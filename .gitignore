@@ -1,0 +1,35 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Logs
+*.log
+server.log
+
+# Secrets
+.env
+.env.local
+.env*.local
+**/.mcp.json
+
+# Node
+node_modules/
+.npm/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Java/Maven
+target/
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Playwright
+/playwright-report/
+/test-results/

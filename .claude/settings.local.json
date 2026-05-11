@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -LsSf https://astral.sh/uv/install.sh)",
+      "Bash(sh)",
+      "Bash(export PATH=\"$HOME/snap/code/237/.local/bin:$PATH\")",
+      "Bash(uv --version)",
+      "Bash(npm install *)",
+      "Bash(claude --version)",
+      "Bash(npm config *)",
+      "Bash(uv tool *)",
+      "WebFetch(domain:github.com)",
+      "Bash(fcc-server)",
+      "Bash(curl -s http://localhost:8082/health)",
+      "Bash(curl -s http://localhost:8082/)",
+      "Bash(mkdir -p ~/.claude/skills)",
+      "Bash(cp /home/toma/projectes/portalAMGv3-claude/kit-skill-creator/.claude/skills/10-skill-creator.md ~/.claude/skills/)",
+      "Read(//usr/local/bin/**)",
+      "Read(//home/toma/.config/free-claude-code/**)",
+      "Bash(pip show *)",
+      "Bash(pip3 show *)",
+      "Bash(/home/toma/snap/code/237/.local/share/uv/tools/free-claude-code/bin/fcc-claude --version)",
+      "Read(//home/toma/snap/code/237/.local/share/uv/tools/free-claude-code/bin/**)",
+      "Bash(/home/toma/snap/code/237/.local/share/uv/tools/free-claude-code/bin/fcc-claude)",
+      "Bash(ANTHROPIC_API_KEY=dummy /home/toma/snap/code/237/.local/share/uv/tools/free-claude-code/bin/fcc-server --help)",
+      "Bash(pkill -f fcc-server)",
+      "Bash(gh auth *)",
+      "Bash(git config *)",
+      "Bash(git --version)",
+      "Bash(git ls-remote *)",
+      "Bash(git init *)",
+      "Bash(git branch *)",
+      "Bash(git remote *)",
+      "Bash(git add *)"
+    ]
+  }
+}
