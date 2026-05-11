@@ -74,8 +74,10 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 - n8n self-hosted, alertes via Telegram Bot
 
 ### Models IA
-- **Claude Code (Opus/Sonnet):** Arquitectura, specs, decisions, seguretat, debugging complex
-- **DeepSeek V4:** Implementació rutinària seguint specs aprovats, entitats JPA, components Next.js, tests
+- **Claude (Sonnet 4.6):** Arquitectura, specs, decisions, seguretat, debugging complex, i tot el que requereixi judici
+- **DeepSeek V4 (via MCP `deepseek-generate`):** Implementació rutinària seguint specs aprovats — entitats JPA, repositoris, DTOs, serveis CRUD, components Next.js, tests, i codi mecànic en general
+
+**Flux de treball:** Claude avalua cada tasca. Si és implementació rutinària i ben definida per un spec, invoca DeepSeek via l'eina MCP `deepseek-generate`. Si requereix decisions d'arquitectura, disseny de seguretat, o debugging complex, ho fa Claude directament.
 
 ---
 
@@ -88,6 +90,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 5. **MAI modifiquis CLAUDE.md** sense aprovació explícita
 6. **Cada PR ha de tenir** el número de mòdul i el títol de l'spec al commit message
 7. **Tests primers**: si l'spec defineix casos QA, escriu els tests abans de la implementació
+8. **DeepSeek per a codi rutinari**: si la tasca és implementació mecànica seguint un spec aprovat (entitats JPA, CRUD, DTOs, components simples, tests), invoca `deepseek-generate` via MCP en lloc de generar-ho tu mateix. Si la tasca requereix decisió arquitectònica o de seguretat, fes-ho directament.
 
 ---
 
@@ -100,6 +103,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | Configurar next-intl sense errors d'hidratació | `/i18n-setup` (skill) |
 | Revisar compliment RGPD/LSSI | `/rgpd-check` (skill) |
 | Validar que un spec és complet | Agent `spec-validator` |
+| Implementació rutinària (JPA, CRUD, DTOs, tests) | MCP `deepseek-generate` |
 | Implementar mòdul backend (Java) | Agent `backend-impl` (DeepSeek) |
 | Implementar mòdul frontend (Next.js) | Agent `frontend-impl` (DeepSeek) |
 | Revisar seguretat (Vault, Auth, Crypto) | Agent `security-reviewer` (Opus) |

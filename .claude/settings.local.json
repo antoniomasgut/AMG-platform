@@ -31,7 +31,32 @@
       "Bash(git init *)",
       "Bash(git branch *)",
       "Bash(git remote *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(openssl rand *)",
+      "Bash(docker --version)",
+      "Bash(docker compose *)",
+      "Bash(make dev *)",
+      "Bash(pip3 install *)",
+      "Bash(uv run *)",
+      "WebSearch",
+      "Bash(/home/toma/snap/code/237/.local/share/uv/tools/free-claude-code/bin/fcc-server --help)",
+      "Bash(/home/toma/snap/code/237/.local/share/uv/tools/free-claude-code/bin/fcc-claude --help)",
+      "Read(//home/toma/**)",
+      "Read(//usr/bin/**)",
+      "Bash(/home/toma/snap/code/237/.local/bin/fcc-claude --version)",
+      "Bash(mkdir -p /home/toma/projectes/portalAMGv3-claude/.claude/skills)",
+      "Bash(cp /home/toma/projectes/portalAMGv3-claude/spec-writer.md /home/toma/projectes/portalAMGv3-claude/.claude/skills/spec-writer.md)",
+      "Bash(npx playwright *)",
+      "Bash(python3 -m playwright --version)",
+      "Bash(python3 -m json.tool)",
+      "Bash(mvn --version)",
+      "Bash(java --version)",
+      "Bash(kill %1)",
+      "Bash(wait)",
+      "Bash(pkill -f \"mcp-deepseek.py\")"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true
 }
