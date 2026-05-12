@@ -150,9 +150,11 @@ public class DataSeeder {
                 BigDecimal.valueOf(50), BigDecimal.valueOf(100), 1, "Xatbot amb Retrieval Augmented Generation");
 
         var canals = addPhase(assistantIaId, "Integració de canals",
-                "Connexió del bot amb WhatsApp Business per a comunicació directa amb clients.");
+                "Connexió del bot amb WhatsApp Business i Telegram per a comunicació directa amb clients.");
         addService(canals, "WhatsApp Business", "whatsapp-business", ServiceType.CREDENTIALS, false,
                 BigDecimal.valueOf(25), BigDecimal.valueOf(50), 1, "Integració amb WhatsApp Business API");
+        addService(canals, "Telegram Business", "telegram-business", ServiceType.CREDENTIALS, false,
+                BigDecimal.valueOf(20), BigDecimal.valueOf(40), 2, "Bot de Telegram per a comunicació automatitzada");
 
         assignProfile(clinicaDental.getId(), assistantIaId);
         assignProfile(hotelPosada.getId(), assistantIaId);
@@ -185,6 +187,8 @@ public class DataSeeder {
                 BigDecimal.valueOf(20), BigDecimal.valueOf(40), 1, "Xatbot amb respostes automàtiques");
         addService(faseIa, "WhatsApp Business", "whatsapp-business-td", ServiceType.CREDENTIALS, false,
                 BigDecimal.valueOf(25), BigDecimal.valueOf(50), 2, "Integració amb WhatsApp Business API");
+        addService(faseIa, "Telegram Business", "telegram-business-td", ServiceType.CREDENTIALS, false,
+                BigDecimal.valueOf(20), BigDecimal.valueOf(40), 3, "Bot de Telegram per a comunicació automatitzada");
 
         assignProfile(hotelPosada.getId(), transformacioId);
 
@@ -192,6 +196,9 @@ public class DataSeeder {
         createAddon("WhatsApp Business", "whatsapp-business-addon", ServiceType.CREDENTIALS,
                 BigDecimal.valueOf(25), BigDecimal.valueOf(50),
                 "Canal de comunicació amb WhatsApp Business API");
+        createAddon("Telegram Business", "telegram-business-addon", ServiceType.CREDENTIALS,
+                BigDecimal.valueOf(20), BigDecimal.valueOf(40),
+                "Bot de Telegram per a comunicació automatitzada amb clients");
         createAddon("Blog integrat", "blog-integrat", ServiceType.LANDING,
                 BigDecimal.valueOf(20), BigDecimal.valueOf(40),
                 "Blog amb articles i gestor de continguts");
