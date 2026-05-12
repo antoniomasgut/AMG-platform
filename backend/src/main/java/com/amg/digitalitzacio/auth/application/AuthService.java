@@ -3,6 +3,9 @@ package com.amg.digitalitzacio.auth.application;
 import com.amg.digitalitzacio.auth.api.dto.*;
 import com.amg.digitalitzacio.auth.domain.*;
 import com.amg.digitalitzacio.shared.config.JwtProperties;
+import com.amg.digitalitzacio.shared.exception.RateLimitExceededException;
+import com.amg.digitalitzacio.shared.exception.TokenException;
+import com.amg.digitalitzacio.shared.exception.TokenReuseException;
 import com.amg.digitalitzacio.shared.security.JwtProvider;
 import com.amg.digitalitzacio.shared.security.Role;
 import jakarta.validation.Valid;
@@ -35,7 +38,7 @@ public class AuthService {
     @Transactional
     public LoginResponse login(@Valid LoginRequest request, String ip) {
         if (loginAttemptService.isBlocked(request.email(), ip)) {
-            throw new LockedException("Massa intents. Prova de nou en 15 minuts.");
+            throw new RateLimitExceededException("Massa intents. Prova de nou en 15 minuts.");
         }
 
         var user = userRepository.findByEmail(request.email())
@@ -68,7 +71,8 @@ public class AuthService {
                 user.getId(), user.getEmail(), user.getRole(), user.getTenantId());
         var refreshToken = jwtProvider.generateRefreshToken();
         var refreshTokenId = UUID.randomUUID().toString();
-        refreshTokenService.save(refreshTokenId, user.getId());
+        var tokenHash = RefreshTokenService.hashToken(refreshToken);
+        refreshTokenService.save(refreshTokenId, user.getId(), tokenHash);
 
         LoginResponse.TenantInfo tenantInfo = null;
         if (user.getTenantId() != null) {
@@ -95,16 +99,31 @@ public class AuthService {
             throw new IllegalArgumentException("Format de token invàlid");
         }
         var tokenId = parts[0];
+        var incomingToken = parts[1];
 
-        var storedUserIdStr = refreshTokenService.getUserId(tokenId);
-        if (storedUserIdStr == null) {
-            throw new IllegalArgumentException("Refresh token invàlid o expirat");
+        var storedValue = refreshTokenService.getStoredValue(tokenId);
+        if (storedValue == null) {
+            // Comprovar si el token va ser usat (possible robatori)
+            if (refreshTokenService.isUsed(tokenId)) {
+                throw new TokenReuseException("Refresh token ja utilitzat — possible robatori de token");
+            }
+            throw new TokenException("Refresh token invàlid o expirat");
         }
 
-        // Rotacio: eliminar token antic (single-use)
+        // Verificar hash del token rebut
+        var expectedHash = refreshTokenService.getTokenHash(storedValue);
+        var actualHash = RefreshTokenService.hashToken(incomingToken);
+        if (!actualHash.equals(expectedHash)) {
+            refreshTokenService.markUsed(tokenId);
+            throw new TokenReuseException("Refresh token ja utilitzat — possible robatori de token");
+        }
+
+        var userId = refreshTokenService.getUserIdFromValue(storedValue);
+
+        // Rotacio: marcar token antic com a usat i eliminar-lo
+        refreshTokenService.markUsed(tokenId);
         refreshTokenService.delete(tokenId);
 
-        var userId = UUID.fromString(storedUserIdStr);
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuari no trobat"));
 
@@ -112,7 +131,8 @@ public class AuthService {
                 user.getId(), user.getEmail(), user.getRole(), user.getTenantId());
         var newRefreshToken = jwtProvider.generateRefreshToken();
         var newTokenId = UUID.randomUUID().toString();
-        refreshTokenService.save(newTokenId, user.getId());
+        var newTokenHash = RefreshTokenService.hashToken(newRefreshToken);
+        refreshTokenService.save(newTokenId, user.getId(), newTokenHash);
 
         return new RefreshResponse(
                 newAccessToken,
@@ -173,6 +193,7 @@ public class AuthService {
     }
 
     public void logout(String tokenId) {
+        refreshTokenService.markUsed(tokenId);
         refreshTokenService.delete(tokenId);
     }
 

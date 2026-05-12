@@ -16,3 +16,13 @@ spring:
     redis:
       host: localhost
       port: 6379
+
+  main:
+    allow-bean-definition-overriding: true
+
+app:
+  cors:
+    allowed-origins: "*"
+
+jwt:
+  secret: dGVzdC1zZWNyZXQtdGhhdC1pcy1hdC1sZWFzdC0zMi1jaGFycy1sb25nLXNlY3JldA==

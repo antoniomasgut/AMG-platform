@@ -6,10 +6,12 @@ import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -31,12 +33,12 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request) {
+    public ResponseEntity<Map<String, Object>> logout(@Valid @RequestBody RefreshRequest request) {
         var parts = request.refreshToken().split(":", 2);
         if (parts.length == 2) {
             authService.logout(parts[0]);
         }
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Map.of());
     }
 
     @GetMapping("/me")
