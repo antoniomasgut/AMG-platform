@@ -1,0 +1,357 @@
+{
+  "common": {
+    "siteName": "AMG · Digital Engineering",
+    "tagline": "Digitale Automatisierung für KMU auf Mallorca",
+    "cta": "DEMO ANFORDERN",
+    "seeServices": "DIENSTLEISTUNGEN",
+    "learnMore": "MEHR ERFAHREN"
+  },
+  "nav": {
+    "serveis": "Dienstleistungen",
+    "comFunciona": "So funktioniert's",
+    "preus": "Preise",
+    "contacte": "Kontakt",
+    "iniciarSessio": "ANMELDEN"
+  },
+  "hero": {
+    "title": "HÖREN SIE AUF, KUNDEN ZU VERLIEREN",
+    "titleAccent": "WEIL SIE NICHT AUF WHATSAPP ANTWORTEN",
+    "subtitle": "Verwandeln Sie Ihr WhatsApp in eine Maschine für organisierte Arbeit. Kein Technik-Jargon, keine Komplikationen.",
+    "cta": "DEMO VEREINBAREN",
+    "scrollDown": "SCROLLEN SIE FÜR MEHR INFORMATIONEN"
+  },
+  "problem": {
+    "title": "KONTROLLIERT IHR UNTERNEHMEN SIE?",
+    "items": [
+      "Kunden, die schreiben und stundenlang warten.",
+      "Nicht dringende Anfragen, die Ihre Arbeit unterbrechen.",
+      "Das Chaos der Terminverwaltung per Telefon.",
+      "Geschäftschancen, die durch mangelnde Nachverfolgung verloren gehen."
+    ]
+  },
+  "services": {
+    "title": "MASSGESCHNEIDERTE LÖSUNGEN FÜR IHR UNTERNEHMEN",
+    "subtitle": "Ob Sie eine einfache Website oder ein vollständiges KI-System brauchen – wir haben den perfekten Plan.",
+    "profiles": [
+      {
+        "name": "Basis-Web",
+        "tagline": "Essenzielle digitale Präsenz",
+        "price": "ab 29€/Monat",
+        "features": [
+          "Responsive Landing Page",
+          "Kontaktformular",
+          "WhatsApp Business",
+          "Unternehmens-SMTP",
+          "Domain + DNS + SSL"
+        ]
+      },
+      {
+        "name": "Premium Landing",
+        "tagline": "Ihre digitale Visitenkarte",
+        "price": "ab 49€/Monat",
+        "features": [
+          "Pro Landing mit Fotos",
+          "Bildergalerie",
+          "Online-Terminbuchung",
+          "24h WhatsApp-Erinnerung",
+          "Integrierter Web-Chat"
+        ]
+      },
+      {
+        "name": "Automatisierung",
+        "tagline": "Prozesse, die von selbst laufen",
+        "price": "ab 49€/Monat",
+        "features": [
+          "CRM + Verkaufspipeline",
+          "Angebotsrechner",
+          "Automatisches Re-Engagement",
+          "Automatische Google-Bewertung",
+          "Kartenzahlungen"
+        ]
+      },
+      {
+        "name": "KI-Assistent",
+        "tagline": "Künstliche Intelligenz für Ihr Unternehmen",
+        "price": "ab 99€/Monat",
+        "features": [
+          "Konversations-KI-Bot",
+          "RAG (Antworten aus Dokumenten)",
+          "Automatische Anfragenklassifizierung",
+          "24/7 Sofortantwort",
+          "Intelligenter Verlauf"
+        ]
+      },
+      {
+        "name": "Digitale Transformation",
+        "tagline": "Ihr Unternehmen, vollständig digitalisiert",
+        "price": "auf Anfrage",
+        "features": [
+          "Alle vorherigen Dienste",
+          "E-Rechnung",
+          "Benutzerdefinierte n8n-Workflows",
+          "Finanz-Dashboard",
+          "Schulung und Begleitung"
+        ]
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "SO FUNKTIONIERT'S",
+    "steps": [
+      {
+        "number": "1",
+        "title": "Wir analysieren Ihr Unternehmen",
+        "desc": "Wir analysieren Ihre aktuellen Prozesse und identifizieren Automatisierungsmöglichkeiten."
+      },
+      {
+        "number": "2",
+        "title": "Inbetriebnahme in 48h",
+        "desc": "Wir richten das gesamte System ein: Web, WhatsApp, Terminbuchung, KI. Keine technischen Hürden für Sie."
+      },
+      {
+        "number": "3",
+        "title": "Die Ergebnisse kommen",
+        "desc": "Ihr Unternehmen läuft von selbst. Mehr Kunden, weniger Arbeit, mehr Kontrolle."
+      }
+    ]
+  },
+  "pricing": {
+    "title": "FESTPREISE, OHNE ÜBERRASCHUNGEN",
+    "plans": [
+      {
+        "name": "Basis",
+        "price": "29€",
+        "period": "/Monat",
+        "features": [
+          "Landing Page",
+          "WhatsApp Business",
+          "Unternehmens-SMTP",
+          "Domain + SSL",
+          "E-Mail-Support"
+        ],
+        "cta": "STARTEN"
+      },
+      {
+        "name": "Mittel",
+        "price": "49€",
+        "period": "/Monat",
+        "features": [
+          "Alles aus Basis",
+          "Premium Landing",
+          "Online-Terminbuchung",
+          "CRM + Pipeline",
+          "Prioritäts-Support"
+        ],
+        "cta": "STARTEN",
+        "highlighted": true
+      },
+      {
+        "name": "Fortgeschritten",
+        "price": "99€",
+        "period": "/Monat",
+        "features": [
+          "Alles aus Mittel",
+          "Vollständiger KI-Assistent",
+          "Automatisierte Workflows",
+          "Digitale Rechnungsstellung",
+          "Dedizierte Betreuung"
+        ],
+        "cta": "STARTEN"
+      }
+    ]
+  },
+  "cta": {
+    "title": "BEREIT FÜR DIE DIGITALISIERUNG IHRES UNTERNEHMENS?",
+    "subtitle": "In weniger als 48 Stunden kann Ihr Unternehmen mit Automatisierungen laufen, die Ihnen jede Menge Zeit sparen.",
+    "button": "KOSTENLOSE DEMO VEREINBAREN"
+  },
+  "footer": {
+    "description": "Digitale Automatisierung für KMU auf Mallorca. Websites, KI-Bots, CRM und mehr.",
+    "services": "Dienstleistungen",
+    "legal": "Rechtliches",
+    "avisLegal": "Impressum",
+    "privacitat": "Datenschutz",
+    "termes": "AGB",
+    "contacte": "Kontakt",
+    "copyright": "AMG Digital Engineering. Alle Rechte vorbehalten."
+  },
+  "auth": {
+    "login": {
+      "title": "PORTAL-ZUGANG",
+      "subtitle": "Wir senden Ihnen einen Magic Link per E-Mail. Keine Passwörter.",
+      "emailLabel": "Unternehmens-E-Mail",
+      "emailPlaceholder": "sie@unternehmen.de",
+      "sendMagicLink": "MAGIC LINK SENDEN",
+      "orPassword": "oder mit Passwort",
+      "usePassword": "Passwort verwenden",
+      "passwordTitle": "PASSWORT",
+      "passwordLabel": "Passwort",
+      "enter": "EINLOGGEN",
+      "back": "ZURÜCK",
+      "forgotPassword": "PASSWORT VERGESSEN?",
+      "sentTitle": "PRÜFEN SIE IHRE E-MAIL",
+      "sentDesc": "Wir haben einen Zugangslink gesendet an",
+      "sentExpiry": "Der Link läuft in {minutes} Min. ab. Prüfen Sie Ihren Spam-Ordner.",
+      "resent": "LINK ERNEUT SENDEN",
+      "useOtherEmail": "ANDERE E-MAIL VERWENDEN",
+      "errorInvalidCredentials": "Ungültige Anmeldedaten",
+      "errorBlocked": "Konto gesperrt. Versuchen Sie es später erneut oder setzen Sie Ihr Passwort zurück.",
+      "errorTooManyAttempts": "Zu viele Versuche. Versuchen Sie es in ein paar Minuten erneut.",
+      "errorGeneral": "Anmeldefehler",
+      "entering": "EINLOGGEN...",
+      "sending": "SENDE..."
+    },
+    "forgotPassword": {
+      "title": "PASSWORT WIEDERHERSTELLEN",
+      "subtitle": "Geben Sie Ihre E-Mail ein und wir senden Ihnen einen Link zum Zurücksetzen des Passworts.",
+      "emailLabel": "Unternehmens-E-Mail",
+      "sendLink": "LINK SENDEN",
+      "sentTitle": "PRÜFEN SIE IHRE E-MAIL",
+      "sentDesc": "Wenn die E-Mail existiert, erhalten Sie einen Wiederherstellungslink an",
+      "sentExpiry": "Der Link läuft in {minutes} Min. ab. Prüfen Sie Ihren Spam-Ordner.",
+      "backToLogin": "ZURÜCK ZUM LOGIN",
+      "sending": "SENDE...",
+      "error": "Fehler beim Senden der Anfrage"
+    },
+    "resetPassword": {
+      "title": "PASSWORT ZURÜCKSETZEN",
+      "subtitle": "Geben Sie Ihr neues Passwort ein.",
+      "newPasswordLabel": "Neues Passwort",
+      "confirmLabel": "Passwort bestätigen",
+      "update": "PASSWORT AKTUALISIEREN",
+      "invalidLinkTitle": "UNGÜLTIGER LINK",
+      "invalidLinkDesc": "Dieser Wiederherstellungslink ist ungültig oder abgelaufen.",
+      "successTitle": "PASSWORT AKTUALISIERT",
+      "successDesc": "Weiterleitung zum Login...",
+      "goToLogin": "ZUM LOGIN",
+      "updating": "AKTUALISIERE...",
+      "errorInvalidToken": "Ungültiger oder abgelaufener Wiederherstellungslink",
+      "errorMinLength": "Das Passwort muss mindestens 4 Zeichen lang sein",
+      "errorMismatch": "Passwörter stimmen nicht überein",
+      "errorGeneral": "Fehler beim Zurücksetzen des Passworts"
+    }
+  },
+  "portal": {
+    "greeting": "Guten Morgen, {name}",
+    "subscription": {
+      "badge": "Aktives Abonnement",
+      "plan": "PLAN {name}",
+      "upToDate": "AUF DEM NEUESTEN STAND",
+      "active": "Aktiv",
+      "nextBilling": "Nächste Abrechnung",
+      "monthlyAmount": "Monatsbeitrag",
+      "role": "Rolle",
+      "cycle": "Zyklus {start} → {end}"
+    },
+    "services": {
+      "title": "Aktive Dienste",
+      "eyebrow": "Monatliche Nutzung",
+      "operational": "BETRIEBSBEREIT",
+      "manage": "VERWALTEN"
+    },
+    "invoices": {
+      "title": "Letzte Rechnungen",
+      "eyebrow": "Verlauf",
+      "viewAll": "ALLE ANZEIGEN"
+    },
+    "help": {
+      "title": "BRAUCHEN SIE HILFE?",
+      "description": "Ihr zugewiesener Techniker steht zur Verfügung, um Ihre Fragen zu beantworten.",
+      "contactTeam": "TEAM KONTAKTIEREN",
+      "viewTutorials": "TUTORIALS ANSEHEN"
+    },
+    "sidebar": {
+      "myAccount": "Mein Konto",
+      "dashboard": "Dashboard",
+      "services": "Dienste",
+      "invoices": "Rechnungen",
+      "publicLanding": "Öffentliche Landingpage",
+      "support": "Support",
+      "settings": "Einstellungen"
+    },
+    "logout": "ABMELDEN",
+    "loggingOut": "ABMELDUNG..."
+  },
+  "legal": {
+    "cookies": {
+      "title": "Diese Website verwendet Cookies",
+      "description": "Wir verwenden eigene und Drittanbieter-Cookies, um Ihre Erfahrung zu verbessern und den Verkehr zu analysieren.",
+      "acceptAll": "Alle akzeptieren",
+      "configure": "Konfigurieren",
+      "accept": "AKZEPTIEREN"
+    },
+    "avis": {
+      "title": "Impressum",
+      "sections": {
+        "ownership": {
+          "title": "1. Verantwortlicher",
+          "content": "AMG Digital Engineering ist eine Handelsmarke von Antonio Más Gutiérrez, mit Steuer-ID 12345678A und Sitz in Mallorca, Balearische Inseln. Kontakt: hola@amg.cat."
+        },
+        "purpose": {
+          "title": "2. Zweck der Website",
+          "content": "Diese Website dient der Information über digitale Automatisierungs-, Webentwicklungs- und KI-Dienstleistungen von AMG Digital Engineering."
+        },
+        "terms": {
+          "title": "3. Nutzungsbedingungen",
+          "content": "Der Nutzer verpflichtet sich, die Inhalte und Dienste angemessen zu nutzen und keine rechtswidrigen Handlungen vorzunehmen."
+        }
+      },
+      "backToHome": "← Zurück zur Startseite",
+      "lastUpdated": "Letzte Aktualisierung"
+    },
+    "privacitat": {
+      "title": "Datenschutzerklärung",
+      "sections": {
+        "controller": {
+          "title": "1. Verantwortlicher",
+          "content": "Der Verantwortliche für die Verarbeitung personenbezogener Daten auf dieser Website ist Antonio Más Gutiérrez (AMG Digital Engineering)."
+        },
+        "dataCollected": {
+          "title": "2. Erhobene Daten",
+          "content": "Wir erheben: Vor- und Nachname, E-Mail-Adresse, Telefonnummer und Rechnungsinformationen bei Vertragsabschluss."
+        },
+        "purpose": {
+          "title": "3. Zweck der Verarbeitung",
+          "content": "Die Daten werden verarbeitet für: Angebotsanfragen, Erbringung vertraglicher Dienstleistungen, Werbung (mit Einwilligung) und Erfüllung gesetzlicher Pflichten."
+        },
+        "legalBasis": {
+          "title": "4. Rechtsgrundlage",
+          "content": "Die Rechtsgrundlage ist: Erfüllung eines Dienstleistungsvertrags, Einwilligung der betroffenen Person und Erfüllung gesetzlicher Pflichten."
+        },
+        "rights": {
+          "title": "5. Betroffenenrechte",
+          "content": "Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch per E-Mail an hola@amg.cat."
+        },
+        "security": {
+          "title": "6. Sicherheitsmaßnahmen",
+          "content": "Wir wenden geeignete technische und organisatorische Sicherheitsmaßnahmen an, einschließlich AES-256-Verschlüsselung für sensible Daten."
+        }
+      },
+      "backToHome": "← Zurück zur Startseite",
+      "lastUpdated": "Letzte Aktualisierung"
+    },
+    "termes": {
+      "title": "AGB",
+      "sections": {
+        "object": {
+          "title": "1. Gegenstand",
+          "content": "Diese AGB regeln die Beauftragung von digitalen Automatisierungs-, Webentwicklungs- und KI-Dienstleistungen durch AMG Digital Engineering."
+        },
+        "services": {
+          "title": "2. Dienstleistungen",
+          "content": "AMG bietet: Website-Entwicklung, n8n-Prozessautomatisierung, KI-Chatbots, WhatsApp Business-Integration, Domain- und SSL-Verwaltung und Digitalberatung."
+        },
+        "pricing": {
+          "title": "3. Preise und Abrechnung",
+          "content": "Die Preise richten sich nach dem vereinbarten Angebot. Die Abrechnung erfolgt monatlich oder nach dem im Vertrag festgelegten Zeitplan."
+        },
+        "obligations": {
+          "title": "4. Kundenpflichten",
+          "content": "Der Kunde verpflichtet sich, die erforderlichen Informationen bereitzustellen, Rechnungen fristgerecht zu bezahlen und die Dienste nicht missbräuchlich zu nutzen."
+        }
+      },
+      "backToHome": "← Zurück zur Startseite",
+      "lastUpdated": "Letzte Aktualisierung"
+    }
+  }
+}

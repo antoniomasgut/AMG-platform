@@ -1,0 +1,357 @@
+{
+  "common": {
+    "siteName": "AMG · Ingeniería Digital",
+    "tagline": "Automatización digital para pymes de Mallorca",
+    "cta": "SOLICITAR DEMO",
+    "seeServices": "VER SERVICIOS",
+    "learnMore": "SABER MÁS"
+  },
+  "nav": {
+    "serveis": "Servicios",
+    "comFunciona": "Cómo funciona",
+    "preus": "Precios",
+    "contacte": "Contacto",
+    "iniciarSessio": "INICIAR SESIÓN"
+  },
+  "hero": {
+    "title": "DEJA DE PERDER CLIENTES",
+    "titleAccent": "POR NO RESPONDER AL WHATSAPP",
+    "subtitle": "Convierte tu WhatsApp en una máquina de generar trabajo organizado. Sin tecnicismos, sin complicaciones.",
+    "cta": "PIDE UNA DEMO",
+    "scrollDown": "DESPLÁZATE PARA SABER MÁS"
+  },
+  "problem": {
+    "title": "¿TU NEGOCIO TE CONTROLA A TI?",
+    "items": [
+      "Clientes que te escriben y esperan horas (o días).",
+      "Consultas que no son urgentes y te interrumpen el trabajo.",
+      "El caos de gestionar la agenda a base de llamadas.",
+      "Oportunidades de negocio que se pierden por falta de seguimiento."
+    ]
+  },
+  "services": {
+    "title": "SOLUCIONES A MEDIDA PARA TU NEGOCIO",
+    "subtitle": "Tanto si necesitas una web sencilla como un sistema de IA completo, tenemos el plan perfecto.",
+    "profiles": [
+      {
+        "name": "Web Básica",
+        "tagline": "Presencia digital esencial",
+        "price": "desde 29€/mes",
+        "features": [
+          "Landing page responsiva",
+          "Formulario de contacto",
+          "WhatsApp Business",
+          "SMTP corporativo",
+          "Dominio + DNS + SSL"
+        ]
+      },
+      {
+        "name": "Landing Premium",
+        "tagline": "Tu tarjeta de visita digital",
+        "price": "desde 49€/mes",
+        "features": [
+          "Landing Pro con fotos",
+          "Galería de imágenes",
+          "Agenda online",
+          "Recordatorio 24h WhatsApp",
+          "Chat web integrado"
+        ]
+      },
+      {
+        "name": "Automatización",
+        "tagline": "Procesos que funcionan solos",
+        "price": "desde 49€/mes",
+        "features": [
+          "CRM + Pipeline de ventas",
+          "Calculadora de presupuesto",
+          "Reenganche automático",
+          "Reseña Google automática",
+          "Cobro con tarjeta"
+        ]
+      },
+      {
+        "name": "Assistant IA",
+        "tagline": "Inteligencia artificial para tu negocio",
+        "price": "desde 99€/mes",
+        "features": [
+          "Bot IA conversacional",
+          "RAG (respuestas desde documentos)",
+          "Clasificación automática de consultas",
+          "Respuesta inmediata 24/7",
+          "Historial inteligente"
+        ]
+      },
+      {
+        "name": "Transformación Digital",
+        "tagline": "Tu negocio, totalmente digitalizado",
+        "price": "consultar",
+        "features": [
+          "Todos los servicios anteriores",
+          "Facturación electrónica",
+          "Workflows personalizados n8n",
+          "Dashboard financiero",
+          "Formación y acompañamiento"
+        ]
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "CÓMO FUNCIONA",
+    "steps": [
+      {
+        "number": "1",
+        "title": "Auditamos tu negocio",
+        "desc": "Analizamos tus procesos actuales e identificamos oportunidades de automatización."
+      },
+      {
+        "number": "2",
+        "title": "Lo ponemos en marcha en 48h",
+        "desc": "Configuramos todo el sistema: web, WhatsApp, agenda, IA. Sin complicaciones técnicas para ti."
+      },
+      {
+        "number": "3",
+        "title": "Empiezan los resultados",
+        "desc": "Tu negocio funciona solo. Más clientes, menos trabajo, más control."
+      }
+    ]
+  },
+  "pricing": {
+    "title": "TARIFAS PLANAS, SIN SORPRESAS",
+    "plans": [
+      {
+        "name": "Básico",
+        "price": "29€",
+        "period": "/mes",
+        "features": [
+          "Landing page",
+          "WhatsApp Business",
+          "SMTP corporativo",
+          "Dominio + SSL",
+          "Soporte por email"
+        ],
+        "cta": "EMPEZAR"
+      },
+      {
+        "name": "Intermedio",
+        "price": "49€",
+        "period": "/mes",
+        "features": [
+          "Todo del plan Básico",
+          "Landing Premium",
+          "Agenda online",
+          "CRM + Pipeline",
+          "Soporte prioritario"
+        ],
+        "cta": "EMPEZAR",
+        "highlighted": true
+      },
+      {
+        "name": "Avanzado",
+        "price": "99€",
+        "period": "/mes",
+        "features": [
+          "Todo del plan Intermedio",
+          "Assistant IA completo",
+          "Workflows automáticos",
+          "Facturación digital",
+          "Acompañamiento dedicado"
+        ],
+        "cta": "EMPEZAR"
+      }
+    ]
+  },
+  "cta": {
+    "title": "¿LISTO PARA DIGITALIZAR TU NEGOCIO?",
+    "subtitle": "En menos de 48 horas tu negocio puede estar funcionando con automatizaciones que te harán ahorrar horas cada semana.",
+    "button": "PIDE UNA DEMO GRATUITA"
+  },
+  "footer": {
+    "description": "Automatización digital para pymes de Mallorca. Webs, bots IA, CRM y mucho más.",
+    "services": "Servicios",
+    "legal": "Legal",
+    "avisLegal": "Aviso Legal",
+    "privacitat": "Política de Privacidad",
+    "termes": "Términos del Servicio",
+    "contacte": "Contacto",
+    "copyright": "AMG Ingeniería Digital. Todos los derechos reservados."
+  },
+  "auth": {
+    "login": {
+      "title": "ACCESO AL PORTAL",
+      "subtitle": "Te enviamos un enlace mágico por email. Sin contraseñas.",
+      "emailLabel": "Email corporativo",
+      "emailPlaceholder": "tu@empresa.com",
+      "sendMagicLink": "ENVIAR MAGIC LINK",
+      "orPassword": "o con contraseña",
+      "usePassword": "Usar contraseña",
+      "passwordTitle": "CONTRASEÑA",
+      "passwordLabel": "Contraseña",
+      "enter": "ENTRAR",
+      "back": "VOLVER",
+      "forgotPassword": "¿HAS OLVIDADO LA CONTRASEÑA?",
+      "sentTitle": "REVISA TU EMAIL",
+      "sentDesc": "Hemos enviado un enlace de acceso a",
+      "sentExpiry": "El enlace caduca en {minutes} min. Revisa la carpeta de spam si no lo ves.",
+      "resent": "REENVIAR ENLACE",
+      "useOtherEmail": "USAR OTRO EMAIL",
+      "errorInvalidCredentials": "Credenciales incorrectas",
+      "errorBlocked": "Cuenta bloqueada. Inténtalo más tarde o recupera la contraseña.",
+      "errorTooManyAttempts": "Demasiados intentos. Vuelve a intentarlo en unos minutos.",
+      "errorGeneral": "Error de inicio de sesión",
+      "entering": "ENTRANDO...",
+      "sending": "ENVIANDO..."
+    },
+    "forgotPassword": {
+      "title": "RECUPERAR CONTRASEÑA",
+      "subtitle": "Introduce tu email y te enviaremos un enlace para restablecer la contraseña.",
+      "emailLabel": "Email corporativo",
+      "sendLink": "ENVIAR ENLACE",
+      "sentTitle": "REVISA TU EMAIL",
+      "sentDesc": "Si el correo existe, recibirás un enlace de recuperación a",
+      "sentExpiry": "El enlace caduca en {minutes} min. Revisa la carpeta de spam si no lo ves.",
+      "backToLogin": "VOLVER AL LOGIN",
+      "sending": "ENVIANDO...",
+      "error": "Error al enviar la solicitud"
+    },
+    "resetPassword": {
+      "title": "RESTABLECER CONTRASEÑA",
+      "subtitle": "Introduce tu nueva contraseña.",
+      "newPasswordLabel": "Nueva contraseña",
+      "confirmLabel": "Confirmar contraseña",
+      "update": "ACTUALIZAR CONTRASEÑA",
+      "invalidLinkTitle": "ENLACE INVÁLIDO",
+      "invalidLinkDesc": "Este enlace de recuperación es inválido o ha expirado.",
+      "successTitle": "CONTRASEÑA ACTUALIZADA",
+      "successDesc": "Redirigiendo al login...",
+      "goToLogin": "IR AL LOGIN",
+      "updating": "ACTUALIZANDO...",
+      "errorInvalidToken": "Enlace de recuperación inválido o expirado",
+      "errorMinLength": "La contraseña debe tener al menos 4 caracteres",
+      "errorMismatch": "Las contraseñas no coinciden",
+      "errorGeneral": "Error al restablecer la contraseña"
+    }
+  },
+  "portal": {
+    "greeting": "Buenos días, {name}",
+    "subscription": {
+      "badge": "Suscripción activa",
+      "plan": "PLAN {name}",
+      "upToDate": "AL DÍA",
+      "active": "En activo",
+      "nextBilling": "Próximo cobro",
+      "monthlyAmount": "Importe mensual",
+      "role": "Rol",
+      "cycle": "Ciclo {start} → {end}"
+    },
+    "services": {
+      "title": "Servicios activos",
+      "eyebrow": "Uso del mes",
+      "operational": "OPERATIVO",
+      "manage": "GESTIONAR"
+    },
+    "invoices": {
+      "title": "Últimas facturas",
+      "eyebrow": "Historial",
+      "viewAll": "VER TODAS"
+    },
+    "help": {
+      "title": "¿NECESITAS AYUDA?",
+      "description": "Tu técnico asignado está disponible para responder tus dudas.",
+      "contactTeam": "ESCRIBIR AL EQUIPO",
+      "viewTutorials": "VER TUTORIALES"
+    },
+    "sidebar": {
+      "myAccount": "Mi cuenta",
+      "dashboard": "Dashboard",
+      "services": "Servicios",
+      "invoices": "Facturas",
+      "publicLanding": "Landing pública",
+      "support": "Soporte",
+      "settings": "Configuración"
+    },
+    "logout": "CERRAR SESIÓN",
+    "loggingOut": "SALIENDO..."
+  },
+  "legal": {
+    "cookies": {
+      "title": "Esta web utiliza cookies",
+      "description": "Utilizamos cookies propias y de terceros para mejorar tu experiencia y analizar el tráfico.",
+      "acceptAll": "Aceptar todas",
+      "configure": "Configurar",
+      "accept": "DE ACUERDO"
+    },
+    "avis": {
+      "title": "Aviso Legal",
+      "sections": {
+        "ownership": {
+          "title": "1. Datos del titular",
+          "content": "AMG Ingeniería Digital es una marca comercial de Antonio Más Gutiérrez, con NIF 12345678A y domicilio en Mallorca, Islas Baleares. Para cualquier consulta, puedes contactar a través del correo electrónico hola@amg.cat."
+        },
+        "purpose": {
+          "title": "2. Finalidad del web",
+          "content": "El presente web tiene como finalidad principal ofrecer información sobre los servicios de automatización digital, desarrollo web e inteligencia artificial ofrecidos por AMG Ingeniería Digital."
+        },
+        "terms": {
+          "title": "3. Condiciones de uso",
+          "content": "El usuario se compromete a hacer un uso adecuado de los contenidos y servicios ofrecidos, y a no emplearlos para actividades ilícitas o contrarias a la buena fe."
+        }
+      },
+      "backToHome": "← Volver al inicio",
+      "lastUpdated": "Última actualización"
+    },
+    "privacitat": {
+      "title": "Política de Privacidad",
+      "sections": {
+        "controller": {
+          "title": "1. Responsable del tratamiento",
+          "content": "El responsable del tratamiento de los datos personales recogidos en este web es Antonio Más Gutiérrez (AMG Ingeniería Digital)."
+        },
+        "dataCollected": {
+          "title": "2. Datos recogidos",
+          "content": "Se recogen los siguientes datos: nombre y apellidos, dirección de correo electrónico, número de teléfono, e información de facturación cuando se contratan servicios."
+        },
+        "purpose": {
+          "title": "3. Finalidad del tratamiento",
+          "content": "Los datos se tratan con las siguientes finalidades: gestionar la solicitud de presupuestos, prestar los servicios contratados, enviar comunicaciones comerciales (con consentimiento previo), y cumplir con obligaciones legales."
+        },
+        "legalBasis": {
+          "title": "4. Base legal",
+          "content": "La base legal para el tratamiento de datos es: la ejecución de un contrato de servicios, el consentimiento del interesado, y el cumplimiento de obligaciones legales."
+        },
+        "rights": {
+          "title": "5. Derechos del interesado",
+          "content": "El usuario puede ejercer los derechos de acceso, rectificación, supresión, limitación, portabilidad y oposición enviando un email a hola@amg.cat."
+        },
+        "security": {
+          "title": "6. Medidas de seguridad",
+          "content": "Se aplican medidas de seguridad técnicas y organizativas adecuadas para proteger los datos personales, incluyendo cifrado AES-256 para datos sensibles y acceso restringido por roles."
+        }
+      },
+      "backToHome": "← Volver al inicio",
+      "lastUpdated": "Última actualización"
+    },
+    "termes": {
+      "title": "Términos del Servicio",
+      "sections": {
+        "object": {
+          "title": "1. Objeto",
+          "content": "Estos Términos del Servicio regulan la contratación de los servicios de automatización digital, desarrollo web e inteligencia artificial ofrecidos por AMG Ingeniería Digital."
+        },
+        "services": {
+          "title": "2. Servicios",
+          "content": "AMG ofrece: desarrollo de páginas web, automatización de procesos con n8n, chatbots de inteligencia artificial, integración de WhatsApp Business, gestión de dominios y SSL, y consultoría digital."
+        },
+        "pricing": {
+          "title": "3. Precios y facturación",
+          "content": "Los precios se fijan según el presupuesto acordado con el cliente. La facturación se realiza mensualmente o según el calendario acordado en el contrato."
+        },
+        "obligations": {
+          "title": "4. Obligaciones del cliente",
+          "content": "El cliente se compromete a proporcionar la información necesaria para la prestación de los servicios, a pagar las facturas dentro del plazo acordado, y a no hacer un uso indebido de los servicios contratados."
+        }
+      },
+      "backToHome": "← Volver al inicio",
+      "lastUpdated": "Última actualización"
+    }
+  }
+}

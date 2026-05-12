@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useRouter, Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { login } from '@/services/auth';
 
-/* ─────────── SVG Icons (inline, no dependency) ─────────── */
+/* ─────────── SVG Icons (inline) ─────────── */
 const Icon = ({ d, size = 16, stroke = 'currentColor', children }: { d?: string; size?: number; stroke?: string; children?: React.ReactNode }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
     {children || (d && <path d={d} />)}
@@ -23,12 +23,11 @@ const I = {
   AlertCircle: (p: any) => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></Icon>,
 };
 
-/* ─────────── Types ─────────── */
 type PageState = 'form' | 'password' | 'sent';
 
-/* ─────────── Login Page ─────────── */
 export default function LoginPage() {
   const router = useRouter();
+  const t = useTranslations('auth.login');
   const [state, setState] = useState<PageState>('form');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,12 +42,10 @@ export default function LoginPage() {
     setSubmitting(true);
     setErrorMsg('');
     try {
-      // Would call forgotPassword endpoint for magic link
-      // For now, simulate with a short delay then show sent state
       setSuccessEmail(email);
       setState('sent');
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Error en enviar l\'enllaç');
+    } catch (_err: unknown) {
+      setErrorMsg(t('errorGeneral'));
       setState('form');
     } finally {
       setSubmitting(false);
@@ -65,15 +62,10 @@ export default function LoginPage() {
       sessionStorage.setItem('user', JSON.stringify(res.user));
       router.push('/portal');
     } catch (err: any) {
-      if (err.status === 401) {
-        setErrorMsg('Credencials incorrectes');
-      } else if (err.status === 423) {
-        setErrorMsg('Compte blocat. Intenta-ho més tard o recupera la contrasenya.');
-      } else if (err.status === 429) {
-        setErrorMsg('Massa intents. Torna-ho a provar en uns minuts.');
-      } else {
-        setErrorMsg(err.message || 'Error d\'inici de sessió');
-      }
+      if (err.status === 401) setErrorMsg(t('errorInvalidCredentials'));
+      else if (err.status === 423) setErrorMsg(t('errorBlocked'));
+      else if (err.status === 429) setErrorMsg(t('errorTooManyAttempts'));
+      else setErrorMsg(err.message || t('errorGeneral'));
       setState('password');
     } finally {
       setSubmitting(false);
@@ -83,13 +75,12 @@ export default function LoginPage() {
   const isBusy = submitting;
   return (
     <div className="relative w-full min-h-dvh bg-[#0d0d1a] overflow-hidden flex">
-      {/* Animated grid bg */}
       <div className="fixed inset-0 amg-grid-sm pointer-events-none"></div>
       <div className="fixed inset-0 pointer-events-none" style={{
         background: 'radial-gradient(ellipse at 30% 50%, rgba(255,107,0,0.18), transparent 45%), radial-gradient(ellipse at 80% 80%, rgba(255,154,60,0.10), transparent 40%)',
       }}></div>
 
-      {/* Left: brand panel (hidden on mobile) */}
+      {/* Left: brand panel */}
       <div className="relative hidden lg:flex w-[48%] p-16 flex-col justify-between z-10 border-r border-[rgba(255,107,0,0.15)]">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-[#FF6B00] btn-clip flex items-center justify-center">
@@ -126,47 +117,44 @@ export default function LoginPage() {
       <div className="relative flex-1 flex items-center justify-center p-6 sm:p-10 z-10">
         <div className="w-full max-w-[420px]">
           <div className="amg-card card-clip p-6 sm:p-8">
-            {/* Header */}
             <div className="flex items-center gap-2 mb-1">
               <div className="w-1.5 h-1.5 bg-[#FF6B00]"></div>
               <span className="f-mono text-[10px] uppercase tracking-[0.2em] text-[#FF9A3C]">
-                {state === 'sent' ? 'Enllaç enviat' : 'Iniciar sessió'}
+                {state === 'sent' ? t('sentTitle') : t('title')}
               </span>
             </div>
 
             {state === 'sent' ? (
-              /* ─── SENT STATE ─── */
               <>
                 <div className="w-16 h-16 bg-[rgba(255,107,0,0.12)] border border-[#FF6B00] flex items-center justify-center mb-5 mx-auto">
                   <I.Mail size={24} stroke="#FF9A3C" />
                 </div>
-                <h2 className="f-display font-black text-2xl text-center">COMPROVA EL TEU EMAIL</h2>
-                <p className="text-[13px] text-[#94a3b8] mt-2 text-center">Hem enviat un enllaç d&#39;accés a</p>
+                <h2 className="f-display font-black text-2xl text-center">{t('sentTitle')}</h2>
+                <p className="text-[13px] text-[#94a3b8] mt-2 text-center">{t('sentDesc')}</p>
                 <div className="f-mono text-sm text-[#FF9A3C] text-center mt-1">{successEmail}</div>
 
                 <div className="mt-6 p-3 border-l-2 border-l-[#58a6ff] bg-[rgba(88,166,255,0.05)] flex gap-3">
                   <I.Clock size={14} stroke="#58a6ff" className="shrink-0 mt-0.5" />
                   <div className="text-[12px] text-[#94a3b8]">
-                    L&#39;enllaç caduca en <span className="text-[#58a6ff] f-mono">15 min</span>. Revisa la carpeta de spam si no el veus.
+                    {t('sentExpiry', { minutes: 15 })}
                   </div>
                 </div>
 
                 <button className="mt-6 w-full h-10 f-mono text-xs uppercase btn-clip bg-[#1a1a2e] hover:bg-[#212140] text-[#e2e8f0] border border-[rgba(255,107,0,0.35)] transition-all">
-                  REENVIAR ENLLAÇ
+                  {t('resent')}
                 </button>
                 <button onClick={() => setState('form')} className="w-full mt-3 f-mono text-[11px] uppercase text-[#64748b] hover:text-[#FF9A3C] transition">
-                  ← USAR UN ALTRE EMAIL
+                  ← {t('useOtherEmail')}
                 </button>
               </>
             ) : state === 'password' ? (
-              /* ─── PASSWORD STATE ─── */
               <>
-                <h2 className="f-display font-black text-2xl mb-2">CONTRASENYA</h2>
-                <p className="text-[13px] text-[#94a3b8] mb-6">Introdueix la teva contrasenya per a {email}</p>
+                <h2 className="f-display font-black text-2xl mb-2">{t('passwordTitle')}</h2>
+                <p className="text-[13px] text-[#94a3b8] mb-6">{t('usePassword')} {email}</p>
 
                 <form onSubmit={handlePasswordLogin} className="space-y-4">
                   <label className="block">
-                    <span className="block f-mono uppercase text-[10px] tracking-[0.14em] text-[#94a3b8] mb-1.5">Contrasenya</span>
+                    <span className="block f-mono uppercase text-[10px] tracking-[0.14em] text-[#94a3b8] mb-1.5">{t('passwordLabel')}</span>
                     <div className="relative flex items-center h-10 bg-[#1a1a2e]/80 border border-[rgba(255,107,0,0.14)] focus-within:border-[#FF6B00] transition">
                       <div className="pl-3 text-[#64748b]"><I.Lock size={14} /></div>
                       <input
@@ -204,35 +192,34 @@ export default function LoginPage() {
                     ) : (
                       <I.ArrowRight size={14} />
                     )}
-                    {isBusy ? 'ENTRANT...' : 'ENTRAR'}
+                    {isBusy ? t('entering') : t('enter')}
                   </button>
 
                   <div className="flex items-center justify-between">
                     <button type="button" onClick={() => setState('form')} className="f-mono text-[11px] uppercase text-[#64748b] hover:text-[#FF9A3C] transition">
-                      ← TORNAR
+                      ← {t('back')}
                     </button>
                     <Link href="/forgot-password" className="f-mono text-[11px] uppercase text-[#FF9A3C] hover:text-[#FF6B00] transition">
-                      HAS OBLIDAT LA CONTRASENYA?
+                      {t('forgotPassword')}
                     </Link>
                   </div>
                 </form>
               </>
             ) : (
-              /* ─── FORM STATE (magic link) ─── */
               <>
-                <h2 className="f-display font-black text-2xl mb-2">ACCÉS AL PORTAL</h2>
-                <p className="text-[13px] text-[#94a3b8] mb-6">T&#39;enviem un enllaç màgic per email. Sense contrasenyes.</p>
+                <h2 className="f-display font-black text-2xl mb-2">{t('title')}</h2>
+                <p className="text-[13px] text-[#94a3b8] mb-6">{t('subtitle')}</p>
 
                 <form onSubmit={handleMagicLink} className="space-y-3">
                   <label className="block">
-                    <span className="block f-mono uppercase text-[10px] tracking-[0.14em] text-[#94a3b8] mb-1.5">Email corporatiu</span>
+                    <span className="block f-mono uppercase text-[10px] tracking-[0.14em] text-[#94a3b8] mb-1.5">{t('emailLabel')}</span>
                     <div className="relative flex items-center h-10 bg-[#1a1a2e]/80 border border-[rgba(255,107,0,0.14)] focus-within:border-[#FF6B00] transition">
                       <div className="pl-3 text-[#64748b]"><I.Mail size={14} /></div>
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="tu@empresa.com"
+                        placeholder={t('emailPlaceholder')}
                         autoFocus
                         className="flex-1 bg-transparent outline-none px-3 text-sm text-[#e2e8f0] placeholder:text-[#64748b]"
                       />
@@ -249,13 +236,13 @@ export default function LoginPage() {
                     ) : (
                       <I.ArrowRight size={14} />
                     )}
-                    {isBusy ? 'ENVIANT...' : 'ENVIAR MAGIC LINK'}
+                    {isBusy ? t('sending') : t('sendMagicLink')}
                   </button>
                 </form>
 
                 <div className="flex items-center gap-3 my-5">
                   <div className="flex-1 h-[1px] bg-[rgba(226,232,240,0.08)]"></div>
-                  <span className="f-mono text-[10px] uppercase text-[#64748b] tracking-wider">o amb contrasenya</span>
+                  <span className="f-mono text-[10px] uppercase text-[#64748b] tracking-wider">{t('orPassword')}</span>
                   <div className="flex-1 h-[1px] bg-[rgba(226,232,240,0.08)]"></div>
                 </div>
 
@@ -263,7 +250,7 @@ export default function LoginPage() {
                   onClick={() => { if (email.trim()) setState('password'); else setErrorMsg('Introdueix primer el teu email'); }}
                   className="w-full h-10 bg-[#1a1a2e] border border-[rgba(255,107,0,0.14)] flex items-center justify-between px-3 text-sm hover:border-[#FF6B00] transition"
                 >
-                  <span className="flex items-center gap-2"><I.Lock size={14} stroke="#94a3b8" />Usar contrasenya</span>
+                  <span className="flex items-center gap-2"><I.Lock size={14} stroke="#94a3b8" />{t('usePassword')}</span>
                   <I.ChevDown size={12} className="text-[#64748b]" />
                 </button>
 
@@ -278,11 +265,11 @@ export default function LoginPage() {
 
           {/* Footer */}
           <div className="mt-6 text-center f-mono text-[10px] uppercase text-[#64748b] tracking-wider">
-            <a className="hover:text-[#FF9A3C] transition">TERMES</a>
+            <Link href="/legal/termes-servei" className="hover:text-[#FF9A3C] transition">TERMES</Link>
             <span className="mx-2">·</span>
-            <a className="hover:text-[#FF9A3C] transition">PRIVACITAT</a>
+            <Link href="/legal/politica-privacitat" className="hover:text-[#FF9A3C] transition">PRIVACITAT</Link>
             <span className="mx-2">·</span>
-            <a className="hover:text-[#FF9A3C] transition"> SUPORT</a>
+            <a href="mailto:hola@amg.cat" className="hover:text-[#FF9A3C] transition">SUPORT</a>
           </div>
         </div>
       </div>

@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import { Orbitron, Rajdhani, Share_Tech_Mono } from 'next/font/google';
 import './globals.css';
 
@@ -23,14 +22,9 @@ const shareTechMono = Share_Tech_Mono({
   variable: '--font-mono',
 });
 
-export const metadata: Metadata = {
-  title: 'AMG · Enginyeria Digital',
-  description: 'Plataforma SaaS per automatitzar la presència digital de pimes',
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ca" className={`${orbitron.variable} ${rajdhani.variable} ${shareTechMono.variable}`}>
+    <html className={`${orbitron.variable} ${rajdhani.variable} ${shareTechMono.variable}`}>
       <body>{children}</body>
     </html>
   );
