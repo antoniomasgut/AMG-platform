@@ -41,7 +41,7 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<LoginResponse.UserInfo> me(@AuthenticationPrincipal UserPrincipal principal) {
-        var user = authService.getCurrentUser(principal.getId());
+        var user = authService.getCurrentUser(principal.id());
         return ResponseEntity.ok(user);
     }
 

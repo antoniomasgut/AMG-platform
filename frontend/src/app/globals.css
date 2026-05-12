@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────── Font utility classes ─────────── */
+.f-display { font-family: var(--font-display), sans-serif; }
+.f-mono    { font-family: var(--font-mono), 'ui-monospace', monospace; }
+
+/* ─────────── Clip-paths ─────────── */
+.btn-clip {
+  clip-path: polygon(
+    calc(100% - 10px) 0%,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0% calc(100% - 10px),
+    0% 0%
+  );
+}
+
+.card-clip {
+  clip-path: polygon(
+    calc(100% - 14px) 0%,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0% calc(100% - 14px),
+    0% 0%
+  );
+}
+
+/* ─────────── Card surface ─────────── */
+.amg-card {
+  background: #13132a;
+  border: 1px solid rgba(255, 107, 0, 0.12);
+}
+
+/* ─────────── Grid backgrounds ─────────── */
+.amg-grid {
+  background-image:
+    linear-gradient(rgba(255, 107, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 107, 0, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.amg-grid-sm {
+  background-image:
+    linear-gradient(rgba(255, 107, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 107, 0, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ─────────── Hatch pattern ─────────── */
+.hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 8px,
+    rgba(255, 107, 0, 0.06) 8px,
+    rgba(255, 107, 0, 0.06) 9px
+  );
+}
+
+/* ─────────── Blink animation ─────────── */
+.amg-blink {
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+/* ─────────── Base styles ─────────── */
+body {
+  background: #0d0d1a;
+  color: #e2e8f0;
+  font-family: 'Rajdhani', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─────────── Scrollbar ─────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0d0d1a;
+}
+::-webkit-scrollbar-thumb {
+  background: #212140;
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FF6B00;
+}
+
+/* ─────────── Input autofill override ─────────── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 30px #1a1a2e inset !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+}

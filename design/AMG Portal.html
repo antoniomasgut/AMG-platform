@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>AMG Enginyeria Digital — Portal Design</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          accent: '#FF6B00',
+          'accent-light': '#FF9A3C',
+          'bg-0': '#0d0d1a',
+          'bg-1': '#13132a',
+          'bg-2': '#1a1a2e',
+          'bg-3': '#212140',
+          danger: '#ff4444',
+          success: '#39d353',
+          info: '#58a6ff',
+          warning: '#f0b429',
+          'ink-0': '#e2e8f0',
+          'ink-1': '#94a3b8',
+          'ink-2': '#64748b',
+          'line': 'rgba(255,107,0,0.14)',
+          'line-soft': 'rgba(226,232,240,0.08)',
+        },
+        fontFamily: {
+          display: ['Orbitron', 'sans-serif'],
+          sans: ['Rajdhani', 'sans-serif'],
+          mono: ['"Share Tech Mono"', 'ui-monospace', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { background: #f0eee9; font-family: 'Rajdhani', sans-serif; }
+  /* AMG tokens & shared fragments used inside artboards */
+  .amg {
+    --accent:#FF6B00; --accent-l:#FF9A3C;
+    --bg0:#0d0d1a; --bg1:#13132a; --bg2:#1a1a2e; --bg3:#212140;
+    --line: rgba(255,107,0,0.14);
+    --line-soft: rgba(226,232,240,0.08);
+    color:#e2e8f0;
+    font-family:'Rajdhani',sans-serif;
+    letter-spacing:.01em;
+  }
+  .amg .f-display{ font-family:'Orbitron',sans-serif; letter-spacing:.04em; }
+  .amg .f-mono{ font-family:'Share Tech Mono',monospace; letter-spacing:.06em; }
+
+  /* grid background */
+  .amg-grid {
+    background-color:#0d0d1a;
+    background-image:
+      linear-gradient(rgba(255,107,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,107,0,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .amg-grid-sm {
+    background-color:#0d0d1a;
+    background-image:
+      linear-gradient(rgba(255,107,0,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,107,0,0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Clip-path primary button (cut corner) */
+  .btn-clip {
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+  .card-clip {
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  }
+
+  /* scrollbars hidden inside artboards */
+  .amg *::-webkit-scrollbar{ display:none; }
+  .amg * { scrollbar-width: none; }
+
+  /* animated grid glow for login */
+  @keyframes amg-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+  .amg-blink { animation: amg-pulse 2.4s ease-in-out infinite; }
+
+  /* striped placeholder */
+  .amg-ph {
+    background-image: repeating-linear-gradient(135deg,
+      rgba(255,107,0,0.10) 0 10px,
+      rgba(255,107,0,0.02) 10px 20px);
+    border: 1px dashed rgba(255,107,0,0.35);
+  }
+
+  /* selection */
+  .amg ::selection { background: rgba(255,107,0,0.35); color:#fff; }
+
+  /* subtle inner glow for cards */
+  .amg-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0) 40%), #13132a;
+    border: 1px solid rgba(255,107,0,0.10);
+  }
+  .amg-card-hover:hover {
+    border-left: 2px solid #FF6B00;
+    padding-left: calc(var(--pl, 20px) - 1px);
+  }
+
+  /* diagonal hatching for empty states */
+  .hatch {
+    background-image: repeating-linear-gradient(45deg,
+      rgba(255,107,0,0.05) 0 2px,
+      transparent 2px 8px);
+  }
+</style>
+</head>
+<body>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="amg-primitives.jsx"></script>
+<script type="text/babel" src="amg-admin.jsx"></script>
+<script type="text/babel" src="amg-clients.jsx"></script>
+<script type="text/babel" src="amg-services-invoices.jsx"></script>
+<script type="text/babel" src="amg-portal.jsx"></script>
+<script type="text/babel" src="amg-public.jsx"></script>
+<script type="text/babel" src="amg-system.jsx"></script>
+<script type="text/babel" src="amg-v2.jsx"></script>
+<script type="text/babel" src="amg-ml-builder.jsx"></script>
+<script type="text/babel" src="amg-factory-hub.jsx"></script>
+
+<div id="root"></div>
+
+<script type="text/babel">
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <DesignCanvas>
+    <DCSection id="foundation" title="01 · Foundations" subtitle="Color tokens, typography, spacing and iconography">
+      <DCArtboard id="colors" label="Color tokens" width={900} height={620}>
+        <AMGColorSystem />
+      </DCArtboard>
+      <DCArtboard id="typography" label="Type pairing" width={900} height={620}>
+        <AMGTypeSystem />
+      </DCArtboard>
+      <DCArtboard id="spacing" label="Spacing, radii, iconography" width={900} height={620}>
+        <AMGSpacingSystem />
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="components" title="02 · Components" subtitle="Buttons, inputs, cards, badges, tabs, alerts, modals">
+      <DCArtboard id="buttons" label="Buttons & CTAs" width={720} height={620}>
+        <AMGButtonSheet />
+      </DCArtboard>
+      <DCArtboard id="inputs" label="Inputs & forms" width={720} height={620}>
+        <AMGInputSheet />
+      </DCArtboard>
+      <DCArtboard id="cards-badges" label="Cards, badges, tabs" width={720} height={620}>
+        <AMGCardSheet />
+      </DCArtboard>
+      <DCArtboard id="alerts-modals" label="Alerts, toasts, modals" width={720} height={620}>
+        <AMGAlertSheet />
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="backoffice" title="03 · Backoffice modules" subtitle="Cicle de vida del client · model service-based / per fases">
+      <DCArtboard id="prospecting" label="Prospecting · Leads IA" width={1440} height={900}>
+        <AMGProspecting />
+      </DCArtboard>
+      <DCArtboard id="budgets" label="Pressupostos" width={1440} height={900}>
+        <AMGBudgets />
+      </DCArtboard>
+      <DCArtboard id="clients-audit" label="Clients & Audit · Health + Fases" width={1440} height={900}>
+        <AMGClientsAudit />
+      </DCArtboard>
+      <DCArtboard id="factory-hub" label="Content Factory · Hub" width={1440} height={900}>
+        <AMGFactoryHub />
+      </DCArtboard>
+      <DCArtboard id="content-factory" label="Content Factory · Editor de fluxos" width={1440} height={900}>
+        <AMGContentFactory />
+      </DCArtboard>
+      <DCArtboard id="vault" label="Vault de Seguretat" width={1440} height={900}>
+        <AMGVault />
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="conversion-landing" title="04 · Landing de conversió" subtitle="Per a fontaners, fisios, clíniques · enfocada a demo">
+      <DCArtboard id="conversion-landing-art" label="Landing · Conversió alta" width={1440} height={3400}>
+        <AMGConversionLanding />
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="admin" title="05 · Admin (legacy)" subtitle="Panel interno: sidebar layout, dashboard, quick actions">
+      <DCArtboard id="admin-dashboard" label="Admin · Dashboard" width={1440} height={900}>
+        <AMGAdminDashboard />
+      </DCArtboard>
+      <DCArtboard id="admin-sidebar-collapsed" label="Admin · Sidebar collapsed" width={1440} height={900}>
+        <AMGAdminDashboard collapsed />
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="clients" title="04 · Clients" subtitle="Listado, editor drawer, wizard de onboarding">
+      <DCArtboard id="clients-list" label="Clientes · Lista" width={1440} height={900}>
+        <AMGClientsList />
+      </DCArtboard>
+      <DCArtboard id="client-editor" label="Cliente · Editor (drawer)" width={1440} height={900}>
+        <AMGClientEditor />
+      </DCArtboard>
+      <DCArtboard id="setup-wizard" label="Setup wizard · 4 pasos" width={1440} height={900}>
+        <AMGSetupWizard />
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="services-invoices" title="05 · Services & Invoices" subtitle="Catálogo, modal de factura, estados">
+      <DCArtboard id="services-catalog" label="Catálogo de servicios" width={1440} height={900}>
+        <AMGServicesCatalog />
+      </DCArtboard>
+      <DCArtboard id="invoices-list" label="Facturas · Lista" width={1440} height={900}>
+        <AMGInvoicesList />
+      </DCArtboard>
+      <DCArtboard id="invoice-new" label="Factura · Nueva (modal)" width={1440} height={900}>
+        <AMGInvoiceNew />
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="portal" title="06 · Client Portal" subtitle="Vista del cliente final: suscripción, servicios, facturas">
+      <DCArtboard id="portal-dashboard" label="Cliente · Dashboard" width={1440} height={900}>
+        <AMGPortalDashboard />
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="auth" title="07 · Auth" subtitle="Login, magic link, verificación">
+      <DCArtboard id="login" label="Login · Magic link" width={1440} height={900}>
+        <AMGLogin />
+      </DCArtboard>
+      <DCArtboard id="login-sent" label="Login · Email enviado" width={1440} height={900}>
+        <AMGLogin state="sent" />
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="landing" title="08 · Landing pública" subtitle="Home de AMG Enginyeria Digital">
+      <DCArtboard id="public-landing" label="Landing · Home" width={1440} height={2600}>
+        <AMGPublicLanding />
+      </DCArtboard>
+    </DCSection>
+
+    <DCSection id="micro-landings" title="09 · Micro-landings" subtitle="Página pública generada por cliente — 4 estilos">
+      <DCArtboard id="ml-templates" label="Plantilles · Llistat" width={1440} height={900}>
+        <AMGMLTemplates />
+      </DCArtboard>
+      <DCArtboard id="ml-builder" label="Builder · Editor de seccions" width={1440} height={900}>
+        <AMGMLBuilder />
+      </DCArtboard>
+      <DCArtboard id="ml-automations" label="Builder · Automatitzacions" width={1440} height={900}>
+        <AMGMLAutomations />
+      </DCArtboard>
+      <DCArtboard id="ml-tech" label="Estil · Tech" width={520} height={900}>
+        <AMGMicroLanding style="tech" />
+      </DCArtboard>
+      <DCArtboard id="ml-modern" label="Moderno" width={520} height={900}>
+        <AMGMicroLanding style="modern" />
+      </DCArtboard>
+      <DCArtboard id="ml-classic" label="Clásico" width={520} height={900}>
+        <AMGMicroLanding style="classic" />
+      </DCArtboard>
+      <DCArtboard id="ml-minimal" label="Minimalista" width={520} height={900}>
+        <AMGMicroLanding style="minimal" />
+      </DCArtboard>
+    </DCSection>
+  </DesignCanvas>
+);
+</script>
+</body>
+</html>
