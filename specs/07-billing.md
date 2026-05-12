@@ -1,4 +1,4 @@
-# Mòdul 07: Billing — Pressupostos, Mensualitats i Descomptes
+# Mòdul 07: Billing — Pressupostos i Descomptes
 
 > **Versió:** 1.0
 > **Data:** 2026-05-12
@@ -10,7 +10,6 @@
 
 - Formalitzar el **pressupost** que el Vault calcula (per fase/servei) en un document oficial enviable al client
 - Gestionar el cicle de vida del pressupost: esborrany → enviat → acceptat → rebutjat → expirat
-- Gestionar **mensualitats recurrents** (pla Bàsic 29€, Intermedi 49€, Avançat 99€ + serveis amb quota mensual)
 - Aplicar **descomptos** percentuals o fixos per fase, servei, perfil o globals
 - Connectar amb Mòdul 08 (FinOps / Holded) per a facturació Verifactu i Mòdul 09 (Stripe) per a cobrament
 - **No reemplaça** els stubs del Vault — coexisteixen fins als mòduls 08/09
@@ -27,10 +26,9 @@
 - Enviament automàtic per email al client
 - Acceptació/rebuig per part del client (via link segur + token)
 - Expiració automàtica (per defecte 30 dies)
-- Revisións: nou número de versió cada cop que es modifica
-- CRUD de mensualitats (subscripció) — serveis amb quota mensual
-- CRUD de descomptes — aplicables a pressupostos i/o subscripcions
-- Dashboard de billing per al client: pressupostos pendents, històric, subscripció activa
+- Revisions: nou número de versió cada cop que es modifica
+- CRUD de descomptes — aplicables a pressupostos, fases o serveis
+- Dashboard de billing per al client: pressupostos pendents, històric
 
 ### 2.2 Funcionalitats excloses
 
@@ -38,14 +36,15 @@
 - Cobrament real amb Stripe (Mòdul 09 Payments)
 - Conciliació bancària (Mòdul 09)
 - Comptabilitat (Mòdul 08)
+- **Mensualitats fixes (pla/subscripció)** — no hi ha plans mensuals. Cada servei es pressuposta i factura per fase.
 
 ### 2.3 Actors
 
 | Actor | Descripció | Permisos |
 |-------|-----------|----------|
-| SUPER_ADMIN | Propietari de la plataforma. | CRUD complet de pressupostos, subscripcions i descomptes. Veu costos i marges. |
-| ADMIN | Personal operatiu. | Crea i envia pressupostos, aplica descomptes, veu subscripcions. NO pot eliminar pressupostos ni modificar preus base. |
-| CLIENT | Usuari final del tenant. | Veure els seus pressupostos (pendents + històric), acceptar/rebutjar, veure subscripció activa. |
+| SUPER_ADMIN | Propietari de la plataforma. | CRUD complet de pressupostos i descomptes. Veu costos i marges. |
+| ADMIN | Personal operatiu. | Crea i envia pressupostos, aplica descomptes. NO pot eliminar pressupostos ni modificar preus base. |
+| CLIENT | Usuari final del tenant. | Veure els seus pressupostos (pendents + històric), acceptar/rebutjar. |
 
 ---
 
@@ -92,51 +91,12 @@ Cada servei del perfil (o add-on) amb el seu preu.
 | phaseId | UUID | FK a Phase (null si és add-on o servei solt) |
 | serviceId | UUID | FK a CatalogService |
 | serviceName | String(100) | Snapshot del nom del servei (per si es modifica després) |
-| chargeType | Enum | `ONE_TIME` (setup) o `MONTHLY` (recurrent) |
 | quantity | Integer | Per defecte 1 |
 | unitPrice | BigDecimal(10,2) | Preu unitari (snapshot del salePrice en crear) |
 | total | BigDecimal(10,2) | quantity * unitPrice |
 | sortOrder | Integer | Ordre al pressupost |
 
 **NOTA:** `serviceName` i `unitPrice` es guarden com a snapshot perquè el pressupost no canviï si es modifiquen els preus al catàleg després.
-
-#### Subscription (Subscripció / Mensualitat)
-
-Subscripció activa d'un tenant.
-
-| Camp | Tipus | Descripció |
-|------|-------|------------|
-| id | UUID | PK |
-| tenantId | UUID | FK a Tenant (unique) |
-| planType | Enum | `BASIC` (29€), `INTERMEDIATE` (49€), `ADVANCED` (99€), `CUSTOM` |
-| baseFee | BigDecimal(10,2) | Preu base del pla |
-| servicesFee | BigDecimal(10,2) | Suma de preus mensuals dels serveis actius |
-| totalMonthly | BigDecimal(10,2) | baseFee + servicesFee - descomptes |
-| status | Enum | `ACTIVE`, `PAUSED`, `CANCELLED` |
-| billingDay | Integer | Dia del mes de facturació (1-28) |
-| startedAt | Instant | Inici de la subscripció |
-| pausedAt | Instant | Quan es va pausar |
-| cancelledAt | Instant | Quan es va cancel·lar |
-| createdAt | Instant | @CreatedDate |
-| updatedAt | Instant | @LastModifiedDate |
-
-**Restricció:** Un tenant només pot tenir UNA subscripció activa alhora.
-**Índex:** `tenantId` (unique)
-
-#### SubscriptionLine (Servei dins la subscripció)
-
-Serveis que tenen quota mensual dins la subscripció.
-
-| Camp | Tipus | Descripció |
-|------|-------|------------|
-| id | UUID | PK |
-| subscriptionId | UUID | FK a Subscription |
-| serviceId | UUID | FK a CatalogService |
-| serviceName | String(100) | Snapshot |
-| monthlyPrice | BigDecimal(10,2) | Preu mensual del servei |
-| isActive | Boolean | Si està actiu (false si s'ha retirat però queda historial) |
-| addedAt | Instant | Quan es va afegir |
-| removedAt | Instant | Quan es va retirar |
 
 #### Discount (Descompte)
 
@@ -146,7 +106,7 @@ Serveis que tenen quota mensual dins la subscripció.
 | tenantId | UUID | FK a Tenant (nullable — pot ser global) |
 | type | Enum | `PERCENTAGE` o `FIXED` |
 | value | BigDecimal(10,2) | Percentatge (0-100) o import fix en EUR |
-| appliesTo | Enum | `BUDGET`, `SUBSCRIPTION`, `PHASE`, `SERVICE` |
+| appliesTo | Enum | `BUDGET`, `PHASE`, `SERVICE` |
 | referenceId | UUID | ID del que s'aplica (null si GLOBAL) |
 | label | String(100) | Per què es va aplicar (ex: "Descompte fidelitat") |
 | isActive | Boolean | Si està vigent |
@@ -160,9 +120,8 @@ Serveis que tenen quota mensual dins la subscripció.
 **Lògica:**
 - `PERCENTAGE` aplicat a un `BUDGET`: redueix el subtotal X%
 - `FIXED` aplicat a un `BUDGET`: resta l'import del total
-- `PERCENTAGE` aplicat a una `SUBSCRIPTION`: redueix la quota mensual X%
-- `FIXED` aplicat a una `SUBSCRIPTION`: resta l'import de la quota mensual
-- Si `referenceId` és null i `appliesTo` és `BUDGET`/`SUBSCRIPTION`, s'aplica al pressupost/subscripció concreta
+- Si `appliesTo` és `PHASE` o `SERVICE`, el descompte s'aplica automàticament quan es crea un pressupost que inclogui aquesta fase/servei
+- Si `referenceId` és null i `appliesTo` és `BUDGET`, s'aplica al pressupost concret en crear-lo
 - Si `tenantId` és null, és un descompte global (aplicable per ADMIN/SUPER_ADMIN)
 
 ### 3.2 Relacions
@@ -171,19 +130,15 @@ Serveis que tenen quota mensual dins la subscripció.
 Budget
   └── BudgetLine (1:N) — serveis inclosos al pressupost
 
-Subscription (1 per tenant)
-  └── SubscriptionLine (1:N) — serveis amb quota mensual
-
-Discount (aplicable a Budget, Subscription, Phase o Service)
+Discount (aplicable a Budget, Phase o Service)
 ```
 
 **Flux d'acceptació:**
 ```
 Budget DRAFT → Budget SENT (enviat al client) → Budget ACCEPTED
                                                      ↓
-                                              Subscription.CREATED (si no existeix)
-                                              Vault.approvePhase (per a cada fase del pressupost)
-                                              InvoiceService.createInvoice (stub)
+                                              VaultService.approvePhase (per a cada fase del pressupost)
+                                              InvoiceService.createInvoice (per a cada fase, stub)
 ```
 
 ---
@@ -204,13 +159,16 @@ Request:
 ```json
 {
   "profileId": "uuid",
-  "addonIds": ["uuid1", "uuid2"],
+  "phaseIds": ["uuid1", "uuid2"],
+  "addonIds": ["uuid3"],
   "notes": "Descompte especial per client nou",
   "clientNotes": "Oferta vàlida fins al 15/06/2026",
   "discountIds": ["uuid"],
   "validUntil": "2026-06-15"
 }
 ```
+
+**`phaseIds`:** Opcional. Si no s'especifica, s'inclouen totes les fases del perfil. Si s'especifica, només les fases seleccionades (el client pot aprovar fase per fase).
 
 Response 201:
 ```json
@@ -223,7 +181,8 @@ Response 201:
       "name": "Configuració bàsica",
       "sortOrder": 1,
       "lines": [
-        { "serviceName": "WhatsApp Business", "chargeType": "ONE_TIME", "unitPrice": 50.00, "total": 50.00 }
+        { "serviceName": "WhatsApp Business", "unitPrice": 50.00, "total": 50.00 },
+        { "serviceName": "SMTP Corporatiu", "unitPrice": 30.00, "total": 30.00 }
       ],
       "phaseTotal": 80.00
     }
@@ -291,8 +250,7 @@ Response 200:
 - Valida que el token existeixi i el pressupost estigui SENT
 - Canvia `status` a ACCEPTED
 - Registra `acceptedAt`
-- Crea/actualitza Subscription amb els serveis del pressupost
-- Crida `Vault.approvePhase` per a cada fase inclosa (stub)
+- Crida `VaultService.approvePhase` per a cada fase inclosa al pressupost
 - Crida `InvoiceService.createInvoice` per a cada fase (stub)
 
 Response 200:
@@ -318,65 +276,7 @@ Response 200:
 
 **NOTA:** L'acceptació/rebuig via token públic és intencionada — el client no té per què tenir sessió al portal per acceptar un pressupost. El token és un UUID aleatori d'un sol ús.
 
-### 4.2 Subscripcions (Subscriptions)
-
-#### `GET /api/v1/billing/tenants/{tenantId}/subscription` — Veure subscripció activa
-
-**Rols:** SUPER_ADMIN, ADMIN, CLIENT (propi)
-
-Response 200:
-```json
-{
-  "id": "uuid",
-  "planType": "INTERMEDIATE",
-  "baseFee": 49.00,
-  "servicesFee": 50.00,
-  "totalMonthly": 99.00,
-  "status": "ACTIVE",
-  "billingDay": 15,
-  "lines": [
-    { "serviceName": "WhatsApp Business", "monthlyPrice": 20.00, "isActive": true },
-    { "serviceName": "Landing Pro hosting", "monthlyPrice": 30.00, "isActive": true }
-  ],
-  "discounts": [
-    { "label": "Fidelitat 10%", "type": "PERCENTAGE", "value": 10 }
-  ]
-}
-```
-
-#### `POST /api/v1/billing/tenants/{tenantId}/subscription` — Crear/actualitzar subscripció
-
-**Rols:** SUPER_ADMIN, ADMIN
-
-Request:
-```json
-{
-  "planType": "INTERMEDIATE",
-  "billingDay": 15,
-  "serviceIds": ["uuid1", "uuid2"]
-}
-```
-
-Si ja existeix una subscripció activa, l'actualitza. Si està PAUSED, la reactiva.
-
-**Lògica de preus mensuals:**
-- `baseFee` = preu del pla segons el `planType` (29/49/99)
-- `servicesFee` = suma dels `monthlyPrice` dels serveis marcats com a MONTHLY
-- `totalMonthly` = baseFee + servicesFee - descomptes
-
-#### `POST /api/v1/billing/tenants/{tenantId}/subscription/pause` — Pausar subscripció
-
-**Rols:** SUPER_ADMIN, ADMIN
-
-Passa a PAUSED. NO s'eliminen les dades.
-
-#### `POST /api/v1/billing/tenants/{tenantId}/subscription/cancel` — Cancel·lar subscripció
-
-**Rols:** SUPER_ADMIN
-
-Passa a CANCELLED. Es manté com a historial.
-
-### 4.3 Descomptes (Discounts)
+### 4.2 Descomptes (Discounts)
 
 #### `POST /api/v1/billing/discounts` — Crear descompte
 
@@ -411,7 +311,7 @@ Query: `tenantId`, `isActive`, `appliesTo`
 
 Desactivació lògica (isActive=false).
 
-### 4.4 Dashboard CLIENT
+### 4.3 Dashboard CLIENT
 
 #### `GET /api/v1/billing/tenants/{tenantId}/dashboard` — Dashboard de billing
 
@@ -422,19 +322,16 @@ Retorna un resum complet per al client:
 Response 200:
 ```json
 {
-  "activeSubscription": {
-    "planType": "INTERMEDIATE",
-    "totalMonthly": 99.00,
-    "status": "ACTIVE"
-  },
   "pendingBudgets": 2,
   "lastBudget": { "budgetNumber": "BUD-2026-0001", "total": 126.00, "status": "SENT", "sentAt": "..." },
   "totalSpent": 240.00,
-  "nextBillingDate": "2026-06-15"
+  "recentPhases": [
+    { "name": "Configuració bàsica", "status": "PAID", "amount": 80.00 }
+  ]
 }
 ```
 
-### 4.5 Mapa complet d'endpoints
+### 4.4 Mapa complet d'endpoints
 
 | Mètode | Ruta | Descripció | Rols |
 |--------|------|-----------|------|
@@ -446,10 +343,6 @@ Response 200:
 | POST | /billing/budgets/{id}/send | Enviar pressupost | SUPER_ADMIN, ADMIN |
 | POST | /billing/budgets/accept | Acceptar (token) | Públic |
 | POST | /billing/budgets/reject | Rebutjar (token) | Públic |
-| GET | /billing/tenants/{tId}/subscription | Veure subscripció | Tots (propi tenant) |
-| POST | /billing/tenants/{tId}/subscription | Crear/actualitzar subscripció | SUPER_ADMIN, ADMIN |
-| POST | /billing/tenants/{tId}/subscription/pause | Pausar subscripció | SUPER_ADMIN, ADMIN |
-| POST | /billing/tenants/{tId}/subscription/cancel | Cancel·lar subscripció | SUPER_ADMIN |
 | POST | /billing/discounts | Crear descompte | SUPER_ADMIN, ADMIN |
 | GET | /billing/discounts | Llistar descomptes | SUPER_ADMIN, ADMIN |
 | PUT | /billing/discounts/{id} | Actualitzar descompte | SUPER_ADMIN |
@@ -469,15 +362,15 @@ Response 200:
 
 - Un pressupost ACCEPTAT no es pot modificar ni cancel·lar
 - Un pressupost EXPIRED es pot reenviar (crea una nova versió amb `version++` i nou token)
-- La subscripció es crea automàticament en acceptar el primer pressupost
-- Cada vegada que s'accepta un pressupost, els serveis ONE_TIME s'afegeixen a la subscripció com a MONTHLY (si tenen quota mensual)
+- Un pressupost pot incloure només algunes fases del perfil (el client aprova fase per fase)
+- Quan un pressupost es converteix en ACCEPTAT, cada fase s'aprova al Vault individualment
 
 ---
 
 ## 6. RGPD / LSSI
 
 - Els pressupostos contenen dades de facturació del client (retenció 1 any després de l'acceptació)
-- En eliminar un tenant, tots els seus pressupostos i subscripcions s'anonymitzen (no s'eliminen per requisits fiscals)
+- En eliminar un tenant, tots els seus pressupostos s'anonymitzen (no s'eliminen per requisits fiscals)
 - Els tokens d'acceptació expiren en acceptar/rebutjar el pressupost
 
 ---
@@ -490,18 +383,16 @@ Response 200:
 |---|-----|-----------------|
 | 1 | Crear pressupost DRAFT a partir d'un perfil | 201, status=DRAFT, total correcte |
 | 2 | Crear pressupost amb descompte | 201, total = subtotal - descompte |
-| 3 | Enviar pressupost | 200, status=SENT, acceptanceToken generat |
-| 4 | CLIENT veu llista de pressupostos | 200, només els seus |
-| 5 | Acceptar pressupost via token | 200, status=ACCEPTED |
-| 6 | Rebutjar pressupost via token | 200, status=REJECTED |
-| 7 | Token d'un sol ús (re-acceptar) | 400, token ja usat |
-| 8 | Pressupost expirat automàticament | CronJob passa a EXPIRED |
-| 9 | Crear subscripció | 200, status=ACTIVE, totalMonthly correcte |
-| 10 | Pausar subscripció | 200, status=PAUSED |
-| 11 | Cancel·lar subscripció | 200, status=CANCELLED |
-| 12 | Dashboard retorna resum correcte | 200, tots els camps |
-| 13 | Crear descompte PERCENTAGE | 201, aplicat correctament al pressupost |
-| 14 | Crear descompte FIXED | 201, aplicat correctament |
+| 3 | Crear pressupost amb fases seleccionades | 201, només les fases indicades |
+| 4 | Enviar pressupost | 200, status=SENT, acceptanceToken generat |
+| 5 | CLIENT veu llista de pressupostos | 200, només els seus |
+| 6 | Acceptar pressupost via token | 200, status=ACCEPTED |
+| 7 | Rebutjar pressupost via token | 200, status=REJECTED |
+| 8 | Token d'un sol ús (re-acceptar) | 400, token ja usat |
+| 9 | Pressupost expirat automàticament | CronJob passa a EXPIRED |
+| 10 | Dashboard retorna resum correcte | 200, tots els camps |
+| 11 | Crear descompte PERCENTAGE | 201 |
+| 12 | Crear descompte FIXED | 201 |
 
 ### 7.2 Seguretat
 
@@ -533,10 +424,6 @@ public interface BillingService {
     BudgetSendResponse sendBudget(UUID budgetId);
     AcceptRejectResponse acceptBudget(String token);
     AcceptRejectResponse rejectBudget(String token, String reason);
-    SubscriptionResponse getSubscription(UUID tenantId);
-    SubscriptionResponse createOrUpdateSubscription(UUID tenantId, CreateSubscriptionRequest request);
-    void pauseSubscription(UUID tenantId);
-    void cancelSubscription(UUID tenantId);
     DashboardResponse getDashboard(UUID tenantId);
 }
 ```
@@ -575,10 +462,10 @@ El Billing NO importa classes concretes del Vault. Només depèn de les interfí
 @Service
 public class BillingOrchestrator implements BillingService {
     
-    private final VaultService vaultService;        // ← interfície
-    private final ProfileService profileService;    // ← interfície
-    private final InvoiceService invoiceService;    // ← interfície
-    private final PaymentService paymentService;    // ← interfície
+    private final VaultService vaultService;
+    private final ProfileService profileService;
+    private final InvoiceService invoiceService;
+    private final PaymentService paymentService;
     
     public BillingOrchestrator(VaultService vs, ProfileService ps, 
                                InvoiceService is, PaymentService ps2) {
@@ -613,9 +500,8 @@ public class BillingOrchestrator implements BillingService {
 
 ## 10. Obert / Pendents
 
-- [ ] Definir quins serveis tenen quota mensual (MONTHLY) i quins són ONE_TIME
 - [ ] Implementar generació de PDF (iText / JasperReports?)
 - [ ] Implementar enviament d'email real (Mòdul 10 Automations o SES)
-- [ ] Definir esquema de preus mensuals per servei (ex: WhatsApp 20€/mes, Landing hosting 30€/mes)
 - [ ] Connexió real amb Holded (Mòdul 08) per a facturació amb Verifactu
-- [ ] Connexió real amb Stripe (Mòdul 09) per a cobrament recurrent
+- [ ] Connexió real amb Stripe (Mòdul 09) per a cobrament
+- [ ] Definir si algun servei requereix quota mensual (ex: hosting de landing)

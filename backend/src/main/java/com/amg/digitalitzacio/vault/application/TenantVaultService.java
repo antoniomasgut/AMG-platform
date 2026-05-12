@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class TenantVaultService {
+public class TenantVaultService implements VaultService {
 
     private final ServiceProfileRepository profileRepository;
     private final PhaseRepository phaseRepository;

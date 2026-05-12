@@ -3,7 +3,7 @@ package com.amg.digitalitzacio.vault.api;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import com.amg.digitalitzacio.vault.api.dto.*;
 import com.amg.digitalitzacio.vault.application.ProfileService;
-import com.amg.digitalitzacio.vault.application.TenantVaultService;
+import com.amg.digitalitzacio.vault.application.VaultService;
 import com.amg.digitalitzacio.vault.domain.ImplementationStatus;
 import com.amg.digitalitzacio.vault.domain.ServiceStatus;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class VaultController {
 
     private final ProfileService profileService;
-    private final TenantVaultService tenantVaultService;
+    private final VaultService vaultService;
 
     // ── 4.1 Perfils ──
 
@@ -105,13 +105,13 @@ public class VaultController {
     @PostMapping("/tenants/{tenantId}/profiles/{profileId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<AssignProfileResponse> assignProfile(@PathVariable UUID tenantId, @PathVariable UUID profileId) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(tenantVaultService.assignProfile(tenantId, profileId));
+        return ResponseEntity.status(HttpStatus.CREATED).body(vaultService.assignProfile(tenantId, profileId));
     }
 
     @DeleteMapping("/tenants/{tenantId}/profiles/{profileId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> removeProfile(@PathVariable UUID tenantId, @PathVariable UUID profileId) {
-        tenantVaultService.removeProfile(tenantId, profileId);
+        vaultService.removeProfile(tenantId, profileId);
         return ResponseEntity.noContent().build();
     }
 
@@ -128,13 +128,13 @@ public class VaultController {
     @PostMapping("/tenants/{tenantId}/phases/{phaseId}/approve")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #tenantId == authentication.principal.tenantId)")
     public ResponseEntity<ApprovePhaseResponse> approvePhase(@PathVariable UUID tenantId, @PathVariable UUID phaseId) {
-        return ResponseEntity.ok(tenantVaultService.approvePhase(tenantId, phaseId));
+        return ResponseEntity.ok(vaultService.approvePhase(tenantId, phaseId));
     }
 
     @PostMapping("/tenants/{tenantId}/phases/{phaseId}/reject")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #tenantId == authentication.principal.tenantId)")
     public ResponseEntity<Void> rejectPhase(@PathVariable UUID tenantId, @PathVariable UUID phaseId) {
-        tenantVaultService.rejectPhase(tenantId, phaseId);
+        vaultService.rejectPhase(tenantId, phaseId);
         return ResponseEntity.noContent().build();
     }
 
@@ -142,7 +142,7 @@ public class VaultController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> advancePhase(@PathVariable UUID tenantId, @PathVariable UUID phaseId,
                                              @RequestBody AdvancePhaseRequest request) {
-        tenantVaultService.advancePhase(tenantId, phaseId, request.getStatus());
+        vaultService.advancePhase(tenantId, phaseId, request.getStatus());
         return ResponseEntity.ok().build();
     }
 
@@ -150,7 +150,7 @@ public class VaultController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> changeServiceStatus(@PathVariable UUID tenantId, @PathVariable UUID serviceId,
                                                     @RequestBody ChangeServiceStatusRequest request) {
-        tenantVaultService.changeServiceStatus(tenantId, serviceId, request.getStatus());
+        vaultService.changeServiceStatus(tenantId, serviceId, request.getStatus());
         return ResponseEntity.ok().build();
     }
 
@@ -163,7 +163,7 @@ public class VaultController {
                                                               @PathVariable UUID fieldId,
                                                               @RequestBody SetCredentialRequest request,
                                                               @AuthenticationPrincipal UserPrincipal principal) {
-        tenantVaultService.setCredential(tenantId, serviceId, fieldId, request.getValue(), principal.id());
+        vaultService.setCredential(tenantId, serviceId, fieldId, request.getValue(), principal.id());
         return ResponseEntity.ok(Map.of("isSet", true, "maskedValue", "***set"));
     }
 
@@ -171,7 +171,7 @@ public class VaultController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Map<String, Object>> verifyService(@PathVariable UUID tenantId,
                                                               @PathVariable UUID serviceId) {
-        tenantVaultService.verifyService(tenantId, serviceId);
+        vaultService.verifyService(tenantId, serviceId);
         return ResponseEntity.ok(Map.of("verified", true, "message", "Connexió verificada"));
     }
 
@@ -181,20 +181,20 @@ public class VaultController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<AddonResponse> addAddon(@PathVariable UUID tenantId, @PathVariable UUID serviceId,
                                                    @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(tenantVaultService.addAddon(tenantId, serviceId, principal.id()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(vaultService.addAddon(tenantId, serviceId, principal.id()));
     }
 
     @PostMapping("/tenants/{tenantId}/addons/{serviceId}/approve")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #tenantId == authentication.principal.tenantId)")
     public ResponseEntity<Void> approveAddon(@PathVariable UUID tenantId, @PathVariable UUID serviceId) {
-        tenantVaultService.approveAddon(tenantId, serviceId);
+        vaultService.approveAddon(tenantId, serviceId);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/tenants/{tenantId}/addons/{serviceId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> removeAddon(@PathVariable UUID tenantId, @PathVariable UUID serviceId) {
-        tenantVaultService.removeAddon(tenantId, serviceId);
+        vaultService.removeAddon(tenantId, serviceId);
         return ResponseEntity.noContent().build();
     }
 
@@ -205,7 +205,7 @@ public class VaultController {
     public ResponseEntity<SetupResponse> getSetup(@PathVariable UUID tenantId,
                                                    @AuthenticationPrincipal UserPrincipal principal) {
         boolean includeClearValue = hasRole("SUPER_ADMIN") || hasRole("ADMIN");
-        return ResponseEntity.ok(tenantVaultService.getSetup(tenantId, includeClearValue));
+        return ResponseEntity.ok(vaultService.getSetup(tenantId, includeClearValue));
     }
 
     // Monitorització
@@ -213,19 +213,19 @@ public class VaultController {
     @GetMapping("/tenants/{tenantId}/monitoring/invoices")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #tenantId == authentication.principal.tenantId)")
     public ResponseEntity<MonitoringResponse.InvoiceMonitoring> getInvoiceMonitoring(@PathVariable UUID tenantId) {
-        return ResponseEntity.ok(tenantVaultService.getInvoiceMonitoring(tenantId));
+        return ResponseEntity.ok(vaultService.getInvoiceMonitoring(tenantId));
     }
 
     @GetMapping("/tenants/{tenantId}/monitoring/payments")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #tenantId == authentication.principal.tenantId)")
     public ResponseEntity<MonitoringResponse.PaymentMonitoring> getPaymentMonitoring(@PathVariable UUID tenantId) {
-        return ResponseEntity.ok(tenantVaultService.getPaymentMonitoring(tenantId));
+        return ResponseEntity.ok(vaultService.getPaymentMonitoring(tenantId));
     }
 
     @GetMapping("/tenants/{tenantId}/monitoring/phases")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<MonitoringResponse.PhaseMonitoring> getPhaseMonitoring(@PathVariable UUID tenantId) {
-        return ResponseEntity.ok(tenantVaultService.getPhaseMonitoring(tenantId));
+        return ResponseEntity.ok(vaultService.getPhaseMonitoring(tenantId));
     }
 
     // ── Helpers ──

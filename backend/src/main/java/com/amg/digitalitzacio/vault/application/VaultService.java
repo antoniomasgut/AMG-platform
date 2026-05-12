@@ -1,0 +1,40 @@
+package com.amg.digitalitzacio.vault.application;
+
+import com.amg.digitalitzacio.vault.api.dto.*;
+import com.amg.digitalitzacio.vault.domain.ImplementationStatus;
+import com.amg.digitalitzacio.vault.domain.ServiceStatus;
+
+import java.util.UUID;
+
+public interface VaultService {
+
+    AssignProfileResponse assignProfile(UUID tenantId, UUID profileId);
+
+    void removeProfile(UUID tenantId, UUID profileId);
+
+    ApprovePhaseResponse approvePhase(UUID tenantId, UUID phaseId);
+
+    void rejectPhase(UUID tenantId, UUID phaseId);
+
+    void advancePhase(UUID tenantId, UUID phaseId, ImplementationStatus status);
+
+    void changeServiceStatus(UUID tenantId, UUID serviceId, ServiceStatus newStatus);
+
+    void setCredential(UUID tenantId, UUID serviceId, UUID fieldId, String value, UUID userId);
+
+    void verifyService(UUID tenantId, UUID serviceId);
+
+    AddonResponse addAddon(UUID tenantId, UUID serviceId, UUID addedBy);
+
+    void approveAddon(UUID tenantId, UUID serviceId);
+
+    void removeAddon(UUID tenantId, UUID serviceId);
+
+    SetupResponse getSetup(UUID tenantId, boolean includeClearValue);
+
+    MonitoringResponse.InvoiceMonitoring getInvoiceMonitoring(UUID tenantId);
+
+    MonitoringResponse.PaymentMonitoring getPaymentMonitoring(UUID tenantId);
+
+    MonitoringResponse.PhaseMonitoring getPhaseMonitoring(UUID tenantId);
+}
