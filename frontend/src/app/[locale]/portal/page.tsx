@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
+import { useParams } from 'next/navigation';
 import { getCurrentUser } from '@/services/auth';
 import { AMGSectionTitle } from '@/components/ui/stat';
 import { AMGBadge } from '@/components/ui/badge';
@@ -14,6 +15,7 @@ type User = { name: string; email: string; role: string; tenantId: string };
 export default function PortalPage() {
   const t = useTranslations('portal');
   const router = useRouter();
+  const params = useParams();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -74,6 +76,18 @@ export default function PortalPage() {
           <a className="flex items-center gap-3 px-3 py-2 rounded text-sm text-ink-2 hover:text-white hover:bg-white/5 transition-colors">
             <I.Settings size={16} /> {t('sidebar.support')}
           </a>
+
+          {(user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') && (
+            <>
+              <div className="f-mono text-[9px] uppercase tracking-widest text-ink-2/50 px-3 pt-4 pb-2">{t('sidebar.admin')}</div>
+              <a href={`/${params.locale}/portal/admin/users`} className="flex items-center gap-3 px-3 py-2 rounded text-sm text-ink-2 hover:text-white hover:bg-white/5 transition-colors">
+                <I.Users size={16} /> {t('sidebar.users')}
+              </a>
+              <a href={`/${params.locale}/portal/admin/tenants`} className="flex items-center gap-3 px-3 py-2 rounded text-sm text-ink-2 hover:text-white hover:bg-white/5 transition-colors">
+                <I.Building size={16} /> {t('sidebar.tenants')}
+              </a>
+            </>
+          )}
         </nav>
 
         <div className="p-3 border-t border-white/5">

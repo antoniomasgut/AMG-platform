@@ -267,7 +267,10 @@
       "invoices": "Facturas",
       "publicLanding": "Landing pública",
       "support": "Soporte",
-      "settings": "Configuración"
+      "settings": "Configuración",
+      "admin": "Administración",
+      "users": "Usuarios",
+      "tenants": "Tenants"
     },
     "logout": "CERRAR SESIÓN",
     "loggingOut": "SALIENDO..."
@@ -353,5 +356,67 @@
       "backToHome": "← Volver al inicio",
       "lastUpdated": "Última actualización"
     }
+  },
+  "admin": {
+    "title": "Administración",
+    "users": {
+      "title": "Usuarios",
+      "new": "Nuevo usuario",
+      "edit": "Editar usuario",
+      "delete": "Eliminar usuario",
+      "deleteConfirm": "¿Estás seguro de eliminar este usuario? Esta acción desactivará su cuenta.",
+      "unlock": "Desbloquear",
+      "unlockSuccess": "Usuario desbloqueado correctamente",
+      "created": "Usuario creado correctamente",
+      "updated": "Usuario actualizado correctamente",
+      "deleted": "Usuario eliminado correctamente",
+      "fields": {
+        "email": "Email",
+        "name": "Nombre",
+        "role": "Rol",
+        "tenant": "Tenant",
+        "password": "Contraseña",
+        "isActive": "Activo"
+      },
+      "status": {
+        "active": "Activo",
+        "blocked": "Bloqueado",
+        "inactive": "Inactivo"
+      },
+      "roles": {
+        "SUPER_ADMIN": "Super Admin",
+        "ADMIN": "Admin",
+        "CLIENT": "Cliente"
+      },
+      "search": "Buscar usuarios...",
+      "noResults": "No se encontraron usuarios",
+      "lastLogin": "Última conexión",
+      "never": "Nunca"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "new": "Nuevo tenant",
+      "edit": "Editar tenant",
+      "created": "Tenant creado correctamente",
+      "updated": "Tenant actualizado correctamente",
+      "fields": {
+        "name": "Nombre",
+        "slug": "Slug",
+        "email": "Email",
+        "phone": "Teléfono",
+        "address": "Dirección",
+        "isActive": "Activo"
+      },
+      "search": "Buscar tenants...",
+      "noResults": "No se encontraron tenants"
+    },
+    "sidebar": {
+      "admin": "Administración",
+      "users": "Usuarios",
+      "tenants": "Tenants"
+    },
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "loading": "Cargando..."
   }
 }

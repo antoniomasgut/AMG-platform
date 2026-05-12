@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+const API_BASE = '/api/v1';
 
 interface ApiOptions extends RequestInit {
   skipAuth?: boolean;

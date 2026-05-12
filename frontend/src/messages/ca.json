@@ -267,7 +267,10 @@
       "invoices": "Factures",
       "publicLanding": "Landing pública",
       "support": "Suport",
-      "settings": "Configuració"
+      "settings": "Configuració",
+      "admin": "Administració",
+      "users": "Usuaris",
+      "tenants": "Tenants"
     },
     "logout": "TANCAR SESSIÓ",
     "loggingOut": "SORTINT..."
@@ -353,5 +356,67 @@
       "backToHome": "← Tornar a l'inici",
       "lastUpdated": "Darrera actualització"
     }
+  },
+  "admin": {
+    "title": "Administració",
+    "users": {
+      "title": "Usuaris",
+      "new": "Nou usuari",
+      "edit": "Editar usuari",
+      "delete": "Eliminar usuari",
+      "deleteConfirm": "Estàs segur d'eliminar aquest usuari? Aquesta acció desactivarà el seu compte.",
+      "unlock": "Desbloquejar",
+      "unlockSuccess": "Usuari desblocat correctament",
+      "created": "Usuari creat correctament",
+      "updated": "Usuari actualitzat correctament",
+      "deleted": "Usuari eliminat correctament",
+      "fields": {
+        "email": "Email",
+        "name": "Nom",
+        "role": "Rol",
+        "tenant": "Tenant",
+        "password": "Contrasenya",
+        "isActive": "Actiu"
+      },
+      "status": {
+        "active": "Actiu",
+        "blocked": "Blocat",
+        "inactive": "Inactiu"
+      },
+      "roles": {
+        "SUPER_ADMIN": "Super Admin",
+        "ADMIN": "Admin",
+        "CLIENT": "Client"
+      },
+      "search": "Cercar usuaris...",
+      "noResults": "No s'han trobat usuaris",
+      "lastLogin": "Última connexió",
+      "never": "Mai"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "new": "Nou tenant",
+      "edit": "Editar tenant",
+      "created": "Tenant creat correctament",
+      "updated": "Tenant actualitzat correctament",
+      "fields": {
+        "name": "Nom",
+        "slug": "Slug",
+        "email": "Email",
+        "phone": "Telèfon",
+        "address": "Adreça",
+        "isActive": "Actiu"
+      },
+      "search": "Cercar tenants...",
+      "noResults": "No s'han trobat tenants"
+    },
+    "sidebar": {
+      "admin": "Administració",
+      "users": "Usuaris",
+      "tenants": "Tenants"
+    },
+    "save": "Guardar",
+    "cancel": "Cancel·lar",
+    "loading": "Carregant..."
   }
 }
