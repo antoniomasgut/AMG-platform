@@ -28,7 +28,7 @@ public class TenantController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Page<TenantResponse>> listTenants(
             Pageable pageable,
             @RequestParam(required = false) String search) {
@@ -36,13 +36,13 @@ public class TenantController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('CLIENT') and authentication.principal.tenantId == #id)")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and authentication.principal.tenantId == #id)")
     public ResponseEntity<TenantResponse> getTenant(@PathVariable UUID id) {
         return ResponseEntity.ok(tenantService.getTenant(id));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<TenantResponse> updateTenant(@PathVariable UUID id,
                                                        @Valid @RequestBody UpdateTenantRequest request) {
         return ResponseEntity.ok(tenantService.updateTenant(id, request));

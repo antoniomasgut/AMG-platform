@@ -10,7 +10,7 @@
 ## 1. Objectius
 
 - Proporcionar autenticació segura via JWT (access token + refresh token) per a tota la plataforma.
-- Implementar control d'accés basat en rols (RBAC) amb dos rols: `SUPER_ADMIN` i `CLIENT`.
+- Implementar control d'accés basat en rols (RBAC) amb tres rols: `SUPER_ADMIN`, `ADMIN` i `CLIENT`.
 - Gestionar el cicle de vida de les sessions: login, refresh, logout, bloqueig per intents fallits i reset de contrasenya.
 - Suport multi-tenant amb esquema per tenant a PostgreSQL.
 
@@ -42,7 +42,8 @@
 
 | Actor | Descripció | Permisos |
 |-------|-----------|----------|
-| SUPER_ADMIN | Propietari de la plataforma. Gestiona tenants i usuaris clients. | Accés total a totes les operacions de la plataforma |
+| SUPER_ADMIN | Propietari de la plataforma. Gestiona admins, tenants i usuaris clients. | Accés total a totes les operacions de la plataforma |
+| ADMIN | Personal operatiu de la plataforma. Gestiona clients i configuració de tenants. | Gestionar usuaris CLIENT, assignar perfils i configurar credencials, veure i modificar tenants. NO pot crear/modificar ADMINs ni eliminar tenants. |
 | CLIENT | Usuari final d'un tenant. Accés només de lectura a la seva informació i la del seu tenant. | Veure el seu perfil i dades del seu tenant. Sense permisos d'escriptura ni accés a altres tenants |
 
 ---
@@ -323,7 +324,7 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 #### `POST /api/v1/users` — Crear usuari (SUPER_ADMIN o CLIENT)
 
 **Autenticació:** Bearer JWT
-**Rols permesos:** SUPER_ADMIN
+**Rols permesos:** SUPER_ADMIN (qualsevol rol), ADMIN (només CLIENT)
 
 **Request:**
 ```json
@@ -331,9 +332,14 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
   "email": "string",
   "password": "string (min 4 chars)",
   "name": "string",
-  "role": "SUPER_ADMIN | CLIENT",
-  "tenantId": "uuid (obligatori si role=CLIENT, ignorat si role=SUPER_ADMIN)"
+  "role": "SUPER_ADMIN | ADMIN | CLIENT",
+  "tenantId": "uuid (obligatori si role=CLIENT, ignorat si role=SUPER_ADMIN o ADMIN)"
 }
+```
+
+**Lògica interna:**
+- Si el creador és ADMIN, el camp `role` es força a CLIENT (encara que enviïn un altre valor)
+- Si el creador és SUPER_ADMIN, permet crear qualsevol rol
 ```
 
 **Response 201:**
@@ -363,9 +369,7 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 #### `GET /api/v1/users` — Llistar usuaris
 
 **Autenticació:** Bearer JWT
-**Rols permesos:** SUPER_ADMIN
-
-**Query params:** `page`, `size`, `role`, `tenantId`, `search` (per email o nom)
+**Rols permesos:** SUPER_ADMIN, ADMIN
 
 **Response 200:**
 ```json
@@ -395,22 +399,31 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 #### `GET /api/v1/users/{id}` — Veure usuari
 
 **Autenticació:** Bearer JWT
-**Rols permesos:** SUPER_ADMIN (qualsevol usuari), CLIENT (només el seu propi perfil)
+**Rols permesos:** SUPER_ADMIN (qualsevol usuari), ADMIN (qualsevol usuari), CLIENT (només el seu propi perfil)
 
 ---
 
 #### `PUT /api/v1/users/{id}` — Actualitzar usuari
 
 **Autenticació:** Bearer JWT
-**Rols permesos:** SUPER_ADMIN (qualsevol usuari), CLIENT (només el seu propi nom/email)
+**Rols permesos:** SUPER_ADMIN (qualsevol usuari, pot canviar el rol), ADMIN (només CLIENT, no pot canviar el rol), CLIENT (només el seu propi nom/email)
 
 **Request (SUPER_ADMIN):**
 ```json
 {
   "email": "string",
   "name": "string",
-  "role": "SUPER_ADMIN | CLIENT",
+  "role": "SUPER_ADMIN | ADMIN | CLIENT",
   "tenantId": "uuid",
+  "isActive": true
+}
+```
+
+**Request (ADMIN):**
+```json
+{
+  "email": "string",
+  "name": "string",
   "isActive": true
 }
 ```
@@ -437,7 +450,7 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 #### `POST /api/v1/users/{id}/unlock` — Desblocar usuari
 
 **Autenticació:** Bearer JWT
-**Rols permesos:** SUPER_ADMIN
+**Rols permesos:** SUPER_ADMIN, ADMIN
 
 **Response 200:**
 ```json
@@ -487,7 +500,7 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 #### `GET /api/v1/tenants` — Llistar tenants
 
 **Autenticació:** Bearer JWT
-**Rols permesos:** SUPER_ADMIN
+**Rols permesos:** SUPER_ADMIN, ADMIN
 
 **Query params:** `page`, `size`, `search` (per nom o slug)
 
@@ -503,7 +516,7 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 #### `PUT /api/v1/tenants/{id}` — Actualitzar tenant
 
 **Autenticació:** Bearer JWT
-**Rols permesos:** SUPER_ADMIN
+**Rols permesos:** SUPER_ADMIN, ADMIN
 
 ---
 
@@ -517,16 +530,16 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 | GET | /api/v1/auth/me | Perfil actual | JWT | Tots |
 | POST | /api/v1/auth/forgot-password | Sol·licitar reset | Pública | — |
 | POST | /api/v1/auth/reset-password | Resetjar contrasenya | Reset token | — |
-| POST | /api/v1/users | Crear usuari | JWT | SUPER_ADMIN |
-| GET | /api/v1/users | Llistar usuaris | JWT | SUPER_ADMIN |
-| GET | /api/v1/users/{id} | Veure usuari | JWT | SUPER_ADMIN / CLIENT (propi) |
-| PUT | /api/v1/users/{id} | Actualitzar usuari | JWT | SUPER_ADMIN / CLIENT (propi) |
+| POST | /api/v1/users | Crear usuari | JWT | SUPER_ADMIN / ADMIN (només CLIENT) |
+| GET | /api/v1/users | Llistar usuaris | JWT | SUPER_ADMIN, ADMIN |
+| GET | /api/v1/users/{id} | Veure usuari | JWT | SUPER_ADMIN / ADMIN / CLIENT (propi) |
+| PUT | /api/v1/users/{id} | Actualitzar usuari | JWT | SUPER_ADMIN / ADMIN (només CLIENT) / CLIENT (propi) |
 | DELETE | /api/v1/users/{id} | Desactivar usuari | JWT | SUPER_ADMIN |
-| POST | /api/v1/users/{id}/unlock | Desblocar usuari | JWT | SUPER_ADMIN |
+| POST | /api/v1/users/{id}/unlock | Desblocar usuari | JWT | SUPER_ADMIN, ADMIN |
 | POST | /api/v1/tenants | Crear tenant | JWT | SUPER_ADMIN |
-| GET | /api/v1/tenants | Llistar tenants | JWT | SUPER_ADMIN |
-| GET | /api/v1/tenants/{id} | Veure tenant | JWT | SUPER_ADMIN / CLIENT (propi) |
-| PUT | /api/v1/tenants/{id} | Actualitzar tenant | JWT | SUPER_ADMIN |
+| GET | /api/v1/tenants | Llistar tenants | JWT | SUPER_ADMIN, ADMIN |
+| GET | /api/v1/tenants/{id} | Veure tenant | JWT | SUPER_ADMIN / ADMIN / CLIENT (propi) |
+| PUT | /api/v1/tenants/{id} | Actualitzar tenant | JWT | SUPER_ADMIN, ADMIN |
 
 ---
 
@@ -541,9 +554,10 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 
 ### 5.2 Autorització (RBAC)
 
-- **SUPER_ADMIN:** Accés total a tots els endpoints de la plataforma. Pot gestionar usuaris i tenants. Sense restriccions de tenant.
+- **SUPER_ADMIN:** Accés total a tots els endpoints de la plataforma. Pot gestionar usuaris (qualsevol rol), tenants i configuracions globals. Sense restriccions de tenant.
+- **ADMIN:** Accés operatiu. Pot gestionar usuaris CLIENT (crear, modificar, desbloquejar), veure i modificar tenants, assignar perfils i configurar credencials. NO pot crear/modificar ADMINs ni eliminar tenants.
 - **CLIENT:** Accés només de lectura a la seva informació. Pot veure el seu perfil, el seu tenant i les dades associades al seu tenant. No pot crear, modificar ni eliminar recursos.
-- Implementat mitjançant `@PreAuthorize` i un `AuthenticationProvider` personalitzat de Spring Security que afegeix el rol JWT a la `GrantedAuthority`.
+- Implementat mitjançant `@PreAuthorize` amb `hasRole()` i `hasAnyRole()` de Spring Security.
 
 ### 5.3 Protecció de dades
 
@@ -592,6 +606,10 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 | 18 | CLIENT veu el seu propi perfil | GET /users/{el-seu-id} | 200 |
 | 19 | CLIENT veu perfil d'altre user | GET /users/{altre-id} | 403 |
 | 20 | CLIENT veu el seu propi tenant | GET /tenants/{el-seu-tenant-id} | 200 |
+| 21 | ADMIN llista usuaris | GET /users | 200 + llista |
+| 22 | ADMIN desbloqueja CLIENT | POST /users/{id}/unlock | 200 |
+| 23 | ADMIN crea un altre ADMIN | POST /users amb role=ADMIN | 403 (el rol es força a CLIENT) |
+| 24 | ADMIN modifica tenant | PUT /tenants/{id} | 200 |
 
 ### 7.2 Test cases de seguretat
 

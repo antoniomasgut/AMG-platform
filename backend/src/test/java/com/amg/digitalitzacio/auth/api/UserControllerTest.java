@@ -46,10 +46,12 @@ class UserControllerTest {
     private JwtProvider jwtProvider;
 
     private User superAdmin;
+    private User adminUser;
     private User clientUser;
     private Tenant tenant;
     private String adminToken;
     private String clientToken;
+    private String operatorToken;
 
     @BeforeEach
     void setUp() {
@@ -67,6 +69,14 @@ class UserControllerTest {
                 .isActive(true).isBlocked(false).failedAttempts(0)
                 .build());
 
+        adminUser = userRepository.save(User.builder()
+                .email("operator@test.com")
+                .passwordHash(passwordEncoder.encode("pass1234"))
+                .name("Operator Admin")
+                .role(Role.ADMIN)
+                .isActive(true).isBlocked(false).failedAttempts(0)
+                .build());
+
         clientUser = userRepository.save(User.builder()
                 .email("client@test.com")
                 .passwordHash(passwordEncoder.encode("pass1234"))
@@ -78,6 +88,8 @@ class UserControllerTest {
 
         adminToken = jwtProvider.generateAccessToken(
                 superAdmin.getId(), superAdmin.getEmail(), superAdmin.getRole(), superAdmin.getTenantId());
+        operatorToken = jwtProvider.generateAccessToken(
+                adminUser.getId(), adminUser.getEmail(), adminUser.getRole(), adminUser.getTenantId());
         clientToken = jwtProvider.generateAccessToken(
                 clientUser.getId(), clientUser.getEmail(), clientUser.getRole(), clientUser.getTenantId());
     }
@@ -147,5 +159,42 @@ class UserControllerTest {
         mockMvc.perform(get("/api/v1/users/{id}", superAdmin.getId())
                 .header("Authorization", "Bearer " + clientToken))
                 .andExpect(status().isForbidden());
+    }
+
+    /* ─────────── TC-21: ADMIN llista usuaris ─────────── */
+    @Test
+    void tc21_adminListsUsers_Returns200() throws Exception {
+        mockMvc.perform(get("/api/v1/users")
+                .header("Authorization", "Bearer " + operatorToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray());
+    }
+
+    /* ─────────── TC-22: ADMIN desbloqueja CLIENT ─────────── */
+    @Test
+    void tc22_adminUnlocksClient_Returns200() throws Exception {
+        clientUser.setIsBlocked(true);
+        clientUser.setFailedAttempts(3);
+        userRepository.save(clientUser);
+
+        mockMvc.perform(post("/api/v1/users/{id}/unlock", clientUser.getId())
+                .header("Authorization", "Bearer " + operatorToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Usuari desblocat correctament"));
+    }
+
+    /* ─────────── TC-23: ADMIN crea usuari ADMIN → es força a CLIENT ─────────── */
+    @Test
+    void tc23_adminCreatesAdminUser_ForcesClientRole() throws Exception {
+        var request = new CreateUserRequest(
+                "newuser@test.com", "pass1234", "New User",
+                Role.ADMIN, tenant.getId());
+
+        mockMvc.perform(post("/api/v1/users")
+                .header("Authorization", "Bearer " + operatorToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role").value("CLIENT"));
     }
 }

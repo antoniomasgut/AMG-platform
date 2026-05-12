@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.auth.api;
 import com.amg.digitalitzacio.auth.api.dto.*;
 import com.amg.digitalitzacio.auth.application.UserService;
 import com.amg.digitalitzacio.shared.security.Role;
+import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -22,14 +24,15 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
-        var response = userService.createUser(request);
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request,
+                                                    @AuthenticationPrincipal UserPrincipal principal) {
+        var response = userService.createUser(request, Role.valueOf(principal.role()));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Page<UserResponse>> listUsers(
             Pageable pageable,
             @RequestParam(required = false) Role role,
@@ -39,16 +42,17 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or #id == authentication.principal.id")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or #id == authentication.principal.id")
     public ResponseEntity<UserResponse> getUser(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUser(id));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or #id == authentication.principal.id")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or #id == authentication.principal.id")
     public ResponseEntity<UserResponse> updateUser(@PathVariable UUID id,
-                                                    @Valid @RequestBody UpdateUserRequest request) {
-        return ResponseEntity.ok(userService.updateUser(id, request));
+                                                    @Valid @RequestBody UpdateUserRequest request,
+                                                    @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(userService.updateUser(id, request, Role.valueOf(principal.role())));
     }
 
     @DeleteMapping("/{id}")
@@ -59,7 +63,7 @@ public class UserController {
     }
 
     @PostMapping("/{id}/unlock")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<MessageResponse> unlockUser(@PathVariable UUID id) {
         userService.unlockUser(id);
         return ResponseEntity.ok(new MessageResponse("Usuari desblocat correctament"));

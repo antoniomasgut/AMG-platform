@@ -53,8 +53,9 @@ public class SecurityConfig {
                                 "/api/v1/auth/reset-password"
                         ).permitAll()
                         .requestMatchers("/api/v1/auth/**").authenticated()
-                        .requestMatchers("/api/v1/users/**").hasRole("SUPER_ADMIN")
-                        .requestMatchers("/api/v1/tenants/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers("/api/v1/users/**").authenticated()
+                        .requestMatchers("/api/v1/tenants/**").authenticated()
+                        .requestMatchers("/api/v1/vault/**").authenticated()
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().permitAll()
                 )

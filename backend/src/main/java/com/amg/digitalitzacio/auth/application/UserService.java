@@ -22,17 +22,19 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public UserResponse createUser(@Valid CreateUserRequest request) {
+    public UserResponse createUser(@Valid CreateUserRequest request, Role callerRole) {
         if (userRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("Email ja registrat");
         }
 
-        if (request.role() == Role.CLIENT && request.tenantId() == null) {
-            throw new IllegalArgumentException("El rol CLIENT requereix un tenantId");
+        // ADMIN només pot crear CLIENT — forcem el rol
+        var targetRole = request.role();
+        if (callerRole == Role.ADMIN && targetRole != Role.CLIENT) {
+            targetRole = Role.CLIENT;
         }
 
-        if (request.role() == Role.SUPER_ADMIN && request.tenantId() != null) {
-            // SUPER_ADMIN no te tenant
+        if (targetRole == Role.CLIENT && request.tenantId() == null) {
+            throw new IllegalArgumentException("El rol CLIENT requereix un tenantId");
         }
 
         if (request.tenantId() != null && !tenantRepository.existsById(request.tenantId())) {
@@ -43,8 +45,8 @@ public class UserService {
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .name(request.name())
-                .role(request.role())
-                .tenantId(request.role() == Role.CLIENT ? request.tenantId() : null)
+                .role(targetRole)
+                .tenantId(targetRole == Role.CLIENT ? request.tenantId() : null)
                 .isActive(true)
                 .isBlocked(false)
                 .failedAttempts(0)
@@ -55,8 +57,6 @@ public class UserService {
     }
 
     public Page<UserResponse> listUsers(Pageable pageable, Role role, UUID tenantId, String search) {
-        // Per simplicitat, retornem tots amb paginacio basica
-        // En una versio real, afegir Specifications per filtrar
         return userRepository.findAll(pageable).map(this::toResponse);
     }
 
@@ -67,9 +67,22 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateUser(UUID id, @Valid UpdateUserRequest request) {
+    public UserResponse updateUser(UUID id, @Valid UpdateUserRequest request, Role callerRole) {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuari no trobat"));
+
+        // ADMIN no pot canviar rol ni modificar usuaris que no siguin CLIENT
+        if (callerRole == Role.ADMIN) {
+            if (user.getRole() != Role.CLIENT) {
+                throw new IllegalArgumentException("ADMIN només pot modificar usuaris CLIENT");
+            }
+            if (request.role() != null && request.role() != user.getRole()) {
+                throw new IllegalArgumentException("ADMIN no pot canviar el rol d'un usuari");
+            }
+            if (request.tenantId() != null) {
+                throw new IllegalArgumentException("ADMIN no pot canviar el tenant d'un usuari");
+            }
+        }
 
         if (request.email() != null) {
             if (!request.email().equals(user.getEmail()) && userRepository.existsByEmail(request.email())) {
@@ -78,8 +91,8 @@ public class UserService {
             user.setEmail(request.email());
         }
         if (request.name() != null) user.setName(request.name());
-        if (request.role() != null) user.setRole(request.role());
-        if (request.tenantId() != null) user.setTenantId(request.tenantId());
+        if (request.role() != null && callerRole != Role.ADMIN) user.setRole(request.role());
+        if (request.tenantId() != null && callerRole != Role.ADMIN) user.setTenantId(request.tenantId());
         if (request.isActive() != null) user.setIsActive(request.isActive());
 
         user = userRepository.save(user);
