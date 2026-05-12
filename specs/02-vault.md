@@ -540,7 +540,111 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 
 ---
 
-## 8. Dependències
+## 8. API pública / Contractes
+
+El Vault exposa **interfícies** al paquet `application/` perquè altres mòduls (especialment 07 Billing) en depenguin sense acoblar-se a la implementació.
+
+### 8.1 VaultService
+
+Interfície principal per a la lògica de cicle de vida de clients (assignació, fases, serveis, credencials).
+
+```java
+public interface VaultService {
+    AssignProfileResponse assignProfile(UUID tenantId, UUID profileId);
+    void removeProfile(UUID tenantId, UUID profileId);
+    ApprovePhaseResponse approvePhase(UUID tenantId, UUID phaseId);
+    void rejectPhase(UUID tenantId, UUID phaseId);
+    void advancePhase(UUID tenantId, UUID phaseId, ImplementationStatus status);
+    void changeServiceStatus(UUID tenantId, UUID serviceId, ServiceStatus newStatus);
+    void setCredential(UUID tenantId, UUID serviceId, UUID fieldId, String value, UUID userId);
+    void verifyService(UUID tenantId, UUID serviceId);
+    AddonResponse addAddon(UUID tenantId, UUID serviceId, UUID addedBy);
+    void approveAddon(UUID tenantId, UUID serviceId);
+    void removeAddon(UUID tenantId, UUID serviceId);
+    SetupResponse getSetup(UUID tenantId, boolean includeClearValue);
+    MonitoringResponse.InvoiceMonitoring getInvoiceMonitoring(UUID tenantId);
+    MonitoringResponse.PaymentMonitoring getPaymentMonitoring(UUID tenantId);
+    MonitoringResponse.PhaseMonitoring getPhaseMonitoring(UUID tenantId);
+}
+```
+
+**Implementació:** `TenantVaultService implements VaultService`
+
+### 8.2 ProfileService
+
+Interfície per a la gestió de catàleg (perfils, fases, serveis, pressupost).
+
+```java
+public interface ProfileService {
+    ProfileResponse createProfile(CreateProfileRequest request);
+    List<ProfileResponse> listProfiles();
+    ProfileResponse getProfile(UUID id);
+    ProfileResponse updateProfile(UUID id, UpdateProfileRequest request);
+    void deactivateProfile(UUID id);
+    ProfileResponse addPhase(UUID profileId, CreatePhaseRequest request);
+    ProfileResponse updatePhase(UUID profileId, UUID phaseId, UpdatePhaseRequest request);
+    void deletePhase(UUID profileId, UUID phaseId);
+    ProfileResponse addServiceToPhase(UUID phaseId, CreateServiceRequest request);
+    ServiceResponse createAddonService(CreateAddonServiceRequest request);
+    List<ServiceResponse> listServices();
+    BudgetResponse calculateBudget(UUID profileId, List<UUID> addonIds, boolean includeCost);
+}
+```
+
+**Implementació:** `ProfileManagementService implements ProfileService`
+
+### 8.3 VaultEncryption (ja és una classe, es manté)
+
+```java
+public class VaultEncryption {
+    String encrypt(String rawValue);
+    String decrypt(String encryptedValue);
+    String mask(String rawValue);
+}
+```
+
+### 8.4 InvoiceService
+
+Interfície per a facturació. El Mòdul 07 Billing o 08 FinOps en proporcionarà la implementació real.
+
+```java
+public interface InvoiceService {
+    UUID createInvoice(UUID tenantId, UUID phaseId, BigDecimal amount);
+    void updateInvoiceStatus(UUID invoiceId, InvoiceStatus status);
+}
+```
+
+**Stub actual:** `InvoiceServiceStub implements InvoiceService` (retorna `INV-STUB-{UUID}`)
+
+### 8.5 PaymentService
+
+Interfície per a cobrament. El Mòdul 09 Payments en proporcionarà la implementació real.
+
+```java
+public interface PaymentService {
+    PaymentResult charge(UUID tenantId, UUID invoiceId, BigDecimal amount);
+    PaymentResult refund(UUID tenantId, UUID invoiceId);
+}
+```
+
+**Stub actual:** `PaymentServiceStub implements PaymentService` (sempre retorna success)
+
+### 8.6 Regla d'evolució
+
+Quan una interfície necessiti canvis (ex: afegir un mètode nou), es crea una **nova versió** en lloc de modificar-la:
+
+```java
+// Nova versió sense trencar la v1
+public interface VaultServiceV2 extends VaultService {
+    void someNewMethod(UUID tenantId, UUID something);
+}
+```
+
+La implementació nova implementa `VaultServiceV2`. Els consumidors antics segueixen usant `VaultService`.
+
+---
+
+## 9. Dependències
 
 | Mòdul | Dependència | Tipus |
 |-------|-----------|-------|
@@ -548,9 +652,12 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 | Mòdul 04 (Engine) | Servirà landings als serveis type=LANDING | Debil |
 | Mòdul 10 (Automations) | Executarà workflows referenciats | Debil |
 
+**Contractes que exporta:** `VaultService`, `ProfileService`, `VaultEncryption`, `InvoiceService`, `PaymentService`
+**Contractes que importa:** Cap (no depèn de cap altre mòdul de negoci)
+
 ---
 
-## 9. Obert / Pendents
+## 10. Obert / Pendents
 
 - [ ] Definir perfils inicials concrets (Pla Bàsic, Pla Intermedi, Pla Avançat)
 - [ ] Definir lògica d'avanç de fase (automàtic en completar tots els serveis?)
