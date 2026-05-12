@@ -33,9 +33,16 @@ Cada `kit-*/` és un **espai de treball autònom de Claude Code** amb el seu pro
 | `kit-extension-chrome/` | Crea extensions Chrome (Manifest V3) des de zero |
 | `kit-skill-creator/` | Genera noves skills per a Claude Code |
 
-### 2. Plataforma AMG (en planificació)
+### 2. Plataforma AMG (en desenvolupament)
 
-El codi del backend/frontend/infra **encara no existeix**. Les carpetes `specs/`, `backend/`, `frontend/` i `infra/` estan pendents de crear.
+El codi del backend, frontend i infra ja està creat i en evolució constant:
+
+| Carpeta | Contingut |
+|---------|-----------|
+| `specs/` | Especificacions dels mòduls (01-auth, 02-vault, 07-billing, perfils-cataleg) |
+| `backend/` | Spring Boot 3 + Java 21 amb arquitectura hexagonal |
+| `frontend/` | Next.js 14 App Router + Tailwind + next-intl (4 idiomes) |
+| `infra/` | Docker, Coolify, Traefik |
 
 ---
 
