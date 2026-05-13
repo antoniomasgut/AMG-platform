@@ -88,7 +88,7 @@ Les fases defineixen l'ordre de configuració. Ex: Fase 1 "Configuració inicial
 
 **Relacions:** Un `ServiceProfile` té moltes `Phase` (1:N), ordenades per `sortOrder`
 
-#### Service (Servei configurable)
+#### CatalogService (Servei configurable del catàleg)
 
 Defineix un servei concret dins d'una fase. Ex: "WhatsApp Business", "Landing Pro", "SMTP"
 
@@ -120,7 +120,7 @@ Defineix quines claus necessita un servei. Ex: servei "WhatsApp" requereix `apiK
 | Camp | Tipus | Mapeig JPA | Descripció |
 |------|-------|-----------|------------|
 | id | UUID | @Id @GeneratedValue | |
-| serviceId | UUID | @Column(nullable=false) | FK a Service |
+| serviceId | UUID | @Column(nullable=false) | FK a CatalogService |
 | key | String(100) | @Column(nullable=false) | Nom del camp (ex: "apiKey") |
 | label | String(150) | @Column(nullable=false) | Etiqueta per al formulari |
 | type | Enum(STRING) | @Enumerated | `PASSWORD`, `TEXT`, `HOST`, `PORT`, `EMAIL` |
@@ -166,7 +166,7 @@ Cada servei (del perfil o add-on) té un registre per tenant amb seguiment del s
 |------|-------|-----------|------------|
 | id | UUID | @Id @GeneratedValue | |
 | tenantId | UUID | @Column(nullable=false) | Tenant |
-| serviceId | UUID | @Column(nullable=false) | FK a Service |
+| serviceId | UUID | @Column(nullable=false) | FK a CatalogService |
 | phaseId | UUID | @Column(nullable=true) | Fase a la qual pertany (null si add-on) |
 | configStatus | Enum | @Enumerated(STRING) @Column(nullable=false) | Estat del servei: `PENDING`, `AWAITING_CLIENT`, `CONFIGURED`, `VERIFIED` |
 | configuredAt | Instant | @Column | Quan es va completar la configuració |
@@ -239,7 +239,7 @@ Quan s'afegeix un servei a la carta, es regeustra aquí (a més de `TenantServic
 |------|-------|-----------|------------|
 | id | UUID | @Id @GeneratedValue | |
 | tenantId | UUID | @Column(nullable=false) | Tenant |
-| serviceId | UUID | @Column(nullable=false) | FK a Service (isAddon=true) |
+| serviceId | UUID | @Column(nullable=false) | FK a CatalogService (isAddon=true) |
 | addedBy | UUID | @Column(nullable=false) | Qui va afegir el servei (userId) |
 | createdAt | Instant | @CreatedDate | |
 
@@ -261,11 +261,11 @@ Quan s'afegeix un servei a la carta, es regeustra aquí (a més de `TenantServic
 ```
 ServiceProfile
   └── Phase (ordenades per sortOrder)
-        └── Service (ordenats per sortOrder dins la fase)
+        └── CatalogService (ordenats per sortOrder dins la fase)
               └── CredentialField (camps del formulari)
 
 TenantProfile → ServiceProfile (assignació) → currentPhaseId → phaseStatus
-TenantService → Service (per tenant) → configStatus (PENDING → AWAITING_CLIENT → CONFIGURED → VERIFIED)
+TenantService → CatalogService (per tenant) → configStatus (PENDING → AWAITING_CLIENT → CONFIGURED → VERIFIED)
 TenantCredential → CredentialField (valor xifrat per tenant)
 CommunicationRequest → TenantService (sol·licitud al client) → canal preferit
 ```
@@ -757,7 +757,7 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 | POST | /api/v1/vault/communication/{reqId}/respond | Webhook resposta client | Intern (API Key) |
 | POST | /api/v1/vault/tenants/{tId}/profiles/{pId}/confirm-phase | Confirmar fase | CLIENT (propi), ADMIN |
 | POST | /api/v1/vault/tenants/{tId}/addons/{sId} | Afegir add-on | SUPER_ADMIN, ADMIN |
-| DELETE | /vault/tenants/{tId}/addons/{sId} | Eliminar add-on | SUPER_ADMIN, ADMIN |
+| DELETE | /api/v1/vault/tenants/{tId}/addons/{sId} | Eliminar add-on | SUPER_ADMIN, ADMIN |
 
 ---
 

@@ -80,7 +80,7 @@ Defineix una landing page d'un tenant.
 |------|-------|-----------|------------|
 | id | UUID | @Id @GeneratedValue | |
 | tenantId | UUID | @Column(nullable=false) | FK a Tenant |
-| serviceId | UUID | @Column(nullable=false) | FK a Service (el servei LANDING associat, definit al Mòdul 02 Vault) |
+| serviceId | UUID | @Column(nullable=false) | FK a CatalogService (el servei LANDING associat) |
 | title | String(200) | @Column(nullable=false) | Títol de la landing |
 | slug | String(100) | @Column(nullable=false) | URL-friendly (ex: "restaurant-can-pedro") |
 | metaDescription | String(300) | @Column | Meta description per SEO |

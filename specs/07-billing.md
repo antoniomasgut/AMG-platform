@@ -86,7 +86,7 @@
 | id | UUID | @Id @GeneratedValue | |
 | budgetId | UUID | @Column(nullable=false) | FK a Budget |
 | phaseId | UUID | @Column | FK lògica a Phase (null si add-on) |
-| serviceId | UUID | @Column(nullable=false) | FK lògica a Service (catàleg del Mòdul 02 Vault) |
+| serviceId | UUID | @Column(nullable=false) | FK lògica a CatalogService |
 | serviceName | String(100) | @Column | Denormalitzat del catàleg |
 | quantity | Integer | @Builder.Default | 1 |
 | unitPrice | BigDecimal(10,2) | @Column(nullable=false) | Preu en creació (snapshot) |
