@@ -38,6 +38,16 @@ public class Tenant {
     @Column(length = 255)
     private String address;
 
+    @Column(length = 20)
+    private String nif;
+
+    @Column(name = "contact_phone", length = 20)
+    private String contactPhone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "preferred_channel", length = 20)
+    private PreferredChannel preferredChannel;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = true;

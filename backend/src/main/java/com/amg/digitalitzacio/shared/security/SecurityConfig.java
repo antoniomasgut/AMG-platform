@@ -50,12 +50,20 @@ public class SecurityConfig {
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/forgot-password",
-                                "/api/v1/auth/reset-password"
+                                "/api/v1/auth/reset-password",
+                                "/api/v1/billing/budgets/accept",
+                                "/api/v1/billing/budgets/reject"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/engine/render/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/engine/render/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/assets/*/file").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/assets/*/thumbnail").permitAll()
+                        .requestMatchers("/api/v1/automations/webhook/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").authenticated()
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/tenants/**").authenticated()
                         .requestMatchers("/api/v1/vault/**").authenticated()
+                        .requestMatchers("/api/v1/engine/**").authenticated()
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().permitAll()
                 )

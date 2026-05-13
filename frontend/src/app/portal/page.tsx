@@ -68,15 +68,16 @@ export default function PortalPage() {
         <nav className="flex-1 p-3 space-y-1">
           <div className="f-mono text-[9px] uppercase tracking-[0.2em] text-[#64748b] px-3 py-2">El meu compte</div>
           {([
-            { label: 'Dashboard', icon: I.Dashboard, active: true },
-            { label: 'Serveis', icon: I.Box, active: false },
-            { label: 'Factures', icon: I.Receipt, active: false },
-            { label: 'Landing pública', icon: I.Globe, active: false },
-            { label: 'Suport', icon: I.Bell, active: false },
-            { label: 'Configuració', icon: I.Settings, active: false },
-          ] as const).map(({ label, icon: Icon, active }) => (
+            { label: 'Dashboard', icon: I.Dashboard, active: true, href: '/portal' },
+            { label: 'Landings', icon: I.Globe, active: false, href: '/portal/landings' },
+            { label: 'Serveis', icon: I.Box, active: false, href: '/portal' },
+            { label: 'Factures', icon: I.Receipt, active: false, href: '/portal' },
+            { label: 'Suport', icon: I.Bell, active: false, href: '/portal' },
+            { label: 'Configuració', icon: I.Settings, active: false, href: '/portal' },
+          ] as const).map(({ label, icon: Icon, active, href }) => (
             <a
               key={label}
+              href={href}
               className={`relative flex items-center gap-3 px-3 h-10 f-mono text-xs uppercase tracking-wider cursor-pointer ${
                 active ? 'bg-[rgba(255,107,0,0.10)] text-[#FF9A3C]' : 'text-[#94a3b8] hover:text-[#e2e8f0]'
               }`}
