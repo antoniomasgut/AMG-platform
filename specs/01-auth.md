@@ -1,7 +1,7 @@
 # Mòdul 01: Auth (JWT + RBAC)
 
-> **Versió:** 1.0
-> **Data:** 2026-05-12
+> **Versió:** 1.1
+> **Data:** 2026-05-13
 > **Autor:** [per determinar]
 > **Dependències:** Cap (mòdul fonacional)
 
@@ -44,7 +44,7 @@
 |-------|-----------|----------|
 | SUPER_ADMIN | Propietari de la plataforma. Gestiona admins, tenants i usuaris clients. | Accés total a totes les operacions de la plataforma |
 | ADMIN | Personal operatiu de la plataforma. Gestiona clients i configuració de tenants. | Gestionar usuaris CLIENT, assignar perfils i configurar credencials, veure i modificar tenants. NO pot crear/modificar ADMINs ni eliminar tenants. |
-| CLIENT | Usuari final d'un tenant. Accés només de lectura a la seva informació i la del seu tenant. | Veure el seu perfil i dades del seu tenant. Sense permisos d'escriptura ni accés a altres tenants |
+| CLIENT | Usuari final d'un tenant. Accés de lectura a la seva informació i escriptura limitada a funcionalitats del seu tenant. | Veure el seu perfil i dades del seu tenant. Crear/editar leads, configurar domini de landing, veure i acceptar pressupostos. Sense accés a altres tenants ni a funcions d'administració. |
 
 ---
 
@@ -60,8 +60,11 @@
 | name | String(100) | @Column(nullable=false) | Nom del negoci/empresa |
 | slug | String(60) | @Column(unique, nullable=false) | Identificador URL-friendly del tenant |
 | email | String(150) | @Column | Email de contacte del tenant |
-| phone | String(20) | @Column | Telèfon de contacte |
+| phone | String(20) | @Column | Telèfon general de contacte |
 | address | String(255) | @Column | Adreça fiscal |
+| nif | String(20) | @Column | NIF/CIF del negoci (per facturació) |
+| contactPhone | String(20) | @Column(name="contact_phone") | Telèfon directe de contacte operatiu |
+| preferredChannel | Enum | @Column(name="preferred_channel") @Enumerated(STRING) | Canal preferit de comunicació: `WHATSAPP`, `TELEGRAM` o `EMAIL` |
 | isActive | Boolean | @Column(nullable=false) | Si el tenant està actiu |
 | createdAt | Instant | @CreatedDate | Data de creació |
 | updatedAt | Instant | @LastModifiedDate | Data de darrera modificació |
@@ -75,7 +78,7 @@
 | email | String(150) | @Column(unique, nullable=false) | Email d'inici de sessió |
 | passwordHash | String(255) | @Column(nullable=false) | Hash BCrypt de la contrasenya |
 | name | String(100) | @Column(nullable=false) | Nom complet de l'usuari |
-| role | Enum | @Enumerated(STRING) @Column(nullable=false) | Rol RBAC: `SUPER_ADMIN` o `CLIENT` |
+| role | Enum | @Enumerated(STRING) @Column(nullable=false) | Rol RBAC: `SUPER_ADMIN`, `ADMIN` o `CLIENT` |
 | isActive | Boolean | @Column(nullable=false) | Si l'usuari està actiu (pot iniciar sessió) |
 | isBlocked | Boolean | @Column(nullable=false) | Si el compte està blocat per intents fallits |
 | failedAttempts | Integer | @Column(nullable=false) | Nombre d'intents fallits consecutius (0-3) |
@@ -130,7 +133,7 @@ Les següents entitats NO es persisteixen a PostgreSQL, només a Redis perquè t
 
 El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 
-- `public` — taules globals: `Tenant`, `User` (inclou SUPER_ADMIN i CLIENT amb `tenant_id`)
+- `public` — taules globals: `Tenant`, `User` (inclou SUPER_ADMIN, ADMIN i CLIENT amb `tenant_id`)
 - Enfocament: **taula compartida amb tenantId** (shared table + discriminator column), no esquemes separats, per simplificar manteniment donat el nombre baix d'entitats i la poca aïllació requerida.
 - `SUPER_ADMIN` no té `tenant_id` (NULL) i pot operar a través de tots els tenants.
 - `CLIENT` té `tenant_id` assignat i només veu les dades del seu tenant.
@@ -165,7 +168,7 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
     "id": "uuid",
     "email": "string",
     "name": "string",
-    "role": "SUPER_ADMIN | CLIENT",
+    "role": "SUPER_ADMIN | ADMIN | CLIENT",
     "tenant": { "id": "uuid", "name": "string" }
   }
 }
@@ -319,7 +322,7 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 
 ---
 
-### 4.2 Endpoints de gestió d'usuaris (SUPER_ADMIN només)
+### 4.2 Endpoints de gestió d'usuaris (SUPER_ADMIN i ADMIN)
 
 #### `POST /api/v1/users` — Crear usuari (SUPER_ADMIN o CLIENT)
 
@@ -348,7 +351,7 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
   "id": "uuid",
   "email": "string",
   "name": "string",
-  "role": "SUPER_ADMIN | CLIENT",
+  "role": "SUPER_ADMIN | ADMIN | CLIENT",
   "tenant": { "id": "uuid", "name": "string" },
   "isActive": true,
   "createdAt": "instant"
@@ -362,7 +365,7 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 | 400 | Contrasenya no compleix requisits |
 | 400 | Tenant no especificat per a rol CLIENT |
 | 401 | JWT invàlid |
-| 403 | No tens permís (no ets SUPER_ADMIN) |
+| 403 | No tens permís |
 
 ---
 
@@ -379,7 +382,7 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
       "id": "uuid",
       "email": "string",
       "name": "string",
-      "role": "SUPER_ADMIN | CLIENT",
+      "role": "SUPER_ADMIN | ADMIN | CLIENT",
       "tenant": { "id": "uuid", "name": "string" },
       "isActive": true,
       "isBlocked": false,
@@ -477,7 +480,10 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
   "slug": "string",
   "email": "string (opcional)",
   "phone": "string (opcional)",
-  "address": "string (opcional)"
+  "address": "string (opcional)",
+  "nif": "string (opcional)",
+  "contactPhone": "string (opcional)",
+  "preferredChannel": "WHATSAPP | TELEGRAM | EMAIL (opcional)"
 }
 ```
 
@@ -490,6 +496,9 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
   "email": "string",
   "phone": "string",
   "address": "string",
+  "nif": "string",
+  "contactPhone": "string",
+  "preferredChannel": "WHATSAPP | TELEGRAM | EMAIL",
   "isActive": true,
   "createdAt": "instant"
 }
@@ -556,7 +565,7 @@ El sistema multi-tenant s'implementa amb **schema-per-tenant** a PostgreSQL:
 
 - **SUPER_ADMIN:** Accés total a tots els endpoints de la plataforma. Pot gestionar usuaris (qualsevol rol), tenants i configuracions globals. Sense restriccions de tenant.
 - **ADMIN:** Accés operatiu. Pot gestionar usuaris CLIENT (crear, modificar, desbloquejar), veure i modificar tenants, assignar perfils i configurar credencials. NO pot crear/modificar ADMINs ni eliminar tenants.
-- **CLIENT:** Accés només de lectura a la seva informació. Pot veure el seu perfil, el seu tenant i les dades associades al seu tenant. No pot crear, modificar ni eliminar recursos.
+- **CLIENT:** Accés de lectura al seu perfil i tenant, més escriptura limitada a funcionalitats concretes: crear/editar leads del seu tenant, configurar el domini de la seva landing, i acceptar/rebutjar pressupostos. No té accés a administració, a usuaris d'altres tenants, ni a funcions de facturació internes.
 - Implementat mitjançant `@PreAuthorize` amb `hasRole()` i `hasAnyRole()` de Spring Security.
 
 ### 5.3 Protecció de dades

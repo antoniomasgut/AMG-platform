@@ -114,21 +114,20 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 
 | # | Mòdul | Estat | Spec |
 |---|-------|-------|------|
-| 01 | Auth (JWT + RBAC) | ⬜ Pendent | specs/01-auth.md |
-| 02 | Vault (AES-256 credentials) | ⬜ Pendent | specs/02-vault.md |
-| 03 | Leads CRM | ⬜ Pendent | specs/03-leads.md |
-| 04 | Engine (Landing Renderer) | ⬜ Pendent | specs/04-engine.md |
-| 05 | Factory (Landing Editor) | ⬜ Pendent | specs/05-factory.md |
-| 06 | Assets (Storage) | ⬜ Pendent | specs/06-assets.md |
-| 07 | Billing (Pressupostos) | ⬜ Pendent | specs/07-billing.md |
+| 01 | Auth (JWT + RBAC) | ✅ Completat | specs/01-auth.md |
+| 02 | Vault (AES-256 credentials) | ✅ Completat | specs/02-vault.md |
+| 03 | Leads CRM | ✅ Completat | specs/03-leads.md |
+| 04 | Engine (Landing Renderer) | ✅ Completat | specs/04-engine.md |
+| 05 | Factory (Landing Editor) | ✅ Completat | specs/05-factory.md |
+| 06 | Assets (Storage) | ✅ Completat | specs/06-assets.md |
+| 07 | Billing (Pressupostos) | ✅ Completat | specs/07-billing.md |
 | 08 | FinOps (Holded) | ⬜ Pendent | specs/08-finops.md |
 | 09 | Payments (Stripe) | ⬜ Pendent | specs/09-payments.md |
-| 10 | Automations (n8n) | ⬜ Pendent | specs/10-automations.md |
+| 10 | Automations (n8n) | ✅ Completat | specs/10-automations.md |
 | 11 | Ops & Health | ⬜ Pendent | specs/11-ops.md |
 | 12 | Prospecting | ⬜ Pendent | specs/12-prospecting.md |
-| 13 | i18n + SEO + RGPD | ⬜ Pendent | specs/13-i18n-seo-rgpd.md |
-
-**Proper pas:** Generar i aprovar `specs/01-auth.md`
+| 13 | i18n + SEO + RGPD | ✅ Completat | specs/13-i18n-seo-rgpd.md |
+| 14 | Admin Frontend (CRUD usuaris/tenants) | ✅ Completat | specs/14-admin-frontend.md |
 
 ---
 
@@ -144,15 +143,18 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 
 ## Model de preus (referència per Billing)
 
-| Servei | Setup | Mensual |
-|--------|-------|---------|
-| WhatsApp Business | 50€ | — |
-| Micro-landing | 30€ | — |
-| Landing Pro | 80€ | — |
-| Bot IA bàsic | 40€ | — |
-| Bot IA avançat (RAG) | 100€ | — |
-| Domini + DNS + SSL | 60€ | — |
-| Automatització bàsica | 20€/u | — |
-| **Pla Bàsic** | — | 29€ |
-| **Pla Intermedi** | — | 49€ |
-| **Pla Avançat** | — | 99€ |
+Cada servei es paga una vegada (setup). No hi ha quotes mensuals recurrents. La tarifa d'enginyeria/hora és configurable via `ENGINEER_HOURLY_RATE` (defecte: 30 €/h). Cada client rep una oferta personalitzada per fases. Veure `specs/serveis-cataleg.md` per al catàleg complet.
+
+| Servei | Setup |
+|--------|-------|
+| Micro-landing | 30€ |
+| Landing Pro | 80€ |
+| Domini autogestionat | 30€ |
+| Domini gestionat (inclou 1r any) | 60€ |
+| WhatsApp Business API | 50€ |
+| Automatització bàsica (n8n) | 20€ |
+| Automatització avançada (n8n) | 60€ |
+| Bot IA bàsic | 40€ |
+| Bot IA avançat (RAG) | 100€ |
+| SMTP Corporatiu | 25€ |
+| Google Analytics | 25€ |
