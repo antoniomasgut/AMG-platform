@@ -61,3 +61,10 @@ app:
     max-file-size: 5242880
     thumbnail-width: 200
     thumbnail-height: 200
+
+  finops:
+    provider: ${FINOP_PROVIDER:mock}
+    holded:
+      api-url: https://api.holded.com/api/v1
+      webhook-secret: ${HOLDED_WEBHOOK_SECRET:}
+    default-due-days: 30
