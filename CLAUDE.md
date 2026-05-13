@@ -123,7 +123,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 07 | Billing (Pressupostos) | ✅ Completat | specs/07-billing.md |
 | 08 | FinOps (Holded) | ⬜ Pendent | specs/08-finops.md |
 | 09 | Payments (Stripe) | ⬜ Pendent | specs/09-payments.md |
-| 10 | Automations (n8n) | ⬜ Pendent | specs/10-automations.md |
+| 10 | Automations (n8n) | ✅ Completat | specs/10-automations.md |
 | 11 | Ops & Health | ⬜ Pendent | specs/11-ops.md |
 | 12 | Prospecting | ⬜ Pendent | specs/12-prospecting.md |
 | 13 | i18n + SEO + RGPD | ✅ Completat | specs/13-i18n-seo-rgpd.md |
