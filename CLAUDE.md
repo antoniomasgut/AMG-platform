@@ -143,15 +143,18 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 
 ## Model de preus (referència per Billing)
 
-| Servei | Setup | Mensual |
-|--------|-------|---------|
-| WhatsApp Business | 50€ | — |
-| Micro-landing | 30€ | — |
-| Landing Pro | 80€ | — |
-| Bot IA bàsic | 40€ | — |
-| Bot IA avançat (RAG) | 100€ | — |
-| Domini + DNS + SSL | 60€ | — |
-| Automatització bàsica | 20€/u | — |
-| **Pla Bàsic** | — | 29€ |
-| **Pla Intermedi** | — | 49€ |
-| **Pla Avançat** | — | 99€ |
+Cada servei es paga una vegada (setup). No hi ha quotes mensuals recurrents. La tarifa d'enginyeria/hora és configurable via `ENGINEER_HOURLY_RATE` (defecte: 30 €/h). Cada client rep una oferta personalitzada per fases. Veure `specs/serveis-cataleg.md` per al catàleg complet.
+
+| Servei | Setup |
+|--------|-------|
+| Micro-landing | 30€ |
+| Landing Pro | 80€ |
+| Domini autogestionat | 30€ |
+| Domini gestionat (inclou 1r any) | 60€ |
+| WhatsApp Business API | 50€ |
+| Automatització bàsica (n8n) | 20€ |
+| Automatització avançada (n8n) | 60€ |
+| Bot IA bàsic | 40€ |
+| Bot IA avançat (RAG) | 100€ |
+| SMTP Corporatiu | 25€ |
+| Google Analytics | 25€ |

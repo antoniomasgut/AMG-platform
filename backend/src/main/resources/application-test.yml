@@ -23,6 +23,8 @@ spring:
 app:
   cors:
     allowed-origins: "*"
+  storage:
+    path: /tmp/test-assets
 
 jwt:
   secret: dGVzdC1zZWNyZXQtdGhhdC1pcy1hdC1sZWFzdC0zMi1jaGFycy1sb25nLXNlY3JldA==

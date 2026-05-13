@@ -54,3 +54,10 @@ rate-limiting:
   max-attempts-per-email: 5
   max-attempts-per-ip: 20
   window-minutes: 15
+
+app:
+  storage:
+    path: ${STORAGE_PATH:/data/assets}
+    max-file-size: 5242880
+    thumbnail-width: 200
+    thumbnail-height: 200

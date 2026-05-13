@@ -5,5 +5,8 @@ public record UpdateTenantRequest(
         String slug,
         String email,
         String phone,
-        String address
+        String address,
+        String nif,
+        String contactPhone,
+        String preferredChannel
 ) {}

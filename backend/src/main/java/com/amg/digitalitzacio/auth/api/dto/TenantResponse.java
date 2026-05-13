@@ -10,6 +10,9 @@ public record TenantResponse(
         String email,
         String phone,
         String address,
+        String nif,
+        String contactPhone,
+        String preferredChannel,
         boolean isActive,
         Instant createdAt
 ) {}

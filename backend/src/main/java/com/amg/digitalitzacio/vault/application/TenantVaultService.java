@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Slf4j
@@ -27,6 +28,7 @@ public class TenantVaultService implements VaultService {
     private final TenantCredentialRepository tenantCredentialRepository;
     private final TenantServiceAddonRepository tenantServiceAddonRepository;
     private final CredentialAuditLogRepository credentialAuditLogRepository;
+    private final CommunicationRequestRepository communicationRequestRepository;
     private final VaultEncryption encryption;
     private final InvoiceService invoiceService;
     private final PaymentService paymentService;
@@ -315,6 +317,220 @@ public class TenantVaultService implements VaultService {
         }).toList();
 
         return new SetupResponse(profileSetups, addonSetups);
+    }
+
+    // --- Guided Configuration ---
+
+    @Override
+    @Transactional
+    public RequestInfoResponse requestClientInfo(UUID tenantId, UUID serviceId, RequestInfoRequest request) {
+        var ts = tenantServiceRepository.findByTenantIdAndServiceId(tenantId, serviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant service not found: " + serviceId));
+
+        if (ts.getStatus() != ServiceStatus.PENDING && ts.getStatus() != ServiceStatus.AWAITING_CLIENT) {
+            throw new IllegalArgumentException("Service is not in a configurable state: " + ts.getStatus());
+        }
+
+        // Look up the service definition for message generation
+        var svc = catalogServiceRepository.findById(ts.getServiceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Service definition not found"));
+
+        // Determine recipient and channel from tenant context
+        CommunicationChannel channel = CommunicationChannel.EMAIL; // default
+        String recipient = "client@unknown.com";
+
+        // Build message based on request type
+        String body;
+        String subject;
+        UUID fieldId = request.fieldId();
+
+        var reqType = RequestType.valueOf(request.requestType());
+        if (reqType == RequestType.REQUEST_CREDENTIAL && fieldId != null) {
+            var field = credentialFieldRepository.findById(fieldId).orElse(null);
+            var fieldLabel = field != null ? field.getLabel() : "desconegut";
+            body = request.customMessage() != null ? request.customMessage()
+                    : "Per configurar " + svc.getName() + " necessitam el camp " + fieldLabel + ".";
+            subject = "Configuració de " + svc.getName();
+        } else if (reqType == RequestType.REQUEST_PERMISSION) {
+            body = request.customMessage() != null ? request.customMessage()
+                    : "Dona'ns permís per continuar amb la configuració de " + svc.getName() + ".";
+            subject = "Permís requerit per " + svc.getName();
+        } else {
+            body = request.customMessage() != null ? request.customMessage()
+                    : "Necessitam més informació per configurar " + svc.getName() + ".";
+            subject = "Informació requerida per " + svc.getName();
+        }
+
+        var commRequest = CommunicationRequest.builder()
+                .tenantId(tenantId).tenantServiceId(ts.getId())
+                .channel(channel).recipient(recipient)
+                .subject(subject).body(body)
+                .status(CommunicationStatus.SENT)
+                .requestType(reqType).fieldId(fieldId)
+                .sentAt(Instant.now())
+                .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
+                .build();
+        commRequest = communicationRequestRepository.save(commRequest);
+
+        // Update service status to AWAITING_CLIENT
+        ts.setStatus(ServiceStatus.AWAITING_CLIENT);
+        ts.setStatusChangedAt(Instant.now());
+        tenantServiceRepository.save(ts);
+
+        log.info("Communication request {} sent for service {} (tenant {})", commRequest.getId(), serviceId, tenantId);
+
+        return new RequestInfoResponse(commRequest.getId(), channel.name(),
+                CommunicationStatus.SENT.name(),
+                "Missatge enviat a " + recipient, commRequest.getExpiresAt());
+    }
+
+    @Override
+    @Transactional
+    public CommunicationRespondResponse handleClientResponse(UUID requestId, CommunicationRespondRequest request) {
+        var commReq = communicationRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Communication request not found: " + requestId));
+
+        commReq.setStatus(CommunicationStatus.RESPONDED);
+        commReq.setRespondedAt(Instant.now());
+        commReq.setResponseData(request.text());
+        communicationRequestRepository.save(commReq);
+
+        var ts = tenantServiceRepository.findById(commReq.getTenantServiceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant service not found"));
+
+        String action;
+        String serviceStatus;
+
+        if (commReq.getRequestType() == RequestType.REQUEST_CREDENTIAL && commReq.getFieldId() != null) {
+            // Store encrypted credential
+            var existingTc = tenantCredentialRepository.findByTenantIdAndFieldId(commReq.getTenantId(), commReq.getFieldId());
+            var tc = existingTc.orElseGet(() -> TenantCredential.builder()
+                    .tenantId(commReq.getTenantId()).fieldId(commReq.getFieldId()).build());
+            tc.setEncryptedValue(encryption.encrypt(request.text()));
+            tc.setIsSet(true);
+            tenantCredentialRepository.save(tc);
+
+            action = "credential_stored";
+            ts.setStatus(ServiceStatus.CONFIGURED);
+            ts.setStatusChangedAt(Instant.now());
+            tenantServiceRepository.save(ts);
+
+            // Check if all services in phase are configured → update phase status
+            if (ts.getPhaseId() != null) {
+                checkPhaseCompletion(commReq.getTenantId(), ts.getPhaseId());
+            }
+        } else if (commReq.getRequestType() == RequestType.REQUEST_PERMISSION) {
+            action = "permission_granted";
+            ts.setStatus(ServiceStatus.CONFIGURED);
+            ts.setStatusChangedAt(Instant.now());
+            tenantServiceRepository.save(ts);
+
+            if (ts.getPhaseId() != null) {
+                checkPhaseCompletion(commReq.getTenantId(), ts.getPhaseId());
+            }
+        } else {
+            action = "info_received_pending_admin";
+            ts.setStatus(ServiceStatus.AWAITING_CLIENT);
+            tenantServiceRepository.save(ts);
+        }
+
+        serviceStatus = ts.getStatus().name();
+        return new CommunicationRespondResponse(true, action, serviceStatus);
+    }
+
+    private void checkPhaseCompletion(UUID tenantId, UUID phaseId) {
+        var services = tenantServiceRepository.findByTenantIdAndPhaseId(tenantId, phaseId);
+        boolean allConfigured = services.stream()
+                .allMatch(ts -> ts.getStatus() == ServiceStatus.CONFIGURED || ts.getStatus() == ServiceStatus.VERIFIED);
+
+        if (allConfigured) {
+            // Update TenantProfile phaseStatus to AWAITING_CONFIRMATION
+            var phase = phaseRepository.findById(phaseId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Phase not found: " + phaseId));
+            var profileId = phase.getProfileId();
+
+            var tpOpt = tenantProfileRepository.findByTenantIdAndProfileId(tenantId, profileId);
+            tpOpt.ifPresent(tp -> {
+                tp.setPhaseStatus(PhaseStatus.AWAITING_CONFIRMATION);
+                tenantProfileRepository.save(tp);
+            });
+
+            log.info("Phase {} (tenant {}) completed configuration, awaiting client confirmation", phaseId, tenantId);
+        }
+    }
+
+    @Override
+    @Transactional
+    public ConfirmPhaseResponse confirmPhase(UUID tenantId, UUID profileId, ConfirmPhaseRequest request) {
+        var tp = tenantProfileRepository.findByTenantIdAndProfileId(tenantId, profileId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant profile not found"));
+
+        tp.setPhaseStatus(PhaseStatus.COMPLETED);
+        tenantProfileRepository.save(tp);
+
+        var phases = phaseRepository.findByProfileIdOrderBySortOrder(profileId);
+        ConfirmPhaseResponse.NextPhase nextPhase = null;
+        boolean profileCompleted = true;
+
+        // Find current phase index and check if there's a next phase
+        UUID currentPhaseId = null;
+        for (var phase : phases) {
+            var tphOpt = tenantPhaseRepository.findByTenantIdAndPhaseId(tenantId, phase.getId());
+            if (tphOpt.isPresent() && tphOpt.get().getImplementationStatus() != ImplementationStatus.COMPLETED) {
+                // Check if this is the current phase (first not-completed one)
+                if (currentPhaseId == null) {
+                    currentPhaseId = phase.getId();
+                    // This is the one being confirmed
+                    var tph = tphOpt.get();
+                    tph.setImplementationStatus(ImplementationStatus.COMPLETED);
+                    tph.setCompletedAt(Instant.now());
+                    tenantPhaseRepository.save(tph);
+                }
+            }
+        }
+
+        if (currentPhaseId == null) {
+            // Profile is completed
+            tp.setCompletedAt(Instant.now());
+            tenantProfileRepository.save(tp);
+            profileCompleted = true;
+        } else {
+            // Check if there's a next phase after the confirmed one
+            boolean foundCurrent = false;
+            for (var phase : phases) {
+                if (foundCurrent) {
+                    nextPhase = new ConfirmPhaseResponse.NextPhase(phase.getId(), phase.getName(), phase.getSortOrder());
+                    tp.setPhaseStatus(PhaseStatus.CONFIGURING);
+                    tenantProfileRepository.save(tp);
+
+                    // Verify the TenantPhase exists
+                    var nextTph = tenantPhaseRepository.findByTenantIdAndPhaseId(tenantId, phase.getId())
+                            .orElseGet(() -> {
+                                var newTph = TenantPhase.builder()
+                                        .tenantId(tenantId).profileId(profileId).phaseId(phase.getId()).build();
+                                return tenantPhaseRepository.save(newTph);
+                            });
+                    if (nextTph.getImplementationStatus() == null) {
+                        nextTph.setImplementationStatus(ImplementationStatus.NOT_STARTED);
+                        tenantPhaseRepository.save(nextTph);
+                    }
+                    profileCompleted = false;
+                    break;
+                }
+                if (phase.getId().equals(request.phaseId())) {
+                    foundCurrent = true;
+                }
+            }
+            if (nextPhase == null) {
+                // No next phase found, profile completed
+                tp.setCompletedAt(Instant.now());
+                tp.setPhaseStatus(PhaseStatus.COMPLETED);
+                tenantProfileRepository.save(tp);
+                profileCompleted = true;
+            }
+        }
+
+        return new ConfirmPhaseResponse(tp.getPhaseStatus().name(), nextPhase, profileCompleted);
     }
 
     @Override

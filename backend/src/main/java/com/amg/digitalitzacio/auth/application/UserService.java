@@ -57,7 +57,7 @@ public class UserService {
     }
 
     public Page<UserResponse> listUsers(Pageable pageable, Role role, UUID tenantId, String search) {
-        return userRepository.findAll(pageable).map(this::toResponse);
+        return userRepository.findAllFiltered(role, tenantId, search, pageable).map(this::toResponse);
     }
 
     public UserResponse getUser(UUID id) {

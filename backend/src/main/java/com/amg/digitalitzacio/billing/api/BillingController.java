@@ -6,8 +6,10 @@ import com.amg.digitalitzacio.billing.application.DiscountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,14 +31,17 @@ public class BillingController {
     }
 
     @GetMapping("/tenants/{tenantId}/budgets")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     public List<BudgetResponse> listBudgets(@PathVariable UUID tenantId,
                                              @RequestParam(required = false) String status,
                                              @RequestParam(defaultValue = "0") int page,
-                                             @RequestParam(defaultValue = "20") int size) {
+                                             @RequestParam(defaultValue = "20") int size,
+                                             @AuthenticationPrincipal UserPrincipal principal) {
         return billingService.listBudgets(tenantId, status, page, size);
     }
 
     @GetMapping("/tenants/{tenantId}/budgets/{id}")
+    @PreAuthorize("isAuthenticated()")
     public BudgetResponse getBudget(@PathVariable UUID id) {
         return billingService.getBudget(id, false);
     }
@@ -104,7 +109,9 @@ public class BillingController {
     // --- Dashboard ---
 
     @GetMapping("/tenants/{tenantId}/dashboard")
-    public DashboardResponse getDashboard(@PathVariable UUID tenantId) {
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public DashboardResponse getDashboard(@PathVariable UUID tenantId,
+                                          @AuthenticationPrincipal UserPrincipal principal) {
         return billingService.getDashboard(tenantId);
     }
 }

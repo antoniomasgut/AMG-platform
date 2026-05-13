@@ -20,6 +20,12 @@ public interface VaultService {
     void approveAddon(UUID tenantId, UUID serviceId);
     void removeAddon(UUID tenantId, UUID serviceId);
     SetupResponse getSetup(UUID tenantId, boolean includeClearValue);
+
+    // Guided configuration
+    RequestInfoResponse requestClientInfo(UUID tenantId, UUID serviceId, RequestInfoRequest request);
+    CommunicationRespondResponse handleClientResponse(UUID requestId, CommunicationRespondRequest request);
+    ConfirmPhaseResponse confirmPhase(UUID tenantId, UUID profileId, ConfirmPhaseRequest request);
+
     MonitoringResponse.InvoiceMonitoring getInvoiceMonitoring(UUID tenantId);
     MonitoringResponse.PaymentMonitoring getPaymentMonitoring(UUID tenantId);
     MonitoringResponse.PhaseMonitoring getPhaseMonitoring(UUID tenantId);

@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.auth.application;
 
 import com.amg.digitalitzacio.auth.api.dto.*;
+import com.amg.digitalitzacio.auth.domain.PreferredChannel;
 import com.amg.digitalitzacio.auth.domain.Tenant;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import jakarta.validation.Valid;
@@ -30,6 +31,11 @@ public class TenantService {
                 .email(request.email())
                 .phone(request.phone())
                 .address(request.address())
+                .nif(request.nif())
+                .contactPhone(request.contactPhone())
+                .preferredChannel(request.preferredChannel() != null
+                        ? PreferredChannel.valueOf(request.preferredChannel().toUpperCase())
+                        : null)
                 .isActive(true)
                 .build();
 
@@ -62,6 +68,10 @@ public class TenantService {
         if (request.email() != null) tenant.setEmail(request.email());
         if (request.phone() != null) tenant.setPhone(request.phone());
         if (request.address() != null) tenant.setAddress(request.address());
+        if (request.nif() != null) tenant.setNif(request.nif());
+        if (request.contactPhone() != null) tenant.setContactPhone(request.contactPhone());
+        if (request.preferredChannel() != null) tenant.setPreferredChannel(
+                PreferredChannel.valueOf(request.preferredChannel().toUpperCase()));
 
         tenant = tenantRepository.save(tenant);
         return toResponse(tenant);
@@ -71,6 +81,8 @@ public class TenantService {
         return new TenantResponse(
                 tenant.getId(), tenant.getName(), tenant.getSlug(),
                 tenant.getEmail(), tenant.getPhone(), tenant.getAddress(),
+                tenant.getNif(), tenant.getContactPhone(),
+                tenant.getPreferredChannel() != null ? tenant.getPreferredChannel().name() : null,
                 tenant.getIsActive(), tenant.getCreatedAt());
     }
 }

@@ -32,11 +32,13 @@ public class VaultController {
     }
 
     @GetMapping("/profiles")
+    @PreAuthorize("isAuthenticated()")
     public List<ProfileResponse> listProfiles() {
         return profileService.listProfiles();
     }
 
     @GetMapping("/profiles/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ProfileResponse getProfile(@PathVariable UUID id) {
         return profileService.getProfile(id);
     }
@@ -93,6 +95,7 @@ public class VaultController {
     }
 
     @GetMapping("/services")
+    @PreAuthorize("isAuthenticated()")
     public List<ProfileResponse.ServiceResponse> listServices() {
         return profileService.listServices();
     }
@@ -116,6 +119,7 @@ public class VaultController {
     // --- Budget ---
 
     @GetMapping("/tenants/{tenantId}/budget")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     public BudgetResponse calculateBudget(@PathVariable UUID tenantId,
                                            @RequestParam UUID profileId,
                                            @RequestParam(required = false) List<UUID> addonIds,
@@ -127,11 +131,13 @@ public class VaultController {
     // --- Phase lifecycle ---
 
     @PostMapping("/tenants/{tenantId}/phases/{phaseId}/approve")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ApprovePhaseResponse approvePhase(@PathVariable UUID tenantId, @PathVariable UUID phaseId) {
         return vaultService.approvePhase(tenantId, phaseId);
     }
 
     @PostMapping("/tenants/{tenantId}/phases/{phaseId}/reject")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void rejectPhase(@PathVariable UUID tenantId, @PathVariable UUID phaseId) {
         vaultService.rejectPhase(tenantId, phaseId);
@@ -168,6 +174,7 @@ public class VaultController {
     }
 
     @PostMapping("/tenants/{tenantId}/services/{serviceId}/verify")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public VerifyResponse verifyService(@PathVariable UUID tenantId, @PathVariable UUID serviceId) {
         boolean verified = vaultService.verifyService(tenantId, serviceId);
         return new VerifyResponse(verified, verified ? "Connexió correcta" : "Verificació fallida");
@@ -184,6 +191,7 @@ public class VaultController {
     }
 
     @PostMapping("/tenants/{tenantId}/addons/{serviceId}/approve")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void approveAddon(@PathVariable UUID tenantId, @PathVariable UUID serviceId) {
         vaultService.approveAddon(tenantId, serviceId);
@@ -196,9 +204,33 @@ public class VaultController {
         vaultService.removeAddon(tenantId, serviceId);
     }
 
+    // --- Guided Configuration ---
+
+    @PostMapping("/tenants/{tenantId}/services/{serviceId}/request")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public RequestInfoResponse requestClientInfo(@PathVariable UUID tenantId, @PathVariable UUID serviceId,
+                                                  @RequestBody RequestInfoRequest request) {
+        return vaultService.requestClientInfo(tenantId, serviceId, request);
+    }
+
+    @PostMapping("/communication/{requestId}/respond")
+    public CommunicationRespondResponse handleClientResponse(@PathVariable UUID requestId,
+                                                              @RequestBody CommunicationRespondRequest request) {
+        return vaultService.handleClientResponse(requestId, request);
+    }
+
+    @PostMapping("/tenants/{tenantId}/profiles/{profileId}/confirm-phase")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public ConfirmPhaseResponse confirmPhase(@PathVariable UUID tenantId, @PathVariable UUID profileId,
+                                              @RequestBody ConfirmPhaseRequest request,
+                                              @AuthenticationPrincipal UserPrincipal principal) {
+        return vaultService.confirmPhase(tenantId, profileId, request);
+    }
+
     // --- Setup & Monitoring ---
 
     @GetMapping("/tenants/{tenantId}/setup")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     public SetupResponse getSetup(@PathVariable UUID tenantId,
                                    @AuthenticationPrincipal UserPrincipal principal) {
         boolean includeClearValue = !"CLIENT".equals(principal.role());
@@ -206,11 +238,13 @@ public class VaultController {
     }
 
     @GetMapping("/tenants/{tenantId}/monitoring/invoices")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public MonitoringResponse.InvoiceMonitoring getInvoiceMonitoring(@PathVariable UUID tenantId) {
         return vaultService.getInvoiceMonitoring(tenantId);
     }
 
     @GetMapping("/tenants/{tenantId}/monitoring/payments")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public MonitoringResponse.PaymentMonitoring getPaymentMonitoring(@PathVariable UUID tenantId) {
         return vaultService.getPaymentMonitoring(tenantId);
     }

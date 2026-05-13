@@ -16,7 +16,7 @@ import java.util.UUID;
 public class CredentialField {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name = "service_id", nullable = false) private UUID serviceId;
-    @Column(nullable = false, length = 100) private String key;
+    @Column(name = "field_key", nullable = false, length = 100) private String key;
     @Column(nullable = false, length = 150) private String label;
     @Enumerated(EnumType.STRING) private FieldType type;
     @Builder.Default @Column(nullable = false) private Boolean isRequired = true;

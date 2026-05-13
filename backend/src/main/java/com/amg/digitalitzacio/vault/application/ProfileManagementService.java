@@ -117,6 +117,9 @@ public class ProfileManagementService implements ProfileService {
     @Override
     @Transactional
     public ProfileResponse addServiceToPhase(UUID phaseId, CreateServiceRequest request) {
+        if (request.salePrice().compareTo(request.cost()) <= 0) {
+            throw new IllegalArgumentException("salePrice must be greater than cost");
+        }
         var phase = phaseRepository.findById(phaseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Phase not found: " + phaseId));
         var svc = CatalogService.builder()
@@ -131,6 +134,9 @@ public class ProfileManagementService implements ProfileService {
     @Override
     @Transactional
     public ProfileResponse createAddonService(CreateAddonServiceRequest request) {
+        if (request.salePrice().compareTo(request.cost()) <= 0) {
+            throw new IllegalArgumentException("salePrice must be greater than cost");
+        }
         var svc = CatalogService.builder()
                 .phaseId(null).name(request.name()).slug(request.slug())
                 .description(request.description()).type(ServiceType.valueOf(request.type()))
@@ -174,26 +180,32 @@ public class ProfileManagementService implements ProfileService {
                 phaseTotal = phaseTotal.add(svc.getSalePrice());
                 phaseCost = phaseCost.add(svc.getCost());
                 budgetServices.add(new BudgetResponse.BudgetPhase.BudgetService(
-                        svc.getId(), svc.getName(), svc.getSalePrice(), svc.getCost()));
+                        svc.getId(), svc.getName(), svc.getSalePrice(),
+                        includeCost ? svc.getCost() : null));
             }
 
             budgetPhases.add(new BudgetResponse.BudgetPhase(
                     new BudgetResponse.BudgetPhase.PhaseRef(phase.getId(), phase.getName(), phase.getSortOrder()),
-                    budgetServices, phaseTotal, phaseCost, phaseTotal.subtract(phaseCost)));
+                    budgetServices, phaseTotal,
+                    includeCost ? phaseCost : null,
+                    includeCost ? phaseTotal.subtract(phaseCost) : null));
             total = total.add(phaseTotal);
             totalCost = totalCost.add(phaseCost);
         }
 
         var budgetAddons = new ArrayList<BudgetResponse.BudgetAddon>();
         for (var addon : addons) {
-            budgetAddons.add(new BudgetResponse.BudgetAddon(addon.getId(), addon.getName(), addon.getSalePrice(), addon.getCost()));
+            budgetAddons.add(new BudgetResponse.BudgetAddon(addon.getId(), addon.getName(), addon.getSalePrice(),
+                    includeCost ? addon.getCost() : null));
             total = total.add(addon.getSalePrice());
             totalCost = totalCost.add(addon.getCost());
         }
 
         return new BudgetResponse(
                 new BudgetResponse.ProfileRef(profile.getId(), profile.getName()),
-                budgetPhases, budgetAddons, total, totalCost, total.subtract(totalCost));
+                budgetPhases, budgetAddons, total,
+                includeCost ? totalCost : null,
+                includeCost ? total.subtract(totalCost) : null);
     }
 
     private ServiceProfile findProfile(UUID id) {

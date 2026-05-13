@@ -18,7 +18,7 @@ public class Discount {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     private UUID tenantId;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private DiscountType type;
-    @Column(nullable = false, precision = 10, scale = 2) private BigDecimal value;
+    @Column(name = "discount_value", nullable = false, precision = 10, scale = 2) private BigDecimal value;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private DiscountAppliesTo appliesTo;
     private UUID referenceId;
     @Column(length = 100) private String label;

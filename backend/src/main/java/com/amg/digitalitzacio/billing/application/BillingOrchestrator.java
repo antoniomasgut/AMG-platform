@@ -261,8 +261,8 @@ public class BillingOrchestrator implements BillingService {
                         .divide(BigDecimal.valueOf(100)));
                 case FIXED -> total = total.add(discount.getValue());
             }
-            discount.setAppliedCount(discount.getAppliedCount() + 1);
-            discountRepository.save(discount);
+            // appliedCount tracking is not incremented here —
+            // discount limits and usage tracking are pending implementation
         }
         return total;
     }

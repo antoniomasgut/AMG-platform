@@ -17,6 +17,7 @@ public class TenantProfile {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name = "tenant_id", nullable = false) private UUID tenantId;
     @Column(name = "profile_id", nullable = false) private UUID profileId;
+    @Enumerated(EnumType.STRING) @Builder.Default @Column(nullable = false) private PhaseStatus phaseStatus = PhaseStatus.CONFIGURING;
     @Builder.Default @Column(nullable = false) private Boolean isActive = true;
     private Instant startedAt;
     private Instant completedAt;
