@@ -107,21 +107,21 @@ Prefix base: `/api/v1/leads`
 
 | Mètode | Ruta | Descripció | Rols |
 |--------|------|-----------|------|
-| POST | /leads | Crear lead | Tots autenticats |
-| GET | /leads | Llistar leads (paginate, filter) | Tots autenticats |
-| GET | /leads/stats | Estadístiques del pipeline | Tots autenticats |
-| GET | /leads/{id} | Veure lead | Tots autenticats (propi tenant) |
-| PUT | /leads/{id} | Actualitzar lead | Tots autenticats (propi tenant) |
-| DELETE | /leads/{id} | Soft-delete lead | SUPER_ADMIN, ADMIN |
-| PATCH | /leads/{id}/stage | Canviar etapa del pipeline | Tots autenticats |
+| POST | /api/v1/leads | Crear lead | Tots autenticats |
+| GET | /api/v1/leads | Llistar leads (paginate, filter) | Tots autenticats |
+| GET | /api/v1/leads/stats | Estadístiques del pipeline | Tots autenticats |
+| GET | /api/v1/leads/{id} | Veure lead | Tots autenticats (propi tenant) |
+| PUT | /api/v1/leads/{id} | Actualitzar lead | Tots autenticats (propi tenant) |
+| DELETE | /api/v1/leads/{id} | Soft-delete lead | SUPER_ADMIN, ADMIN |
+| PATCH | /api/v1/leads/{id}/stage | Canviar etapa del pipeline | Tots autenticats |
 
 ### 4.2 Activitats
 
 | Mètode | Ruta | Descripció | Rols |
 |--------|------|-----------|------|
-| GET | /leads/{leadId}/activities | Llistar activitats d'un lead | Tots autenticats |
-| POST | /leads/{leadId}/activities | Crear activitat | Tots autenticats |
-| PATCH | /leads/{leadId}/activities/{activityId}/complete | Completar tasca | Tots autenticats |
+| GET | /api/v1/leads/{leadId}/activities | Llistar activitats d'un lead | Tots autenticats |
+| POST | /api/v1/leads/{leadId}/activities | Crear activitat | Tots autenticats |
+| PATCH | /api/v1/leads/{leadId}/activities/{activityId}/complete | Completar tasca | Tots autenticats |
 
 ### 4.3 Detall d'endpoints
 

@@ -232,7 +232,7 @@ app:
 | Mòdul | Dependència | Tipus |
 |-------|-----------|-------|
 | Mòdul 01 (Auth) | Autenticació JWT | Forta |
-| Mòdul 05 (Factory) | Consumeix Assets per al selector d'imatges | Forta |
+| Mòdul 05 (Factory) | Consumit per Factory (selector d'imatges) | Forta |
 
 ---
 

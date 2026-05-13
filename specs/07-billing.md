@@ -28,7 +28,7 @@
 - Acceptació i rebutjament públic via token (sense JWT)
 - Cancel·lació de pressupostos (DRAFT o SENT)
 - Dashboard de facturació per tenant
-- Integració amb Vault (approvePhase en acceptar pressupost)
+- Integració amb Vault (confirm-phase en acceptar pressupost)
 
 ### 2.2 Funcionalitats excloses
 
@@ -86,7 +86,7 @@
 | id | UUID | @Id @GeneratedValue | |
 | budgetId | UUID | @Column(nullable=false) | FK a Budget |
 | phaseId | UUID | @Column | FK lògica a Phase (null si add-on) |
-| serviceId | UUID | @Column(nullable=false) | FK lògica a CatalogService |
+| serviceId | UUID | @Column(nullable=false) | FK lògica a Service (catàleg del Mòdul 02 Vault) |
 | serviceName | String(100) | @Column | Denormalitzat del catàleg |
 | quantity | Integer | @Builder.Default | 1 |
 | unitPrice | BigDecimal(10,2) | @Column(nullable=false) | Preu en creació (snapshot) |
@@ -136,29 +136,29 @@ Prefix base: `/api/v1/billing`
 
 | Mètode | Ruta | Descripció | Rols |
 |--------|------|-----------|------|
-| POST | /billing/tenants/{tenantId}/budgets | Crear pressupost | SUPER_ADMIN, ADMIN |
-| GET | /billing/tenants/{tenantId}/budgets | Llistar pressupostos | Tots autenticats |
-| GET | /billing/tenants/{tenantId}/budgets/{id} | Veure pressupost | Tots autenticats |
-| PUT | /billing/budgets/{id} | Actualitzar (només DRAFT) | SUPER_ADMIN, ADMIN |
-| DELETE | /billing/budgets/{id} | Cancel·lar | SUPER_ADMIN |
-| POST | /billing/budgets/{id}/send | Enviar (genera token) | SUPER_ADMIN, ADMIN |
-| POST | /billing/budgets/accept?token= | Acceptar (públic) | Públic (token) |
-| POST | /billing/budgets/reject?token= | Rebutjar (públic) | Públic (token) |
+| POST | /api/v1/billing/tenants/{tenantId}/budgets | Crear pressupost | SUPER_ADMIN, ADMIN |
+| GET | /api/v1/billing/tenants/{tenantId}/budgets | Llistar pressupostos | Tots autenticats |
+| GET | /api/v1/billing/tenants/{tenantId}/budgets/{id} | Veure pressupost | Tots autenticats |
+| PUT | /api/v1/billing/budgets/{id} | Actualitzar (només DRAFT) | SUPER_ADMIN, ADMIN |
+| DELETE | /api/v1/billing/budgets/{id} | Cancel·lar | SUPER_ADMIN |
+| POST | /api/v1/billing/budgets/{id}/send | Enviar (genera token) | SUPER_ADMIN, ADMIN |
+| POST | /api/v1/billing/budgets/accept?token= | Acceptar (públic) | Públic (token) |
+| POST | /api/v1/billing/budgets/reject?token= | Rebutjar (públic) | Públic (token) |
 
 ### 4.2 Descomptes
 
 | Mètode | Ruta | Descripció | Rols |
 |--------|------|-----------|------|
-| POST | /billing/discounts | Crear descompte | SUPER_ADMIN, ADMIN |
-| GET | /billing/discounts | Llistar descomptes | SUPER_ADMIN, ADMIN |
-| PUT | /billing/discounts/{id} | Actualitzar | SUPER_ADMIN |
-| DELETE | /billing/discounts/{id} | Desactivar | SUPER_ADMIN |
+| POST | /api/v1/billing/discounts | Crear descompte | SUPER_ADMIN, ADMIN |
+| GET | /api/v1/billing/discounts | Llistar descomptes | SUPER_ADMIN, ADMIN |
+| PUT | /api/v1/billing/discounts/{id} | Actualitzar | SUPER_ADMIN |
+| DELETE | /api/v1/billing/discounts/{id} | Desactivar | SUPER_ADMIN |
 
 ### 4.3 Dashboard
 
 | Mètode | Ruta | Descripció | Rols |
 |--------|------|-----------|------|
-| GET | /billing/tenants/{tenantId}/dashboard | Dashboard facturació | Tots autenticats |
+| GET | /api/v1/billing/tenants/{tenantId}/dashboard | Dashboard facturació | Tots autenticats |
 
 ### 4.4 Detall d'endpoints
 
@@ -290,7 +290,7 @@ Els tests d'integració es troben a `backend/src/test/java/com/amg/digitalitzaci
 | Mòdul | Dependència | Tipus |
 |-------|-----------|-------|
 | Mòdul 01 (Auth) | Autenticació JWT + RBAC | Forta |
-| Mòdul 02 (Vault) | ServiceProfile, VaultService.approvePhase | Forta |
+| Mòdul 02 (Vault) | ServiceProfile, confirm-phase endpoint | Forta |
 
 ---
 

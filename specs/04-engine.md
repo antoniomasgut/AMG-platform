@@ -80,7 +80,7 @@ Defineix una landing page d'un tenant.
 |------|-------|-----------|------------|
 | id | UUID | @Id @GeneratedValue | |
 | tenantId | UUID | @Column(nullable=false) | FK a Tenant |
-| serviceId | UUID | @Column(nullable=false) | FK a CatalogService (el servei LANDING associat) |
+| serviceId | UUID | @Column(nullable=false) | FK a Service (el servei LANDING associat, definit al Mòdul 02 Vault) |
 | title | String(200) | @Column(nullable=false) | Títol de la landing |
 | slug | String(100) | @Column(nullable=false) | URL-friendly (ex: "restaurant-can-pedro") |
 | metaDescription | String(300) | @Column | Meta description per SEO |
@@ -271,7 +271,7 @@ Response 204
 
 #### `POST /api/v1/engine/landings/{landingId}/versions` — Crear versió (esborrany)
 
-**Rols:** SUPER_ADMIN, ADMIN
+**Rols:** SUPER_ADMIN, ADMIN, CLIENT (propi)
 
 Request:
 ```json
@@ -285,7 +285,7 @@ Response 201: versió creada amb status `DRAFT`
 
 #### `PUT /api/v1/engine/landings/{landingId}/versions/{versionId}` — Actualitzar versió esborrany
 
-**Rols:** SUPER_ADMIN, ADMIN
+**Rols:** SUPER_ADMIN, ADMIN, CLIENT (propi)
 
 Només es pot actualitzar si status = `DRAFT`.
 
@@ -444,22 +444,22 @@ Crea un `ContactLead` amb metadades de consentiment.
 
 | Mètode | Ruta | Descripció | Auth | Rols |
 |--------|------|-----------|------|------|
-| POST | /engine/tenants/{tId}/landings | Crear landing | JWT | SUPER_ADMIN, ADMIN |
-| GET | /engine/tenants/{tId}/landings | Llistar landings | JWT | Tots |
-| GET | /engine/tenants/{tId}/landings/{id} | Veure landing | JWT | Tots |
-| PUT | /engine/tenants/{tId}/landings/{id} | Actualitzar metadades | JWT | SUPER_ADMIN, ADMIN |
-| DELETE | /engine/tenants/{tId}/landings/{id} | Eliminar landing | JWT | SUPER_ADMIN, ADMIN |
-| POST | /engine/landings/{lId}/versions | Nova versió | JWT | SUPER_ADMIN, ADMIN |
-| PUT | /engine/landings/{lId}/versions/{vId} | Actualitzar esborrany | JWT | SUPER_ADMIN, ADMIN |
-| POST | /engine/landings/{lId}/publish | Publicar | JWT | SUPER_ADMIN, ADMIN |
-| POST | /engine/landings/{lId}/unpublish | Despublicar | JWT | SUPER_ADMIN, ADMIN |
-| PUT | /engine/landings/{lId}/domain | Configurar domini | JWT | SUPER_ADMIN, ADMIN |
-| GET | /engine/landings/{lId}/domain/verify | Verificar domini | JWT | SUPER_ADMIN, ADMIN |
-| POST | /engine/landings/{lId}/domain/status | Actualitzar estat domini | JWT | SUPER_ADMIN, ADMIN |
-| DELETE | /engine/landings/{lId}/domain | Desconfigurar domini | JWT | SUPER_ADMIN, ADMIN |
-| GET | /engine/render/{slug} | Renderitzar landing | Pública | — |
-| GET | /engine/render/{slug}/sitemap.xml | Sitemap | Pública | — |
-| POST | /engine/render/{slug}/contact | Enviar formulari | Pública | — |
+| POST | /api/v1/engine/tenants/{tId}/landings | Crear landing | JWT | SUPER_ADMIN, ADMIN |
+| GET | /api/v1/engine/tenants/{tId}/landings | Llistar landings | JWT | Tots |
+| GET | /api/v1/engine/tenants/{tId}/landings/{id} | Veure landing | JWT | Tots |
+| PUT | /api/v1/engine/tenants/{tId}/landings/{id} | Actualitzar metadades | JWT | SUPER_ADMIN, ADMIN |
+| DELETE | /api/v1/engine/tenants/{tId}/landings/{id} | Eliminar landing | JWT | SUPER_ADMIN, ADMIN |
+| POST | /api/v1/engine/landings/{lId}/versions | Nova versió | JWT | SUPER_ADMIN, ADMIN, CLIENT |
+| PUT | /api/v1/engine/landings/{lId}/versions/{vId} | Actualitzar esborrany | JWT | SUPER_ADMIN, ADMIN, CLIENT |
+| POST | /api/v1/engine/landings/{lId}/publish | Publicar | JWT | SUPER_ADMIN, ADMIN |
+| POST | /api/v1/engine/landings/{lId}/unpublish | Despublicar | JWT | SUPER_ADMIN, ADMIN |
+| PUT | /api/v1/engine/landings/{lId}/domain | Configurar domini | JWT | SUPER_ADMIN, ADMIN |
+| GET | /api/v1/engine/landings/{lId}/domain/verify | Verificar domini | JWT | SUPER_ADMIN, ADMIN |
+| POST | /api/v1/engine/landings/{lId}/domain/status | Actualitzar estat domini | JWT | SUPER_ADMIN, ADMIN |
+| DELETE | /api/v1/engine/landings/{lId}/domain | Desconfigurar domini | JWT | SUPER_ADMIN, ADMIN |
+| GET | /api/v1/engine/render/{slug} | Renderitzar landing | Pública | — |
+| GET | /api/v1/engine/render/{slug}/sitemap.xml | Sitemap | Pública | — |
+| POST | /api/v1/engine/render/{slug}/contact | Enviar formulari | Pública | — |
 
 ---
 

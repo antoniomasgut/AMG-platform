@@ -736,27 +736,27 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 
 | Mètode | Ruta | Descripció | Rols |
 |--------|------|-----------|------|
-| POST | /vault/profiles | Crear perfil | SUPER_ADMIN |
-| GET | /vault/profiles | Llistar perfils | Tots |
-| GET | /vault/profiles/{id} | Veure perfil complert | Tots |
-| PUT | /vault/profiles/{id} | Actualitzar perfil | SUPER_ADMIN |
-| DELETE | /vault/profiles/{id} | Desactivar perfil | SUPER_ADMIN |
-| POST | /vault/profiles/{pId}/phases | Afegir fase | SUPER_ADMIN |
-| PUT | /vault/profiles/{pId}/phases/{phId} | Actualitzar fase | SUPER_ADMIN |
-| DELETE | /vault/profiles/{pId}/phases/{phId} | Eliminar fase | SUPER_ADMIN |
-| POST | /vault/phases/{phId}/services | Afegir servei a fase | SUPER_ADMIN |
-| POST | /vault/services | Crear servei add-on | SUPER_ADMIN |
-| GET | /vault/services | Llistar serveis | Tots |
-| GET | /vault/tenants/{tId}/budget | Generar pressupost | SUPER_ADMIN, ADMIN, CLIENT (propi) |
-| POST | /vault/tenants/{tId}/profiles/{pId} | Assignar perfil | SUPER_ADMIN, ADMIN |
-| DELETE | /vault/tenants/{tId}/profiles/{pId} | Desassignar perfil | SUPER_ADMIN, ADMIN |
-| GET | /vault/tenants/{tId}/setup | Estat configuració | SUPER_ADMIN, ADMIN, CLIENT (propi) |
-| PUT | /vault/tenants/{tId}/services/{sId}/fields/{fId} | Establir credencial | SUPER_ADMIN, ADMIN |
-| POST | /vault/tenants/{tId}/services/{sId}/verify | Verificar servei | SUPER_ADMIN, ADMIN |
-| POST | /vault/tenants/{tId}/services/{sId}/request | Sol·licitar info al client | SUPER_ADMIN, ADMIN |
-| POST | /vault/communication/{reqId}/respond | Webhook resposta client | Intern (API Key) |
-| POST | /vault/tenants/{tId}/profiles/{pId}/confirm-phase | Confirmar fase | CLIENT (propi), ADMIN |
-| POST | /vault/tenants/{tId}/addons/{sId} | Afegir add-on | SUPER_ADMIN, ADMIN |
+| POST | /api/v1/vault/profiles | Crear perfil | SUPER_ADMIN |
+| GET | /api/v1/vault/profiles | Llistar perfils | Tots |
+| GET | /api/v1/vault/profiles/{id} | Veure perfil complert | Tots |
+| PUT | /api/v1/vault/profiles/{id} | Actualitzar perfil | SUPER_ADMIN |
+| DELETE | /api/v1/vault/profiles/{id} | Desactivar perfil | SUPER_ADMIN |
+| POST | /api/v1/vault/profiles/{pId}/phases | Afegir fase | SUPER_ADMIN |
+| PUT | /api/v1/vault/profiles/{pId}/phases/{phId} | Actualitzar fase | SUPER_ADMIN |
+| DELETE | /api/v1/vault/profiles/{pId}/phases/{phId} | Eliminar fase | SUPER_ADMIN |
+| POST | /api/v1/vault/phases/{phId}/services | Afegir servei a fase | SUPER_ADMIN |
+| POST | /api/v1/vault/services | Crear servei add-on | SUPER_ADMIN |
+| GET | /api/v1/vault/services | Llistar serveis | Tots |
+| GET | /api/v1/vault/tenants/{tId}/budget | Generar pressupost | SUPER_ADMIN, ADMIN, CLIENT (propi) |
+| POST | /api/v1/vault/tenants/{tId}/profiles/{pId} | Assignar perfil | SUPER_ADMIN, ADMIN |
+| DELETE | /api/v1/vault/tenants/{tId}/profiles/{pId} | Desassignar perfil | SUPER_ADMIN, ADMIN |
+| GET | /api/v1/vault/tenants/{tId}/setup | Estat configuració | SUPER_ADMIN, ADMIN, CLIENT (propi) |
+| PUT | /api/v1/vault/tenants/{tId}/services/{sId}/fields/{fId} | Establir credencial | SUPER_ADMIN, ADMIN |
+| POST | /api/v1/vault/tenants/{tId}/services/{sId}/verify | Verificar servei | SUPER_ADMIN, ADMIN |
+| POST | /api/v1/vault/tenants/{tId}/services/{sId}/request | Sol·licitar info al client | SUPER_ADMIN, ADMIN |
+| POST | /api/v1/vault/communication/{reqId}/respond | Webhook resposta client | Intern (API Key) |
+| POST | /api/v1/vault/tenants/{tId}/profiles/{pId}/confirm-phase | Confirmar fase | CLIENT (propi), ADMIN |
+| POST | /api/v1/vault/tenants/{tId}/addons/{sId} | Afegir add-on | SUPER_ADMIN, ADMIN |
 | DELETE | /vault/tenants/{tId}/addons/{sId} | Eliminar add-on | SUPER_ADMIN, ADMIN |
 
 ---

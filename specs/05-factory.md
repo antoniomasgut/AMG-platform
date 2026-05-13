@@ -6,7 +6,7 @@
 >
 > **Canvis v1.1:**
 > - Corregides rutes API a `/api/v1/engine/...` (vs `/engine/...`)
-> - Corregides rutes frontend (sense `[locale]`)
+> - Rutes frontend corregides: ara usen `/[locale]/portal/...` (Mòdul 13 i18n)
 > - Afegits permisos CLIENT per a endpoints de versions (edició d'esborranys)
 > - Referència a `specs/06-assets.md`
 
@@ -204,11 +204,13 @@ FactoryLayout
 
 ### 5.3 Rutes del frontend
 
+Rutes dins del grup `/[locale]/portal/` (seguint l'estructura del Mòdul 13 i18n):
+
 ```
-/portal/landings                     → Llistat de landings del tenant
-/portal/landings/new                 → Selector de plantilla
-/portal/landings/[id]/edit           → Editor complert
-/portal/landings/[id]/preview        → Previsualització (pestanya nova)
+/[locale]/portal/landings                     → Llistat de landings del tenant
+/[locale]/portal/landings/new                 → Selector de plantilla
+/[locale]/portal/landings/[id]/edit           → Editor complert
+/[locale]/portal/landings/[id]/preview        → Previsualització (pestanya nova)
 ```
 
 ---
@@ -217,7 +219,7 @@ FactoryLayout
 
 ### 6.1 Crear landing nova
 
-1. Usuari va a `/portal/landings/new`
+1. Usuari va a `/[locale]/portal/landings/new`
 2. Selecciona una plantilla (o "des de zero")
 3. Es crea la landing via Engine API amb versió esborrany
 4. Es redirigeix a `/portal/landings/[id]/edit`
@@ -304,7 +306,6 @@ FactoryLayout
 | Mòdul 04 (Engine) | CRUD versions, publicar/despublicar | Forta |
 | Mòdul 06 Assets | `specs/06-assets.md` | Pujar i seleccionar imatges | Forta |
 | Mòdul 13 (i18n) | Traduccions de l'editor als 4 idiomes | Forta |
-| Mòdul 14 (Admin) | Llistat de landings al portal | Forta |
 
 ---
 
