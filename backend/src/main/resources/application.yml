@@ -68,3 +68,8 @@ app:
       api-url: https://api.holded.com/api/v1
       webhook-secret: ${HOLDED_WEBHOOK_SECRET:}
     default-due-days: 30
+
+  payments:
+    provider: ${PAYMENTS_PROVIDER:mock}
+    success-url: https://portal.amg.cat/payments/success
+    cancel-url: https://portal.amg.cat/payments/cancel
