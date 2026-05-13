@@ -1,0 +1,9 @@
+package com.amg.digitalitzacio.billing.api.dto;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+public record CreateBudgetRequest(UUID profileId, List<UUID> phaseIds, List<UUID> addonIds,
+                                   String notes, String clientNotes, List<UUID> discountIds,
+                                   LocalDate validUntil) {}
