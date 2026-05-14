@@ -1,0 +1,259 @@
+{
+  "common": {
+    "amg": "AMG",
+    "tagline": "Digitale Technik",
+    "back": "Zurück",
+    "send": "Senden",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Fertig"
+  },
+  "nav": {
+    "services": "Leistungen",
+    "pricing": "Preise",
+    "howItWorks": "So funktioniert es",
+    "contact": "Kontakt",
+    "login": "Anmelden",
+    "portal": "Mein Portal"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Portal v2 · Jetzt verfügbar",
+      "title": "KMU AUTOMATISIERT",
+      "titleAccent": "IN WENIGER ALS 48H.",
+      "subtitle": "Bots, Landings, Workflows und Rechnungen — ein verwaltetes Portal für Unternehmen auf Mallorca.",
+      "cta": "ZUM PORTAL",
+      "ctaSecondary": "Leistungen ansehen",
+      "stats": {
+        "uptime": "99,98% Verfügbarkeit",
+        "clients": "48 aktive KMU",
+        "automations": "+200 Automatisierungen"
+      }
+    },
+    "problem": {
+      "badge": "Das Problem",
+      "title": "ZU VIELE TOOLS,\nZU VIEL ZEITVERLUST.",
+      "description": "Die meisten KMU verwalten ihr digitales Geschäft mit verstreuten Tools: ein Anbieter für die Website, ein anderer für WhatsApp, ein anderer für Rechnungen... Das Ergebnis ist Zeitverlust, hohe Kosten und kein Gesamtüberblick.",
+      "items": [
+        { "icon": "⏳", "text": "Stunden verloren beim Wechseln zwischen Plattformen" },
+        { "icon": "💸", "text": "Mehrere Abonnements ohne Integration" },
+        { "icon": "📊", "text": "Kein einheitlicher Geschäftsüberblick" }
+      ]
+    },
+    "services": {
+      "badge": "Leistungen",
+      "title": "ALLES WAS SIE BRAUCHEN,\nIN EINEM PORTAL.",
+      "subtitle": "Von der Landing bis zur Rechnung, automatisiert.",
+      "items": [
+        {
+          "icon": "🌐",
+          "title": "Websites & Landings",
+          "description": "Professionelle Landing Pages, optimiert für Conversion. Premium-Design, SEO inklusive.",
+          "price": "Ab 30€"
+        },
+        {
+          "icon": "🤖",
+          "title": "Automatisierungen",
+          "description": "n8n-Workflows zur Automatisierung von WhatsApp, E-Mail, CRM und vielem mehr.",
+          "price": "Ab 20€"
+        },
+        {
+          "icon": "🧾",
+          "title": "Digitale Rechnungen",
+          "description": "Angebote und Rechnungen als PDF, integriert mit Holded. Kein Papierkram.",
+          "price": "Inklusive"
+        },
+        {
+          "icon": "🔒",
+          "title": "Domain & E-Mail",
+          "description": "Eigene Domain, Firmen-E-Mail und SSL-Zertifikat. Alles von uns verwaltet.",
+          "price": "Ab 30€"
+        }
+      ]
+    },
+    "howItWorks": {
+      "badge": "Prozess",
+      "title": "IN 3 SCHRITTEN\nZU IHREM DIGITALEN UNTERNEHMEN.",
+      "steps": [
+        {
+          "number": "01",
+          "title": "Sie erklären uns Ihr Unternehmen",
+          "description": "Ein 30-minütiges Gespräch, um Ihre Bedürfnisse und Ziele zu verstehen."
+        },
+        {
+          "number": "02",
+          "title": "Sie erhalten Ihr persönliches Angebot",
+          "description": "Detailliertes phasenweises Angebot, keine versteckten Gebühren oder monatlichen Kosten."
+        },
+        {
+          "number": "03",
+          "title": "Live in 48h",
+          "description": "Ihr Portal aktiv, Ihre Automatisierungen laufen. Sie haben alles unter Kontrolle."
+        }
+      ]
+    },
+    "pricing": {
+      "badge": "Preise",
+      "title": "KEINE ÜBERRASCHUNGEN.\nKEINE ABONNEMENTS.",
+      "subtitle": "Einmal zahlen. Für immer Ihres.",
+      "note": "Alle Preise sind Einrichtungsgebühren (Einmalzahlung). Keine monatlich wiederkehrenden Gebühren.",
+      "items": [
+        { "service": "Micro-Landing", "price": "30€" },
+        { "service": "Landing Pro", "price": "80€" },
+        { "service": "Selbst verwaltete Domain", "price": "30€" },
+        { "service": "Verwaltete Domain (inkl. 1. Jahr)", "price": "60€" },
+        { "service": "WhatsApp Business API", "price": "50€" },
+        { "service": "Basis-Automatisierung (n8n)", "price": "20€" },
+        { "service": "Erweiterte Automatisierung (n8n)", "price": "60€" },
+        { "service": "Basis-KI-Bot", "price": "40€" },
+        { "service": "Erweiterter KI-Bot (RAG)", "price": "100€" },
+        { "service": "Firmen-SMTP", "price": "25€" },
+        { "service": "Google Analytics", "price": "25€" }
+      ]
+    },
+    "cta": {
+      "title": "BEREIT, IHR UNTERNEHMEN\nZU AUTOMATISIEREN?",
+      "subtitle": "Sprechen wir. Erste Beratung kostenlos und unverbindlich.",
+      "button": "JETZT KONTAKTIEREN",
+      "buttonSecondary": "ZUM PORTAL"
+    },
+    "footer": {
+      "description": "Digitalisierungsplattform für lokale Unternehmen auf Mallorca.",
+      "legal": "Rechtliches",
+      "links": {
+        "avisLegal": "Impressum",
+        "privacitat": "Datenschutz",
+        "cookies": "Cookies",
+        "termes": "AGB"
+      },
+      "contact": "Kontakt",
+      "copyright": "AMG Digitalització. Alle Rechte vorbehalten."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "PORTAL-ZUGANG",
+      "subtitle": "Wir senden Ihnen einen Magic Link per E-Mail. Kein Passwort nötig.",
+      "emailLabel": "Firmen-E-Mail",
+      "emailPlaceholder": "sie@unternehmen.com",
+      "sendMagicLink": "MAGIC LINK SENDEN",
+      "sending": "WIRD GESENDET...",
+      "orWithPassword": "oder mit Passwort",
+      "usePassword": "Passwort verwenden",
+      "passwordTitle": "PASSWORT",
+      "passwordSubtitle": "Geben Sie Ihr Passwort ein für",
+      "passwordLabel": "Passwort",
+      "enter": "ANMELDEN",
+      "entering": "ANMELDEN...",
+      "forgotPassword": "PASSWORT VERGESSEN?",
+      "back": "← ZURÜCK",
+      "linkSent": "Link gesendet",
+      "checkEmail": "PRÜFEN SIE IHRE E-MAIL",
+      "linkSentTo": "Wir haben einen Zugangslink gesendet an",
+      "linkExpires": "Link läuft ab in",
+      "minutes": "15 min",
+      "checkSpam": "Prüfen Sie den Spam-Ordner, wenn Sie es nicht sehen.",
+      "resendLink": "LINK ERNEUT SENDEN",
+      "useOtherEmail": "← ANDERE E-MAIL VERWENDEN",
+      "errors": {
+        "incorrectCredentials": "Falsche Anmeldedaten",
+        "accountLocked": "Konto gesperrt. Versuchen Sie es später oder setzen Sie Ihr Passwort zurück.",
+        "tooManyAttempts": "Zu viele Versuche. Versuchen Sie es in einigen Minuten erneut.",
+        "loginError": "Anmeldefehler",
+        "sendError": "Fehler beim Senden des Links",
+        "emailRequired": "Geben Sie zuerst Ihre E-Mail ein"
+      }
+    },
+    "forgotPassword": {
+      "badge": "Passwort zurücksetzen",
+      "title": "PASSWORT ZURÜCKSETZEN",
+      "subtitle": "Geben Sie Ihre E-Mail ein und wir senden einen Link zum Zurücksetzen des Passworts.",
+      "emailLabel": "Firmen-E-Mail",
+      "sendLink": "LINK SENDEN",
+      "sending": "WIRD GESENDET...",
+      "linkSentBadge": "Link gesendet",
+      "checkEmail": "PRÜFEN SIE IHRE E-MAIL",
+      "emailSentTo": "Falls die E-Mail existiert, erhalten Sie einen Wiederherstellungslink an",
+      "linkExpires": "Link läuft ab in",
+      "minutes": "30 min",
+      "checkSpam": "Prüfen Sie den Spam-Ordner, wenn Sie es nicht sehen.",
+      "backToLogin": "← ZURÜCK ZUM LOGIN",
+      "error": "Fehler beim Senden der Anfrage"
+    },
+    "resetPassword": {
+      "badge": "Neues Passwort",
+      "title": "PASSWORT ZURÜCKSETZEN",
+      "subtitle": "Geben Sie Ihr neues Passwort ein.",
+      "newPasswordLabel": "Neues Passwort",
+      "confirmLabel": "Passwort bestätigen",
+      "update": "PASSWORT AKTUALISIEREN",
+      "updating": "WIRD AKTUALISIERT...",
+      "invalidLink": "UNGÜLTIGER LINK",
+      "invalidLinkText": "Dieser Wiederherstellungslink ist ungültig oder abgelaufen.",
+      "backToLogin": "ZURÜCK ZUM LOGIN",
+      "successTitle": "PASSWORT AKTUALISIERT",
+      "successText": "Weiterleitung zum Login...",
+      "goToLogin": "ZUM LOGIN",
+      "errors": {
+        "invalidToken": "Ungültiger oder abgelaufener Wiederherstellungslink",
+        "minLength": "Das Passwort muss mindestens 4 Zeichen haben",
+        "mismatch": "Passwörter stimmen nicht überein",
+        "generic": "Fehler beim Zurücksetzen des Passworts"
+      }
+    }
+  },
+  "portal": {
+    "sidebar": {
+      "system": "System betriebsbereit",
+      "nav": {
+        "dashboard": "Dashboard",
+        "landings": "Landings",
+        "automations": "Automatisierungen",
+        "billing": "Abrechnung",
+        "settings": "Einstellungen"
+      },
+      "logout": "Abmelden"
+    },
+    "dashboard": {
+      "welcome": "Guten Morgen",
+      "status": "System betriebsbereit",
+      "services": {
+        "landings": "Aktive Landings",
+        "automations": "Automatisierungen",
+        "billing": "Ausgestellte Rechnungen",
+        "storage": "Speicher"
+      },
+      "invoices": {
+        "title": "Letzte Rechnungen",
+        "viewAll": "Alle ansehen",
+        "cols": {
+          "id": "ID",
+          "concept": "Konzept",
+          "amount": "Betrag",
+          "date": "Datum",
+          "status": "Status"
+        },
+        "statuses": {
+          "paid": "Bezahlt",
+          "pending": "Ausstehend",
+          "overdue": "Überfällig"
+        },
+        "empty": "Keine Rechnungen"
+      }
+    }
+  },
+  "legal": {
+    "avisLegal": "Impressum",
+    "privacitat": "Datenschutzerklärung",
+    "cookies": "Cookie-Richtlinie",
+    "termes": "AGB"
+  },
+  "cookies": {
+    "message": "Wir verwenden Cookies, um Ihre Erfahrung zu verbessern. Technische Cookies sind für den Betrieb des Portals erforderlich.",
+    "accept": "Alle akzeptieren",
+    "configure": "Konfigurieren",
+    "reject": "Optionale ablehnen"
+  }
+}

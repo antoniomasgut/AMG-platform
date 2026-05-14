@@ -1,0 +1,259 @@
+{
+  "common": {
+    "amg": "AMG",
+    "tagline": "Ingeniería Digital",
+    "back": "Volver",
+    "send": "Enviar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Hecho"
+  },
+  "nav": {
+    "services": "Servicios",
+    "pricing": "Precios",
+    "howItWorks": "Cómo funciona",
+    "contact": "Contacto",
+    "login": "Acceder",
+    "portal": "Mi portal"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Portal v2 · Ya disponible",
+      "title": "PYMES AUTOMATIZADAS",
+      "titleAccent": "EN MENOS DE 48H.",
+      "subtitle": "Bots, landings, workflows y facturación — un solo portal administrado para los negocios de Mallorca.",
+      "cta": "ACCEDER AL PORTAL",
+      "ctaSecondary": "Ver servicios",
+      "stats": {
+        "uptime": "99.98% uptime",
+        "clients": "48 pymes activas",
+        "automations": "+200 automatizaciones"
+      }
+    },
+    "problem": {
+      "badge": "El problema",
+      "title": "DEMASIADAS HERRAMIENTAS,\nDEMASIADO TIEMPO PERDIDO.",
+      "description": "La mayoría de pymes gestionan su negocio digital con herramientas dispersas: un proveedor para la web, otro para WhatsApp, otro para las facturas... El resultado es tiempo perdido, costes elevados y ninguna visión global.",
+      "items": [
+        { "icon": "⏳", "text": "Horas perdidas cambiando entre plataformas" },
+        { "icon": "💸", "text": "Suscripciones múltiples sin integración" },
+        { "icon": "📊", "text": "Ninguna visión unificada del negocio" }
+      ]
+    },
+    "services": {
+      "badge": "Servicios",
+      "title": "TODO LO QUE NECESITAS,\nEN UN PORTAL.",
+      "subtitle": "Desde la landing hasta la factura, automatizado.",
+      "items": [
+        {
+          "icon": "🌐",
+          "title": "Webs y landings",
+          "description": "Landings profesionales optimizadas para conversión. Diseño premium, SEO incluido.",
+          "price": "Desde 30€"
+        },
+        {
+          "icon": "🤖",
+          "title": "Automatizaciones",
+          "description": "Workflows de n8n para automatizar WhatsApp, email, CRM y mucho más.",
+          "price": "Desde 20€"
+        },
+        {
+          "icon": "🧾",
+          "title": "Facturación digital",
+          "description": "Presupuestos y facturas en PDF, integrado con Holded. Sin papeleo.",
+          "price": "Incluido"
+        },
+        {
+          "icon": "🔒",
+          "title": "Dominio y email",
+          "description": "Dominio propio, email corporativo y certificado SSL. Todo gestionado por nosotros.",
+          "price": "Desde 30€"
+        }
+      ]
+    },
+    "howItWorks": {
+      "badge": "Proceso",
+      "title": "EN 3 PASOS,\nTU NEGOCIO DIGITAL.",
+      "steps": [
+        {
+          "number": "01",
+          "title": "Nos explicas tu negocio",
+          "description": "Una llamada de 30 minutos para entender tus necesidades y objetivos."
+        },
+        {
+          "number": "02",
+          "title": "Recibes tu oferta personalizada",
+          "description": "Presupuesto detallado por fases, sin letra pequeña ni cuotas mensuales."
+        },
+        {
+          "number": "03",
+          "title": "En marcha en 48h",
+          "description": "Tu portal activo, tus automatizaciones funcionando. Tú controlando todo."
+        }
+      ]
+    },
+    "pricing": {
+      "badge": "Precios",
+      "title": "SIN SORPRESAS.\nSIN CUOTAS.",
+      "subtitle": "Pagas una vez. Es tuyo para siempre.",
+      "note": "Todos los precios son de setup (un solo pago). Sin cuotas mensuales recurrentes.",
+      "items": [
+        { "service": "Micro-landing", "price": "30€" },
+        { "service": "Landing Pro", "price": "80€" },
+        { "service": "Dominio autogestionado", "price": "30€" },
+        { "service": "Dominio gestionado (incluye 1r año)", "price": "60€" },
+        { "service": "WhatsApp Business API", "price": "50€" },
+        { "service": "Automatización básica (n8n)", "price": "20€" },
+        { "service": "Automatización avanzada (n8n)", "price": "60€" },
+        { "service": "Bot IA básico", "price": "40€" },
+        { "service": "Bot IA avanzado (RAG)", "price": "100€" },
+        { "service": "SMTP Corporativo", "price": "25€" },
+        { "service": "Google Analytics", "price": "25€" }
+      ]
+    },
+    "cta": {
+      "title": "¿LISTO PARA AUTOMATIZAR\nTU NEGOCIO?",
+      "subtitle": "Hablemos. Primera consulta gratuita y sin compromiso.",
+      "button": "CONTACTAR AHORA",
+      "buttonSecondary": "ACCEDER AL PORTAL"
+    },
+    "footer": {
+      "description": "Plataforma de digitalización para negocios locales en Mallorca.",
+      "legal": "Legal",
+      "links": {
+        "avisLegal": "Aviso Legal",
+        "privacitat": "Privacidad",
+        "cookies": "Cookies",
+        "termes": "Términos del Servicio"
+      },
+      "contact": "Contacto",
+      "copyright": "AMG Digitalització. Todos los derechos reservados."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "ACCESO AL PORTAL",
+      "subtitle": "Te enviamos un enlace mágico por email. Sin contraseñas.",
+      "emailLabel": "Email corporativo",
+      "emailPlaceholder": "tu@empresa.com",
+      "sendMagicLink": "ENVIAR MAGIC LINK",
+      "sending": "ENVIANDO...",
+      "orWithPassword": "o con contraseña",
+      "usePassword": "Usar contraseña",
+      "passwordTitle": "CONTRASEÑA",
+      "passwordSubtitle": "Introduce tu contraseña para",
+      "passwordLabel": "Contraseña",
+      "enter": "ENTRAR",
+      "entering": "ENTRANDO...",
+      "forgotPassword": "¿HAS OLVIDADO LA CONTRASEÑA?",
+      "back": "← VOLVER",
+      "linkSent": "Enlace enviado",
+      "checkEmail": "COMPRUEBA TU EMAIL",
+      "linkSentTo": "Hemos enviado un enlace de acceso a",
+      "linkExpires": "El enlace caduca en",
+      "minutes": "15 min",
+      "checkSpam": "Revisa la carpeta de spam si no lo ves.",
+      "resendLink": "REENVIAR ENLACE",
+      "useOtherEmail": "← USAR OTRO EMAIL",
+      "errors": {
+        "incorrectCredentials": "Credenciales incorrectas",
+        "accountLocked": "Cuenta bloqueada. Inténtalo más tarde o recupera la contraseña.",
+        "tooManyAttempts": "Demasiados intentos. Vuelve a intentarlo en unos minutos.",
+        "loginError": "Error de inicio de sesión",
+        "sendError": "Error al enviar el enlace",
+        "emailRequired": "Introduce primero tu email"
+      }
+    },
+    "forgotPassword": {
+      "badge": "Recuperar contraseña",
+      "title": "RECUPERAR CONTRASEÑA",
+      "subtitle": "Introduce tu email y te enviaremos un enlace para restablecer la contraseña.",
+      "emailLabel": "Email corporativo",
+      "sendLink": "ENVIAR ENLACE",
+      "sending": "ENVIANDO...",
+      "linkSentBadge": "Enlace enviado",
+      "checkEmail": "COMPRUEBA TU EMAIL",
+      "emailSentTo": "Si el correo existe, recibirás un enlace de recuperación en",
+      "linkExpires": "El enlace caduca en",
+      "minutes": "30 min",
+      "checkSpam": "Revisa la carpeta de spam si no lo ves.",
+      "backToLogin": "← VOLVER AL LOGIN",
+      "error": "Error al enviar la solicitud"
+    },
+    "resetPassword": {
+      "badge": "Nueva contraseña",
+      "title": "RESTABLECER CONTRASEÑA",
+      "subtitle": "Introduce tu nueva contraseña.",
+      "newPasswordLabel": "Nueva contraseña",
+      "confirmLabel": "Confirmar contraseña",
+      "update": "ACTUALIZAR CONTRASEÑA",
+      "updating": "ACTUALIZANDO...",
+      "invalidLink": "ENLACE INVÁLIDO",
+      "invalidLinkText": "Este enlace de recuperación es inválido o ha expirado.",
+      "backToLogin": "VOLVER AL LOGIN",
+      "successTitle": "CONTRASEÑA ACTUALIZADA",
+      "successText": "Redirigiendo al login...",
+      "goToLogin": "IR AL LOGIN",
+      "errors": {
+        "invalidToken": "Enlace de recuperación inválido o expirado",
+        "minLength": "La contraseña debe tener al menos 4 caracteres",
+        "mismatch": "Las contraseñas no coinciden",
+        "generic": "Error al restablecer la contraseña"
+      }
+    }
+  },
+  "portal": {
+    "sidebar": {
+      "system": "Sistema operativo",
+      "nav": {
+        "dashboard": "Dashboard",
+        "landings": "Landings",
+        "automations": "Automatizaciones",
+        "billing": "Facturación",
+        "settings": "Configuración"
+      },
+      "logout": "Cerrar sesión"
+    },
+    "dashboard": {
+      "welcome": "Buenos días",
+      "status": "Sistema operativo",
+      "services": {
+        "landings": "Landings activas",
+        "automations": "Automatizaciones",
+        "billing": "Facturas emitidas",
+        "storage": "Almacenamiento"
+      },
+      "invoices": {
+        "title": "Facturas recientes",
+        "viewAll": "Ver todas",
+        "cols": {
+          "id": "ID",
+          "concept": "Concepto",
+          "amount": "Importe",
+          "date": "Fecha",
+          "status": "Estado"
+        },
+        "statuses": {
+          "paid": "Pagada",
+          "pending": "Pendiente",
+          "overdue": "Vencida"
+        },
+        "empty": "Sin facturas"
+      }
+    }
+  },
+  "legal": {
+    "avisLegal": "Aviso Legal",
+    "privacitat": "Política de Privacidad",
+    "cookies": "Política de Cookies",
+    "termes": "Términos del Servicio"
+  },
+  "cookies": {
+    "message": "Usamos cookies para mejorar tu experiencia. Las cookies técnicas son necesarias para el funcionamiento del portal.",
+    "accept": "Aceptar todas",
+    "configure": "Configurar",
+    "reject": "Rechazar opcionales"
+  }
+}

@@ -29,25 +29,7 @@ const shareTechMono = Share_Tech_Mono({
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://amg.digital';
 
 export const metadata: Metadata = {
-  title: {
-    default: 'AMG · Enginyeria Digital per a Pimes',
-    template: '%s · AMG Digitalització',
-  },
-  description: 'Plataforma SaaS per automatitzar la presència digital de pimes a Mallorca. Webs, automatitzacions, facturació i CRM en un sol lloc.',
   metadataBase: new URL(SITE_URL),
-  openGraph: {
-    title: 'AMG · Enginyeria Digital per a Pimes',
-    description: 'Plataforma SaaS per automatitzar la presència digital de pimes a Mallorca.',
-    url: SITE_URL,
-    siteName: 'AMG Digitalització',
-    locale: 'ca_ES',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'AMG · Enginyeria Digital per a Pimes',
-    description: 'Plataforma SaaS per automatitzar la presència digital de pimes a Mallorca.',
-  },
   robots: { index: true, follow: true },
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
@@ -56,13 +38,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ca" className={`${orbitron.variable} ${spaceGrotesk.variable} ${shareTechMono.variable}`}>
+    <html className={`${orbitron.variable} ${spaceGrotesk.variable} ${shareTechMono.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
-        {/* Skip nav: primer element del body per a navegació per teclat */}
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#FF6B00] focus:text-black focus:font-semibold focus:rounded"
@@ -71,9 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <ErrorBoundary>
           <Providers>
-            <main id="main-content">
-              {children}
-            </main>
+            {children}
             <ToastContainer />
           </Providers>
         </ErrorBoundary>

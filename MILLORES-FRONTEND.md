@@ -35,13 +35,13 @@ Marca cada millora amb `[x]` quan estigui feta.
 
 ## 🔵 Gran esforç — > 1 setmana
 
-- [ ] **Landing pública multi-idioma (Mòdul 13)** — La mancança de SEO i conversió més gran. Rutes `/[locale]/` (ca/es/en/de) amb Hero, Serveis, Preus, CTA i Footer. Spec: `specs/13-i18n-seo-rgpd.md`.
+- [x] **Landing pública multi-idioma (Mòdul 13)** — next-intl v4 instal·lat. Routing `/[locale]/` (ca/es/en/de) amb middleware. Landing completa: Header, Hero, Problem, Services, HowItWorks, Pricing, CTA, Footer. Missatges en 4 idiomes. generateMetadata amb hreflang i OG per locale. JSON-LD Organization a `[locale]/layout.tsx`. CookieConsentBanner amb localStorage. Sitemap dinàmic (`app/sitemap.ts`) amb alternates hreflang. Build compila net.
 - [ ] **Lighthouse audit en producció** — Un cop desplegat a Hetzner/Coolify, executar Lighthouse per mesurar Core Web Vitals reals (LCP, CLS, INP).
-- [ ] **Revisar Server Components** — 26 fitxers amb `'use client'`. Identificar quins es poden convertir per millorar LCP i reduir el bundle JS inicial.
+- [ ] **Revisar Server Components** — Identificar quins fitxers `'use client'` es poden convertir per millorar LCP.
 - [ ] **Pàgines legals — omplir NIF i adreça** — `[NIF del titular]` i `[Adreça]` amb placeholders a `avis-legal` i `privacitat`. Incompliment LSSI fins que s'omplin.
-- [ ] **Banner de cookies (RGPD)** — No implementat. Obligatori si s'usen cookies no estrictament necessàries. Cal un component de consentiment que bloquegi cookies analítiques/màrqueting fins a l'acceptació.
-- [ ] **Content-Security-Policy (CSP)** — El header CSP no està configurat. Protegeix contra XSS avançat. Complex d'implementar amb Google Fonts (necessita nonces o hashes). Backlog per a quan la landing pública estigui activa.
-- [ ] **Structured data (JSON-LD)** — No implementat. Recomanat per a rich snippets a Google (negoci local, serveis, FAQ). Alta prioritat un cop la landing pública existeixi.
+- [ ] **Content-Security-Policy (CSP)** — El header CSP no està configurat. Complex amb Google Fonts (necessita nonces o hashes). Backlog.
+- [x] **Banner de cookies (RGPD)** — `CookieConsentBanner` implementat a `[locale]/layout.tsx`. Acceptar/rebutjar opcionals, persistència a `localStorage('cookie_consent')`.
+- [x] **Structured data (JSON-LD)** — Organization schema injectat a `[locale]/layout.tsx` amb `dangerouslySetInnerHTML`.
 
 ---
 

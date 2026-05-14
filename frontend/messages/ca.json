@@ -1,0 +1,259 @@
+{
+  "common": {
+    "amg": "AMG",
+    "tagline": "Enginyeria Digital",
+    "back": "Tornar",
+    "send": "Enviar",
+    "save": "Desar",
+    "cancel": "Cancel·lar",
+    "loading": "Carregant...",
+    "error": "Error",
+    "success": "Fet"
+  },
+  "nav": {
+    "services": "Serveis",
+    "pricing": "Preus",
+    "howItWorks": "Com funciona",
+    "contact": "Contacte",
+    "login": "Accedir",
+    "portal": "El meu portal"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Portal v2 · Ara disponible",
+      "title": "PYMES AUTOMATITZADES",
+      "titleAccent": "EN MENYS DE 48H.",
+      "subtitle": "Bots, landings, workflows i facturació — un sol portal administrat per als negocis de Mallorca.",
+      "cta": "ACCEDIR AL PORTAL",
+      "ctaSecondary": "Veure serveis",
+      "stats": {
+        "uptime": "99.98% uptime",
+        "clients": "48 pimes actives",
+        "automations": "+200 automatitzacions"
+      }
+    },
+    "problem": {
+      "badge": "El problema",
+      "title": "MASSA EINES,\nMASSA TEMPS PERDUT.",
+      "description": "La majoria de pimes gestionen el negoci digital amb eines disperses: un proveïdor per la web, un altre per WhatsApp, un altre per les factures... El resultat és temps perdut, costos elevats i cap visió global.",
+      "items": [
+        { "icon": "⏳", "text": "Hores perdudes canviant entre plataformes" },
+        { "icon": "💸", "text": "Subscripcions múltiples sense integració" },
+        { "icon": "📊", "text": "Cap visió unificada del negoci" }
+      ]
+    },
+    "services": {
+      "badge": "Serveis",
+      "title": "TOT EL QUE NECESSITES,\nEN UN PORTAL.",
+      "subtitle": "Des de la landing fins a la factura, automatitzat.",
+      "items": [
+        {
+          "icon": "🌐",
+          "title": "Webs i landings",
+          "description": "Landings professionals optimitzades per a conversió. Disseny premium, SEO inclòs.",
+          "price": "Des de 30€"
+        },
+        {
+          "icon": "🤖",
+          "title": "Automatitzacions",
+          "description": "Workflows de n8n per automatitzar WhatsApp, email, CRM i molt més.",
+          "price": "Des de 20€"
+        },
+        {
+          "icon": "🧾",
+          "title": "Facturació digital",
+          "description": "Pressupostos i factures en PDF, integrat amb Holded. Sense paperassa.",
+          "price": "Inclòs"
+        },
+        {
+          "icon": "🔒",
+          "title": "Domini i email",
+          "description": "Domini propi, email corporatiu i certificat SSL. Tot gestionat per nosaltres.",
+          "price": "Des de 30€"
+        }
+      ]
+    },
+    "howItWorks": {
+      "badge": "Procés",
+      "title": "EN 3 PASSOS,\nEL TEU NEGOCI DIGITAL.",
+      "steps": [
+        {
+          "number": "01",
+          "title": "Ens expliques el teu negoci",
+          "description": "Una trucada de 30 minuts per entendre les teves necessitats i objectius."
+        },
+        {
+          "number": "02",
+          "title": "Rebem la teva oferta personalitzada",
+          "description": "Pressupost detallat per fases, sense lletra petita ni quotes mensuals."
+        },
+        {
+          "number": "03",
+          "title": "Posem en marxa en 48h",
+          "description": "El teu portal actiu, les teves automatitzacions funcionant. Tu controlant tot."
+        }
+      ]
+    },
+    "pricing": {
+      "badge": "Preus",
+      "title": "SENSE SORPRESES.\nSENSE QUOTES.",
+      "subtitle": "Pagues una vegada. És teu per sempre.",
+      "note": "Tots els preus són de setup (un sol pagament). Sense quotes mensuals recurrents.",
+      "items": [
+        { "service": "Micro-landing", "price": "30€" },
+        { "service": "Landing Pro", "price": "80€" },
+        { "service": "Domini autogestionat", "price": "30€" },
+        { "service": "Domini gestionat (inclou 1r any)", "price": "60€" },
+        { "service": "WhatsApp Business API", "price": "50€" },
+        { "service": "Automatització bàsica (n8n)", "price": "20€" },
+        { "service": "Automatització avançada (n8n)", "price": "60€" },
+        { "service": "Bot IA bàsic", "price": "40€" },
+        { "service": "Bot IA avançat (RAG)", "price": "100€" },
+        { "service": "SMTP Corporatiu", "price": "25€" },
+        { "service": "Google Analytics", "price": "25€" }
+      ]
+    },
+    "cta": {
+      "title": "PREPARAT PER AUTOMATITZAR\nEL TEU NEGOCI?",
+      "subtitle": "Parlem. Primera consulta gratuïta i sense compromís.",
+      "button": "CONTACTAR ARA",
+      "buttonSecondary": "ACCEDIR AL PORTAL"
+    },
+    "footer": {
+      "description": "Plataforma de digitalització per a negocis locals a Mallorca.",
+      "legal": "Legal",
+      "links": {
+        "avisLegal": "Avís Legal",
+        "privacitat": "Privacitat",
+        "cookies": "Cookies",
+        "termes": "Termes del Servei"
+      },
+      "contact": "Contacte",
+      "copyright": "AMG Digitalització. Tots els drets reservats."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "ACCÉS AL PORTAL",
+      "subtitle": "T'enviem un enllaç màgic per email. Sense contrasenyes.",
+      "emailLabel": "Email corporatiu",
+      "emailPlaceholder": "tu@empresa.com",
+      "sendMagicLink": "ENVIAR MAGIC LINK",
+      "sending": "ENVIANT...",
+      "orWithPassword": "o amb contrasenya",
+      "usePassword": "Usar contrasenya",
+      "passwordTitle": "CONTRASENYA",
+      "passwordSubtitle": "Introdueix la teva contrasenya per a",
+      "passwordLabel": "Contrasenya",
+      "enter": "ENTRAR",
+      "entering": "ENTRANT...",
+      "forgotPassword": "HAS OBLIDAT LA CONTRASENYA?",
+      "back": "← TORNAR",
+      "linkSent": "Enllaç enviat",
+      "checkEmail": "COMPROVA EL TEU EMAIL",
+      "linkSentTo": "Hem enviat un enllaç d'accés a",
+      "linkExpires": "L'enllaç caduca en",
+      "minutes": "15 min",
+      "checkSpam": "Revisa la carpeta de spam si no el veus.",
+      "resendLink": "REENVIAR ENLLAÇ",
+      "useOtherEmail": "← USAR UN ALTRE EMAIL",
+      "errors": {
+        "incorrectCredentials": "Credencials incorrectes",
+        "accountLocked": "Compte blocat. Intenta-ho més tard o recupera la contrasenya.",
+        "tooManyAttempts": "Massa intents. Torna-ho a provar en uns minuts.",
+        "loginError": "Error d'inici de sessió",
+        "sendError": "Error en enviar l'enllaç",
+        "emailRequired": "Introdueix primer el teu email"
+      }
+    },
+    "forgotPassword": {
+      "badge": "Recuperar contrasenya",
+      "title": "RECUPERAR CONTRASENYA",
+      "subtitle": "Introdueix el teu email i t'enviarem un enllaç per restablir la contrasenya.",
+      "emailLabel": "Email corporatiu",
+      "sendLink": "ENVIAR ENLLAÇ",
+      "sending": "ENVIANT...",
+      "linkSentBadge": "Enllaç enviat",
+      "checkEmail": "COMPROVA EL TEU EMAIL",
+      "emailSentTo": "Si el correu existeix, rebràs un enllaç de recuperació a",
+      "linkExpires": "L'enllaç caduca en",
+      "minutes": "30 min",
+      "checkSpam": "Revisa la carpeta de spam si no el veus.",
+      "backToLogin": "← TORNAR AL LOGIN",
+      "error": "Error en enviar la sol·licitud"
+    },
+    "resetPassword": {
+      "badge": "Nova contrasenya",
+      "title": "RESTABLIR CONTRASENYA",
+      "subtitle": "Introdueix la teva nova contrasenya.",
+      "newPasswordLabel": "Nova contrasenya",
+      "confirmLabel": "Confirmar contrasenya",
+      "update": "ACTUALITZAR CONTRASENYA",
+      "updating": "ACTUALITZANT...",
+      "invalidLink": "ENLLAÇ INVALID",
+      "invalidLinkText": "Aquest enllaç de recuperació és invàlid o ha expirat.",
+      "backToLogin": "TORNAR AL LOGIN",
+      "successTitle": "CONTRASENYA ACTUALITZADA",
+      "successText": "Redirigint al login...",
+      "goToLogin": "ANAR AL LOGIN",
+      "errors": {
+        "invalidToken": "Enllaç de recuperació invàlid o expirat",
+        "minLength": "La contrasenya ha de tenir almenys 4 caràcters",
+        "mismatch": "Les contrasenyes no coincideixen",
+        "generic": "Error en restablir la contrasenya"
+      }
+    }
+  },
+  "portal": {
+    "sidebar": {
+      "system": "Sistema operatiu",
+      "nav": {
+        "dashboard": "Dashboard",
+        "landings": "Landings",
+        "automations": "Automatitzacions",
+        "billing": "Facturació",
+        "settings": "Configuració"
+      },
+      "logout": "Tancar sessió"
+    },
+    "dashboard": {
+      "welcome": "Bon dia",
+      "status": "Sistema operatiu",
+      "services": {
+        "landings": "Landings actives",
+        "automations": "Automatitzacions",
+        "billing": "Factures emeses",
+        "storage": "Emmagatzematge"
+      },
+      "invoices": {
+        "title": "Factures recents",
+        "viewAll": "Veure totes",
+        "cols": {
+          "id": "ID",
+          "concept": "Concepte",
+          "amount": "Import",
+          "date": "Data",
+          "status": "Estat"
+        },
+        "statuses": {
+          "paid": "Pagada",
+          "pending": "Pendent",
+          "overdue": "Vençuda"
+        },
+        "empty": "Cap factura"
+      }
+    }
+  },
+  "legal": {
+    "avisLegal": "Avís Legal",
+    "privacitat": "Política de Privacitat",
+    "cookies": "Política de Cookies",
+    "termes": "Termes del Servei"
+  },
+  "cookies": {
+    "message": "Fem servir galetes per millorar la teva experiència. Les galetes tècniques són necessàries per al funcionament del portal.",
+    "accept": "Acceptar totes",
+    "configure": "Configurar",
+    "reject": "Rebutjar opcionals"
+  }
+}

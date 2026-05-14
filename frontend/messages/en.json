@@ -1,0 +1,259 @@
+{
+  "common": {
+    "amg": "AMG",
+    "tagline": "Digital Engineering",
+    "back": "Back",
+    "send": "Send",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Done"
+  },
+  "nav": {
+    "services": "Services",
+    "pricing": "Pricing",
+    "howItWorks": "How it works",
+    "contact": "Contact",
+    "login": "Sign in",
+    "portal": "My portal"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Portal v2 · Now live",
+      "title": "SMBS AUTOMATED",
+      "titleAccent": "IN LESS THAN 48H.",
+      "subtitle": "Bots, landings, workflows and invoicing — one managed portal for Mallorca businesses.",
+      "cta": "ACCESS PORTAL",
+      "ctaSecondary": "View services",
+      "stats": {
+        "uptime": "99.98% uptime",
+        "clients": "48 active SMBs",
+        "automations": "+200 automations"
+      }
+    },
+    "problem": {
+      "badge": "The problem",
+      "title": "TOO MANY TOOLS,\nTOO MUCH TIME WASTED.",
+      "description": "Most SMBs manage their digital business with scattered tools: one provider for the website, another for WhatsApp, another for invoices... The result is wasted time, high costs and no unified view.",
+      "items": [
+        { "icon": "⏳", "text": "Hours lost switching between platforms" },
+        { "icon": "💸", "text": "Multiple subscriptions without integration" },
+        { "icon": "📊", "text": "No unified business overview" }
+      ]
+    },
+    "services": {
+      "badge": "Services",
+      "title": "EVERYTHING YOU NEED,\nIN ONE PORTAL.",
+      "subtitle": "From landing to invoice, automated.",
+      "items": [
+        {
+          "icon": "🌐",
+          "title": "Websites & landings",
+          "description": "Professional landing pages optimised for conversion. Premium design, SEO included.",
+          "price": "From €30"
+        },
+        {
+          "icon": "🤖",
+          "title": "Automations",
+          "description": "n8n workflows to automate WhatsApp, email, CRM and much more.",
+          "price": "From €20"
+        },
+        {
+          "icon": "🧾",
+          "title": "Digital invoicing",
+          "description": "Quotes and invoices in PDF, integrated with Holded. No paperwork.",
+          "price": "Included"
+        },
+        {
+          "icon": "🔒",
+          "title": "Domain & email",
+          "description": "Custom domain, corporate email and SSL certificate. All managed by us.",
+          "price": "From €30"
+        }
+      ]
+    },
+    "howItWorks": {
+      "badge": "Process",
+      "title": "IN 3 STEPS,\nYOUR DIGITAL BUSINESS.",
+      "steps": [
+        {
+          "number": "01",
+          "title": "Tell us about your business",
+          "description": "A 30-minute call to understand your needs and goals."
+        },
+        {
+          "number": "02",
+          "title": "Receive your personalised offer",
+          "description": "Detailed phased quote, no hidden fees or monthly charges."
+        },
+        {
+          "number": "03",
+          "title": "Live in 48h",
+          "description": "Your portal active, your automations running. You in control."
+        }
+      ]
+    },
+    "pricing": {
+      "badge": "Pricing",
+      "title": "NO SURPRISES.\nNO SUBSCRIPTIONS.",
+      "subtitle": "Pay once. Yours forever.",
+      "note": "All prices are setup fees (one-time payment). No recurring monthly charges.",
+      "items": [
+        { "service": "Micro-landing", "price": "€30" },
+        { "service": "Landing Pro", "price": "€80" },
+        { "service": "Self-managed domain", "price": "€30" },
+        { "service": "Managed domain (incl. 1st year)", "price": "€60" },
+        { "service": "WhatsApp Business API", "price": "€50" },
+        { "service": "Basic automation (n8n)", "price": "€20" },
+        { "service": "Advanced automation (n8n)", "price": "€60" },
+        { "service": "Basic AI bot", "price": "€40" },
+        { "service": "Advanced AI bot (RAG)", "price": "€100" },
+        { "service": "Corporate SMTP", "price": "€25" },
+        { "service": "Google Analytics", "price": "€25" }
+      ]
+    },
+    "cta": {
+      "title": "READY TO AUTOMATE\nYOUR BUSINESS?",
+      "subtitle": "Let's talk. First consultation free, no commitment.",
+      "button": "CONTACT NOW",
+      "buttonSecondary": "ACCESS PORTAL"
+    },
+    "footer": {
+      "description": "Digitalisation platform for local businesses in Mallorca.",
+      "legal": "Legal",
+      "links": {
+        "avisLegal": "Legal Notice",
+        "privacitat": "Privacy",
+        "cookies": "Cookies",
+        "termes": "Terms of Service"
+      },
+      "contact": "Contact",
+      "copyright": "AMG Digitalització. All rights reserved."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "PORTAL ACCESS",
+      "subtitle": "We send you a magic link by email. No passwords.",
+      "emailLabel": "Corporate email",
+      "emailPlaceholder": "you@company.com",
+      "sendMagicLink": "SEND MAGIC LINK",
+      "sending": "SENDING...",
+      "orWithPassword": "or with password",
+      "usePassword": "Use password",
+      "passwordTitle": "PASSWORD",
+      "passwordSubtitle": "Enter your password for",
+      "passwordLabel": "Password",
+      "enter": "SIGN IN",
+      "entering": "SIGNING IN...",
+      "forgotPassword": "FORGOT YOUR PASSWORD?",
+      "back": "← BACK",
+      "linkSent": "Link sent",
+      "checkEmail": "CHECK YOUR EMAIL",
+      "linkSentTo": "We sent an access link to",
+      "linkExpires": "Link expires in",
+      "minutes": "15 min",
+      "checkSpam": "Check your spam folder if you don't see it.",
+      "resendLink": "RESEND LINK",
+      "useOtherEmail": "← USE ANOTHER EMAIL",
+      "errors": {
+        "incorrectCredentials": "Incorrect credentials",
+        "accountLocked": "Account locked. Try later or recover your password.",
+        "tooManyAttempts": "Too many attempts. Try again in a few minutes.",
+        "loginError": "Login error",
+        "sendError": "Error sending the link",
+        "emailRequired": "Enter your email first"
+      }
+    },
+    "forgotPassword": {
+      "badge": "Recover password",
+      "title": "RECOVER PASSWORD",
+      "subtitle": "Enter your email and we'll send a link to reset your password.",
+      "emailLabel": "Corporate email",
+      "sendLink": "SEND LINK",
+      "sending": "SENDING...",
+      "linkSentBadge": "Link sent",
+      "checkEmail": "CHECK YOUR EMAIL",
+      "emailSentTo": "If the email exists, you'll receive a recovery link at",
+      "linkExpires": "Link expires in",
+      "minutes": "30 min",
+      "checkSpam": "Check your spam folder if you don't see it.",
+      "backToLogin": "← BACK TO LOGIN",
+      "error": "Error sending the request"
+    },
+    "resetPassword": {
+      "badge": "New password",
+      "title": "RESET PASSWORD",
+      "subtitle": "Enter your new password.",
+      "newPasswordLabel": "New password",
+      "confirmLabel": "Confirm password",
+      "update": "UPDATE PASSWORD",
+      "updating": "UPDATING...",
+      "invalidLink": "INVALID LINK",
+      "invalidLinkText": "This recovery link is invalid or has expired.",
+      "backToLogin": "BACK TO LOGIN",
+      "successTitle": "PASSWORD UPDATED",
+      "successText": "Redirecting to login...",
+      "goToLogin": "GO TO LOGIN",
+      "errors": {
+        "invalidToken": "Invalid or expired recovery link",
+        "minLength": "Password must be at least 4 characters",
+        "mismatch": "Passwords do not match",
+        "generic": "Error resetting the password"
+      }
+    }
+  },
+  "portal": {
+    "sidebar": {
+      "system": "System operational",
+      "nav": {
+        "dashboard": "Dashboard",
+        "landings": "Landings",
+        "automations": "Automations",
+        "billing": "Billing",
+        "settings": "Settings"
+      },
+      "logout": "Sign out"
+    },
+    "dashboard": {
+      "welcome": "Good morning",
+      "status": "System operational",
+      "services": {
+        "landings": "Active landings",
+        "automations": "Automations",
+        "billing": "Invoices issued",
+        "storage": "Storage"
+      },
+      "invoices": {
+        "title": "Recent invoices",
+        "viewAll": "View all",
+        "cols": {
+          "id": "ID",
+          "concept": "Concept",
+          "amount": "Amount",
+          "date": "Date",
+          "status": "Status"
+        },
+        "statuses": {
+          "paid": "Paid",
+          "pending": "Pending",
+          "overdue": "Overdue"
+        },
+        "empty": "No invoices"
+      }
+    }
+  },
+  "legal": {
+    "avisLegal": "Legal Notice",
+    "privacitat": "Privacy Policy",
+    "cookies": "Cookie Policy",
+    "termes": "Terms of Service"
+  },
+  "cookies": {
+    "message": "We use cookies to improve your experience. Technical cookies are necessary for the portal to function.",
+    "accept": "Accept all",
+    "configure": "Configure",
+    "reject": "Reject optional"
+  }
+}
