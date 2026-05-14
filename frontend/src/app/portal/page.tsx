@@ -1,16 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { getCurrentUser, logout } from '@/services/auth';
+import { useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
 import { I } from '@/components/ui/icons';
-
-interface UserInfo {
-  id: string; email: string; name: string; role: string; tenantId: string | null;
-}
 
 const services = [
   { name: 'WhatsApp Bot AI', icon: I.Bot, used: 1240, total: 2000, unit: 'msgs' },
@@ -20,35 +15,19 @@ const services = [
 ];
 
 export default function PortalPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<UserInfo | null>(null);
+  const { user, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
-
-  useEffect(() => {
-    const u = getCurrentUser();
-    if (!u) {
-      router.replace('/login');
-    } else {
-      setUser(u);
-    }
-  }, [router]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
       await logout();
     } finally {
-      router.replace('/login');
+      window.location.href = '/login';
     }
   };
 
-  if (!user) {
-    return (
-      <div className="w-full min-h-dvh bg-[#0d0d1a] flex items-center justify-center">
-        <span className="w-4 h-4 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin"></span>
-      </div>
-    );
-  }
+  if (!user) return null;
 
   const initial = (user.name || user.email)[0].toUpperCase();
 

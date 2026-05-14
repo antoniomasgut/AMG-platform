@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Orbitron, Rajdhani, Share_Tech_Mono } from 'next/font/google';
 import { Providers } from '@/components/Providers';
+import { ToastContainer } from '@/components/ToastContainer';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import './globals.css';
 
 const orbitron = Orbitron({
@@ -32,7 +34,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ca" className={`${orbitron.variable} ${rajdhani.variable} ${shareTechMono.variable}`}>
-      <body><Providers>{children}</Providers></body>
+      <body>
+        <ErrorBoundary>
+          <Providers>
+            {children}
+            <ToastContainer />
+          </Providers>
+        </ErrorBoundary>
+      </body>
     </html>
   );
 }

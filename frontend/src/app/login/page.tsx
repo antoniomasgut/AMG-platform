@@ -3,7 +3,8 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { login } from '@/services/auth';
+import { useAuth } from '@/lib/auth-context';
+import { forgotPassword } from '@/services/auth';
 
 /* ─────────── SVG Icons (inline, no dependency) ─────────── */
 const Icon = ({ d, size = 16, stroke = 'currentColor', children }: { d?: string; size?: number; stroke?: string; children?: React.ReactNode }) => (
@@ -29,6 +30,7 @@ type PageState = 'form' | 'password' | 'sent';
 /* ─────────── Login Page ─────────── */
 export default function LoginPage() {
   const router = useRouter();
+  const { login, isAuthenticated } = useAuth();
   const [state, setState] = useState<PageState>('form');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,14 +39,18 @@ export default function LoginPage() {
   const [successEmail, setSuccessEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Redirect if already logged in
+  if (isAuthenticated) {
+    router.replace('/portal');
+  }
+
   const handleMagicLink = async (e: FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
     setSubmitting(true);
     setErrorMsg('');
     try {
-      // Would call forgotPassword endpoint for magic link
-      // For now, simulate with a short delay then show sent state
+      await forgotPassword({ email });
       setSuccessEmail(email);
       setState('sent');
     } catch (err: any) {
@@ -61,8 +67,7 @@ export default function LoginPage() {
     setSubmitting(true);
     setErrorMsg('');
     try {
-      const res = await login({ email, password });
-      sessionStorage.setItem('user', JSON.stringify(res.user));
+      await login({ email, password });
       router.push('/portal');
     } catch (err: any) {
       if (err.status === 401) {
