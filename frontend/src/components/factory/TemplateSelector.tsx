@@ -16,13 +16,13 @@ export const TemplateSelector: FC<Props> = ({ onSelect }) => {
           onClick={() => onSelect(tpl.id)}
           className="amg-card card-clip p-5 text-left hover:ring-1 hover:ring-[#FF6B00] transition group"
         >
-          <div className="f-display font-bold text-sm mb-1 text-[#e2e8f0] group-hover:text-[#FF9A3C] transition">
+          <div className="f-display font-bold text-sm mb-1 text-ink-0 group-hover:text-accent-light transition">
             {tpl.label}
           </div>
-          <div className="f-mono text-[11px] text-[#64748b] mb-3">{tpl.desc}</div>
+          <div className="f-mono text-caption text-ink-3 mb-3">{tpl.desc}</div>
           <div className="flex flex-wrap gap-1">
             {tpl.blocks.map((blockType) => (
-              <span key={blockType} className="text-[10px] px-2 py-0.5 bg-[rgba(255,107,0,0.1)] text-[#FF9A3C] rounded">
+              <span key={blockType} className="text-label px-2 py-0.5 bg-[rgba(255,107,0,0.1)] text-accent-light rounded">
                 {blockType}
               </span>
             ))}

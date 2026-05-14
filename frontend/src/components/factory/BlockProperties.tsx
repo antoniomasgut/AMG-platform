@@ -11,7 +11,7 @@ export const BlockProperties: FC = () => {
 
   if (!block) {
     return (
-      <div className="p-3 text-[#64748b] text-xs text-center">
+      <div className="p-3 text-ink-3 text-xs text-center">
         Selecciona un bloc per editar les seves propietats
       </div>
     );
@@ -27,11 +27,11 @@ export const BlockProperties: FC = () => {
     if (key === 'body') {
       return (
         <div key={key} className="mb-2">
-          <label className="f-mono text-[10px] uppercase text-[#64748b] block mb-1">{key}</label>
+          <label className="f-mono text-label uppercase text-ink-3 block mb-1">{key}</label>
           <textarea
             value={String(value || '')}
             onChange={(e) => handleChange(key, e.target.value)}
-            className="w-full bg-[#0d0d1a] border border-[rgba(255,107,0,0.2)] rounded p-2 text-xs text-[#e2e8f0] h-20 font-mono"
+            className="w-full bg-[#0d0d1a] border border-border-medium rounded p-2 text-xs text-ink-0 h-20 font-mono"
           />
         </div>
       );
@@ -39,7 +39,7 @@ export const BlockProperties: FC = () => {
     if (key === 'items' && Array.isArray(value)) {
       return (
         <div key={key} className="mb-2">
-          <label className="f-mono text-[10px] uppercase text-[#64748b] block mb-1">{key}</label>
+          <label className="f-mono text-label uppercase text-ink-3 block mb-1">{key}</label>
           {value.map((item: Record<string, unknown>, i: number) => (
             <div key={i} className="bg-[#0d0d1a] p-2 rounded mb-1 border border-[rgba(255,107,0,0.1)]">
               {Object.entries(item).map(([k, v]) => (
@@ -52,7 +52,7 @@ export const BlockProperties: FC = () => {
                     handleChange(key, newItems);
                   }}
                   placeholder={k}
-                  className="w-full bg-transparent text-xs text-[#e2e8f0] p-1 mb-1 border-b border-[rgba(255,107,0,0.1)]"
+                  className="w-full bg-transparent text-xs text-ink-0 p-1 mb-1 border-b border-[rgba(255,107,0,0.1)]"
                 />
               ))}
               <button
@@ -61,7 +61,7 @@ export const BlockProperties: FC = () => {
                   newItems.splice(i, 1);
                   handleChange(key, newItems);
                 }}
-                className="text-red-400 text-[10px] mt-1"
+                className="text-red-400 text-label mt-1"
               >
                 Eliminar
               </button>
@@ -69,7 +69,7 @@ export const BlockProperties: FC = () => {
           ))}
           <button
             onClick={() => handleChange(key, [...value, { name: '', desc: '' }])}
-            className="text-[#FF9A3C] text-[10px] mt-1"
+            className="text-accent-light text-label mt-1"
           >
             + Afegir
           </button>
@@ -79,18 +79,18 @@ export const BlockProperties: FC = () => {
     if (key === 'images' && Array.isArray(value)) {
       return (
         <div key={key} className="mb-2">
-          <label className="f-mono text-[10px] uppercase text-[#64748b] block mb-1">Imatges</label>
-          <button className="text-[#FF9A3C] text-[10px]">Pujar imatge</button>
+          <label className="f-mono text-label uppercase text-ink-3 block mb-1">Imatges</label>
+          <button className="text-accent-light text-label">Pujar imatge</button>
         </div>
       );
     }
     return (
       <div key={key} className="mb-2">
-        <label className="f-mono text-[10px] uppercase text-[#64748b] block mb-1">{key}</label>
+        <label className="f-mono text-label uppercase text-ink-3 block mb-1">{key}</label>
         <input
           value={String(value || '')}
           onChange={(e) => handleChange(key, e.target.value)}
-          className="w-full bg-[#0d0d1a] border border-[rgba(255,107,0,0.2)] rounded p-2 text-xs text-[#e2e8f0]"
+          className="w-full bg-[#0d0d1a] border border-border-medium rounded p-2 text-xs text-ink-0"
         />
       </div>
     );
@@ -98,7 +98,7 @@ export const BlockProperties: FC = () => {
 
   return (
     <div className="p-3">
-      <div className="f-mono text-[10px] uppercase tracking-[0.2em] text-[#FF9A3C] mb-3">
+      <div className="f-mono text-label uppercase tracking-widest text-accent-light mb-3">
         {tpl?.label || block.type}
       </div>
       {Object.entries((tpl?.defaultProps || {})).map(([key, value]) => renderField(key, value))}

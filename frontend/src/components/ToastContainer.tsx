@@ -37,9 +37,9 @@ export function ToastContainer() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="f-display font-bold text-sm">{t.title}</div>
-                {t.message && <div className="text-[12px] text-[#94a3b8] mt-0.5">{t.message}</div>}
+                {t.message && <div className="text-data text-ink-1 mt-0.5">{t.message}</div>}
               </div>
-              <button onClick={() => dismiss(t.id)} className="text-[#64748b] hover:text-[#e2e8f0] transition shrink-0">
+              <button onClick={() => dismiss(t.id)} className="text-ink-3 hover:text-ink-0 transition shrink-0">
                 <I.X size={12} />
               </button>
             </div>

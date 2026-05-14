@@ -13,15 +13,15 @@ export const BlockCatalog: FC<Props> = ({ onAddBlock }) => {
 
   return (
     <div className="space-y-0.5">
-      <div className="f-mono text-[10px] uppercase tracking-[0.2em] text-[#64748b] px-3 py-2">Blocs</div>
+      <div className="f-mono text-label uppercase tracking-widest text-ink-3 px-3 py-2">Blocs</div>
       {entries.map(([type, tpl]) => (
         <button
           key={type}
           onClick={() => onAddBlock(type)}
-          className="w-full flex items-center gap-3 px-3 py-2 text-left text-xs text-[#94a3b8] hover:text-[#e2e8f0] hover:bg-[rgba(255,107,0,0.08)] transition rounded"
+          className="w-full flex items-center gap-3 px-3 py-2 text-left text-xs text-ink-1 hover:text-ink-0 hover:bg-accent-subtle transition rounded"
         >
-          <span className="w-6 h-6 flex items-center justify-center text-[#FF9A3C] text-sm font-bold">{tpl.icon}</span>
-          <span className="f-mono text-[11px] uppercase tracking-wider">{tpl.label}</span>
+          <span className="w-6 h-6 flex items-center justify-center text-accent-light text-sm font-bold">{tpl.icon}</span>
+          <span className="f-mono text-caption uppercase tracking-wider">{tpl.label}</span>
         </button>
       ))}
     </div>

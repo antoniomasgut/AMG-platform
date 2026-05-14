@@ -1,6 +1,7 @@
 'use client';
 
 import type { FC } from 'react';
+import DOMPurify from 'dompurify';
 import type { Block, PageStyles } from '@/services/factory';
 
 interface Props {
@@ -53,7 +54,7 @@ export const BlockRenderer: FC<Props> = ({ block, styles: _, isSelected, onSelec
           <section className="py-12 px-4 max-w-3xl mx-auto" onClick={handleClick}>
             {removeBtn}
             <h2 className="text-2xl font-bold mb-4">{s(p.title)}</h2>
-            <div className="prose" dangerouslySetInnerHTML={{ __html: s(p.body) }} />
+            <div className="prose" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(s(p.body)) }} />
           </section>
         );
       case 'services':
@@ -80,7 +81,7 @@ export const BlockRenderer: FC<Props> = ({ block, styles: _, isSelected, onSelec
               {Array.isArray(p.images) && (p.images as string[]).length > 0
                 ? (p.images as string[]).map((img, i) => (
                     <div key={i} className="aspect-square bg-gray-200 rounded flex items-center justify-center text-gray-400 text-sm">
-                      {img ? <img src={img} alt="" className="w-full h-full object-cover rounded" /> : 'Img'}
+                      {img ? <img src={img} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover rounded" /> : 'Img'}
                     </div>
                   ))
                 : Array.from({ length: 3 }).map((_, i) => (

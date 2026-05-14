@@ -31,8 +31,8 @@ function ResetPasswordForm() {
       await resetPassword({ token, password });
       setSuccess(true);
       setTimeout(() => router.push('/login'), 3000);
-    } catch (err: any) {
-      setError(err?.message || 'Error en restablir la contrasenya');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error en restablir la contrasenya');
     } finally {
       setLoading(false);
     }
@@ -46,7 +46,7 @@ function ResetPasswordForm() {
             <I.AlertCircle size={24} stroke="#ff6666" />
           </div>
           <h2 className="f-display font-black text-2xl">ENLLAÇ INVALID</h2>
-          <p className="text-[13px] text-[#94a3b8] mt-2">Aquest enllaç de recuperació és invàlid o ha expirat.</p>
+          <p className="text-ui text-ink-1 mt-2">Aquest enllaç de recuperació és invàlid o ha expirat.</p>
           <AMGButton onClick={() => router.push('/login')} className="mt-6">TORNAR AL LOGIN</AMGButton>
         </div>
       </div>
@@ -61,7 +61,7 @@ function ResetPasswordForm() {
             <I.Check size={24} stroke="#39d353" />
           </div>
           <h2 className="f-display font-black text-2xl">CONTRASENYA ACTUALITZADA</h2>
-          <p className="text-[13px] text-[#94a3b8] mt-2">Redirigint al login...</p>
+          <p className="text-ui text-ink-1 mt-2">Redirigint al login...</p>
           <AMGButton onClick={() => router.push('/login')} className="mt-6">ANAR AL LOGIN</AMGButton>
         </div>
       </div>
@@ -79,29 +79,29 @@ function ResetPasswordForm() {
         <div className="amg-card card-clip p-6 sm:p-8">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-1.5 h-1.5 bg-[#FF6B00]"></div>
-            <span className="f-mono text-[10px] uppercase tracking-[0.2em] text-[#FF9A3C]">Nova contrasenya</span>
+            <span className="f-mono text-label uppercase tracking-widest text-accent-light">Nova contrasenya</span>
           </div>
 
           <h2 className="f-display font-black text-2xl mb-2">RESTABLIR CONTRASENYA</h2>
-          <p className="text-[13px] text-[#94a3b8] mb-6">Introdueix la teva nova contrasenya.</p>
+          <p className="text-ui text-ink-1 mb-6">Introdueix la teva nova contrasenya.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">
-              <span className="block f-mono uppercase text-[10px] tracking-[0.14em] text-[#94a3b8] mb-1.5">Nova contrasenya</span>
-              <div className="relative flex items-center h-10 bg-[#1a1a2e]/80 border border-[rgba(255,107,0,0.14)] focus-within:border-[#FF6B00] transition">
-                <div className="pl-3 text-[#64748b]"><I.Lock size={14} /></div>
+              <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">Nova contrasenya</span>
+              <div className="relative flex items-center h-10 bg-[#1a1a2e]/80 border border-border-base focus-within:border-[#FF6B00] transition">
+                <div className="pl-3 text-ink-3"><I.Lock size={14} /></div>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   autoFocus
-                  className="flex-1 bg-transparent outline-none px-3 text-sm text-[#e2e8f0] placeholder:text-[#64748b]"
+                  className="flex-1 bg-transparent outline-none px-3 text-sm text-ink-0 placeholder:text-ink-3"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="pr-3 text-[#64748b] hover:text-[#e2e8f0] transition"
+                  className="pr-3 text-ink-3 hover:text-ink-0 transition"
                 >
                   {showPassword ? <I.EyeOff size={14} /> : <I.Eye size={14} />}
                 </button>
@@ -109,22 +109,22 @@ function ResetPasswordForm() {
             </label>
 
             <label className="block">
-              <span className="block f-mono uppercase text-[10px] tracking-[0.14em] text-[#94a3b8] mb-1.5">Confirmar contrasenya</span>
-              <div className="relative flex items-center h-10 bg-[#1a1a2e]/80 border border-[rgba(255,107,0,0.14)] focus-within:border-[#FF6B00] transition">
-                <div className="pl-3 text-[#64748b]"><I.Lock size={14} /></div>
+              <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">Confirmar contrasenya</span>
+              <div className="relative flex items-center h-10 bg-[#1a1a2e]/80 border border-border-base focus-within:border-[#FF6B00] transition">
+                <div className="pl-3 text-ink-3"><I.Lock size={14} /></div>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="••••••••"
-                  className="flex-1 bg-transparent outline-none px-3 text-sm text-[#e2e8f0] placeholder:text-[#64748b]"
+                  className="flex-1 bg-transparent outline-none px-3 text-sm text-ink-0 placeholder:text-ink-3"
                 />
               </div>
             </label>
 
             {error && (
               <div className="flex items-start gap-2 p-3 border-l-2 border-l-[#ff4444] bg-[rgba(255,68,68,0.05)]">
-                <span className="text-[12px] text-[#ff6666]">{error}</span>
+                <span className="text-data text-danger-light">{error}</span>
               </div>
             )}
 

@@ -38,8 +38,8 @@ export class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
             <h2 className="f-display font-black text-xl">ERROR INESPERAT</h2>
-            <p className="text-[13px] text-[#94a3b8] mt-2">Ha ocorregut un error. Torna a carregar la pàgina.</p>
-            <p className="f-mono text-[11px] text-[#64748b] mt-3 truncate">{this.state.error?.message}</p>
+            <p className="text-ui text-ink-1 mt-2">Ha ocorregut un error. Torna a carregar la pàgina.</p>
+            <p className="f-mono text-caption text-ink-3 mt-3 truncate">{this.state.error?.message}</p>
             <button
               onClick={() => window.location.reload()}
               className="mt-6 h-10 px-6 f-mono text-xs uppercase btn-clip bg-[#FF6B00] hover:bg-[#FF9A3C] text-black font-semibold transition"

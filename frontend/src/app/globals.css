@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────── Design Tokens ─────────── */
+:root {
+  /* Type scale */
+  --text-label:   10px;
+  --text-caption: 11px;
+  --text-data:    12px;
+  --text-ui:      13px;
+  --text-base:    14px;
+  --text-md:      16px;
+  --text-lg:      18px;
+  --text-xl:      20px;
+  --text-2xl:     24px;
+  --text-3xl:     30px;
+  --text-4xl:     36px;
+  --text-5xl:     48px;
+  --text-6xl:     60px;
+  --text-7xl:     72px;
+
+  /* Letter spacing */
+  --tracking-label:   0.14em;
+  --tracking-caption: 0.10em;
+  --tracking-badge:   0.08em;
+  --tracking-display: -0.02em;
+
+  /* Transitions */
+  --duration-fast:   100ms;
+  --duration-base:   150ms;
+  --duration-slow:   250ms;
+  --ease-out:        cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* ─────────── Font utility classes ─────────── */
 .f-display { font-family: var(--font-display), sans-serif; }
 .f-mono    { font-family: var(--font-mono), 'ui-monospace', monospace; }
@@ -80,11 +111,24 @@
   animation: slide-up 0.25s ease-out;
 }
 
+/* ─────────── Focus visible ─────────── */
+:focus-visible {
+  outline: 2px solid #FF6B00;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* ─────────── Base styles ─────────── */
 body {
   background: #0d0d1a;
   color: #e2e8f0;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--font-sans), 'Space Grotesk', system-ui, sans-serif;
+  font-size: var(--text-base);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -111,4 +155,14 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 30px #1a1a2e inset !important;
   -webkit-text-fill-color: #e2e8f0 !important;
+}
+
+/* ─────────── Reduced motion ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  .amg-blink { animation: none; opacity: 0.6; }
+  .animate-slide-up { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

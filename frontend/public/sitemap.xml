@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://amg.digital/</loc>
+    <xhtml:link rel="alternate" hreflang="ca" href="https://amg.digital/ca/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://amg.digital/es/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://amg.digital/en/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://amg.digital/de/"/>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://amg.digital/legal/avis-legal</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://amg.digital/legal/privacitat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://amg.digital/legal/cookies</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>

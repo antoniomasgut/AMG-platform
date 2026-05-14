@@ -30,13 +30,13 @@ export function AMGButton({
   type = 'button',
 }: ButtonProps) {
   const base = 'f-mono uppercase inline-flex items-center gap-2 font-semibold transition-all select-none';
-  const sizes = { sm: 'px-3 h-8 text-[11px]', md: 'px-5 h-10 text-xs', lg: 'px-7 h-12 text-sm' };
+  const sizes = { sm: 'px-3 h-8 text-caption', md: 'px-5 h-10 text-xs', lg: 'px-7 h-12 text-sm' };
   const variants = {
     primary: 'btn-clip bg-[#FF6B00] hover:bg-[#FF9A3C] text-black',
-    secondary: 'btn-clip bg-[#1a1a2e] hover:bg-[#212140] text-[#e2e8f0] border border-[rgba(255,107,0,0.35)]',
-    ghost: 'text-[#e2e8f0] hover:text-[#FF9A3C] hover:bg-[rgba(255,107,0,0.08)]',
+    secondary: 'btn-clip bg-[#1a1a2e] hover:bg-[#212140] text-ink-0 border border-border-strong',
+    ghost: 'text-ink-0 hover:text-accent-light hover:bg-accent-subtle',
     danger: 'btn-clip bg-[#ff4444] hover:bg-[#ff6666] text-black',
-    outline: 'btn-clip bg-transparent text-[#FF9A3C] border border-[#FF6B00]/60 hover:bg-[#FF6B00]/10',
+    outline: 'btn-clip bg-transparent text-accent-light border border-[#FF6B00]/60 hover:bg-[#FF6B00]/10',
   };
   return (
     <button

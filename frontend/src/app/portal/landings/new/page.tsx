@@ -55,9 +55,9 @@ export default function NewLandingPage() {
     return (
       <div className="p-4 sm:p-8 space-y-6">
         <div>
-          <span className="f-mono text-[10px] uppercase text-[#FF9A3C] tracking-[0.2em]">/ portal / landings / nova /</span>
+          <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / landings / nova /</span>
           <div className="f-display font-bold text-xl mt-1">Selecciona una plantilla</div>
-          <p className="text-sm text-[#94a3b8] mt-1">Tria una plantilla per començar o crea una de zero</p>
+          <p className="text-sm text-ink-1 mt-1">Tria una plantilla per començar o crea una de zero</p>
         </div>
         <TemplateSelector onSelect={handleSelectTemplate} />
       </div>
@@ -67,29 +67,29 @@ export default function NewLandingPage() {
   return (
     <div className="p-4 sm:p-8 max-w-lg space-y-6">
       <div>
-        <span className="f-mono text-[10px] uppercase text-[#FF9A3C] tracking-[0.2em]">/ portal / landings / nova /</span>
+        <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / landings / nova /</span>
         <div className="f-display font-bold text-xl mt-1">Configura la landing</div>
       </div>
 
       <div className="amg-card card-clip p-5 space-y-4">
         <div>
-          <label className="f-mono text-[10px] uppercase text-[#64748b] block mb-1">Títol</label>
+          <label className="f-mono text-label uppercase text-ink-3 block mb-1">Títol</label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-[#0d0d1a] border border-[rgba(255,107,0,0.2)] rounded p-2 text-sm text-[#e2e8f0]"
+            className="w-full bg-[#0d0d1a] border border-border-medium rounded p-2 text-sm text-ink-0"
             placeholder="Nom de la landing"
           />
         </div>
         <div>
-          <label className="f-mono text-[10px] uppercase text-[#64748b] block mb-1">Slug (URL)</label>
+          <label className="f-mono text-label uppercase text-ink-3 block mb-1">Slug (URL)</label>
           <input
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            className="w-full bg-[#0d0d1a] border border-[rgba(255,107,0,0.2)] rounded p-2 text-sm text-[#e2e8f0]"
+            className="w-full bg-[#0d0d1a] border border-border-medium rounded p-2 text-sm text-ink-0"
             placeholder="nom-de-la-landing"
           />
-          <p className="f-mono text-[9px] text-[#64748b] mt-1">/{slug}</p>
+          <p className="f-mono text-[9px] text-ink-3 mt-1">/{slug}</p>
         </div>
 
         <div className="flex gap-3 pt-2">

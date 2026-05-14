@@ -14,15 +14,15 @@ export const PreviewToolbar: FC = () => {
   ];
 
   return (
-    <div className="flex items-center gap-1 bg-[#13132a] rounded p-0.5 border border-[rgba(255,107,0,0.12)]">
+    <div className="flex items-center gap-1 bg-[#13132a] rounded p-0.5 border border-border-base">
       {modes.map(({ key, label }) => (
         <button
           key={key}
           onClick={() => setPreviewMode(key)}
-          className={`px-2 h-6 f-mono text-[10px] uppercase tracking-wider rounded transition ${
+          className={`px-2 h-6 f-mono text-label uppercase tracking-wider rounded transition ${
             previewMode === key
               ? 'bg-[#FF6B00] text-black font-semibold'
-              : 'text-[#64748b] hover:text-[#94a3b8]'
+              : 'text-ink-3 hover:text-ink-1'
           }`}
         >
           {label}

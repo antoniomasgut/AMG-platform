@@ -31,7 +31,7 @@ export default function LandingsPage() {
     <div className="p-4 sm:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <span className="f-mono text-[10px] uppercase text-[#FF9A3C] tracking-[0.2em]">/ portal / landings /</span>
+          <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / landings /</span>
           <div className="f-display font-bold text-xl mt-1">Les meves landings</div>
         </div>
         <AMGButton size="sm" icon={I.Plus} onClick={() => router.push('/portal/landings/new')}>
@@ -47,7 +47,7 @@ export default function LandingsPage() {
         <div className="amg-card card-clip p-8 text-center">
           <I.Globe size={32} stroke="#64748b" className="mx-auto mb-3" />
           <div className="f-display font-bold text-base mb-1">Cap landing creada</div>
-          <p className="text-[13px] text-[#94a3b8] mb-4">Crea la teva primera landing per començar</p>
+          <p className="text-ui text-ink-1 mb-4">Crea la teva primera landing per començar</p>
           <AMGButton size="sm" icon={I.Plus} onClick={() => router.push('/portal/landings/new')}>
             Crear landing
           </AMGButton>
@@ -62,7 +62,7 @@ export default function LandingsPage() {
                   {l.status === 'PUBLISHED' ? 'Publicada' : 'Esborrany'}
                 </AMGBadge>
               </div>
-              <div className="f-mono text-[11px] text-[#64748b] mb-1">/{l.slug}</div>
+              <div className="f-mono text-caption text-ink-3 mb-1">/{l.slug}</div>
               <div className="flex gap-2 mt-4">
                 <AMGButton
                   size="sm"

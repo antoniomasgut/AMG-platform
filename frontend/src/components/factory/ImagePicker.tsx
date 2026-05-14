@@ -40,13 +40,13 @@ export const ImagePicker: FC<Props> = ({ onSelect, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-      <div className="bg-[#13132a] border border-[rgba(255,107,0,0.2)] rounded-lg w-full max-w-lg max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-[rgba(255,107,0,0.12)]">
-          <span className="f-mono text-xs uppercase tracking-wider text-[#e2e8f0]">Selector d&apos;imatges</span>
-          <button onClick={onClose} className="text-[#94a3b8] hover:text-white text-sm">×</button>
+      <div className="bg-[#13132a] border border-border-medium rounded-lg w-full max-w-lg max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-border-base">
+          <span className="f-mono text-xs uppercase tracking-wider text-ink-0">Selector d&apos;imatges</span>
+          <button onClick={onClose} className="text-ink-1 hover:text-white text-sm">×</button>
         </div>
 
-        <div className="p-4 border-b border-[rgba(255,107,0,0.12)]">
+        <div className="p-4 border-b border-border-base">
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
@@ -59,7 +59,7 @@ export const ImagePicker: FC<Props> = ({ onSelect, onClose }) => {
 
         <div className="flex-1 overflow-auto p-4 grid grid-cols-3 gap-2">
           {assets.length === 0 ? (
-            <div className="col-span-3 text-center text-[#64748b] text-xs py-8">
+            <div className="col-span-3 text-center text-ink-3 text-xs py-8">
               Cap imatge pujada
             </div>
           ) : (

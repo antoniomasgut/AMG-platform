@@ -21,20 +21,20 @@ export function AMGInput({
 }: InputProps) {
   return (
     <label className={`block ${className}`}>
-      {label && <span className="block f-mono uppercase text-[10px] tracking-[0.14em] text-[#94a3b8] mb-1.5">{label}</span>}
-      <div className="relative flex items-center h-10 bg-[#1a1a2e]/80 border border-[rgba(255,107,0,0.14)] focus-within:border-[#FF6B00] transition">
-        {Ico && <div className="pl-3 text-[#64748b]"><Ico size={14} /></div>}
+      {label && <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">{label}</span>}
+      <div className="relative flex items-center h-10 bg-[#1a1a2e]/80 border border-border-base focus-within:border-[#FF6B00] transition">
+        {Ico && <div className="pl-3 text-ink-3"><Ico size={14} /></div>}
         <input
           type={type}
           defaultValue={value}
           placeholder={placeholder}
           autoFocus={autoFocus}
           onChange={onChange}
-          className={`${mono ? 'f-mono' : ''} flex-1 bg-transparent outline-none px-3 text-sm text-[#e2e8f0] placeholder:text-[#64748b]`}
+          className={`${mono ? 'f-mono' : ''} flex-1 bg-transparent outline-none px-3 text-sm text-ink-0 placeholder:text-ink-3`}
         />
       </div>
-      {hint && <span className="block mt-1 text-[11px] text-[#64748b]">{hint}</span>}
-      {error && <span className="block mt-1 text-[11px] text-[#ff6666]">{error}</span>}
+      {hint && <span className="block mt-1 text-caption text-ink-3">{hint}</span>}
+      {error && <span className="block mt-1 text-caption text-danger-light">{error}</span>}
     </label>
   );
 }
