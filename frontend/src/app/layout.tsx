@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { Orbitron, Space_Grotesk, Share_Tech_Mono } from 'next/font/google';
 import { Providers } from '@/components/Providers';
 import { ToastContainer } from '@/components/ToastContainer';
@@ -36,7 +37,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nonce = (await headers()).get('x-nonce') ?? '';
+
   return (
     <html className={`${orbitron.variable} ${spaceGrotesk.variable} ${shareTechMono.variable}`}>
       <head>
@@ -51,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Salta al contingut principal
         </a>
         <ErrorBoundary>
-          <Providers>
+          <Providers nonce={nonce}>
             {children}
             <ToastContainer />
           </Providers>
