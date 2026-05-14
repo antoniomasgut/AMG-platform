@@ -60,10 +60,11 @@ interface SidebarProps {
   userEmail: string;
   userRole: string;
   isSuperAdmin: boolean;
+  isAdmin: boolean;
   initial: string;
 }
 
-function PortalSidebar({ userName, userEmail, userRole: _userRole, isSuperAdmin, initial }: SidebarProps) {
+function PortalSidebar({ userName, userEmail, userRole: _userRole, isSuperAdmin, isAdmin, initial }: SidebarProps) {
   return (
     <aside aria-label="Navegació del portal" className="hidden lg:flex w-[240px] shrink-0 bg-[#13132a] border-r border-border-base flex-col">
       <div className="h-16 border-b border-border-base flex items-center px-5 gap-3">
@@ -75,16 +76,17 @@ function PortalSidebar({ userName, userEmail, userRole: _userRole, isSuperAdmin,
           <span className="f-mono text-[9px] text-accent-light tracking-widest">PORTAL · GROWTH</span>
         </div>
       </div>
-      <nav aria-label="Menú principal" className="flex-1 p-3 space-y-1">
+      <nav aria-label="Menú principal" className="flex-1 p-3 space-y-1 overflow-y-auto">
         <div className="f-mono text-[9px] uppercase tracking-widest text-ink-2 px-3 py-2">El meu compte</div>
         {([
           { label: 'Dashboard', icon: I.Dashboard, active: true, href: '/portal' },
           { label: 'Landings', icon: I.Globe, active: false, href: '/portal/landings' },
-          { label: 'Serveis', icon: I.Box, active: false, href: '/portal' },
-          { label: 'Factures', icon: I.Receipt, active: false, href: '/portal' },
-          { label: 'Suport', icon: I.Bell, active: false, href: '/portal' },
-          ...(isSuperAdmin ? [{ label: 'Admin', icon: I.Settings, active: false, href: '/portal' }] : []),
-        ] as const).map(({ label, icon: Icon, active, href }) => (
+          { label: 'Billing', icon: I.CreditCard, active: false, href: '/portal/billing' },
+          { label: 'FinOps', icon: I.Receipt, active: false, href: '/portal/finops' },
+          { label: 'Automatitzacions', icon: I.Zap, active: false, href: '/portal/automations' },
+          ...(isAdmin ? [{ label: 'Ops & Health', icon: I.Activity, active: false, href: '/portal/ops' }] : []),
+          ...(isSuperAdmin ? [{ label: 'Admin', icon: I.Settings, active: false, href: '/portal/admin/users' }] : []),
+        ]).map(({ label, icon: Icon, active, href }) => (
           <a key={label} href={href}
             className={`relative flex items-center gap-3 px-3 h-10 f-mono text-xs uppercase tracking-wider cursor-pointer ${
               active ? 'bg-accent-muted text-accent-light' : 'text-ink-1 hover:text-ink-0'
@@ -306,7 +308,7 @@ function OnboardingGuide({ userName, landingCount, workflowCount, invoiceCount, 
 
 /* ─────────── Main ─────────── */
 export default function PortalPage() {
-  const { user, logout, isSuperAdmin } = useAuth();
+  const { user, logout, isSuperAdmin, isAdmin } = useAuth();
   const handleApiError = useApiErrorHandler();
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -394,6 +396,7 @@ export default function PortalPage() {
         userEmail={user.email}
         userRole={user.role}
         isSuperAdmin={isSuperAdmin}
+        isAdmin={isAdmin}
         initial={initial}
       />
 
