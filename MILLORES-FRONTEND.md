@@ -37,9 +37,9 @@ Marca cada millora amb `[x]` quan estigui feta.
 
 - [x] **Landing pública multi-idioma (Mòdul 13)** — next-intl v4 instal·lat. Routing `/[locale]/` (ca/es/en/de) amb middleware. Landing completa: Header, Hero, Problem, Services, HowItWorks, Pricing, CTA, Footer. Missatges en 4 idiomes. generateMetadata amb hreflang i OG per locale. JSON-LD Organization a `[locale]/layout.tsx`. CookieConsentBanner amb localStorage. Sitemap dinàmic (`app/sitemap.ts`) amb alternates hreflang. Build compila net.
 - [ ] **Lighthouse audit en producció** — Un cop desplegat a Hetzner/Coolify, executar Lighthouse per mesurar Core Web Vitals reals (LCP, CLS, INP).
-- [ ] **Revisar Server Components** — Identificar quins fitxers `'use client'` es poden convertir per millorar LCP.
-- [ ] **Pàgines legals — omplir NIF i adreça** — `[NIF del titular]` i `[Adreça]` amb placeholders a `avis-legal` i `privacitat`. Incompliment LSSI fins que s'omplin.
-- [ ] **Content-Security-Policy (CSP)** — El header CSP no està configurat. Complex amb Google Fonts (necessita nonces o hashes). Backlog.
+- [x] **Revisar Server Components** — Auditoria completada: tots els `'use client'` son legítims (hooks, handlers, context). Landing sections (Hero, Problem, Services, HowItWorks, Pricing, CTA, Footer) ja son Server Components correctament.
+- [x] **Pàgines legals — omplir NIF i adreça** — NIF: 182237442B · Titular: Antonio Mas Gutiérrez · Domicili: Carrer Joan Capó, núm. 7, 1r esq., 07200 Felanitx. Actualitzats els 4 fitxers legals.
+- [x] **Content-Security-Policy (CSP)** — Implementat amb nonces per request al middleware. `script-src 'nonce-xxx' 'strict-dynamic'`, `style-src nonce+fonts.googleapis.com`, `font-src fonts.gstatic.com`, `frame-ancestors 'none'`, `upgrade-insecure-requests`. JSON-LD rep el nonce via `headers()` al Server Component.
 - [x] **Banner de cookies (RGPD)** — `CookieConsentBanner` implementat a `[locale]/layout.tsx`. Acceptar/rebutjar opcionals, persistència a `localStorage('cookie_consent')`.
 - [x] **Structured data (JSON-LD)** — Organization schema injectat a `[locale]/layout.tsx` amb `dangerouslySetInnerHTML`.
 
