@@ -20,8 +20,9 @@ export default function AvisLegalPage() {
             <p>En compliment de la Llei 34/2002, d'11 de juliol, de Serveis de la Societat de la Informació i del Comerç Electrònic (LSSI-CE), s'informa que el titular d'aquest lloc web és:</p>
             <ul className="mt-3 space-y-1 pl-4 border-l border-[#FF6B00]/30">
               <li><strong className="text-ink-0">Denominació:</strong> AMG Digitalització</li>
-              <li><strong className="text-ink-0">NIF:</strong> [NIF del titular]</li>
-              <li><strong className="text-ink-0">Domicili:</strong> [Adreça], Mallorca, Illes Balears</li>
+              <li><strong className="text-ink-0">Titular:</strong> Antonio Mas Gutiérrez</li>
+              <li><strong className="text-ink-0">NIF:</strong> 182237442B</li>
+              <li><strong className="text-ink-0">Domicili:</strong> Carrer Joan Capó, núm. 7, 1r esquerra, 07200 Felanitx, Illes Balears</li>
               <li><strong className="text-ink-0">Correu electrònic:</strong> hola@amg.digital</li>
             </ul>
           </div>

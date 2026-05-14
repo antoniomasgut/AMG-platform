@@ -18,9 +18,9 @@ export default function PrivacitatPage() {
           <div>
             <h2 className="text-lg font-semibold text-ink-0 mb-3">1. Responsable del tractament</h2>
             <ul className="space-y-1 pl-4 border-l border-[#FF6B00]/30">
-              <li><strong className="text-ink-0">Responsable:</strong> AMG Digitalització</li>
-              <li><strong className="text-ink-0">NIF:</strong> [NIF del titular]</li>
-              <li><strong className="text-ink-0">Adreça:</strong> [Adreça], Mallorca</li>
+              <li><strong className="text-ink-0">Responsable:</strong> Antonio Mas Gutiérrez (AMG Digitalització)</li>
+              <li><strong className="text-ink-0">NIF:</strong> 182237442B</li>
+              <li><strong className="text-ink-0">Adreça:</strong> Carrer Joan Capó, núm. 7, 1r esquerra, 07200 Felanitx, Illes Balears</li>
               <li><strong className="text-ink-0">Contacte:</strong> privacitat@amg.digital</li>
             </ul>
           </div>
