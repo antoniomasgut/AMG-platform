@@ -8,21 +8,13 @@ async function loginViaAPI(page: any) {
     data: { email: 'superadmin@amg.com', password: 'admin123' },
   });
   const data = await resp.json();
-  const token = data.accessToken;
-  const refreshToken = data.refreshToken;
-
-  // Set tokens in sessionStorage before navigating to portal
   await page.goto('/ca/login');
   await page.waitForLoadState('networkidle');
-  await page.evaluate(({ token, refreshToken }) => {
+  await page.evaluate(({ token, refreshToken, user }) => {
     sessionStorage.setItem('access_token', token);
     sessionStorage.setItem('refresh_token', refreshToken);
-    sessionStorage.setItem('user', JSON.stringify({
-      email: 'superadmin@amg.com',
-      role: 'SUPER_ADMIN',
-      name: 'Super Admin',
-    }));
-  }, { token, refreshToken });
+    sessionStorage.setItem('user', JSON.stringify(user));
+  }, { token: data.accessToken, refreshToken: data.refreshToken, user: data.user });
 }
 
 test.describe('Admin Templates Pages', () => {
@@ -30,32 +22,21 @@ test.describe('Admin Templates Pages', () => {
     await loginViaAPI(page);
 
     await page.goto('/ca/portal/admin/templates');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-
-    const body = await page.textContent('body');
-    expect(body).toContain('Gestió de plantilles');
+    await expect(page.locator('text=Gestió de plantilles').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('New template page renders form', async ({ page }) => {
     await loginViaAPI(page);
 
     await page.goto('/ca/portal/admin/templates/new');
-    await page.waitForLoadState('networkidle');
-
-    const body = await page.textContent('body');
-    expect(body).toContain('Nova plantilla');
+    await expect(page.locator('text=Nova plantilla').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('Landings new page shows templates from API', async ({ page }) => {
     await loginViaAPI(page);
 
     await page.goto('/ca/portal/landings/new');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
-
-    const body = await page.textContent('body');
-    expect(body).toContain('Selecciona una plantilla');
+    await expect(page.locator('text=Selecciona una plantilla').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('Template detail page renders with sections', async ({ page }) => {
@@ -70,11 +51,7 @@ test.describe('Admin Templates Pages', () => {
     if (templates && templates.length > 0) {
       const tid = templates[0].id;
       await page.goto(`/ca/portal/admin/templates/${tid}`);
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(1000);
-
-      const body = await page.textContent('body');
-      expect(body).toContain(templates[0].name);
+      await expect(page.locator(`text=${templates[0].name}`).first()).toBeVisible({ timeout: 10000 });
     }
   });
 });

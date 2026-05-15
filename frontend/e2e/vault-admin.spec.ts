@@ -15,12 +15,13 @@ async function loginViaAPI(page: any) {
     sessionStorage.setItem('refresh_token', refreshToken);
     sessionStorage.setItem('user', JSON.stringify(user));
   }, { token: data.accessToken, refreshToken: data.refreshToken, user: data.user });
+  return data.accessToken;
 }
 
 const TS = Date.now();
 
 test('Complete vault flow: create profile, phases, services, assign', async ({ page }) => {
-  await loginViaAPI(page);
+  const token = await loginViaAPI(page);
 
   // 1. Create a profile from the catalog
   await page.goto('/ca/portal/admin/vault');
@@ -34,7 +35,7 @@ test('Complete vault flow: create profile, phases, services, assign', async ({ p
   await page.locator('button:has-text("Crear perfil")').click();
   await page.waitForTimeout(1000);
 
-  // 2. Dismiss cookie consent if present
+  // Dismiss cookie consent if present
   const cookieAccept = page.locator('button:has-text("Acceptar")').first();
   if (await cookieAccept.isVisible({ timeout: 500 }).catch(() => false)) {
     await cookieAccept.click();
@@ -73,46 +74,34 @@ test('Complete vault flow: create profile, phases, services, assign', async ({ p
   await expect(page.locator(`text=${svcName}`).first()).toBeVisible({ timeout: 3000 });
   await expect(page.locator('text=80.00 €').first()).toBeVisible({ timeout: 3000 });
 
-  // 6. Go to tenants page and create a tenant
-  await page.goto('/ca/portal/admin/tenants');
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1000);
+  // 6. Create a tenant via API (faster and more reliable than UI creation for this step)
+  const tenantSlug = `vt-tenant-${TS}`;
+  const tenantResp = await page.request.post(`${API_BASE}/api/v1/tenants`, {
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    data: { name: `Vault E2E Tenant ${TS}`, slug: tenantSlug, email: 'vt@test.com' },
+  });
+  const tenant = await tenantResp.json();
+  const tenantId = tenant.id;
+  expect(tenantId).toBeTruthy();
 
-  const tenantName = `Vault E2E Tenant ${TS}`;
-  await page.locator('button:has-text("Nou tenant")').click();
-  await page.locator('input[placeholder="Nom de l\'empresa"]').fill(tenantName);
-  await page.locator('input[placeholder="nom-empresa"]').fill(`vt-tenant-${TS}`);
-  await page.locator('input[placeholder="info@empresa.com"]').fill('vt@test.com');
-  await page.locator('button:has-text("Crear tenant")').click();
-  await page.waitForTimeout(1500);
-
-  // 7. Open tenant detail — click Gestionar via DOM API to bypass React interception issues
-  await page.evaluate((name) => {
-    const rows = document.querySelectorAll('tr');
-    for (const row of rows) {
-      if (row.textContent?.includes(name)) {
-        const btn = row.querySelector('button');
-        if (btn) { btn.click(); break; }
-      }
-    }
-  }, tenantName);
-  await page.waitForURL(/\/portal\/admin\/tenants\//, { timeout: 5000 });
+  // 7. Navigate directly to tenant detail page
+  await page.goto(`/ca/portal/admin/tenants/${tenantId}`);
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(2000);
 
-  // 8. Dismiss cookies and assign profile
+  // 8. Dismiss cookies if present
   const cookieBtn = page.locator('button:has-text("Acceptar")').first();
   if (await cookieBtn.isVisible({ timeout: 500 }).catch(() => false)) {
     await cookieBtn.click();
     await page.waitForTimeout(300);
   }
 
-  // Wait for "Assignar perfil" button
-  await page.waitForTimeout(1000);
-  await expect(page.locator('button:has-text("Assignar perfil")')).toBeVisible({ timeout: 5000 });
+  // 9. Assign profile
+  await expect(page.locator('button:has-text("Assignar perfil")')).toBeVisible({ timeout: 10000 });
   await page.locator('button:has-text("Assignar perfil")').click({ force: true });
   await page.waitForTimeout(500);
-  // Click the profile via DOM API since it may be outside the viewport in the modal
+
+  // Click the profile in the modal via DOM API
   await page.evaluate((name) => {
     const buttons = document.querySelectorAll('.fixed.inset-0 button');
     for (const btn of buttons) {
@@ -123,7 +112,8 @@ test('Complete vault flow: create profile, phases, services, assign', async ({ p
     }
   }, `Vault E2E Profile ${TS}`);
   await page.waitForTimeout(300);
-  // Click the modal's "Assignar perfil" button via DOM API
+
+  // Click the modal's "Assignar perfil" confirm button
   await page.evaluate(() => {
     const overlay = document.querySelector('.fixed.inset-0');
     if (!overlay) return;
@@ -137,7 +127,7 @@ test('Complete vault flow: create profile, phases, services, assign', async ({ p
   });
   await page.waitForTimeout(2000);
 
-  // 9. Verify phases and services assigned to tenant
+  // 10. Verify phases and services assigned to tenant
   await expect(page.locator('text=F1 Config').first()).toBeVisible();
   await expect(page.locator(`text=${svcName}`).first()).toBeVisible();
 });

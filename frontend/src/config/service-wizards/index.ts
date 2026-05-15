@@ -36,34 +36,43 @@ export interface ServiceWizardConfig {
   steps: WizardStep[];
 }
 
-const slugRegistry = new Map<string, ServiceWizardConfig>();
-/** Fallback: type → primer wizard registrat amb aquest type */
-const typeFallback = new Map<string, string>();
+// Use globalThis directly inside functions to avoid TDZ with circular-dep init order.
+// `function` declarations are hoisted (no TDZ), so wizard files can call these safely
+// even when this module's body hasn't fully executed yet.
+type G = Record<string, unknown>;
+function slugMap(): Map<string, ServiceWizardConfig> {
+  const g = globalThis as G;
+  if (!g.__amgWizardSlugs) g.__amgWizardSlugs = new Map<string, ServiceWizardConfig>();
+  return g.__amgWizardSlugs as Map<string, ServiceWizardConfig>;
+}
+function typeMap(): Map<string, string> {
+  const g = globalThis as G;
+  if (!g.__amgWizardTypes) g.__amgWizardTypes = new Map<string, string>();
+  return g.__amgWizardTypes as Map<string, string>;
+}
 
 export function registerWizard(config: ServiceWizardConfig) {
-  slugRegistry.set(config.slug, config);
-  if (!typeFallback.has(config.serviceType)) {
-    typeFallback.set(config.serviceType, config.slug);
+  slugMap().set(config.slug, config);
+  if (!typeMap().has(config.serviceType)) {
+    typeMap().set(config.serviceType, config.slug);
   }
 }
 
 export function getWizardConfig(slug: string, serviceType?: string): ServiceWizardConfig | undefined {
-  // Try exact slug first
-  const exact = slugRegistry.get(slug);
+  const exact = slugMap().get(slug);
   if (exact) return exact;
-  // Fallback to serviceType
   if (serviceType) {
-    const fallbackSlug = typeFallback.get(serviceType);
-    if (fallbackSlug) return slugRegistry.get(fallbackSlug);
+    const fallbackSlug = typeMap().get(serviceType);
+    if (fallbackSlug) return slugMap().get(fallbackSlug);
   }
   return undefined;
 }
 
 export function listWizardSlugs(): string[] {
-  return Array.from(slugRegistry.keys());
+  return Array.from(slugMap().keys());
 }
 
-// Import all wizards
+// Import all wizards (side-effect: they call registerWizard)
 import './WHATSAPP';
 import './SMTP';
 import './LANDING';
