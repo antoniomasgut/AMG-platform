@@ -17,7 +17,7 @@ export function LocaleSwitcher() {
   const path = fullPathname.replace(/^\/(ca|es|en|de)/, '') || '';
 
   return (
-    <div className="hidden sm:flex items-center gap-1">
+    <div className="flex items-center gap-1">
       {LOCALES.map((l, i) => (
         <span key={l.code} className="flex items-center gap-1">
           {i > 0 && <span className="text-border-medium f-mono text-label">·</span>}

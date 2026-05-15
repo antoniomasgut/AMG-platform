@@ -127,10 +127,32 @@
       ],
       "note": "Free initial consultation, no commitment. We'll explain exactly how we can help you."
     },
+    "portalPreview": {
+      "badge": "Your client portal",
+      "title": "YOUR ENTIRE BUSINESS,\nALWAYS VISIBLE.",
+      "subtitle": "Every client gets access to a private dashboard where they can check the status of all their services, invoices and incidents in real time — without having to ask.",
+      "features": [
+        {
+          "icon": "📊",
+          "title": "Real-time status",
+          "description": "Know at a glance whether your website, automations and systems are running."
+        },
+        {
+          "icon": "🧾",
+          "title": "Invoices & documents",
+          "description": "Access all invoices and a summary of your contracted services."
+        },
+        {
+          "icon": "🔔",
+          "title": "Alerts & incidents",
+          "description": "We notify you when we detect a problem. You can track it directly from the portal."
+        }
+      ]
+    },
     "cta": {
       "title": "READY TO\nDIGITISE YOUR BUSINESS?",
       "subtitle": "Free first consultation. No commitments, no fine print. Let's talk about what you need.",
-      "button": "REQUEST A FREE STUDY",
+      "button": "CHAT ON WHATSAPP",
       "buttonSecondary": "SIGN IN TO PORTAL"
     },
     "footer": {

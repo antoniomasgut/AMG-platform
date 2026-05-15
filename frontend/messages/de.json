@@ -127,10 +127,32 @@
       ],
       "note": "Kostenlose Erstberatung, unverbindlich. Wir erklären Ihnen, wie wir helfen können."
     },
+    "portalPreview": {
+      "badge": "Ihr Kundenportal",
+      "title": "IHR GESAMTES GESCHÄFT,\nIMMER SICHTBAR.",
+      "subtitle": "Jeder Kunde erhält Zugang zu einem privaten Dashboard, auf dem er den Status aller Dienste, Rechnungen und Störungen in Echtzeit einsehen kann — ohne nachfragen zu müssen.",
+      "features": [
+        {
+          "icon": "📊",
+          "title": "Echtzeit-Status",
+          "description": "Sie sehen auf einen Blick, ob Ihre Website, Automatisierungen und Systeme betriebsbereit sind."
+        },
+        {
+          "icon": "🧾",
+          "title": "Rechnungen & Dokumente",
+          "description": "Zugang zu allen Rechnungen und einer Übersicht der gebuchten Dienste."
+        },
+        {
+          "icon": "🔔",
+          "title": "Alarme & Störungen",
+          "description": "Wir benachrichtigen Sie, wenn wir ein Problem erkennen. Sie können es im Portal verfolgen."
+        }
+      ]
+    },
     "cta": {
       "title": "BEREIT ZUR\nDIGITALISIERUNG?",
       "subtitle": "Kostenlose Erstberatung. Keine Verpflichtungen, kein Kleingedrucktes. Sprechen wir über Ihre Bedürfnisse.",
-      "button": "KOSTENLOSE ANALYSE ANFRAGEN",
+      "button": "PER WHATSAPP SCHREIBEN",
       "buttonSecondary": "ZUM PORTAL ANMELDEN"
     },
     "footer": {

@@ -127,10 +127,32 @@
       ],
       "note": "Primera consulta gratuïta i sense compromís. T'expliquem com podem ajudar-te."
     },
+    "portalPreview": {
+      "badge": "El teu portal de client",
+      "title": "TOT EL TEU NEGOCI,\nSEMPRE VISIBLE.",
+      "subtitle": "Cada client té accés a un dashboard privat on pot consultar l'estat de tots els serveis, les factures i les incidències en temps real — sense haver de preguntar.",
+      "features": [
+        {
+          "icon": "📊",
+          "title": "Estat en temps real",
+          "description": "Saps en tot moment si la teva web, automatitzacions i sistemes estan operatius."
+        },
+        {
+          "icon": "🧾",
+          "title": "Factures i documents",
+          "description": "Accedeix a totes les factures i al resum dels serveis contractats."
+        },
+        {
+          "icon": "🔔",
+          "title": "Alertes i incidències",
+          "description": "T'avisem quan detectem un problema. Pots fer el seguiment des del portal."
+        }
+      ]
+    },
     "cta": {
       "title": "PREPARAT PER\nDIGITALITZAR EL TEU NEGOCI?",
       "subtitle": "Primera consulta gratuïta. Sense compromisos, sense lletra petita. Parlem del que necessites.",
-      "button": "DEMANAR ESTUDI GRATUÏT",
+      "button": "PARLAR PER WHATSAPP",
       "buttonSecondary": "ACCEDIR AL PORTAL"
     },
     "footer": {

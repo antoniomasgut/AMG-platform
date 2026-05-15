@@ -127,10 +127,32 @@
       ],
       "note": "Primera consulta gratuita y sin compromiso. Te explicamos cómo podemos ayudarte."
     },
+    "portalPreview": {
+      "badge": "Tu portal de cliente",
+      "title": "TODO TU NEGOCIO,\nSIEMPRE VISIBLE.",
+      "subtitle": "Cada cliente tiene acceso a un dashboard privado donde puede consultar el estado de todos sus servicios, las facturas y las incidencias en tiempo real — sin tener que preguntar.",
+      "features": [
+        {
+          "icon": "📊",
+          "title": "Estado en tiempo real",
+          "description": "Sabes en todo momento si tu web, automatizaciones y sistemas están operativos."
+        },
+        {
+          "icon": "🧾",
+          "title": "Facturas y documentos",
+          "description": "Accede a todas las facturas y al resumen de los servicios contratados."
+        },
+        {
+          "icon": "🔔",
+          "title": "Alertas e incidencias",
+          "description": "Te avisamos cuando detectamos un problema. Puedes hacer el seguimiento desde el portal."
+        }
+      ]
+    },
     "cta": {
       "title": "¿LISTO PARA\nDIGITALIZAR TU NEGOCIO?",
       "subtitle": "Primera consulta gratuita. Sin compromisos, sin letra pequeña. Hablemos de lo que necesitas.",
-      "button": "PEDIR ESTUDIO GRATUITO",
+      "button": "HABLAR POR WHATSAPP",
       "buttonSecondary": "ACCEDER AL PORTAL"
     },
     "footer": {
