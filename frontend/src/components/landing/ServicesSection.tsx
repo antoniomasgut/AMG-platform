@@ -2,7 +2,7 @@ import { useTranslations } from 'next-intl';
 
 export function ServicesSection() {
   const t = useTranslations('landing.services');
-  const items = t.raw('items') as Array<{ icon: string; title: string; description: string; price: string }>;
+  const items = t.raw('items') as Array<{ icon: string; title: string; description: string; tag: string }>;
 
   return (
     <section id="services" className="py-24 px-6 border-t border-border-subtle">
@@ -33,7 +33,7 @@ export function ServicesSection() {
                 <p className="text-data text-ink-2 leading-relaxed">{item.description}</p>
               </div>
               <div className="mt-auto pt-4 border-t border-border-subtle">
-                <span className="f-mono text-caption text-accent-light uppercase tracking-caption">{item.price}</span>
+                <span className="f-mono text-caption text-ink-3 uppercase tracking-caption">{item.tag}</span>
               </div>
             </div>
           ))}

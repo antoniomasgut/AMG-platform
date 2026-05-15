@@ -12,112 +12,126 @@
   },
   "nav": {
     "services": "Services",
-    "pricing": "Pricing",
-    "howItWorks": "How it works",
+    "pricing": "How we work",
+    "howItWorks": "The process",
     "contact": "Contact",
     "login": "Sign in",
     "portal": "My portal"
   },
   "landing": {
     "hero": {
-      "badge": "Portal v2 · Now live",
-      "title": "SMBS AUTOMATED",
-      "titleAccent": "IN LESS THAN 48H.",
-      "subtitle": "Bots, landings, workflows and invoicing — one managed portal for Mallorca businesses.",
-      "cta": "ACCESS PORTAL",
-      "ctaSecondary": "View services",
+      "badge": "Digital engineering for SMEs",
+      "title": "DIGITISE YOUR BUSINESS",
+      "titleAccent": "WITH ONE PARTNER.",
+      "subtitle": "Websites, automations, maintenance and technical support — all managed by a team that knows your business inside out.",
+      "cta": "LET'S TALK ABOUT YOUR PROJECT",
+      "ctaSecondary": "See services",
       "stats": {
-        "uptime": "99.98% uptime",
-        "clients": "48 active SMBs",
-        "automations": "+200 automations"
+        "uptime": "Incident support",
+        "clients": "Active SMEs",
+        "automations": "Phase-based delivery"
       }
     },
     "problem": {
       "badge": "The problem",
-      "title": "TOO MANY TOOLS,\nTOO MUCH TIME WASTED.",
-      "description": "Most SMBs manage their digital business with scattered tools: one provider for the website, another for WhatsApp, another for invoices... The result is wasted time, high costs and no unified view.",
+      "title": "TOO MANY TOOLS,\nTOO LITTLE REAL SUPPORT.",
+      "description": "SMEs end up with scattered tools and no trusted technical partner. When something breaks — and it always does — nobody knows who to call or how to fix it fast.",
       "items": [
-        { "icon": "⏳", "text": "Hours lost switching between platforms" },
-        { "icon": "💸", "text": "Multiple subscriptions without integration" },
-        { "icon": "📊", "text": "No unified business overview" }
+        { "icon": "⏳", "text": "Hours lost switching between disconnected platforms" },
+        { "icon": "🚨", "text": "No support when the system goes down or an incident occurs" },
+        { "icon": "📊", "text": "No unified view or control of the digital business" }
       ]
     },
     "services": {
       "badge": "Services",
-      "title": "EVERYTHING YOU NEED,\nIN ONE PORTAL.",
-      "subtitle": "From landing to invoice, automated.",
+      "title": "EVERYTHING YOU NEED,\nWITH ONE TEAM.",
+      "subtitle": "From design to ongoing maintenance, without changing providers.",
       "items": [
         {
           "icon": "🌐",
           "title": "Websites & landings",
-          "description": "Professional landing pages optimised for conversion. Premium design, SEO included.",
-          "price": "From €30"
+          "description": "Professional landing pages optimised for conversion. Premium design, technical SEO and measured performance.",
+          "tag": "Web · Landing · SEO"
         },
         {
           "icon": "🤖",
           "title": "Automations",
-          "description": "n8n workflows to automate WhatsApp, email, CRM and much more.",
-          "price": "From €20"
+          "description": "Custom workflows for WhatsApp, email, CRM and any repetitive process in your business.",
+          "tag": "n8n · AI · Integrations"
         },
         {
-          "icon": "🧾",
-          "title": "Digital invoicing",
-          "description": "Quotes and invoices in PDF, integrated with Holded. No paperwork.",
-          "price": "Included"
+          "icon": "🛡️",
+          "title": "Maintenance & SLA",
+          "description": "Systems monitored 24/7 with regular backups. When an incident occurs, we detect and resolve it before you even notice.",
+          "tag": "24/7 · Backups · SLA"
         },
         {
-          "icon": "🔒",
-          "title": "Domain & email",
-          "description": "Custom domain, corporate email and SSL certificate. All managed by us.",
-          "price": "From €30"
+          "icon": "🔄",
+          "title": "Changes & evolution",
+          "description": "Your business changes and so does the system. We implement improvements and adjustments whenever you need them.",
+          "tag": "Iteration · Improvements"
         }
       ]
     },
     "howItWorks": {
-      "badge": "Process",
-      "title": "IN 3 STEPS,\nYOUR DIGITAL BUSINESS.",
+      "badge": "Our process",
+      "title": "WE WORK IN PHASES,\nAT YOUR PACE.",
       "steps": [
         {
           "number": "01",
-          "title": "Tell us about your business",
-          "description": "A 30-minute call to understand your needs and goals."
+          "title": "We study your needs",
+          "description": "A discovery session to understand your business, your current processes and your goals. No strings attached."
         },
         {
           "number": "02",
-          "title": "Receive your personalised offer",
-          "description": "Detailed phased quote, no hidden fees or monthly charges."
+          "title": "Phase-by-phase quote",
+          "description": "You receive a detailed, transparent proposal broken into phases. You choose which ones to implement and when."
         },
         {
           "number": "03",
-          "title": "Live in 48h",
-          "description": "Your portal active, your automations running. You in control."
+          "title": "We build and launch",
+          "description": "Each phase is developed, tested and deployed. You have portal access to track all your services in real time."
+        },
+        {
+          "number": "04",
+          "title": "We stay by your side",
+          "description": "Maintenance, incident resolution and iterative improvements. The system grows with your business."
         }
       ]
     },
-    "pricing": {
-      "badge": "Pricing",
-      "title": "NO SURPRISES.\nNO SUBSCRIPTIONS.",
-      "subtitle": "Pay once. Yours forever.",
-      "note": "All prices are setup fees (one-time payment). No recurring monthly charges.",
-      "items": [
-        { "service": "Micro-landing", "price": "€30" },
-        { "service": "Landing Pro", "price": "€80" },
-        { "service": "Self-managed domain", "price": "€30" },
-        { "service": "Managed domain (incl. 1st year)", "price": "€60" },
-        { "service": "WhatsApp Business API", "price": "€50" },
-        { "service": "Basic automation (n8n)", "price": "€20" },
-        { "service": "Advanced automation (n8n)", "price": "€60" },
-        { "service": "Basic AI bot", "price": "€40" },
-        { "service": "Advanced AI bot (RAG)", "price": "€100" },
-        { "service": "Corporate SMTP", "price": "€25" },
-        { "service": "Google Analytics", "price": "€25" }
-      ]
+    "service": {
+      "badge": "How we work",
+      "title": "A TECHNICAL PARTNER,\nNOT A VENDOR.",
+      "subtitle": "Every client is different. That's why we don't have fixed rates: we study your needs and propose a phased solution with transparent pricing.",
+      "pillars": [
+        {
+          "icon": "🔍",
+          "title": "Personalised study",
+          "description": "We analyse your business, processes and goals. We design a tailored solution — no generic templates."
+        },
+        {
+          "icon": "📋",
+          "title": "Phase-based quote",
+          "description": "A clear, detailed proposal. You implement the phases you want, at your own pace and budget, with no forced commitments."
+        },
+        {
+          "icon": "🛡️",
+          "title": "Maintenance, backups & incidents",
+          "description": "System monitored 24/7 with regular backups. When an incident happens, we resolve it. If the service goes down, we're the first to know and act."
+        },
+        {
+          "icon": "🔄",
+          "title": "Changes & growth",
+          "description": "Your business evolves and so does the system. We adapt, improve and expand capabilities whenever you need it."
+        }
+      ],
+      "note": "Free initial consultation, no commitment. We'll explain exactly how we can help you."
     },
     "cta": {
-      "title": "READY TO AUTOMATE\nYOUR BUSINESS?",
-      "subtitle": "Let's talk. First consultation free, no commitment.",
-      "button": "CONTACT NOW",
-      "buttonSecondary": "ACCESS PORTAL"
+      "title": "READY TO\nDIGITISE YOUR BUSINESS?",
+      "subtitle": "Free first consultation. No commitments, no fine print. Let's talk about what you need.",
+      "button": "REQUEST A FREE STUDY",
+      "buttonSecondary": "SIGN IN TO PORTAL"
     },
     "footer": {
       "description": "Digitalisation platform for local businesses in Mallorca.",
@@ -129,7 +143,7 @@
         "termes": "Terms of Service"
       },
       "contact": "Contact",
-      "copyright": "AMG Digitalització. All rights reserved."
+      "copyright": "AMG Digitalisation. All rights reserved."
     }
   },
   "auth": {
@@ -145,38 +159,38 @@
       "passwordTitle": "PASSWORD",
       "passwordSubtitle": "Enter your password for",
       "passwordLabel": "Password",
-      "enter": "SIGN IN",
-      "entering": "SIGNING IN...",
+      "enter": "ENTER",
+      "entering": "ENTERING...",
       "forgotPassword": "FORGOT YOUR PASSWORD?",
       "back": "← BACK",
       "linkSent": "Link sent",
       "checkEmail": "CHECK YOUR EMAIL",
-      "linkSentTo": "We sent an access link to",
-      "linkExpires": "Link expires in",
+      "linkSentTo": "We've sent an access link to",
+      "linkExpires": "The link expires in",
       "minutes": "15 min",
       "checkSpam": "Check your spam folder if you don't see it.",
       "resendLink": "RESEND LINK",
-      "useOtherEmail": "← USE ANOTHER EMAIL",
+      "useOtherEmail": "← USE A DIFFERENT EMAIL",
       "errors": {
         "incorrectCredentials": "Incorrect credentials",
-        "accountLocked": "Account locked. Try later or recover your password.",
+        "accountLocked": "Account locked. Try again later or reset your password.",
         "tooManyAttempts": "Too many attempts. Try again in a few minutes.",
         "loginError": "Login error",
         "sendError": "Error sending the link",
-        "emailRequired": "Enter your email first"
+        "emailRequired": "Please enter your email first"
       }
     },
     "forgotPassword": {
-      "badge": "Recover password",
-      "title": "RECOVER PASSWORD",
-      "subtitle": "Enter your email and we'll send a link to reset your password.",
+      "badge": "Reset password",
+      "title": "RESET PASSWORD",
+      "subtitle": "Enter your email and we'll send you a link to reset your password.",
       "emailLabel": "Corporate email",
       "sendLink": "SEND LINK",
       "sending": "SENDING...",
       "linkSentBadge": "Link sent",
       "checkEmail": "CHECK YOUR EMAIL",
       "emailSentTo": "If the email exists, you'll receive a recovery link at",
-      "linkExpires": "Link expires in",
+      "linkExpires": "The link expires in",
       "minutes": "30 min",
       "checkSpam": "Check your spam folder if you don't see it.",
       "backToLogin": "← BACK TO LOGIN",
@@ -200,13 +214,13 @@
         "invalidToken": "Invalid or expired recovery link",
         "minLength": "Password must be at least 4 characters",
         "mismatch": "Passwords do not match",
-        "generic": "Error resetting the password"
+        "generic": "Error resetting password"
       }
     }
   },
   "portal": {
     "sidebar": {
-      "system": "System operational",
+      "system": "System status",
       "nav": {
         "dashboard": "Dashboard",
         "landings": "Landings",
@@ -218,7 +232,7 @@
     },
     "dashboard": {
       "welcome": "Good morning",
-      "status": "System operational",
+      "status": "System status",
       "services": {
         "landings": "Active landings",
         "automations": "Automations",
@@ -230,7 +244,7 @@
         "viewAll": "View all",
         "cols": {
           "id": "ID",
-          "concept": "Concept",
+          "concept": "Description",
           "amount": "Amount",
           "date": "Date",
           "status": "Status"

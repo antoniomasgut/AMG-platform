@@ -12,111 +12,125 @@
   },
   "nav": {
     "services": "Servicios",
-    "pricing": "Precios",
-    "howItWorks": "Cómo funciona",
+    "pricing": "Cómo trabajamos",
+    "howItWorks": "El proceso",
     "contact": "Contacto",
     "login": "Acceder",
     "portal": "Mi portal"
   },
   "landing": {
     "hero": {
-      "badge": "Portal v2 · Ya disponible",
-      "title": "PYMES AUTOMATIZADAS",
-      "titleAccent": "EN MENOS DE 48H.",
-      "subtitle": "Bots, landings, workflows y facturación — un solo portal administrado para los negocios de Mallorca.",
-      "cta": "ACCEDER AL PORTAL",
+      "badge": "Ingeniería digital para pymes",
+      "title": "DIGITALIZA TU NEGOCIO",
+      "titleAccent": "CON UN SOLO PARTNER.",
+      "subtitle": "Webs, automatizaciones, mantenimiento y soporte técnico — todo gestionado por un equipo que conoce tu negocio en profundidad.",
+      "cta": "HABLEMOS DE TU PROYECTO",
       "ctaSecondary": "Ver servicios",
       "stats": {
-        "uptime": "99.98% uptime",
-        "clients": "48 pymes activas",
-        "automations": "+200 automatizaciones"
+        "uptime": "Soporte de incidencias",
+        "clients": "Pymes activas",
+        "automations": "Implementación por fases"
       }
     },
     "problem": {
       "badge": "El problema",
-      "title": "DEMASIADAS HERRAMIENTAS,\nDEMASIADO TIEMPO PERDIDO.",
-      "description": "La mayoría de pymes gestionan su negocio digital con herramientas dispersas: un proveedor para la web, otro para WhatsApp, otro para las facturas... El resultado es tiempo perdido, costes elevados y ninguna visión global.",
+      "title": "DEMASIADAS HERRAMIENTAS,\nPOCO SOPORTE REAL.",
+      "description": "Las pymes acaban con herramientas dispersas y sin un referente técnico al lado. Cuando algo falla — y siempre falla — nadie sabe a quién llamar ni cómo solucionarlo rápido.",
       "items": [
-        { "icon": "⏳", "text": "Horas perdidas cambiando entre plataformas" },
-        { "icon": "💸", "text": "Suscripciones múltiples sin integración" },
-        { "icon": "📊", "text": "Ninguna visión unificada del negocio" }
+        { "icon": "⏳", "text": "Horas perdidas entre plataformas que no se comunican" },
+        { "icon": "🚨", "text": "Sin soporte cuando el sistema cae o hay una incidencia" },
+        { "icon": "📊", "text": "Sin visión global ni control del negocio digital" }
       ]
     },
     "services": {
       "badge": "Servicios",
-      "title": "TODO LO QUE NECESITAS,\nEN UN PORTAL.",
-      "subtitle": "Desde la landing hasta la factura, automatizado.",
+      "title": "TODO LO QUE NECESITAS,\nCON UN SOLO EQUIPO.",
+      "subtitle": "Desde el diseño hasta el mantenimiento continuo, sin cambiar de proveedor.",
       "items": [
         {
           "icon": "🌐",
           "title": "Webs y landings",
-          "description": "Landings profesionales optimizadas para conversión. Diseño premium, SEO incluido.",
-          "price": "Desde 30€"
+          "description": "Landings profesionales optimizadas para conversión. Diseño premium, SEO técnico y rendimiento medido.",
+          "tag": "Web · Landing · SEO"
         },
         {
           "icon": "🤖",
           "title": "Automatizaciones",
-          "description": "Workflows de n8n para automatizar WhatsApp, email, CRM y mucho más.",
-          "price": "Desde 20€"
+          "description": "Workflows personalizados para WhatsApp, email, CRM y cualquier proceso repetitivo de tu negocio.",
+          "tag": "n8n · IA · Integraciones"
         },
         {
-          "icon": "🧾",
-          "title": "Facturación digital",
-          "description": "Presupuestos y facturas en PDF, integrado con Holded. Sin papeleo.",
-          "price": "Incluido"
+          "icon": "🛡️",
+          "title": "Mantenimiento y SLA",
+          "description": "Sistema monitorizado 24/7 con copias de seguridad periódicas. Cuando hay una incidencia, la detectamos y la resolvemos sin que tengas que pedirlo.",
+          "tag": "24/7 · Backups · SLA"
         },
         {
-          "icon": "🔒",
-          "title": "Dominio y email",
-          "description": "Dominio propio, email corporativo y certificado SSL. Todo gestionado por nosotros.",
-          "price": "Desde 30€"
+          "icon": "🔄",
+          "title": "Modificaciones y evolución",
+          "description": "Tu negocio cambia y el sistema se adapta. Implementamos mejoras y ajustes cuando los necesitas.",
+          "tag": "Iteración · Mejoras"
         }
       ]
     },
     "howItWorks": {
-      "badge": "Proceso",
-      "title": "EN 3 PASOS,\nTU NEGOCIO DIGITAL.",
+      "badge": "Nuestro proceso",
+      "title": "TRABAJAMOS POR FASES,\nA TU RITMO.",
       "steps": [
         {
           "number": "01",
-          "title": "Nos explicas tu negocio",
-          "description": "Una llamada de 30 minutos para entender tus necesidades y objetivos."
+          "title": "Estudiamos tus necesidades",
+          "description": "Una sesión de descubrimiento para entender tu negocio, tus procesos actuales y tus objetivos. Sin compromisos."
         },
         {
           "number": "02",
-          "title": "Recibes tu oferta personalizada",
-          "description": "Presupuesto detallado por fases, sin letra pequeña ni cuotas mensuales."
+          "title": "Presupuesto por fases",
+          "description": "Recibirás una propuesta detallada y transparente, dividida en fases. Tú decides cuáles implementas y en qué orden."
         },
         {
           "number": "03",
-          "title": "En marcha en 48h",
-          "description": "Tu portal activo, tus automatizaciones funcionando. Tú controlando todo."
+          "title": "Implementamos y ponemos en marcha",
+          "description": "Cada fase se desarrolla, se prueba y se despliega. Tienes acceso al portal para seguir el estado de todos tus servicios en tiempo real."
+        },
+        {
+          "number": "04",
+          "title": "Te acompañamos continuamente",
+          "description": "Mantenimiento, resolución de incidencias y mejoras iterativas. El sistema evoluciona con tu negocio."
         }
       ]
     },
-    "pricing": {
-      "badge": "Precios",
-      "title": "SIN SORPRESAS.\nSIN CUOTAS.",
-      "subtitle": "Pagas una vez. Es tuyo para siempre.",
-      "note": "Todos los precios son de setup (un solo pago). Sin cuotas mensuales recurrentes.",
-      "items": [
-        { "service": "Micro-landing", "price": "30€" },
-        { "service": "Landing Pro", "price": "80€" },
-        { "service": "Dominio autogestionado", "price": "30€" },
-        { "service": "Dominio gestionado (incluye 1r año)", "price": "60€" },
-        { "service": "WhatsApp Business API", "price": "50€" },
-        { "service": "Automatización básica (n8n)", "price": "20€" },
-        { "service": "Automatización avanzada (n8n)", "price": "60€" },
-        { "service": "Bot IA básico", "price": "40€" },
-        { "service": "Bot IA avanzado (RAG)", "price": "100€" },
-        { "service": "SMTP Corporativo", "price": "25€" },
-        { "service": "Google Analytics", "price": "25€" }
-      ]
+    "service": {
+      "badge": "Cómo trabajamos",
+      "title": "UN PARTNER TÉCNICO,\nNO UN PROVEEDOR.",
+      "subtitle": "Cada cliente es diferente. Por eso no tenemos tarifas fijas: hacemos un estudio de tus necesidades y te proponemos una solución por fases, con presupuesto transparente.",
+      "pillars": [
+        {
+          "icon": "🔍",
+          "title": "Estudio personalizado",
+          "description": "Analizamos tu negocio, tus procesos y tus objetivos. Diseñamos una solución a medida, sin plantillas genéricas."
+        },
+        {
+          "icon": "📋",
+          "title": "Presupuesto por fases",
+          "description": "Propuesta clara y detallada. Implementas las fases que te interesan, a tu ritmo y presupuesto, sin compromisos forzados."
+        },
+        {
+          "icon": "🛡️",
+          "title": "Mantenimiento, copias y incidencias",
+          "description": "Sistema monitorizado 24/7, copias de seguridad periódicas y resolución de incidencias. Si el servicio cae, somos los primeros en saberlo y en actuar."
+        },
+        {
+          "icon": "🔄",
+          "title": "Modificaciones y crecimiento",
+          "description": "El negocio evoluciona, el sistema también. Adaptamos, mejoramos y ampliamos las funcionalidades cuando lo necesitas."
+        }
+      ],
+      "note": "Primera consulta gratuita y sin compromiso. Te explicamos cómo podemos ayudarte."
     },
     "cta": {
-      "title": "¿LISTO PARA AUTOMATIZAR\nTU NEGOCIO?",
-      "subtitle": "Hablemos. Primera consulta gratuita y sin compromiso.",
-      "button": "CONTACTAR AHORA",
+      "title": "¿LISTO PARA\nDIGITALIZAR TU NEGOCIO?",
+      "subtitle": "Primera consulta gratuita. Sin compromisos, sin letra pequeña. Hablemos de lo que necesitas.",
+      "button": "PEDIR ESTUDIO GRATUITO",
       "buttonSecondary": "ACCEDER AL PORTAL"
     },
     "footer": {
@@ -129,7 +143,7 @@
         "termes": "Términos del Servicio"
       },
       "contact": "Contacto",
-      "copyright": "AMG Digitalització. Todos los derechos reservados."
+      "copyright": "AMG Digitalización. Todos los derechos reservados."
     }
   },
   "auth": {

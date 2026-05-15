@@ -12,111 +12,125 @@
   },
   "nav": {
     "services": "Serveis",
-    "pricing": "Preus",
-    "howItWorks": "Com funciona",
+    "pricing": "Com treballem",
+    "howItWorks": "El procés",
     "contact": "Contacte",
     "login": "Accedir",
     "portal": "El meu portal"
   },
   "landing": {
     "hero": {
-      "badge": "Portal v2 · Ara disponible",
-      "title": "PYMES AUTOMATITZADES",
-      "titleAccent": "EN MENYS DE 48H.",
-      "subtitle": "Bots, landings, workflows i facturació — un sol portal administrat per als negocis de Mallorca.",
-      "cta": "ACCEDIR AL PORTAL",
+      "badge": "Enginyeria digital per a pimes",
+      "title": "DIGITALITZA EL TEU NEGOCI",
+      "titleAccent": "AMB UN SOL PARTNER.",
+      "subtitle": "Webs, automatitzacions, manteniment i suport tècnic — tot gestionat per un equip que coneix el teu negoci en profunditat.",
+      "cta": "PARLEM DEL TEU PROJECTE",
       "ctaSecondary": "Veure serveis",
       "stats": {
-        "uptime": "99.98% uptime",
-        "clients": "48 pimes actives",
-        "automations": "+200 automatitzacions"
+        "uptime": "Suport d'incidències",
+        "clients": "Pimes actives",
+        "automations": "Implementació per fases"
       }
     },
     "problem": {
       "badge": "El problema",
-      "title": "MASSA EINES,\nMASSA TEMPS PERDUT.",
-      "description": "La majoria de pimes gestionen el negoci digital amb eines disperses: un proveïdor per la web, un altre per WhatsApp, un altre per les factures... El resultat és temps perdut, costos elevats i cap visió global.",
+      "title": "MASSES EINES,\nPOC SUPORT REAL.",
+      "description": "Les pimes acaben amb eines disperses i cap referent tècnic al costat. Quan alguna cosa falla — i sempre falla — ningú sap a qui trucar ni com solucionar-ho ràpid.",
       "items": [
-        { "icon": "⏳", "text": "Hores perdudes canviant entre plataformes" },
-        { "icon": "💸", "text": "Subscripcions múltiples sense integració" },
-        { "icon": "📊", "text": "Cap visió unificada del negoci" }
+        { "icon": "⏳", "text": "Hores perdudes entre plataformes que no es comuniquen" },
+        { "icon": "🚨", "text": "Cap suport quan el sistema cau o es produeix una incidència" },
+        { "icon": "📊", "text": "Sense visió global ni control del negoci digital" }
       ]
     },
     "services": {
       "badge": "Serveis",
-      "title": "TOT EL QUE NECESSITES,\nEN UN PORTAL.",
-      "subtitle": "Des de la landing fins a la factura, automatitzat.",
+      "title": "TOT EL QUE NECESSITES,\nAMB UN SOL EQUIP.",
+      "subtitle": "Des del disseny fins al manteniment continu, sense canviar de proveïdor.",
       "items": [
         {
           "icon": "🌐",
           "title": "Webs i landings",
-          "description": "Landings professionals optimitzades per a conversió. Disseny premium, SEO inclòs.",
-          "price": "Des de 30€"
+          "description": "Landings professionals optimitzades per a conversió. Disseny premium, SEO tècnic i rendiment mesurat.",
+          "tag": "Web · Landing · SEO"
         },
         {
           "icon": "🤖",
           "title": "Automatitzacions",
-          "description": "Workflows de n8n per automatitzar WhatsApp, email, CRM i molt més.",
-          "price": "Des de 20€"
+          "description": "Workflows personalitzats per a WhatsApp, email, CRM i qualsevol procés repetitiu del teu negoci.",
+          "tag": "n8n · IA · Integracions"
         },
         {
-          "icon": "🧾",
-          "title": "Facturació digital",
-          "description": "Pressupostos i factures en PDF, integrat amb Holded. Sense paperassa.",
-          "price": "Inclòs"
+          "icon": "🛡️",
+          "title": "Manteniment i SLA",
+          "description": "Sistema monitoritzat 24/7 amb còpies de seguretat periòdiques. Quan apareix una incidència, la detectem i la resolem sense que hagis de demanar-ho.",
+          "tag": "24/7 · Backups · SLA"
         },
         {
-          "icon": "🔒",
-          "title": "Domini i email",
-          "description": "Domini propi, email corporatiu i certificat SSL. Tot gestionat per nosaltres.",
-          "price": "Des de 30€"
+          "icon": "🔄",
+          "title": "Modificacions i evolució",
+          "description": "El teu negoci canvia i el sistema s'hi adapta. Implementem millores i ajustos quan els necessites.",
+          "tag": "Iteració · Millores"
         }
       ]
     },
     "howItWorks": {
-      "badge": "Procés",
-      "title": "EN 3 PASSOS,\nEL TEU NEGOCI DIGITAL.",
+      "badge": "El nostre procés",
+      "title": "TREBALLEM PER FASES,\nAL TEU RITME.",
       "steps": [
         {
           "number": "01",
-          "title": "Ens expliques el teu negoci",
-          "description": "Una trucada de 30 minuts per entendre les teves necessitats i objectius."
+          "title": "Estudiem les teves necessitats",
+          "description": "Una sessió de descoberta per entendre el teu negoci, els teus processos actuals i els teus objectius. Sense compromisos."
         },
         {
           "number": "02",
-          "title": "Rebem la teva oferta personalitzada",
-          "description": "Pressupost detallat per fases, sense lletra petita ni quotes mensuals."
+          "title": "Pressupost per fases",
+          "description": "Rebràs una proposta detallada i transparent, dividida en fases. Tu decides quines implementes i en quin ordre."
         },
         {
           "number": "03",
-          "title": "Posem en marxa en 48h",
-          "description": "El teu portal actiu, les teves automatitzacions funcionant. Tu controlant tot."
+          "title": "Implementem i posem en marxa",
+          "description": "Cada fase es desenvolupa, es prova i es desplega. Tens accés al portal per seguir l'estat de tots els teus serveis en temps real."
+        },
+        {
+          "number": "04",
+          "title": "T'acompanyem contínuament",
+          "description": "Manteniment, resolució d'incidències i millores iteratives. El sistema evoluciona amb el teu negoci."
         }
       ]
     },
-    "pricing": {
-      "badge": "Preus",
-      "title": "SENSE SORPRESES.\nSENSE QUOTES.",
-      "subtitle": "Pagues una vegada. És teu per sempre.",
-      "note": "Tots els preus són de setup (un sol pagament). Sense quotes mensuals recurrents.",
-      "items": [
-        { "service": "Micro-landing", "price": "30€" },
-        { "service": "Landing Pro", "price": "80€" },
-        { "service": "Domini autogestionat", "price": "30€" },
-        { "service": "Domini gestionat (inclou 1r any)", "price": "60€" },
-        { "service": "WhatsApp Business API", "price": "50€" },
-        { "service": "Automatització bàsica (n8n)", "price": "20€" },
-        { "service": "Automatització avançada (n8n)", "price": "60€" },
-        { "service": "Bot IA bàsic", "price": "40€" },
-        { "service": "Bot IA avançat (RAG)", "price": "100€" },
-        { "service": "SMTP Corporatiu", "price": "25€" },
-        { "service": "Google Analytics", "price": "25€" }
-      ]
+    "service": {
+      "badge": "Com treballem",
+      "title": "UN PARTNER TÈCNIC,\nNO UN PROVEÏDOR.",
+      "subtitle": "Cada client és diferent. Per això no tenim tarifes fixes: fem un estudi de les teves necessitats i et proposem una solució per fases, amb pressupost transparent.",
+      "pillars": [
+        {
+          "icon": "🔍",
+          "title": "Estudi personalitzat",
+          "description": "Analitzem el teu negoci, els teus processos i els teus objectius. Dissenyem una solució a mida, sense plantilles genèriques."
+        },
+        {
+          "icon": "📋",
+          "title": "Pressupost per fases",
+          "description": "Proposta clara i detallada. Implementes les fases que t'interessen, al teu ritme i pressupost, sense compromisos forçats."
+        },
+        {
+          "icon": "🛡️",
+          "title": "Manteniment, còpies i incidències",
+          "description": "Sistema monitoritzat 24/7, còpies de seguretat periòdiques i resolució d'incidències. Si el servei cau, som els primers en saber-ho i en actuar."
+        },
+        {
+          "icon": "🔄",
+          "title": "Modificacions i creixement",
+          "description": "El negoci evoluciona, el sistema també. Adaptem, milloram i ampliem les funcionalitats quan ho necessites."
+        }
+      ],
+      "note": "Primera consulta gratuïta i sense compromís. T'expliquem com podem ajudar-te."
     },
     "cta": {
-      "title": "PREPARAT PER AUTOMATITZAR\nEL TEU NEGOCI?",
-      "subtitle": "Parlem. Primera consulta gratuïta i sense compromís.",
-      "button": "CONTACTAR ARA",
+      "title": "PREPARAT PER\nDIGITALITZAR EL TEU NEGOCI?",
+      "subtitle": "Primera consulta gratuïta. Sense compromisos, sense lletra petita. Parlem del que necessites.",
+      "button": "DEMANAR ESTUDI GRATUÏT",
       "buttonSecondary": "ACCEDIR AL PORTAL"
     },
     "footer": {
