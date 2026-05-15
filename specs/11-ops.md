@@ -2,7 +2,7 @@
 
 > **Versió:** 1.0
 > **Data:** 2026-05-13
-> **Dependències:** Mòdul 01 (Auth), Mòdul 10 (Automations)
+> **Dependències:** Mòdul 01 (Auth), Mòdul 10 (Automations), Mòdul 18 (Backup — veure 2.2)
 
 ---
 
@@ -12,7 +12,7 @@
 - Enviar alertes automàtiques via Telegram quan un servei cau
 - Mantenir un historial d'incidències i recuperacions
 - Dashboard d'operacions per a SUPER_ADMIN
-- Facilitar la gestió de logs i backups
+- Facilitar la gestió de logs
 
 ---
 
@@ -24,11 +24,11 @@
 - **Alertes Telegram**: Notificacions automàtiques amb cooldown de 30 min
 - **Historial d'incidències**: Registre de caigudes i recuperacions
 - **Dashboard Ops**: Visió global de l'estat de tots els serveis
-- **Gestió de backups**: Programació i monitorització de backups de BD i assets
 - **Log viewer**: Accés als logs recents dels serveis (backend, n8n, Traefik)
 
 ### 2.2 Funcionalitats excloses
 
+- **Gestió de backups**: delegada al Mòdul 18 (Backup Operacional) — backup de BD, dades operatives, i configuració a GCS
 - Monitorització avançada d'APM (elastic APM, Datadog — es pot afegir després)
 - Pàginament telefònic (SMS/trucada — Telegram és suficient)
 - Auto-scaling (Hetzner + Coolify ho gestionen)
@@ -85,22 +85,6 @@ Incidència detectada (caiguda o degradació).
 
 **Índex:** (status, startedAt), (serviceName, status)
 
-#### BackupRecord
-
-Registre d'operacions de backup.
-
-| Camp | Tipus | Mapeig JPA | Descripció |
-|------|-------|-----------|------------|
-| id | UUID | @Id @GeneratedValue | |
-| type | Enum(STRING) | @Enumerated | `DATABASE`, `ASSETS`, `CONFIG` |
-| status | Enum(STRING) | @Enumerated | `IN_PROGRESS`, `SUCCESS`, `FAILED` |
-| fileName | String(200) | @Column | Nom del fitxer de backup |
-| fileSize | Long | @Column | Mida en bytes |
-| startedAt | Instant | @Column(nullable=false) | Inici del backup |
-| completedAt | Instant | @Column | Fi del backup |
-| errorMessage | String(500) | @Column | Missatge d'error si falla |
-| createdAt | Instant | @CreatedDate | |
-
 ### 3.2 Enums
 
 ```java
@@ -114,14 +98,6 @@ public enum IncidentSeverity {
 
 public enum IncidentStatus {
     OPEN, ACKNOWLEDGED, RESOLVED
-}
-
-public enum BackupType {
-    DATABASE, ASSETS, CONFIG
-}
-
-public enum BackupStatus {
-    IN_PROGRESS, SUCCESS, FAILED
 }
 ```
 
@@ -139,8 +115,6 @@ Prefix base: `/api/v1/ops`
 | PUT | /api/v1/ops/incidents/{id}/acknowledge | SUPER_ADMIN | Acceptar una incidència |
 | PUT | /api/v1/ops/incidents/{id}/resolve | SUPER_ADMIN | Resoldre incidència |
 | GET | /api/v1/ops/dashboard | SUPER_ADMIN | Dashboard d'operacions |
-| POST | /api/v1/ops/backups | SUPER_ADMIN | Iniciar backup manual |
-| GET | /api/v1/ops/backups | SUPER_ADMIN | Llistar backups realitzats |
 | GET | /api/v1/ops/logs/{serviceName} | SUPER_ADMIN | Veure logs recents d'un servei |
 
 ### Detall d'endpoints
@@ -185,45 +159,6 @@ Response 200:
 
 #### `GET /api/v1/ops/dashboard` — Dashboard d'operacions
 
-**Rol:** SUPER_ADMIN
-
-Response 200:
-```json
-{
-  "currentStatus": {
-    "services": 7, "up": 6, "degraded": 1, "down": 0
-  },
-  "openIncidents": 2,
-  "todayIncidents": 5,
-  "avgResponseTimeMs": 45,
-  "lastBackup": "2026-05-13T04:00:00Z",
-  "uptimePercentage": 99.97,
-  "uptimePeriod": "30d"
-}
-```
-
-#### `POST /api/v1/ops/backups` — Iniciar backup manual
-
-**Rol:** SUPER_ADMIN
-
-Request:
-```json
-{
-  "type": "DATABASE",
-  "description": "Backup manual pre-desplegament"
-}
-```
-
-Response 202:
-```json
-{
-  "id": "uuid",
-  "type": "DATABASE",
-  "status": "IN_PROGRESS",
-  "startedAt": "..."
-}
-```
-
 ---
 
 ## 5. Serveis
@@ -251,16 +186,7 @@ Gestiona l'enviament d'alertes via Telegram:
 - Envia via Bot API de Telegram
 - Registra si l'alerta s'ha enviat a l'Incident
 
-### 5.3 BackupManager
-
-Gestiona les operacions de backup:
-
-- Backup de PostgreSQL: `pg_dump` → fitxer `.sql.gz` → MinIO
-- Backup d'assets: `tar -czf` → MinIO
-- Backup de configuració: docker-compose + .env → MinIO
-- Retenció: 7 backups diaris, 4 setmanals, 3 mensuals
-
-### 5.4 LogService
+### 5.3 LogService
 
 Permet consultar logs recents:
 
@@ -315,16 +241,6 @@ app:
         bot-token: ${TELEGRAM_BOT_TOKEN}
         chat-id: ${TELEGRAM_CHAT_ID}
       cooldown-minutes: 30
-    backups:
-      database:
-        enabled: true
-        schedule: "0 4 * * *"       # Cada dia a les 4 AM
-        retention-daily: 7
-        retention-weekly: 4
-        retention-monthly: 3
-      assets:
-        enabled: true
-        schedule: "0 5 * * 0"       # Cada diumenge a les 5 AM
 ```
 
 ### Serveis monitoritzats per defecte
@@ -346,13 +262,13 @@ app:
 - `/api/v1/ops/health` és públic (només retorna UP/DOWN + versió)
 - Tota la resta requereix JWT amb rol SUPER_ADMIN
 - Les alertes de Telegram no contenen secrets ni tokens
-- Els backups es guarden xifrats a MinIO (AES-256)
+- Els backups es gestionen al Mòdul 18 (Backup Operacional) amb xifratge AES-256 a GCS
 
 ---
 
 ## 9. Tests d'integració
 
-12 tests mínims (patró: `OpsControllerTest.java`):
+10 tests mínims (patró: `OpsControllerTest.java`):
 
 | # | Test | Esperat |
 |---|------|---------|
@@ -364,10 +280,8 @@ app:
 | 6 | Acceptar incidència | 200, status = ACKNOWLEDGED |
 | 7 | Resoldre incidència | 200, status = RESOLVED, resolvedAt no null |
 | 8 | Dashboard | 200, mètriques |
-| 9 | Iniciar backup manual | 202, status = IN_PROGRESS |
-| 10 | Llistar backups | 200 |
-| 11 | Logs d'un servei | 200, llista d'entrades de log |
-| 12 | ADMIN no pot accedir a Ops | 403 |
+| 9 | Logs d'un servei | 200, llista d'entrades de log |
+| 10 | ADMIN no pot accedir a Ops | 403 |
 
 ---
 
@@ -380,9 +294,7 @@ app:
 | OPS-03 | Backend cau 1 minut només (menys de 6 checks) | NO alerta, NO incident |
 | OPS-04 | Múltiples serveis cauen → alertes individuals | Cada servei rep la seva alerta |
 | OPS-05 | Cooldown actiu → nova caiguda no alerta | No es duplica l'alerta |
-| OPS-06 | Backup programat s'executa | BackupRecord creat, fitxer a MinIO |
-| OPS-07 | Backup falla → error registrat | BackupRecord.FAILED, errorMessage |
-| OPS-08 | Dashboard amb incidències obertes | openIncidents > 0 |
+| OPS-06 | Dashboard amb incidències obertes | openIncidents > 0 |
 
 ---
 
@@ -392,7 +304,6 @@ app:
 |---------|-----------|-----------|
 | ServiceHealth | ServiceHealthRepository | health/all |
 | Incident | IncidentRepository | llistar, acknowledge, resolve, dashboard |
-| BackupRecord | BackupRecordRepository | iniciar, llistar |
 
 ---
 
@@ -400,6 +311,5 @@ app:
 
 - [ ] Decidir si els health checks de llocs web de clients es fan des d'aquest mòdul o des d'Engine
 - [ ] Implementar el LogService real (accés a logs de Docker/journald)
-- [ ] Backup automàtic: integrar amb scheduler de Spring (`@Scheduled` o coolify)
 - [ ] Mètriques d'uptime per client (SLAs)
 - [ ] Notificacions addicionals: email a client si el seu web cau > 1h

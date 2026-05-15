@@ -110,7 +110,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 
 ---
 
-## Mòduls de la plataforma (tots pendents)
+## Mòduls de la plataforma
 
 | # | Mòdul | Estat | Spec |
 |---|-------|-------|------|
@@ -128,6 +128,10 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 12 | Prospecting | ✅ Completat | specs/12-prospecting.md |
 | 13 | i18n + SEO + RGPD | ✅ Completat | specs/13-i18n-seo-rgpd.md |
 | 14 | Admin Frontend (CRUD usuaris/tenants) | ✅ Completat | specs/14-admin-frontend.md |
+| 15 | Demo (tenant demo automàtic) | ✅ Completat | specs/15-demo.md |
+| 16 | Onboarding (guia ràpida post-registre) | ⏳ Esborrany | specs/16-onboarding.md |
+| 17 | Service Setup Wizard (assistent implementació) | ✅ Completat | specs/17-service-setup-wizard.md |
+| 18 | Backup Operacional (còpia seguretat dades a GCS) | ✅ Spec | specs/18-backup-operacional.md |
 
 ---
 
