@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { I } from '@/components/ui/icons';
+import { AMGLogo } from '@/components/ui/AMGLogo';
 import { forgotPassword } from '@/services/auth';
 
 export default function ForgotPasswordPage() {
@@ -37,6 +38,11 @@ export default function ForgotPasswordPage() {
       }} />
 
       <div className="relative z-10 w-full max-w-[420px]">
+        <div className="flex justify-center mb-8">
+          <Link href={`/${locale}`}>
+            <AMGLogo className="h-9 w-auto" />
+          </Link>
+        </div>
         <div className="amg-card card-clip p-6 sm:p-8">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-1.5 h-1.5 bg-accent" />

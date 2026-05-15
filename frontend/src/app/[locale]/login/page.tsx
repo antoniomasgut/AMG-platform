@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '@/lib/auth-context';
 import { forgotPassword } from '@/services/auth';
+import { AMGLogo } from '@/components/ui/AMGLogo';
 
 type IconProps = { size?: number; stroke?: string; className?: string };
 
@@ -96,24 +97,18 @@ export default function LoginPage() {
 
       {/* Left brand panel */}
       <div className="relative hidden lg:flex w-[48%] p-16 flex-col justify-between z-10 border-r border-border-base">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-accent btn-clip flex items-center justify-center">
-            <span className="f-display font-black text-black text-xl">A</span>
-          </div>
-          <div>
-            <div className="f-display font-black text-lg tracking-wider">AMG</div>
-            <div className="f-mono text-label text-accent-light tracking-widest">ENGINYERIA DIGITAL</div>
-          </div>
-        </div>
+        <Link href={`/${locale}`}>
+          <AMGLogo className="h-10 w-auto" />
+        </Link>
 
         <div>
-          <div className="f-mono text-caption uppercase tracking-widest text-accent-light mb-4">PORTAL v2.14.0</div>
           <h1 className="f-display font-black text-5xl leading-[1.05]">
-            PYMES <span className="text-accent-light">AUTOMATITZADES</span><br />
-            EN MENYS DE 48 HORES.
+            UN SOL PARTNER<br />
+            PER A <span className="text-accent-light">TOT EL TEU</span><br />
+            NEGOCI DIGITAL.
           </h1>
           <p className="text-lg text-ink-1 mt-4 max-w-md">
-            Bots, landings, workflows i facturació — un sol portal administrat.
+            Webs, automatitzacions, manteniment i suport — tot gestionat i visible al teu portal.
           </p>
         </div>
 
@@ -122,8 +117,8 @@ export default function LoginPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-[#39d353] amg-blink" />
             SISTEMA OPERATIU
           </span>
-          <span>· 99.98% uptime</span>
-          <span>· 48 pimes actives</span>
+          <span>· &lt; 4h resposta</span>
+          <span>· 8+ pimes actives</span>
         </div>
       </div>
 
