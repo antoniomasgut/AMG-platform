@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AMG Digitalitzacions — Logo sobre fons fosc (versió standalone amb background)
+  Ús: previsualizació, OG images, presentacions
+-->
+<svg width="480" height="180" viewBox="0 0 480 180" xmlns="http://www.w3.org/2000/svg">
+  <title>AMG Digitalitzacions — Logo fosc</title>
+  <defs>
+    <radialGradient id="darkBg" cx="50%" cy="50%" r="65%">
+      <stop offset="0%"   stop-color="#13132a"/>
+      <stop offset="100%" stop-color="#0d0d1a"/>
+    </radialGradient>
+    <linearGradient id="darkTriGrad" x1="80" y1="30" x2="80" y2="152"
+                    gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF6B00" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#FF6B00" stop-opacity="0.02"/>
+    </linearGradient>
+    <filter id="darkGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Quadrícula de fons global -->
+    <pattern id="grid" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none"
+            stroke="#FF6B00" stroke-width="0.5" stroke-opacity="0.04"/>
+    </pattern>
+  </defs>
+
+  <!-- Fons principal -->
+  <rect width="480" height="180" fill="url(#darkBg)" rx="4"/>
+
+  <!-- Quadrícula de fons -->
+  <rect width="480" height="180" fill="url(#grid)" rx="4"/>
+
+  <!-- Bores de l'exterior (clip-path estil portal) -->
+  <polygon
+    points="460,0 480,20 480,180 20,180 0,160 0,0"
+    fill="none"
+    stroke="#FF6B00"
+    stroke-width="0.75"
+    stroke-opacity="0.18"
+  />
+
+  <!-- ── Icona (columna esquerra, centrada verticalment) ── -->
+  <!-- Canvas de la icona: (20,18) a (140,162) → 120×144 px -->
+
+  <!-- Contenidor card-clip de la icona -->
+  <polygon
+    points="128,18 140,30 140,162 28,162 20,150 20,18"
+    fill="#13132a"
+    stroke="#FF6B00"
+    stroke-width="0.75"
+    stroke-opacity="0.28"
+  />
+
+  <!-- Vèrtex de la A dins la icona (centrat en (80,90)) -->
+  <!-- Apex: (80,30) BL:(28,155) BR:(132,155) -->
+  <polygon points="80,30 28,155 132,155" fill="url(#darkTriGrad)"/>
+
+  <line x1="80" y1="30" x2="28" y2="155"
+        stroke="#FF6B00" stroke-width="3" stroke-linecap="square"
+        filter="url(#darkGlow)"/>
+  <line x1="80" y1="30" x2="132" y2="155"
+        stroke="#FF6B00" stroke-width="3" stroke-linecap="square"
+        filter="url(#darkGlow)"/>
+
+  <!-- Barra: t=0.667 → esquerra=(45,113) dreta=(115,113) -->
+  <line x1="45" y1="113" x2="115" y2="113"
+        stroke="#FF6B00" stroke-width="3" stroke-linecap="square"
+        filter="url(#darkGlow)"/>
+
+  <!-- Nodes de circuit (7×7) -->
+  <rect x="76.5" y="26.5"   width="7" height="7" fill="#FF6B00" filter="url(#darkGlow)"/>
+  <rect x="24.5" y="151.5"  width="7" height="7" fill="#FF6B00"/>
+  <rect x="128.5" y="151.5" width="7" height="7" fill="#FF6B00"/>
+  <rect x="41.5"  y="109.5" width="7" height="7" fill="#FF6B00"/>
+  <rect x="111.5" y="109.5" width="7" height="7" fill="#FF6B00"/>
+
+  <!-- Punt central barra -->
+  <circle cx="80" cy="113" r="2.5" fill="#FF6B00" fill-opacity="0.5"/>
+
+  <!-- ── Separador ── -->
+  <line x1="162" y1="28" x2="162" y2="152"
+        stroke="#FF6B00" stroke-width="0.75" stroke-opacity="0.20"/>
+
+  <!-- ── Wordmark ── -->
+
+  <!-- AMG -->
+  <text
+    x="182" y="105"
+    font-family="Orbitron, 'Share Tech Mono', monospace"
+    font-size="62"
+    font-weight="700"
+    fill="#FF6B00"
+    letter-spacing="8"
+    filter="url(#darkGlow)"
+  >AMG</text>
+
+  <!-- DIGITALITZACIONS -->
+  <text
+    x="185" y="138"
+    font-family="'Space Grotesk', 'DM Sans', system-ui, sans-serif"
+    font-size="15"
+    font-weight="400"
+    fill="#8896aa"
+    letter-spacing="7"
+  >DIGITALITZACIONS</text>
+
+  <!-- Línea decorativa sota el wordmark -->
+  <line x1="185" y1="148" x2="460" y2="148"
+        stroke="#FF6B00" stroke-width="0.5" stroke-opacity="0.12"/>
+</svg>

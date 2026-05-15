@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AMG Digitalitzacions — Logo inline animat: [Δ]MG (340×110)
+     La icona delta substitueix la lletra A del wordmark -->
+<svg width="340" height="110" viewBox="0 0 340 110" xmlns="http://www.w3.org/2000/svg">
+  <title>AMG Digitalitzacions — Logo inline Δ MG</title>
+  <defs>
+    <linearGradient id="triI" x1="42" y1="8" x2="42" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF6B00" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#FF6B00" stop-opacity="0.02"/>
+    </linearGradient>
+    <filter id="glI" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glIsig" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ── Icona Δ (fa de lletra A) — 84×96px ── -->
+  <!-- Contenidor card-clip (proporcional a l'alçada de lletra) -->
+  <polygon points="72,6 82,16 82,100 12,100 4,90 4,6"
+           fill="#13132a" stroke="#FF6B00" stroke-width="0.75" stroke-opacity="0.22"/>
+
+  <!-- Ompliment triangle -->
+  <polygon points="43,14 10,97 76,97" fill="url(#triI)"/>
+
+  <!-- Cables wire -->
+  <line x1="43" y1="14" x2="10"  y2="97" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.22" stroke-linecap="square"/>
+  <line x1="43" y1="14" x2="76"  y2="97" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.22" stroke-linecap="square"/>
+  <line x1="21" y1="63" x2="65"  y2="63" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.22" stroke-linecap="square"/>
+
+  <!-- Senyals animats -->
+  <line x1="43" y1="14" x2="10" y2="97"
+        stroke="#FF9A3C" stroke-width="4.5" stroke-linecap="round"
+        stroke-dasharray="9 400" filter="url(#glIsig)">
+    <animate attributeName="stroke-dashoffset" from="0" to="-409" dur="2s" repeatCount="indefinite" begin="0s"/>
+  </line>
+  <line x1="43" y1="14" x2="76" y2="97"
+        stroke="#FF9A3C" stroke-width="4.5" stroke-linecap="round"
+        stroke-dasharray="9 400" filter="url(#glIsig)">
+    <animate attributeName="stroke-dashoffset" from="0" to="-409" dur="2s" repeatCount="indefinite" begin="0.18s"/>
+  </line>
+  <line x1="21" y1="63" x2="65" y2="63"
+        stroke="#FF9A3C" stroke-width="4.5" stroke-linecap="round"
+        stroke-dasharray="9 400" filter="url(#glIsig)">
+    <animate attributeName="stroke-dashoffset" from="0" to="-409" dur="2s" repeatCount="indefinite" begin="0.60s"/>
+  </line>
+
+  <!-- Nodes -->
+  <circle cx="43" cy="14" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4" filter="url(#glI)">
+    <animate attributeName="stroke-opacity" values="1;0.35;1" dur="2s" repeatCount="indefinite" begin="0s"/>
+  </circle>
+  <circle cx="10" cy="97" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4">
+    <animate attributeName="stroke-opacity" values="0.35;1;0.35" dur="2s" repeatCount="indefinite" begin="0.88s"/>
+  </circle>
+  <circle cx="76" cy="97" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4">
+    <animate attributeName="stroke-opacity" values="0.35;1;0.35" dur="2s" repeatCount="indefinite" begin="1.06s"/>
+  </circle>
+  <circle cx="21" cy="63" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4">
+    <animate attributeName="stroke-opacity" values="0.35;1;0.35" dur="2s" repeatCount="indefinite" begin="0.60s"/>
+  </circle>
+  <circle cx="65" cy="63" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4">
+    <animate attributeName="stroke-opacity" values="0.35;1;0.35" dur="2s" repeatCount="indefinite" begin="1.08s"/>
+  </circle>
+
+  <!-- ── "MG" continuant el wordmark ── -->
+  <!-- L'icona fa de "A", "MG" continua a la dreta sense espai -->
+  <text x="92" y="90"
+        font-family="Orbitron, 'Share Tech Mono', monospace"
+        font-size="72" font-weight="700" fill="#FF6B00" letter-spacing="-2">MG</text>
+
+  <!-- ── DIGITALITZACIONS baix ── -->
+  <text x="8" y="108"
+        font-family="'Space Grotesk', system-ui, sans-serif"
+        font-size="10.5" font-weight="400" fill="#8896aa" letter-spacing="6.5">DIGITALITZACIONS</text>
+</svg>

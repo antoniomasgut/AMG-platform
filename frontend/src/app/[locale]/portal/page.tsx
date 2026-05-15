@@ -7,6 +7,7 @@ import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
 import { I } from '@/components/ui/icons';
+import { AMGLogo } from '@/components/ui/AMGLogo';
 import {
   fetchBillingDashboard, fetchInvoices, fetchLandings, fetchWorkflows,
   type BillingDashboard, type Invoice, type LandingSummary, type WorkflowSummary,
@@ -67,14 +68,10 @@ interface SidebarProps {
 function PortalSidebar({ userName, userEmail, userRole: _userRole, isSuperAdmin, isAdmin, initial }: SidebarProps) {
   return (
     <aside aria-label="Navegació del portal" className="hidden lg:flex w-[240px] shrink-0 bg-[#13132a] border-r border-border-base flex-col">
-      <div className="h-16 border-b border-border-base flex items-center px-5 gap-3">
-        <div className="w-9 h-9 bg-[#FF6B00] btn-clip flex items-center justify-center shrink-0">
-          <span className="f-display font-black text-black text-sm">A</span>
-        </div>
-        <div className="flex flex-col leading-tight">
-          <span className="f-display font-bold text-sm">AMG</span>
-          <span className="f-mono text-[9px] text-accent-light tracking-widest">PORTAL · GROWTH</span>
-        </div>
+      <div className="h-16 border-b border-border-base flex items-center px-4">
+        <a href="/portal">
+          <AMGLogo className="h-9 w-auto" />
+        </a>
       </div>
       <nav aria-label="Menú principal" className="flex-1 p-3 space-y-1 overflow-y-auto">
         <div className="f-mono text-[9px] uppercase tracking-widest text-ink-2 px-3 py-2">El meu compte</div>

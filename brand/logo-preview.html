@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AMG Digitalitzacions — Comparació de Logotips</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent:   #FF6B00;
+      --bg-0:     #0d0d1a;
+      --bg-1:     #13132a;
+      --bg-2:     #1a1a2e;
+      --ink-0:    #e2e8f0;
+      --ink-1:    #94a3b8;
+      --ink-2:    #8896aa;
+      --success:  #22c55e;
+      --danger:   #ef4444;
+    }
+    body {
+      background: var(--bg-0);
+      color: var(--ink-0);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 48px 24px 80px;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,107,0,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,107,0,0.035) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+    .wrap { position: relative; max-width: 1160px; margin: 0 auto; }
+
+    /* ─── Header ─── */
+    header { text-align: center; margin-bottom: 56px; }
+    .eyebrow {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px; letter-spacing: 0.20em;
+      color: var(--accent); text-transform: uppercase; margin-bottom: 10px;
+    }
+    header h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(22px, 4vw, 40px); font-weight: 700;
+      letter-spacing: -0.02em; margin-bottom: 10px;
+    }
+    header h1 em { color: var(--accent); font-style: normal; }
+    header p { font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+
+    /* ─── Grid 2×2 ─── */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+    /* ─── Card ─── */
+    .card {
+      background: var(--bg-1);
+      border: 1px solid rgba(255,107,0,0.10);
+      clip-path: polygon(calc(100% - 14px) 0%, 100% 14px, 100% 100%,
+                         14px 100%, 0% calc(100% - 14px), 0% 0%);
+      transition: border-color .2s;
+      cursor: pointer;
+    }
+    .card:hover   { border-color: rgba(255,107,0,0.28); }
+    .card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+
+    /* Preview zona del logo */
+    .preview {
+      background: var(--bg-2);
+      border-bottom: 1px solid rgba(255,107,0,0.07);
+      display: flex; align-items: center; justify-content: center;
+      padding: 32px 24px;
+      min-height: 220px;
+    }
+    .preview img, .preview object {
+      max-width: 100%; max-height: 180px;
+      object-fit: contain;
+    }
+    /* Concepte 4 (horitzontal) necessita menys alçada */
+    .card:nth-child(4) .preview { min-height: 200px; }
+
+    /* Cos de la targeta */
+    .body { padding: 18px 20px 22px; }
+    .num  {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 0.18em;
+      color: var(--accent); text-transform: uppercase; margin-bottom: 4px;
+    }
+    .name {
+      font-family: 'Orbitron', monospace;
+      font-size: 13px; font-weight: 700;
+      color: var(--ink-0); margin-bottom: 8px;
+    }
+    .desc { font-size: 12px; color: var(--ink-2); line-height: 1.55; margin-bottom: 14px; }
+
+    /* Pros / Contres */
+    .pc { display: flex; gap: 16px; }
+    .pc-col { flex: 1; }
+    .pc-col h4 {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 0.14em;
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .pc-col h4.p { color: var(--success); }
+    .pc-col h4.c { color: var(--danger); }
+    .pc-col ul { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+    .pc-col li {
+      font-size: 11px; color: var(--ink-1);
+      display: flex; gap: 5px; align-items: flex-start; line-height: 1.4;
+    }
+    .pc-col li b { flex-shrink: 0; font-size: 12px; font-weight: 700; margin-top: -1px; }
+    .pc-col.p li b { color: var(--success); }
+    .pc-col.c li b { color: var(--danger); }
+
+    /* Badge */
+    .badge {
+      display: inline-block; margin-top: 14px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 3px 9px; border: 1px solid;
+    }
+    .rec   { border-color: var(--accent); color: var(--accent); background: rgba(255,107,0,0.08); }
+    .bold  { border-color: #60a5fa; color: #93c5fd; background: rgba(96,165,250,0.07); }
+    .min   { border-color: var(--ink-2); color: var(--ink-2); background: rgba(136,150,170,0.07); }
+    .narr  { border-color: #c084fc; color: #d8b4fe; background: rgba(192,132,252,0.07); }
+
+    /* ─── Footer nota ─── */
+    .nota {
+      margin-top: 40px;
+      padding: 22px 28px;
+      background: var(--bg-1);
+      border: 1px solid rgba(255,107,0,0.10);
+      clip-path: polygon(calc(100% - 14px) 0%, 100% 14px, 100% 100%,
+                         14px 100%, 0% calc(100% - 14px), 0% 0%);
+    }
+    .nota h3 {
+      font-family: 'Orbitron', monospace;
+      font-size: 11px; font-weight: 700;
+      color: var(--accent); letter-spacing: 0.07em; margin-bottom: 10px;
+    }
+    .nota p { font-size: 12.5px; color: var(--ink-2); line-height: 1.65; }
+    .nota p + p { margin-top: 6px; }
+    code { font-family: 'Share Tech Mono', monospace; color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Brand Identity · Selecció de concepte</p>
+    <h1>4 conceptes per a <em>AMG Digitalitzacions</em></h1>
+    <p>Fes clic al que més t'agradi per refinar-lo.</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- ══ 01 A-Delta ══ -->
+    <div class="card selected" onclick="sel(this)">
+      <div class="preview">
+        <img src="amg-icon.svg" alt="Concepte 01 A-Delta"/>
+      </div>
+      <div class="body">
+        <p class="num">Concepte 01</p>
+        <p class="name">A-Delta Digital</p>
+        <p class="desc">La lletra A geometritzada en triangle. Δ (delta) representa canvi i transformació. Nodes de circuit als vèrtexs. Estètica 100% coherent amb el portal.</p>
+        <div class="pc">
+          <div class="pc-col p">
+            <h4 class="p">Pros</h4>
+            <ul>
+              <li><b>✓</b> Escala perfecte fins a 16px (favicon)</li>
+              <li><b>✓</b> Doble lectura: "A" + Δ canvi/tech</li>
+              <li><b>✓</b> 100% coherent amb el portal existent</li>
+              <li><b>✓</b> Funciona en mono sense pèrdua</li>
+            </ul>
+          </div>
+          <div class="pc-col c">
+            <h4 class="c">Contres</h4>
+            <ul>
+              <li><b>×</b> Triangle molt usat en tech en general</li>
+              <li><b>×</b> Pot recordar icona d'advertència</li>
+            </ul>
+          </div>
+        </div>
+        <span class="badge rec">★ Recomanat</span>
+      </div>
+    </div>
+
+    <!-- ══ 02 Hexagonal ══ -->
+    <div class="card" onclick="sel(this)">
+      <div class="preview">
+        <img src="amg-concept-2-hex.svg" alt="Concepte 02 Hexagonal"/>
+      </div>
+      <div class="body">
+        <p class="num">Concepte 02</p>
+        <p class="name">Monograma Hexagonal</p>
+        <p class="desc">Les tres inicials A·M·G distribuïdes en un hexàgon, connectades per línies de circuit. L'hexàgon evoca xarxa, estructura i eficiència.</p>
+        <div class="pc">
+          <div class="pc-col p">
+            <h4 class="p">Pros</h4>
+            <ul>
+              <li><b>✓</b> Les 3 lletres AMG clarament visibles</li>
+              <li><b>✓</b> Hexàgon = xarxa, connectivitat</li>
+              <li><b>✓</b> Força visual a mida gran</li>
+            </ul>
+          </div>
+          <div class="pc-col c">
+            <h4 class="c">Contres</h4>
+            <ul>
+              <li><b>×</b> Lletres desapareixen a &lt;48px</li>
+              <li><b>×</b> Associat a blockchain/crypto</li>
+              <li><b>×</b> Complex de reproduir en mono</li>
+            </ul>
+          </div>
+        </div>
+        <span class="badge bold">Audaç</span>
+      </div>
+    </div>
+
+    <!-- ══ 03 Circuit Square ══ -->
+    <div class="card" onclick="sel(this)">
+      <div class="preview">
+        <img src="amg-concept-3-circuit.svg" alt="Concepte 03 Circuit"/>
+      </div>
+      <div class="body">
+        <p class="num">Concepte 03</p>
+        <p class="name">Quadrat Circuit</p>
+        <p class="desc">Contenidor quadrat amb cantonades de circuit en L i quadrícula interior. "AMG" és el protagonista absolut. Màxima coherència amb el portal.</p>
+        <div class="pc">
+          <div class="pc-col p">
+            <h4 class="p">Pros</h4>
+            <ul>
+              <li><b>✓</b> Màxima coherència amb el portal</li>
+              <li><b>✓</b> "AMG" llegible a qualsevol escala</li>
+              <li><b>✓</b> Excel·lent com a avatar quadrat</li>
+            </ul>
+          </div>
+          <div class="pc-col c">
+            <h4 class="c">Contres</h4>
+            <ul>
+              <li><b>×</b> Sense icona pròpia (depèn del text)</li>
+              <li><b>×</b> La quadrícula desapareix en petit</li>
+              <li><b>×</b> Format quadrat limita usos horitzonals</li>
+            </ul>
+          </div>
+        </div>
+        <span class="badge min">Minimalista</span>
+      </div>
+    </div>
+
+    <!-- ══ 04 Pulse ══ -->
+    <div class="card" onclick="sel(this)">
+      <div class="preview">
+        <img src="amg-concept-4-pulse.svg" alt="Concepte 04 Pulse"/>
+      </div>
+      <div class="body">
+        <p class="num">Concepte 04</p>
+        <p class="name">Pulse Wordmark</p>
+        <p class="desc">Wordmark "AMG" amb una ona de pols digital. Referència directa a les automatitzacions i el monitoring de salut dels serveis del portal.</p>
+        <div class="pc">
+          <div class="pc-col p">
+            <h4 class="p">Pros</h4>
+            <ul>
+              <li><b>✓</b> Narrativa clara: automatització + flux</li>
+              <li><b>✓</b> Molt llegible en formats horitzontals</li>
+              <li><b>✓</b> Únic: no és un shape genèric</li>
+            </ul>
+          </div>
+          <div class="pc-col c">
+            <h4 class="c">Contres</h4>
+            <ul>
+              <li><b>×</b> El pulse no funciona com a icona sola</li>
+              <li><b>×</b> Pot associar-se a medicina (ECG)</li>
+              <li><b>×</b> No escala bé a favicon</li>
+            </ul>
+          </div>
+        </div>
+        <span class="badge narr">Narratiu</span>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+  <div class="nota">
+    <h3>Fitxers disponibles a brand/</h3>
+    <p>
+      <code>amg-icon.svg</code> (concepte 01) ·
+      <code>amg-concept-2-hex.svg</code> ·
+      <code>amg-concept-3-circuit.svg</code> ·
+      <code>amg-concept-4-pulse.svg</code>
+    </p>
+    <p>Un cop escollit el concepte, es generaran les variants completes: icona, logo horitzontal, logo sobre fons fosc i versió monocromàtica.</p>
+  </div>
+
+</div>
+
+<script>
+  function sel(card) {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+  }
+</script>
+</body>
+</html>

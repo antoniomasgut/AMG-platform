@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AMG Digitalitzacions — Logo vertical animat (200×260) -->
+<svg width="200" height="260" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
+  <title>AMG Digitalitzacions — Logo vertical</title>
+  <defs>
+    <linearGradient id="triV" x1="100" y1="18" x2="100" y2="153" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF6B00" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#FF6B00" stop-opacity="0.02"/>
+    </linearGradient>
+    <filter id="glV" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glVsig" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ── Icona centrada (full width 200×160) ── -->
+  <polygon points="186,4 196,14 196,156 14,156 4,146 4,4"
+           fill="#13132a" stroke="#FF6B00" stroke-width="0.75" stroke-opacity="0.22"/>
+
+  <!-- Ompliment triangle -->
+  <polygon points="100,18 22,152 178,152" fill="url(#triV)"/>
+
+  <!-- Cables wire -->
+  <line x1="100" y1="18" x2="22"  y2="152" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.22" stroke-linecap="square"/>
+  <line x1="100" y1="18" x2="178" y2="152" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.22" stroke-linecap="square"/>
+  <line x1="48"  y1="108" x2="152" y2="108" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.22" stroke-linecap="square"/>
+
+  <!-- Senyals animats -->
+  <line x1="100" y1="18" x2="22"  y2="152"
+        stroke="#FF9A3C" stroke-width="4.5" stroke-linecap="round"
+        stroke-dasharray="9 400" filter="url(#glVsig)">
+    <animate attributeName="stroke-dashoffset" from="0" to="-409" dur="2s" repeatCount="indefinite" begin="0s"/>
+  </line>
+  <line x1="100" y1="18" x2="178" y2="152"
+        stroke="#FF9A3C" stroke-width="4.5" stroke-linecap="round"
+        stroke-dasharray="9 400" filter="url(#glVsig)">
+    <animate attributeName="stroke-dashoffset" from="0" to="-409" dur="2s" repeatCount="indefinite" begin="0.18s"/>
+  </line>
+  <line x1="48" y1="108" x2="152" y2="108"
+        stroke="#FF9A3C" stroke-width="4.5" stroke-linecap="round"
+        stroke-dasharray="9 400" filter="url(#glVsig)">
+    <animate attributeName="stroke-dashoffset" from="0" to="-409" dur="2s" repeatCount="indefinite" begin="0.63s"/>
+  </line>
+
+  <!-- Nodes -->
+  <circle cx="100" cy="18"  r="6.5" fill="#13132a" stroke="#FF6B00" stroke-width="4" filter="url(#glV)">
+    <animate attributeName="stroke-opacity" values="1;0.35;1" dur="2s" repeatCount="indefinite" begin="0s"/>
+  </circle>
+  <circle cx="22"  cy="152" r="6.5" fill="#13132a" stroke="#FF6B00" stroke-width="4">
+    <animate attributeName="stroke-opacity" values="0.35;1;0.35" dur="2s" repeatCount="indefinite" begin="0.95s"/>
+  </circle>
+  <circle cx="178" cy="152" r="6.5" fill="#13132a" stroke="#FF6B00" stroke-width="4">
+    <animate attributeName="stroke-opacity" values="0.35;1;0.35" dur="2s" repeatCount="indefinite" begin="1.13s"/>
+  </circle>
+  <circle cx="48"  cy="108" r="6.5" fill="#13132a" stroke="#FF6B00" stroke-width="4">
+    <animate attributeName="stroke-opacity" values="0.35;1;0.35" dur="2s" repeatCount="indefinite" begin="0.63s"/>
+  </circle>
+  <circle cx="152" cy="108" r="6.5" fill="#13132a" stroke="#FF6B00" stroke-width="4">
+    <animate attributeName="stroke-opacity" values="0.35;1;0.35" dur="2s" repeatCount="indefinite" begin="1.26s"/>
+  </circle>
+
+  <!-- ── Separador horitzontal ── -->
+  <line x1="16" y1="170" x2="184" y2="170" stroke="#FF6B00" stroke-width="0.75" stroke-opacity="0.22"/>
+
+  <!-- ── Wordmark vertical (centrat) ── -->
+  <text x="100" y="210"
+        text-anchor="middle"
+        font-family="Orbitron, 'Share Tech Mono', monospace"
+        font-size="38" font-weight="700" fill="#FF6B00" letter-spacing="8">AMG</text>
+  <text x="100" y="238"
+        text-anchor="middle"
+        font-family="'Space Grotesk', system-ui, sans-serif"
+        font-size="10" font-weight="400" fill="#8896aa" letter-spacing="5">DIGITALITZACIONS</text>
+</svg>

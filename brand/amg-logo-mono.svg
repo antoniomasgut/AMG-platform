@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AMG Digitalitzacions — Versió monocromàtica (blanc)
+  Ús: sobre fons de color sòlid, estampació, documents
+-->
+<svg width="340" height="84" viewBox="0 0 340 84" xmlns="http://www.w3.org/2000/svg">
+  <title>AMG Digitalitzacions — Mono blanc</title>
+
+  <!-- Icona contenidor -->
+  <polygon
+    points="68,0 76,8 76,84 8,84 0,76 0,0"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="0.75"
+    stroke-opacity="0.30"
+  />
+
+  <!-- Triangle A -->
+  <line x1="38" y1="8" x2="8" y2="76"
+        stroke="#ffffff" stroke-width="2.2" stroke-linecap="square"/>
+  <line x1="38" y1="8" x2="68" y2="76"
+        stroke="#ffffff" stroke-width="2.2" stroke-linecap="square"/>
+  <line x1="18" y1="49" x2="58" y2="49"
+        stroke="#ffffff" stroke-width="2.2" stroke-linecap="square"/>
+
+  <!-- Nodes -->
+  <rect x="35.5" y="5.5"   width="5" height="5" fill="#ffffff"/>
+  <rect x="5.5"  y="73.5"  width="5" height="5" fill="#ffffff"/>
+  <rect x="65.5" y="73.5"  width="5" height="5" fill="#ffffff"/>
+  <rect x="15.5" y="46.5"  width="5" height="5" fill="#ffffff"/>
+  <rect x="55.5" y="46.5"  width="5" height="5" fill="#ffffff"/>
+
+  <!-- Separador -->
+  <line x1="94" y1="14" x2="94" y2="70"
+        stroke="#ffffff" stroke-width="0.75" stroke-opacity="0.25"/>
+
+  <!-- AMG -->
+  <text
+    x="108" y="51"
+    font-family="Orbitron, 'Share Tech Mono', monospace"
+    font-size="36"
+    font-weight="700"
+    fill="#ffffff"
+    letter-spacing="5"
+  >AMG</text>
+
+  <!-- DIGITALITZACIONS -->
+  <text
+    x="110" y="70"
+    font-family="'Space Grotesk', 'DM Sans', system-ui, sans-serif"
+    font-size="11"
+    font-weight="400"
+    fill="#ffffff"
+    fill-opacity="0.55"
+    letter-spacing="5.5"
+  >DIGITALITZACIONS</text>
+</svg>

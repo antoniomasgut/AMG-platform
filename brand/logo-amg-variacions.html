@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AMG — Variacions amb text</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Space+Grotesk:wght@300;400&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #FF6B00; --bg-0: #0d0d1a; --bg-1: #13132a; --bg-2: #1a1a2e;
+      --ink-0: #e2e8f0; --ink-1: #94a3b8; --ink-2: #8896aa;
+    }
+    body {
+      background: var(--bg-0); color: var(--ink-0);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      padding: 48px 24px 80px; min-height: 100vh;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,107,0,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,107,0,0.035) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+    .wrap { position: relative; max-width: 960px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 56px; }
+    .eyebrow {
+      font-family: 'Share Tech Mono', monospace; font-size: 10px;
+      letter-spacing: 0.20em; color: var(--accent); text-transform: uppercase; margin-bottom: 10px;
+    }
+    h1 {
+      font-family: 'Orbitron', monospace; font-size: clamp(20px,4vw,36px);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px;
+    }
+    h1 em { color: var(--accent); font-style: normal; }
+    header p { font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+
+    /* Cards */
+    .cards { display: flex; flex-direction: column; gap: 28px; }
+
+    .card {
+      background: var(--bg-1);
+      border: 1px solid rgba(255,107,0,0.10);
+      clip-path: polygon(calc(100% - 14px) 0%, 100% 14px, 100% 100%,
+                         14px 100%, 0% calc(100% - 14px), 0% 0%);
+      transition: border-color .2s;
+    }
+    .card:hover { border-color: rgba(255,107,0,0.30); }
+
+    /* Zona de preview (fons fosc de contrast) */
+    .preview {
+      background: var(--bg-0);
+      border-bottom: 1px solid rgba(255,107,0,0.07);
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 32px; gap: 40px; flex-wrap: wrap;
+    }
+    .preview img { max-width: 100%; max-height: 160px; object-fit: contain; }
+
+    /* Mostra el logo sobre blanc tb */
+    .preview-white {
+      background: #f8f8f8;
+      border-radius: 3px; padding: 24px 28px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .preview-white img { max-height: 100px; max-width: 100%; }
+
+    /* Cos */
+    .body { padding: 20px 24px 24px; display: flex; gap: 24px; align-items: flex-start; }
+    .meta { flex: 1; }
+    .num  { font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
+    .name { font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .desc { font-size: 12px; color: var(--ink-2); line-height: 1.55; }
+    .usos { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag  {
+      font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 2px 8px; border: 1px solid rgba(255,107,0,0.30);
+      color: var(--ink-2);
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Brand Identity · Variacions AMG</p>
+    <h1>Logo animat — <em>3 variacions</em></h1>
+    <p>Cada variació mostrada sobre fons fosc (ús principal) i fons clar (test de llegibilitat).</p>
+  </header>
+
+  <div class="cards">
+
+    <!-- V1: Horitzontal -->
+    <div class="card">
+      <div class="preview">
+        <img src="amg-logo-h.svg" alt="Logo horitzontal" style="max-height:90px"/>
+        <div class="preview-white">
+          <img src="amg-logo-h.svg" alt="Logo horitzontal fons clar" style="max-height:60px; filter:invert(1) hue-rotate(180deg) saturate(0) brightness(0.1)"/>
+        </div>
+      </div>
+      <div class="body">
+        <div class="meta">
+          <p class="num">Variació 01</p>
+          <p class="name">Horitzontal — Icona + AMG DIGITALITZACIONS</p>
+          <p class="desc">La combinació estàndard: icona animada a l'esquerra, wordmark a la dreta. Separat per una línia vertical subtil. Format ideal per a la majoria d'usos.</p>
+          <div class="usos">
+            <span class="tag">Navbar</span>
+            <span class="tag">Header web</span>
+            <span class="tag">Email firma</span>
+            <span class="tag">Documents PDF</span>
+            <span class="tag">Factures</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V2: Vertical -->
+    <div class="card">
+      <div class="preview">
+        <img src="amg-logo-v.svg" alt="Logo vertical" style="max-height:220px"/>
+        <div class="preview-white" style="padding: 20px 36px;">
+          <img src="amg-logo-v.svg" alt="Logo vertical fons clar" style="max-height:160px; filter:invert(1) hue-rotate(180deg) saturate(0) brightness(0.1)"/>
+        </div>
+      </div>
+      <div class="body">
+        <div class="meta">
+          <p class="num">Variació 02</p>
+          <p class="name">Vertical — Icona gran centrada + AMG</p>
+          <p class="desc">Icona gran a la part superior, wordmark centrat a sota. Format vertical ideal per a xarxes socials, targetes de presentació i contexts quadrats.</p>
+          <div class="usos">
+            <span class="tag">LinkedIn</span>
+            <span class="tag">Google Business</span>
+            <span class="tag">Targeta visita</span>
+            <span class="tag">App icon</span>
+            <span class="tag">WhatsApp</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V3: Inline -->
+    <div class="card">
+      <div class="preview">
+        <img src="amg-logo-inline.svg" alt="Logo inline" style="max-height:120px"/>
+        <div class="preview-white" style="padding: 20px 28px;">
+          <img src="amg-logo-inline.svg" alt="Logo inline fons clar" style="max-height:90px; filter:invert(1) hue-rotate(180deg) saturate(0) brightness(0.1)"/>
+        </div>
+      </div>
+      <div class="body">
+        <div class="meta">
+          <p class="num">Variació 03</p>
+          <p class="name">Inline — [Δ]MG (la A és la icona)</p>
+          <p class="desc">La icona delta substitueix la lletra A del wordmark, integrant-se directament en la tipografia. El resultat és un logo tipogràfic únic on la icona i el text són inseparables.</p>
+          <div class="usos">
+            <span class="tag">Hero web</span>
+            <span class="tag">Presentacions</span>
+            <span class="tag">Merchandising</span>
+            <span class="tag">Cartells</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

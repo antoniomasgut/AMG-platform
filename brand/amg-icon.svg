@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <title>AMG Digitalitzacions — Icona</title>
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0d0d1a"/>
+    </radialGradient>
+    <linearGradient id="triGrad" x1="100" y1="35" x2="100" y2="170" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF6B00" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#FF6B00" stop-opacity="0.02"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="glow-signal" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Contenidor card-clip -->
+  <polygon points="184,4 196,16 196,196 16,196 4,184 4,4"
+           fill="url(#bgGrad)" stroke="#FF6B00" stroke-width="0.75" stroke-opacity="0.20"/>
+
+  <!-- Quadrícula de fons -->
+  <line x1="4"   y1="100" x2="196" y2="100" stroke="#FF6B00" stroke-width="0.4" stroke-opacity="0.05"/>
+  <line x1="100" y1="4"   x2="100" y2="196" stroke="#FF6B00" stroke-width="0.4" stroke-opacity="0.05"/>
+
+  <!-- Ompliment del triangle -->
+  <polygon points="100,35 22,170 178,170" fill="url(#triGrad)"/>
+
+  <!-- ── Cables (wire estàtic, opacitat baixa) ── -->
+  <line x1="100" y1="35" x2="22"  y2="170"
+        stroke="#FF6B00" stroke-width="4.5" stroke-opacity="0.22" stroke-linecap="square"/>
+  <line x1="100" y1="35" x2="178" y2="170"
+        stroke="#FF6B00" stroke-width="4.5" stroke-opacity="0.22" stroke-linecap="square"/>
+  <line x1="48"  y1="125" x2="152" y2="125"
+        stroke="#FF6B00" stroke-width="4.5" stroke-opacity="0.22" stroke-linecap="square"/>
+
+  <!-- ── Senyals animats (dades viatjant pels cables) ──
+       Tots a la mateixa velocitat: 158 px/s (316px per 2s).
+       Cama esquerra:  apex(100,35)→BL(22,170),   longitud≈156px, begin=0s
+       Cama dreta:     apex(100,35)→BR(178,170),  longitud≈156px, begin=0.18s
+       Barra:          CL(48,125)→CR(152,125),     longitud=104px,  begin=0.66s
+                       (el senyal de la cama esquerra arriba a CL en ≈0.66s)
+  ── -->
+
+  <!-- Cama esquerra -->
+  <line x1="100" y1="35" x2="22" y2="170"
+        stroke="#FF9A3C" stroke-width="5" stroke-linecap="round"
+        stroke-dasharray="10 400"
+        filter="url(#glow-signal)">
+    <animate attributeName="stroke-dashoffset"
+             from="0" to="-410"
+             dur="2s" repeatCount="indefinite" begin="0s"/>
+  </line>
+
+  <!-- Cama dreta (lleuger retard per efecte asimètric) -->
+  <line x1="100" y1="35" x2="178" y2="170"
+        stroke="#FF9A3C" stroke-width="5" stroke-linecap="round"
+        stroke-dasharray="10 400"
+        filter="url(#glow-signal)">
+    <animate attributeName="stroke-dashoffset"
+             from="0" to="-410"
+             dur="2s" repeatCount="indefinite" begin="0.18s"/>
+  </line>
+
+  <!-- Barra horitzontal (s'activa quan el senyal arriba al node CL) -->
+  <line x1="48" y1="125" x2="152" y2="125"
+        stroke="#FF9A3C" stroke-width="5" stroke-linecap="round"
+        stroke-dasharray="10 400"
+        filter="url(#glow-signal)">
+    <animate attributeName="stroke-dashoffset"
+             from="0" to="-410"
+             dur="2s" repeatCount="indefinite" begin="0.66s"/>
+  </line>
+
+  <!-- ── Nodes (cercles buits estil n8n) ── -->
+  <!-- Àpex — pols suau quan s'inicia el senyal -->
+  <circle cx="100" cy="35" r="7"
+          fill="#13132a" stroke="#FF6B00" stroke-width="4.5"
+          filter="url(#glow)">
+    <animate attributeName="stroke-opacity" values="1;0.4;1" dur="2s"
+             repeatCount="indefinite" begin="0s"/>
+  </circle>
+
+  <!-- Inferior esquerre -->
+  <circle cx="22" cy="170" r="7"
+          fill="#13132a" stroke="#FF6B00" stroke-width="4.5">
+    <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2s"
+             repeatCount="indefinite" begin="1s"/>
+  </circle>
+
+  <!-- Inferior dret -->
+  <circle cx="178" cy="170" r="7"
+          fill="#13132a" stroke="#FF6B00" stroke-width="4.5">
+    <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2s"
+             repeatCount="indefinite" begin="1.1s"/>
+  </circle>
+
+  <!-- Barra esquerra (CL) -->
+  <circle cx="48" cy="125" r="7"
+          fill="#13132a" stroke="#FF6B00" stroke-width="4.5">
+    <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2s"
+             repeatCount="indefinite" begin="0.66s"/>
+  </circle>
+
+  <!-- Barra dreta (CR) -->
+  <circle cx="152" cy="125" r="7"
+          fill="#13132a" stroke="#FF6B00" stroke-width="4.5">
+    <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2s"
+             repeatCount="indefinite" begin="1.32s"/>
+  </circle>
+</svg>

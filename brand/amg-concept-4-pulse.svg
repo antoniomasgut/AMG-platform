@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AMG Digitalitzacions — Concepte 04: Pulse Wordmark
+  400×200 · fons fosc · format horitzontal
+-->
+<svg width="400" height="200" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+  <title>AMG Digitalitzacions — Concepte 04 Pulse</title>
+  <defs>
+    <radialGradient id="bg4" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0d0d1a"/>
+    </radialGradient>
+    <filter id="gw4" x="-20%" y="-50%" width="140%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="gw4sm" x="-30%" y="-50%" width="160%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Fons -->
+  <rect width="400" height="200" fill="url(#bg4)"/>
+
+  <!-- Contenidor card-clip horitzontal -->
+  <polygon points="382,8 392,18 392,192 18,192 8,182 8,8"
+           fill="#13132a"
+           stroke="#FF6B00" stroke-width="0.75" stroke-opacity="0.20"/>
+
+  <!-- Nodes cantonada -->
+  <rect x="5.5"  y="5.5"   width="5" height="5" fill="#FF6B00" fill-opacity="0.40"/>
+  <rect x="389.5" y="5.5"  width="5" height="5" fill="#FF6B00" fill-opacity="0.40"/>
+  <rect x="5.5"  y="189.5" width="5" height="5" fill="#FF6B00" fill-opacity="0.40"/>
+  <rect x="389.5" y="189.5" width="5" height="5" fill="#FF6B00" fill-opacity="0.40"/>
+
+  <!-- ══ AMG wordmark ══ -->
+  <text x="200" y="102"
+        text-anchor="middle"
+        font-family="Orbitron, 'Share Tech Mono', monospace"
+        font-size="72" font-weight="900"
+        fill="#FF6B00"
+        letter-spacing="12"
+        filter="url(#gw4)">AMG</text>
+
+  <!-- ══ Línia de pols digital ══ -->
+  <!--
+    Senyal: base a y=126, pic alt a y=94, pic baix a y=142
+    Segments: ..base..[rampa amunt][pic alt][rampa avall][pic baix][rampa amunt][base]..
+    x: 20→80 (base) → 95 (puja) → 115 (pic alt) → 135 (puja baix) →
+       155 (pic baix) → 175 (torna base) → 200 (centre) → 225...
+    Simètric: reflectit al centre x=200
+  -->
+  <polyline
+    points="
+      20,126
+      80,126
+      95,126  100,100  120,100  125,126
+      140,126 145,94   165,94   170,126
+      185,126 190,142  210,142  215,126
+      230,126 235,100  255,100  260,126
+      275,126 280,100  300,100  305,126
+      320,126
+      380,126
+    "
+    fill="none"
+    stroke="#FF6B00" stroke-width="1.8"
+    stroke-linecap="round" stroke-linejoin="round"
+    stroke-opacity="0.55"
+    filter="url(#gw4sm)"
+  />
+
+  <!-- Nodes del pols (punts clau) -->
+  <circle cx="145" cy="94"  r="3" fill="#FF6B00" fill-opacity="0.80" filter="url(#gw4sm)"/>
+  <circle cx="165" cy="94"  r="3" fill="#FF6B00" fill-opacity="0.80" filter="url(#gw4sm)"/>
+  <circle cx="190" cy="142" r="3" fill="#FF6B00" fill-opacity="0.60"/>
+  <circle cx="210" cy="142" r="3" fill="#FF6B00" fill-opacity="0.60"/>
+  <!-- Pic central (el pic màxim, destacat) -->
+  <circle cx="200" cy="126" r="2" fill="#FF6B00" fill-opacity="0.40"/>
+
+  <!-- ══ DIGITALITZACIONS ══ -->
+  <text x="200" y="165"
+        text-anchor="middle"
+        font-family="'Space Grotesk', system-ui, sans-serif"
+        font-size="12" font-weight="300"
+        fill="#8896aa"
+        letter-spacing="8">DIGITALITZACIONS</text>
+
+  <!-- Línies decoratives als costats del subtext -->
+  <line x1="22"  y1="165" x2="68"  y2="165" stroke="#FF6B00" stroke-width="0.5" stroke-opacity="0.18"/>
+  <line x1="332" y1="165" x2="378" y2="165" stroke="#FF6B00" stroke-width="0.5" stroke-opacity="0.18"/>
+</svg>

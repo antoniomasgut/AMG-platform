@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { LocaleSwitcher } from './LocaleSwitcher';
+import { AMGLogo } from '@/components/ui/AMGLogo';
 
 export function LandingHeader() {
   const t = useTranslations('nav');
@@ -14,14 +15,8 @@ export function LandingHeader() {
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border-base bg-bg-0/90 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         {/* Logo */}
-        <Link href={`/${locale}`} className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-accent btn-clip flex items-center justify-center shrink-0">
-            <span className="f-display font-black text-black text-sm">A</span>
-          </div>
-          <div className="hidden sm:block">
-            <div className="f-display font-black text-sm tracking-wider text-ink-0">AMG</div>
-            <div className="f-mono text-label text-accent-light tracking-widest leading-none">DIGITALITZACIÓ</div>
-          </div>
+        <Link href={`/${locale}`} className="flex items-center">
+          <AMGLogo className="h-10 w-auto" />
         </Link>
 
         {/* Desktop nav */}
