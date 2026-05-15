@@ -23,6 +23,7 @@ public class Landing {
     @Column(nullable = false, length = 100) private String slug;
     @Column(length = 300) private String metaDescription;
     @Column(length = 500) private String ogImageUrl;
+    @Column(name = "template_id", nullable = true) private UUID templateId;
     @Enumerated(EnumType.STRING) @Builder.Default @Column(nullable = false) private LandingStatus status = LandingStatus.DRAFT;
     @Column(name = "published_version_id", nullable = true) private UUID publishedVersionId;
     @Column(unique = true, nullable = true, length = 200) private String customDomain;

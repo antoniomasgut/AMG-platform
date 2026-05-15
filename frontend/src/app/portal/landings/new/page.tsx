@@ -4,10 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/auth';
-import { createLanding, createVersion, buildTemplateContent } from '@/services/factory';
+import { createLanding } from '@/services/factory';
 import { TemplateSelector } from '@/components/factory/TemplateSelector';
 import { AMGButton } from '@/components/ui/button';
 import { I } from '@/components/ui/icons';
+
+function slugify(text: string): string {
+  return text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
 
 export default function NewLandingPage() {
   const router = useRouter();
@@ -21,10 +25,7 @@ export default function NewLandingPage() {
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!user?.tenantId) throw new Error('No tenant');
-      const landing = await createLanding(user.tenantId, title, slug);
-      const content = buildTemplateContent(templateId);
-      await createVersion(landing.id, content);
-      return landing;
+      return createLanding(user.tenantId, title, slug, templateId || undefined);
     },
     onSuccess: (landing) => {
       router.push(`/portal/landings/${landing.id}/edit`);
@@ -34,16 +35,8 @@ export default function NewLandingPage() {
   const handleSelectTemplate = (id: string) => {
     setTemplateId(id);
     setStep('details');
-    const defaultNames: Record<string, string> = {
-      restaurant: 'Restaurant',
-      profesional: 'Professional',
-      comercio: 'Comerç',
-      evento: 'Esdeveniment',
-      basica: 'Landing',
-    };
-    const name = defaultNames[id] || 'Landing';
-    setTitle(name);
-    setSlug(name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '-'));
+    setTitle('');
+    setSlug('');
   };
 
   if (!user) {
@@ -57,7 +50,7 @@ export default function NewLandingPage() {
         <div>
           <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / landings / nova /</span>
           <div className="f-display font-bold text-xl mt-1">Selecciona una plantilla</div>
-          <p className="text-sm text-ink-1 mt-1">Tria una plantilla per començar o crea una de zero</p>
+          <p className="text-sm text-ink-1 mt-1">Tria una plantilla per començar</p>
         </div>
         <TemplateSelector onSelect={handleSelectTemplate} />
       </div>
@@ -76,7 +69,10 @@ export default function NewLandingPage() {
           <label className="f-mono text-label uppercase text-ink-3 block mb-1">Títol</label>
           <input
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (!slug) setSlug(slugify(e.target.value));
+            }}
             className="w-full bg-[#0d0d1a] border border-border-medium rounded p-2 text-sm text-ink-0"
             placeholder="Nom de la landing"
           />

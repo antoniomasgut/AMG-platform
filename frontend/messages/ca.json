@@ -294,5 +294,359 @@
     "accept": "Acceptar totes",
     "configure": "Configurar",
     "reject": "Rebutjar opcionals"
+  },
+  "wizard": {
+    "start": "Començar",
+    "next": "Següent",
+    "previous": "Anterior",
+    "finish": "Finalitzar",
+    "cancel": "Configurar més tard",
+    "step": "Pas {current} de {total}",
+    "verify": "Provar connexió",
+    "verify_success": "Connexió correcta",
+    "verify_error": "Verificació fallida",
+    "verify_loading": "Verificant...",
+    "copy": "Copiar",
+    "copied": "Copiat!",
+    "complete_title": "Configuració completada!",
+    "complete_cta": "Tornar al tenant",
+    "whatsapp": {
+      "title": "Configuració: WhatsApp Business",
+      "description": "Configurarem l'API de WhatsApp Business per al teu client. Aquest servei permet enviar i rebre missatges de WhatsApp automàticament des del portal.",
+      "prerequisites": "Necessitaràs: clau API de WhatsApp Business, número de telèfon verificat i Account ID de Meta Developers.",
+      "step1": { "title": "Credencials API", "description": "Introdueix les credencials de l'API de WhatsApp Business." },
+      "step2": { "title": "Configuració webhook", "description": "Configura el webhook per rebre missatges automàticament." },
+      "step3": { "title": "Verificació", "description": "Prova la connexió per assegurar que tot funciona correctament." },
+      "field": {
+        "api_key": "API Key",
+        "phone": "Número de telèfon",
+        "account_id": "Account ID",
+        "webhook_url": "Webhook URL",
+        "webhook_placeholder": "https://example.com/webhook"
+      }
+    },
+    "smtp": {
+      "title": "Configuració: SMTP Corporatiu",
+      "description": "Configurarem el servidor SMTP per al correu corporatiu del teu client. Aquest servei permet enviar correus electrònics des de qualsevol client de correu.",
+      "prerequisites": "Necessitaràs: servidor SMTP, port, usuari i contrasenya del proveïdor de correu.",
+      "step1": { "title": "Configuració del servidor", "description": "Introdueix les dades del servidor SMTP." },
+      "step2": { "title": "Verificació", "description": "Prova l'envió per assegurar que el servidor funciona correctament." },
+      "field": {
+        "host": "Servidor SMTP",
+        "host_placeholder": "smtp.example.com",
+        "port": "Port",
+        "port_placeholder": "587",
+        "user": "Usuari",
+        "user_placeholder": "correu@example.com",
+        "password": "Contrasenya",
+        "security": "Seguretat"
+      },
+      "security": {
+        "tls": "TLS",
+        "ssl": "SSL",
+        "none": "Sense"
+      }
+    },
+    "landing": {
+      "title": "Configuració: Landing",
+      "description": "Crearem la landing page del teu client a partir d'una plantilla. Podràs seleccionar el disseny i personalitzar el contingut.",
+      "prerequisites": "Necessitaràs: contingut del client (textos, imatges, xarxes socials, horaris).",
+      "step1": { "title": "Selecciona plantilla", "description": "Tria la plantilla que millor s'adapti al negoci del client." },
+      "step2": { "title": "Omple el contingut", "description": "Personalitza cada secció amb la informació del client." },
+      "step3": { "title": "Publica", "description": "Revisa i publica la landing." },
+      "field": { "template": "Plantilla" }
+    },
+    "landing_extra": {
+      "description": "Landing addicional per al teu client. El procés és el mateix que una landing normal."
+    },
+    "common": {
+      "yes": "Sí",
+      "no": "No"
+    },
+    "agenda": {
+      "title": "Configuració: Agenda Online",
+      "description": "Configurarem un sistema de reserves online. El client podrà reservar visites directament des d'un enllaç.",
+      "prerequisites": "Necessitaràs: API Key de Google Calendar o Calendly.",
+      "step1": { "title": "Integració de calendari", "description": "Connecta el calendari on es crearan les cites." },
+      "step2": { "title": "Plantilla de confirmació", "description": "Configura el missatge de confirmació que es enviarà al client." },
+      "step3": { "title": "Verificació", "description": "Prova que el flux de reserva funciona correctament." },
+      "field": {
+        "calendar_type": "Tipus de calendari",
+        "api_key": "API Key",
+        "api_key_hint": "OAuth credentials de Google o API Key de Calendly",
+        "confirmation": "Missatge de confirmació",
+        "confirmation_placeholder": "Hola! La teva cita ha estat confirmada per al dia {{date}}"
+      },
+      "calendar": { "google": "Google Calendar", "calendly": "Calendly" }
+    },
+    "recordatori": {
+      "title": "Configuració: Recordatori 24h",
+      "description": "Configurarem un recordatori automàtic per WhatsApp 24h abans de la cita.",
+      "prerequisites": "Necessitaràs: accés al calendari (API Key de Google Calendar).",
+      "step1": { "title": "Connectar calendari", "description": "Connecta el calendari per llegir les cites." },
+      "step2": { "title": "Plantilla de recordatori", "description": "Configura el missatge de recordatori." },
+      "step3": { "title": "Activar", "description": "Activa el workflow de recordatoris." },
+      "field": {
+        "calendar_key": "API Key del calendari",
+        "calendar_id": "ID del calendari",
+        "calendar_id_placeholder": "primary o calendar@group.calendar.google.com",
+        "template": "Plantilla de recordatori",
+        "template_placeholder": "Hola! Tens una cita demà a les {{time}}. Et confirmes?",
+        "hours": "Hores abans del recordatori"
+      }
+    },
+    "reenganxament": {
+      "title": "Configuració: Reenganxament Clients",
+      "description": "Configurarem un sistema que envia WhatsApp automàticament a clients inactius per recuperar-los.",
+      "prerequisites": "Necessitaràs: API Key i URL del CRM.",
+      "step1": { "title": "Connectar CRM", "description": "Connecta el CRM per detectar clients inactius." },
+      "step2": { "title": "Configuració", "description": "Defineix el període d'inactivitat i el missatge." },
+      "step3": { "title": "Activar", "description": "Activa el workflow de reenganxament." },
+      "field": {
+        "api_url": "URL del CRM",
+        "api_url_placeholder": "https://api.example.com/crm",
+        "api_key": "API Key del CRM",
+        "months": "Mesos d'inactivitat",
+        "template": "Plantilla de l'oferta",
+        "template_placeholder": "Fa temps que no et veiem! Et regalem un {{descompte}} si vens aquesta setmana."
+      }
+    },
+    "ressenya": {
+      "title": "Configuració: Ressenya Google",
+      "description": "Configurarem un sistema que demana ressenyes de Google automàticament després de cada servei.",
+      "prerequisites": "Necessitaràs: l'enllaç de Google Reviews del teu client.",
+      "step1": { "title": "Enllaç Google Reviews", "description": "Introdueix l'enllaç de Google Reviews." },
+      "step2": { "title": "Trigger automàtic", "description": "El workflow s'activarà automàticament quan es completi un servei al CRM." },
+      "step3": { "title": "Activar", "description": "Activa el workflow de ressenyes." },
+      "field": {
+        "url": "Enllaç de Google Reviews",
+        "url_placeholder": "https://g.page/r/XXXXXXXXX/review"
+      }
+    },
+    "calculadora": {
+      "title": "Configuració: Calculadora de Pressupost",
+      "description": "Configurarem un formulari interactiu que calcula i envia pressupostos automàticament.",
+      "prerequisites": "Necessitaràs: les regles de càlcul de preus del negoci.",
+      "step1": { "title": "Regles de càlcul", "description": "Defineix com es calcula el pressupost segons les dades del formulari." },
+      "step2": { "title": "Notificació", "description": "Configura la plantilla del pressupost que es enviarà al client." },
+      "step3": { "title": "Activar", "description": "Activa el workflow de càlcul i enviament." },
+      "field": {
+        "rules": "Regles de càlcul",
+        "rules_placeholder": "Ex: m2 * 50€ + desplaçament",
+        "template": "Plantilla de pressupost",
+        "template_placeholder": "Pressupost per a {{client}}: {{total}}€"
+      }
+    },
+    "crm": {
+      "title": "Configuració: CRM + Pipeline",
+      "description": "Configurarem el sistema de seguiment de leads (nou → pressupostat → tancat).",
+      "prerequisites": "No necessites API keys externes. El CRM és intern del portal.",
+      "step1": { "title": "Etapes del pipeline", "description": "Defineix les etapes del teu pipeline de vendes." },
+      "step2": { "title": "Notificacions", "description": "Configura les notificacions per cada canvi d'etapa." },
+      "step3": { "title": "Activar", "description": "Activa el pipeline." },
+      "field": {
+        "stages": "Etapes (separades per comes)",
+        "stages_placeholder": "Nou, Contactat, Pressupostat, Tancat",
+        "notify_whatsapp": "Notificar per WhatsApp?"
+      }
+    },
+    "galeria": {
+      "title": "Configuració: Galeria de Fotos",
+      "description": "Configurarem una galeria de fotos per mostrar treballs realitzats.",
+      "prerequisites": "Necessitaràs: fotos dels treballs del client.",
+      "step1": { "title": "Pujar fotos", "description": "Puja les fotos i organitza-les per categories." },
+      "step2": { "title": "Publicar", "description": "Publica la galeria." },
+      "field": {
+        "categories": "Categories (separades per comes)",
+        "categories_placeholder": "Reformes, Neteja, Instal·lacions"
+      }
+    },
+    "cobrament": {
+      "title": "Configuració: Cobrament amb Targeta",
+      "description": "Configurarem el sistema de pagament amb Stripe per acceptar targetes de crèdit.",
+      "prerequisites": "Necessitaràs: les claus API de Stripe (secret key, public key i webhook secret).",
+      "step1": { "title": "Credencials Stripe", "description": "Introdueix les claus API de Stripe." },
+      "step2": { "title": "Webhook Stripe", "description": "Configura el webhook per rebre notificacions de pagament." },
+      "step3": { "title": "Verificació", "description": "Prova un pagament de prova." },
+      "field": {
+        "secret_key": "Stripe Secret Key",
+        "public_key": "Stripe Public Key",
+        "webhook_secret": "Stripe Webhook Secret",
+        "webhook": "Webhook URL (per configurar a Stripe)"
+      }
+    },
+    "facturacio": {
+      "title": "Configuració: Facturació Automàtica",
+      "description": "Configurarem la generació i enviament automàtic de factures via Holded.",
+      "prerequisites": "Necessitaràs: API Key de Holded i dades fiscals del client (NIF, adreça).",
+      "step1": { "title": "Credencials Holded", "description": "Introdueix l'API Key de Holded i les dades fiscals del client." },
+      "step2": { "title": "Periodicitat", "description": "Selecciona el dia del mes per generar les factures." },
+      "step3": { "title": "Verificació", "description": "Prova la creació d'una factura de prova." },
+      "field": {
+        "api_key": "Holded API Key",
+        "vat": "NIF del client",
+        "vat_placeholder": "12345678A",
+        "address": "Adreça fiscal",
+        "address_placeholder": "C/ Exemple, 123, 07001 Palma",
+        "day": "Dia de facturació"
+      }
+    },
+    "analytics": {
+      "title": "Configuració: Google Analytics",
+      "description": "Configurarem Google Analytics 4 + Search Console per al seguiment de mètriques.",
+      "prerequisites": "Necessitaràs: GA4 Property ID i credencials OAuth de Google.",
+      "step1": { "title": "Credencials Google", "description": "Introdueix el Property ID de GA4 i les credencials OAuth." },
+      "step2": { "title": "Verificació", "description": "Verifica que el tracking funciona correctament." },
+      "field": {
+        "property_id": "GA4 Property ID",
+        "property_id_placeholder": "G-XXXXXXXXXX",
+        "oauth": "Google OAuth Credentials (JSON)"
+      }
+    },
+    "xat": {
+      "title": "Configuració: Xat Web",
+      "description": "Configurarem un widget de xat en directe per al web del client.",
+      "prerequisites": "Necessitaràs: API Key del servei de xat (Tawk.to, Crisp, etc.) o del Bot IA.",
+      "step1": { "title": "Credencials del xat", "description": "Introdueix les credencials del servei de xat." },
+      "step2": { "title": "Verificació", "description": "Prova que el xat funciona correctament." },
+      "field": {
+        "api_key": "API Key del xat",
+        "widget_id": "Widget ID (opcional)"
+      }
+    },
+    "formulari": {
+      "title": "Configuració: Formulari de Leads",
+      "description": "Configurarem un formulari de contacte que alimenta el CRM automàticament.",
+      "prerequisites": "No necessites API keys externes.",
+      "step1": { "title": "Configuració", "description": "Defineix on s'envien les notificacions dels leads." },
+      "step2": { "title": "Activar", "description": "Activa el formulari." },
+      "field": {
+        "email": "Correu de notificació",
+        "email_placeholder": "client@exemple.com"
+      }
+    },
+    "quest": {
+      "title": "Configuració: Qüestionari de Salut",
+      "description": "Configurarem un formulari pre-visita per a professionals sanitaris.",
+      "prerequisites": "Necessitaràs: les preguntes del qüestionari.",
+      "step1": { "title": "Preguntes", "description": "Introdueix les preguntes del qüestionari." },
+      "step2": { "title": "Activar", "description": "Activa el qüestionari." },
+      "field": {
+        "questions": "Preguntes (separades per comes)",
+        "questions_placeholder": "Edat, Al·lèrgies, Medicació, Motiu de la visita"
+      }
+    },
+    "historial": {
+      "title": "Configuració: Historial Mèdic",
+      "description": "Configurarem la fitxa digital de pacient amb historial mèdic.",
+      "prerequisites": "No necessites API keys externes.",
+      "step1": { "title": "Camps de la fitxa", "description": "Defineix els camps de la fitxa de pacient." },
+      "step2": { "title": "Activar", "description": "Activa el mòdul d'historial." },
+      "field": {
+        "config": "Camps de la fitxa (separats per comes)",
+        "config_placeholder": "Nom, Telèfon, Al·lèrgies, Notes"
+      }
+    },
+    "telegram": {
+      "title": "Configuració: Bot de Telegram",
+      "description": "Configurarem un bot de Telegram per al teu client. El bot pot enviar notificacions, respondre consultes i molt més.",
+      "prerequisites": "Necessitaràs: el token del bot de Telegram (de @BotFather) i un nom d'usuari per al bot.",
+      "step1": { "title": "Credencials del bot", "description": "Introdueix el token i el nom d'usuari del bot de Telegram." },
+      "step2": { "title": "Webhook", "description": "Configura el webhook per rebre missatges." },
+      "step3": { "title": "Comandes", "description": "Defineix les comandes que entendrà el bot." },
+      "step4": { "title": "Verificació", "description": "Prova que el bot respon correctament." },
+      "field": {
+        "token": "Bot Token",
+        "token_hint": "Obtén-lo de @BotFather a Telegram",
+        "username": "Nom d'usuari del bot",
+        "username_placeholder": "exemple_bot",
+        "webhook": "Webhook URL (per configurar a Telegram)",
+        "commands": "Comandes personalitzades",
+        "commands_placeholder": "/start, /ajuda, /preus",
+        "commands_hint": "Separa les comandes per comes"
+      }
+    },
+    "bot_ia": {
+      "title": "Configuració: Bot IA Bàsic",
+      "description": "Configurarem un assistent virtual amb intel·ligència artificial per al teu client.",
+      "prerequisites": "Necessitaràs: clau API del proveïdor d'IA i el nom del bot.",
+      "step1": { "title": "Configuració API", "description": "Introdueix la clau API i selecciona el model d'IA." },
+      "step2": { "title": "Missatge de benvinguda", "description": "Configura el missatge de benvinguda del bot." },
+      "step3": { "title": "Verificació", "description": "Prova que el bot respon correctament." },
+      "field": {
+        "api_key": "Clau API",
+        "model": "Model d'IA",
+        "name": "Nom del bot",
+        "name_placeholder": "Ex: Assistent Virtual",
+        "welcome": "Missatge de benvinguda",
+        "welcome_placeholder": "Hola! Com puc ajudar-te?"
+      },
+      "model": {
+        "sonnet": "Claude Sonnet 4.6",
+        "haiku": "Claude Haiku 4.5",
+        "gpt4o": "GPT-4o"
+      }
+    },
+    "bot_ia_rag": {
+      "title": "Configuració: Bot IA Avançat (RAG)",
+      "description": "Configurarem un assistent virtual amb accés a documents personalitzats del teu client.",
+      "prerequisites": "Necessitaràs: clau API del proveïdor d'IA, nom del bot i documents de referència.",
+      "step1": { "title": "Configuració API", "description": "Introdueix la clau API i selecciona el model d'IA." },
+      "step2": { "title": "Documents de referència", "description": "Afegeix URLs de documents que el bot usarà per respondre." },
+      "step3": { "title": "Verificació", "description": "Prova que el bot respon basant-se en els documents." },
+      "field": {
+        "api_key": "Clau API",
+        "model": "Model d'IA",
+        "name": "Nom del bot",
+        "name_placeholder": "Ex: Assistent Documentat",
+        "documents": "Documents de referència",
+        "documents_hint": "Introdueix URLs separades per comes",
+        "documents_placeholder": "https://example.com/document.pdf, https://..."
+      },
+      "model": {
+        "sonnet": "Claude Sonnet 4.6",
+        "haiku": "Claude Haiku 4.5"
+      }
+    },
+    "automation": {
+      "title": "Configuració: Automatització n8n",
+      "description": "Connectarem el portal amb n8n per gestionar les automatitzacions del teu client.",
+      "prerequisites": "Necessitaràs: URL del servidor n8n i API Key.",
+      "step1": { "title": "Connexió n8n", "description": "Introdueix la URL i la clau API del servidor n8n." },
+      "step2": { "title": "Workflows disponibles", "description": "Revisa els workflows predefinits que s'activaran." },
+      "step3": { "title": "Verificació", "description": "Prova la connexió amb n8n." },
+      "field": {
+        "url": "URL n8n",
+        "url_placeholder": "https://n8n.example.com",
+        "api_key": "API Key"
+      }
+    },
+    "domain": {
+      "title": "Configuració: Domini",
+      "description": "Configurarem el domini personalitzat per al teu client.",
+      "prerequisites": "Necessitaràs: el nom de domini i accés al panell DNS del registrador.",
+      "step1": { "title": "Nom de domini", "description": "Introdueix el nom de domini i selecciona el tipus de gestió." },
+      "step2": { "title": "Configuració DNS", "description": "Copia els nameservers al teu registrador de domini." },
+      "step3": { "title": "Verificació", "description": "Espera la propagació del DNS i verifica el domini." },
+      "field": {
+        "name": "Nom de domini",
+        "name_placeholder": "exemple.com",
+        "type": "Tipus de gestió",
+        "ns1": "Nameserver 1",
+        "ns2": "Nameserver 2"
+      },
+      "type": {
+        "managed": "Gestionat (inclòs)",
+        "self": "Autogestionat"
+      }
+    },
+    "validation": {
+      "phone": "El número de telèfon no és vàlid",
+      "required": "Aquest camp és obligatori",
+      "url": "La URL no és vàlida",
+      "email": "El correu electrònic no és vàlid",
+      "port": "El port no és vàlid",
+      "domain": "El format del domini no és vàlid"
+    }
   }
 }

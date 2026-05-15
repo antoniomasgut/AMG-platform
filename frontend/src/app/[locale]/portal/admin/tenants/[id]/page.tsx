@@ -1,0 +1,378 @@
+'use client';
+
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useParams } from 'next/navigation';
+import { useToast } from '@/lib/toast-context';
+import {
+  getTenant, getTenantSetup, listCatalogServices,
+  listProfiles, assignProfileToTenant, removeProfileFromTenant,
+  type TenantResponse, type TenantSetup, type CatalogService,
+  type CatalogProfileResponse,
+} from '@/services/admin';
+import { listLandings } from '@/services/factory';
+import { getWizardConfig } from '@/config/service-wizards';
+import { PortalShell } from '@/components/portal/PortalShell';
+import { AMGButton } from '@/components/ui/button';
+import { AMGBadge } from '@/components/ui/badge';
+import { AMGSectionTitle } from '@/components/ui/stat';
+import { I } from '@/components/ui/icons';
+
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function statusBadge(status: string, activeLabel: string, inactiveLabel: string) {
+  return status === 'APPROVED' || status === 'ACTIVE' || status === 'COMPLETED'
+    ? <AMGBadge tone="success">{activeLabel}</AMGBadge>
+    : status === 'PENDING' || status === 'REJECTED'
+    ? <AMGBadge tone="warning">{status === 'REJECTED' ? 'Rebutjat' : 'Pendent'}</AMGBadge>
+    : <AMGBadge tone="neutral">{inactiveLabel}</AMGBadge>;
+}
+
+function ServiceCatalogTable({ services }: { services: CatalogService[] }) {
+  if (services.length === 0) return <p className="text-sm text-ink-2 py-4">Cap servei al catàleg</p>;
+  return (
+    <table className="w-full min-w-[500px]">
+      <thead>
+        <tr className="border-b border-border-base">
+          {['Servei', 'Tipus', 'Preu venda', 'Addon'].map((h) => (
+            <th key={h} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal">{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {services.map((s) => (
+          <tr key={s.id} className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+            <td className="px-4 sm:px-5 py-3">
+              <div className="f-display font-bold text-sm">{s.name}</div>
+              <div className="f-mono text-xs text-ink-3 mt-0.5">{s.slug}</div>
+            </td>
+            <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-2 capitalize">{s.type.toLowerCase()}</td>
+            <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{s.salePrice.toFixed(2)} €</td>
+            <td className="px-4 sm:px-5 py-3">{s.isAddon ? <AMGBadge tone="info">Addon</AMGBadge> : '—'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function SetupSection({ setup, tenantId }: { setup: TenantSetup; tenantId: string }) {
+  const hasProfiles = setup.profiles.length > 0;
+  const hasAddons = setup.addons.length > 0;
+
+  if (!hasProfiles && !hasAddons) {
+    return (
+      <div className="p-8 text-center">
+        <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
+        <div className="f-display font-bold text-sm mb-1">Cap servei assignat</div>
+        <p className="f-mono text-xs text-ink-2">Aquest tenant encara no té perfils ni serveis assignats</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 p-5">
+      {setup.profiles.map((p) => (
+        <div key={p.profile.id} className="border border-border-base rounded p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <I.Box size={14} className="text-accent-light" />
+            <span className="f-display font-bold text-sm">{p.profile.name}</span>
+          </div>
+          {p.phases.map((ph) => (
+            <div key={ph.phase.id} className="ml-5 border-l-2 border-border-base pl-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="f-mono text-label uppercase text-ink-3">{ph.phase.name}</span>
+                {statusBadge(ph.approvalStatus, 'Aprovat', 'Pendent')}
+              </div>
+              {ph.services.map((svc) => {
+                const isPending = svc.status === 'PENDING' || svc.status === 'CONFIGURING' || svc.status === 'AWAITING_CLIENT';
+                return (
+                  <div key={svc.service.id} className="flex items-center gap-2 pl-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-ink-3 flex-shrink-0" />
+                    <span className="text-sm text-ink-1">{svc.service.name}</span>
+                    <span className="f-mono text-[10px] text-ink-3 uppercase">{svc.service.type}</span>
+                    {statusBadge(svc.status, 'Actiu', 'Inactiu')}
+                    {isPending && getWizardConfig(svc.service.slug, svc.service.type) && (
+                      <a
+                        href={`/portal/admin/tenants/${tenantId}/services/${svc.service.id}/setup`}
+                        className="ml-auto text-[10px] f-mono uppercase text-accent-light hover:text-accent transition"
+                      >
+                        Configurar
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      ))}
+      {hasAddons && (
+        <div className="border border-border-base rounded p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <I.Plus size={14} className="text-accent-light" />
+            <span className="f-display font-bold text-sm">Add-ons</span>
+          </div>
+          {setup.addons.map((a) => (
+            <div key={a.service.id} className="flex items-center gap-2 pl-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
+              <span className="text-sm text-ink-1">{a.service.name}</span>
+              {statusBadge(a.approvalStatus, 'Aprovat', 'No aprovat')}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AssignProfileModal({ tenantId, onClose, onAssigned }: { tenantId: string; onClose: () => void; onAssigned: () => void }) {
+  const { toast } = useToast();
+  const { data: profiles, isLoading } = useQuery({
+    queryKey: ['vault-profiles'],
+    queryFn: () => listProfiles(),
+  });
+
+  const [selectedProfileId, setSelectedProfileId] = useState('');
+  const [assigning, setAssigning] = useState(false);
+
+  const activeProfiles = profiles?.filter(p => p.isActive) ?? [];
+
+  const handleAssign = async () => {
+    if (!selectedProfileId) return;
+    setAssigning(true);
+    try {
+      const result = await assignProfileToTenant(tenantId, selectedProfileId);
+      toast('success', `Perfil assignat — ${result.phases.length} fases, total ${result.totalPrice.toFixed(2)} €`);
+      onAssigned();
+      onClose();
+    } catch {
+      toast('error', 'Error assignant el perfil');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="amg-card card-clip w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <div className="f-display font-bold text-base">Assignar perfil</div>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : activeProfiles.length === 0 ? (
+          <div className="text-center py-6">
+            <I.Box size={24} stroke="#64748b" className="mx-auto mb-2" />
+            <div className="f-display font-bold text-sm mb-1">Cap perfil disponible</div>
+            <p className="f-mono text-xs text-ink-2">Crea perfils des de la secció Catàleg</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-ink-2">Selecciona un perfil per assignar-lo al tenant:</p>
+            {activeProfiles.map((p: CatalogProfileResponse) => (
+              <button key={p.id} onClick={() => setSelectedProfileId(p.id)}
+                className={`w-full text-left p-3 border rounded transition ${
+                  selectedProfileId === p.id
+                    ? 'border-[#FF6B00] bg-accent-muted'
+                    : 'border-border-base hover:border-ink-2'
+                }`}>
+                <div className="f-display font-bold text-sm">{p.name}</div>
+                {p.description && <div className="f-mono text-xs text-ink-3 mt-0.5">{p.description}</div>}
+                <div className="f-mono text-xs text-ink-2 mt-1">{p.phases?.length ?? 0} fases</div>
+              </button>
+            ))}
+            <div className="flex gap-3 pt-2">
+              <AMGButton onClick={handleAssign} disabled={!selectedProfileId || assigning} loading={assigning} className="flex-1 justify-center">
+                Assignar perfil
+              </AMGButton>
+              <AMGButton variant="outline" onClick={onClose}>Cancel·lar</AMGButton>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function TenantDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [showAssignProfile, setShowAssignProfile] = useState(false);
+
+  const { data: tenant, isLoading: loadingTenant, error: tenantErr } = useQuery({
+    queryKey: ['tenant', id],
+    queryFn: () => getTenant(id),
+  });
+
+  const { data: setup, isLoading: loadingSetup } = useQuery({
+    queryKey: ['tenant-setup', id],
+    queryFn: () => getTenantSetup(id),
+    enabled: !!tenant,
+  });
+
+  const { data: services } = useQuery({
+    queryKey: ['catalog-services'],
+    queryFn: () => listCatalogServices(),
+  });
+
+  const { data: landings } = useQuery({
+    queryKey: ['tenant-landings', id],
+    queryFn: () => listLandings(id),
+    enabled: !!tenant,
+  });
+
+  const invalidateSetup = () => {
+    qc.invalidateQueries({ queryKey: ['tenant-setup', id] });
+    qc.invalidateQueries({ queryKey: ['tenant-landings', id] });
+  };
+
+  if (loadingTenant) {
+    return (
+      <PortalShell breadcrumb="admin · tenants · carregant">
+        <div className="p-4 sm:p-8 space-y-6">
+          <div className="flex justify-center py-12">
+            <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          </div>
+        </div>
+      </PortalShell>
+    );
+  }
+
+  if (tenantErr || !tenant) {
+    return (
+      <PortalShell breadcrumb="admin · tenants · error">
+        <div className="p-4 sm:p-8 text-center py-12">
+          <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
+          <div className="f-display font-bold text-sm mb-1">Error carregant el tenant</div>
+          <p className="f-mono text-xs text-ink-2 mb-4">No s'ha pogut carregar la informació del tenant</p>
+          <AMGButton size="sm" onClick={() => window.location.reload()}>Reintentar</AMGButton>
+        </div>
+      </PortalShell>
+    );
+  }
+
+  const landingCount = landings?.length ?? 0;
+  const profileCount = setup?.profiles.length ?? 0;
+  const serviceCount = setup?.profiles.reduce((acc, p) =>
+    acc + p.phases.reduce((a, ph) => a + ph.services.length, 0), 0) ?? 0;
+
+  // Find services pending configuration that have a wizard defined
+  const pendingServices: Array<{ serviceId: string; serviceName: string; serviceType: string; slug: string }> = [];
+  for (const p of setup?.profiles ?? []) {
+    for (const ph of p.phases) {
+      for (const svc of ph.services) {
+        const isPending = svc.status === 'PENDING' || svc.status === 'CONFIGURING' || svc.status === 'AWAITING_CLIENT';
+        if (isPending && getWizardConfig(svc.service.slug, svc.service.type)) {
+          pendingServices.push({ serviceId: svc.service.id, serviceName: svc.service.name, serviceType: svc.service.type, slug: svc.service.slug });
+        }
+      }
+    }
+  }
+
+  return (
+    <PortalShell breadcrumb={`admin · tenants · ${tenant.name}`}>
+      <div className="p-4 sm:p-8 space-y-6">
+        {/* Header */}
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / admin / tenants /</span>
+            <div className="flex items-center gap-3 mt-1">
+              <div className="f-display font-bold text-xl">{tenant.name}</div>
+              {tenant.isActive
+                ? <AMGBadge tone="success">Actiu</AMGBadge>
+                : <AMGBadge tone="neutral">Inactiu</AMGBadge>}
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-ink-2">
+              {tenant.email && <span className="flex items-center gap-1"><I.Mail size={12} />{tenant.email}</span>}
+              {tenant.phone && <span className="flex items-center gap-1"><I.Smartphone size={12} />{tenant.phone}</span>}
+              <span className="f-mono text-xs text-ink-3">/{tenant.slug}</span>
+              <span className="f-mono text-xs text-ink-3">Creat {fmtDate(tenant.createdAt)}</span>
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <AMGButton
+              size="sm"
+              icon={I.Plus}
+              onClick={() => window.location.href = `/portal/landings/new?tenantId=${id}`}
+            >
+              Crear landing
+            </AMGButton>
+            {pendingServices.map((svc) => (
+              <AMGButton
+                key={svc.serviceId}
+                size="sm"
+                variant="secondary"
+                onClick={() => window.location.href = `/portal/admin/tenants/${id}/services/${svc.serviceId}/setup`}
+              >
+                Configurar {svc.serviceName}
+              </AMGButton>
+            ))}
+          </div>
+        </div>
+
+        {/* Stat cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="card-clip amg-card p-5">
+            <span className="f-mono uppercase text-label tracking-widest text-ink-3">Landings</span>
+            <div className="f-display font-bold text-2xl text-accent-light mt-2">{landingCount}</div>
+          </div>
+          <div className="card-clip amg-card p-5">
+            <span className="f-mono uppercase text-label tracking-widest text-ink-3">Perfils</span>
+            <div className="f-display font-bold text-2xl text-accent-light mt-2">{profileCount}</div>
+          </div>
+          <div className="card-clip amg-card p-5">
+            <span className="f-mono uppercase text-label tracking-widest text-ink-3">Serveis actius</span>
+            <div className="f-display font-bold text-2xl text-accent-light mt-2">{serviceCount}</div>
+          </div>
+        </div>
+
+        {/* Serveis assignats */}
+        <div className="amg-card card-clip">
+          <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
+            <AMGSectionTitle eyebrow="Assignació" title="Serveis assignats" />
+            <AMGButton size="sm" icon={I.Plus} onClick={() => setShowAssignProfile(true)}>Assignar perfil</AMGButton>
+          </div>
+          {loadingSetup ? (
+            <div className="flex justify-center py-8">
+              <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : setup ? (
+            <SetupSection setup={setup} tenantId={id} />
+          ) : (
+            <div className="p-8 text-center">
+              <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
+              <div className="f-display font-bold text-sm mb-1">Error de càrrega</div>
+            </div>
+          )}
+        </div>
+
+        {/* Catàleg de serveis */}
+        <div className="amg-card card-clip">
+          <div className="p-4 sm:p-5 border-b border-border-base">
+            <AMGSectionTitle eyebrow="Catàleg" title="Serveis disponibles" />
+          </div>
+          <div className="overflow-x-auto">
+            {services ? (
+              <ServiceCatalogTable services={services} />
+            ) : (
+              <div className="flex justify-center py-8">
+                <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showAssignProfile && (
+        <AssignProfileModal tenantId={id} onClose={() => setShowAssignProfile(false)} onAssigned={invalidateSetup} />
+      )}
+    </PortalShell>
+  );
+}

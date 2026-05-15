@@ -1,8 +1,8 @@
 # Mòdul 07: Billing — Pressupostos i Descomptes
 
-> **Versió:** 1.0
-> **Data:** 2026-05-13
-> **Dependències:** Mòdul 01 (Auth), Mòdul 02 (Vault)
+> **Versió:** 1.1
+> **Data:** 2026-05-15
+> **Dependències:** Mòdul 01 (Auth), Mòdul 02 (Vault) — inclou flux d'intake, selecció de fases a pressupostar, i transició d'estats en acceptar pressupost
 
 ---
 
@@ -20,7 +20,9 @@
 
 ### 2.1 Funcionalitats incloses
 
-- Creació de pressupostos a partir d'un perfil de servei + add-ons
+- Creació de pressupostos a partir d'un perfil de servei + fases seleccionades + add-ons
+- Les fases NO seleccionades per pressupostar es marquen com a `FUTURE_EXPANSION` (ampliació futura)
+- En acceptar el pressupost, les fases/serveis seleccionats passen a `ACCEPTED` / `BUDGET_ACCEPTED` al Vault
 - Càlcul de subtotal, descomptes i total
 - CRUD de descomptes (percentatge o fix) amb dates de validesa
 - Aplicació de descomptes al pressupost
@@ -164,18 +166,26 @@ Prefix base: `/api/v1/billing`
 
 #### `POST /api/v1/billing/tenants/{tenantId}/budgets` — Crear pressupost
 
+Crea un pressupost per a les **fases seleccionades** d'un perfil (més add-ons opcionals). Les fases NO incloses a `phaseIds` es marquen automàticament com a `FUTURE_EXPANSION` al Vault.
+
 Request:
 ```json
 {
   "profileId": "uuid",
-  "phaseIds": [],
-  "addonIds": ["uuid1", "uuid2"],
+  "phaseIds": ["uuid1", "uuid2"],
+  "addonIds": ["uuid3"],
   "notes": "Pressupost inicial",
   "clientNotes": "Oferta vàlida 30 dies",
   "discountIds": ["uuid"],
   "validUntil": "2026-06-13"
 }
 ```
+
+**Comportament:**
+- `phaseIds` buit = pressupostar TOTES les fases del perfil
+- `phaseIds` amb fases concretes = només aquestes fases es pressuposten
+- Les fases del perfil NO incloses a `phaseIds` es marquen com a `FUTURE_EXPANSION` al Vault
+- `subtotal` = suma de `salePrice` dels serveis de les fases seleccionades + add-ons
 
 Response 201: BudgetResponse
 
@@ -200,7 +210,14 @@ Response 200:
 
 #### `POST /api/v1/billing/budgets/accept?token=abc123` — Acceptar públicament
 
-Canvia l'estat a ACCEPTED, invalida el token, aprova les fases al Vault.
+Canvia l'estat a ACCEPTED, invalida el token.
+
+**Efectes al Vault:**
+- Totes les `TenantProfile.phaseStatus` de les fases pressupostades → `BUDGET_ACCEPTED`
+- Tots els `TenantService.configStatus` dels serveis pressupostats → `ACCEPTED`
+- Les fases `FUTURE_EXPANSION` no es modifiquen
+- La primera fase amb `BUDGET_ACCEPTED` passa a `CONFIGURING` (s'inicia la implementació)
+- El primer servei de la fase passa a `CONFIGURING`
 
 Response 200: `{ "status": "ACCEPTED", "message": "Pressupost acceptat correctament" }`
 
@@ -299,7 +316,6 @@ Els tests d'integració es troben a `backend/src/test/java/com/amg/digitalitzaci
 - [ ] `createdBy` a DiscountManager es queda amb UUID.randomUUID() — cal passar l'usuari real
 - [ ] `appliesTo` query param a GET /discounts no s'usa al servei
 - [ ] BudgetNumber usa `count()` global, no per tenant
-- [ ] `phaseIds` als request DTOs no s'usa mai (les fases venen del perfil)
 - [ ] `InvoiceService` i `PaymentService` estan injectats però mai cridats
 - [ ] `rejectionUrl` a BudgetResponse sempre és null
 - [ ] `recentPhases` a DashboardResponse sempre és buit

@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.engine.api;
 
 import com.amg.digitalitzacio.engine.api.dto.*;
 import com.amg.digitalitzacio.engine.application.EngineService;
+import com.amg.digitalitzacio.engine.application.TemplateService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import java.util.UUID;
 public class EngineController {
 
     private final EngineService engineService;
+    private final TemplateService templateService;
 
     // --- Landings ---
 
@@ -27,6 +29,14 @@ public class EngineController {
     @ResponseStatus(HttpStatus.CREATED)
     public LandingResponse createLanding(@PathVariable UUID tenantId, @RequestBody CreateLandingRequest request) {
         return engineService.createLanding(tenantId, request);
+    }
+
+    @PostMapping("/tenants/{tenantId}/landings/from-template")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LandingResponse createLandingFromTemplate(@PathVariable UUID tenantId,
+                                                      @RequestBody CreateLandingFromTemplateRequest request) {
+        return engineService.createLandingFromTemplate(tenantId, request);
     }
 
     @GetMapping("/tenants/{tenantId}/landings")
@@ -137,5 +147,60 @@ public class EngineController {
     @ResponseStatus(HttpStatus.CREATED)
     public ContactResponse submitContact(@PathVariable String slug, @RequestBody ContactRequest request) {
         return engineService.submitContact(slug, request);
+    }
+
+    // --- Templates ---
+
+    @GetMapping("/templates")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public List<LandingTemplateSummary> listTemplates() {
+        return templateService.listTemplates();
+    }
+
+    @GetMapping("/templates/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public LandingTemplateResponse getTemplate(@PathVariable UUID id) {
+        return templateService.getTemplate(id);
+    }
+
+    @PostMapping("/templates")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LandingTemplateResponse createTemplate(@RequestBody CreateTemplateRequest request) {
+        return templateService.createTemplate(request);
+    }
+
+    @PutMapping("/templates/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public LandingTemplateResponse updateTemplate(@PathVariable UUID id, @RequestBody CreateTemplateRequest request) {
+        return templateService.updateTemplate(id, request);
+    }
+
+    @DeleteMapping("/templates/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTemplate(@PathVariable UUID id) {
+        templateService.deleteTemplate(id);
+    }
+
+    @PostMapping("/templates/{templateId}/sections")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LandingTemplateResponse addSection(@PathVariable UUID templateId, @RequestBody TemplateSectionRequest request) {
+        return templateService.addSection(templateId, request);
+    }
+
+    @PutMapping("/templates/{templateId}/sections/{sectionId}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public LandingTemplateResponse updateSection(@PathVariable UUID templateId, @PathVariable UUID sectionId,
+                                                  @RequestBody TemplateSectionRequest request) {
+        return templateService.updateSection(templateId, sectionId, request);
+    }
+
+    @DeleteMapping("/templates/{templateId}/sections/{sectionId}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeSection(@PathVariable UUID templateId, @PathVariable UUID sectionId) {
+        templateService.removeSection(templateId, sectionId);
     }
 }

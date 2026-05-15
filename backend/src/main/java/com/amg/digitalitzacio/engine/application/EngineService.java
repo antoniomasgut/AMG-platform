@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public interface EngineService {
     LandingResponse createLanding(UUID tenantId, CreateLandingRequest request);
+    LandingResponse createLandingFromTemplate(UUID tenantId, CreateLandingFromTemplateRequest request);
     List<LandingSummary> listLandings(UUID tenantId, int page, int size, String search);
     LandingResponse getLanding(UUID tenantId, UUID id);
     LandingResponse updateLanding(UUID tenantId, UUID id, CreateLandingRequest request);

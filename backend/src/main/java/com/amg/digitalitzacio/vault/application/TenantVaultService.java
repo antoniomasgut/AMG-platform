@@ -287,7 +287,7 @@ public class TenantVaultService implements VaultService {
 
                     serviceSetups.add(new SetupResponse.ProfileSetup.PhaseSetup.ServiceSetup(
                             new SetupResponse.ProfileSetup.PhaseSetup.ServiceSetup.ServiceRef(
-                                    svc.getId(), svc.getName(), svc.getType().name()),
+                                    svc.getId(), svc.getName(), svc.getSlug(), svc.getType().name()),
                             ts.getStatus().name(), fieldSetups));
                 }
 

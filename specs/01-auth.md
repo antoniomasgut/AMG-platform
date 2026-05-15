@@ -65,6 +65,11 @@
 | nif | String(20) | @Column | NIF/CIF del negoci (per facturació) |
 | contactPhone | String(20) | @Column(name="contact_phone") | Telèfon directe de contacte operatiu |
 | preferredChannel | Enum | @Column(name="preferred_channel") @Enumerated(STRING) | Canal preferit de comunicació: `WHATSAPP`, `TELEGRAM` o `EMAIL` |
+| businessDescription | TEXT | @Column(columnDefinition="TEXT") | Descripció del negoci (què fa, sector, etc.) |
+| existingWebsite | String(500) | @Column | URL de la web existent (null si no en té) |
+| facebookPage | String(500) | @Column | URL de la pàgina de Facebook (null si no en té) |
+| wantsLanding | Boolean | @Column | true = vol que li creem una landing; false = no en vol o ja en té |
+| serviceRequirements | TEXT | @Column(columnDefinition="TEXT") | Descripció en text lliure dels serveis que el client necessita |
 | isActive | Boolean | @Column(nullable=false) | Si el tenant està actiu |
 | createdAt | Instant | @CreatedDate | Data de creació |
 | updatedAt | Instant | @LastModifiedDate | Data de darrera modificació |

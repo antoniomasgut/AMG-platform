@@ -28,7 +28,10 @@ export function PortalShell({ children, breadcrumb }: { children: ReactNode; bre
     { label: 'FinOps', icon: I.Receipt, href: '/portal/finops' },
     { label: 'Automatitzacions', icon: I.Zap, href: '/portal/automations' },
     ...(isAdmin ? [{ label: 'Ops & Health', icon: I.Activity, href: '/portal/ops' }] : []),
-    ...(isSuperAdmin ? [{ label: 'Admin', icon: I.Settings, href: '/portal/admin/users' }] : []),
+    ...(isSuperAdmin ? [
+      { label: 'Catàleg', icon: I.Box, href: '/portal/admin/vault' },
+      { label: 'Admin', icon: I.Settings, href: '/portal/admin/users' },
+    ] : []),
   ];
 
   return (

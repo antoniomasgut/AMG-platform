@@ -87,6 +87,26 @@ public class VaultController {
         return profileService.addServiceToPhase(phaseId, request);
     }
 
+    @PostMapping("/profiles/{profileId}/services")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProfileResponse addServiceToProfile(@PathVariable UUID profileId, @RequestBody CreateServiceRequest request) {
+        return profileService.addServiceToProfile(profileId, request);
+    }
+
+    @PutMapping("/services/{serviceId}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ProfileResponse updateService(@PathVariable UUID serviceId, @RequestBody CreateServiceRequest request) {
+        return profileService.updateService(serviceId, request);
+    }
+
+    @DeleteMapping("/services/{serviceId}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteService(@PathVariable UUID serviceId) {
+        profileService.deleteService(serviceId);
+    }
+
     @PostMapping("/services")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)

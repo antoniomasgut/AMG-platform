@@ -26,6 +26,8 @@ public class EngineOrchestrator implements EngineService {
     private final ContactLeadRepository contactLeadRepository;
     private final CatalogServiceRepository catalogServiceRepository;
     private final TenantServiceRepository tenantServiceRepository;
+    private final LandingTemplateRepository landingTemplateRepository;
+    private final TemplateSectionRepository templateSectionRepository;
     private final ObjectMapper objectMapper;
 
     // --- Landings ---
@@ -42,20 +44,22 @@ public class EngineOrchestrator implements EngineService {
 
         var landing = Landing.builder()
                 .tenantId(tenantId)
-                .serviceId(request.serviceId())
+                .serviceId(request.serviceId() != null ? request.serviceId() : findLandingServiceId(tenantId))
                 .title(request.title())
                 .slug(request.slug())
                 .metaDescription(request.metaDescription())
+                .templateId(request.templateId())
                 .status(LandingStatus.DRAFT)
                 .build();
         landing = landingRepository.save(landing);
 
-        // Create initial DRAFT version
+        // Create initial DRAFT version — populate from template defaults if templateId provided
+        var initialContent = buildTemplateDefaultContent(request.templateId());
         var version = LandingVersion.builder()
                 .landingId(landing.getId())
                 .versionNumber(1)
                 .status(VersionStatus.DRAFT)
-                .content("{\"blocks\":[]}")
+                .content(initialContent)
                 .build();
         landingVersionRepository.save(version);
 
@@ -343,7 +347,110 @@ public class EngineOrchestrator implements EngineService {
         return new ContactResponse("Missatge rebut correctament");
     }
 
+    // --- Template-based landing creation ---
+
+    @Override
+    @Transactional
+    public LandingResponse createLandingFromTemplate(UUID tenantId, CreateLandingFromTemplateRequest request) {
+        if (landingRepository.existsByTenantIdAndSlug(tenantId, request.slug())) {
+            throw new IllegalArgumentException("Slug duplicat dins el tenant");
+        }
+        verifyTenantHasLandingService(tenantId);
+
+        var landing = Landing.builder()
+                .tenantId(tenantId)
+                .serviceId(request.serviceId())
+                .title(request.title())
+                .slug(request.slug())
+                .metaDescription(request.metaDescription())
+                .templateId(request.templateId())
+                .status(LandingStatus.DRAFT)
+                .build();
+        landing = landingRepository.save(landing);
+
+        // Build content from template sections + filled content
+        var content = buildFilledContent(request.templateId(), request.filledSections());
+        var version = LandingVersion.builder()
+                .landingId(landing.getId())
+                .versionNumber(1)
+                .status(VersionStatus.DRAFT)
+                .content(content)
+                .build();
+        landingVersionRepository.save(version);
+
+        return toLandingResponse(landing);
+    }
+
+    /**
+     * Build initial version content from template defaults.
+     * Returns {"blocks":[]} if no template or no sections.
+     */
+    private String buildTemplateDefaultContent(UUID templateId) {
+        if (templateId == null) return "{\"blocks\":[]}";
+        var sections = templateSectionRepository.findByTemplateIdOrderBySortOrder(templateId);
+        if (sections.isEmpty()) return "{\"blocks\":[]}";
+
+        var blocks = sections.stream()
+                .map(section -> {
+                    Map<String, Object> block = new LinkedHashMap<>();
+                    block.put("id", "blk_" + UUID.randomUUID().toString().substring(0, 8));
+                    block.put("type", section.getBlockType().name().toLowerCase());
+                    Map<String, Object> props = new LinkedHashMap<>();
+                    if (section.getDefaultProps() != null && !section.getDefaultProps().isBlank()) {
+                        var parsed = fromJson(section.getDefaultProps());
+                        if (parsed != null) props.putAll(parsed);
+                    }
+                    block.put("props", props);
+                    return block;
+                })
+                .toList();
+
+        var root = new LinkedHashMap<String, Object>();
+        root.put("blocks", blocks);
+        return toJson(root);
+    }
+
+    /**
+     * Build version content from template sections + ADMIN-filled content per section.
+     * filledSections is a Map<sectionId, props>.
+     */
+    private String buildFilledContent(UUID templateId, Map<String, Map<String, Object>> filledSections) {
+        if (templateId == null) return "{\"blocks\":[]}";
+        var sections = templateSectionRepository.findByTemplateIdOrderBySortOrder(templateId);
+        if (sections.isEmpty()) return "{\"blocks\":[]}";
+
+        var blocks = sections.stream()
+                .map(section -> {
+                    Map<String, Object> block = new LinkedHashMap<>();
+                    block.put("id", "blk_" + UUID.randomUUID().toString().substring(0, 8));
+                    block.put("type", section.getBlockType().name().toLowerCase());
+                    // Merge: start with defaultProps, overlay with filled content
+                    Map<String, Object> props = new LinkedHashMap<>();
+                    if (section.getDefaultProps() != null && !section.getDefaultProps().isBlank()) {
+                        var parsed = fromJson(section.getDefaultProps());
+                        if (parsed != null) props.putAll(parsed);
+                    }
+                    var filled = filledSections != null ? filledSections.get(section.getId().toString()) : null;
+                    if (filled != null) props.putAll(filled);
+                    block.put("props", props);
+                    return block;
+                })
+                .toList();
+
+        var root = new LinkedHashMap<String, Object>();
+        root.put("blocks", blocks);
+        return toJson(root);
+    }
+
     // --- Helpers ---
+
+    private UUID findLandingServiceId(UUID tenantId) {
+        var landingServices = catalogServiceRepository.findByType(ServiceType.LANDING);
+        if (landingServices.isEmpty()) return null;
+        var landingService = landingServices.get(0);
+        var tenantService = tenantServiceRepository.findByTenantIdAndServiceId(tenantId, landingService.getId());
+        return tenantService.isPresent() ? landingService.getId() : null;
+    }
 
     private void verifyTenantHasLandingService(UUID tenantId) {
         var landingServices = catalogServiceRepository.findByType(ServiceType.LANDING);

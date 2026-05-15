@@ -45,7 +45,9 @@ export async function fetchBillingDashboard(tenantId: string): Promise<BillingDa
 }
 
 export async function fetchInvoices(): Promise<Invoice[]> {
-  return apiFetch<Invoice[]>('/finops/invoices');
+  const data = await apiFetch<{ content?: Invoice[] }>('/finops/invoices');
+  // Backend returns Spring Page: { content: [...], totalPages: ..., ... }
+  return Array.isArray(data) ? data : (data.content ?? []);
 }
 
 export async function fetchLandings(tenantId: string): Promise<LandingSummary[]> {
@@ -53,5 +55,6 @@ export async function fetchLandings(tenantId: string): Promise<LandingSummary[]>
 }
 
 export async function fetchWorkflows(tenantId: string): Promise<WorkflowSummary[]> {
-  return apiFetch<WorkflowSummary[]>(`/automations/tenants/${tenantId}/workflows`);
+  const data = await apiFetch<{ content?: WorkflowSummary[] }>(`/automations/tenants/${tenantId}/workflows`);
+  return Array.isArray(data) ? data : (data.content ?? []);
 }

@@ -17,6 +17,7 @@ import java.util.UUID;
 public class CatalogService {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name = "phase_id", nullable = true) private UUID phaseId;
+    @Column(name = "profile_id", nullable = true) private UUID profileId;
     @Column(nullable = false, length = 100) private String name;
     @Column(nullable = false, length = 60, unique = true) private String slug;
     @Column(length = 255) private String description;

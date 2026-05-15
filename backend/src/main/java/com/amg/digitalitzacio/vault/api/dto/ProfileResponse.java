@@ -9,6 +9,7 @@ import java.util.UUID;
 
 public record ProfileResponse(
     UUID id, String name, String slug, String description, Boolean isActive,
+    List<ServiceResponse> directServices,
     List<PhaseResponse> phases,
     Instant createdAt, Instant updatedAt
 ) {

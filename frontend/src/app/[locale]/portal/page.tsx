@@ -206,7 +206,7 @@ function OnboardingGuide({ userName, landingCount, workflowCount, invoiceCount, 
       num: 1,
       title: 'Crea la teva primera landing',
       desc: "Publica la teva web en menys de 5 minuts amb l'editor visual.",
-      href: '/portal/factory/new',
+      href: '/portal/landings/new',
       done: landingCount > 0,
     },
     {
@@ -331,12 +331,12 @@ export default function PortalPage() {
     setLoading(true);
     setError(null);
     try {
-      const tid = user.tenantId!;
+      const tid = user.tenantId;
       const [bill, inv, lnd, wf] = await Promise.all([
-        fetchBillingDashboard(tid).catch(() => null),
+        tid ? fetchBillingDashboard(tid).catch(() => null) : Promise.resolve(null),
         fetchInvoices().catch(() => [] as Invoice[]),
-        fetchLandings(tid).catch(() => [] as LandingSummary[]),
-        fetchWorkflows(tid).catch(() => [] as WorkflowSummary[]),
+        tid ? fetchLandings(tid).catch(() => [] as LandingSummary[]) : Promise.resolve([]),
+        tid ? fetchWorkflows(tid).catch(() => [] as WorkflowSummary[]) : Promise.resolve([]),
       ]);
       setBilling(bill);
       setInvoices(inv);

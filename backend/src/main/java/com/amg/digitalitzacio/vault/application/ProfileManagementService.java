@@ -133,20 +133,74 @@ public class ProfileManagementService implements ProfileService {
 
     @Override
     @Transactional
+    public ProfileResponse addServiceToProfile(UUID profileId, CreateServiceRequest request) {
+        if (request.salePrice().compareTo(request.cost()) <= 0) {
+            throw new IllegalArgumentException("salePrice must be greater than cost");
+        }
+        findProfile(profileId);
+        var svc = CatalogService.builder()
+                .profileId(profileId).name(request.name()).slug(request.slug())
+                .description(request.description()).type(ServiceType.valueOf(request.type()))
+                .cost(request.cost()).salePrice(request.salePrice()).sortOrder(request.sortOrder())
+                .build();
+        catalogServiceRepository.save(svc);
+        return getProfile(profileId);
+    }
+
+    @Override
+    @Transactional
+    public ProfileResponse updateService(UUID serviceId, CreateServiceRequest request) {
+        var svc = catalogServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found: " + serviceId));
+        if (request.name() != null) svc.setName(request.name());
+        if (request.description() != null) svc.setDescription(request.description());
+        if (request.type() != null) svc.setType(ServiceType.valueOf(request.type()));
+        if (request.cost() != null) svc.setCost(request.cost());
+        if (request.salePrice() != null) {
+            var effectiveCost = request.cost() != null ? request.cost() : svc.getCost();
+            if (request.salePrice().compareTo(effectiveCost) <= 0) {
+                throw new IllegalArgumentException("salePrice must be greater than cost");
+            }
+            svc.setSalePrice(request.salePrice());
+        }
+        if (request.sortOrder() != null) svc.setSortOrder(request.sortOrder());
+        catalogServiceRepository.save(svc);
+        // Return the profile if it's linked, otherwise return a simple response
+        if (svc.getProfileId() != null) {
+            return getProfile(svc.getProfileId());
+        }
+        if (svc.getPhaseId() != null) {
+            var phase = phaseRepository.findById(svc.getPhaseId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Phase not found"));
+            return getProfile(phase.getProfileId());
+        }
+        // Addon — return empty response
+        return new ProfileResponse(null, null, null, null, null, List.of(), List.of(), null, null);
+    }
+
+    @Override
+    @Transactional
+    public void deleteService(UUID serviceId) {
+        var svc = catalogServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found: " + serviceId));
+        var fields = credentialFieldRepository.findByServiceIdOrderBySortOrder(svc.getId());
+        credentialFieldRepository.deleteAll(fields);
+        catalogServiceRepository.delete(svc);
+    }
+
+    @Override
+    @Transactional
     public ProfileResponse createAddonService(CreateAddonServiceRequest request) {
         if (request.salePrice().compareTo(request.cost()) <= 0) {
             throw new IllegalArgumentException("salePrice must be greater than cost");
         }
         var svc = CatalogService.builder()
-                .phaseId(null).name(request.name()).slug(request.slug())
+                .phaseId(null).profileId(null).name(request.name()).slug(request.slug())
                 .description(request.description()).type(ServiceType.valueOf(request.type()))
                 .cost(request.cost()).salePrice(request.salePrice()).isAddon(true)
                 .build();
-        svc = catalogServiceRepository.save(svc);
-        var fields = credentialFieldRepository.findByServiceIdOrderBySortOrder(svc.getId());
-        var svcResp = toServiceResponse(svc, fields);
-        var phaseResp = new ProfileResponse.PhaseResponse(null, "Add-on", null, 0, List.of(svcResp));
-        return new ProfileResponse(null, null, null, null, null, List.of(phaseResp), null, null);
+        catalogServiceRepository.save(svc);
+        return new ProfileResponse(null, null, null, null, null, List.of(), List.of(), null, null);
     }
 
     @Override
@@ -214,8 +268,11 @@ public class ProfileManagementService implements ProfileService {
     }
 
     private ProfileResponse toProfileResponse(ServiceProfile profile, List<Phase> phases) {
+        var directServices = catalogServiceRepository.findByProfileIdAndPhaseIdIsNull(profile.getId());
         return new ProfileResponse(profile.getId(), profile.getName(), profile.getSlug(),
                 profile.getDescription(), profile.getIsActive(),
+                directServices.stream().map(s -> toServiceResponse(s,
+                        credentialFieldRepository.findByServiceIdOrderBySortOrder(s.getId()))).toList(),
                 phases.stream().map(this::toPhaseResponse).toList(),
                 profile.getCreatedAt(), profile.getUpdatedAt());
     }

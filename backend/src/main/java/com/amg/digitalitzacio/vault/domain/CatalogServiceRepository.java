@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public interface CatalogServiceRepository extends JpaRepository<CatalogService, UUID> {
     List<CatalogService> findByPhaseIdOrderBySortOrder(UUID phaseId);
+    List<CatalogService> findByProfileIdAndPhaseIdIsNull(UUID profileId);
     List<CatalogService> findByIsAddonTrue();
     List<CatalogService> findByType(ServiceType type);
 }

@@ -177,13 +177,22 @@ export default function AdminTenantsPage() {
                         </td>
                         <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{fmtDate(t.createdAt)}</td>
                         <td className="px-4 sm:px-5 py-3">
-                          <AMGButton
-                            size="sm"
-                            variant={t.isActive ? 'ghost' : 'secondary'}
-                            onClick={() => doToggle({ id: t.id, isActive: !t.isActive })}
-                          >
-                            {t.isActive ? 'Desactivar' : 'Activar'}
-                          </AMGButton>
+                          <div className="flex gap-2 items-center">
+                            <AMGButton
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => window.location.href = `/portal/admin/tenants/${t.id}`}
+                            >
+                              Gestionar
+                            </AMGButton>
+                            <AMGButton
+                              size="sm"
+                              variant={t.isActive ? 'ghost' : 'secondary'}
+                              onClick={() => doToggle({ id: t.id, isActive: !t.isActive })}
+                            >
+                              {t.isActive ? 'Desactivar' : 'Activar'}
+                            </AMGButton>
+                          </div>
                         </td>
                       </tr>
                     ))}

@@ -14,6 +14,9 @@ public interface ProfileService {
     ProfileResponse updatePhase(UUID profileId, UUID phaseId, UpdatePhaseRequest request);
     ProfileResponse deletePhase(UUID profileId, UUID phaseId);
     ProfileResponse addServiceToPhase(UUID phaseId, CreateServiceRequest request);
+    ProfileResponse addServiceToProfile(UUID profileId, CreateServiceRequest request);
+    ProfileResponse updateService(UUID serviceId, CreateServiceRequest request);
+    void deleteService(UUID serviceId);
     ProfileResponse createAddonService(CreateAddonServiceRequest request);
     List<ProfileResponse> listProfiles();
     List<ProfileResponse.ServiceResponse> listServices();

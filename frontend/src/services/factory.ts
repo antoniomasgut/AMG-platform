@@ -77,10 +77,27 @@ export async function getLanding(tenantId: string, landingId: string): Promise<L
   return apiFetch<LandingDetail>(`/engine/tenants/${tenantId}/landings/${landingId}`);
 }
 
-export async function createLanding(tenantId: string, title: string, slug: string): Promise<LandingDetail> {
+export async function createLanding(tenantId: string, title: string, slug: string, templateId?: string): Promise<LandingDetail> {
   return apiFetch<LandingDetail>(`/engine/tenants/${tenantId}/landings`, {
     method: 'POST',
-    body: JSON.stringify({ title, slug }),
+    body: JSON.stringify({ title, slug, templateId }),
+  });
+}
+
+export async function createLandingFromTemplate(
+  tenantId: string,
+  data: {
+    title: string;
+    slug: string;
+    metaDescription?: string;
+    serviceId: string;
+    templateId: string;
+    filledSections: Record<string, Record<string, unknown>>;
+  }
+): Promise<LandingDetail> {
+  return apiFetch<LandingDetail>(`/engine/tenants/${tenantId}/landings/from-template`, {
+    method: 'POST',
+    body: JSON.stringify(data),
   });
 }
 
@@ -160,31 +177,3 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
     defaultProps: { address: 'Carrer, Ciutat', lat: 39.5696, lng: 2.6502 },
   },
 };
-
-// --- Page templates ---
-
-export interface LandingTemplate {
-  id: string;
-  label: string;
-  desc: string;
-  blocks: BlockType[];
-}
-
-export const LANDING_TEMPLATES: LandingTemplate[] = [
-  { id: 'restaurant', label: 'Restaurant', desc: 'Restaurants i bars', blocks: ['hero', 'text', 'services', 'gallery', 'testimonials', 'contact-form', 'footer'] },
-  { id: 'profesional', label: 'Professional', desc: 'Advocats, metges, assessors', blocks: ['hero', 'services', 'testimonials', 'cta', 'contact-form'] },
-  { id: 'comercio', label: 'Comerç', desc: 'Botigues i comerços locals', blocks: ['hero', 'services', 'gallery', 'contact-form', 'map', 'footer'] },
-  { id: 'evento', label: 'Esdeveniment', desc: 'Celebracions i events', blocks: ['hero', 'text', 'gallery', 'contact-form'] },
-  { id: 'basica', label: 'Bàsica', desc: 'Landing mínima', blocks: ['hero', 'text', 'contact-form'] },
-];
-
-export function buildTemplateContent(templateId: string): PageContent {
-  const template = LANDING_TEMPLATES.find((t) => t.id === templateId) || LANDING_TEMPLATES[4];
-  return {
-    blocks: template.blocks.map((type) => ({
-      id: crypto.randomUUID(),
-      type,
-      props: { ...BLOCK_TEMPLATES[type].defaultProps },
-    })),
-  };
-}

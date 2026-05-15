@@ -1,14 +1,17 @@
 # Mòdul 02: Perfils de Servei + Vault (AES-256)
 
-> **Versió:** 1.1
-> **Data:** 2026-05-13
-> **Dependències:** Mòdul 01 (Auth) — tots els endpoints requereixen JWT + RBAC. Mòdul 01 (Tenant) — preferredChannel per comunicació guiada.
+> **Versió:** 2.0
+> **Data:** 2026-05-15
+> **Dependències:** Mòdul 01 (Auth) — tots els endpoints requereixen JWT + RBAC. Mòdul 01 (Tenant) — preferredChannel, businessDescription, existingWebsite, facebookPage, wantsLanding, serviceRequirements per al flux d'intake. Mòdul 07 (Billing) — pressupostos per fase.
 
 ---
 
 ## 1. Objectius
 
+- Capturar la **informació d'intake del client** (descripció del negoci, web existent, Facebook, necessitats) per recomanar fases i serveis automàticament
 - Definir **perfils de servei** (paquets) que contenen **fases** → **serveis** → **credencials**
+- Gestionar el **cicle de vida complet del servei** des de la presa de dades fins al lliurament:
+  - Captura d'intake → recomanació de fases → pressupost → acceptació → implementació → lliurament
 - Assignar perfils a clients i guiar la configuració fase per fase de forma **automatitzada i remota**
 - Quan necessitem dades del client (API keys, permisos...), contactar-lo automàticament pel seu **canal preferit** (WhatsApp, Telegram o email) i posar la configuració en pausa fins que respongui
 - Reprendre la configuració automàticament quan el client respon (missatge o click d'un botó)
@@ -17,6 +20,7 @@
 - Emmagatzemar de forma segura (xifrat AES-256-GCM) les credencials de cada servei
 - El CLIENT pot veure les seves pròpies credencials (valors emmascarats) al dashboard
 - Les credencials es poden verificar i rotar
+- **Dependències entre serveis**: per exemple, WhatsApp Business requereix una web o una pàgina de Facebook per verificar-se. Si el client no té cap dels dos, s'ha de crear una landing primer (creant una cadena de dependències)
 
 ---
 
@@ -24,6 +28,9 @@
 
 ### 2.1 Funcionalitats incloses
 
+- **Flux d'intake en 2 pantalles**:
+  - Pantalla 1: Creació del tenant amb dades de negoci + descripció de necessitats
+  - Pantalla 2: Recomanació automàtica de fases segons les dades d'intake, selecció de fases a pressupostar (la resta = ampliació futura)
 - CRUD de perfils de servei (nom, slug, descripció)
 - CRUD de fases dins d'un perfil (ordre, nom)
 - CRUD de serveis dins d'una fase (tipus, credencials necessàries)
@@ -32,8 +39,11 @@
 - Afegir serveis a la carta a un tenant (ex: landing extra)
 - Formulari dinàmic de configuració: fase actual → mostrar serveis pendents → demanar credencials
 - **Configuració guiada remota**: enviar sol·licitud d'informació al client via `preferredChannel` (WhatsApp, Telegram, email) i reprendre automàticament en rebre resposta
-- **Cicle de vida de servei**: PENDING → AWAITING_CLIENT → CONFIGURED → VERIFIED
+- **Cicle de vida complet del servei/fase amb 6 estats** (de pressupost a implementació acceptada):
+  - `BUDGET_PENDING` → `ACCEPTED` → `CONFIGURING` → `AWAITING_CLIENT` → `READY_FOR_DELIVERY` → `IMPLEMENTATION_ACCEPTED`
+- **Targetes de fase/servei** al dashboard del tenant: visualització de l'estat de cada fase o servei amb codi de colors i accions contextuals
 - **Notificació de fase completada**: en acabar una fase, contactar al client per explicar funcionament i obtenir confirmació
+- **Dependències entre serveis**: WhatsApp Business requereix web o Facebook. Si no en té, la landing es marca com a prerequisit.
 - Xifrat AES-256-GCM via `spring-security-crypto`
 - Client dashboard: visualització de credencials (valors emmascarats: `***...abc`)
 - Registre d'accessos a credencials (audit log)
@@ -139,15 +149,19 @@ Quan s'assigna un perfil a un tenant, es crea un registre amb la fase actual.
 | tenantId | UUID | @Column(nullable=false) | Tenant |
 | profileId | UUID | @Column(nullable=false) | Perfil assignat |
 | currentPhaseId | UUID | @Column(nullable=true) | Fase actual (NULL = tot completat) |
-| phaseStatus | Enum | @Enumerated(STRING) @Column(nullable=false) | Estat de la fase actual: `CONFIGURING`, `AWAITING_CONFIRMATION`, `COMPLETED` |
+| phaseStatus | Enum | @Enumerated(STRING) @Column(nullable=false) | Estat de la fase actual: `BUDGETING`, `BUDGET_ACCEPTED`, `CONFIGURING`, `AWAITING_CLIENT`, `READY_FOR_DELIVERY`, `COMPLETED`, `FUTURE_EXPANSION` |
 | startedAt | Instant | @CreatedDate | |
 | completedAt | Instant | @Column | Quan es completa tot el perfil |
 
 **Restricció única:** `(tenantId, profileId)`
 
+- `BUDGETING` — Fase identificada i pendent de pressupostar (estat inicial)
+- `BUDGET_ACCEPTED` — Pressupost acceptat pel client, pendent d'iniciar configuració
 - `CONFIGURING` — S'estan configurant els serveis de la fase actual
-- `AWAITING_CONFIRMATION` — Tots els serveis de la fase estan configurats, pendent que el client confirmi que funciona
-- `COMPLETED` — Client ha confirmat, fase finalitzada
+- `AWAITING_CLIENT` — Configuració pausada, esperant dades del client
+- `READY_FOR_DELIVERY` — Tots els serveis configurats, pendent que el client confirmi el lliurament
+- `COMPLETED` — Client ha acceptat la implementació, fase finalitzada
+- `FUTURE_EXPANSION` — Fase no pressupostada, marcada com a ampliació futura
 
 #### TenantService (Servei per tenant)
 
@@ -155,12 +169,14 @@ Cada servei (del perfil o add-on) té un registre per tenant amb seguiment del s
 
 **Enums:**
 
-`ServiceConfigStatus`: `PENDING`, `AWAITING_CLIENT`, `CONFIGURED`, `VERIFIED`
+`ServiceConfigStatus`: `BUDGET_PENDING`, `ACCEPTED`, `CONFIGURING`, `AWAITING_CLIENT`, `READY_FOR_DELIVERY`, `IMPLEMENTATION_ACCEPTED`
 
-- `PENDING` — Servei pendent de configurar (acabat de crear)
+- `BUDGET_PENDING` — Servei identificat, pendent de pressupostar (acabat de crear/assignar)
+- `ACCEPTED` — Pressupost acceptat pel client, pendent d'iniciar configuració
+- `CONFIGURING` — S'està configurant el servei (credencials, landings, etc.)
 - `AWAITING_CLIENT` — En espera de resposta del client (s'ha enviat sol·licitud)
-- `CONFIGURED` — Totes les credencials/configuracions requerides estan completes
-- `VERIFIED` — Configuració verificada i validada
+- `READY_FOR_DELIVERY` — Totes les credencials/configuracions requerides estan completes, llest per entregar
+- `IMPLEMENTATION_ACCEPTED` — Client ha acceptat la implementació, servei completat
 
 | Camp | Tipus | Mapeig JPA | Descripció |
 |------|-------|-----------|------------|
@@ -168,18 +184,22 @@ Cada servei (del perfil o add-on) té un registre per tenant amb seguiment del s
 | tenantId | UUID | @Column(nullable=false) | Tenant |
 | serviceId | UUID | @Column(nullable=false) | FK a CatalogService |
 | phaseId | UUID | @Column(nullable=true) | Fase a la qual pertany (null si add-on) |
-| configStatus | Enum | @Enumerated(STRING) @Column(nullable=false) | Estat del servei: `PENDING`, `AWAITING_CLIENT`, `CONFIGURED`, `VERIFIED` |
+| configStatus | Enum | @Enumerated(STRING) @Column(nullable=false) | Estat del servei: `BUDGET_PENDING`, `ACCEPTED`, `CONFIGURING`, `AWAITING_CLIENT`, `READY_FOR_DELIVERY`, `IMPLEMENTATION_ACCEPTED` |
 | configuredAt | Instant | @Column | Quan es va completar la configuració |
-| verifiedAt | Instant | @Column | Quan es va verificar |
+| verifiedAt | Instant | @Column | Quan es va acceptar la implementació |
 | createdAt | Instant | @CreatedDate | |
 | updatedAt | Instant | @LastModifiedDate | |
 
 **Restricció única:** `(tenantId, serviceId)`
 
-Comportament per estat:
-- `PENDING` → `AWAITING_CLIENT`: Quan ADMIN prem "Sol·licitar al client" i s'envia el missatge
-- `AWAITING_CLIENT` → `CONFIGURED`: Quan el client respon amb les dades necessàries (o ADMIN les introdueix manualment)
-- `CONFIGURED` → `VERIFIED`: Quan ADMIN verifica que el servei funciona correctament
+**Comportament per transició d'estat:**
+
+- `BUDGET_PENDING` → `ACCEPTED`: Quan el client accepta el pressupost que inclou aquest servei
+- `ACCEPTED` → `CONFIGURING`: Quan l'ADMIN inicia la configuració del servei
+- `CONFIGURING` → `AWAITING_CLIENT`: Quan ADMIN prem "Sol·licitar al client" i s'envia el missatge
+- `AWAITING_CLIENT` → `CONFIGURING`: Quan el client respon amb les dades necessàries (ADMIN les introdueix o arriben per webhook)
+- `CONFIGURING` → `READY_FOR_DELIVERY`: Quan la configuració està completa (credencials posades, landing creada, etc.)
+- `READY_FOR_DELIVERY` → `IMPLEMENTATION_ACCEPTED`: Quan el client confirma que la implementació funciona correctament
 
 #### TenantCredential (Valor xifrat d'una credencial)
 
@@ -265,7 +285,7 @@ ServiceProfile
               └── CredentialField (camps del formulari)
 
 TenantProfile → ServiceProfile (assignació) → currentPhaseId → phaseStatus
-TenantService → CatalogService (per tenant) → configStatus (PENDING → AWAITING_CLIENT → CONFIGURED → VERIFIED)
+TenantService → CatalogService (per tenant) → configStatus (BUDGET_PENDING → ACCEPTED → CONFIGURING → AWAITING_CLIENT → READY_FOR_DELIVERY → IMPLEMENTATION_ACCEPTED)
 TenantCredential → CredentialField (valor xifrat per tenant)
 CommunicationRequest → TenantService (sol·licitud al client) → canal preferit
 ```
@@ -284,7 +304,10 @@ ServiceProfile: "Pla Avançat"
 ├── Phase 1: "Configuració bàsica"
 │     ├── Service: "WhatsApp Business" (CREDENTIALS)
 │     │     ├── Field: "apiKey" (PASSWORD, obligatori)
-│     │     └── Field: "phoneId" (TEXT, obligatori)
+│     │     ├── Field: "phoneId" (TEXT, obligatori)
+│     │     ├── Field: "businessName" (TEXT, obligatori) — Nom del negoci per verificació
+│     │     ├── Field: "website" (TEXT, obligatori si no hi ha facebookPage) — Web per verificació WhatsApp
+│     │     └── Field: "facebookPageUrl" (TEXT, obligatori si no hi ha website) — Pàgina de FB per verificació
 │     └── Service: "SMTP Corporatiu" (CREDENTIALS)
 │           ├── Field: "smtpHost" (HOST, obligatori)
 │           ├── Field: "smtpPort" (PORT, obligatori)
@@ -301,21 +324,124 @@ Add-ons disponibles:
 └── Service: "Landing extra" (LANDING, isAddon=true)
 ```
 
+**WhatsApp Business — Regles de verificació:**
+
+La API de WhatsApp Business requereix que el compte de negoci estigui verificat. Per verificar-lo, cal proporcionar almenys una de les següents:
+- Un **lloc web** (`website`) — el domini ha d'estar actiu i accessible
+- Una **pàgina de Facebook** (`facebookPageUrl`) — la pàgina ha d'estar publicada
+
+Regles de negoci:
+1. Si el tenant té `existingWebsite` (capturat a l'intake), s'usa automàticament per a la verificació
+2. Si NO té website però té `facebookPage`, s'usa la pàgina de Facebook
+3. Si NO té ni website ni Facebook, **la landing es converteix en prerequisit**: cal crear i publicar una landing primer (el domini de la landing servirà com a `website` per verificar WhatsApp)
+4. Aquesta dependència es detecta a l'intake (Pantalla 2): si el client vol WhatsApp però no té web ni Facebook, la fase "Landing" es marca automàticament com a necessària abans de WhatsApp
+
 ---
 
-### 3.4 Flux de configuració guiada
+### 3.4 Flux de client nou (intake → pressupost → implementació → lliurament)
+
+El cicle de vida complet d'un client des de la captura fins al lliurament es divideix en 3 grans blocs:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  BLOC 1: INTAKE + PRESSUPOST                                    │
+│                                                                  │
+│  Pantalla 1: Creació del tenant                                 │
+│  ┌────────────────────────────────────────────────────┐         │
+│  │ Dades del negoci:                                  │         │
+│  │ ✅ Nom, email, telèfon, slug                       │         │
+│  │ ✅ Descripció del negoci (businessDescription)      │         │
+│  │ ✅ Web existent (existingWebsite) — opcional       │         │
+│  │ ✅ Pàgina Facebook (facebookPage) — opcional       │         │
+│  │ ✅ Vol landing? (wantsLanding)                     │         │
+│  │ ✅ Descripció de serveis necessitats (serviceReq)  │         │
+│  └────────────────────────────────────────────────────┘         │
+│                          │                                       │
+│                          ▼                                       │
+│  Pantalla 2: Recomanació de fases                               │
+│  ┌────────────────────────────────────────────────────┐         │
+│  │ Basant-se en les dades d'intake, el sistema         │         │
+│  │ recomana fases i serveis:                          │         │
+│  │                                                     │         │
+│  │ 📋 Fase 1: Configuració bàsica    [✅ Recomanada]   │         │
+│  │    └── WhatsApp Business          [✅ Recomanat]    │         │
+│  │    └── SMTP Corporatiu            [✅ Recomanat]    │         │
+│  │ 📋 Fase 2: Landing                [⭐ Depèn]       │         │
+│  │    └── Landing Pro                [wantsLanding?]  │         │
+│  │ 📋 Fase 3: Automatitzacions       [➖ Opcional]    │         │
+│  │                                                     │         │
+│  │ ADMIN selecciona quines fases pressupostar:         │         │
+│  │ ✅ Fase 1 → Pressupostar ara                        │         │
+│  │ ❌ Fase 2 → Ampliació futura                        │         │
+│  │ ✅ Fase 3 → Pressupostar ara                        │         │
+│  │                                                     │         │
+│  │ [Generar pressupost per a les seleccionades]        │         │
+│  └────────────────────────────────────────────────────┘         │
+│                          │                                       │
+│                          ▼                                       │
+│  Pressupost enviat al client (Mòdul 07 Billing)                  │
+│  Client accepta o rebutja                                        │
+└─────────────────────────────────────────────────────────────────┘
+                          │ (acceptat)
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  BLOC 2: IMPLEMENTACIÓ                                          │
+│                                                                  │
+│  Targeta Fase 1: [Acceptat → Implementant-se → ...]             │
+│  Targeta Fase 3: [Acceptat → Implementant-se → ...]             │
+│  Targeta Fase 2: [Ampliació futura]                              │
+└─────────────────────────────────────────────────────────────────┘
+                          │ (totes completades)
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  BLOC 3: LLIURAMENT                                             │
+│                                                                  │
+│  Cada fase: Llest per entregar → Client accepta implementació   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 3.5 Targetes de fase/servei (card visualization)
+
+Cada fase (o servei independent) es visualitza com una targeta al dashboard del tenant amb:
+
+```
+┌──────────────────────────────────────────┐
+│  🟡 Fase 1: Configuració bàsica          │
+│  ─────────────────────────────────────── │
+│  ├── WhatsApp Business  🟢 Configurat    │
+│  └── SMTP Corporatiu   🟡 En espera     │
+│                                          │
+│  Progrés: ██████░░░░ 2/3                 │
+│  [Gestionar →]                           │
+└──────────────────────────────────────────┘
+```
+
+**Colors per estat:**
+
+| Estat | Color | Descripció |
+|-------|-------|-----------|
+| BUDGET_PENDING / Pendent pressupostar | Gris | Fase/servei identificat, no pressupostat |
+| ACCEPTED / Acceptat | Blau | Pressupost acceptat, pendent d'implementar |
+| CONFIGURING / Implementant-se | Taronja | Configuració en curs |
+| AWAITING_CLIENT / Esperant client | Groc | Pausat, esperant dada del client |
+| READY_FOR_DELIVERY / Llest per entregar | Verd clar | Configurat, pendent de confirmació del client |
+| IMPLEMENTATION_ACCEPTED / Client ha acceptat | Verd fosc | Completat |
+| FUTURE_EXPANSION / Ampliació futura | Gris clar | No pressupostat, ajornat |
+
+### 3.6 Flux de configuració guiada (detall tècnic) (cicle de vida complet)
 
 La configuració dels serveis és un procés guiat que alterna accions internes (ADMIN/SUPER_ADMIN) amb sol·licituds al client. El flux complet per a cada fase és:
 
 ```
-Assignar perfil al tenant
+Pressupost acceptat → Fase 1 en marxa
   │
   ▼
 Fase 1: CONFIGURING
   │
-  ├── Servei A (CREDENTIALS) → PENDING
+  ├── Servei A (CREDENTIALS) → ACCEPTED
+  │     ├── ADMIN inicia configuració → CONFIGURING
   │     ├── ADMIN estableix credencials internament
-  │     │     └── → CONFIGURED
+  │     │     └── → READY_FOR_DELIVERY
   │     └── ADMIN necessita API Key del client
   │           ├── → AWAITING_CLIENT
   │           ├── Crear CommunicationRequest
@@ -323,17 +449,17 @@ Fase 1: CONFIGURING
   │           │     └── "Hola (client), per configurar WhatsApp necessitam la teva API Key.
   │           │          Pots respondre aquest missatge o fer clic aquí."
   │           ├── Client respon (webhook/callback)
-  │           │     └── → CONFIGURED
+  │           │     └── → CONFIGURING (es repren la configuració)
   │           └── (Si no respon en 7 dies → EXPIRED, reenviar)
   │
-  ├── Servei B (LANDING) → PENDING
+  ├── Servei B (LANDING) → ACCEPTED
   │     └── ADMIN crea landing al Engine →
-  │           └── → CONFIGURED
+  │           └── → READY_FOR_DELIVERY
   │
-  └── TOTS els serveis de la fase → CONFIGURED
+  └── TOTS els serveis de la fase → READY_FOR_DELIVERY
         │
         ▼
-  Fase 1: AWAITING_CONFIRMATION
+  Fase 1: READY_FOR_DELIVERY
         │
         ├── Enviar missatge al client:
         │     └── "(client), la Fase 1 (Configuració bàsica) està llesta!
@@ -342,6 +468,7 @@ Fase 1: CONFIGURING
         │
         ├── Client confirma (webhook/botó)
         │     └── Fase 1 → COMPLETED
+        │     └── Serveis → IMPLEMENTATION_ACCEPTED
         │
         ▼
   Fase 2: CONFIGURING (mateix procés)
@@ -530,7 +657,7 @@ Response 200:
 
 **Rols:** SUPER_ADMIN, ADMIN, CLIENT (propi)
 
-Retorna l'estat de tots els perfils, fases i serveis del tenant, amb indicació de l'estat de configuració (configStatus), sol·licituds pendents al client, i fase actual.
+Retorna l'estat de tots els perfils, fases i serveis del tenant, amb indicació de l'estat actual dins del cicle de vida complet (intake → pressupost → implementació → lliurament).
 
 Response:
 ```json
@@ -540,7 +667,7 @@ Response:
       "profile": { "id": "uuid", "name": "Pla Avançat", "slug": "pla-avancat" },
       "currentPhase": { "id": "uuid", "name": "Configuració bàsica", "sortOrder": 1 },
       "phaseStatus": "CONFIGURING",
-      "progress": { "configured": 1, "pending": 1, "awaitingClient": 1, "total": 6 },
+      "progress": { "readyForDelivery": 1, "configuring": 1, "awaitingClient": 1, "total": 6 },
       "phases": [
         {
           "phase": { "id": "uuid", "name": "Configuració bàsica", "sortOrder": 1 },
@@ -548,7 +675,7 @@ Response:
           "services": [
             {
               "service": { "id": "uuid", "name": "WhatsApp Business", "type": "CREDENTIALS" },
-              "configStatus": "CONFIGURED",
+              "configStatus": "READY_FOR_DELIVERY",
               "fields": [
                 { "id": "uuid", "key": "apiKey", "label": "API Key", "isSet": true, "maskedValue": "***key" }
               ]
@@ -575,17 +702,19 @@ Response:
     }
   ],
   "addons": [
-    { "service": { "id": "uuid", "name": "Landing extra" }, "configStatus": "PENDING" }
+    { "service": { "id": "uuid", "name": "Landing extra" }, "configStatus": "BUDGET_PENDING" }
   ]
 }
 ```
 
 - CLIENT veu `maskedValue`; SUPER_ADMIN i ADMIN veuen `clearValue`
 - `configStatus` es calcula així:
-  - `PENDING` — Acabat de crear, pendent d'iniciar configuració
+  - `BUDGET_PENDING` — Servei identificat, pendent de pressupostar
+  - `ACCEPTED` — Pressupost acceptat, pendent d'iniciar configuració
+  - `CONFIGURING` — Configuració en curs
   - `AWAITING_CLIENT` — S'ha enviat sol·licitud al client, s'està esperant resposta
-  - `CONFIGURED` — Tots els `CredentialField` requerits tenen `isSet=true` (o el servei no en necessita)
-  - `VERIFIED` — S'ha verificat que el servei funciona correctament
+  - `READY_FOR_DELIVERY` — Tots els `CredentialField` requerits tenen `isSet=true` (o el servei no en necessita)
+  - `IMPLEMENTATION_ACCEPTED` — Client ha confirmat que la implementació funciona
 
 ### 4.5 Gestió de credencials
 
@@ -600,7 +729,7 @@ Request:
 
 Response 200: `{ "id": "uuid", "isSet": true, "maskedValue": "***key" }`
 
-Quan s'estableix l'últim camp requerit d'un servei, el `TenantService.configStatus` passa a `CONFIGURED` (si estava `PENDING` o `AWAITING_CLIENT`).
+Quan s'estableix l'últim camp requerit d'un servei, el `TenantService.configStatus` passa a `READY_FOR_DELIVERY` (si estava `CONFIGURING` o `AWAITING_CLIENT`).
 
 #### `POST /api/v1/vault/tenants/{tenantId}/services/{serviceId}/verify` — Verificar servei
 
@@ -672,20 +801,19 @@ Aquest endpoint rep les respostes dels canals de comunicació (WhatsApp, Telegra
 1. Buscar `CommunicationRequest` per `requestId` (passat al missatge original com a context)
 2. Actualitzar `status = RESPONDED`, `respondedAt`, `responseData`
 3. Segons `requestType` original:
-   - `REQUEST_CREDENTIAL` amb `fieldId` → xifrar el valor i guardar a `TenantCredential` → servei `CONFIGURED`
+   - `REQUEST_CREDENTIAL` amb `fieldId` → xifrar el valor i guardar a `TenantCredential` → servei `CONFIGURING`
    - `REQUEST_PERMISSION` → registrar permís → continuar configuració
    - `REQUEST_INFO` → guardar resposta a `responseData` → quedar pendent d'ADMIN
-4. Si tots els serveis de la fase estan `CONFIGURED`:
-   - `TenantProfile.phaseStatus` → `AWAITING_CONFIRMATION`
+4. Si tots els serveis de la fase estan `READY_FOR_DELIVERY`:
+   - `TenantProfile.phaseStatus` → `READY_FOR_DELIVERY`
    - Enviar missatge automàtic al client: "La fase (nom) està llesta! Confirma que tot funciona."
-   - Cada servei passa a `VERIFIED` (pendent de verificació real)
 
 **Response 200:**
 ```json
 {
   "processed": true,
   "action": "credential_stored",
-  "serviceStatus": "CONFIGURED"
+  "serviceStatus": "CONFIGURING"
 }
 ```
 
@@ -705,9 +833,11 @@ Aquest endpoint s'activa quan el client prem "Confirma" (via botó de WhatsApp/T
 
 **Lògica:**
 1. Marcar la fase actual com `COMPLETED`
-2. Si hi ha una fase següent → avançar `currentPhaseId` a la nova fase, posar `phaseStatus = CONFIGURING`
-3. Si és l'última fase → marcar `TenantProfile.completedAt`
-4. Enviar missatge de confirmació al client:
+2. Marcar tots els serveis de la fase com `IMPLEMENTATION_ACCEPTED`
+3. Si hi ha una fase següent amb `BUDGET_ACCEPTED` → avançar `currentPhaseId` a la nova fase, posar `phaseStatus = CONFIGURING`
+4. Si hi ha una fase següent amb `FUTURE_EXPANSION` → saltar-la (no s'ha pressupostat)
+5. Si és l'última fase → marcar `TenantProfile.completedAt`
+6. Enviar missatge de confirmació al client:
    - Si avança de fase: "Passam a la fase (nom de la següent)!"
    - Si és l'última: "Perfil completat! El teu negoci ja està online."
 
@@ -755,9 +885,11 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 | POST | /api/v1/vault/tenants/{tId}/services/{sId}/verify | Verificar servei | SUPER_ADMIN, ADMIN |
 | POST | /api/v1/vault/tenants/{tId}/services/{sId}/request | Sol·licitar info al client | SUPER_ADMIN, ADMIN |
 | POST | /api/v1/vault/communication/{reqId}/respond | Webhook resposta client | Intern (API Key) |
-| POST | /api/v1/vault/tenants/{tId}/profiles/{pId}/confirm-phase | Confirmar fase | CLIENT (propi), ADMIN |
+| POST | /api/v1/vault/tenants/{tId}/profiles/{pId}/confirm-phase | Confirmar lliurament de fase | CLIENT (propi), ADMIN |
 | POST | /api/v1/vault/tenants/{tId}/addons/{sId} | Afegir add-on | SUPER_ADMIN, ADMIN |
 | DELETE | /api/v1/vault/tenants/{tId}/addons/{sId} | Eliminar add-on | SUPER_ADMIN, ADMIN |
+| POST | /api/v1/vault/tenants/{tId}/intake | Enviar dades d'intake + recomanar fases | SUPER_ADMIN, ADMIN |
+| POST | /api/v1/vault/tenants/{tId}/select-phases | Seleccionar fases a pressupostar + generar pressupost | SUPER_ADMIN, ADMIN |
 
 ---
 
@@ -786,21 +918,27 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 | # | Cas | Resultat |
 |---|-----|---------|
 | 1 | Crear perfil amb 2 fases i 3 serveis | 201 |
-| 2 | Assignar perfil a tenant | 201, currentPhase = primera fase, configStatus=PENDING |
-| 3 | Configurar tots els camps d'un servei | `configStatus` = `CONFIGURED` |
-| 4 | Sol·licitar informació al client | 200, CommunicationRequest creat, servei AWAITING_CLIENT |
-| 5 | Client respon amb API Key via webhook | 200, credencial guardada xifrada, servei CONFIGURED |
-| 6 | Client respon confirmació (button click) | 200, fase completa, avança a següent fase |
-| 7 | Tots els serveis d'una fase configurats | `phaseStatus` = AWAITING_CONFIRMATION, notificació enviada |
-| 8 | Confirmar fase (CLIENT) | 200, fase COMPLETED, avança o finalitza |
-| 9 | CLIENT veu estat configuració (emmascarat) | 200, valors emmascarats |
-| 10 | ADMIN veu estat configuració (en clar) | 200, valors en clar |
-| 11 | CommunicationRequest expira | Estat EXPIRED, ADMIN pot reenviar |
-| 12 | Afegir servei add-on a tenant | 201, apareix a setup |
-| 13 | CLIENT no pot establir credencials | 403 |
-| 14 | Pressupost d'un perfil | GET /budget amb profileId | 200, total = suma de serveis |
-| 15 | CLIENT veu pressupost sense costos | GET /budget | 200, no mostra `cost` |
-| 16 | Crear servei amb salePrice <= cost | POST /services | 400 |
+| 2 | Assignar perfil a tenant | 201, currentPhase = primera fase, configStatus=BUDGET_PENDING |
+| 3 | Enviar dades d'intake | 200, recomanació de fases basada en les dades |
+| 4 | Seleccionar fases a pressupostar + generar pressupost | 201, fases seleccionades = BUDGET_PENDING, no seleccionades = FUTURE_EXPANSION |
+| 5 | Client accepta pressupost → serveis passen a ACCEPTED | Webhook/token → configStatus=ACCEPTED |
+| 6 | Iniciar configuració d'un servei ACCEPTED | configStatus = CONFIGURING |
+| 7 | Configurar tots els camps d'un servei | `configStatus` = `READY_FOR_DELIVERY` |
+| 8 | Sol·licitar informació al client | 200, CommunicationRequest creat, servei AWAITING_CLIENT |
+| 9 | Client respon amb API Key via webhook | 200, credencial guardada xifrada, servei CONFIGURING (es repren) |
+| 10 | Client respon confirmació (button click) | 200, fase completa, avança a següent fase |
+| 11 | Tots els serveis d'una fase configurats | `phaseStatus` = READY_FOR_DELIVERY, notificació enviada |
+| 12 | Confirmar lliurament de fase (CLIENT) | 200, fase COMPLETED, serveis IMPLEMENTATION_ACCEPTED, avança o finalitza |
+| 13 | Fase FUTURE_EXPANSION es salta automàticament | En avançar, es passa a la següent fase pressupostada |
+| 14 | CLIENT veu estat configuració (emmascarat) | 200, valors emmascarats |
+| 15 | ADMIN veu estat configuració (en clar) | 200, valors en clar |
+| 16 | CommunicationRequest expira | Estat EXPIRED, ADMIN pot reenviar |
+| 17 | Afegir servei add-on a tenant | 201, apareix a setup amb BUDGET_PENDING |
+| 18 | CLIENT no pot establir credencials | 403 |
+| 19 | Pressupost d'un perfil (només fases seleccionades) | GET /budget amb phaseIds | 200, total = suma de serveis de les fases seleccionades |
+| 20 | CLIENT veu pressupost sense costos | GET /budget | 200, no mostra `cost` |
+| 21 | Crear servei amb salePrice <= cost | POST /services | 400 |
+| 22 | WhatsApp Business sense website ni Facebook → landing marcada com a prerequisit | Intake detecta dependència | Landing apareix com a requerida abans que WhatsApp |
 
 ### 7.2 Seguretat
 
@@ -828,6 +966,9 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 
 - [ ] **Mòdul de Comunicacions**: Implementar adaptadors concrets per a cada canal (WhatsApp Business API, Telegram Bot API, SMTP). Aquest mòdul exposarà una interfície unificada que Vault consumirà per enviar missatges i rebre webhooks.
 - [ ] Definir perfils inicials concrets (Pla Bàsic, Pla Intermedi, Pla Avançat)
+- [ ] **Algorisme de recomanació d'intake**: Definir regles precises per mapejar dades d'intake → fases/serveis recomanats
+- [ ] **Dependències de serveis**: Implementar detecció de cadenes de dependència (WhatsApp → web/Facebook → landing)
+- [ ] **Targetes de fase/servei**: Implementar les targetes visuals al frontend amb codi de colors per estat
 - [ ] Verificador de connexió: implementar només per SMTP en primera versió
 - [ ] Definir plantilles de missatges per a cada tipus de sol·licitud (REQUEST_CREDENTIAL, REQUEST_PERMISSION, REQUEST_CONFIRMATION, REQUEST_INFO)
 - [ ] Implementar reintent automàtic per CommunicationRequest expirat (al cap de 7 dies, reenviar)

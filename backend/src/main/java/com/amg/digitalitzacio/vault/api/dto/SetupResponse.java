@@ -23,7 +23,7 @@ public record SetupResponse(
                 String status,
                 List<FieldSetup> fields
             ) {
-                public record ServiceRef(UUID id, String name, String type) {}
+                public record ServiceRef(UUID id, String name, String slug, String type) {}
                 public record FieldSetup(UUID id, String key, String label, Boolean isSet) {}
             }
         }
