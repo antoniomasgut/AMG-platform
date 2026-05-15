@@ -122,7 +122,7 @@
         {
           "icon": "🔄",
           "title": "Modificacions i creixement",
-          "description": "El negoci evoluciona, el sistema també. Adaptem, milloram i ampliem les funcionalitats quan ho necessites."
+          "description": "El negoci evoluciona, el sistema també. Adaptem, millorem i ampliem les funcionalitats quan ho necessites."
         }
       ],
       "note": "Primera consulta gratuïta i sense compromís. T'expliquem com podem ajudar-te."
@@ -204,7 +204,7 @@
       "confirmLabel": "Confirmar contrasenya",
       "update": "ACTUALITZAR CONTRASENYA",
       "updating": "ACTUALITZANT...",
-      "invalidLink": "ENLLAÇ INVALID",
+      "invalidLink": "ENLLAÇ INVÀLID",
       "invalidLinkText": "Aquest enllaç de recuperació és invàlid o ha expirat.",
       "backToLogin": "TORNAR AL LOGIN",
       "successTitle": "CONTRASENYA ACTUALITZADA",

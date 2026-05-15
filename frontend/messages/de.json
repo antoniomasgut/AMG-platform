@@ -140,7 +140,7 @@
         "avisLegal": "Impressum",
         "privacitat": "Datenschutz",
         "cookies": "Cookies",
-        "termes": "AGB"
+        "termes": "Nutzungsbedingungen"
       },
       "contact": "Kontakt",
       "copyright": "AMG Digitalisierung. Alle Rechte vorbehalten."
@@ -160,7 +160,7 @@
       "passwordSubtitle": "Geben Sie Ihr Passwort ein für",
       "passwordLabel": "Passwort",
       "enter": "EINLOGGEN",
-      "entering": "EINLOGGEN...",
+      "entering": "WIRD ANGEMELDET...",
       "forgotPassword": "PASSWORT VERGESSEN?",
       "back": "← ZURÜCK",
       "linkSent": "Link gesendet",

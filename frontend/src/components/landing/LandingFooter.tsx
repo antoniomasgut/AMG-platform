@@ -1,5 +1,6 @@
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
+import { AMGLogo } from '@/components/ui/AMGLogo';
 
 export function LandingFooter() {
   const t = useTranslations('landing.footer');
@@ -12,12 +13,9 @@ export function LandingFooter() {
         <div className="flex flex-col sm:flex-row items-start justify-between gap-8">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 bg-accent btn-clip flex items-center justify-center">
-                <span className="f-display font-black text-black text-xs">A</span>
-              </div>
-              <span className="f-display font-black text-sm tracking-wider text-ink-0">AMG</span>
-            </div>
+            <Link href={`/${locale}`} className="inline-block mb-3">
+              <AMGLogo className="h-8 w-auto" />
+            </Link>
             <p className="f-mono text-label text-ink-3 max-w-[200px]">{t('description')}</p>
           </div>
 
