@@ -27,9 +27,12 @@
       "cta": "ÜBER IHR PROJEKT SPRECHEN",
       "ctaSecondary": "Leistungen ansehen",
       "stats": {
-        "uptime": "Störungsbehebung",
-        "clients": "Aktive KMU",
-        "automations": "Phasenweise Umsetzung"
+        "uptimeValue": "< 4h",
+        "uptimeLabel": "Reaktionszeit",
+        "clientsValue": "8+",
+        "clientsLabel": "Aktive KMU",
+        "automationsValue": "15+",
+        "automationsLabel": "Automatisierungen"
       }
     },
     "problem": {

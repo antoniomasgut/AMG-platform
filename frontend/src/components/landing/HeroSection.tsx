@@ -51,15 +51,22 @@ export function HeroSection() {
         </div>
 
         {/* Stats */}
-        <div className="mt-16 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 f-mono text-label uppercase text-ink-3">
-          <span className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#39d353]" />
-            {t('stats.uptime')}
-          </span>
-          <span className="hidden sm:block text-border-medium">·</span>
-          <span>{t('stats.clients')}</span>
-          <span className="hidden sm:block text-border-medium">·</span>
-          <span>{t('stats.automations')}</span>
+        <div className="mt-16 grid grid-cols-3 divide-x divide-border-subtle max-w-md mx-auto">
+          <div className="flex flex-col items-center gap-1 px-4">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#39d353] shrink-0" />
+              <span className="f-display font-black text-2xl sm:text-3xl text-ink-0">{t('stats.uptimeValue')}</span>
+            </span>
+            <span className="f-mono text-label uppercase text-ink-3 tracking-widest">{t('stats.uptimeLabel')}</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 px-4">
+            <span className="f-display font-black text-2xl sm:text-3xl text-ink-0">{t('stats.clientsValue')}</span>
+            <span className="f-mono text-label uppercase text-ink-3 tracking-widest">{t('stats.clientsLabel')}</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 px-4">
+            <span className="f-display font-black text-2xl sm:text-3xl text-ink-0">{t('stats.automationsValue')}</span>
+            <span className="f-mono text-label uppercase text-ink-3 tracking-widest">{t('stats.automationsLabel')}</span>
+          </div>
         </div>
       </div>
     </section>

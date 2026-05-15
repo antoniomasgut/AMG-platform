@@ -27,9 +27,12 @@
       "cta": "PARLEM DEL TEU PROJECTE",
       "ctaSecondary": "Veure serveis",
       "stats": {
-        "uptime": "Suport d'incidències",
-        "clients": "Pimes actives",
-        "automations": "Implementació per fases"
+        "uptimeValue": "< 4h",
+        "uptimeLabel": "Resposta",
+        "clientsValue": "8+",
+        "clientsLabel": "Pimes actives",
+        "automationsValue": "15+",
+        "automationsLabel": "Automatitzacions"
       }
     },
     "problem": {

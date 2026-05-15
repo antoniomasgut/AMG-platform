@@ -27,9 +27,12 @@
       "cta": "LET'S TALK ABOUT YOUR PROJECT",
       "ctaSecondary": "See services",
       "stats": {
-        "uptime": "Incident support",
-        "clients": "Active SMEs",
-        "automations": "Phase-based delivery"
+        "uptimeValue": "< 4h",
+        "uptimeLabel": "Response",
+        "clientsValue": "8+",
+        "clientsLabel": "Active SMEs",
+        "automationsValue": "15+",
+        "automationsLabel": "Automations"
       }
     },
     "problem": {

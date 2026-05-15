@@ -27,9 +27,12 @@
       "cta": "HABLEMOS DE TU PROYECTO",
       "ctaSecondary": "Ver servicios",
       "stats": {
-        "uptime": "Soporte de incidencias",
-        "clients": "Pymes activas",
-        "automations": "Implementación por fases"
+        "uptimeValue": "< 4h",
+        "uptimeLabel": "Respuesta",
+        "clientsValue": "8+",
+        "clientsLabel": "Pymes activas",
+        "automationsValue": "15+",
+        "automationsLabel": "Automatizaciones"
       }
     },
     "problem": {
