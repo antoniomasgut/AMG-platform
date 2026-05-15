@@ -2,19 +2,19 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
-import { useRouter, usePathname } from '@/i18n/navigation';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 const LOCALES = [
-  { code: 'ca' as const, label: 'CAT' },
-  { code: 'es' as const, label: 'ES' },
-  { code: 'en' as const, label: 'EN' },
-  { code: 'de' as const, label: 'DE' },
+  { code: 'ca', label: 'CAT' },
+  { code: 'es', label: 'ES' },
+  { code: 'en', label: 'EN' },
+  { code: 'de', label: 'DE' },
 ];
 
 export function LocaleSwitcher() {
   const locale = useLocale();
-  const router = useRouter();
-  const pathname = usePathname();
+  const fullPathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -26,10 +26,8 @@ export function LocaleSwitcher() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const switchLocale = (code: 'ca' | 'es' | 'en' | 'de') => {
-    router.replace(pathname, { locale: code });
-    setOpen(false);
-  };
+  // Strip the locale prefix to get the locale-independent path
+  const pathWithoutLocale = fullPathname.replace(/^\/(ca|es|en|de)/, '') || '/';
 
   const current = LOCALES.find(l => l.code === locale) ?? LOCALES[0];
 
@@ -48,17 +46,18 @@ export function LocaleSwitcher() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 bg-bg-1 border border-border-base shadow-lg z-50 min-w-[72px]">
+        <div className="absolute right-0 top-full mt-1 bg-bg-1 border border-border-base shadow-lg z-[100] min-w-[72px]">
           {LOCALES.map(l => (
-            <button
+            <Link
               key={l.code}
-              onClick={() => switchLocale(l.code)}
-              className={`w-full px-3 py-2 text-left f-mono text-label uppercase transition-colors hover:bg-bg-2 ${
+              href={`/${l.code}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`}
+              onClick={() => setOpen(false)}
+              className={`block px-3 py-2 f-mono text-label uppercase transition-colors hover:bg-bg-2 ${
                 l.code === locale ? 'text-accent-light' : 'text-ink-2'
               }`}
             >
               {l.label}
-            </button>
+            </Link>
           ))}
         </div>
       )}
