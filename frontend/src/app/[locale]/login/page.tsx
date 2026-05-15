@@ -27,14 +27,14 @@ const I = {
   AlertCircle: (p: IconProps) => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></Icon>,
 };
 
-type PageState = 'form' | 'password' | 'sent';
+type PageState = 'login' | 'magic' | 'sent';
 
 export default function LoginPage() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('auth.login');
   const { login, isAuthenticated } = useAuth();
-  const [state, setState] = useState<PageState>('form');
+  const [state, setState] = useState<PageState>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -46,24 +46,7 @@ export default function LoginPage() {
     router.replace(`/${locale}/portal`);
   }
 
-  const handleMagicLink = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setSubmitting(true);
-    setErrorMsg('');
-    try {
-      await forgotPassword({ email });
-      setSuccessEmail(email);
-      setState('sent');
-    } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : t('errors.sendError'));
-      setState('form');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handlePasswordLogin = async (e: FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password) return;
     setSubmitting(true);
@@ -82,7 +65,22 @@ export default function LoginPage() {
       } else {
         setErrorMsg(apiErr.message || t('errors.loginError'));
       }
-      setState('password');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleMagicLink = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setSubmitting(true);
+    setErrorMsg('');
+    try {
+      await forgotPassword({ email });
+      setSuccessEmail(email);
+      setState('sent');
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : t('errors.sendError'));
     } finally {
       setSubmitting(false);
     }
@@ -149,19 +147,74 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <button className="mt-6 w-full h-10 f-mono text-xs uppercase btn-clip bg-bg-2 hover:bg-bg-3 text-ink-0 border border-border-strong transition-all">
-                  {t('resendLink')}
-                </button>
-                <button onClick={() => setState('form')} className="w-full mt-3 f-mono text-caption uppercase text-ink-3 hover:text-accent-light transition">
+                <button onClick={() => setState('login')} className="mt-6 w-full h-10 f-mono text-xs uppercase btn-clip bg-bg-2 hover:bg-bg-3 text-ink-0 border border-border-strong transition-all">
                   {t('useOtherEmail')}
                 </button>
               </>
-            ) : state === 'password' ? (
+            ) : state === 'magic' ? (
+              <>
+                <h2 className="f-display font-black text-2xl mb-2">{t('title')}</h2>
+                <p className="text-ui text-ink-1 mb-6">{t('subtitle')}</p>
+
+                <form onSubmit={handleMagicLink} className="space-y-3">
+                  <label className="block">
+                    <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">{t('emailLabel')}</span>
+                    <div className="relative flex items-center h-10 bg-bg-2/80 border border-border-base focus-within:border-accent transition">
+                      <div className="pl-3 text-ink-3"><I.Mail size={14} /></div>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder={t('emailPlaceholder')}
+                        autoFocus
+                        autoComplete="email"
+                        className="flex-1 bg-transparent outline-none px-3 text-sm text-ink-0 placeholder:text-ink-3"
+                      />
+                    </div>
+                  </label>
+
+                  {errorMsg && (
+                    <div className="flex items-start gap-2 p-3 border-l-2 border-l-danger bg-[rgba(255,68,68,0.05)]">
+                      <span className="text-data text-danger-light">{errorMsg}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submitting || !email.trim()}
+                    className="w-full h-10 f-mono text-xs uppercase btn-clip bg-accent hover:bg-accent-light text-black font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                  >
+                    {submitting ? <span className="w-3 h-3 border-2 border-black/60 border-t-transparent rounded-full animate-spin" /> : <I.ArrowRight size={14} />}
+                    {submitting ? t('sending') : t('sendMagicLink')}
+                  </button>
+                </form>
+
+                <button type="button" onClick={() => setState('login')} className="mt-4 w-full f-mono text-caption uppercase text-ink-3 hover:text-accent-light transition">
+                  {t('back')}
+                </button>
+              </>
+            ) : (
               <>
                 <h2 className="f-display font-black text-2xl mb-2">{t('passwordTitle')}</h2>
-                <p className="text-ui text-ink-1 mb-6">{t('passwordSubtitle')} {email}</p>
+                <p className="text-ui text-ink-1 mb-6">{t('subtitle')}</p>
 
-                <form onSubmit={handlePasswordLogin} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <label className="block">
+                    <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">{t('emailLabel')}</span>
+                    <div className="relative flex items-center h-10 bg-bg-2/80 border border-border-base focus-within:border-accent transition">
+                      <div className="pl-3 text-ink-3"><I.Mail size={14} /></div>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder={t('emailPlaceholder')}
+                        autoFocus
+                        autoComplete="email"
+                        className="flex-1 bg-transparent outline-none px-3 text-sm text-ink-0 placeholder:text-ink-3"
+                      />
+                    </div>
+                  </label>
+
                   <label className="block">
                     <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">{t('passwordLabel')}</span>
                     <div className="relative flex items-center h-10 bg-bg-2/80 border border-border-base focus-within:border-accent transition">
@@ -171,7 +224,6 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        autoFocus
                         autoComplete="current-password"
                         className="flex-1 bg-transparent outline-none px-3 text-sm text-ink-0 placeholder:text-ink-3"
                       />
@@ -195,82 +247,26 @@ export default function LoginPage() {
 
                   <button
                     type="submit"
-                    disabled={submitting || !password}
+                    disabled={submitting || !email.trim() || !password}
                     className="w-full h-10 f-mono text-xs uppercase btn-clip bg-accent hover:bg-accent-light text-black font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                   >
-                    {submitting ? (
-                      <span className="w-3 h-3 border-2 border-black/60 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <I.ArrowRight size={14} />
-                    )}
+                    {submitting ? <span className="w-3 h-3 border-2 border-black/60 border-t-transparent rounded-full animate-spin" /> : <I.ArrowRight size={14} />}
                     {submitting ? t('entering') : t('enter')}
                   </button>
 
-                  <div className="flex items-center justify-between">
-                    <button type="button" onClick={() => setState('form')} className="f-mono text-caption uppercase text-ink-3 hover:text-accent-light transition">
-                      {t('back')}
+                  <div className="flex items-center justify-between pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setState('magic')}
+                      className="f-mono text-caption uppercase text-ink-3 hover:text-accent-light transition"
+                    >
+                      {t('sendMagicLink')}
                     </button>
                     <Link href={`/${locale}/forgot-password`} className="f-mono text-caption uppercase text-accent-light hover:text-accent transition">
                       {t('forgotPassword')}
                     </Link>
                   </div>
                 </form>
-              </>
-            ) : (
-              <>
-                <h2 className="f-display font-black text-2xl mb-2">{t('title')}</h2>
-                <p className="text-ui text-ink-1 mb-6">{t('subtitle')}</p>
-
-                <form onSubmit={handleMagicLink} className="space-y-3">
-                  <label className="block">
-                    <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">{t('emailLabel')}</span>
-                    <div className="relative flex items-center h-10 bg-bg-2/80 border border-border-base focus-within:border-accent transition">
-                      <div className="pl-3 text-ink-3"><I.Mail size={14} /></div>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder={t('emailPlaceholder')}
-                        autoFocus
-                        autoComplete="email"
-                        className="flex-1 bg-transparent outline-none px-3 text-sm text-ink-0 placeholder:text-ink-3"
-                      />
-                    </div>
-                  </label>
-
-                  <button
-                    type="submit"
-                    disabled={submitting || !email.trim()}
-                    className="w-full h-10 f-mono text-xs uppercase btn-clip bg-accent hover:bg-accent-light text-black font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
-                  >
-                    {submitting ? (
-                      <span className="w-3 h-3 border-2 border-black/60 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <I.ArrowRight size={14} />
-                    )}
-                    {submitting ? t('sending') : t('sendMagicLink')}
-                  </button>
-                </form>
-
-                <div className="flex items-center gap-3 my-5">
-                  <div className="flex-1 h-[1px] bg-[rgba(226,232,240,0.08)]" />
-                  <span className="f-mono text-label uppercase text-ink-3 tracking-wider">{t('orWithPassword')}</span>
-                  <div className="flex-1 h-[1px] bg-[rgba(226,232,240,0.08)]" />
-                </div>
-
-                <button
-                  onClick={() => { if (email.trim()) setState('password'); else setErrorMsg(t('errors.emailRequired')); }}
-                  className="w-full h-10 bg-bg-2 border border-border-base flex items-center justify-between px-3 text-sm hover:border-accent transition"
-                >
-                  <span className="flex items-center gap-2"><I.Lock size={14} stroke="#94a3b8" />{t('usePassword')}</span>
-                  <I.ChevDown size={12} className="text-ink-3" />
-                </button>
-
-                {errorMsg && (
-                  <div className="flex items-start gap-2 p-3 border-l-2 border-l-warning bg-[rgba(240,180,41,0.05)] mt-3">
-                    <span className="text-data text-warning">{errorMsg}</span>
-                  </div>
-                )}
               </>
             )}
           </div>
