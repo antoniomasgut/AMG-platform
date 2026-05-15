@@ -83,7 +83,7 @@ export default function TernesServeiPage() {
 
         <div className="mt-12 pt-8 border-t border-border-subtle flex flex-wrap gap-4 f-mono text-label text-ink-3">
           <Link href="/ca/legal/avis-legal" className="hover:text-ink-1 transition-colors">Avís Legal</Link>
-          <Link href="/ca/legal/politica-privacitat" className="hover:text-ink-1 transition-colors">Privacitat</Link>
+          <Link href="/ca/legal/privacitat" className="hover:text-ink-1 transition-colors">Privacitat</Link>
           <Link href="/ca/legal/cookies" className="hover:text-ink-1 transition-colors">Cookies</Link>
           <Link href="/ca" className="ml-auto hover:text-ink-1 transition-colors">← Inici</Link>
         </div>

@@ -25,7 +25,7 @@ export function LandingFooter() {
             <div className="flex flex-col gap-2">
               {[
                 { key: 'avisLegal', href: `/${locale}/legal/avis-legal` },
-                { key: 'privacitat', href: `/${locale}/legal/politica-privacitat` },
+                { key: 'privacitat', href: `/${locale}/legal/privacitat` },
                 { key: 'cookies', href: `/${locale}/legal/cookies` },
                 { key: 'termes', href: `/${locale}/legal/termes-servei` },
               ].map(({ key, href }) => (

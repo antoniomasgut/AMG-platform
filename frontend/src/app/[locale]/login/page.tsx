@@ -274,7 +274,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center f-mono text-label uppercase text-ink-3 tracking-wider">
             <Link href={`/${locale}/legal/avis-legal`} className="hover:text-accent-light transition">TERMES</Link>
             <span className="mx-2">·</span>
-            <Link href={`/${locale}/legal/politica-privacitat`} className="hover:text-accent-light transition">PRIVACITAT</Link>
+            <Link href={`/${locale}/legal/privacitat`} className="hover:text-accent-light transition">PRIVACITAT</Link>
             <span className="mx-2">·</span>
             <a href="mailto:hola@amg.digital" className="hover:text-accent-light transition">SUPORT</a>
           </div>
