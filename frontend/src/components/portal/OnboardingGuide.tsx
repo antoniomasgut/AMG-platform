@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useLocale } from 'next-intl';
 import { OnboardingStep } from './OnboardingStep';
 import { OnboardingComplete } from './OnboardingComplete';
 
@@ -26,6 +27,7 @@ function buildSteps(
   landingsCount: number,
   workflowsCount: number,
   invoicesCount: number,
+  locale: string,
 ): StepDef[] {
   return [
     {
@@ -33,7 +35,7 @@ function buildSteps(
       num: 1,
       title: 'Crea la teva primera landing',
       description: "Publica la teva web en menys de 5 minuts amb l'editor visual.",
-      href: '/portal/landings/new',
+      href: `/${locale}/portal/landings/new`,
       done: landingsCount > 0,
     },
     {
@@ -41,7 +43,7 @@ function buildSteps(
       num: 2,
       title: 'Connecta una automatització',
       description: 'Connecta n8n per enviar emails, WhatsApp o rebre notificacions.',
-      href: '/portal/automations',
+      href: `/${locale}/portal/automations`,
       done: workflowsCount > 0,
     },
     {
@@ -49,7 +51,7 @@ function buildSteps(
       num: 3,
       title: 'Genera el teu primer pressupost',
       description: "Crea un pressupost personalitzat i envia'l al client en PDF.",
-      href: '/portal/billing',
+      href: `/${locale}/portal/billing`,
       done: invoicesCount > 0,
     },
   ];
@@ -63,7 +65,8 @@ export function OnboardingGuide({
   onSkip,
   onComplete,
 }: OnboardingGuideProps) {
-  const steps = buildSteps(landingsCount, workflowsCount, invoicesCount);
+  const locale = useLocale();
+  const steps = buildSteps(landingsCount, workflowsCount, invoicesCount, locale);
   const completedCount = steps.filter((s) => s.done).length;
   const totalCount = steps.length;
   const prevCompletedRef = useRef(completedCount);
