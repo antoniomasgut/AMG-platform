@@ -152,11 +152,33 @@
         }
       ]
     },
+    "testimonials": {
+      "badge": "Testimonis",
+      "title": "QUÈ DIUEN ELS\nNOSALTRES CLIENTS.",
+      "items": [
+        {
+          "name": "Maria Rosselló",
+          "role": "Clínica Dental Rosselló",
+          "text": "Des que treballem amb l'AMG, ja no m'he de preocupar per la web ni les automatitzacions. Tot funciona sol i si hi ha algun problema, m'ho resolen abans que me n'adoni."
+        },
+        {
+          "name": "Pere Fullana",
+          "role": "Fullana Reformes",
+          "text": "El portal de client és una passada. Puc veure l'estat de tot el meu negoci en temps real, les factures i fins i tot les automatitzacions que tenim actives. Ho recoman 100%."
+        },
+        {
+          "name": "Caterina Cantallops",
+          "role": "Cantallops Advocats",
+          "text": "Vàrem començar amb una landing i ara tenim tot el despatx automatitzat. El suport és immediat i sempre resol qualsevol dubte. No canviaria d'equip per res."
+        }
+      ]
+    },
     "cta": {
       "title": "PREPARAT PER\nDIGITALITZAR EL TEU NEGOCI?",
       "subtitle": "Primera consulta gratuïta. Sense compromisos, sense lletra petita. Parlem del que necessites.",
       "button": "PARLAR PER WHATSAPP",
-      "buttonSecondary": "ACCEDIR AL PORTAL"
+      "buttonSecondary": "ACCEDIR AL PORTAL",
+      "buttonDemo": "RESERVAR UNA DEMO"
     },
     "footer": {
       "description": "Plataforma de digitalització per a negocis locals a Mallorca.",
@@ -281,6 +303,33 @@
         },
         "empty": "Cap factura"
       }
+    }
+  },
+  "onboarding": {
+    "title": "Benvingut, {name}! Comencem.",
+    "subtitle": "Completa {total} pas{pas} per treure el màxim profit del portal",
+    "progress": "{completed} / {total} passos completats",
+    "skip": "Salta l'onboarding",
+    "complete_title": "ESTÀS A PUNT!",
+    "complete_subtitle": "Ja tens tot configurat. El teu portal està llest.",
+    "complete_cta": "Anar al dashboard",
+    "complete_cta_full": "ANAR AL DASHBOARD →",
+    "vault_pending": "Configuració pendent",
+    "vault_pending_desc": "El teu compte té serveis pendents de configurar. Revisa'ls per activar-los.",
+    "vault_pending_cta": "Revisar configuració",
+    "error_title": "Error de connexió",
+    "error_desc": "No s'han pogut carregar les dades del teu portal.",
+    "error_retry": "Reintentar",
+    "steps": {
+      "landing_title": "Crea la teva primera landing",
+      "landing_desc": "Publica la teva web en menys de 5 minuts amb l'editor visual.",
+      "landing_cta": "COMENÇA",
+      "automation_title": "Connecta una automatització",
+      "automation_desc": "Connecta n8n per enviar emails, WhatsApp o rebre notificacions automàtiques.",
+      "automation_cta": "COMENÇA",
+      "billing_title": "Genera el teu primer pressupost",
+      "billing_desc": "Crea un pressupost personalitzat i envia'l al client en PDF.",
+      "billing_cta": "COMENÇA"
     }
   },
   "legal": {

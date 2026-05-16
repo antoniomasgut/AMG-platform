@@ -152,11 +152,33 @@
         }
       ]
     },
+    "testimonials": {
+      "badge": "Testimonials",
+      "title": "WHAT OUR\nCLIENTS SAY.",
+      "items": [
+        {
+          "name": "Maria Rosselló",
+          "role": "Rosselló Dental Clinic",
+          "text": "Since working with AMG, I no longer worry about the website or automations. Everything runs smoothly and if there's an issue, they fix it before I even notice."
+        },
+        {
+          "name": "Pere Fullana",
+          "role": "Fullana Renovations",
+          "text": "The client portal is amazing. I can see the status of my entire business in real time, my invoices and even the active automations. 100% recommended."
+        },
+        {
+          "name": "Caterina Cantallops",
+          "role": "Cantallops Attorneys",
+          "text": "We started with a landing page and now the entire office is automated. The support is immediate and always resolves any questions. I wouldn't change teams for anything."
+        }
+      ]
+    },
     "cta": {
       "title": "READY TO\nDIGITISE YOUR BUSINESS?",
       "subtitle": "Free first consultation. No commitments, no fine print. Let's talk about what you need.",
       "button": "CHAT ON WHATSAPP",
-      "buttonSecondary": "SIGN IN TO PORTAL"
+      "buttonSecondary": "SIGN IN TO PORTAL",
+      "buttonDemo": "BOOK A DEMO"
     },
     "footer": {
       "description": "Digitalisation platform for local businesses in Mallorca.",
@@ -281,6 +303,33 @@
         },
         "empty": "No invoices"
       }
+    }
+  },
+  "onboarding": {
+    "title": "Welcome, {name}! Let's get started.",
+    "subtitle": "Complete {total} step{steps} to get the most out of your portal",
+    "progress": "{completed} / {total} steps completed",
+    "skip": "Skip onboarding",
+    "complete_title": "YOU'RE ALL SET!",
+    "complete_subtitle": "Everything is configured. Your portal is ready.",
+    "complete_cta": "Go to dashboard",
+    "complete_cta_full": "GO TO DASHBOARD →",
+    "vault_pending": "Pending configuration",
+    "vault_pending_desc": "Your account has services pending configuration. Review them to activate.",
+    "vault_pending_cta": "Review configuration",
+    "error_title": "Connection error",
+    "error_desc": "Unable to load your portal data.",
+    "error_retry": "Retry",
+    "steps": {
+      "landing_title": "Create your first landing page",
+      "landing_desc": "Publish your website in under 5 minutes with the visual editor.",
+      "landing_cta": "GET STARTED",
+      "automation_title": "Connect an automation",
+      "automation_desc": "Connect n8n to send emails, WhatsApp, or receive automatic notifications.",
+      "automation_cta": "GET STARTED",
+      "billing_title": "Generate your first budget",
+      "billing_desc": "Create a custom budget and send it to your client as a PDF.",
+      "billing_cta": "GET STARTED"
     }
   },
   "legal": {

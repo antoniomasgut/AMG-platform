@@ -152,11 +152,33 @@
         }
       ]
     },
+    "testimonials": {
+      "badge": "Testimonios",
+      "title": "QUÉ DICEN\nNUESTROS CLIENTES.",
+      "items": [
+        {
+          "name": "María Rosselló",
+          "role": "Clínica Dental Rosselló",
+          "text": "Desde que trabajamos con AMG, ya no me preocupo por la web ni las automatizaciones. Todo funciona solo y si hay algún problema, lo resuelven antes de que me dé cuenta."
+        },
+        {
+          "name": "Pedro Fullana",
+          "role": "Fullana Reformas",
+          "text": "El portal de cliente es increíble. Puedo ver el estado de todo mi negocio en tiempo real, las facturas e incluso las automatizaciones activas. Lo recomiendo 100%."
+        },
+        {
+          "name": "Catalina Cantallops",
+          "role": "Cantallops Abogados",
+          "text": "Empezamos con una landing y ahora tenemos todo el despacho automatizado. El soporte es inmediato y siempre resuelve cualquier duda. No cambiaría de equipo por nada."
+        }
+      ]
+    },
     "cta": {
       "title": "¿LISTO PARA\nDIGITALIZAR TU NEGOCIO?",
       "subtitle": "Primera consulta gratuita. Sin compromisos, sin letra pequeña. Hablemos de lo que necesitas.",
       "button": "HABLAR POR WHATSAPP",
-      "buttonSecondary": "ACCEDER AL PORTAL"
+      "buttonSecondary": "ACCEDER AL PORTAL",
+      "buttonDemo": "RESERVAR UNA DEMO"
     },
     "footer": {
       "description": "Plataforma de digitalización para negocios locales en Mallorca.",
@@ -281,6 +303,33 @@
         },
         "empty": "Sin facturas"
       }
+    }
+  },
+  "onboarding": {
+    "title": "¡Bienvenido, {name}! Empecemos.",
+    "subtitle": "Completa {total} paso{pas} para aprovechar al máximo el portal",
+    "progress": "{completed} / {total} pasos completados",
+    "skip": "Saltar onboarding",
+    "complete_title": "¡TODO LISTO!",
+    "complete_subtitle": "Ya tienes todo configurado. Tu portal está listo.",
+    "complete_cta": "Ir al dashboard",
+    "complete_cta_full": "IR AL DASHBOARD →",
+    "vault_pending": "Configuración pendiente",
+    "vault_pending_desc": "Tu cuenta tiene servicios pendientes de configurar. Revísalos para activarlos.",
+    "vault_pending_cta": "Revisar configuración",
+    "error_title": "Error de conexión",
+    "error_desc": "No se han podido cargar los datos de tu portal.",
+    "error_retry": "Reintentar",
+    "steps": {
+      "landing_title": "Crea tu primera landing",
+      "landing_desc": "Publica tu web en menos de 5 minutos con el editor visual.",
+      "landing_cta": "COMENZAR",
+      "automation_title": "Conecta una automatización",
+      "automation_desc": "Conecta n8n para enviar emails, WhatsApp o recibir notificaciones automáticas.",
+      "automation_cta": "COMENZAR",
+      "billing_title": "Genera tu primer presupuesto",
+      "billing_desc": "Crea un presupuesto personalizado y envíalo al cliente en PDF.",
+      "billing_cta": "COMENZAR"
     }
   },
   "legal": {

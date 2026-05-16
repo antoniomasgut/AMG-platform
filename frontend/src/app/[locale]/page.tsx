@@ -5,6 +5,7 @@ import { PricingSection } from '@/components/landing/PricingSection';
 import { ServicesSection } from '@/components/landing/ServicesSection';
 import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
 import { PortalSection } from '@/components/landing/PortalSection';
+import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { CTASection } from '@/components/landing/CTASection';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 
@@ -18,6 +19,7 @@ export default function LandingPage() {
       <ServicesSection />
       <HowItWorksSection />
       <PortalSection />
+      <TestimonialsSection />
       <CTASection />
       <LandingFooter />
     </div>

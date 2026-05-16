@@ -152,11 +152,33 @@
         }
       ]
     },
+    "testimonials": {
+      "badge": "Testimonials",
+      "title": "WAS UNSERE\nKUNDEN SAGEN.",
+      "items": [
+        {
+          "name": "Maria Rosselló",
+          "role": "Zahnklinik Rosselló",
+          "text": "Seit wir mit AMG arbeiten, muss ich mir keine Sorgen mehr um die Website oder Automatisierungen machen. Alles läuft von allein und falls ein Problem auftritt, wird es behoben bevor ich es merke."
+        },
+        {
+          "name": "Pere Fullana",
+          "role": "Fullana Renovierungen",
+          "text": "Das Kundenportal ist fantastisch. Ich kann den Status meines gesamten Unternehmens in Echtzeit sehen, meine Rechnungen und sogar die aktiven Automatisierungen. 100%ige Empfehlung."
+        },
+        {
+          "name": "Caterina Cantallops",
+          "role": "Cantallops Rechtsanwälte",
+          "text": "Wir begannen mit einer Landing Page und jetzt ist die gesamte Kanzlei automatisiert. Der Support ist sofort da und löst jedes Problem. Ich würde das Team nie wechseln."
+        }
+      ]
+    },
     "cta": {
       "title": "BEREIT ZUR\nDIGITALISIERUNG?",
       "subtitle": "Kostenlose Erstberatung. Keine Verpflichtungen, kein Kleingedrucktes. Sprechen wir über Ihre Bedürfnisse.",
       "button": "PER WHATSAPP SCHREIBEN",
-      "buttonSecondary": "ZUM PORTAL ANMELDEN"
+      "buttonSecondary": "ZUM PORTAL ANMELDEN",
+      "buttonDemo": "DEMO BUCHEN"
     },
     "footer": {
       "description": "Digitalisierungsplattform für lokale Unternehmen auf Mallorca.",
@@ -281,6 +303,33 @@
         },
         "empty": "Keine Rechnungen"
       }
+    }
+  },
+  "onboarding": {
+    "title": "Willkommen, {name}! Los geht's.",
+    "subtitle": "Absolvieren Sie {total} Schritt{schritte}, um das Portal optimal zu nutzen",
+    "progress": "{completed} / {total} Schritte abgeschlossen",
+    "skip": "Onboarding überspringen",
+    "complete_title": "ALLES BEREIT!",
+    "complete_subtitle": "Alles ist konfiguriert. Ihr Portal ist bereit.",
+    "complete_cta": "Zum Dashboard",
+    "complete_cta_full": "ZUM DASHBOARD →",
+    "vault_pending": "Ausstehende Konfiguration",
+    "vault_pending_desc": "Ihr Konto hat Dienste mit ausstehender Konfiguration. Überprüfen Sie sie, um sie zu aktivieren.",
+    "vault_pending_cta": "Konfiguration überprüfen",
+    "error_title": "Verbindungsfehler",
+    "error_desc": "Die Daten Ihres Portals konnten nicht geladen werden.",
+    "error_retry": "Wiederholen",
+    "steps": {
+      "landing_title": "Erstellen Sie Ihre erste Landing Page",
+      "landing_desc": "Veröffentlichen Sie Ihre Website in unter 5 Minuten mit dem visuellen Editor.",
+      "landing_cta": "LOS GEHT'S",
+      "automation_title": "Verbinden Sie eine Automatisierung",
+      "automation_desc": "Verbinden Sie n8n, um E-Mails, WhatsApp oder automatische Benachrichtigungen zu senden.",
+      "automation_cta": "LOS GEHT'S",
+      "billing_title": "Erstellen Sie Ihr erstes Angebot",
+      "billing_desc": "Erstellen Sie ein individuelles Angebot und senden Sie es als PDF an den Kunden.",
+      "billing_cta": "LOS GEHT'S"
     }
   },
   "legal": {

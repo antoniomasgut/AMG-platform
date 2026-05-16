@@ -32,6 +32,16 @@ export function CTASection() {
                 </svg>
                 {t('button')}
               </a>
+              <a
+                href={`mailto:amg@digitalitzacio.com?subject=Demo%20AMG%20Digitalització&body=Hola!%20M'agradaria%20reservar%20una%20demo%20per%20coneixer%20els%20vostres%20serveis.`}
+                className="btn-clip border border-accent hover:bg-accent hover:text-black text-accent-light font-semibold f-mono text-xs uppercase px-8 h-12 flex items-center gap-2 transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M22 7l-10 7L2 7" />
+                </svg>
+                {t('buttonDemo')}
+              </a>
               <Link
                 href={`/${locale}/login`}
                 className="f-mono text-xs uppercase text-ink-2 hover:text-ink-0 border border-border-base hover:border-border-medium px-8 h-12 flex items-center transition-colors"

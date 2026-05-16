@@ -11,6 +11,7 @@ import {
   fetchBillingDashboard, fetchInvoices, fetchLandings, fetchWorkflows,
   type BillingDashboard, type Invoice, type LandingSummary, type WorkflowSummary,
 } from '@/services/dashboard';
+import { OnboardingGuide } from '@/components/portal/OnboardingGuide';
 
 /* ─────────── Skeleton ─────────── */
 function Skeleton({ className = '' }: { className?: string }) {
@@ -192,118 +193,6 @@ function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
   );
 }
 
-/* ─────────── OnboardingGuide ─────────── */
-interface OnboardingGuideProps {
-  userName: string;
-  landingCount: number;
-  workflowCount: number;
-  invoiceCount: number;
-  onSkip: () => void;
-}
-
-function OnboardingGuide({ userName, landingCount, workflowCount, invoiceCount, onSkip }: OnboardingGuideProps) {
-  const steps = [
-    {
-      num: 1,
-      title: 'Crea la teva primera landing',
-      desc: "Publica la teva web en menys de 5 minuts amb l'editor visual.",
-      href: '/portal/factory/new',
-      done: landingCount > 0,
-    },
-    {
-      num: 2,
-      title: 'Connecta una automatització',
-      desc: 'Connecta n8n per enviar emails, WhatsApp o rebre notificacions.',
-      href: '/portal/automations',
-      done: workflowCount > 0,
-    },
-    {
-      num: 3,
-      title: 'Genera el teu primer pressupost',
-      desc: "Crea un pressupost personalitzat i envia'l al client en PDF.",
-      href: '/portal/billing/new',
-      done: invoiceCount > 0,
-    },
-  ];
-
-  const completedCount = steps.filter((s) => s.done).length;
-
-  if (completedCount === 3) {
-    return (
-      <div className="amg-card card-clip p-8 text-center animate-slide-up" role="region" aria-label="Guia d'inici completada">
-        <div className="w-16 h-16 bg-emerald-900/30 border border-emerald-500/40 flex items-center justify-center mx-auto mb-4">
-          <I.Check size={28} stroke="#4ade80" />
-        </div>
-        <div className="f-display font-bold text-2xl mb-2">ESTÀS A PUNT!</div>
-        <p className="text-ink-2 text-sm">Ja tens tot configurat. El teu portal està llest.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6 animate-slide-up" role="region" aria-label="Guia d'inici">
-      <div>
-        <div className="f-mono text-label uppercase tracking-widest text-accent-light mb-1">PRIMERS PASSOS</div>
-        <div className="f-display font-bold text-xl">Benvingut, {userName}! Comencem.</div>
-        <p className="text-ink-2 text-sm mt-1">Completa els 3 passos per treure el màxim profit del portal.</p>
-      </div>
-
-      <div>
-        <div className="flex justify-between f-mono text-label uppercase text-ink-2 mb-1.5">
-          <span>Progrés</span>
-          <span>{completedCount} / 3 passos</span>
-        </div>
-        <div className="h-1.5 bg-[#212140] overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-[#FF6B00] to-[#FF9A3C] transition-all duration-500"
-            style={{ width: `${Math.round((completedCount / 3) * 100)}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {steps.map((step) => (
-          <a
-            key={step.num}
-            href={step.done ? undefined : step.href}
-            aria-label={`Pas ${step.num}: ${step.title} — ${step.done ? 'completat' : 'pendent'}`}
-            className={`amg-card card-clip p-5 flex flex-col gap-3 transition-all ${
-              step.done
-                ? 'border-emerald-500/40 opacity-70 pointer-events-none'
-                : 'hover:border-[#FF6B00]/60 cursor-pointer'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 flex items-center justify-center text-sm font-bold f-mono ${
-                step.done
-                  ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-500/40'
-                  : 'bg-accent-muted text-accent-light border border-border-strong'
-              }`}>
-                {step.done ? <I.Check size={14} stroke="#4ade80" /> : step.num}
-              </div>
-              <span className="f-display font-bold text-sm">{step.title.toUpperCase()}</span>
-            </div>
-            <p className="text-data text-ink-2">{step.desc}</p>
-            {!step.done && (
-              <span className="f-mono text-label uppercase text-accent-light mt-auto">COMENÇA →</span>
-            )}
-          </a>
-        ))}
-      </div>
-
-      <div className="flex justify-end">
-        <button
-          onClick={onSkip}
-          aria-label="Salta la guia d'inici i ves al dashboard"
-          className="f-mono text-label uppercase text-ink-2 hover:text-ink-0 transition"
-        >
-          Salta l&#39;onboarding
-        </button>
-      </div>
-    </div>
-  );
-}
-
 /* ─────────── Main ─────────── */
 export default function PortalPage() {
   const { user, logout, isSuperAdmin } = useAuth();
@@ -318,6 +207,7 @@ export default function PortalPage() {
   const [workflows, setWorkflows] = useState<WorkflowSummary[]>([]);
 
   const [onboardingSkipped, setOnboardingSkipped] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   useEffect(() => {
     if (user?.tenantId) {
@@ -355,6 +245,13 @@ export default function PortalPage() {
     loadDashboard();
   }, [loadDashboard]);
 
+  const onboardingActive = !onboardingSkipped && !onboardingComplete;
+  useEffect(() => {
+    if (!onboardingActive) return;
+    const id = setInterval(loadDashboard, 30000);
+    return () => clearInterval(id);
+  }, [onboardingActive, loadDashboard]);
+
   const handleLogout = async () => {
     setLoggingOut(true);
     try { await logout(); } finally { window.location.href = '/login'; }
@@ -383,9 +280,8 @@ export default function PortalPage() {
 
   const showOnboarding =
     !onboardingSkipped &&
-    landings.length === 0 &&
-    workflows.length === 0 &&
-    invoices.length === 0;
+    !onboardingComplete &&
+    !error;
 
   return (
     <div className="flex w-full min-h-dvh bg-[#0d0d1a] overflow-hidden">
@@ -424,10 +320,11 @@ export default function PortalPage() {
           {showOnboarding ? (
             <OnboardingGuide
               userName={user.name?.split(' ')[0] || 'usuari'}
-              landingCount={landings.length}
-              workflowCount={workflows.length}
-              invoiceCount={invoices.length}
+              landingsCount={landings.length}
+              workflowsCount={workflows.length}
+              invoicesCount={invoices.length}
               onSkip={handleSkipOnboarding}
+              onComplete={() => setOnboardingComplete(true)}
             />
           ) : (
             <>

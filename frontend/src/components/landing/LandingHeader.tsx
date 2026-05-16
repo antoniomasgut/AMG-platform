@@ -39,7 +39,7 @@ export function LandingHeader() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          <LocaleSwitcher />
+          <span className="inline"><LocaleSwitcher /></span>
           <Link
             href={`/${locale}/login`}
             className="f-mono text-caption uppercase btn-clip bg-accent hover:bg-accent-light text-black font-semibold px-4 h-8 flex items-center transition-colors"
@@ -78,6 +78,9 @@ export function LandingHeader() {
               {t(key as 'services' | 'pricing' | 'howItWorks' | 'contact')}
             </a>
           ))}
+          <div className="pt-2 border-t border-border-subtle">
+            <LocaleSwitcher />
+          </div>
         </div>
       )}
     </header>
