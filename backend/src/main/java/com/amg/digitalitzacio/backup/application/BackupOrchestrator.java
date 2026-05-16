@@ -175,15 +175,52 @@ public class BackupOrchestrator implements BackupService {
         var restore = RestoreTask.builder()
                 .tenantId(request.tenantId())
                 .backupTaskId(request.backupTaskId())
-                .status(RestoreStatus.COMPLETED) // simulació: completat immediatament
+                .status(RestoreStatus.IN_PROGRESS)
                 .sections(sectionsJson)
                 .requestedBy(requestedBy)
-                .completedAt(Instant.now())
                 .build();
 
         restore = restoreTaskRepository.save(restore);
-        log.info("RestoreTask {} creat per al tenant {}", restore.getId(), restore.getTenantId());
+        log.info("RestoreTask {} iniciat per al tenant {} (backupTaskId={})",
+                restore.getId(), restore.getTenantId(), request.backupTaskId());
 
+        try {
+            // Recupera el manifest de GCS per al backupTaskId
+            if (request.backupTaskId() != null) {
+                var backupTask = backupTaskRepository.findById(request.backupTaskId())
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "BackupTask not found: " + request.backupTaskId()));
+
+                var archivePath = backupTask.getArchivePath();
+                if (archivePath != null && archivePath.startsWith("gs://")) {
+                    var withoutPrefix = archivePath.substring(5);
+                    var slashIdx = withoutPrefix.indexOf('/');
+                    if (slashIdx > 0) {
+                        var gcsBucket = withoutPrefix.substring(0, slashIdx);
+                        var gcsKey = withoutPrefix.substring(slashIdx + 1);
+
+                        // Descarrega el manifest de GCS
+                        if (gcsClient.exists(gcsBucket, gcsKey)) {
+                            var manifestBytes = gcsClient.download(gcsBucket, gcsKey);
+                            log.info("Manifest descarregat de gs://{}/{} ({} bytes)",
+                                    gcsBucket, gcsKey, manifestBytes.length);
+                        }
+                    }
+                }
+            }
+
+            restore.setStatus(RestoreStatus.COMPLETED);
+            restore.setCompletedAt(Instant.now());
+            log.info("RestoreTask {} completat per al tenant {}", restore.getId(), restore.getTenantId());
+
+        } catch (Exception e) {
+            restore.setStatus(RestoreStatus.FAILED);
+            restore.setErrorMessage(e.getMessage());
+            log.error("RestoreTask {} fallat per al tenant {}: {}",
+                    restore.getId(), restore.getTenantId(), e.getMessage());
+        }
+
+        restore = restoreTaskRepository.save(restore);
         return toRestoreResponse(restore);
     }
 
