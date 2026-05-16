@@ -1,9 +1,10 @@
 package com.amg.digitalitzacio.payments.application;
 
-import com.amg.digitalitzacio.billing.domain.Budget;
 import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetStatus;
 import com.amg.digitalitzacio.finops.application.FinOpsService;
+import com.amg.digitalitzacio.gocardless.api.dto.ProviderSummaryResponse;
+import com.amg.digitalitzacio.gocardless.application.GoCardlessService;
 import com.amg.digitalitzacio.payments.api.dto.*;
 import com.amg.digitalitzacio.payments.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
@@ -27,6 +28,7 @@ public class PaymentOrchestrator implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final BudgetRepository budgetRepository;
     private final FinOpsService finOpsService;
+    private final GoCardlessService goCardlessService;
 
     @Value("${app.payments.success-url:https://portal.amg.cat/payments/success}")
     private String successUrl;
@@ -64,9 +66,6 @@ public class PaymentOrchestrator implements PaymentService {
         if (budget.getStatus() != BudgetStatus.ACCEPTED) {
             throw new IllegalArgumentException("Budget must be ACCEPTED to create a checkout. Current status: " + budget.getStatus());
         }
-
-        var config = stripeConfigRepository.findByTenantId(budget.getTenantId())
-                .orElse(null);
 
         var payment = Payment.builder()
                 .tenantId(budget.getTenantId())
@@ -195,6 +194,40 @@ public class PaymentOrchestrator implements PaymentService {
             });
         }
         return new WebhookResponse(true);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProviderSummaryResponse getProviders(UUID tenantId) {
+        var stripeConfig = stripeConfigRepository.findByTenantId(tenantId).orElse(null);
+        boolean stripeConfigured = stripeConfig != null;
+        boolean stripeActive = stripeConfigured && Boolean.TRUE.equals(stripeConfig.getIsActive());
+        String setupProvider = stripeActive ? "STRIPE" : "TRANSFER";
+
+        boolean sepaMandateActive = false;
+        try {
+            finOpsService.getSepaMandate(tenantId);
+            sepaMandateActive = true;
+        } catch (Exception ignored) {}
+
+        boolean gcMandateActive = false;
+        String gcMandateStatus = null;
+        try {
+            var gcMandate = goCardlessService.findMandate(tenantId);
+            if (gcMandate.isPresent()) {
+                gcMandateStatus = gcMandate.get().status();
+                gcMandateActive = "ACTIVE".equals(gcMandateStatus);
+            }
+        } catch (Exception ignored) {}
+
+        String recurringProvider = gcMandateActive ? "GOCARDLESS"
+                : sepaMandateActive ? "SEPA_MANUAL"
+                : "TRANSFER";
+
+        return new ProviderSummaryResponse(
+                tenantId,
+                new ProviderSummaryResponse.SetupProviders(setupProvider, stripeConfigured, stripeActive),
+                new ProviderSummaryResponse.RecurringProviders(recurringProvider, sepaMandateActive, gcMandateActive, gcMandateStatus));
     }
 
     private StripeConfig findConfig(UUID tenantId) {

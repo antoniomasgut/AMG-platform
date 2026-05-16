@@ -6,9 +6,13 @@ import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.YearMonth;
+import java.util.List;
 
 import java.util.UUID;
 
@@ -84,5 +88,72 @@ public class FinOpsController {
     @ResponseStatus(HttpStatus.OK)
     public WebhookResponse webhook(@RequestBody WebhookRequest request) {
         return finOpsService.processWebhook(request);
+    }
+
+    // --- SEPA Mandates ---
+
+    @PostMapping("/tenants/{tenantId}/sepa-mandate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public SepaMandateResponse registerSepaMandate(@PathVariable UUID tenantId,
+            @RequestBody SepaMandateRequest request) {
+        return finOpsService.registerSepaMandate(tenantId, request);
+    }
+
+    @GetMapping("/tenants/{tenantId}/sepa-mandate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public SepaMandateResponse getSepaMandate(@PathVariable UUID tenantId) {
+        return finOpsService.getSepaMandate(tenantId);
+    }
+
+    @DeleteMapping("/tenants/{tenantId}/sepa-mandate")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void revokeSepaMandate(@PathVariable UUID tenantId) {
+        finOpsService.revokeSepaMandate(tenantId);
+    }
+
+    // --- Monthly Invoices ---
+
+    @GetMapping("/monthly-invoices")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public Page<MonthlyInvoiceResponse> listMonthlyInvoices(
+            @RequestParam(required = false) UUID tenantId,
+            @RequestParam(required = false) String period,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return finOpsService.listMonthlyInvoices(tenantId, period, page, size);
+    }
+
+    @GetMapping("/monthly-invoices/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public MonthlyInvoiceResponse getMonthlyInvoice(@PathVariable UUID id) {
+        return finOpsService.getMonthlyInvoice(id);
+    }
+
+    @PostMapping("/monthly-invoices/generate")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public List<MonthlyInvoiceResponse> generateMonthlyInvoices(
+            @RequestParam(required = false) String period) {
+        var p = period != null ? period : YearMonth.now().minusMonths(1).toString();
+        return finOpsService.generateMonthlyInvoices(p);
+    }
+
+    // --- SEPA XML ---
+
+    @GetMapping(value = "/sepa/export", produces = "application/xml")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<byte[]> exportSepaXml(@RequestParam String period) {
+        var xml = finOpsService.exportSepaXml(period);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"sepa-" + period + ".xml\"")
+                .body(xml);
+    }
+
+    @PostMapping("/sepa/mark-collected")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void markSepaCollected(@RequestParam String period) {
+        finOpsService.markSepaCollected(period);
     }
 }

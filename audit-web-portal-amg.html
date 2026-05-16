@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auditoria Frontend — Portal AMG v3 · 14 maig 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d0d1a; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  .header { background: #13132a; border-bottom: 2px solid #FF6B00; padding: 32px 48px; }
+  .header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  .header p { color: #94a3b8; margin-top: 6px; font-size: 13px; }
+  .main { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+  .scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 48px; }
+  .score-card { background: #13132a; border: 1px solid rgba(255,107,0,0.12); padding: 20px; position: relative; overflow: hidden; }
+  .score-card::after { content: ''; position: absolute; top: 0; right: 0; width: 3px; height: 100%; }
+  .score-card.excellent::after { background: #22c55e; }
+  .score-card.good::after { background: #3b82f6; }
+  .score-card.medium::after { background: #f59e0b; }
+  .score-card.poor::after { background: #ef4444; }
+  .score-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: #8896aa; margin-bottom: 8px; }
+  .score-value { font-size: 36px; font-weight: 900; line-height: 1; }
+  .score-value.excellent { color: #4ade80; }
+  .score-value.good { color: #93c5fd; }
+  .score-value.medium { color: #fcd34d; }
+  .score-value.poor { color: #f87171; }
+  .score-bar { height: 4px; background: #212140; margin-top: 12px; overflow: hidden; }
+  .score-bar-fill { height: 100%; }
+  .score-bar-fill.excellent { background: #22c55e; }
+  .score-bar-fill.good { background: #3b82f6; }
+  .score-bar-fill.medium { background: #f59e0b; }
+  .score-bar-fill.poor { background: #ef4444; }
+  .global-score { background: #13132a; border: 1px solid rgba(255,107,0,0.20); padding: 32px 40px; margin-bottom: 48px; display: flex; align-items: center; gap: 40px; }
+  .global-num { font-size: 72px; font-weight: 900; line-height: 1; color: #fcd34d; }
+  .global-info h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .global-info p { color: #94a3b8; font-size: 13px; max-width: 480px; }
+  .progress-bar { height: 8px; background: #212140; margin-top: 16px; width: 300px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #FF6B00, #fcd34d); }
+  .section { margin-bottom: 40px; }
+  .section-title { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,107,0,0.12); }
+  .section-title h2 { font-size: 16px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  .section-score { font-size: 22px; font-weight: 900; margin-left: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #8896aa; font-weight: 600; text-align: left; padding: 8px 12px; border-bottom: 1px solid rgba(255,107,0,0.08); }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(226,232,240,0.04); font-size: 13px; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,107,0,0.03); }
+  .check { color: #4ade80; }
+  .warn { color: #fcd34d; }
+  .cross { color: #f87171; }
+  .note { color: #94a3b8; font-size: 12px; display: block; margin-top: 2px; }
+  .issues { display: flex; flex-direction: column; gap: 12px; }
+  .issue { display: flex; gap: 14px; padding: 14px 16px; border-left: 3px solid; background: rgba(255,255,255,0.02); }
+  .issue.critical { border-color: #ef4444; }
+  .issue.high { border-color: #f59e0b; }
+  .issue.medium { border-color: #3b82f6; }
+  .issue-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; margin-top: 1px; }
+  .issue.critical .issue-label { color: #f87171; }
+  .issue.high .issue-label { color: #fcd34d; }
+  .issue.medium .issue-label { color: #93c5fd; }
+  .issue-text { font-size: 13px; line-height: 1.5; }
+  .issue-text strong { color: #e2e8f0; }
+  .issue-text code { font-family: monospace; font-size: 11px; background: rgba(255,255,255,0.07); padding: 1px 5px; border-radius: 3px; }
+  .comparison { display: flex; gap: 24px; margin-bottom: 48px; align-items: center; }
+  .comp-card { flex: 1; background: #13132a; border: 1px solid rgba(255,107,0,0.12); padding: 24px; text-align: center; }
+  .comp-num { font-size: 48px; font-weight: 900; line-height: 1; }
+  .comp-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #8896aa; margin-top: 8px; }
+  .comp-arrow { font-size: 24px; color: #FF6B00; }
+  footer { text-align: center; padding: 32px; color: #8896aa; font-size: 12px; border-top: 1px solid rgba(255,107,0,0.08); margin-top: 48px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Auditoria Frontend — Portal AMG v3</h1>
+  <p>14 maig 2026 &nbsp;&middot;&nbsp; 8 dimensions &nbsp;&middot;&nbsp; Sessió completa (millores ràpides + mitjanes + design system)</p>
+</div>
+<div class="main">
+
+  <div class="comparison">
+    <div class="comp-card"><div class="comp-num" style="color:#f87171">42</div><div class="comp-label">Nota inicial</div></div>
+    <div class="comp-arrow">&rarr;</div>
+    <div class="comp-card"><div class="comp-num" style="color:#fcd34d">68</div><div class="comp-label">Millores ràpides</div></div>
+    <div class="comp-arrow">&rarr;</div>
+    <div class="comp-card" style="border-color:rgba(34,197,94,0.3)"><div class="comp-num" style="color:#4ade80">78</div><div class="comp-label">Sessió completa (avui)</div></div>
+  </div>
+
+  <div class="global-score">
+    <div class="global-num">78</div>
+    <div class="global-info">
+      <h2>Nota global &mdash; <span style="color:#fcd34d">Bona</span></h2>
+      <p>Codi tècnic sòlid: 0 <code style="font-family:monospace;background:rgba(255,255,255,0.07);padding:1px 5px">any</code>, 5 headers de seguretat, WCAG AA, design system modern. Les mancances són de contingut i negoci: og-image absent, landing pública absent, dades legals amb placeholders.</p>
+      <div class="progress-bar"><div class="progress-fill" style="width:78%"></div></div>
+    </div>
+  </div>
+
+  <div class="scores">
+    <div class="score-card good"><div class="score-label">Performance</div><div class="score-value good">68</div><div class="score-bar"><div class="score-bar-fill good" style="width:68%"></div></div></div>
+    <div class="score-card medium"><div class="score-label">SEO</div><div class="score-value medium">72</div><div class="score-bar"><div class="score-bar-fill medium" style="width:72%"></div></div></div>
+    <div class="score-card excellent"><div class="score-label">Accessibilitat</div><div class="score-value excellent">88</div><div class="score-bar"><div class="score-bar-fill excellent" style="width:88%"></div></div></div>
+    <div class="score-card excellent"><div class="score-label">Seguretat</div><div class="score-value excellent">92</div><div class="score-bar"><div class="score-bar-fill excellent" style="width:92%"></div></div></div>
+    <div class="score-card good"><div class="score-label">Qualitat codi</div><div class="score-value good">82</div><div class="score-bar"><div class="score-bar-fill good" style="width:82%"></div></div></div>
+    <div class="score-card excellent"><div class="score-label">Design System</div><div class="score-value excellent">85</div><div class="score-bar"><div class="score-bar-fill excellent" style="width:85%"></div></div></div>
+    <div class="score-card poor"><div class="score-label">Legal / RGPD</div><div class="score-value poor">55</div><div class="score-bar"><div class="score-bar-fill poor" style="width:55%"></div></div></div>
+    <div class="score-card poor"><div class="score-label">Contingut</div><div class="score-value poor">50</div><div class="score-bar"><div class="score-bar-fill poor" style="width:50%"></div></div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><h2>🎯 Pla d'acció prioritzat</h2></div>
+    <div class="issues">
+      <div class="issue critical"><div class="issue-label">1 · Avui</div><div class="issue-text"><strong>Omplir NIF i adreça a les pàgines legals</strong> — 15 minuts. Substituir <code>[NIF del titular]</code> i <code>[Adreça]</code> per les dades reals. Incompliment LSSI mentre estiguin buits.</div></div>
+      <div class="issue critical"><div class="issue-label">2 · Avui</div><div class="issue-text"><strong>Crear og-image.jpg (1200×630px)</strong> — 30-60 minuts. Cada compartició a LinkedIn, WhatsApp o X apareixerà amb la imatge. Màxim impacte per temps mínim.</div></div>
+      <div class="issue high"><div class="issue-label">3 · Proper sprint</div><div class="issue-text"><strong>Migrar 253 valors Tailwind inline a tokens</strong> — Substituir <code>text-[10px]</code> → <code>text-label</code>, <code>text-[#FF9A3C]</code> → <code>text-accent-light</code>. El design system té els tokens, cal usar-los.</div></div>
+      <div class="issue high"><div class="issue-label">4 · Proper sprint</div><div class="issue-text"><strong>Landing pública multi-idioma (Mòdul 13)</strong> — La inversió de major retorn en SEO. Spec a <code>specs/13-i18n-seo-rgpd.md</code>. Rutes <code>/[locale]/</code> amb Hero, Serveis, Preus, CTA.</div></div>
+      <div class="issue medium"><div class="issue-label">5 · Backlog</div><div class="issue-text"><strong>Revisar Server Components</strong> — 26 fitxers amb <code>'use client'</code>. Identificar quins es poden convertir per millorar LCP i reduir el bundle JS inicial.</div></div>
+      <div class="issue medium"><div class="issue-label">6 · Backlog</div><div class="issue-text"><strong>favicon.ico + apple-touch-icon.png + banner cookies</strong> — Assets de presència bàsica i compliment RGPD si s'usen cookies no essencials.</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><h2>⚡ Performance</h2><span class="section-score" style="color:#93c5fd">68/100</span></div>
+    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
+      <tr><td>Font display:swap</td><td><span class="check">✓</span></td><td>Orbitron, Space Grotesk, Share Tech Mono. No hi ha FOIT.</td></tr>
+      <tr><td>Preconnect Google Fonts</td><td><span class="check">✓</span></td><td>googleapis.com i gstatic.com preconnectats.</td></tr>
+      <tr><td>Next.js standalone output</td><td><span class="check">✓</span></td><td>output: 'standalone' — optimitzat per Docker/Coolify.</td></tr>
+      <tr><td>Imatges lazy loading</td><td><span class="warn">⚠</span></td><td>1 ocurrència (BlockRenderer). Suficient per ara.</td></tr>
+      <tr><td>Fitxers 'use client'</td><td><span class="warn">⚠</span></td><td>26 fitxers. Oportunitat de conversió a Server Components.</td></tr>
+      <tr><td>Tailwind arbitrari inline</td><td><span class="warn">⚠</span></td><td>253 ocurrències de text-[Xpx], text-[#hex]. Tokens definits però no migrats.</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><h2>🔍 SEO</h2><span class="section-score" style="color:#fcd34d">72/100</span></div>
+    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
+      <tr><td>Metadata completa</td><td><span class="check">✓</span></td><td>Title template, description (158 chars), OG, Twitter Cards, canonical via metadataBase.</td></tr>
+      <tr><td>robots.txt</td><td><span class="check">✓</span></td><td>Bloqueja /portal/ i /api/. Link al sitemap.</td></tr>
+      <tr><td>sitemap.xml + hreflang</td><td><span class="check">✓</span></td><td>4 URLs amb hreflang ca/es/en/de.</td></tr>
+      <tr><td>og-image.jpg</td><td><span class="cross">✗</span></td><td><strong>Crític:</strong> fitxer no existeix. Previsualitzacions socials buides.</td></tr>
+      <tr><td>Landing pública indexable</td><td><span class="cross">✗</span></td><td><strong>Crític:</strong> / redirigeix a /login. Google no indexa res de valor.</td></tr>
+      <tr><td>Structured data (JSON-LD)</td><td><span class="cross">✗</span></td><td>No implementat. Recomanat per rich snippets.</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><h2>♿ Accessibilitat</h2><span class="section-score" style="color:#4ade80">88/100</span></div>
+    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
+      <tr><td>Skip navigation link</td><td><span class="check">✓</span></td><td>Primer element del body. Focus visible amb bg taronja AMG.</td></tr>
+      <tr><td>Landmarks ARIA</td><td><span class="check">✓</span></td><td>aside, nav, main amb aria-label. 8 aria-labels en total al portal.</td></tr>
+      <tr><td>Labels formularis</td><td><span class="check">✓</span></td><td>Tots els inputs amb &lt;label&gt; associat o aria-label.</td></tr>
+      <tr><td>Contrast ink-0 (#e2e8f0)</td><td><span class="check">✓</span></td><td>13.7:1 — WCAG AAA</td></tr>
+      <tr><td>Contrast ink-1 (#94a3b8)</td><td><span class="check">✓</span></td><td>5.2:1 — WCAG AA</td></tr>
+      <tr><td>Contrast ink-2 (#8896aa)</td><td><span class="check">✓</span></td><td>4.51:1 — WCAG AA (corregit de #64748b → #8896aa)</td></tr>
+      <tr><td>prefers-reduced-motion</td><td><span class="check">✓</span></td><td>@media present a globals.css. Desactiva totes les animacions.</td></tr>
+      <tr><td>ink-3 (#64748b) en text</td><td><span class="warn">⚠</span></td><td>2.87:1 — documentat com "decorative only" però cal vigilar l'ús.</td></tr>
+      <tr><td>Focus visible (portal)</td><td><span class="warn">⚠</span></td><td>Sense focus ring consistent als elements interactius del portal.</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><h2>🔒 Seguretat</h2><span class="section-score" style="color:#4ade80">92/100</span></div>
+    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
+      <tr><td>X-Frame-Options, X-Content-Type-Options</td><td><span class="check">✓</span></td><td>DENY + nosniff</td></tr>
+      <tr><td>HSTS + Referrer-Policy + Permissions-Policy</td><td><span class="check">✓</span></td><td>max-age=31536000 + strict-origin + camera/mic/geo desactivats</td></tr>
+      <tr><td>DOMPurify (XSS)</td><td><span class="check">✓</span></td><td>dangerouslySetInnerHTML sanititzat a BlockRenderer.</td></tr>
+      <tr><td>TypeScript : any</td><td><span class="check">✓</span></td><td>0 ocurrències. De 56 → 0 en aquesta sessió.</td></tr>
+      <tr><td>Variables d'entorn</td><td><span class="check">✓</span></td><td>Només NEXT_PUBLIC_* al client. Cap secret filtrat.</td></tr>
+      <tr><td>Content-Security-Policy</td><td><span class="cross">✗</span></td><td>No configurat. Complex amb Google Fonts (necessita nonces).</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><h2>🎨 Design System</h2><span class="section-score" style="color:#4ade80">85/100</span></div>
+    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
+      <tr><td>Paleta de colors completa</td><td><span class="check">✓</span></td><td>accent + hover + muted, bg-0→3, border-subtle/base/strong, ink-0→3, semantic + subtle + light variants.</td></tr>
+      <tr><td>Font pairing</td><td><span class="check">✓</span></td><td>Orbitron (display) + Space Grotesk (UI, nou) + Share Tech Mono (data).</td></tr>
+      <tr><td>Escala tipogràfica</td><td><span class="check">✓</span></td><td>label(10px)→7xl(72px). Major Third ×1.25. CSS custom properties a globals.css.</td></tr>
+      <tr><td>Dark mode profund</td><td><span class="check">✓</span></td><td>4 nivells de surface (#0d0d1a→#212140). Tint blau subtil, no negre pur.</td></tr>
+      <tr><td>Tokens en ús</td><td><span class="warn">⚠</span></td><td>Sistema definit però components antics usen valors inline. Migració pendent.</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><h2>⚖️ Legal / RGPD</h2><span class="section-score" style="color:#f87171">55/100</span></div>
+    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
+      <tr><td>Avís Legal + Privacitat + Cookies</td><td><span class="warn">⚠</span></td><td>Pàgines existents i ben estructurades. <span class="note">Crític: [NIF del titular] i [Adreça] sense omplir.</span></td></tr>
+      <tr><td>Links legals en login</td><td><span class="check">✓</span></td><td>TERMES, PRIVACITAT, SUPORT, TELÈFON al footer del login.</td></tr>
+      <tr><td>Links legals en portal</td><td><span class="cross">✗</span></td><td>El portal autenticat no té footer amb links a documents legals.</td></tr>
+      <tr><td>Banner de cookies</td><td><span class="cross">✗</span></td><td>No implementat. Obligatori per RGPD si s'usen cookies no essencials.</td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title"><h2>📄 Contingut i Assets</h2><span class="section-score" style="color:#f87171">50/100</span></div>
+    <table><thead><tr><th>Recurs</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
+      <tr><td>Landing pública (/)</td><td><span class="cross">✗</span></td><td>Redirigeix a /login. Zero SEO, zero conversió orgànica. Spec 13 creat, pendent d'implementació.</td></tr>
+      <tr><td>og-image.jpg (1200×630)</td><td><span class="cross">✗</span></td><td>Referenciat però no existeix. Previsualitzacions socials buides.</td></tr>
+      <tr><td>favicon.svg</td><td><span class="check">✓</span></td><td>416 bytes. Hexàgon AMG amb "A". Funcional en navegadors moderns.</td></tr>
+      <tr><td>favicon.ico + apple-touch-icon.png</td><td><span class="warn">⚠</span></td><td>Referenciats però no existeixen. Fallback per navegadors antics i iOS.</td></tr>
+      <tr><td>robots.txt + sitemap.xml + 404</td><td><span class="check">✓</span></td><td>Tots correctes i personalitzats.</td></tr>
+    </tbody></table>
+  </div>
+
+</div>
+<footer>Auditoria generada per Claude Code &nbsp;&middot;&nbsp; Portal AMG Digitalització &nbsp;&middot;&nbsp; 14 maig 2026 &nbsp;&middot;&nbsp; 42 &rarr; 68 &rarr; 78/100</footer>
+</body>
+</html>

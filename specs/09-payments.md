@@ -8,11 +8,13 @@
 
 ## 1. Objectius
 
-- Crear **Checkout Sessions de Stripe** perquè els clients puguin pagar els pressupostos acceptats
+- Crear **Checkout Sessions de Stripe** perquè els clients puguin pagar els **pressupostos de setup** acceptats (pagament únic)
 - Gestionar el cicle de vida del pagament: pendent → completat → fallit → reemborsat
 - Sincronitzar estats de pagament entre Stripe i la plataforma via **webhooks**
 - Crear la factura a Holded (Mòdul 08) automàticament quan el pagament es completa
 - La integració ha de ser **mockejable** per desenvolupament sense compte Stripe
+
+> **Àmbit clar:** Stripe gestiona **únicament** els pagaments de setup (un sol cop per pressupost). Les **quotes mensuals recurrents** es cobren via **domiciliació SEPA** (Mòdul 08 FinOps), NO via Stripe. Això evita comissions de Stripe (~0.40€) en transaccions petites de 10€/mes.
 
 ---
 
@@ -31,7 +33,7 @@
 ### 2.2 Funcionalitats excloses
 
 - Targetes guardades / customers reutilitzables (es podria afegir després)
-- Subscripcions recurrents (només pagament únic)
+- **Subscripcions recurrents via Stripe** — les quotes mensuals van per SEPA (Mòdul 08), NO per Stripe
 - Més d'un intent de pagament per pressupost
 - Cancel·lació del checkout per part del client (Stripe ho gestiona)
 
@@ -367,9 +369,51 @@ flowchart LR
 
 ---
 
-## 14. Obert / Pendents
+## 14. Configuració des de l'administrador
+
+Stripe és **opcional i configurable per tenant** des del panell d'administració. Per defecte està desactivat.
+
+### 14.1 StripeConfig — camps rellevants
+
+| Camp | Descripció |
+|------|-----------|
+| `isActive` | Si Stripe està activat per a aquest tenant. Si `false`, el botó "Pagar amb targeta" no apareix |
+| `tenantId` | null = configuració global de la plataforma; valor = configuració específica per tenant |
+| `apiKeyRef` | Referència al Vault on es guarda la Secret Key de Stripe xifrada |
+| `webhookSecret` | Secret per verificar webhooks de Stripe |
+
+### 14.2 Flux d'activació des de l'admin
+
+```
+Admin Panel → Tenant Detail → Pestanya "Pagaments"
+  ├── Stripe: [Desactivat] [Activar]
+  │     Al activar:
+  │     ├── Camp: Secret Key (s'emmagatzema al Vault xifrada)
+  │     ├── Camp: Webhook Secret
+  │     └── [Guardar] → POST /api/v1/payments/configure
+  │
+  └── Si actiu: mostra estat, botó [Desactivar], darrer pagament
+```
+
+### 14.3 Comportament segons estat
+
+| Estat Stripe | Comportament al pressupost |
+|-------------|--------------------------|
+| `isActive = false` | El pressupost s'accepta via token, el cobrament és manual (transferència) |
+| `isActive = true` | En acceptar el pressupost, apareix botó "Pagar ara" → Stripe Checkout |
+
+### 14.4 Configuració global vs per tenant
+
+- **Global** (`tenantId = null`): s'aplica a tots els tenants sense configuració pròpia
+- **Per tenant**: sobreescriu la configuració global per a aquell tenant concret
+- Un tenant pot tenir Stripe desactivat fins i tot si la plataforma el té activat globalment
+
+---
+
+## 15. Obert / Pendents
 
 - [ ] Decidir si el checkout es crea automàticament en acceptar el pressupost o manualment
 - [ ] Afegir enviament automàtic de l'enllaç de pagament per email/WhatsApp
 - [ ] Gestionar expiració de Checkout Sessions (expiren en 24h per defecte a Stripe)
 - [ ] Múltiples intents de pagament si el primer falla
+- [ ] **[NOU]** Frontend: pestanya "Pagaments" al Tenant Detail amb toggle Stripe + formulari de configuració

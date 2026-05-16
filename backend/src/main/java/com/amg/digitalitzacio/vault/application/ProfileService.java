@@ -21,4 +21,5 @@ public interface ProfileService {
     List<ProfileResponse> listProfiles();
     List<ProfileResponse.ServiceResponse> listServices();
     BudgetResponse calculateBudget(UUID profileId, List<UUID> addonIds, boolean includeCost);
+    ProfileResponse.ServiceResponse updateServicePrice(UUID serviceId, UpdateServicePriceRequest request);
 }

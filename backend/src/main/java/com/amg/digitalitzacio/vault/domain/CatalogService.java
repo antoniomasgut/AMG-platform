@@ -25,6 +25,7 @@ public class CatalogService {
     @Builder.Default @Column(nullable = false) private Boolean isAddon = false;
     @Column(nullable = false, precision = 10, scale = 2) private BigDecimal cost;
     @Column(nullable = false, precision = 10, scale = 2) private BigDecimal salePrice;
+    @Builder.Default @Column(nullable = false, precision = 10, scale = 2) private BigDecimal monthlyPrice = BigDecimal.TEN;
     private Integer sortOrder;
     @CreatedDate @Column(updatable = false) private Instant createdAt;
     @LastModifiedDate private Instant updatedAt;

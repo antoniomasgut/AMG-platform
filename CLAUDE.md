@@ -132,6 +132,8 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 16 | Onboarding (guia ràpida post-registre) | ⏳ Esborrany | specs/16-onboarding.md |
 | 17 | Service Setup Wizard (assistent implementació) | ✅ Completat | specs/17-service-setup-wizard.md |
 | 18 | Backup Operacional (còpia seguretat dades a GCS) | ✅ Spec | specs/18-backup-operacional.md |
+| 09b | GoCardless (domiciliació SEPA automàtica) | ✅ Completat | specs/09b-gocardless.md |
+| 19 | InfraOps (monitorització servidor + escalat) | ✅ Completat | specs/19-infraops.md |
 
 ---
 

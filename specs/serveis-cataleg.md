@@ -141,13 +141,49 @@ Cada fase agrupa serveis amb un descompte al setup respecte a contractar-los sol
 
 ---
 
-## 6. Notes per implementació
+## 6. Implementació dels preus — estat i decisions
 
-- [ ] Afegir `monthlyPrice` a l'entitat `CatalogService`
-- [ ] El `cost` de `CatalogService` = setupHours × hourlyRate + directCosts
-- [ ] `CatalogService.salePrice` = preu setup per al client
-- [ ] `CatalogService.monthlyPrice` = 10 € per defecte
-- [ ] El **setup** es cobra al crear el pressupost (mòdul 07 Billing)
-- [ ] El **mensual** es factura a final de mes amb pro rata el primer mes
-- [ ] La tarifa horària (`ENGINEER_HOURLY_RATE`) es pot modificar via variable d'entorn
-- [ ] Les fases es creen com a `ServiceProfile` personalitzat per a cada client
+### 6.1 Model de preus (decisió final)
+
+| Concepte | On viu | Qui el pot canviar | Afecta clients antics? |
+|---------|--------|-------------------|----------------------|
+| `CatalogService.salePrice` | Catàleg (BD) | SUPER_ADMIN via `PATCH /vault/services/{id}/price` | ❌ No |
+| `CatalogService.monthlyPrice` | Catàleg (BD) | SUPER_ADMIN via `PATCH /vault/services/{id}/price` | ❌ No |
+| `TenantService.setupPriceLocked` | Assignació (BD) | Ningú (congèlat en crear) | — |
+| `TenantService.monthlyPriceLocked` | Assignació (BD) | Ningú (congèlat en crear) | — |
+
+**Regla fonamental:** En crear un `TenantService` (assignació de perfil o add-on), copiar immediatament `salePrice → setupPriceLocked` i `monthlyPrice → monthlyPriceLocked`. A partir d'aquí, facturar sempre des del `TenantService`, mai des del `CatalogService`.
+
+### 6.2 Checklist d'implementació
+
+- [x] `CatalogService.salePrice` — preu de setup al client
+- [x] `CatalogService.cost` — cost intern
+- [ ] **Afegir `monthlyPrice` a l'entitat `CatalogService`** (default: 10.00€) — migració JPA necessària
+- [ ] **Afegir `setupPriceLocked`, `monthlyPriceLocked`, `activatedAt` a `TenantService`** — migració JPA necessària
+- [ ] **Actualitzar `CatalogSeeder`**: afegir `monthlyPrice = 10` a tots els serveis base
+- [ ] **Endpoint `PATCH /vault/services/{id}/price`**: actualitza catàleg sense tocar clients existents
+- [ ] **`BillingCalculator`**: lògica de pro-rata mensual (dies actius / dies del mes)
+- [ ] **`MonthlyBillingJob`** (`@Scheduled`): genera factures a final de mes via FinOps
+- [ ] **`SepaMandate`** entity + endpoints: registrar IBAN + titular + data signatura
+- [ ] **`MonthlyInvoice`** entity + endpoints: factures recurrents separades de les de setup
+- [ ] **`SepaXmlGenerator`**: genera fitxer `pain.008` per al banc
+- [ ] El **pressupost** (Billing) ha de mostrar `totalSetup` + `totalMensualEstimat` com a informació addicional
+
+### 6.3 Flux de preus (resum)
+
+```
+ADMIN crea servei al catàleg:
+  CatalogService { salePrice: 100€, monthlyPrice: 10€, cost: 20€ }
+
+ADMIN assigna perfil a tenant (ara o en 2 anys):
+  TenantService { setupPriceLocked: 100€, monthlyPriceLocked: 10€ }
+
+ADMIN modifica preu al catàleg:
+  CatalogService { salePrice: 120€, monthlyPrice: 12€ }  ← client antic no es veu afectat
+
+Client antic facturació mensual (sempre):
+  monthlyPriceLocked = 10€  ← congèlat des del dia de l'assignació
+
+Client nou (assignació posterior al canvi):
+  TenantService { setupPriceLocked: 120€, monthlyPriceLocked: 12€ }
+```

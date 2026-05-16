@@ -82,6 +82,7 @@ public class CatalogSeeder implements CommandLineRunner {
                 .isAddon(isAddon)
                 .cost(new BigDecimal(costEuro))
                 .salePrice(new BigDecimal(salePriceEuro))
+                .monthlyPrice(BigDecimal.TEN)
                 .build());
     }
 

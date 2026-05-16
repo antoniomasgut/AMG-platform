@@ -111,8 +111,9 @@ Defineix un servei concret dins d'una fase. Ex: "WhatsApp Business", "Landing Pr
 | description | String(255) | @Column | Descripció |
 | type | Enum(STRING) | @Enumerated | Tipus: `CREDENTIALS`, `LANDING`, `AUTOMATION`, `BILLING`, `OTHER` |
 | isAddon | Boolean | @Column(nullable=false) | Si es pot afegir a la carta |
-| cost | BigDecimal(10,2) | @Column(nullable=false) | Cost per a nosaltres (ex: 20.00€) |
-| salePrice | BigDecimal(10,2) | @Column(nullable=false) | Preu de venda al client (ex: 50.00€) |
+| cost | BigDecimal(10,2) | @Column(nullable=false) | Cost intern (ex: 20.00€) |
+| salePrice | BigDecimal(10,2) | @Column(nullable=false) | Preu de setup al client (ex: 100.00€) |
+| **monthlyPrice** | BigDecimal(10,2) | @Column(nullable=false) | **Preu mensual de manteniment (default: 10.00€)** |
 | sortOrder | Integer | @Column | Ordre dins la fase |
 | createdAt | Instant | @CreatedDate | |
 | updatedAt | Instant | @LastModifiedDate | |
@@ -122,6 +123,8 @@ Defineix un servei concret dins d'una fase. Ex: "WhatsApp Business", "Landing Pr
 - `type=LANDING` indica que cal crear una landing (mòdul 04)
 - `type=AUTOMATION` indica que cal configurar un flux n8n (mòdul 10)
 - `type=CREDENTIALS` és un servei que només necessita credencials
+- `monthlyPrice` és el preu publicat per a clients NOUS. Els clients existents tenen el preu congèlat a `TenantService.monthlyPriceLocked` (veure més avall)
+- Canviar `monthlyPrice` o `salePrice` al catàleg **no afecta** clients que ja tenen el servei assignat
 
 #### CredentialField (Camp de credencial d'un servei)
 
@@ -185,12 +188,17 @@ Cada servei (del perfil o add-on) té un registre per tenant amb seguiment del s
 | serviceId | UUID | @Column(nullable=false) | FK a CatalogService |
 | phaseId | UUID | @Column(nullable=true) | Fase a la qual pertany (null si add-on) |
 | configStatus | Enum | @Enumerated(STRING) @Column(nullable=false) | Estat del servei: `BUDGET_PENDING`, `ACCEPTED`, `CONFIGURING`, `AWAITING_CLIENT`, `READY_FOR_DELIVERY`, `IMPLEMENTATION_ACCEPTED` |
+| **setupPriceLocked** | BigDecimal(10,2) | @Column(nullable=false) | **Preu de setup congèlat en el moment de l'assignació (snapshot de `CatalogService.salePrice`)** |
+| **monthlyPriceLocked** | BigDecimal(10,2) | @Column(nullable=false) | **Preu mensual congèlat en el moment de l'assignació (snapshot de `CatalogService.monthlyPrice`)** |
+| **activatedAt** | Instant | @Column | **Quan el servei ha passat a `IMPLEMENTATION_ACCEPTED`. S'usa per calcular la pro-rata del primer mes** |
 | configuredAt | Instant | @Column | Quan es va completar la configuració |
 | verifiedAt | Instant | @Column | Quan es va acceptar la implementació |
 | createdAt | Instant | @CreatedDate | |
 | updatedAt | Instant | @LastModifiedDate | |
 
 **Restricció única:** `(tenantId, serviceId)`
+
+**Regla de preus congèlats:** Quan es crea un `TenantService` (en assignar un perfil o afegir un add-on), els camps `setupPriceLocked` i `monthlyPriceLocked` es copien dels valors actuals del `CatalogService`. Qualsevol canvi posterior al catàleg no afecta aquest registre.
 
 **Comportament per transició d'estat:**
 
@@ -592,6 +600,23 @@ Response:
 
 **Rols:** SUPER_ADMIN
 
+#### `PATCH /api/v1/vault/services/{id}/price` — Actualitzar preus del catàleg
+
+**Rols:** SUPER_ADMIN
+
+Actualitza `salePrice`, `monthlyPrice` i/o `cost` d'un servei del catàleg. **Només afecta assignacions futures** (clients nous). Els clients existents mantenen els seus preus congèlats a `TenantService.setupPriceLocked` i `monthlyPriceLocked`.
+
+Request:
+```json
+{
+  "salePrice": 120.00,
+  "monthlyPrice": 12.00,
+  "cost": 25.00
+}
+```
+
+Response 200: `CatalogServiceResponse` amb els preus actualitzats i `{ "affectedExistingClients": 0 }` per confirmar que cap client existent es veu afectat.
+
 ### 4.4 Assignació i configuració de clients
 
 #### `POST /api/v1/vault/tenants/{tenantId}/profiles/{profileId}` — Assignar perfil a tenant
@@ -877,6 +902,7 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 | POST | /api/v1/vault/phases/{phId}/services | Afegir servei a fase | SUPER_ADMIN |
 | POST | /api/v1/vault/services | Crear servei add-on | SUPER_ADMIN |
 | GET | /api/v1/vault/services | Llistar serveis | Tots |
+| PATCH | /api/v1/vault/services/{id}/price | Actualitzar preus catàleg (no afecta clients existents) | SUPER_ADMIN |
 | GET | /api/v1/vault/tenants/{tId}/budget | Generar pressupost | SUPER_ADMIN, ADMIN, CLIENT (propi) |
 | POST | /api/v1/vault/tenants/{tId}/profiles/{pId} | Assignar perfil | SUPER_ADMIN, ADMIN |
 | DELETE | /api/v1/vault/tenants/{tId}/profiles/{pId} | Desassignar perfil | SUPER_ADMIN, ADMIN |
@@ -899,6 +925,7 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 - **Accés:** SUPER_ADMIN i ADMIN veuen valors en clar. CLIENT veu emmascarat.
 - **Emmascarament:** Últims 4 caràcters, prefix `***`. Ex: `***key`, `***3456`.
 - **Preus:** `salePrice > cost` sempre. Si s'intenta crear/modificar un servei amb `salePrice <= cost`, retornar 400.
+- **Preus congèlats:** En crear un `TenantService`, sempre copiar `salePrice → setupPriceLocked` i `monthlyPrice → monthlyPriceLocked` del catàleg en aquell moment. Mai llegir preus del catàleg per a clients existents.
 - **Audit log:** Tots els accessos a `TenantCredential` es registren.
 
 ---

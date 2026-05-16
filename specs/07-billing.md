@@ -36,7 +36,9 @@
 
 - Facturació real i pagaments (Stripe — Mòdul 09 Payments, Holded — Mòdul 08 FinOps)
 - Enviament d'email al client (futur)
-- Pressupostos recurrents
+- Pressupostos recurrents de setup (cada client rep un sol pressupost de setup per perfil)
+
+> **Nota:** La facturació recurrent mensual NO és un pressupost — és un procés separat que genera factures a Holded a final de mes. Veure secció 3.3 i Mòdul 08 FinOps.
 
 ### 2.3 Actors
 
@@ -117,6 +119,40 @@
 **DiscountType enum:** `PERCENTAGE`, `FIXED`
 
 **DiscountAppliesTo enum:** `BUDGET`, `PHASE`, `SERVICE`
+
+### 3.3 Facturació mensual recurrent
+
+La facturació mensual s'origina al Mòdul 08 (FinOps) via un job programat. El Billing aporta la lògica de càlcul:
+
+**Font de dades:** `TenantService.monthlyPriceLocked` per a cada servei en estat `IMPLEMENTATION_ACCEPTED`.
+
+**Pro-rata del primer mes:**
+```
+import = monthlyPriceLocked × (dies_restants_al_mes / dies_totals_al_mes)
+```
+- Dies restants = dies des d'`activatedAt` fins a final de mes (inclòs)
+- A partir del segon mes: import complet
+
+**Exemple:** Client activa Landing Pro el 16 de maig (monthlyPriceLocked = 10€)
+- Primera factura (31 de maig): 10 € × 16/31 = **5.16 €**
+- A partir de juny: **10 €/mes**
+
+**Agrupació per tenant:** Una sola factura mensual per tenant amb totes les línies de servei. No una factura per servei.
+
+**Format de la factura mensual a Holded:**
+```
+Factura F-MENS-2026-05-0001
+Tenant: Restaurant Can Pedro
+Període: 01/05/2026 – 31/05/2026
+
+Línies:
+  Landing Pro         10.00 € × (16/31 dies) =  5.16 €
+  WhatsApp Business   10.00 € × (16/31 dies) =  5.16 €
+  ─────────────────────────────────────────────────────
+  Total                                         10.32 €
+```
+
+---
 
 ### 3.2 Càlcul de pressupost
 
@@ -319,3 +355,6 @@ Els tests d'integració es troben a `backend/src/test/java/com/amg/digitalitzaci
 - [ ] `InvoiceService` i `PaymentService` estan injectats però mai cridats
 - [ ] `rejectionUrl` a BudgetResponse sempre és null
 - [ ] `recentPhases` a DashboardResponse sempre és buit
+- [ ] **[NOU]** Implementar lògica de càlcul de pro-rata mensual (secció 3.3) — consumit pel job de FinOps
+- [ ] **[NOU]** `BudgetLine.unitPrice` conté el `salePrice` (setup); afegir `monthlyPrice` a la línia per mostrar el cost recurrent al pressupost
+- [ ] **[NOU]** El pressupost hauria de mostrar el **total de setup** i el **total mensual recurrent estimat** com a informació addicional (no és vinculant, però orienta el client)

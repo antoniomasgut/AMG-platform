@@ -6,6 +6,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -19,6 +20,9 @@ public class TenantService {
     @Column(name = "service_id", nullable = false) private UUID serviceId;
     @Column(name = "phase_id", nullable = true) private UUID phaseId;
     @Enumerated(EnumType.STRING) @Builder.Default @Column(nullable = false) private ServiceStatus status = ServiceStatus.PENDING;
+    @Column(nullable = false, precision = 10, scale = 2) @Builder.Default private BigDecimal setupPriceLocked = BigDecimal.ZERO;
+    @Column(nullable = false, precision = 10, scale = 2) @Builder.Default private BigDecimal monthlyPriceLocked = BigDecimal.TEN;
+    private Instant activatedAt;
     private Instant statusChangedAt;
     @CreatedDate @Column(updatable = false) private Instant createdAt;
     @LastModifiedDate private Instant updatedAt;

@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.vault.api;
 
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import com.amg.digitalitzacio.vault.api.dto.*;
+import com.amg.digitalitzacio.vault.api.dto.UpdateServicePriceRequest;
 import com.amg.digitalitzacio.vault.application.*;
 import com.amg.digitalitzacio.vault.domain.ImplementationStatus;
 import com.amg.digitalitzacio.vault.domain.ServiceStatus;
@@ -198,6 +199,13 @@ public class VaultController {
     public VerifyResponse verifyService(@PathVariable UUID tenantId, @PathVariable UUID serviceId) {
         boolean verified = vaultService.verifyService(tenantId, serviceId);
         return new VerifyResponse(verified, verified ? "Connexió correcta" : "Verificació fallida");
+    }
+
+    @PatchMapping("/services/{id}/price")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ProfileResponse.ServiceResponse updateServicePrice(@PathVariable UUID id,
+            @RequestBody UpdateServicePriceRequest request) {
+        return profileService.updateServicePrice(id, request);
     }
 
     // --- Add-ons ---

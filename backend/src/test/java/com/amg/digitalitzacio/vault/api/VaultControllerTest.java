@@ -160,7 +160,7 @@ class VaultControllerTest {
                 .filter(p -> "Automatitzacions".equals(p.name())).findFirst().orElseThrow();
 
         var svc1Req = new CreateServiceRequest("WhatsApp Business", "whatsapp-biz", null,
-                "CREDENTIALS", BigDecimal.valueOf(10), BigDecimal.valueOf(50), 1);
+                "CREDENTIALS", BigDecimal.valueOf(10), BigDecimal.valueOf(50), BigDecimal.TEN, 1);
         mockMvc.perform(post("/api/v1/vault/phases/{phaseId}/services", phase1.id())
                 .header("Authorization", "Bearer " + superAdminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -168,7 +168,7 @@ class VaultControllerTest {
                 .andExpect(status().isCreated());
 
         var svc2Req = new CreateServiceRequest("SMTP Corporatiu", "smtp-corp", null,
-                "CREDENTIALS", BigDecimal.valueOf(5), BigDecimal.valueOf(30), 2);
+                "CREDENTIALS", BigDecimal.valueOf(5), BigDecimal.valueOf(30), BigDecimal.TEN, 2);
         mockMvc.perform(post("/api/v1/vault/phases/{phaseId}/services", phase1.id())
                 .header("Authorization", "Bearer " + superAdminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -176,7 +176,7 @@ class VaultControllerTest {
                 .andExpect(status().isCreated());
 
         var svc3Req = new CreateServiceRequest("Landing Pro", "landing-pro", null,
-                "LANDING", BigDecimal.valueOf(30), BigDecimal.valueOf(80), 1);
+                "LANDING", BigDecimal.valueOf(30), BigDecimal.valueOf(80), BigDecimal.TEN, 1);
         mockMvc.perform(post("/api/v1/vault/phases/{phaseId}/services", phase2.id())
                 .header("Authorization", "Bearer " + superAdminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -295,7 +295,7 @@ class VaultControllerTest {
                 .profileId(profile.getId()).name("Test").sortOrder(1).build());
 
         var request = new CreateServiceRequest("Test", "test", null,
-                "CREDENTIALS", BigDecimal.valueOf(100), BigDecimal.valueOf(50), 1);
+                "CREDENTIALS", BigDecimal.valueOf(100), BigDecimal.valueOf(50), BigDecimal.TEN, 1);
 
         mockMvc.perform(post("/api/v1/vault/phases/{phaseId}/services", phase.getId())
                 .header("Authorization", "Bearer " + superAdminToken)

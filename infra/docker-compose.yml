@@ -144,10 +144,49 @@ services:
       - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.frontend.loadbalancer.server.port=3000"
 
+  netdata:
+    image: netdata/netdata:stable
+    container_name: amg_netdata
+    restart: unless-stopped
+    pid: host
+    cap_add:
+      - SYS_PTRACE
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    environment:
+      NETDATA_CLAIM_TOKEN: ""
+    volumes:
+      - netdata_config:/etc/netdata
+      - netdata_lib:/var/lib/netdata
+      - netdata_cache:/var/cache/netdata
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./netdata/health.d:/etc/netdata/health.d/amg:ro
+      - ./netdata/health_alarm_notify.conf:/etc/netdata/health_alarm_notify.conf:ro
+    ports:
+      - "127.0.0.1:19999:19999"
+    networks:
+      - amg_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.netdata.rule=Host(`monitor.${APP_DOMAIN}`)"
+      - "traefik.http.routers.netdata.tls=true"
+      - "traefik.http.routers.netdata.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.netdata.middlewares=auth"
+      - "traefik.http.services.netdata.loadbalancer.server.port=19999"
+
 volumes:
   postgres_data:
   redis_data:
   minio_data:
+  netdata_config:
+  netdata_lib:
+  netdata_cache:
 
 networks:
   amg_net:

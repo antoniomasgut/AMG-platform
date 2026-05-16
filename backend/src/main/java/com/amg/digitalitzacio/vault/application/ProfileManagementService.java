@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.vault.application;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.vault.api.dto.*;
 import com.amg.digitalitzacio.vault.domain.*;
+import com.amg.digitalitzacio.vault.api.dto.UpdateServicePriceRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -125,7 +126,9 @@ public class ProfileManagementService implements ProfileService {
         var svc = CatalogService.builder()
                 .phaseId(phaseId).name(request.name()).slug(request.slug())
                 .description(request.description()).type(ServiceType.valueOf(request.type()))
-                .cost(request.cost()).salePrice(request.salePrice()).sortOrder(request.sortOrder())
+                .cost(request.cost()).salePrice(request.salePrice())
+                .monthlyPrice(request.monthlyPrice() != null ? request.monthlyPrice() : BigDecimal.TEN)
+                .sortOrder(request.sortOrder())
                 .build();
         catalogServiceRepository.save(svc);
         return getProfile(phase.getProfileId());
@@ -262,6 +265,23 @@ public class ProfileManagementService implements ProfileService {
                 includeCost ? total.subtract(totalCost) : null);
     }
 
+    @Override
+    @Transactional
+    public ProfileResponse.ServiceResponse updateServicePrice(UUID serviceId, UpdateServicePriceRequest request) {
+        var svc = catalogServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found: " + serviceId));
+        if (request.salePrice() != null) {
+            if (request.cost() != null && request.salePrice().compareTo(request.cost()) <= 0)
+                throw new IllegalArgumentException("salePrice must be greater than cost");
+            svc.setSalePrice(request.salePrice());
+        }
+        if (request.monthlyPrice() != null) svc.setMonthlyPrice(request.monthlyPrice());
+        if (request.cost() != null) svc.setCost(request.cost());
+        svc = catalogServiceRepository.save(svc);
+        var fields = credentialFieldRepository.findByServiceIdOrderBySortOrder(svc.getId());
+        return toServiceResponse(svc, fields);
+    }
+
     private ServiceProfile findProfile(UUID id) {
         return serviceProfileRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Profile not found: " + id));
@@ -290,7 +310,7 @@ public class ProfileManagementService implements ProfileService {
     private ProfileResponse.ServiceResponse toServiceResponse(CatalogService svc, List<CredentialField> fields) {
         return new ProfileResponse.ServiceResponse(svc.getId(), svc.getName(), svc.getSlug(),
                 svc.getDescription(), svc.getType(), svc.getIsAddon(),
-                svc.getCost(), svc.getSalePrice(), svc.getSortOrder(),
+                svc.getCost(), svc.getSalePrice(), svc.getMonthlyPrice(), svc.getSortOrder(),
                 fields.stream().map(f -> new ProfileResponse.CredentialFieldResponse(
                         f.getId(), f.getKey(), f.getLabel(), f.getType(), f.getIsRequired(),
                         f.getPlaceholder(), f.getValidationRegex(), f.getSortOrder())).toList());

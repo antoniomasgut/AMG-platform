@@ -63,7 +63,10 @@ public class TenantVaultService implements VaultService {
             for (var svc : services) {
                 tenantServiceRepository.findByTenantIdAndServiceId(tenantId, svc.getId()).ifPresent(ts -> {});
                 var ts = TenantService.builder()
-                        .tenantId(tenantId).serviceId(svc.getId()).phaseId(phase.getId()).build();
+                        .tenantId(tenantId).serviceId(svc.getId()).phaseId(phase.getId())
+                        .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : BigDecimal.ZERO)
+                        .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : BigDecimal.TEN)
+                        .build();
                 tenantServiceRepository.save(ts);
                 phaseTotal = phaseTotal.add(svc.getSalePrice());
             }
@@ -217,7 +220,10 @@ public class TenantVaultService implements VaultService {
         });
 
         var ts = TenantService.builder()
-                .tenantId(tenantId).serviceId(serviceId).phaseId(null).build();
+                .tenantId(tenantId).serviceId(serviceId).phaseId(null)
+                .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : BigDecimal.ZERO)
+                .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : BigDecimal.TEN)
+                .build();
         tenantServiceRepository.save(ts);
 
         boolean requiresApproval = svc.getSalePrice() != null && svc.getSalePrice().compareTo(BigDecimal.ZERO) > 0;

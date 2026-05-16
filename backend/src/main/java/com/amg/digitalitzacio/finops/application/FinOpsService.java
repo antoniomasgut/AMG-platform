@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.finops.application;
 import com.amg.digitalitzacio.finops.api.dto.*;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface FinOpsService {
@@ -21,4 +22,18 @@ public interface FinOpsService {
     FinOpsDashboardGlobalResponse getGlobalDashboard();
 
     WebhookResponse processWebhook(WebhookRequest request);
+
+    // SEPA
+    SepaMandateResponse registerSepaMandate(UUID tenantId, SepaMandateRequest request);
+    SepaMandateResponse getSepaMandate(UUID tenantId);
+    void revokeSepaMandate(UUID tenantId);
+
+    // Facturació mensual
+    List<MonthlyInvoiceResponse> generateMonthlyInvoices(String period);
+    MonthlyInvoiceResponse getMonthlyInvoice(UUID id);
+    Page<MonthlyInvoiceResponse> listMonthlyInvoices(UUID tenantId, String period, int page, int size);
+
+    // SEPA XML
+    byte[] exportSepaXml(String period);
+    void markSepaCollected(String period);
 }

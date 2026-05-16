@@ -76,3 +76,28 @@ app:
     provider: ${PAYMENTS_PROVIDER:mock}
     success-url: https://portal.amg.cat/payments/success
     cancel-url: https://portal.amg.cat/payments/cancel
+
+  gocardless:
+    provider: ${GOCARDLESS_PROVIDER:mock}
+    api-url: https://api.gocardless.com
+    sandbox-url: https://api-sandbox.gocardless.com
+    webhook-secret: ${GOCARDLESS_WEBHOOK_SECRET:}
+
+  infraops:
+    enabled: true
+    collect-cron: "0 */5 * * * ?"
+    retention-days: 7
+    notification-cooldown-hours: 24
+    thresholds:
+      cpu-warn: ${INFRAOPS_CPU_WARN_THRESHOLD:80}
+      cpu-crit: 95
+      ram-warn: ${INFRAOPS_RAM_WARN_THRESHOLD:85}
+      ram-crit: 95
+      disk-warn: ${INFRAOPS_DISK_WARN_THRESHOLD:75}
+      disk-crit: 90
+      db-connections-warn: ${INFRAOPS_DB_CONN_WARN_THRESHOLD:80}
+      tenants-n8n-warn: 30
+      tenants-cloud-warn: 50
+    telegram:
+      bot-token: ${TELEGRAM_BOT_TOKEN:}
+      chat-id: ${TELEGRAM_CHAT_ID:}

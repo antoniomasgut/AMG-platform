@@ -1,6 +1,5 @@
 package com.amg.digitalitzacio.finops.application;
 
-import com.amg.digitalitzacio.billing.domain.Budget;
 import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.finops.api.dto.*;
 import com.amg.digitalitzacio.finops.domain.*;
@@ -13,8 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Map;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,10 @@ public class FinOpsOrchestrator implements FinOpsService {
     private final InvoiceRepository invoiceRepository;
     private final ExpenseRepository expenseRepository;
     private final BudgetRepository budgetRepository;
+    private final SepaMandateRepository sepaMandateRepository;
+    private final MonthlyInvoiceRepository monthlyInvoiceRepository;
+    private final BillingCalculator billingCalculator;
+    private final SepaXmlGenerator sepaXmlGenerator;
 
     @Override
     @Transactional
@@ -224,5 +230,154 @@ public class FinOpsOrchestrator implements FinOpsService {
                 inv.getCurrency(), inv.getVerifactuStatus().name(),
                 inv.getInvoicePdfUrl(), inv.getDueDate(), inv.getPaidAt(),
                 inv.getErrorMessage(), inv.getCreatedAt());
+    }
+
+    // --- SEPA ---
+
+    @Override
+    @Transactional
+    public SepaMandateResponse registerSepaMandate(UUID tenantId, SepaMandateRequest request) {
+        sepaMandateRepository.findByTenantIdAndIsActiveTrue(tenantId).ifPresent(m -> {
+            m.setIsActive(false);
+            m.setRevokedAt(Instant.now());
+            sepaMandateRepository.save(m);
+        });
+        long count = sepaMandateRepository.count();
+        var mandate = SepaMandate.builder()
+                .tenantId(tenantId)
+                .mandateId("AMG-" + java.time.Year.now().getValue() + "-" + String.format("%04d", count + 1))
+                .iban(request.iban())
+                .bic(request.bic())
+                .accountHolderName(request.accountHolderName())
+                .signedAt(request.signedAt())
+                .isActive(true)
+                .build();
+        mandate = sepaMandateRepository.save(mandate);
+        return toMandateResponse(mandate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SepaMandateResponse getSepaMandate(UUID tenantId) {
+        var mandate = sepaMandateRepository.findByTenantIdAndIsActiveTrue(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("No active SEPA mandate for tenant: " + tenantId));
+        return toMandateResponse(mandate);
+    }
+
+    @Override
+    @Transactional
+    public void revokeSepaMandate(UUID tenantId) {
+        var mandate = sepaMandateRepository.findByTenantIdAndIsActiveTrue(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("No active SEPA mandate for tenant: " + tenantId));
+        mandate.setIsActive(false);
+        mandate.setRevokedAt(Instant.now());
+        sepaMandateRepository.save(mandate);
+    }
+
+    // --- Monthly invoices ---
+
+    @Override
+    @Transactional
+    public List<MonthlyInvoiceResponse> generateMonthlyInvoices(String period) {
+        // Obtenir tots els tenants que tenen configuració Holded
+        var configs = holdedConfigRepository.findAll();
+        var results = new ArrayList<MonthlyInvoiceResponse>();
+
+        for (var config : configs) {
+            var tenantId = config.getTenantId();
+            if (monthlyInvoiceRepository.findByTenantIdAndPeriod(tenantId, period).isPresent()) continue;
+
+            var amount = billingCalculator.calculateMonthlyAmount(tenantId, period);
+            if (amount.compareTo(BigDecimal.ZERO) == 0) continue;
+
+            var holdedInvoiceId = finOpsClient.createInvoice(
+                    config.getHoldedContactId() != null ? config.getHoldedContactId() : "UNKNOWN",
+                    amount,
+                    amount.multiply(new BigDecimal("0.21")),
+                    "Quota mensual serveis AMG – " + period,
+                    null);
+
+            var sepaMandate = sepaMandateRepository.findByTenantIdAndIsActiveTrue(tenantId);
+            LocalDate collectionDate = sepaMandate.map(m -> LocalDate.now().withDayOfMonth(5)).orElse(null);
+
+            var invoice = MonthlyInvoice.builder()
+                    .tenantId(tenantId)
+                    .period(period)
+                    .holdedInvoiceId(holdedInvoiceId)
+                    .invoiceNumber("F-MENS-" + period + "-" + String.format("%03d", results.size() + 1))
+                    .amount(amount)
+                    .status(InvoiceStatus.SENT)
+                    .sepaCollectionDate(collectionDate)
+                    .sepaCollected(false)
+                    .build();
+            invoice = monthlyInvoiceRepository.save(invoice);
+            results.add(toMonthlyInvoiceResponse(invoice));
+        }
+        return results;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MonthlyInvoiceResponse getMonthlyInvoice(UUID id) {
+        var invoice = monthlyInvoiceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Monthly invoice not found: " + id));
+        return toMonthlyInvoiceResponse(invoice);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<MonthlyInvoiceResponse> listMonthlyInvoices(UUID tenantId, String period, int page, int size) {
+        var pageable = PageRequest.of(page, size);
+        if (tenantId != null) return monthlyInvoiceRepository.findByTenantId(tenantId, pageable).map(this::toMonthlyInvoiceResponse);
+        if (period != null) return monthlyInvoiceRepository.findByPeriod(period, pageable).map(this::toMonthlyInvoiceResponse);
+        return monthlyInvoiceRepository.findAll(pageable).map(this::toMonthlyInvoiceResponse);
+    }
+
+    @Override
+    @Transactional
+    public byte[] exportSepaXml(String period) {
+        var mandates = sepaMandateRepository.findAllByIsActiveTrue();
+        var pendingInvoices = monthlyInvoiceRepository.findByPeriodAndSepaCollectedFalse(period);
+
+        var mandateMap = mandates.stream().collect(Collectors.toMap(SepaMandate::getTenantId, m -> m));
+
+        var entries = new ArrayList<SepaXmlGenerator.SepaPaymentEntry>();
+        for (var inv : pendingInvoices) {
+            var mandate = mandateMap.get(inv.getTenantId());
+            if (mandate == null) continue;
+            entries.add(new SepaXmlGenerator.SepaPaymentEntry(
+                    mandate.getMandateId(), mandate.getSignedAt(),
+                    mandate.getIban(), mandate.getAccountHolderName(),
+                    inv.getAmount(), "Quota mensual AMG – " + period));
+        }
+
+        return sepaXmlGenerator.generate("ES0000000000000000000000", "AMG Digitalitzacio SL",
+                "ES12ZZZ12345678", entries);
+    }
+
+    @Override
+    @Transactional
+    public void markSepaCollected(String period) {
+        var invoices = monthlyInvoiceRepository.findByPeriodAndSepaCollectedFalse(period);
+        var mandates = sepaMandateRepository.findAllByIsActiveTrue();
+        var tenantIdsWithMandate = mandates.stream().map(SepaMandate::getTenantId).collect(Collectors.toSet());
+
+        for (var inv : invoices) {
+            if (!tenantIdsWithMandate.contains(inv.getTenantId())) continue;
+            inv.setSepaCollected(true);
+            inv.setStatus(InvoiceStatus.PAID);
+            monthlyInvoiceRepository.save(inv);
+        }
+    }
+
+    private SepaMandateResponse toMandateResponse(SepaMandate m) {
+        return new SepaMandateResponse(m.getId(), m.getTenantId(), m.getMandateId(),
+                m.getIban(), m.getAccountHolderName(), m.getSignedAt(), m.getIsActive(), m.getCreatedAt());
+    }
+
+    private MonthlyInvoiceResponse toMonthlyInvoiceResponse(MonthlyInvoice inv) {
+        return new MonthlyInvoiceResponse(inv.getId(), inv.getTenantId(), inv.getPeriod(),
+                inv.getInvoiceNumber(), inv.getAmount(), inv.getStatus().name(),
+                inv.getSepaCollectionDate(), inv.getSepaCollected(), inv.getInvoicePdfUrl(), inv.getCreatedAt());
     }
 }

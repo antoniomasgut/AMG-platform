@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.payments.application;
 
+import com.amg.digitalitzacio.gocardless.api.dto.ProviderSummaryResponse;
 import com.amg.digitalitzacio.payments.api.dto.*;
 import org.springframework.data.domain.Page;
 
@@ -15,4 +16,5 @@ public interface PaymentService {
     Page<PaymentResponse> listPayments(UUID tenantId, String status, int page, int size);
     PaymentDashboardResponse getDashboard(UUID tenantId);
     WebhookResponse processWebhook(WebhookRequest request);
+    ProviderSummaryResponse getProviders(UUID tenantId);
 }

@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.payments.api;
 
+import com.amg.digitalitzacio.gocardless.api.dto.ProviderSummaryResponse;
 import com.amg.digitalitzacio.payments.api.dto.*;
 import com.amg.digitalitzacio.payments.application.PaymentService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
@@ -79,5 +80,11 @@ public class PaymentController {
     @ResponseStatus(HttpStatus.OK)
     public WebhookResponse webhook(@RequestBody WebhookRequest request) {
         return paymentService.processWebhook(request);
+    }
+
+    @GetMapping("/tenants/{tenantId}/providers")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ProviderSummaryResponse getProviders(@PathVariable UUID tenantId) {
+        return paymentService.getProviders(tenantId);
     }
 }

@@ -1,14 +1,17 @@
 # Mòdul 08: FinOps — Facturació amb Holded + Verifactu
 
-> **Versió:** 1.0
-> **Data:** 2026-05-13
+> **Versió:** 2.0
+> **Data:** 2026-05-16
 > **Dependències:** Mòdul 01 (Auth), Mòdul 02 (Vault), Mòdul 07 (Billing)
 
 ---
 
 ## 1. Objectius
 
-- Crear **factures a Holded** automàticament quan un pressupost és acceptat (Mòdul 07 Billing)
+- Crear **factures de setup a Holded** automàticament quan un pressupost és acceptat (Mòdul 07 Billing)
+- Crear **factures mensuals recurrents** automàticament a final de mes per a tots els tenants actius
+- Gestionar **mandats SEPA** per a la domiciliació bancària de les quotes mensuals
+- Generar el **fitxer SEPA XML (pain.008)** per pujar al banc i executar el càrrec mensual
 - Enviar factures al sistema **Verifactu** de l'AEAT (obligatori per a autònoms/empreses a Espanya)
 - Sincronitzar estats de cobrament entre Holded i la plataforma
 - Gestionar **clients (contactes)** a Holded automàticament
@@ -22,7 +25,10 @@
 
 - **HoldedClient** (Interface + Mock + Real): Abstracció per cridar l'API REST de Holded
 - **Sincronització de contactes**: Quan es crea un tenant/client a la plataforma, es crea automàticament a Holded
-- **Creació de factures**: Quan un pressupost (Budget) passa a `ACCEPTED`, es genera la factura a Holded
+- **Factures de setup**: Quan un pressupost (Budget) passa a `ACCEPTED`, es genera la factura a Holded
+- **Factures mensuals recurrents**: Job programat a final de mes — genera una factura per tenant amb tots els serveis actius (càlcul pro-rata primer mes via Mòdul 07 Billing)
+- **Mandats SEPA**: Registre d'IBAN i mandat per tenant per a domiciliació bancària
+- **Fitxer SEPA XML (pain.008)**: Generació del fitxer per pujar al banc i executar els càrrecs mensuals
 - **Enviament a Verifactu**: Holded ja envia automàticament a Verifactu (tots els plans ho inclouen)
 - **Estat de cobrament**: Consultar estat de factures a Holded (pagada, pendent, vençuda)
 - **Dashboard FinOps**: Resum de facturació mensual, impagats, ingressos pendents
@@ -33,7 +39,7 @@
 
 - Gestió de nòmines / RRHH (Holded ho té però no ho integrem)
 - Inventari (Holded ho té com a gemma apart, +25 €/mes)
-- Facturació recurrent automàtica (es farà manualment per ara)
+- Pagaments recurrents amb Stripe (la quota mensual és via SEPA, no Stripe)
 - Conciliació bancària automàtica (Holded ho fa, però no ho exposem)
 
 ### 2.3 Actors
@@ -91,6 +97,50 @@ Factura creada a Holded des de la plataforma.
 | createdAt | Instant | @CreatedDate | |
 | updatedAt | Instant | @LastModifiedDate | |
 
+#### SepaMandate (Mandat SEPA per domiciliació mensual)
+
+Registra l'IBAN i les dades de mandat SEPA de cada tenant per a la domiciliació automàtica de les quotes mensuals.
+
+| Camp | Tipus | Mapeig JPA | Descripció |
+|------|-------|-----------|------------|
+| id | UUID | @Id @GeneratedValue | |
+| tenantId | UUID | @Column(nullable=false, unique=true) | FK a Tenant (1 mandat per tenant) |
+| mandateId | String(35) | @Column(nullable=false, unique=true) | Identificador del mandat SEPA (ex: AMG-2026-0001) |
+| iban | String(34) | @Column(nullable=false) | IBAN del compte del client |
+| bic | String(11) | @Column | BIC/SWIFT (opcional, calculable des de l'IBAN) |
+| accountHolderName | String(100) | @Column(nullable=false) | Titular del compte |
+| signedAt | LocalDate | @Column(nullable=false) | Data de signatura del mandat |
+| isActive | Boolean | @Column(nullable=false) | Si el mandat és actiu |
+| revokedAt | Instant | @Column | Si el client ha revocat el mandat |
+| createdAt | Instant | @CreatedDate | |
+| updatedAt | Instant | @LastModifiedDate | |
+
+**Notes:**
+- `mandateId` es genera automàticament: `AMG-{any}-{sequència}` (ex: AMG-2026-0001)
+- Un tenant sense `SepaMandate` actiu rep la factura per email i paga per transferència manual
+- El `signedAt` és la data en que el client ha autoritzat el mandat (paper o digitalment)
+
+#### MonthlyInvoice (Registre de factura mensual recurrent)
+
+Registra cada factura mensual generada automàticament. Separat de `Invoice` (setup) per claredat.
+
+| Camp | Tipus | Mapeig JPA | Descripció |
+|------|-------|-----------|------------|
+| id | UUID | @Id @GeneratedValue | |
+| tenantId | UUID | @Column(nullable=false) | FK a Tenant |
+| period | String(7) | @Column(nullable=false) | Període facturat (ex: 2026-05) |
+| holdedInvoiceId | String(50) | @Column(unique=true) | ID de la factura a Holded |
+| invoiceNumber | String(20) | @Column | Número de factura (ex: F-MENS-2026-05-001) |
+| amount | BigDecimal | @Column(nullable=false) | Import total (suma de totes les línies) |
+| status | InvoiceStatus | @Enumerated(STRING) | PENDING, SENT, PAID, OVERDUE, CANCELLED |
+| sepaCollectionDate | LocalDate | @Column | Data prevista de càrrec SEPA |
+| sepaCollected | Boolean | @Column | Si s'ha inclòs al fitxer SEPA del mes |
+| invoicePdfUrl | String(500) | @Column | URL del PDF a Holded |
+| createdAt | Instant | @CreatedDate | |
+| updatedAt | Instant | @LastModifiedDate | |
+
+**Restricció única:** `(tenantId, period)` — una sola factura mensual per tenant per mes.
+
 #### Expense (Despeses eventuals)
 
 Per gestionar despeses associades a un tenant (ex: compra de domini).
@@ -134,21 +184,45 @@ Tots els endpoints porten prefix `/api/v1/finops`. Tots requereixen JWT + autent
 | POST | /api/v1/finops/configure | SUPER_ADMIN | Configurar Holded per un tenant (API Key + company ID) |
 | GET | /api/v1/finops/configure/{tenantId} | SUPER_ADMIN, ADMIN | Veure configuració Holded del tenant |
 | POST | /api/v1/finops/configure/{tenantId}/sync | SUPER_ADMIN | Forçar sincronització contacte → Holded |
-| GET | /api/v1/finops/invoices | SUPER_ADMIN, ADMIN | Llistar factures (paginat, filtre per tenant/estat/data) |
+| GET | /api/v1/finops/invoices | SUPER_ADMIN, ADMIN | Llistar factures de setup (paginat, filtre per tenant/estat/data) |
 | GET | /api/v1/finops/invoices/{invoiceId} | SUPER_ADMIN, ADMIN, CLIENT | Detall de factura (CLIENT només les seves) |
 | GET | /api/v1/finops/invoices/{invoiceId}/pdf | SUPER_ADMIN, ADMIN, CLIENT | Descarregar PDF de factura (redirect a Holded) |
 | GET | /api/v1/finops/dashboard | SUPER_ADMIN, ADMIN | Dashboard FinOps del tenant |
 | GET | /api/v1/finops/dashboard/global | SUPER_ADMIN | Dashboard global de tots els tenants |
 | POST | /api/v1/finops/webhook | CAP DE LES DUES (públic amb API Key pròpia) | Webhook de Holded per notificacions de cobrament |
+| POST | /api/v1/finops/tenants/{tenantId}/sepa-mandate | SUPER_ADMIN, ADMIN | Registrar mandat SEPA (IBAN + titular + data signatura) |
+| GET | /api/v1/finops/tenants/{tenantId}/sepa-mandate | SUPER_ADMIN, ADMIN | Veure mandat SEPA del tenant |
+| DELETE | /api/v1/finops/tenants/{tenantId}/sepa-mandate | SUPER_ADMIN | Revocar mandat SEPA |
+| GET | /api/v1/finops/monthly-invoices | SUPER_ADMIN, ADMIN | Llistar factures mensuals (filtre per period/tenant/estat) |
+| GET | /api/v1/finops/monthly-invoices/{id} | SUPER_ADMIN, ADMIN, CLIENT | Detall factura mensual |
+| POST | /api/v1/finops/monthly-invoices/generate | SUPER_ADMIN | Generar factures mensuals del mes actual (normalment és automàtic) |
+| GET | /api/v1/finops/sepa/export?period=2026-05 | SUPER_ADMIN | Descarregar fitxer SEPA XML pain.008 per al mes indicat |
+| POST | /api/v1/finops/sepa/mark-collected?period=2026-05 | SUPER_ADMIN | Marcar factures SEPA del mes com a cobrades (un cop el banc ha executat el càrrec) |
 
 ### Integració automàtica (no endpoints)
 
-Quan un **Budget** passa a `ACCEPTED` (Mòdul 07):
+**Factura de setup** — quan un `Budget` passa a `ACCEPTED` (Mòdul 07):
 1. Es crea `Invoice` a la BD (status PENDING)
 2. Es crida HoldedClient.createInvoice() → Holded crea la factura
 3. Es guarda holdedInvoiceId i invoiceNumber
 4. Holded envia automàticament a Verifactu
 5. L'Invoice passa a SENT
+
+**Factura mensual** — job programat `@Scheduled(cron = "0 0 1 * * ?")` (dia 1 de cada mes):
+1. Obtenir tots els tenants amb almenys 1 `TenantService` en estat `IMPLEMENTATION_ACCEPTED`
+2. Per cada tenant, calcular l'import mensual via `BillingCalculator.calculateMonthlyAmount(tenantId, period)`
+   - Pro-rata per serveis activats durant el mes anterior
+   - Import complet per serveis activats en mesos previs
+3. Crear `MonthlyInvoice` a la BD (status PENDING)
+4. Crear factura a Holded via `HoldedClient.createInvoice()` amb línies per servei
+5. Si el tenant té `SepaMandate` actiu → `sepaCollectionDate = dia 5 del mes actual`
+6. `MonthlyInvoice.status = SENT`
+
+**Generació SEPA XML** — sota demanda via `GET /api/v1/finops/sepa/export?period=`:
+1. Recollir totes les `MonthlyInvoice` del període amb `sepaCollected = false` i tenant amb mandat actiu
+2. Generar fitxer `pain.008` (SEPA Core Direct Debit) format XML
+3. El SUPER_ADMIN descarrega el fitxer i el puja al portal del banc
+4. Trucar `POST /sepa/mark-collected` per marcar les factures com a `PAID` i `sepaCollected = true`
 
 ---
 
@@ -163,9 +237,9 @@ public interface FinOpsClient {
     void updateContact(String holdedContactId, String tenantName, String email, String phone);
     boolean contactExists(String holdedContactId);
     
-    // Factures
+    // Factures (setup i mensuals — Holded no distingeix)
     String createInvoice(String holdedContactId, BigDecimal amount, BigDecimal taxAmount,
-                         String description, String dueDate);
+                         List<InvoiceLineDto> lines, String dueDate, String description);
     InvoiceStatusDto getInvoiceStatus(String holdedInvoiceId);
     String getInvoicePdfUrl(String holdedInvoiceId);
     void cancelInvoice(String holdedInvoiceId);
@@ -177,6 +251,29 @@ public interface FinOpsClient {
     boolean isConnected();
 }
 ```
+
+### 5.5 SepaXmlGenerator
+
+Genera el fitxer SEPA `pain.008` (Core Direct Debit) per a la col·lecció mensual:
+
+```java
+public interface SepaXmlGenerator {
+    byte[] generate(String creditorIban, String creditorBic, String creditorName,
+                    String creditorId, List<SepaPaymentEntry> entries);
+}
+
+public record SepaPaymentEntry(
+    String mandateId,
+    LocalDate mandateSignatureDate,
+    String debtorIban,
+    String debtorBic,
+    String debtorName,
+    BigDecimal amount,
+    String remittanceInfo   // Ex: "Quota mensual mai 2026 – Landing Pro, WhatsApp"
+) {}
+```
+
+La implementació usa la biblioteca **`com.github.dbmdz:sepa-pain`** o construcció manual XML seguint l'esquema ISO 20022.
 
 ### 5.2 Implementacions
 
@@ -198,8 +295,20 @@ public interface FinOpsService {
     String getInvoicePdfUrl(UUID invoiceId, UUID currentTenantId);
     void cancelInvoice(UUID invoiceId);
     
-    // Automàtic (cridat des de Billing)
+    // Automàtic (cridat des de Billing en acceptar pressupost)
     InvoiceResponse createInvoiceFromBudget(UUID budgetId);
+    
+    // Facturació mensual recurrent
+    List<MonthlyInvoiceResponse> generateMonthlyInvoices(String period);  // period = "2026-05"
+    MonthlyInvoiceResponse getMonthlyInvoice(UUID id);
+    Page<MonthlyInvoiceResponse> listMonthlyInvoices(String period, UUID tenantId, String status, int page, int size);
+    
+    // SEPA
+    SepaMandateResponse registerSepaMandate(UUID tenantId, SepaMandateRequest request);
+    SepaMandateResponse getSepaMandate(UUID tenantId);
+    void revokeSepaMandate(UUID tenantId);
+    byte[] exportSepaXml(String period);
+    void markSepaCollected(String period);
     
     // Dashboard
     FinOpsDashboardResponse getDashboard(UUID tenantId);
@@ -347,5 +456,35 @@ Necessitem WebClient per cridar l'API REST de Holded (la implementació real).
 |---------|-----------|------|-----------|
 | HoldedConfig | HoldedConfigRepository | HoldedConfigRequest, HoldedConfigResponse | configure, get, sync |
 | Invoice | InvoiceRepository | InvoiceResponse, InvoiceListResponse | llistar, detall, pdf, cancel·lar |
+| **SepaMandate** | **SepaMandateRepository** | **SepaMandateRequest, SepaMandateResponse** | **register, get, revoke** |
+| **MonthlyInvoice** | **MonthlyInvoiceRepository** | **MonthlyInvoiceResponse** | **generate, list, detall, sepa-export, mark-collected** |
 | Expense | ExpenseRepository | ExpenseRequest, ExpenseResponse | (futur) |
 | FinOpsClient | — | — | interface + 2 implementacions |
+| **SepaXmlGenerator** | — | **SepaPaymentEntry** | — (interna, no endpoint) |
+
+---
+
+## 13. Flux mensual complet (exemple)
+
+```
+Dia 1 de juny 2026 (automàtic):
+  MonthlyBillingJob.run()
+    → FinOpsService.generateMonthlyInvoices("2026-05")
+      Per cada tenant actiu:
+        → BillingCalculator.calculateMonthlyAmount(tenantId, "2026-05")
+           (pro-rata per serveis activats al maig; complet per serveis antics)
+        → HoldedClient.createInvoice(contactId, amount, lines, dueDate)
+        → MonthlyInvoice creat, status=SENT, sepaCollected=false
+        
+Dia 3 de juny (manual SUPER_ADMIN):
+  GET /api/v1/finops/sepa/export?period=2026-05
+    → SepaXmlGenerator.generate(entries) → pain008.xml descarregat
+  
+  SUPER_ADMIN puja el pain008.xml al portal CaixaBanc/Sabadell
+  Banc executa càrrecs dia 5 de juny
+
+Dia 6 de juny (manual SUPER_ADMIN):
+  POST /api/v1/finops/sepa/mark-collected?period=2026-05
+    → MonthlyInvoice.status = PAID, sepaCollected = true
+    → Holded marca factures com a cobrades
+```
