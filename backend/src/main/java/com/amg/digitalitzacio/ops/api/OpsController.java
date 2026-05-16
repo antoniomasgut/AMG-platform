@@ -3,7 +3,6 @@ package com.amg.digitalitzacio.ops.api;
 import com.amg.digitalitzacio.ops.api.dto.*;
 import com.amg.digitalitzacio.ops.application.OpsService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,19 +50,6 @@ public class OpsController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public OpsDashboardResponse dashboard() {
         return opsService.getDashboard();
-    }
-
-    @PostMapping("/api/v1/ops/backups")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public BackupResponse startBackup(@RequestBody BackupRequest request) {
-        return opsService.startBackup(request.type(), request.description());
-    }
-
-    @GetMapping("/api/v1/ops/backups")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public List<BackupResponse> listBackups(@RequestParam(required = false) String type) {
-        return opsService.listBackups(type);
     }
 
     @GetMapping("/api/v1/ops/logs/{serviceName}")

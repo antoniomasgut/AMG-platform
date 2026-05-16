@@ -151,23 +151,26 @@ class OpsControllerTest {
 
     @Test
     void tc09_startBackup_returns202() throws Exception {
-        var request = new com.amg.digitalitzacio.ops.api.dto.BackupRequest("DATABASE", "Manual backup");
+        // El backup s'ha migrat al mòdul 18: POST /api/v1/ops/backups → BackupController
+        var request = new com.amg.digitalitzacio.backup.api.dto.StartBackupRequest("MANUAL_FULL", null);
 
         mockMvc.perform(post("/api/v1/ops/backups")
                         .header("Authorization", "Bearer " + superAdminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isAccepted())
-                .andExpect(jsonPath("$.type").value("DATABASE"))
-                .andExpect(jsonPath("$.status").value("SUCCESS"));
+                .andExpect(jsonPath("$.type").value("MANUAL_FULL"))
+                .andExpect(jsonPath("$.status").isString());
     }
 
     @Test
     void tc10_listBackups_returns200() throws Exception {
+        // El llistat s'ha migrat al mòdul 18: GET /api/v1/ops/backups → BackupController
         mockMvc.perform(get("/api/v1/ops/backups")
                         .header("Authorization", "Bearer " + superAdminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.totalElements").isNumber());
     }
 
     @Test
