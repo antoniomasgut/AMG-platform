@@ -4,6 +4,7 @@ import com.amg.digitalitzacio.automations.api.dto.*;
 import com.amg.digitalitzacio.automations.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -15,11 +16,13 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AutomationOrchestrator implements AutomationService {
 
     private final WorkflowTemplateRepository workflowTemplateRepository;
     private final TenantWorkflowRepository tenantWorkflowRepository;
     private final WorkflowExecutionRepository workflowExecutionRepository;
+    private final N8nClient n8nClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -45,8 +48,16 @@ public class AutomationOrchestrator implements AutomationService {
                 .build();
 
         if (template.getActivationType() == WorkflowActivationType.AUTOMATIC) {
-            workflow.setStatus(TenantWorkflowStatus.DEPLOYED);
-            workflow.setN8nWorkflowId(UUID.randomUUID().toString());
+            var result = n8nClient.deployWorkflow(template.getN8nWorkflowJson());
+            if (result != null) {
+                workflow.setN8nWorkflowId(result.id());
+                workflow.setN8nWebhookUrl(result.webhookUrl());
+                workflow.setStatus(TenantWorkflowStatus.DEPLOYED);
+                n8nClient.activateWorkflow(result.id());
+            } else {
+                workflow.setStatus(TenantWorkflowStatus.ERROR);
+                log.warn("Failed to auto-deploy workflow for template {}", template.getKey());
+            }
         }
 
         workflow = tenantWorkflowRepository.save(workflow);
@@ -57,16 +68,27 @@ public class AutomationOrchestrator implements AutomationService {
     @Transactional
     public WorkflowResponse deployWorkflow(UUID workflowId) {
         var workflow = findActiveWorkflow(workflowId);
-        workflow.setStatus(TenantWorkflowStatus.DEPLOYED);
-        workflow.setN8nWorkflowId(UUID.randomUUID().toString());
+        var template = findTemplate(workflow.getTemplateId());
+        var result = n8nClient.deployWorkflow(template.getN8nWorkflowJson());
+        if (result != null) {
+            workflow.setN8nWorkflowId(result.id());
+            workflow.setN8nWebhookUrl(result.webhookUrl());
+            workflow.setStatus(TenantWorkflowStatus.DEPLOYED);
+        } else {
+            workflow.setStatus(TenantWorkflowStatus.ERROR);
+            log.warn("Failed to deploy workflow {}", workflowId);
+        }
         workflow = tenantWorkflowRepository.save(workflow);
-        return toWorkflowResponse(workflow, findTemplate(workflow.getTemplateId()));
+        return toWorkflowResponse(workflow, template);
     }
 
     @Override
     @Transactional
     public WorkflowResponse activateWorkflow(UUID workflowId) {
         var workflow = findActiveWorkflow(workflowId);
+        if (workflow.getN8nWorkflowId() != null) {
+            n8nClient.activateWorkflow(workflow.getN8nWorkflowId());
+        }
         workflow.setStatus(TenantWorkflowStatus.ACTIVE);
         workflow = tenantWorkflowRepository.save(workflow);
         return toWorkflowResponse(workflow, findTemplate(workflow.getTemplateId()));
@@ -76,6 +98,9 @@ public class AutomationOrchestrator implements AutomationService {
     @Transactional
     public WorkflowResponse deactivateWorkflow(UUID workflowId) {
         var workflow = findActiveWorkflow(workflowId);
+        if (workflow.getN8nWorkflowId() != null) {
+            n8nClient.deactivateWorkflow(workflow.getN8nWorkflowId());
+        }
         workflow.setStatus(TenantWorkflowStatus.DISABLED);
         workflow = tenantWorkflowRepository.save(workflow);
         return toWorkflowResponse(workflow, findTemplate(workflow.getTemplateId()));
@@ -117,6 +142,9 @@ public class AutomationOrchestrator implements AutomationService {
     @Transactional
     public void deleteWorkflow(UUID workflowId) {
         var workflow = findActiveWorkflow(workflowId);
+        if (workflow.getN8nWorkflowId() != null) {
+            n8nClient.deleteWorkflow(workflow.getN8nWorkflowId());
+        }
         workflow.setIsActive(false);
         workflow.setStatus(TenantWorkflowStatus.DISABLED);
         tenantWorkflowRepository.save(workflow);
@@ -142,9 +170,11 @@ public class AutomationOrchestrator implements AutomationService {
     @Override
     @Transactional(readOnly = true)
     public HealthResponse health() {
+        var n8nConnected = n8nClient.isConnected();
+        var n8nVersion = n8nClient.getVersion();
         var activeWorkflows = (int) tenantWorkflowRepository.countByTenantIdAndStatus(
                 null, TenantWorkflowStatus.ACTIVE);
-        return new HealthResponse(true, "1.80.0", Math.max(0, activeWorkflows), 0);
+        return new HealthResponse(n8nConnected, n8nVersion, Math.max(0, activeWorkflows), 0);
     }
 
     private TenantWorkflow findActiveWorkflow(UUID id) {

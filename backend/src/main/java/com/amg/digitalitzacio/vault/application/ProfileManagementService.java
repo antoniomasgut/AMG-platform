@@ -201,6 +201,7 @@ public class ProfileManagementService implements ProfileService {
                 .phaseId(null).profileId(null).name(request.name()).slug(request.slug())
                 .description(request.description()).type(ServiceType.valueOf(request.type()))
                 .cost(request.cost()).salePrice(request.salePrice()).isAddon(true)
+                .monthlyPrice(request.monthlyPrice() != null ? request.monthlyPrice() : BigDecimal.TEN)
                 .build();
         catalogServiceRepository.save(svc);
         return new ProfileResponse(null, null, null, null, null, List.of(), List.of(), null, null);

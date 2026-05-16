@@ -18,11 +18,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             SELECT u FROM User u
             WHERE (:role IS NULL OR u.role = :role)
             AND (:tenantId IS NULL OR u.tenantId = :tenantId)
-            AND (:search IS NULL OR LOWER(u.name) LIKE LOWER(CONCAT('%', :search, '%'))
-                 OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))
+            AND (:searchPattern IS NULL OR LOWER(u.name) LIKE :searchPattern
+                 OR LOWER(u.email) LIKE :searchPattern)
             """)
     Page<User> findAllFiltered(@Param("role") Role role,
                                @Param("tenantId") UUID tenantId,
-                               @Param("search") String search,
+                               @Param("searchPattern") String searchPattern,
                                Pageable pageable);
 }

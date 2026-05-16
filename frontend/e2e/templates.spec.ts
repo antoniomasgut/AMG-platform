@@ -5,7 +5,7 @@ const API_BASE = 'http://localhost:8080';
 async function loginViaAPI(page: any) {
   const resp = await page.request.post(`${API_BASE}/api/v1/auth/login`, {
     headers: { 'Content-Type': 'application/json' },
-    data: { email: 'superadmin@amg.com', password: 'admin123' },
+    data: { email: 'superadmin@test.com', password: 'admin123' },
   });
   const data = await resp.json();
   await page.goto('/ca/login');

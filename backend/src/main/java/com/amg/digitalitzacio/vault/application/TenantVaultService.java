@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.vault.application;
 
+import com.amg.digitalitzacio.shared.exception.ConflictException;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.vault.api.dto.*;
 import com.amg.digitalitzacio.vault.domain.*;
@@ -40,7 +41,7 @@ public class TenantVaultService implements VaultService {
                 .orElseThrow(() -> new ResourceNotFoundException("Profile not found: " + profileId));
 
         tenantProfileRepository.findByTenantIdAndProfileId(tenantId, profileId).ifPresent(tp -> {
-            if (tp.getIsActive()) throw new IllegalArgumentException("Profile already assigned to tenant");
+            if (tp.getIsActive()) throw new ConflictException("Profile already assigned to tenant");
         });
 
         var tp = TenantProfile.builder()
@@ -52,22 +53,24 @@ public class TenantVaultService implements VaultService {
         var totalPrice = BigDecimal.ZERO;
 
         for (var phase : phases) {
-            tenantPhaseRepository.findByTenantIdAndPhaseId(tenantId, phase.getId()).ifPresent(tph -> {});
-
-            var tph = TenantPhase.builder()
-                    .tenantId(tenantId).profileId(profileId).phaseId(phase.getId()).build();
-            tenantPhaseRepository.save(tph);
+            if (tenantPhaseRepository.findByTenantIdAndPhaseId(tenantId, phase.getId()).isEmpty()) {
+                var tph = TenantPhase.builder()
+                        .tenantId(tenantId).profileId(profileId).phaseId(phase.getId()).build();
+                tenantPhaseRepository.save(tph);
+            }
 
             var services = catalogServiceRepository.findByPhaseIdOrderBySortOrder(phase.getId());
             var phaseTotal = BigDecimal.ZERO;
             for (var svc : services) {
-                tenantServiceRepository.findByTenantIdAndServiceId(tenantId, svc.getId()).ifPresent(ts -> {});
-                var ts = TenantService.builder()
-                        .tenantId(tenantId).serviceId(svc.getId()).phaseId(phase.getId())
-                        .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : BigDecimal.ZERO)
-                        .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : BigDecimal.TEN)
-                        .build();
-                tenantServiceRepository.save(ts);
+                var existingTs = tenantServiceRepository.findByTenantIdAndServiceId(tenantId, svc.getId());
+                if (existingTs.isEmpty()) {
+                    var ts = TenantService.builder()
+                            .tenantId(tenantId).serviceId(svc.getId()).phaseId(phase.getId())
+                            .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : BigDecimal.ZERO)
+                            .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : BigDecimal.TEN)
+                            .build();
+                    tenantServiceRepository.save(ts);
+                }
                 phaseTotal = phaseTotal.add(svc.getSalePrice());
             }
 

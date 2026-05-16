@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.finops.application;
 import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.finops.api.dto.*;
 import com.amg.digitalitzacio.finops.domain.*;
+import com.amg.digitalitzacio.shared.exception.ConflictException;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -237,11 +238,16 @@ public class FinOpsOrchestrator implements FinOpsService {
     @Override
     @Transactional
     public SepaMandateResponse registerSepaMandate(UUID tenantId, SepaMandateRequest request) {
-        sepaMandateRepository.findByTenantIdAndIsActiveTrue(tenantId).ifPresent(m -> {
-            m.setIsActive(false);
-            m.setRevokedAt(Instant.now());
-            sepaMandateRepository.save(m);
-        });
+        // tenant_id és unique — només es permet un mandat per tenant
+        if (sepaMandateRepository.findByTenantIdAndIsActiveTrue(tenantId).isPresent()) {
+            throw new ConflictException("Tenant already has an active SEPA mandate");
+        }
+
+        var existingInactive = sepaMandateRepository.findByTenantId(tenantId);
+        if (existingInactive.isPresent()) {
+            throw new ConflictException("SEPA mandate already exists for this tenant (revoked)");
+        }
+
         long count = sepaMandateRepository.count();
         var mandate = SepaMandate.builder()
                 .tenantId(tenantId)

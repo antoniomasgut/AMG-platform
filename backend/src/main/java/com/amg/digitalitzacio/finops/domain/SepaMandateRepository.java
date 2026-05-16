@@ -7,5 +7,6 @@ import java.util.UUID;
 
 public interface SepaMandateRepository extends JpaRepository<SepaMandate, UUID> {
     Optional<SepaMandate> findByTenantIdAndIsActiveTrue(UUID tenantId);
+    Optional<SepaMandate> findByTenantId(UUID tenantId);
     List<SepaMandate> findAllByIsActiveTrue();
 }

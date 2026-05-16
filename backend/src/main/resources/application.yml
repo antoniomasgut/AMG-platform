@@ -69,6 +69,7 @@ app:
     provider: ${FINOP_PROVIDER:mock}
     holded:
       api-url: https://api.holded.com/api/v1
+      api-key: ${HOLDED_API_KEY:}
       webhook-secret: ${HOLDED_WEBHOOK_SECRET:}
     default-due-days: 30
 
@@ -77,11 +78,36 @@ app:
     success-url: https://portal.amg.cat/payments/success
     cancel-url: https://portal.amg.cat/payments/cancel
 
+  stripe:
+    api-key: ${STRIPE_API_KEY:}
+
   gocardless:
     provider: ${GOCARDLESS_PROVIDER:mock}
     api-url: https://api.gocardless.com
     sandbox-url: https://api-sandbox.gocardless.com
     webhook-secret: ${GOCARDLESS_WEBHOOK_SECRET:}
+
+  prospecting:
+    provider: ${PROSPECTING_PROVIDER:mock}
+    google:
+      places-api-key: ${GOOGLE_PLACES_API_KEY:}
+      rate-limit-per-second: 10
+    enrichment:
+      timeout-seconds: 10
+      max-concurrent: 3
+    default-max-results: 50
+
+  automations:
+    provider: ${AUTOMATIONS_PROVIDER:mock}
+    n8n:
+      api-url: ${N8N_API_URL:http://localhost:5678/api/v1}
+      api-key: ${N8N_API_KEY:}
+
+  backup:
+    provider: ${BACKUP_PROVIDER:mock}
+    gcs:
+      bucket-name: ${GCS_BUCKET_NAME:amg-backups}
+      project-id: ${GCS_PROJECT_ID:}
 
   infraops:
     enabled: true

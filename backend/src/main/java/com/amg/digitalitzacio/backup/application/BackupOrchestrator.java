@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,10 @@ public class BackupOrchestrator implements BackupService {
     private final BackupExportLogRepository backupExportLogRepository;
     private final RestoreTaskRepository restoreTaskRepository;
     private final ObjectMapper objectMapper;
+    private final GcsClient gcsClient;
+
+    @Value("${app.backup.gcs.bucket-name}")
+    private String bucketName;
 
     @Override
     @Transactional
@@ -58,12 +63,17 @@ public class BackupOrchestrator implements BackupService {
 
         task = backupTaskRepository.save(task);
 
-        // Simulació d'exportació: marca com a completat immediatament
+        // Exporta un manifest JSON a GCS
+        var key = task.getId() + "/backup-" + now.toString().substring(0, 10) + ".manifest.json";
+        var manifest = ("{\"taskId\":\"" + task.getId() + "\",\"type\":\"" + type
+                + "\",\"scope\":\"" + task.getScope() + "\",\"startedAt\":\"" + now + "\"}").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        var archivePath = gcsClient.upload(bucketName, key, manifest, "application/json");
+
         task.setCompletedTenants(task.getTotalTenants());
         task.setStatus(BackupTaskStatus.COMPLETED);
         task.setCompletedAt(Instant.now());
-        task.setArchivePath("gcs://amg-backups/" + task.getId() + "/backup-" + now.toString().substring(0, 10) + ".tar.gz");
-        task.setArchiveSize(1024L * 1024L * 50); // 50 MB simulats
+        task.setArchivePath(archivePath);
+        task.setArchiveSize((long) manifest.length);
 
         task = backupTaskRepository.save(task);
         log.info("Backup task {} completat: type={}, scope={}", task.getId(), task.getType(), task.getScope());
@@ -100,6 +110,19 @@ public class BackupOrchestrator implements BackupService {
     public void deleteBackup(UUID id) {
         var task = backupTaskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("BackupTask not found: " + id));
+
+        // Elimina l'arxiu de GCS si existeix
+        var archivePath = task.getArchivePath();
+        if (archivePath != null && archivePath.startsWith("gs://")) {
+            var withoutPrefix = archivePath.substring(5); // "bucket/key"
+            var slashIdx = withoutPrefix.indexOf('/');
+            if (slashIdx > 0) {
+                var gcsBucket = withoutPrefix.substring(0, slashIdx);
+                var gcsKey = withoutPrefix.substring(slashIdx + 1);
+                gcsClient.delete(gcsBucket, gcsKey);
+            }
+        }
+
         backupExportLogRepository.deleteAll(
                 backupExportLogRepository.findByTaskIdOrderByStartedAt(id));
         backupTaskRepository.delete(task);
@@ -175,6 +198,10 @@ public class BackupOrchestrator implements BackupService {
     @Transactional
     public BackupTaskResponse exportTenant(UUID tenantId, UUID requestedBy) {
         var now = Instant.now();
+        var key = "tenant-" + tenantId + "/export-" + now.toString().substring(0, 10) + ".manifest.json";
+        var manifest = ("{\"tenantId\":\"" + tenantId + "\",\"exportedAt\":\"" + now + "\"}").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        var archivePath = gcsClient.upload(bucketName, key, manifest, "application/json");
+
         var task = BackupTask.builder()
                 .type(BackupTaskType.MANUAL_TENANT)
                 .status(BackupTaskStatus.COMPLETED)
@@ -187,8 +214,8 @@ public class BackupOrchestrator implements BackupService {
                 .startedAt(now)
                 .completedAt(now)
                 .retentionUntil(now.plus(Duration.ofDays(RETENTION_DAYS)))
-                .archivePath("gcs://amg-backups/tenant-" + tenantId + "/export-" + now.toString().substring(0, 10) + ".tar.gz")
-                .archiveSize(1024L * 1024L * 10) // 10 MB simulats
+                .archivePath(archivePath)
+                .archiveSize((long) manifest.length)
                 .build();
 
         task = backupTaskRepository.save(task);
