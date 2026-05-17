@@ -7,7 +7,7 @@ const nextConfig = {
   output: 'standalone',
   async rewrites() {
     return [
-      { source: '/api/:path*', destination: 'http://localhost:8080/api/:path*' },
+      { source: '/api/:path*', destination: `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8081'}/api/:path*` },
     ];
   },
   async headers() {
