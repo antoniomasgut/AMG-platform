@@ -1,0 +1,422 @@
+{
+  "common": {
+    "siteName": "AMG · Enginyeria Digital",
+    "tagline": "Automatització digital per a pimes de Mallorca",
+    "cta": "SOL·LICITAR DEMO",
+    "seeServices": "VEURE SERVEIS",
+    "learnMore": "SABER-NE MÉS"
+  },
+  "nav": {
+    "serveis": "Serveis",
+    "comFunciona": "Com funciona",
+    "preus": "Preus",
+    "contacte": "Contacte",
+    "iniciarSessio": "INICIAR SESSIÓ"
+  },
+  "hero": {
+    "title": "DEIXA DE PERDRE CLIENTS",
+    "titleAccent": "PER NO RESPONDRE AL WHATSAPP",
+    "subtitle": "Converteix el teu WhatsApp en una màquina de generar feina organitzada. Sense tecnicismes, sense complicacions.",
+    "cta": "DEMANA UNA DEMO",
+    "scrollDown": "DESPLAÇA'T PER SABER-NE MÉS"
+  },
+  "problem": {
+    "title": "EL TEU NEGOCI ET CONTROLA A TU?",
+    "items": [
+      "Clients que t'escriuen i esperen hores (o dies).",
+      "Consultes que no són urgents i t'interrompen la feina.",
+      "El caos de gestionar l'agenda a base de trucades.",
+      "Oportunitats de negoci que es perden per falta de seguiment."
+    ]
+  },
+  "services": {
+    "title": "SOLUCIONS A MIDA PER AL TEU NEGOCI",
+    "subtitle": "Tant si necessites una web senzilla com un sistema d'IA complet, tenim el pla perfecte.",
+    "profiles": [
+      {
+        "name": "Web Bàsica",
+        "tagline": "Presència digital essencial",
+        "price": "des de 29€/mes",
+        "features": [
+          "Landing page responsiva",
+          "Formulari de contacte",
+          "WhatsApp Business",
+          "SMTP corporatiu",
+          "Domini + DNS + SSL"
+        ]
+      },
+      {
+        "name": "Landing Premium",
+        "tagline": "La teva targeta de visita digital",
+        "price": "des de 49€/mes",
+        "features": [
+          "Landing Pro amb fotos",
+          "Galeria d'imatges",
+          "Agenda online",
+          "Recordatori 24h WhatsApp",
+          "Xat web integrat"
+        ]
+      },
+      {
+        "name": "Automatització",
+        "tagline": "Processos que funcionen sols",
+        "price": "des de 49€/mes",
+        "features": [
+          "CRM + Pipeline de vendes",
+          "Calculadora de pressupost",
+          "Reenganxament automàtic",
+          "Ressenya Google automàtica",
+          "Cobrament amb targeta"
+        ]
+      },
+      {
+        "name": "Assistant IA",
+        "tagline": "Intel·ligència artificial per al teu negoci",
+        "price": "des de 99€/mes",
+        "features": [
+          "Bot IA conversacional",
+          "RAG (respostes des de documents)",
+          "Classificació automàtica de consultes",
+          "Resposta immediata 24/7",
+          "Historial intel·ligent"
+        ]
+      },
+      {
+        "name": "Transformació Digital",
+        "tagline": "El teu negoci, totalment digitalitzat",
+        "price": "consultar",
+        "features": [
+          "Tots els serveis anteriors",
+          "Facturació electrònica",
+          "Workflows personalitzats n8n",
+          "Dashboard financer",
+          "Formació i acompanyament"
+        ]
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "COM FUNCIONA",
+    "steps": [
+      {
+        "number": "1",
+        "title": "Auditem el teu negoci",
+        "desc": "Analitzem els teus processos actuals i identifiquem oportunitats d'automatització."
+      },
+      {
+        "number": "2",
+        "title": "Ho posem en marxa en 48h",
+        "desc": "Configurem tot el sistema: web, WhatsApp, agenda, IA. Sense complicacions tècniques per a tu."
+      },
+      {
+        "number": "3",
+        "title": "Comencen els resultats",
+        "desc": "El teu negoci funciona sol. Més clients, menys feina, més control."
+      }
+    ]
+  },
+  "pricing": {
+    "title": "TARIFES PLANES, SENSE SORPRESES",
+    "plans": [
+      {
+        "name": "Bàsic",
+        "price": "29€",
+        "period": "/mes",
+        "features": [
+          "Landing page",
+          "WhatsApp Business",
+          "SMTP corporatiu",
+          "Domini + SSL",
+          "Suport per email"
+        ],
+        "cta": "COMENÇAR"
+      },
+      {
+        "name": "Intermedi",
+        "price": "49€",
+        "period": "/mes",
+        "features": [
+          "Tot del pla Bàsic",
+          "Landing Premium",
+          "Agenda online",
+          "CRM + Pipeline",
+          "Suport prioritari"
+        ],
+        "cta": "COMENÇAR",
+        "highlighted": true
+      },
+      {
+        "name": "Avançat",
+        "price": "99€",
+        "period": "/mes",
+        "features": [
+          "Tot del pla Intermedi",
+          "Assistant IA complet",
+          "Workflows automàtics",
+          "Facturació digital",
+          "Acompanyament dedicat"
+        ],
+        "cta": "COMENÇAR"
+      }
+    ]
+  },
+  "cta": {
+    "title": "LLEST PER DIGITALITZAR EL TEU NEGOCI?",
+    "subtitle": "En menys de 48 hores el teu negoci pot estar funcionant amb automatitzacions que et faran estalviar hores cada setmana.",
+    "button": "DEMANA UNA DEMO GRATUÏTA"
+  },
+  "footer": {
+    "description": "Automatització digital per a pimes de Mallorca. Webs, bots IA, CRM i molt més.",
+    "services": "Serveis",
+    "legal": "Legal",
+    "avisLegal": "Avís Legal",
+    "privacitat": "Política de Privacitat",
+    "termes": "Termes del Servei",
+    "contacte": "Contacte",
+    "copyright": "AMG Enginyeria Digital. Tots els drets reservats."
+  },
+  "auth": {
+    "login": {
+      "title": "ACCÉS AL PORTAL",
+      "subtitle": "T'enviem un enllaç màgic per email. Sense contrasenyes.",
+      "emailLabel": "Email corporatiu",
+      "emailPlaceholder": "tu@empresa.com",
+      "sendMagicLink": "ENVIAR MAGIC LINK",
+      "orPassword": "o amb contrasenya",
+      "usePassword": "Usar contrasenya",
+      "passwordTitle": "CONTRASENYA",
+      "passwordLabel": "Contrasenya",
+      "enter": "ENTRAR",
+      "back": "TORNAR",
+      "forgotPassword": "HAS OBLIDAT LA CONTRASENYA?",
+      "sentTitle": "COMPROVA EL TEU EMAIL",
+      "sentDesc": "Hem enviat un enllaç d'accés a",
+      "sentExpiry": "L'enllaç caduca en {minutes} min. Revisa la carpeta de spam si no el veus.",
+      "resent": "REENVIAR ENLLAÇ",
+      "useOtherEmail": "USAR UN ALTRE EMAIL",
+      "errorInvalidCredentials": "Credencials incorrectes",
+      "errorBlocked": "Compte blocat. Intenta-ho més tard o recupera la contrasenya.",
+      "errorTooManyAttempts": "Massa intents. Torna-ho a provar en uns minuts.",
+      "errorGeneral": "Error d'inici de sessió",
+      "entering": "ENTRANT...",
+      "sending": "ENVIANT..."
+    },
+    "forgotPassword": {
+      "title": "RECUPERAR CONTRASENYA",
+      "subtitle": "Introdueix el teu email i t'enviarem un enllaç per restablir la contrasenya.",
+      "emailLabel": "Email corporatiu",
+      "sendLink": "ENVIAR ENLLAÇ",
+      "sentTitle": "COMPROVA EL TEU EMAIL",
+      "sentDesc": "Si el correu existeix, rebràs un enllaç de recuperació a",
+      "sentExpiry": "L'enllaç caduca en {minutes} min. Revisa la carpeta de spam si no el veus.",
+      "backToLogin": "TORNAR AL LOGIN",
+      "sending": "ENVIANT...",
+      "error": "Error en enviar la sol·licitud"
+    },
+    "resetPassword": {
+      "title": "RESTABLIR CONTRASENYA",
+      "subtitle": "Introdueix la teva nova contrasenya.",
+      "newPasswordLabel": "Nova contrasenya",
+      "confirmLabel": "Confirmar contrasenya",
+      "update": "ACTUALITZAR CONTRASENYA",
+      "invalidLinkTitle": "ENLLAÇ INVÀLID",
+      "invalidLinkDesc": "Aquest enllaç de recuperació és invàlid o ha expirat.",
+      "successTitle": "CONTRASENYA ACTUALITZADA",
+      "successDesc": "Redirigint al login...",
+      "goToLogin": "ANAR AL LOGIN",
+      "updating": "ACTUALITZANT...",
+      "errorInvalidToken": "Enllaç de recuperació invàlid o expirat",
+      "errorMinLength": "La contrasenya ha de tenir almenys 4 caràcters",
+      "errorMismatch": "Les contrasenyes no coincideixen",
+      "errorGeneral": "Error en restablir la contrasenya"
+    }
+  },
+  "portal": {
+    "greeting": "Bon dia, {name}",
+    "subscription": {
+      "badge": "Suscripció activa",
+      "plan": "PLAN {name}",
+      "upToDate": "AL DIA",
+      "active": "En actiu",
+      "nextBilling": "Pròxim cobro",
+      "monthlyAmount": "Import mensual",
+      "role": "Rol",
+      "cycle": "Cicle {start} → {end}"
+    },
+    "services": {
+      "title": "Serveis actius",
+      "eyebrow": "Ús del mes",
+      "operational": "OPERATIU",
+      "manage": "GESTIONAR"
+    },
+    "invoices": {
+      "title": "Últimes factures",
+      "eyebrow": "Historial",
+      "viewAll": "VEURE TOTES"
+    },
+    "help": {
+      "title": "NECESSITES AJUDA?",
+      "description": "El teu tècnic assignat està disponible per respondre els teus dubtes.",
+      "contactTeam": "ESCRIURE AL EQUIP",
+      "viewTutorials": "VEURE TUTORIALS"
+    },
+    "sidebar": {
+      "myAccount": "El meu compte",
+      "dashboard": "Dashboard",
+      "services": "Serveis",
+      "invoices": "Factures",
+      "publicLanding": "Landing pública",
+      "support": "Suport",
+      "settings": "Configuració",
+      "admin": "Administració",
+      "users": "Usuaris",
+      "tenants": "Tenants"
+    },
+    "logout": "TANCAR SESSIÓ",
+    "loggingOut": "SORTINT..."
+  },
+  "legal": {
+    "cookies": {
+      "title": "Aquest web utilitza cookies",
+      "description": "Utilitzem cookies pròpies i de tercers per millorar la teva experiència i analitzar el trànsit.",
+      "acceptAll": "Acceptar totes",
+      "configure": "Configurar",
+      "accept": "D'ACORD"
+    },
+    "avis": {
+      "title": "Avís Legal",
+      "sections": {
+        "ownership": {
+          "title": "1. Dades del titular",
+          "content": "AMG Enginyeria Digital és una marca comercial de Antonio Más Gutiérrez, amb NIF 12345678A i domicili a Mallorca, Illes Balears. Aquest web és operat per Antonio Más Gutiérrez. Per a qualsevol consulta, pots contactar a través del correu electrònic hola@amg.cat."
+        },
+        "purpose": {
+          "title": "2. Finalitat del web",
+          "content": "El present web té com a finalitat principal oferir informació sobre els serveis d'automatització digital, desenvolupament web i intel·ligència artificial oferts per AMG Enginyeria Digital a petites i mitjanes empreses de Mallorca. Així mateix, permet als usuaris sol·licitar pressupostos i contractar els serveis oferts."
+        },
+        "terms": {
+          "title": "3. Condicions d'ús",
+          "content": "L'usuari es compromet a fer un ús adequat dels continguts i serveis oferts, i a no emprar-los per a activitats il·lícites o contràries a la bona fe. L'usuari es compromet a no realitzar cap acció que pugui danyar el funcionament del web."
+        }
+      },
+      "backToHome": "← Tornar a l'inici",
+      "lastUpdated": "Darrera actualització"
+    },
+    "privacitat": {
+      "title": "Política de Privacitat",
+      "sections": {
+        "controller": {
+          "title": "1. Responsable del tractament",
+          "content": "El responsable del tractament de les dades personals recollides en aquest web és Antonio Más Gutiérrez (AMG Enginyeria Digital)."
+        },
+        "dataCollected": {
+          "title": "2. Dades recollides",
+          "content": "Es recullen les següents dades: nom i cognoms, adreça de correu electrònic, número de telèfon, i informació de facturació quan es contracten serveis."
+        },
+        "purpose": {
+          "title": "3. Finalitat del tractament",
+          "content": "Les dades es tracten amb les següents finalitats: gestionar la sol·licitud de pressupostos, prestar els serveis contractats, enviar comunicacions comercials (amb consentiment previ), i complir amb obligacions legals."
+        },
+        "legalBasis": {
+          "title": "4. Base legal",
+          "content": "La base legal per al tractament de dades és: l'execució d'un contracte de serveis, el consentiment de l'interessat, i el compliment d'obligacions legals."
+        },
+        "rights": {
+          "title": "5. Drets de l'interessat",
+          "content": "L'usuari pot exercir els drets d'accés, rectificació, supressió, limitació, portabilitat i oposició enviant un email a hola@amg.cat."
+        },
+        "security": {
+          "title": "6. Mesures de seguretat",
+          "content": "S'apliquen mesures de seguretat tècniques i organitzatives adequades per protegir les dades personals, incloent xifratge AES-256 per a dades sensibles i accés restringit per rols."
+        }
+      },
+      "backToHome": "← Tornar a l'inici",
+      "lastUpdated": "Darrera actualització"
+    },
+    "termes": {
+      "title": "Termes del Servei",
+      "sections": {
+        "object": {
+          "title": "1. Objecte",
+          "content": "Aquests Termes del Servei regulen la contractació dels serveis d'automatització digital, desenvolupament web i intel·ligència artificial oferts per AMG Enginyeria Digital."
+        },
+        "services": {
+          "title": "2. Serveis",
+          "content": "AMG ofereix: desenvolupament de pàgines web, automatització de processos amb n8n, chatbots d'intel·ligència artificial, integració de WhatsApp Business, gestió de dominis i SSL, i consultoria digital."
+        },
+        "pricing": {
+          "title": "3. Preus i facturació",
+          "content": "Els preus es fixen segons el pressupost acordat amb el client. La facturació es realitza mensualment o segons el calendari acordat al contracte. Els preus no inclouen l'IVA."
+        },
+        "obligations": {
+          "title": "4. Obligacions del client",
+          "content": "El client es compromet a proporcionar la informació necessària per a la prestació dels serveis, a pagar les factures dins del termini acordat, i a no fer un ús indegut dels serveis contractats."
+        }
+      },
+      "backToHome": "← Tornar a l'inici",
+      "lastUpdated": "Darrera actualització"
+    }
+  },
+  "admin": {
+    "title": "Administració",
+    "users": {
+      "title": "Usuaris",
+      "new": "Nou usuari",
+      "edit": "Editar usuari",
+      "delete": "Eliminar usuari",
+      "deleteConfirm": "Estàs segur d'eliminar aquest usuari? Aquesta acció desactivarà el seu compte.",
+      "unlock": "Desbloquejar",
+      "unlockSuccess": "Usuari desblocat correctament",
+      "created": "Usuari creat correctament",
+      "updated": "Usuari actualitzat correctament",
+      "deleted": "Usuari eliminat correctament",
+      "fields": {
+        "email": "Email",
+        "name": "Nom",
+        "role": "Rol",
+        "tenant": "Tenant",
+        "password": "Contrasenya",
+        "isActive": "Actiu"
+      },
+      "status": {
+        "active": "Actiu",
+        "blocked": "Blocat",
+        "inactive": "Inactiu"
+      },
+      "roles": {
+        "SUPER_ADMIN": "Super Admin",
+        "ADMIN": "Admin",
+        "CLIENT": "Client"
+      },
+      "search": "Cercar usuaris...",
+      "noResults": "No s'han trobat usuaris",
+      "lastLogin": "Última connexió",
+      "never": "Mai"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "new": "Nou tenant",
+      "edit": "Editar tenant",
+      "created": "Tenant creat correctament",
+      "updated": "Tenant actualitzat correctament",
+      "fields": {
+        "name": "Nom",
+        "slug": "Slug",
+        "email": "Email",
+        "phone": "Telèfon",
+        "address": "Adreça",
+        "isActive": "Actiu"
+      },
+      "search": "Cercar tenants...",
+      "noResults": "No s'han trobat tenants"
+    },
+    "sidebar": {
+      "admin": "Administració",
+      "users": "Usuaris",
+      "tenants": "Tenants"
+    },
+    "save": "Guardar",
+    "cancel": "Cancel·lar",
+    "loading": "Carregant..."
+  }
+}

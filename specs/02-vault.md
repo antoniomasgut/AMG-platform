@@ -19,6 +19,7 @@
 - Permetre afegir serveis a la carta (ex: crear una landing) a un client o fase
 - Emmagatzemar de forma segura (xifrat AES-256-GCM) les credencials de cada servei
 - El CLIENT pot veure les seves pròpies credencials (valors emmascarats) al dashboard
+- Monitorització de facturació, cobraments i implementació per fase
 - Les credencials es poden verificar i rotar
 - **Dependències entre serveis**: per exemple, WhatsApp Business requereix una web o una pàgina de Facebook per verificar-se. Si el client no té cap dels dos, s'ha de crear una landing primer (creant una cadena de dependències)
 
@@ -35,8 +36,12 @@
 - CRUD de fases dins d'un perfil (ordre, nom)
 - CRUD de serveis dins d'una fase (tipus, credencials necessàries)
 - CRUD de camps de credencials per servei (apiKey, smtpHost, phoneId...)
-- Assignació de perfils a tenants amb seguiment de fase actual
+- Assignació de perfils a tenants amb estat complet per fase
 - Afegir serveis a la carta a un tenant (ex: landing extra)
+- Aprovació de fase per part del client (rebutjar o aprovar)
+- Facturació automàtica (a través de Mòdul 08) en aprovar fase
+- Cobrament automàtic (a través de Mòdul 09) en aprovar fase
+- Dashboard de monitorització: estat de cada fase, facturació i pagament
 - Formulari dinàmic de configuració: fase actual → mostrar serveis pendents → demanar credencials
 - **Configuració guiada remota**: enviar sol·licitud d'informació al client via `preferredChannel` (WhatsApp, Telegram, email) i reprendre automàticament en rebre resposta
 - **Cicle de vida complet del servei/fase amb 6 estats** (de pressupost a implementació acceptada):
@@ -52,15 +57,17 @@
 
 - Execució d'automatitzacions (es delega al mòdul 10 Automations / n8n)
 - Renderització de landings (mòdul 04 Engine)
-- Facturació (mòdul 07 Billing)
+- Facturació Verifactu (mòdul 08 FinOps)
+- Pagament Stripe (mòdul 09 Payments)
+- **Nota:** El Mòdul 02 defineix interfícies per als mòduls 08 i 09 (hooks que es criden en aprovar una fase)
 
 ### 2.3 Actors
 
 | Actor | Descripció | Permisos |
 |-------|-----------|----------|
 | SUPER_ADMIN | Propietari de la plataforma. | CRUD complet sobre perfils, fases, serveis, i credencials. Valors en clar. |
-| ADMIN | Personal operatiu. | Assigna perfils, configura serveis, veu credencials en clar. NO pot crear/eliminar perfils ni fases. |
-| CLIENT | Usuari final del tenant. | Veure els seus serveis i credencials (emmascarades). |
+| ADMIN | Personal operatiu. | Assigna perfils, configura serveis, veu credencials en clar, veu dashboard monitorització. NO pot crear/eliminar perfils ni fases. |
+| CLIENT | Usuari final del tenant. | Veure els seus serveis i credencials (emmascarades), aprovar/rebutjar fases, veure estat de la seva facturació. |
 
 ---
 
@@ -105,7 +112,7 @@ Defineix un servei concret dins d'una fase. Ex: "WhatsApp Business", "Landing Pr
 | Camp | Tipus | Mapeig JPA | Descripció |
 |------|-------|-----------|------------|
 | id | UUID | @Id @GeneratedValue | |
-| phaseId | UUID | @Column(nullable=false) | FK a Phase (pot ser null si és add-on) |
+| phaseId | UUID | @Column(nullable=true) | FK a Phase (null si add-on) |
 | name | String(100) | @Column(nullable=false) | Nom del servei |
 | slug | String(60) | @Column(unique, nullable=false) | Identificador |
 | description | String(255) | @Column | Descripció |
@@ -144,7 +151,7 @@ Defineix quines claus necessita un servei. Ex: servei "WhatsApp" requereix `apiK
 
 #### TenantProfile (Assignació de perfil a tenant)
 
-Quan s'assigna un perfil a un tenant, es crea un registre amb la fase actual.
+Quan s'assigna un perfil a un tenant, es crea un registre.
 
 | Camp | Tipus | Mapeig JPA | Descripció |
 |------|-------|-----------|------------|
@@ -154,7 +161,7 @@ Quan s'assigna un perfil a un tenant, es crea un registre amb la fase actual.
 | currentPhaseId | UUID | @Column(nullable=true) | Fase actual (NULL = tot completat) |
 | phaseStatus | Enum | @Enumerated(STRING) @Column(nullable=false) | Estat de la fase actual: `BUDGETING`, `BUDGET_ACCEPTED`, `CONFIGURING`, `AWAITING_CLIENT`, `READY_FOR_DELIVERY`, `COMPLETED`, `FUTURE_EXPANSION` |
 | startedAt | Instant | @CreatedDate | |
-| completedAt | Instant | @Column | Quan es completa tot el perfil |
+| completedAt | Instant | @Column(nullable=true) | Quan es completen totes les fases |
 
 **Restricció única:** `(tenantId, profileId)`
 
@@ -195,6 +202,14 @@ Cada servei (del perfil o add-on) té un registre per tenant amb seguiment del s
 | verifiedAt | Instant | @Column | Quan es va acceptar la implementació |
 | createdAt | Instant | @CreatedDate | |
 | updatedAt | Instant | @LastModifiedDate | |
+
+**Cicle d'estats del servei:**
+
+```
+PENDING ─── demanar dades al client ───→ AWAITING_CLIENT
+AWAITING_CLIENT ─── admin configura ───→ CONFIGURED
+CONFIGURED ─── client verifica ─────────→ VERIFIED
+```
 
 **Restricció única:** `(tenantId, serviceId)`
 
@@ -261,7 +276,7 @@ Registra cada intent de contacte amb el client durant la configuració guiada. Q
 
 #### TenantServiceAddon (Serveis add-on afegits a un tenant)
 
-Quan s'afegeix un servei a la carta, es regeustra aquí (a més de `TenantService`).
+Quan s'afegeix un servei a la carta, es registra aquí (a més de `TenantService`).
 
 | Camp | Tipus | Mapeig JPA | Descripció |
 |------|-------|-----------|------------|
@@ -269,6 +284,8 @@ Quan s'afegeix un servei a la carta, es regeustra aquí (a més de `TenantServic
 | tenantId | UUID | @Column(nullable=false) | Tenant |
 | serviceId | UUID | @Column(nullable=false) | FK a CatalogService (isAddon=true) |
 | addedBy | UUID | @Column(nullable=false) | Qui va afegir el servei (userId) |
+| approvalRequired | Boolean | @Column(nullable=false) | Si requereix aprovació del client |
+| approvalStatus | Enum(STRING) | @Column(nullable=true) | `PENDING`, `APPROVED`, `REJECTED` (null si no requereix) |
 | createdAt | Instant | @CreatedDate | |
 
 **Restricció única:** `(tenantId, serviceId)`
@@ -309,8 +326,8 @@ CommunicationRequest → TenantService (sol·licitud al client) → canal prefer
 
 ```
 ServiceProfile: "Pla Avançat"
-├── Phase 1: "Configuració bàsica"
-│     ├── Service: "WhatsApp Business" (CREDENTIALS)
+├── Phase 1: "Configuració bàsica" (210€)
+│     ├── Service: "WhatsApp Business" (50€) — CREDENTIALS
 │     │     ├── Field: "apiKey" (PASSWORD, obligatori)
 │     │     ├── Field: "phoneId" (TEXT, obligatori)
 │     │     ├── Field: "businessName" (TEXT, obligatori) — Nom del negoci per verificació
@@ -328,8 +345,17 @@ ServiceProfile: "Pla Avançat"
       └── Service: "Benvinguda automàtica" (AUTOMATION)
             └── (referència a workflow n8n)
 
-Add-ons disponibles:
-└── Service: "Landing extra" (LANDING, isAddon=true)
+Total pla: 265€
+
+Flux per Phase 1:
+1. Client rep pressupost → aprova Phase 1 (210€)
+2. Sistema crea factura 210€ + cobra via Stripe
+3. Pagament OK → implementació de Phase 1
+4. Admin demana API key WhatsApp al client → AWAITING_CLIENT
+5. Client envia dades → admin configura → CONFIGURED
+6. Client verifica que funciona → VERIFIED
+7. Admin tanca la fase → COMPLETED
+8. Es discuteix Phase 2...
 ```
 
 **WhatsApp Business — Regles de verificació:**
@@ -554,6 +580,7 @@ Response:
           "id": "uuid",
           "name": "WhatsApp Business",
           "type": "CREDENTIALS",
+          "salePrice": 50.00,
           "fields": [
             { "id": "uuid", "key": "apiKey", "label": "API Key", "type": "PASSWORD", "isRequired": true }
           ]
@@ -586,11 +613,11 @@ Response:
 
 **Rols:** SUPER_ADMIN
 
-### 4.3 Gestió de serveis (SUPER_ADMIN + ADMIN)
+### 4.3 Gestió de serveis (SUPER_ADMIN)
 
 #### `POST /api/v1/vault/phases/{phaseId}/services` — Afegir servei a una fase
 
-**Rols:** SUPER_ADMIN (ADMIN no pot crear serveis)
+**Rols:** SUPER_ADMIN
 
 #### `GET /api/v1/vault/services` — Llistar tots els serveis (inclòs add-ons)
 
@@ -623,15 +650,23 @@ Response 200: `CatalogServiceResponse` amb els preus actualitzats i `{ "affected
 
 **Rols:** SUPER_ADMIN, ADMIN
 
-Crea `TenantProfile` + `TenantService` per a cada servei del perfil. `currentPhaseId` = primera fase.
+Crea `TenantProfile` + `TenantService` per a cada servei + `TenantPhase` per a cada fase del perfil. Totes les fases comencen amb `approvalStatus=PENDING_APPROVAL`, `implementationStatus=NOT_STARTED`.
 
 Response 201:
 ```json
 {
   "profileId": "uuid",
-  "currentPhase": { "id": "uuid", "name": "Configuració bàsica", "sortOrder": 1 },
-  "pendingServices": 2,
-  "totalServices": 6
+  "phases": [
+    {
+      "phaseId": "uuid",
+      "name": "Configuració bàsica",
+      "sortOrder": 1,
+      "approvalStatus": "PENDING_APPROVAL",
+      "totalServices": 2,
+      "totalPrice": 80.00
+    }
+  ],
+  "totalPrice": 265.00
 }
 ```
 
@@ -639,13 +674,13 @@ Response 201:
 
 **Rols:** SUPER_ADMIN, ADMIN
 
-Elimina `TenantProfile`, `TenantService` i `TenantCredential` associats.
+Marca `TenantProfile.isActive=false`, no s'eliminen registres per tenir traçabilitat.
 
 #### `GET /api/v1/vault/tenants/{tenantId}/budget?profileId={id}&addonIds=id1,id2` — Generar pressupost
 
 **Rols:** SUPER_ADMIN, ADMIN, CLIENT (propi)
 
-Calcula el pressupost per a un perfil + add-ons seleccionats. **No crea res**, només calcula.
+Calcula el pressupost complet. **No crea res**, només calcula. Retorna desglossat per fase.
 
 Response 200:
 ```json
@@ -675,16 +710,16 @@ Response 200:
 **Lògica:**
 - `phaseTotal = SUM(salePrice)` de tots els serveis de la fase
 - `total = SUM(phaseTotal) + SUM(addon.salePrice)`
-- `cost` es mostra per a SUPER_ADMIN/ADMIN; CLIENT no veu `cost` ni `phaseCost` ni `totalCost`
-- El pressupost és informatiu; la facturació real es fa al Mòdul 07 Billing
+- CLIENT no veu `cost`, `phaseCost`, `totalCost`
+- El pressupost és informatiu; la facturació real es fa al mòdul 08
 
-#### `GET /api/v1/vault/tenants/{tenantId}/setup` — Estat de configuració del tenant
+#### `POST /api/v1/vault/tenants/{tenantId}/phases/{phaseId}/approve` — Aprovar fase (CLIENT)
 
-**Rols:** SUPER_ADMIN, ADMIN, CLIENT (propi)
+**Rols:** CLIENT (propi tenant), SUPER_ADMIN, ADMIN (en nom del client)
 
 Retorna l'estat de tots els perfils, fases i serveis del tenant, amb indicació de l'estat actual dins del cicle de vida complet (intake → pressupost → implementació → lliurament).
 
-Response:
+Response 200:
 ```json
 {
   "profiles": [
@@ -881,7 +916,28 @@ Aquest endpoint s'activa quan el client prem "Confirma" (via botó de WhatsApp/T
 
 **Rols:** SUPER_ADMIN, ADMIN
 
-El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon`.
+El servei ha de tenir `isAddon=true`. Si `salePrice > 0`:
+- Crea `TenantServiceAddon` amb `approvalRequired=true`
+- Crea `TenantPhase` provisional si té fase associada
+
+Si és **gratuït** (`salePrice = 0`):
+- Es crea directament sense aprovació
+- `TenantServiceAddon.approvalRequired=false`
+
+Response 201:
+```json
+{
+  "approvalRequired": true,
+  "salePrice": 80.00,
+  "status": "PENDING_CLIENT_APPROVAL"
+}
+```
+
+#### `POST /api/v1/vault/tenants/{tenantId}/addons/{serviceId}/approve` — Aprovar add-on de pagament
+
+**Rols:** CLIENT (propi), SUPER_ADMIN, ADMIN
+
+Mateix flux que aprovar fase: factura + cobrament + implementació.
 
 #### `DELETE /api/v1/vault/tenants/{tenantId}/addons/{serviceId}` — Eliminar servei add-on
 
@@ -934,7 +990,8 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 
 - Les credencials són dades tècniques vinculades a un tenant.
 - `CredentialAuditLog` registra qui accedeix a cada credencial.
-- En eliminar un tenant, totes les seves credencials s'eliminen.
+- En eliminar un tenant, totes les seves credencials s'eliminen (cascada).
+- Les factures es conserven segons obligació legal (Verifactu).
 
 ---
 
@@ -977,7 +1034,111 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 
 ---
 
-## 8. Dependències
+## 8. API pública / Contractes
+
+El Vault exposa **interfícies** al paquet `application/` perquè altres mòduls (especialment 07 Billing) en depenguin sense acoblar-se a la implementació.
+
+### 8.1 VaultService
+
+Interfície principal per a la lògica de cicle de vida de clients (assignació, fases, serveis, credencials).
+
+```java
+public interface VaultService {
+    AssignProfileResponse assignProfile(UUID tenantId, UUID profileId);
+    void removeProfile(UUID tenantId, UUID profileId);
+    ApprovePhaseResponse approvePhase(UUID tenantId, UUID phaseId);
+    void rejectPhase(UUID tenantId, UUID phaseId);
+    void advancePhase(UUID tenantId, UUID phaseId, ImplementationStatus status);
+    void changeServiceStatus(UUID tenantId, UUID serviceId, ServiceStatus newStatus);
+    void setCredential(UUID tenantId, UUID serviceId, UUID fieldId, String value, UUID userId);
+    void verifyService(UUID tenantId, UUID serviceId);
+    AddonResponse addAddon(UUID tenantId, UUID serviceId, UUID addedBy);
+    void approveAddon(UUID tenantId, UUID serviceId);
+    void removeAddon(UUID tenantId, UUID serviceId);
+    SetupResponse getSetup(UUID tenantId, boolean includeClearValue);
+    MonitoringResponse.InvoiceMonitoring getInvoiceMonitoring(UUID tenantId);
+    MonitoringResponse.PaymentMonitoring getPaymentMonitoring(UUID tenantId);
+    MonitoringResponse.PhaseMonitoring getPhaseMonitoring(UUID tenantId);
+}
+```
+
+**Implementació:** `TenantVaultService implements VaultService`
+
+### 8.2 ProfileService
+
+Interfície per a la gestió de catàleg (perfils, fases, serveis, pressupost).
+
+```java
+public interface ProfileService {
+    ProfileResponse createProfile(CreateProfileRequest request);
+    List<ProfileResponse> listProfiles();
+    ProfileResponse getProfile(UUID id);
+    ProfileResponse updateProfile(UUID id, UpdateProfileRequest request);
+    void deactivateProfile(UUID id);
+    ProfileResponse addPhase(UUID profileId, CreatePhaseRequest request);
+    ProfileResponse updatePhase(UUID profileId, UUID phaseId, UpdatePhaseRequest request);
+    void deletePhase(UUID profileId, UUID phaseId);
+    ProfileResponse addServiceToPhase(UUID phaseId, CreateServiceRequest request);
+    ServiceResponse createAddonService(CreateAddonServiceRequest request);
+    List<ServiceResponse> listServices();
+    BudgetResponse calculateBudget(UUID profileId, List<UUID> addonIds, boolean includeCost);
+}
+```
+
+**Implementació:** `ProfileManagementService implements ProfileService`
+
+### 8.3 VaultEncryption (ja és una classe, es manté)
+
+```java
+public class VaultEncryption {
+    String encrypt(String rawValue);
+    String decrypt(String encryptedValue);
+    String mask(String rawValue);
+}
+```
+
+### 8.4 InvoiceService
+
+Interfície per a facturació. El Mòdul 07 Billing o 08 FinOps en proporcionarà la implementació real.
+
+```java
+public interface InvoiceService {
+    UUID createInvoice(UUID tenantId, UUID phaseId, BigDecimal amount);
+    void updateInvoiceStatus(UUID invoiceId, InvoiceStatus status);
+}
+```
+
+**Stub actual:** `InvoiceServiceStub implements InvoiceService` (retorna `INV-STUB-{UUID}`)
+
+### 8.5 PaymentService
+
+Interfície per a cobrament. El Mòdul 09 Payments en proporcionarà la implementació real.
+
+```java
+public interface PaymentService {
+    PaymentResult charge(UUID tenantId, UUID invoiceId, BigDecimal amount);
+    PaymentResult refund(UUID tenantId, UUID invoiceId);
+}
+```
+
+**Stub actual:** `PaymentServiceStub implements PaymentService` (sempre retorna success)
+
+### 8.6 Regla d'evolució
+
+Quan una interfície necessiti canvis (ex: afegir un mètode nou), es crea una **nova versió** en lloc de modificar-la:
+
+```java
+// Nova versió sense trencar la v1
+public interface VaultServiceV2 extends VaultService {
+    void someNewMethod(UUID tenantId, UUID something);
+}
+```
+
+La implementació nova implementa `VaultServiceV2`. Els consumidors antics segueixen usant `VaultService`.
+
+---
+
+## 9. Dependències
 
 | Mòdul | Dependència | Tipus |
 |-------|-----------|-------|
@@ -987,9 +1148,12 @@ El servei ha de tenir `isAddon=true`. Crea `TenantService` + `TenantServiceAddon
 | Mòdul 10 (Automations) | Executarà workflows referenciats | Debil |
 | **Mòdul futur: Comunicacions** | Adaptadors per WhatsApp/Telegram/Email | Forta |
 
+**Contractes que exporta:** `VaultService`, `ProfileService`, `VaultEncryption`, `InvoiceService`, `PaymentService`
+**Contractes que importa:** Cap (no depèn de cap altre mòdul de negoci)
+
 ---
 
-## 9. Obert / Pendents
+## 10. Obert / Pendents
 
 - [ ] **Mòdul de Comunicacions**: Implementar adaptadors concrets per a cada canal (WhatsApp Business API, Telegram Bot API, SMTP). Aquest mòdul exposarà una interfície unificada que Vault consumirà per enviar missatges i rebre webhooks.
 - [ ] Definir perfils inicials concrets (Pla Bàsic, Pla Intermedi, Pla Avançat)

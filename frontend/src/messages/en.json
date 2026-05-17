@@ -1,0 +1,422 @@
+{
+  "common": {
+    "siteName": "AMG · Digital Engineering",
+    "tagline": "Digital automation for small businesses in Mallorca",
+    "cta": "REQUEST DEMO",
+    "seeServices": "VIEW SERVICES",
+    "learnMore": "LEARN MORE"
+  },
+  "nav": {
+    "serveis": "Services",
+    "comFunciona": "How it works",
+    "preus": "Pricing",
+    "contacte": "Contact",
+    "iniciarSessio": "SIGN IN"
+  },
+  "hero": {
+    "title": "STOP LOSING CUSTOMERS",
+    "titleAccent": "BY NOT REPLYING ON WHATSAPP",
+    "subtitle": "Turn your WhatsApp into an organised lead-generation machine. No tech skills required.",
+    "cta": "BOOK A DEMO",
+    "scrollDown": "SCROLL TO LEARN MORE"
+  },
+  "problem": {
+    "title": "IS YOUR BUSINESS CONTROLLING YOU?",
+    "items": [
+      "Customers who message you and wait hours (or days).",
+      "Non-urgent questions that interrupt your workflow.",
+      "The chaos of managing appointments via phone calls.",
+      "Business opportunities lost due to lack of follow-up."
+    ]
+  },
+  "services": {
+    "title": "TAILORED SOLUTIONS FOR YOUR BUSINESS",
+    "subtitle": "Whether you need a simple website or a full AI system, we have the perfect plan.",
+    "profiles": [
+      {
+        "name": "Basic Web",
+        "tagline": "Essential digital presence",
+        "price": "from 29€/mo",
+        "features": [
+          "Responsive landing page",
+          "Contact form",
+          "WhatsApp Business",
+          "Corporate SMTP",
+          "Domain + DNS + SSL"
+        ]
+      },
+      {
+        "name": "Premium Landing",
+        "tagline": "Your digital business card",
+        "price": "from 49€/mo",
+        "features": [
+          "Pro Landing with photos",
+          "Image gallery",
+          "Online booking",
+          "24h WhatsApp reminder",
+          "Integrated web chat"
+        ]
+      },
+      {
+        "name": "Automation",
+        "tagline": "Processes that run themselves",
+        "price": "from 49€/mo",
+        "features": [
+          "CRM + Sales Pipeline",
+          "Budget calculator",
+          "Auto re-engagement",
+          "Auto Google review request",
+          "Card payments"
+        ]
+      },
+      {
+        "name": "AI Assistant",
+        "tagline": "Artificial intelligence for your business",
+        "price": "from 99€/mo",
+        "features": [
+          "Conversational AI Bot",
+          "RAG (answers from documents)",
+          "Auto query classification",
+          "24/7 instant response",
+          "Smart history"
+        ]
+      },
+      {
+        "name": "Digital Transformation",
+        "tagline": "Your business, fully digitised",
+        "price": "contact us",
+        "features": [
+          "All previous services",
+          "E-invoicing",
+          "Custom n8n workflows",
+          "Financial dashboard",
+          "Training & support"
+        ]
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "HOW IT WORKS",
+    "steps": [
+      {
+        "number": "1",
+        "title": "We audit your business",
+        "desc": "We analyse your current processes and identify automation opportunities."
+      },
+      {
+        "number": "2",
+        "title": "We launch in 48h",
+        "desc": "We set up the entire system: web, WhatsApp, booking, AI. No technical hassle for you."
+      },
+      {
+        "number": "3",
+        "title": "Results start flowing",
+        "desc": "Your business runs itself. More customers, less work, more control."
+      }
+    ]
+  },
+  "pricing": {
+    "title": "FLAT RATES, NO SURPRISES",
+    "plans": [
+      {
+        "name": "Basic",
+        "price": "29€",
+        "period": "/mo",
+        "features": [
+          "Landing page",
+          "WhatsApp Business",
+          "Corporate SMTP",
+          "Domain + SSL",
+          "Email support"
+        ],
+        "cta": "START"
+      },
+      {
+        "name": "Intermediate",
+        "price": "49€",
+        "period": "/mo",
+        "features": [
+          "Everything in Basic",
+          "Premium Landing",
+          "Online booking",
+          "CRM + Pipeline",
+          "Priority support"
+        ],
+        "cta": "START",
+        "highlighted": true
+      },
+      {
+        "name": "Advanced",
+        "price": "99€",
+        "period": "/mo",
+        "features": [
+          "Everything in Intermediate",
+          "Full AI Assistant",
+          "Automated workflows",
+          "Digital invoicing",
+          "Dedicated support"
+        ],
+        "cta": "START"
+      }
+    ]
+  },
+  "cta": {
+    "title": "READY TO DIGITALISE YOUR BUSINESS?",
+    "subtitle": "In less than 48 hours your business can be running automations that will save you hours every week.",
+    "button": "BOOK A FREE DEMO"
+  },
+  "footer": {
+    "description": "Digital automation for small businesses in Mallorca. Websites, AI bots, CRM and more.",
+    "services": "Services",
+    "legal": "Legal",
+    "avisLegal": "Legal Notice",
+    "privacitat": "Privacy Policy",
+    "termes": "Terms of Service",
+    "contacte": "Contact",
+    "copyright": "AMG Digital Engineering. All rights reserved."
+  },
+  "auth": {
+    "login": {
+      "title": "PORTAL ACCESS",
+      "subtitle": "We'll send you a magic link by email. No passwords.",
+      "emailLabel": "Corporate email",
+      "emailPlaceholder": "you@company.com",
+      "sendMagicLink": "SEND MAGIC LINK",
+      "orPassword": "or with password",
+      "usePassword": "Use password",
+      "passwordTitle": "PASSWORD",
+      "passwordLabel": "Password",
+      "enter": "ENTER",
+      "back": "BACK",
+      "forgotPassword": "FORGOT YOUR PASSWORD?",
+      "sentTitle": "CHECK YOUR EMAIL",
+      "sentDesc": "We've sent an access link to",
+      "sentExpiry": "The link expires in {minutes} min. Check your spam folder if you don't see it.",
+      "resent": "RESEND LINK",
+      "useOtherEmail": "USE ANOTHER EMAIL",
+      "errorInvalidCredentials": "Invalid credentials",
+      "errorBlocked": "Account blocked. Try again later or reset your password.",
+      "errorTooManyAttempts": "Too many attempts. Try again in a few minutes.",
+      "errorGeneral": "Login error",
+      "entering": "ENTERING...",
+      "sending": "SENDING..."
+    },
+    "forgotPassword": {
+      "title": "RECOVER PASSWORD",
+      "subtitle": "Enter your email and we'll send you a link to reset your password.",
+      "emailLabel": "Corporate email",
+      "sendLink": "SEND LINK",
+      "sentTitle": "CHECK YOUR EMAIL",
+      "sentDesc": "If the email exists, you'll receive a recovery link at",
+      "sentExpiry": "The link expires in {minutes} min. Check your spam folder if you don't see it.",
+      "backToLogin": "BACK TO LOGIN",
+      "sending": "SENDING...",
+      "error": "Error sending request"
+    },
+    "resetPassword": {
+      "title": "RESET PASSWORD",
+      "subtitle": "Enter your new password.",
+      "newPasswordLabel": "New password",
+      "confirmLabel": "Confirm password",
+      "update": "UPDATE PASSWORD",
+      "invalidLinkTitle": "INVALID LINK",
+      "invalidLinkDesc": "This recovery link is invalid or has expired.",
+      "successTitle": "PASSWORD UPDATED",
+      "successDesc": "Redirecting to login...",
+      "goToLogin": "GO TO LOGIN",
+      "updating": "UPDATING...",
+      "errorInvalidToken": "Invalid or expired recovery link",
+      "errorMinLength": "Password must be at least 4 characters",
+      "errorMismatch": "Passwords don't match",
+      "errorGeneral": "Error resetting password"
+    }
+  },
+  "portal": {
+    "greeting": "Good morning, {name}",
+    "subscription": {
+      "badge": "Active subscription",
+      "plan": "PLAN {name}",
+      "upToDate": "UP TO DATE",
+      "active": "Active",
+      "nextBilling": "Next billing",
+      "monthlyAmount": "Monthly amount",
+      "role": "Role",
+      "cycle": "Cycle {start} → {end}"
+    },
+    "services": {
+      "title": "Active services",
+      "eyebrow": "Monthly usage",
+      "operational": "OPERATIONAL",
+      "manage": "MANAGE"
+    },
+    "invoices": {
+      "title": "Latest invoices",
+      "eyebrow": "History",
+      "viewAll": "VIEW ALL"
+    },
+    "help": {
+      "title": "NEED HELP?",
+      "description": "Your assigned technician is available to answer your questions.",
+      "contactTeam": "CONTACT TEAM",
+      "viewTutorials": "VIEW TUTORIALS"
+    },
+    "sidebar": {
+      "myAccount": "My account",
+      "dashboard": "Dashboard",
+      "services": "Services",
+      "invoices": "Invoices",
+      "publicLanding": "Public Landing",
+      "support": "Support",
+      "settings": "Settings",
+      "admin": "Administration",
+      "users": "Users",
+      "tenants": "Tenants"
+    },
+    "logout": "SIGN OUT",
+    "loggingOut": "SIGNING OUT..."
+  },
+  "legal": {
+    "cookies": {
+      "title": "This website uses cookies",
+      "description": "We use own and third-party cookies to improve your experience and analyse traffic.",
+      "acceptAll": "Accept all",
+      "configure": "Configure",
+      "accept": "ACCEPT"
+    },
+    "avis": {
+      "title": "Legal Notice",
+      "sections": {
+        "ownership": {
+          "title": "1. Owner details",
+          "content": "AMG Digital Engineering is a trademark of Antonio Más Gutiérrez, with tax ID 12345678A and registered address in Mallorca, Balearic Islands. For any enquiries, contact us at hola@amg.cat."
+        },
+        "purpose": {
+          "title": "2. Website purpose",
+          "content": "This website aims to provide information about digital automation, web development and artificial intelligence services offered by AMG Digital Engineering to small and medium businesses in Mallorca."
+        },
+        "terms": {
+          "title": "3. Terms of use",
+          "content": "The user agrees to use the content and services appropriately and not to engage in any unlawful activities or activities contrary to good faith."
+        }
+      },
+      "backToHome": "← Back to home",
+      "lastUpdated": "Last updated"
+    },
+    "privacitat": {
+      "title": "Privacy Policy",
+      "sections": {
+        "controller": {
+          "title": "1. Data controller",
+          "content": "The data controller for personal data collected on this website is Antonio Más Gutiérrez (AMG Digital Engineering)."
+        },
+        "dataCollected": {
+          "title": "2. Data collected",
+          "content": "We collect: name and surname, email address, phone number, and billing information when services are contracted."
+        },
+        "purpose": {
+          "title": "3. Purpose of processing",
+          "content": "Data is processed for: managing quote requests, providing contracted services, sending commercial communications (with prior consent), and complying with legal obligations."
+        },
+        "legalBasis": {
+          "title": "4. Legal basis",
+          "content": "The legal basis for data processing is: execution of a service contract, consent of the data subject, and compliance with legal obligations."
+        },
+        "rights": {
+          "title": "5. Data subject rights",
+          "content": "Users may exercise their rights of access, rectification, deletion, restriction, portability and objection by emailing hola@amg.cat."
+        },
+        "security": {
+          "title": "6. Security measures",
+          "content": "We apply appropriate technical and organisational security measures to protect personal data, including AES-256 encryption for sensitive data and role-based access control."
+        }
+      },
+      "backToHome": "← Back to home",
+      "lastUpdated": "Last updated"
+    },
+    "termes": {
+      "title": "Terms of Service",
+      "sections": {
+        "object": {
+          "title": "1. Purpose",
+          "content": "These Terms of Service govern the contracting of digital automation, web development and artificial intelligence services offered by AMG Digital Engineering."
+        },
+        "services": {
+          "title": "2. Services",
+          "content": "AMG offers: website development, n8n process automation, AI chatbots, WhatsApp Business integration, domain and SSL management, and digital consulting."
+        },
+        "pricing": {
+          "title": "3. Pricing and billing",
+          "content": "Prices are set according to the agreed budget with the client. Billing is monthly or according to the schedule agreed in the contract."
+        },
+        "obligations": {
+          "title": "4. Client obligations",
+          "content": "The client agrees to provide the necessary information for service delivery, pay invoices within the agreed period, and not misuse the contracted services."
+        }
+      },
+      "backToHome": "← Back to home",
+      "lastUpdated": "Last updated"
+    }
+  },
+  "admin": {
+    "title": "Administration",
+    "users": {
+      "title": "Users",
+      "new": "New user",
+      "edit": "Edit user",
+      "delete": "Delete user",
+      "deleteConfirm": "Are you sure you want to delete this user? This will deactivate their account.",
+      "unlock": "Unlock",
+      "unlockSuccess": "User unlocked successfully",
+      "created": "User created successfully",
+      "updated": "User updated successfully",
+      "deleted": "User deleted successfully",
+      "fields": {
+        "email": "Email",
+        "name": "Name",
+        "role": "Role",
+        "tenant": "Tenant",
+        "password": "Password",
+        "isActive": "Active"
+      },
+      "status": {
+        "active": "Active",
+        "blocked": "Blocked",
+        "inactive": "Inactive"
+      },
+      "roles": {
+        "SUPER_ADMIN": "Super Admin",
+        "ADMIN": "Admin",
+        "CLIENT": "Client"
+      },
+      "search": "Search users...",
+      "noResults": "No users found",
+      "lastLogin": "Last login",
+      "never": "Never"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "new": "New tenant",
+      "edit": "Edit tenant",
+      "created": "Tenant created successfully",
+      "updated": "Tenant updated successfully",
+      "fields": {
+        "name": "Name",
+        "slug": "Slug",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address",
+        "isActive": "Active"
+      },
+      "search": "Search tenants...",
+      "noResults": "No tenants found"
+    },
+    "sidebar": {
+      "admin": "Administration",
+      "users": "Users",
+      "tenants": "Tenants"
+    },
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading..."
+  }
+}
