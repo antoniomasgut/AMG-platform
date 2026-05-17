@@ -205,8 +205,89 @@ public class TenantVaultService implements VaultService {
     @Override
     @Transactional(readOnly = true)
     public boolean verifyService(UUID tenantId, UUID serviceId) {
-        // Stub — always returns true
-        return true;
+        var svc = catalogServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found: " + serviceId));
+
+        return switch (svc.getSlug()) {
+            case "smtp-corporatiu" -> verifySmtp(tenantId);
+            default -> true;
+        };
+    }
+
+    private boolean verifySmtp(UUID tenantId) {
+        var fields = credentialFieldRepository.findByServiceIdOrderBySortOrder(
+                findServiceBySlug("smtp-corporatiu").getId());
+
+        // Map field keys to their values from tenant vault
+        var creds = new java.util.HashMap<String, String>();
+        for (var field : fields) {
+            var tcOpt = tenantCredentialRepository.findByTenantIdAndFieldId(tenantId, field.getId());
+            if (tcOpt.isEmpty() || !tcOpt.get().getIsSet()) {
+                log.warn("SMTP verify failed for tenant {}: field {} not set", tenantId, field.getKey());
+                return false;
+            }
+            var decrypted = encryption.decrypt(tcOpt.get().getEncryptedValue());
+            creds.put(field.getKey(), decrypted);
+        }
+
+        var host = creds.get("smtp_host");
+        var portStr = creds.get("smtp_port");
+        var user = creds.get("smtp_user");
+        var pass = creds.get("smtp_pass");
+        var security = creds.get("smtp_security");
+
+        if (host == null || portStr == null || user == null || pass == null || security == null) {
+            log.warn("SMTP verify failed for tenant {}: missing required credentials", tenantId);
+            return false;
+        }
+
+        int port;
+        try {
+            port = Integer.parseInt(portStr);
+        } catch (NumberFormatException e) {
+            log.warn("SMTP verify failed for tenant {}: invalid port {}", tenantId, portStr);
+            return false;
+        }
+
+        try {
+            var props = new java.util.Properties();
+            props.put("mail.smtp.host", host);
+            props.put("mail.smtp.port", port);
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.connectiontimeout", "5000");
+            props.put("mail.smtp.timeout", "5000");
+
+            if ("TLS".equalsIgnoreCase(security)) {
+                props.put("mail.smtp.starttls.enable", "true");
+            } else if ("SSL".equalsIgnoreCase(security)) {
+                props.put("mail.smtp.ssl.enable", "true");
+                props.put("mail.smtp.socketFactory.port", port);
+                props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+            }
+
+            var session = jakarta.mail.Session.getInstance(props, new jakarta.mail.Authenticator() {
+                @Override
+                protected jakarta.mail.PasswordAuthentication getPasswordAuthentication() {
+                    return new jakarta.mail.PasswordAuthentication(user, pass);
+                }
+            });
+
+            try (var transport = session.getTransport("smtp")) {
+                transport.connect(host, port, user, pass);
+                log.info("SMTP verification succeeded for tenant {}", tenantId);
+                return true;
+            }
+        } catch (Exception e) {
+            log.warn("SMTP verification failed for tenant {}: {}", tenantId, e.getMessage());
+            return false;
+        }
+    }
+
+    private CatalogService findServiceBySlug(String slug) {
+        return catalogServiceRepository.findAll().stream()
+                .filter(s -> s.getSlug().equals(slug) && s.getPhaseId() == null)
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Base service not found: " + slug));
     }
 
     @Override

@@ -1,12 +1,6 @@
 package com.amg.digitalitzacio.vault.application;
 
-import com.amg.digitalitzacio.vault.domain.CatalogService;
-import com.amg.digitalitzacio.vault.domain.CatalogServiceRepository;
-import com.amg.digitalitzacio.vault.domain.Phase;
-import com.amg.digitalitzacio.vault.domain.PhaseRepository;
-import com.amg.digitalitzacio.vault.domain.ServiceProfile;
-import com.amg.digitalitzacio.vault.domain.ServiceProfileRepository;
-import com.amg.digitalitzacio.vault.domain.ServiceType;
+import com.amg.digitalitzacio.vault.domain.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -26,6 +20,7 @@ public class CatalogSeeder implements CommandLineRunner {
     private final CatalogServiceRepository catalogServiceRepository;
     private final ServiceProfileRepository serviceProfileRepository;
     private final PhaseRepository phaseRepository;
+    private final CredentialFieldRepository credentialFieldRepository;
 
     @Override
     public void run(String... args) {
@@ -36,6 +31,7 @@ public class CatalogSeeder implements CommandLineRunner {
 
         log.info("Seeding catalog services and profiles...");
         seedBaseServices();
+        seedCredentialFields();
         seedProfiles();
         log.info("Catalog seeding complete: {} services, {} profiles",
                 catalogServiceRepository.count(), serviceProfileRepository.count());
@@ -85,6 +81,45 @@ public class CatalogSeeder implements CommandLineRunner {
                 .monthlyPrice(BigDecimal.TEN)
                 .build());
     }
+
+    // =========================================================================
+    // Credential fields — define which fields each CREDENTIALS-type service needs
+    // =========================================================================
+    private void seedCredentialFields() {
+        credentialFields("whatsapp-business",
+                cf("whatsapp_phone",   "Telèfon WhatsApp",    FieldType.TEXT,     "^\\+?\\d{7,15}$",       1),
+                cf("whatsapp_api_key", "API Key",             FieldType.PASSWORD,  null,                      2));
+
+        credentialFields("smtp-corporatiu",
+                cf("smtp_host",     "Servidor SMTP",        FieldType.HOST,     null,                       1),
+                cf("smtp_port",     "Port SMTP",            FieldType.PORT,     "^[0-9]{2,5}$",             2),
+                cf("smtp_user",     "Usuari SMTP",          FieldType.TEXT,     null,                       3),
+                cf("smtp_pass",     "Contrasenya SMTP",     FieldType.PASSWORD, null,                       4),
+                cf("smtp_security", "Seguretat",            FieldType.TEXT,     "^(TLS|SSL|NONE)$",         5));
+
+        log.debug("Seeded credential fields for CREDENTIALS services");
+    }
+
+    private void credentialFields(String serviceSlug, CredFieldDef... fields) {
+        var svc = findBaseBySlug(serviceSlug);
+        for (var f : fields) {
+            credentialFieldRepository.save(CredentialField.builder()
+                    .serviceId(svc.getId())
+                    .key(f.key())
+                    .label(f.label())
+                    .type(f.type())
+                    .isRequired(true)
+                    .validationRegex(f.validationRegex())
+                    .sortOrder(f.sortOrder())
+                    .build());
+        }
+    }
+
+    private static CredFieldDef cf(String key, String label, FieldType type, String validationRegex, int sortOrder) {
+        return new CredFieldDef(key, label, type, validationRegex, sortOrder);
+    }
+
+    private record CredFieldDef(String key, String label, FieldType type, String validationRegex, int sortOrder) {}
 
     // =========================================================================
     // Profiles with phases

@@ -7,14 +7,16 @@ import { useToast } from '@/lib/toast-context';
 import {
   listProfiles, createProfile, deleteProfile,
   listCatalogServices, createAddonService,
-  type CatalogProfileResponse, type CreateCatalogProfileRequest,
-  type CatalogService, type CreateCatalogServiceRequest,
+  type CatalogProfileResponse,
+  type CatalogService,
 } from '@/services/admin';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
 import { I } from '@/components/ui/icons';
+import { profileFormSchema, serviceFormSchema } from '@/lib/validations/vault';
+import { FieldError } from '@/components/ui/field-error';
 
 type Tab = 'profiles' | 'services';
 
@@ -23,10 +25,22 @@ const SERVICE_TYPE_OPTIONS = ['CREDENTIALS', 'LANDING', 'AUTOMATION', 'BILLING',
 function NewProfileModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const { toast } = useToast();
   const [form, setForm] = useState({ name: '', slug: '', description: '' });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    const result = profileFormSchema.safeParse(form);
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as string;
+        if (!fieldErrors[field]) fieldErrors[field] = issue.message;
+      }
+      setErrors(fieldErrors);
+      return;
+    }
     setLoading(true);
     try {
       await createProfile({ name: form.name, slug: form.slug, description: form.description || undefined });
@@ -53,12 +67,14 @@ function NewProfileModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <input type="text" required placeholder="Ex: Professionals amb cita"
               value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
               className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+            <FieldError error={errors.name} />
           </div>
           <div>
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Slug</label>
             <input type="text" required placeholder="professionals-cita"
               value={form.slug} onChange={(e) => setForm(f => ({ ...f, slug: e.target.value }))}
               className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+            <FieldError error={errors.slug} />
           </div>
           <div>
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Descripció</label>
@@ -84,13 +100,25 @@ function NewServiceModal({ onClose, onCreated }: { onClose: () => void; onCreate
     name: '', slug: '', description: '', type: 'LANDING',
     cost: '', salePrice: '', isAddon: false,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    const result = serviceFormSchema.safeParse(form);
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as string;
+        if (!fieldErrors[field]) fieldErrors[field] = issue.message;
+      }
+      setErrors(fieldErrors);
+      return;
+    }
     setLoading(true);
     try {
-      const data: CreateCatalogServiceRequest = {
+      const data = {
         name: form.name, slug: form.slug,
         description: form.description || undefined,
         type: form.type,
@@ -126,12 +154,14 @@ function NewServiceModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <input type="text" required placeholder="Ex: Landing Pro"
               value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
               className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+            <FieldError error={errors.name} />
           </div>
           <div>
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Slug</label>
             <input type="text" required placeholder="landing-pro"
               value={form.slug} onChange={(e) => setForm(f => ({ ...f, slug: e.target.value }))}
               className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+            <FieldError error={errors.slug} />
           </div>
           <div>
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Tipus</label>
@@ -146,12 +176,14 @@ function NewServiceModal({ onClose, onCreated }: { onClose: () => void; onCreate
               <input type="number" step="0.01" required placeholder="0"
                 value={form.cost} onChange={(e) => setForm(f => ({ ...f, cost: e.target.value }))}
                 className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+              <FieldError error={errors.cost} />
             </div>
             <div>
               <label className="f-mono text-label uppercase text-ink-2 block mb-1">Preu venda (€)</label>
               <input type="number" step="0.01" required placeholder="0"
                 value={form.salePrice} onChange={(e) => setForm(f => ({ ...f, salePrice: e.target.value }))}
                 className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+              <FieldError error={errors.salePrice} />
             </div>
           </div>
           <div>

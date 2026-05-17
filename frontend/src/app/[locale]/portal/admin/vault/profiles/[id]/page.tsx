@@ -16,16 +16,30 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { I } from '@/components/ui/icons';
+import { profileFormSchema, serviceFormSchema, phaseNameSchema, sortOrderSchema } from '@/lib/validations/vault';
+import { FieldError } from '@/components/ui/field-error';
 
 const SERVICE_TYPES = ['CREDENTIALS', 'LANDING', 'AUTOMATION', 'BILLING', 'OTHER'];
 
 function EditProfileModal({ profile, onClose, onUpdated }: { profile: CatalogProfileResponse; onClose: () => void; onUpdated: () => void }) {
   const { toast } = useToast();
   const [form, setForm] = useState({ name: profile.name, slug: profile.slug, description: profile.description || '' });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    const result = profileFormSchema.safeParse(form);
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as string;
+        if (!fieldErrors[field]) fieldErrors[field] = issue.message;
+      }
+      setErrors(fieldErrors);
+      return;
+    }
     setLoading(true);
     try {
       await updateProfile(profile.id, form);
@@ -51,11 +65,13 @@ function EditProfileModal({ profile, onClose, onUpdated }: { profile: CatalogPro
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Nom</label>
             <input type="text" required value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
               className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 focus:outline-none focus:border-[#FF6B00]" />
+            <FieldError error={errors.name} />
           </div>
           <div>
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Slug</label>
             <input type="text" required value={form.slug} onChange={(e) => setForm(f => ({ ...f, slug: e.target.value }))}
               className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 focus:outline-none focus:border-[#FF6B00]" />
+            <FieldError error={errors.slug} />
           </div>
           <div>
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Descripció</label>
@@ -76,11 +92,18 @@ function AddPhaseModal({ profileId, onClose, onCreated }: { profileId: string; o
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [sortOrder, setSortOrder] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    setErrors({});
+    const nameResult = phaseNameSchema.safeParse(name);
+    const sortResult = sortOrderSchema.safeParse(sortOrder);
+    const fieldErrors: Record<string, string> = {};
+    if (!nameResult.success) fieldErrors.name = nameResult.error.issues[0].message;
+    if (!sortResult.success) fieldErrors.sortOrder = sortResult.error.issues[0].message;
+    if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return; }
     setLoading(true);
     try {
       await addPhaseToProfile(profileId, { name, sortOrder: sortOrder ? parseInt(sortOrder) : undefined });
@@ -107,12 +130,14 @@ function AddPhaseModal({ profileId, onClose, onCreated }: { profileId: string; o
             <input type="text" required placeholder="Ex: Configuració bàsica"
               value={name} onChange={(e) => setName(e.target.value)}
               className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+            <FieldError error={errors.name} />
           </div>
           <div>
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Ordre</label>
             <input type="number" placeholder="1"
               value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}
               className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+            <FieldError error={errors.sortOrder} />
           </div>
           <div className="flex gap-3 pt-2">
             <AMGButton type="submit" disabled={loading} className="flex-1 justify-center">{loading ? 'Afegint...' : 'Afegir fase'}</AMGButton>
@@ -135,12 +160,14 @@ function AddServiceToPhaseModal({ phaseId, onClose, onCreated }: { phaseId: stri
     name: '', slug: '', description: '', type: 'LANDING',
     cost: '', salePrice: '', sortOrder: '',
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedServiceId, setSelectedServiceId] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'select' | 'create'>('select');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
     setLoading(true);
     try {
       if (mode === 'select' && selectedServiceId) {
@@ -152,6 +179,17 @@ function AddServiceToPhaseModal({ phaseId, onClose, onCreated }: { phaseId: stri
           type: svc.type, cost: svc.cost, salePrice: svc.salePrice,
         });
       } else {
+        const result = serviceFormSchema.safeParse(form);
+        if (!result.success) {
+          const fieldErrors: Record<string, string> = {};
+          for (const issue of result.error.issues) {
+            const field = issue.path[0] as string;
+            if (!fieldErrors[field]) fieldErrors[field] = issue.message;
+          }
+          setErrors(fieldErrors);
+          setLoading(false);
+          return;
+        }
         await addServiceToPhase(phaseId, {
           name: form.name, slug: form.slug,
           description: form.description || undefined,
@@ -213,12 +251,14 @@ function AddServiceToPhaseModal({ phaseId, onClose, onCreated }: { phaseId: stri
                 <input type="text" required placeholder="Ex: Landing Pro" value={form.name}
                   onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
                   className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+                <FieldError error={errors.name} />
               </div>
               <div>
                 <label className="f-mono text-label uppercase text-ink-2 block mb-1">Slug</label>
                 <input type="text" required placeholder="landing-pro" value={form.slug}
                   onChange={(e) => setForm(f => ({ ...f, slug: e.target.value }))}
                   className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+                <FieldError error={errors.slug} />
               </div>
               <div>
                 <label className="f-mono text-label uppercase text-ink-2 block mb-1">Tipus</label>
@@ -233,12 +273,14 @@ function AddServiceToPhaseModal({ phaseId, onClose, onCreated }: { phaseId: stri
                   <input type="number" step="0.01" required placeholder="0" value={form.cost}
                     onChange={(e) => setForm(f => ({ ...f, cost: e.target.value }))}
                     className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+                  <FieldError error={errors.cost} />
                 </div>
                 <div>
                   <label className="f-mono text-label uppercase text-ink-2 block mb-1">Preu venda (€)</label>
                   <input type="number" step="0.01" required placeholder="0" value={form.salePrice}
                     onChange={(e) => setForm(f => ({ ...f, salePrice: e.target.value }))}
                     className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+                  <FieldError error={errors.salePrice} />
                 </div>
               </div>
             </>
@@ -264,12 +306,14 @@ function AddDirectServiceModal({ profileId, onClose, onCreated }: { profileId: s
     name: '', slug: '', description: '', type: 'LANDING',
     cost: '', salePrice: '',
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedServiceId, setSelectedServiceId] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'select' | 'create'>('select');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
     setLoading(true);
     try {
       if (mode === 'select' && selectedServiceId) {
@@ -281,6 +325,17 @@ function AddDirectServiceModal({ profileId, onClose, onCreated }: { profileId: s
           type: svc.type, cost: svc.cost, salePrice: svc.salePrice,
         });
       } else {
+        const result = serviceFormSchema.safeParse(form);
+        if (!result.success) {
+          const fieldErrors: Record<string, string> = {};
+          for (const issue of result.error.issues) {
+            const field = issue.path[0] as string;
+            if (!fieldErrors[field]) fieldErrors[field] = issue.message;
+          }
+          setErrors(fieldErrors);
+          setLoading(false);
+          return;
+        }
         await addServiceToProfile(profileId, {
           name: form.name, slug: form.slug,
           description: form.description || undefined,
@@ -341,12 +396,14 @@ function AddDirectServiceModal({ profileId, onClose, onCreated }: { profileId: s
                 <input type="text" required placeholder="Ex: SMTP Corporatiu" value={form.name}
                   onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
                   className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+                <FieldError error={errors.name} />
               </div>
               <div>
                 <label className="f-mono text-label uppercase text-ink-2 block mb-1">Slug</label>
                 <input type="text" required placeholder="smtp-corporatiu" value={form.slug}
                   onChange={(e) => setForm(f => ({ ...f, slug: e.target.value }))}
                   className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+                <FieldError error={errors.slug} />
               </div>
               <div>
                 <label className="f-mono text-label uppercase text-ink-2 block mb-1">Tipus</label>
@@ -361,12 +418,14 @@ function AddDirectServiceModal({ profileId, onClose, onCreated }: { profileId: s
                   <input type="number" step="0.01" required placeholder="0" value={form.cost}
                     onChange={(e) => setForm(f => ({ ...f, cost: e.target.value }))}
                     className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+                  <FieldError error={errors.cost} />
                 </div>
                 <div>
                   <label className="f-mono text-label uppercase text-ink-2 block mb-1">Preu venda (€)</label>
                   <input type="number" step="0.01" required placeholder="0" value={form.salePrice}
                     onChange={(e) => setForm(f => ({ ...f, salePrice: e.target.value }))}
                     className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
+                  <FieldError error={errors.salePrice} />
                 </div>
               </div>
             </>
@@ -392,6 +451,12 @@ function PhaseCard({ phase, profileId, onUpdated, onDeleted, onAddService }: {
   const [editSort, setEditSort] = useState(String(phase.sortOrder ?? ''));
 
   const handleUpdate = async () => {
+    const nameResult = phaseNameSchema.safeParse(editName);
+    const sortResult = sortOrderSchema.safeParse(editSort);
+    if (!nameResult.success || !sortResult.success) {
+      toast('error', 'Nom: mínim 2 caràcters | Ordre: número positiu');
+      return;
+    }
     try {
       await updatePhase(profileId, phase.id, { name: editName, sortOrder: editSort ? parseInt(editSort) : undefined });
       toast('success', 'Fase actualitzada');
