@@ -430,18 +430,16 @@
     },
     "recordatori": {
       "title": "Configuració: Recordatori 24h",
-      "description": "Configurarem un recordatori automàtic per WhatsApp 24h abans de la cita.",
-      "prerequisites": "Necessitaràs: accés al calendari (API Key de Google Calendar).",
-      "step1": { "title": "Connectar calendari", "description": "Connecta el calendari per llegir les cites." },
-      "step2": { "title": "Plantilla de recordatori", "description": "Configura el missatge de recordatori." },
-      "step3": { "title": "Activar", "description": "Activa el workflow de recordatoris." },
+      "description": "Configurarem un recordatori automàtic per Telegram abans de la cita.",
+      "prerequisites": "Necessitaràs: Telegram instal·lat al mòbil.",
+      "step1": { "title": "Configurar missatge", "description": "Configura el missatge de recordatori que rebrà el client." },
+      "step2": { "title": "Vincular Telegram", "description": "Comparteix el codi d'enllaç amb el client perquè es connecti al bot." },
+      "step3": { "title": "Activar", "description": "Activa el servei de recordatoris." },
       "field": {
-        "calendar_key": "API Key del calendari",
-        "calendar_id": "ID del calendari",
-        "calendar_id_placeholder": "primary o calendar@group.calendar.google.com",
         "template": "Plantilla de recordatori",
         "template_placeholder": "Hola! Tens una cita demà a les {{time}}. Et confirmes?",
-        "hours": "Hores abans del recordatori"
+        "hours": "Hores abans del recordatori",
+        "link_code": "Codi d'enllaç de Telegram"
       }
     },
     "reenganxament": {

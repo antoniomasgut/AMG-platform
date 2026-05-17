@@ -34,6 +34,8 @@ export interface ServiceWizardConfig {
   descriptionKey: string;
   prerequisitesKey: string;
   steps: WizardStep[];
+  /** Valors per defecte per al formData (ex: link_code generat) */
+  defaultFormData?: Record<string, string>;
 }
 
 // Use globalThis directly inside functions to avoid TDZ with circular-dep init order.

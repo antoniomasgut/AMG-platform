@@ -33,6 +33,7 @@ public class TenantVaultService implements VaultService {
     private final VaultEncryption encryption;
     private final InvoiceService invoiceService;
     private final PaymentService paymentService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -203,15 +204,31 @@ public class TenantVaultService implements VaultService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public boolean verifyService(UUID tenantId, UUID serviceId) {
         var svc = catalogServiceRepository.findById(serviceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Service not found: " + serviceId));
 
-        return switch (svc.getSlug()) {
+        var verified = switch (svc.getSlug()) {
             case "smtp-corporatiu" -> verifySmtp(tenantId);
             default -> true;
         };
+
+        if (verified) {
+            tenantServiceRepository.findByTenantIdAndServiceId(tenantId, serviceId).ifPresent(ts -> {
+                if (ts.getStatus() != ServiceStatus.VERIFIED) {
+                    ts.setStatus(ServiceStatus.VERIFIED);
+                    ts.setStatusChangedAt(Instant.now());
+                    tenantServiceRepository.save(ts);
+                    eventPublisher.publishEvent(
+                            new com.amg.digitalitzacio.shared.events.ServiceVerifiedEvent(
+                                    tenantId, serviceId, svc.getSlug()));
+                    log.info("Servei {} verificat per al tenant {}", svc.getSlug(), tenantId);
+                }
+            });
+        }
+
+        return verified;
     }
 
     private boolean verifySmtp(UUID tenantId) {

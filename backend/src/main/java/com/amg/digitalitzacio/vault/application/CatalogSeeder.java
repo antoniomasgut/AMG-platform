@@ -97,6 +97,10 @@ public class CatalogSeeder implements CommandLineRunner {
                 cf("smtp_pass",     "Contrasenya SMTP",     FieldType.PASSWORD, null,                       4),
                 cf("smtp_security", "Seguretat",            FieldType.TEXT,     "^(TLS|SSL|NONE)$",         5));
 
+        credentialFields("recordatori-24h",
+                cf("reminder_template", "Plantilla del recordatori",    FieldType.TEXT,     null,           1),
+                cf("hours_before",      "Hores d\'antelació",          FieldType.TEXT,     "^[0-9]+$",     2));
+
         log.debug("Seeded credential fields for CREDENTIALS services");
     }
 

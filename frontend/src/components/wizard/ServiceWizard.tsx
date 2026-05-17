@@ -33,7 +33,7 @@ export function ServiceWizard({
   const config = getWizardConfig(slug, serviceType);
   const [wizardState, setWizardState] = useState<WizardState>(config ? 'welcome' : 'loading');
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState<Record<string, string>>(() => config?.defaultFormData ?? {});
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [errorSteps, setErrorSteps] = useState<Set<string>>(new Set());
 

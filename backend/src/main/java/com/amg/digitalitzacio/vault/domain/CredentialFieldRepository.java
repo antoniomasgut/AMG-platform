@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface CredentialFieldRepository extends JpaRepository<CredentialField, UUID> {
     List<CredentialField> findByServiceIdOrderBySortOrder(UUID serviceId);
     List<CredentialField> findByServiceIdIn(List<UUID> serviceIds);
+    java.util.Optional<CredentialField> findByServiceIdAndKey(UUID serviceId, String key);
 }

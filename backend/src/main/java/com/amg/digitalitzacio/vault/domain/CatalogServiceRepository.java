@@ -10,4 +10,5 @@ public interface CatalogServiceRepository extends JpaRepository<CatalogService, 
     List<CatalogService> findByProfileIdAndPhaseIdIsNull(UUID profileId);
     List<CatalogService> findByIsAddonTrue();
     List<CatalogService> findByType(ServiceType type);
+    java.util.Optional<CatalogService> findBySlug(String slug);
 }

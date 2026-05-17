@@ -127,3 +127,8 @@ app:
     telegram:
       bot-token: ${TELEGRAM_BOT_TOKEN:}
       chat-id: ${TELEGRAM_CHAT_ID:}
+
+  agents:
+    telegram:
+      bot-token: ${AGENTS_TELEGRAM_BOT_TOKEN:${TELEGRAM_BOT_TOKEN:}}
+
