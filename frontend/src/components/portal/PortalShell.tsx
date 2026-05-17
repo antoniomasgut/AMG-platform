@@ -23,17 +23,25 @@ export function PortalShell({ children, breadcrumb }: { children: ReactNode; bre
 
   const navItems: { label: string; icon: (p: { size?: number }) => ReactNode; href: string }[] = [
     { label: 'Dashboard', icon: I.Dashboard, href: '/portal' },
-    { label: 'Leads', icon: I.Users, href: '/portal/leads' },
-    { label: 'Landings', icon: I.Globe, href: '/portal/landings' },
-    { label: 'Assets', icon: I.Image, href: '/portal/assets' },
-    { label: 'Billing', icon: I.CreditCard, href: '/portal/billing' },
-    { label: 'Payments', icon: I.CreditCard, href: '/portal/payments' },
-    { label: 'FinOps', icon: I.Receipt, href: '/portal/finops' },
-    { label: 'Automatitzacions', icon: I.Zap, href: '/portal/automations' },
+    // 1. Prospectar el mercat
     ...(isAdmin ? [
-      { label: 'Ops & Health', icon: I.Activity, href: '/portal/ops' },
       { label: 'Prospecció', icon: I.Search, href: '/portal/prospecting' },
     ] : []),
+    { label: 'Leads', icon: I.Users, href: '/portal/leads' },
+    // 2. Fer pressupostos
+    { label: 'Pressupostos', icon: I.Receipt, href: '/portal/billing' },
+    // 3. Implementar serveis
+    { label: 'Landings', icon: I.Globe, href: '/portal/landings' },
+    { label: 'Assets', icon: I.Image, href: '/portal/assets' },
+    { label: 'Automatitzacions', icon: I.Zap, href: '/portal/automations' },
+    // 4. Pagaments
+    { label: 'Pagaments', icon: I.CreditCard, href: '/portal/payments' },
+    { label: 'FinOps', icon: I.Receipt, href: '/portal/finops' },
+    // 5. Monitoritzar
+    ...(isAdmin ? [
+      { label: 'Ops & Health', icon: I.Activity, href: '/portal/ops' },
+    ] : []),
+    // 6. Còpies de seguretat i infraestructura
     ...(isSuperAdmin ? [
       { label: 'Catàleg', icon: I.Box, href: '/portal/admin/vault' },
       { label: 'Admin', icon: I.Settings, href: '/portal/admin/users' },
