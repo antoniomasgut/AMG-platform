@@ -15,9 +15,9 @@ const SEVERITY_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 
   CRITICAL: 'danger',
 };
 
-function metricTone(percent: number): 'success' | 'warning' | 'danger' | 'accent' {
+function metricTone(percent: number): 'success' | 'info' | 'danger' | 'accent' {
   if (percent >= 90) return 'danger';
-  if (percent >= 75) return 'warning';
+  if (percent >= 75) return 'info';
   if (percent >= 50) return 'accent';
   return 'success';
 }

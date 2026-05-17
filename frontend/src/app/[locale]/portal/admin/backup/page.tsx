@@ -113,7 +113,7 @@ export default function BackupPage() {
               label="Proper programat"
               value={dashboard.nextScheduledAt ? new Date(dashboard.nextScheduledAt).toLocaleDateString('ca-ES') : '—'}
               icon={I.Calendar}
-              tone="neutral"
+              tone="info"
             />
             <AMGStat
               label="Taxa d'èxit"
