@@ -2,7 +2,7 @@ package com.amg.digitalitzacio.agents.application;
 
 import com.amg.digitalitzacio.vault.domain.TenantCredentialRepository;
 import com.amg.digitalitzacio.vault.domain.TenantServiceRepository;
-import com.amg.digitalitzacio.vault.domain.VaultEncryption;
+import com.amg.digitalitzacio.vault.application.VaultEncryption;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
