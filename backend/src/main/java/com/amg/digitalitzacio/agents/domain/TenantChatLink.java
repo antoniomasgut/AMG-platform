@@ -33,6 +33,17 @@ public class TenantChatLink {
     @Builder.Default @Column(nullable = false)
     private Boolean isActive = true;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "agent_mode", nullable = false)
+    private AgentMode agentMode = AgentMode.AUTO;
+
+    @Column(name = "whatsapp_phone_number", length = 20)
+    private String whatsappPhoneNumber;
+
+    @Column(name = "email_address", length = 100)
+    private String emailAddress;
+
     @CreatedDate @Column(updatable = false)
     private Instant createdAt;
 

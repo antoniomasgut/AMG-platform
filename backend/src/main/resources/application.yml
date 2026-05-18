@@ -131,4 +131,15 @@ app:
   agents:
     telegram:
       bot-token: ${AGENTS_TELEGRAM_BOT_TOKEN:${TELEGRAM_BOT_TOKEN:}}
+    conversational:
+      claude-model: ${AGENTS_CLAUDE_MODEL:claude-haiku-4-5-20251001}
+      anthropic-api-key: ${ANTHROPIC_API_KEY:}
+      max-history-messages: 20
+      conversation-ttl-hours: 48
+    whatsapp:
+      twilio-account-sid: ${TWILIO_ACCOUNT_SID:}
+      twilio-auth-token: ${TWILIO_AUTH_TOKEN:}
+    email:
+      resend-api-key: ${RESEND_API_KEY:}
+      resend-from-address: ${RESEND_FROM_ADDRESS:agent@amgdigital.com}
 

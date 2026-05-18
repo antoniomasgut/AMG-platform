@@ -1,9 +1,12 @@
-# Mòdul 20 — Agents Autònoms (Telegram)
+# Mòdul 20 — Agents Autònoms i Conversacionals
 
-**Versió:** 1.0  
-**Estat:** ✅ Implementat  
-**Branca:** main (commit `ae694d6`)  
+**Versió:** 2.0  
+**Estat:** v1 ✅ Implementat · v2 ⏳ Pendent  
+**Branca:** main (commit `ae694d6`) + feat/modul-20-v2  
 **Substitució de:** n8n per a automatitzacions bàsiques
+
+> **v1 (existent):** Agents d'automatització interna — envien missatges programats al tenant via Telegram.  
+> **v2 (nou):** Agents conversacionals — responen als clients finals del tenant via WhatsApp, Telegram i Email.
 
 ---
 
@@ -230,3 +233,263 @@ No cal cap registre manual — l'arquitectura és completament plug-in.
 | Tests d'integració | ⏳ Pendents |
 | Més agents (ex. InvoiceAgent, ReviewAgent) | ⏳ Pendents |
 | Configurar Telegram webhook al servidor | ⏳ Pendent (`TELEGRAM_BOT_TOKEN`) |
+
+---
+
+# Part 2 — Agents Conversacionals (v2)
+
+> Agents orientats al client final del tenant. Reben missatges de clients del negoci via WhatsApp, Telegram o Email, els processen amb IA (Claude) i responen automàticament o en mode híbrid.
+
+---
+
+## 13. Visió general v2
+
+```
+Client final del negoci
+  └─→ WhatsApp / Telegram / Email
+           ↓
+    WebhookController (per canal)
+           ↓
+    ConversationalAgentService
+      ├─ Carrega config tenant (Vault)
+      ├─ Carrega historial (ConversationService)
+      ├─ PromptBuilder → system prompt
+      ├─ Crida Claude API
+      └─ AgentMode check:
+           AUTO   → respon immediatament
+           HYBRID → guarda pendent, notifica tenant per Telegram intern
+           MANUAL → notifica tenant, no envia res
+```
+
+**Principi:** el ConversationalAgent és un `@Service` únic (no implementa la interfície `Agent` d'automatització). Coexisteix amb els agents de la Part 1 sense interferència.
+
+---
+
+## 14. Entitats noves
+
+### Conversation
+
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| `id` | BIGSERIAL | PK |
+| `tenantId` | UUID | Tenant propietari |
+| `customerIdentifier` | String(100) | Telèfon, email o chatId del client final |
+| `channel` | Enum(STRING) | `WHATSAPP` \| `TELEGRAM` \| `EMAIL` |
+| `role` | Enum(STRING) | `USER` \| `ASSISTANT` |
+| `content` | TEXT | Contingut del missatge |
+| `pendingApproval` | Boolean | true si mode HYBRID i pendent d'aprovació |
+| `approvedAt` | Instant | Quan el tenant ha aprovat/enviat |
+| `createdAt` | Instant | |
+
+**Índexs:** `(tenant_id, customer_identifier, channel)`, `(tenant_id, pending_approval) WHERE pending_approval = true`
+
+**Caché Redis:** clau `conv:{tenantId}:{channel}:{customerIdentifier}` → últims 20 missatges · TTL 48h
+
+### AgentMode (extensió a TenantChatLink)
+
+Nou camp a `TenantChatLink`:
+
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| `agentMode` | Enum(STRING) | `AUTO` \| `HYBRID` \| `MANUAL` · default `AUTO` |
+| `whatsappPhoneNumber` | String(20) | Número Twilio assignat al tenant |
+| `emailAddress` | String(100) | Email Resend del negoci |
+
+**AgentMode enum:** `AUTO` (respon sol), `HYBRID` (suggereix, tenant aprova), `MANUAL` (tenant respon, agent en silenci)
+
+---
+
+## 15. ConversationalAgentService
+
+```
+handleIncoming(tenantId, customerIdentifier, channel, text):
+  1. Carrega TenantChatLink → agentMode, canals actius
+  2. ConversationService.loadHistory(tenantId, customerIdentifier, channel) → últims 20
+  3. PromptBuilder.build(tenantId) → system prompt
+  4. Claude API (claude-haiku-4-5) → resposta
+  5. switch(agentMode):
+       AUTO   → sendViaChannel() → saveConversation(pendingApproval=false)
+       HYBRID → saveConversation(pendingApproval=true) → notifyTenantViaTelegram()
+       MANUAL → notifyTenantViaTelegram() [només avís, no guarda resposta IA]
+  6. Guarda missatge del client a Conversation
+```
+
+**Model IA:** `claude-haiku-4-5-20251001` (balanç cost/velocitat per a respostes conversacionals)
+
+---
+
+## 16. PromptBuilder
+
+Construeix el system prompt llegint dades del Vault del tenant (ja configurat via Mòdul 17 Service Wizard):
+
+```
+Ets l'assistent virtual de {businessName}.
+El teu to és: {tone} (llegit del Vault o default "professional i proper").
+Respons en català de forma concisa i natural.
+
+HORARI: {schedule del Vault}
+SERVEIS: {llista de serveis del TenantService}
+PREUS: {preus configurats al Vault}
+INSTRUCCIONS ESPECIALS: {customInstructions del Vault, si existeix}
+
+REGLES:
+- Si no saps alguna cosa, pregunta en lloc d'inventar
+- Confirma les dades abans de qualsevol compromís
+- En cas d'urgència o queixa greu, indica que contactin directament
+```
+
+**Font de dades:** `TenantVaultService.getDecryptedCredentials(tenantId)` per als camps configurats al Wizard.
+
+---
+
+## 17. Canals
+
+### Canal WhatsApp (Twilio)
+
+**Credencials al Vault** (per tenant): `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_NUMBER`
+
+**Webhook:** `POST /api/v1/agents/whatsapp/webhook/{tenantId}` · `permitAll`
+- Valida signatura Twilio (`X-Twilio-Signature`)
+- Extreu `From` (telèfon client) i `Body` (text)
+- Delega a `ConversationalAgentService`
+
+**Enviament:** `WhatsAppChannel.send(phone, text)` via Twilio REST API
+
+**Costos estimats per tenant:** ~€1/mes número + €0.009/missatge sortint (recordatoris) · missatges entrants gratuïts (finestra 24h)
+
+### Canal Telegram (client-facing, diferent del Telegram intern)
+
+El Telegram intern (Part 1) notifica el **tenant**. El Telegram client-facing respon als **clients finals del negoci**.
+
+Cada tenant que activa aquest canal crea el seu propi bot de Telegram (token al Vault).
+
+**Webhook:** `POST /api/v1/agents/telegram/customer/webhook/{tenantId}` · `permitAll`
+
+### Canal Email (Resend)
+
+**Credencials al Vault** (global o per tenant): `RESEND_API_KEY`, `RESEND_FROM_DOMAIN`
+
+**Webhook entrant:** `POST /api/v1/agents/email/webhook/{tenantId}` · `permitAll`
+- Extreu `from` (email client) i `text`
+- Delega a `ConversationalAgentService`
+
+**Enviament:** `EmailChannel.send(toEmail, subject, text)` via Resend REST API
+
+---
+
+## 18. API REST — Agents conversacionals
+
+Prefix: `/api/v1/agents/conversational`
+
+| Mètode | Ruta | Descripció | Rols |
+|--------|------|-----------|------|
+| GET | /{tenantId}/conversations | Llistar converses recents (paginat) | Autenticat (propi tenant) |
+| GET | /{tenantId}/conversations/{customerId} | Historial amb un client | Autenticat |
+| GET | /{tenantId}/pending | Respostes pendents d'aprovació | Autenticat |
+| POST | /{tenantId}/pending/{conversationId}/approve | Aprovar i enviar resposta | Autenticat |
+| POST | /{tenantId}/pending/{conversationId}/edit | Editar i enviar | Autenticat |
+| DELETE | /{tenantId}/pending/{conversationId} | Descartar resposta | Autenticat |
+| PUT | /{tenantId}/mode | Canviar AgentMode | Autenticat |
+| GET | /{tenantId}/status | Estat dels canals actius | Autenticat |
+
+#### `GET /{tenantId}/pending` — Respostes pendents
+
+Response:
+```json
+[
+  {
+    "id": 123,
+    "customerIdentifier": "+34612345678",
+    "channel": "WHATSAPP",
+    "customerMessage": "Vull una cita per dijous",
+    "suggestedResponse": "Hola! Per dijous tenim disponible a les 10h i les 16h...",
+    "createdAt": "2026-05-18T10:30:00Z"
+  }
+]
+```
+
+#### `PUT /{tenantId}/mode` — Canviar mode
+
+Request: `{ "mode": "HYBRID" }`
+Response 200: `{ "mode": "HYBRID", "updatedAt": "..." }`
+
+---
+
+## 19. Frontend — `/portal/agents`
+
+Accessible per a tots els tenants (no només SUPER_ADMIN). Mostra l'estat de l'agent conversacional del tenant.
+
+### Pestanya "Agent"
+- Toggle mode: AUTO / HYBRID / MANUAL (amb explicació breu de cada un)
+- Canals actius: Telegram ✓ · WhatsApp ✓/pendent · Email ✓/pendent
+- Estadístiques: converses aquest mes, temps de resposta mig
+
+### Pestanya "Pendents" (visible si HYBRID i hi ha pendents)
+- Llista de missatges pendents d'aprovació
+- Per cada un: missatge del client + resposta suggerida per l'agent
+- Accions: `[Enviar]` `[Editar i enviar]` `[Descartar]`
+- Badge al menú lateral quan hi ha pendents
+
+### Pestanya "Converses"
+- Llista de converses recents agrupades per client
+- Vista de la conversa completa (usuari / agent alternats)
+- Filtre per canal
+
+---
+
+## 20. Configuració
+
+```yaml
+app:
+  agents:
+    telegram:
+      bot-token: ${TELEGRAM_BOT_TOKEN:}      # existent (intern)
+    conversational:
+      claude-model: claude-haiku-4-5-20251001
+      max-history-messages: 20
+      conversation-ttl-hours: 48
+```
+
+Variables Twilio (per tenant, al Vault):
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_WHATSAPP_NUMBER`
+
+Variables Resend (globals o per tenant):
+- `RESEND_API_KEY`
+- `RESEND_FROM_DOMAIN`
+
+---
+
+## 21. Casos QA — ConversationalAgent
+
+| # | Cas | Resultat esperat |
+|---|-----|-----------------|
+| CA-01 | Missatge WhatsApp en mode AUTO | Resposta enviada immediatament, conversa guardada |
+| CA-02 | Missatge WhatsApp en mode HYBRID | Guardat com a pendent, notificació al Telegram intern del tenant |
+| CA-03 | Missatge WhatsApp en mode MANUAL | Notificació al tenant, cap resposta enviada |
+| CA-04 | Tenant aprova resposta pendent | Missatge enviat al client, `pendingApproval = false` |
+| CA-05 | Tenant edita i envia resposta | Missatge modificat enviat, conversa actualitzada |
+| CA-06 | Tenant descarta resposta | `pendingApproval = false`, sense enviament |
+| CA-07 | Canvi de mode AUTO → HYBRID | Mode actualitzat, pendents futurs queden a la cua |
+| CA-08 | PromptBuilder sense dades Vault | Usa prompt genèric de fallback |
+| CA-09 | Historial carregat des de Redis | Últims 20 missatges inclosos al context |
+| CA-10 | Signatura Twilio invàlida | 403 Forbidden |
+| CA-11 | CLIENT veu les seves pròpies converses | 200, no veu converses d'altres tenants |
+
+---
+
+## 22. Estat v2
+
+| Ítem | Estat |
+|------|-------|
+| Entitat Conversation | ⏳ Pendent |
+| AgentMode a TenantChatLink | ⏳ Pendent |
+| ConversationalAgentService | ⏳ Pendent |
+| PromptBuilder | ⏳ Pendent |
+| WhatsAppChannel (Twilio) | ⏳ Pendent |
+| EmailChannel (Resend) | ⏳ Pendent |
+| Telegram client-facing webhook | ⏳ Pendent |
+| API REST conversacional | ⏳ Pendent |
+| Frontend /portal/agents | ⏳ Pendent |
+| Migració BD (conversation, agentMode) | ⏳ Pendent |

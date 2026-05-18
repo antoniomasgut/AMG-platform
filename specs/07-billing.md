@@ -347,6 +347,173 @@ Els tests d'integració es troben a `backend/src/test/java/com/amg/digitalitzaci
 
 ---
 
+## 10. Programes comercials
+
+> **Versió:** 2.0 — extensió del Mòdul 07
+
+### 10.1 Visió general
+
+Tres mecàniques comercials per accelerar la captació i fidelització de clients. Totes s'integren amb el sistema de descomptes existent ampliant-lo amb nous tipus i entitats.
+
+---
+
+### 10.2 Extensions a l'entitat Discount
+
+Nous camps a afegir:
+
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| `program` | Enum(STRING) | `MANUAL` \| `EARLY_ADOPTER` \| `ANNUAL_CONTRACT` \| `REFERRAL` |
+| `appliesToSetup` | Boolean | S'aplica al setup únic (default true) |
+| `appliesToMonthly` | Boolean | S'aplica a la quota mensual recurrent (default false) |
+| `isLifetime` | Boolean | El descompte no caduca mai (early adopter mensual) |
+| `commitmentMonths` | Integer | Mesos de permanència mínima (0 = sense compromís) |
+
+**DiscountProgram enum:** `MANUAL`, `EARLY_ADOPTER`, `ANNUAL_CONTRACT`, `REFERRAL`
+
+---
+
+### 10.3 Entitat EarlyAdopterProgram
+
+Configuració global del programa early adopter (una sola fila a la BD).
+
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| `id` | UUID | PK |
+| `maxSlots` | Integer | Màxim de clients early adopter (ex: 20) |
+| `usedSlots` | Integer | Quants slots s'han usat |
+| `setupDiscountPct` | BigDecimal | % de descompte al setup (100 = gratuït) |
+| `monthlyDiscountPct` | BigDecimal | % de descompte mensual de per vida (ex: 30) |
+| `commitmentMonths` | Integer | Permanència mínima (ex: 6) |
+| `active` | Boolean | Si el programa està obert |
+| `updatedAt` | Instant | |
+
+**Regla:** Quan `usedSlots >= maxSlots`, el programa tanca automàticament (`active = false`).
+
+---
+
+### 10.4 Entitat ReferralCode
+
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| `id` | UUID | PK |
+| `ownerTenantId` | UUID | Tenant que posseeix el codi (el referidor) |
+| `code` | String(20) | Únic, generat automàticament (ex: `AMG-PEDRO-7X2K`) |
+| `usedByTenantId` | UUID | Tenant que ha usat el codi (null si encara no usat) |
+| `usedAt` | Instant | Quan s'ha aplicat |
+| `referrerCreditMonths` | Integer | Mesos gratuïts per al referidor (default: 1) |
+| `referredSetupFree` | Boolean | Si el referit té setup gratuït (default: true) |
+| `creditApplied` | Boolean | Si el crèdit del referidor ja s'ha aplicat (default: false) |
+| `createdAt` | Instant | |
+
+**Índex:** `code` (unique), `ownerTenantId`
+
+---
+
+### 10.5 Mecàniques detallades
+
+#### Early Adopter
+- Setup gratuït (100% descompte sobre setup)
+- 30% de descompte sobre la quota mensual, de per vida (`isLifetime = true`)
+- Compromís mínim de 6 mesos (`commitmentMonths = 6`)
+- Disponible per als primers N clients (`EarlyAdopterProgram.maxSlots`)
+- En aplicar: `usedSlots++`, es creen dos `Discount` automàticament (setup + mensual)
+
+#### Contracte Anual
+- Setup gratuït (100% descompte sobre setup)
+- Quota mensual al preu normal (sense descompte mensual)
+- Compromís de 12 mesos (`commitmentMonths = 12`)
+- Sense límit de slots
+
+#### Programa de Referits
+- El tenant referidor rep un `ReferralCode` únic en registrar-se
+- Quan un nou client usa el codi: setup gratuït per al referit
+- En activar el primer servei del referit: el referidor obté 1 mes gratuït (`creditApplied = true`)
+- El crèdit del referidor es desconta de la factura mensual de Holded (Mòdul 08)
+- Sense límit de referits per tenant
+
+---
+
+### 10.6 API REST — Programes comercials
+
+Prefix: `/api/v1/billing/programs`
+
+| Mètode | Ruta | Descripció | Rols |
+|--------|------|-----------|------|
+| GET | /programs/early-adopter | Estat del programa (slots disponibles) | SUPER_ADMIN |
+| PUT | /programs/early-adopter | Configurar programa | SUPER_ADMIN |
+| POST | /programs/early-adopter/apply/{tenantId} | Aplicar al tenant | SUPER_ADMIN, ADMIN |
+| GET | /programs/annual-contract/apply/{tenantId} | Aplicar contracte anual | SUPER_ADMIN, ADMIN |
+| GET | /programs/referrals | Llistar tots els referits | SUPER_ADMIN |
+| GET | /programs/referrals/{tenantId} | Codi i historial del tenant | Autenticat (propi tenant) |
+| POST | /programs/referrals/apply | Aplicar codi referit a un pressupost | SUPER_ADMIN, ADMIN |
+
+#### `GET /programs/early-adopter` — Estat del programa
+
+Response:
+```json
+{
+  "active": true,
+  "maxSlots": 20,
+  "usedSlots": 7,
+  "availableSlots": 13,
+  "setupDiscountPct": 100,
+  "monthlyDiscountPct": 30,
+  "commitmentMonths": 6
+}
+```
+
+#### `POST /programs/referrals/apply` — Aplicar codi referit
+
+Request:
+```json
+{
+  "code": "AMG-PEDRO-7X2K",
+  "newTenantId": "uuid"
+}
+```
+
+Response 200: `{ "referrerTenantId": "uuid", "setupFree": true, "referrerCreditMonths": 1 }`
+
+Errors: 404 si codi no existeix · 409 si codi ja usat
+
+---
+
+### 10.7 Frontend — `/portal/billing/programs`
+
+Accessible només per SUPER_ADMIN. Tres pestanyes:
+
+**Early Adopter**
+- Barra de progrés de slots (7/20 usats)
+- Configuració editable (max slots, %)
+- Botó "Aplicar a tenant" (cerca per nom/email)
+
+**Contracte Anual**
+- Botó "Aplicar a tenant"
+- Llista de tenants amb contracte anual actiu + data de venciment
+
+**Referits**
+- Taula de tots els codis: referidor → referit → estat crèdit
+- Filtre per estat (actius, usats, crèdit pendent)
+
+---
+
+### 10.8 Casos QA — Programes comercials
+
+| # | Cas | Resultat esperat |
+|---|-----|-----------------|
+| P-01 | Aplicar early adopter a tenant | Dos descomptes creats (setup + mensual lifetime), `usedSlots++` |
+| P-02 | Aplicar quan no hi ha slots | 409 Conflict "No hi ha slots disponibles" |
+| P-03 | Generar codi referit per tenant nou | Codi únic creat automàticament en activar primer servei |
+| P-04 | Aplicar codi referit vàlid | Setup gratuït al referit, crèdit pendent al referidor |
+| P-05 | Aplicar codi referit ja usat | 409 Conflict "Codi ja usat" |
+| P-06 | Aplicar contracte anual | Descompte setup 100%, commitmentMonths = 12 |
+| P-07 | Consultar slots early adopter | Retorna disponibles = max - used |
+| P-08 | CLIENT veu el seu codi referit | 200 amb codi i historial |
+| P-09 | ADMIN no pot configurar early adopter | 403 |
+
+---
+
 ## 9. Obert / Pendents
 
 - [ ] `createdBy` a DiscountManager es queda amb UUID.randomUUID() — cal passar l'usuari real

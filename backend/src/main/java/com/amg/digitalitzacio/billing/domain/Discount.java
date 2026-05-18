@@ -29,4 +29,9 @@ public class Discount {
     @Builder.Default private Integer appliedCount = 0;
     @Column(nullable = false) private UUID createdBy;
     @CreatedDate @Column(updatable = false) private Instant createdAt;
+    @Enumerated(EnumType.STRING) @Builder.Default @Column(nullable = false) private DiscountProgram program = DiscountProgram.MANUAL;
+    @Builder.Default @Column(nullable = false) private Boolean appliesToSetup = true;
+    @Builder.Default @Column(nullable = false) private Boolean appliesToMonthly = false;
+    @Builder.Default @Column(nullable = false) private Boolean isLifetime = false;
+    @Builder.Default @Column(nullable = false) private Integer commitmentMonths = 0;
 }

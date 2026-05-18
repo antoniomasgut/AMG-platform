@@ -37,6 +37,8 @@ export function PortalShell({ children, breadcrumb }: { children: ReactNode; bre
     // 4. Pagaments
     { label: 'Pagaments', icon: I.CreditCard, href: '/portal/payments' },
     { label: 'FinOps', icon: I.Receipt, href: '/portal/finops' },
+    // 5. Agents de comunicació
+    { label: 'Agents', icon: I.Bot, href: '/portal/agents' },
     // 5. Monitoritzar
     ...(isAdmin ? [
       { label: 'Ops & Health', icon: I.Activity, href: '/portal/ops' },

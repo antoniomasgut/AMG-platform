@@ -1,0 +1,254 @@
+package com.amg.digitalitzacio.agents.api;
+
+import com.amg.digitalitzacio.agents.api.dto.*;
+import com.amg.digitalitzacio.agents.domain.Conversation;
+import com.amg.digitalitzacio.agents.domain.ConversationRepository;
+import com.amg.digitalitzacio.agents.domain.ConversationRole;
+import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.shared.security.UserPrincipal;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/v1/agents/conversational")
+@RequiredArgsConstructor
+@Slf4j
+public class ConversationalAgentController {
+
+    private final ConversationRepository conversationRepository;
+    private final TenantChatLinkRepository tenantChatLinkRepository;
+
+    @GetMapping("/{tenantId}/conversations")
+    public ResponseEntity<List<ConversationResponse>> getConversations(
+            @PathVariable UUID tenantId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        try {
+            var principal = getPrincipal();
+            validateTenantAccess(tenantId, principal);
+
+            var conversations = conversationRepository.findByTenantIdOrderByCreatedAtDesc(
+                    tenantId, PageRequest.of(page, size));
+
+            var responses = conversations.stream()
+                    .map(c -> new ConversationResponse(
+                            c.getId(),
+                            c.getCustomerIdentifier(),
+                            c.getChannel(),
+                            c.getRole(),
+                            c.getContent(),
+                            c.getPendingApproval(),
+                            c.getCreatedAt()
+                    ))
+                    .toList();
+
+            return ResponseEntity.ok(responses);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error fetching conversations for tenant {}", tenantId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/{tenantId}/pending")
+    public ResponseEntity<List<PendingResponseDto>> getPending(@PathVariable UUID tenantId) {
+        try {
+            var principal = getPrincipal();
+            validateTenantAccess(tenantId, principal);
+
+            var pending = conversationRepository.findByTenantIdAndPendingApprovalTrueOrderByCreatedAtDesc(tenantId);
+
+            var responses = pending.stream()
+                    .filter(c -> c.getRole() == ConversationRole.ASSISTANT)
+                    .map(assistantMsg -> {
+                        // Find preceding user message
+                        String customerMessage = "";
+                        var allMsgs = conversationRepository.findByTenantIdOrderByCreatedAtDesc(
+                                tenantId, PageRequest.of(0, 1000));
+                        for (int i = 0; i < allMsgs.size() - 1; i++) {
+                            if (allMsgs.get(i).getId().equals(assistantMsg.getId()) &&
+                                    i + 1 < allMsgs.size() &&
+                                    allMsgs.get(i + 1).getRole() == ConversationRole.USER) {
+                                customerMessage = allMsgs.get(i + 1).getContent();
+                                break;
+                            }
+                        }
+
+                        return new PendingResponseDto(
+                                assistantMsg.getId(),
+                                assistantMsg.getCustomerIdentifier(),
+                                assistantMsg.getChannel(),
+                                customerMessage,
+                                assistantMsg.getContent(),
+                                assistantMsg.getCreatedAt()
+                        );
+                    })
+                    .toList();
+
+            return ResponseEntity.ok(responses);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error fetching pending for tenant {}", tenantId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/{tenantId}/pending/{id}/approve")
+    public ResponseEntity<Void> approvePending(
+            @PathVariable UUID tenantId,
+            @PathVariable Long id) {
+        try {
+            var principal = getPrincipal();
+            validateTenantAccess(tenantId, principal);
+
+            var conversation = conversationRepository.findById(id)
+                    .filter(c -> c.getTenantId().equals(tenantId) && c.getPendingApproval())
+                    .orElseThrow(() -> new IllegalArgumentException("Conversation not found or not pending"));
+
+            conversation.setPendingApproval(false);
+            conversation.setApprovedAt(Instant.now());
+            conversationRepository.save(conversation);
+
+            log.info("Approved pending response {} for tenant {}", id, tenantId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error approving pending {} for tenant {}", id, tenantId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/{tenantId}/pending/{id}/edit")
+    public ResponseEntity<Void> editPending(
+            @PathVariable UUID tenantId,
+            @PathVariable Long id,
+            @RequestBody EditPendingRequest request) {
+        try {
+            var principal = getPrincipal();
+            validateTenantAccess(tenantId, principal);
+
+            String newContent = request.content();
+            if (newContent == null || newContent.isBlank()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            var conversation = conversationRepository.findById(id)
+                    .filter(c -> c.getTenantId().equals(tenantId) && c.getPendingApproval())
+                    .orElseThrow(() -> new IllegalArgumentException("Conversation not found or not pending"));
+
+            conversation.setContent(newContent);
+            conversation.setPendingApproval(false);
+            conversation.setApprovedAt(Instant.now());
+            conversationRepository.save(conversation);
+
+            log.info("Edited and approved pending response {} for tenant {}", id, tenantId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error editing pending {} for tenant {}", id, tenantId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @DeleteMapping("/{tenantId}/pending/{id}")
+    public ResponseEntity<Void> discardPending(
+            @PathVariable UUID tenantId,
+            @PathVariable Long id) {
+        try {
+            var principal = getPrincipal();
+            validateTenantAccess(tenantId, principal);
+
+            var conversation = conversationRepository.findById(id)
+                    .filter(c -> c.getTenantId().equals(tenantId) && c.getPendingApproval())
+                    .orElseThrow(() -> new IllegalArgumentException("Conversation not found or not pending"));
+
+            conversationRepository.delete(conversation);
+
+            log.info("Discarded pending response {} for tenant {}", id, tenantId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error discarding pending {} for tenant {}", id, tenantId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PutMapping("/{tenantId}/mode")
+    public ResponseEntity<Void> updateMode(
+            @PathVariable UUID tenantId,
+            @RequestBody AgentModeRequest request) {
+        try {
+            var principal = getPrincipal();
+            validateTenantAccess(tenantId, principal);
+
+            var chatLink = tenantChatLinkRepository.findByTenantId(tenantId)
+                    .orElseThrow(() -> new IllegalArgumentException("Chat link not found"));
+
+            chatLink.setAgentMode(request.mode());
+            tenantChatLinkRepository.save(chatLink);
+
+            log.info("Updated agent mode to {} for tenant {}", request.mode(), tenantId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error updating mode for tenant {}", tenantId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/{tenantId}/status")
+    public ResponseEntity<AgentStatusResponse> getStatus(@PathVariable UUID tenantId) {
+        try {
+            var principal = getPrincipal();
+            validateTenantAccess(tenantId, principal);
+
+            var chatLink = tenantChatLinkRepository.findByTenantId(tenantId)
+                    .orElseThrow(() -> new IllegalArgumentException("Chat link not found"));
+
+            var response = new AgentStatusResponse(
+                    chatLink.getAgentMode(),
+                    chatLink.getTelegramChatId() != null,
+                    chatLink.getWhatsappPhoneNumber() != null && !chatLink.getWhatsappPhoneNumber().isBlank(),
+                    chatLink.getEmailAddress() != null && !chatLink.getEmailAddress().isBlank()
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error fetching status for tenant {}", tenantId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    private UserPrincipal getPrincipal() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal)) {
+            throw new IllegalArgumentException("Not authenticated");
+        }
+        return (UserPrincipal) auth.getPrincipal();
+    }
+
+    private void validateTenantAccess(UUID requestedTenantId, UserPrincipal principal) {
+        if (!requestedTenantId.equals(principal.tenantId())) {
+            log.warn("Unauthorized access attempt: user {} tried to access tenant {}", principal.id(), requestedTenantId);
+            throw new IllegalArgumentException("Unauthorized");
+        }
+    }
+}

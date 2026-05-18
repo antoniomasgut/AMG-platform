@@ -64,6 +64,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/gocardless/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/gocardless/tenants/*/mandate/complete").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/agents/telegram/webhook").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/agents/whatsapp/webhook/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/agents/email/webhook/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/ops/health").permitAll()
                         .requestMatchers("/api/v1/demo/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").authenticated()
