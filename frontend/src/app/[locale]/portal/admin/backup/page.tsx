@@ -105,21 +105,21 @@ export default function BackupPage() {
             />
             <AMGStat
               label="Últim backup"
-              value={dashboard.lastBackupAt ? new Date(dashboard.lastBackupAt).toLocaleDateString('ca-ES') : 'Mai'}
+              value={dashboard.lastBackup ? new Date(dashboard.lastBackup).toLocaleDateString('ca-ES') : 'Mai'}
               icon={I.Clock}
-              tone="info"
+              tone={dashboard.lastBackupStatus === 'COMPLETED' ? 'success' : 'warning'}
             />
             <AMGStat
               label="Proper programat"
-              value={dashboard.nextScheduledAt ? new Date(dashboard.nextScheduledAt).toLocaleDateString('ca-ES') : '—'}
+              value={dashboard.nextScheduledBackup ? new Date(dashboard.nextScheduledBackup).toLocaleDateString('ca-ES') : '—'}
               icon={I.Calendar}
               tone="info"
             />
             <AMGStat
-              label="Taxa d'èxit"
-              value={`${(dashboard.successRate * 100).toFixed(0)}%`}
+              label="Backups manuals"
+              value={String(dashboard.manualFullCount ?? 0)}
               icon={I.Check}
-              tone={dashboard.successRate >= 0.9 ? 'success' : 'danger'}
+              tone="success"
             />
           </div>
         )}

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { getCampaigns, createCampaign, runCampaign, deleteCampaign, type Campaign } from '@/services/prospecting';
+import { getCampaigns, createCampaign, runCampaign, deleteCampaign, type Campaign, type ProspectSource } from '@/services/prospecting';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
@@ -35,7 +35,7 @@ export default function ProspectingPage() {
   const locale = params.locale as string;
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', sector: '', city: '', maxResults: 50 });
+  const [form, setForm] = useState({ name: '', sector: '', location: '', source: 'GOOGLE_MAPS' as ProspectSource });
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ['campaigns'],
@@ -47,7 +47,7 @@ export default function ProspectingPage() {
     mutationFn: () => createCampaign(form),
     onSuccess: () => {
       toast('success', 'Campanya creada');
-      setForm({ name: '', sector: '', city: '', maxResults: 50 });
+      setForm({ name: '', sector: '', location: '', source: 'GOOGLE_MAPS' });
       setShowForm(false);
       qc.invalidateQueries({ queryKey: ['campaigns'] });
     },
@@ -91,31 +91,30 @@ export default function ProspectingPage() {
           <div className="amg-card card-clip p-6 space-y-4">
             <div className="f-mono text-label uppercase text-ink-2 tracking-widest mb-2">Nova Campanya</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {([
-                ['Nom', 'name', 'text'],
-                ['Sector', 'sector', 'text'],
-                ['Ciutat', 'city', 'text'],
-              ] as const).map(([label, key, type]) => (
+              {([['Nom', 'name'], ['Sector', 'sector'], ['Localitat', 'location']] as const).map(([label, key]) => (
                 <div key={key}>
                   <label className="f-mono text-label text-ink-3 uppercase tracking-wider block mb-1">{label}</label>
                   <input
-                    type={type}
+                    type="text"
                     value={form[key]}
                     onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                     className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+                    placeholder={key === 'location' ? 'p. ex. Palma' : key === 'sector' ? 'p. ex. restaurant' : ''}
                   />
                 </div>
               ))}
               <div>
-                <label className="f-mono text-label text-ink-3 uppercase tracking-wider block mb-1">Màx. resultats</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={200}
-                  value={form.maxResults}
-                  onChange={(e) => setForm((f) => ({ ...f, maxResults: Number(e.target.value) }))}
+                <label className="f-mono text-label text-ink-3 uppercase tracking-wider block mb-1">Font</label>
+                <select
+                  value={form.source}
+                  onChange={(e) => setForm((f) => ({ ...f, source: e.target.value as ProspectSource }))}
                   className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
-                />
+                >
+                  <option value="GOOGLE_MAPS">Google Maps</option>
+                  <option value="INSTAGRAM">Instagram</option>
+                  <option value="PAGINAS_AMARILLAS">Pàgines Grogues</option>
+                  <option value="MANUAL">Manual</option>
+                </select>
               </div>
             </div>
             <div className="flex gap-3">
@@ -161,7 +160,7 @@ export default function ProspectingPage() {
                     <tr key={c.id} className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)] transition-colors">
                       <td className="px-4 sm:px-5 py-3 f-display font-bold text-sm">{c.name}</td>
                       <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">
-                        {c.sector} / {c.city}
+                        {c.sector} / {c.location}
                       </td>
                       <td className="px-4 sm:px-5 py-3">
                         <AMGBadge tone={STATUS_TONE[c.status] ?? 'neutral'}>
@@ -169,7 +168,7 @@ export default function ProspectingPage() {
                         </AMGBadge>
                       </td>
                       <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">
-                        {c.prospectsFound} / {c.maxResults}
+                        {c.prospectsFound ?? 0}
                       </td>
                       <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{fmtDate(c.createdAt)}</td>
                       <td className="px-4 sm:px-5 py-3">

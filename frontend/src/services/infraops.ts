@@ -1,10 +1,25 @@
 import { apiFetch } from './api';
 
-export interface InfraStatus {
-  cpuPercent: number;
-  ramPercent: number;
-  diskPercent: number;
+export interface InfraStatusDetail {
+  percent: number;
   status: string;
+  usedMb?: number;
+  totalMb?: number;
+  usedGb?: number;
+  totalGb?: number;
+  activeConnections?: number;
+  maxConnections?: number;
+}
+
+export interface InfraStatus {
+  collectedAt: string;
+  cpu: InfraStatusDetail;
+  ram: InfraStatusDetail;
+  disk: InfraStatusDetail;
+  database: InfraStatusDetail;
+  tenants: { active: number; recommendation: string | null };
+  overallStatus: string;
+  activeRecommendations: number;
 }
 
 export interface InfraMetric {

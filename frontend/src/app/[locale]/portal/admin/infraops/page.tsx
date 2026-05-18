@@ -70,9 +70,9 @@ export default function InfraOpsPage() {
             <div className="f-display font-bold text-xl">InfraOps</div>
             {s && (
               <AMGBadge
-                tone={s.status === 'HEALTHY' ? 'success' : s.status === 'DEGRADED' ? 'warning' : 'danger'}
+                tone={s.overallStatus === 'OK' ? 'success' : s.overallStatus === 'DEGRADED' ? 'warning' : 'danger'}
               >
-                {s.status}
+                {s.overallStatus}
               </AMGBadge>
             )}
           </div>
@@ -90,32 +90,39 @@ export default function InfraOpsPage() {
           </div>
         ) : s ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <AMGStat
                 label="CPU"
-                value={`${s.cpuPercent.toFixed(1)}%`}
+                value={`${s.cpu.percent.toFixed(1)}%`}
                 icon={I.Activity}
-                tone={metricTone(s.cpuPercent)}
+                tone={metricTone(s.cpu.percent)}
               />
               <AMGStat
                 label="RAM"
-                value={`${s.ramPercent.toFixed(1)}%`}
+                value={`${s.ram.percent.toFixed(1)}%`}
                 icon={I.Server}
-                tone={metricTone(s.ramPercent)}
+                tone={metricTone(s.ram.percent)}
               />
               <AMGStat
                 label="Disc"
-                value={`${s.diskPercent.toFixed(1)}%`}
+                value={`${s.disk.percent.toFixed(1)}%`}
                 icon={I.Database}
-                tone={metricTone(s.diskPercent)}
+                tone={metricTone(s.disk.percent)}
+              />
+              <AMGStat
+                label="BD Connexions"
+                value={`${s.database.activeConnections ?? 0}/${s.database.maxConnections ?? 0}`}
+                icon={I.Box}
+                tone={metricTone(s.database.percent)}
               />
             </div>
 
             <div className="amg-card card-clip p-6 space-y-4">
               <div className="f-mono text-label uppercase text-ink-2 tracking-widest mb-2">Ús de recursos</div>
-              <MetricBar label="CPU" value={s.cpuPercent} />
-              <MetricBar label="Memòria RAM" value={s.ramPercent} />
-              <MetricBar label="Disc" value={s.diskPercent} />
+              <MetricBar label="CPU" value={s.cpu.percent} />
+              <MetricBar label={`RAM (${s.ram.usedMb ?? 0} / ${s.ram.totalMb ?? 0} MB)`} value={s.ram.percent} />
+              <MetricBar label={`Disc (${s.disk.usedGb ?? 0} / ${s.disk.totalGb ?? 0} GB)`} value={s.disk.percent} />
+              <MetricBar label="Base de dades" value={s.database.percent} />
             </div>
           </>
         ) : null}

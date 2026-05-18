@@ -11,9 +11,13 @@ export interface BackupTask {
 
 export interface BackupDashboard {
   totalBackups: number;
-  lastBackupAt?: string;
-  nextScheduledAt?: string;
-  successRate: number;
+  lastBackup?: string;
+  lastBackupStatus?: string;
+  nextScheduledBackup?: string;
+  scheduledCount: number;
+  manualFullCount: number;
+  storageUsedBytes?: number;
+  retentionDays?: number;
 }
 
 export const triggerBackup = (type: string) =>

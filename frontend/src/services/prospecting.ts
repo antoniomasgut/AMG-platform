@@ -4,9 +4,9 @@ export interface Campaign {
   id: string;
   name: string;
   sector: string;
-  city: string;
+  location: string;
+  source: string;
   status: string;
-  maxResults: number;
   prospectsFound: number;
   createdAt: string;
 }
@@ -20,11 +20,15 @@ export interface Prospect {
   status: string;
 }
 
+export type ProspectSource = 'GOOGLE_MAPS' | 'INSTAGRAM' | 'PAGINAS_AMARILLAS' | 'MANUAL';
+
 export interface CreateCampaignRequest {
   name: string;
   sector: string;
-  city: string;
-  maxResults?: number;
+  location: string;
+  source: ProspectSource;
+  searchParams?: string;
+  notes?: string;
 }
 
 export const getCampaigns = () =>
