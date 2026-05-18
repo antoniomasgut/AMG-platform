@@ -22,7 +22,8 @@ import { I } from '@/components/ui/icons';
 type Tab = 'agent' | 'pending' | 'conversations';
 
 export default function AgentsPage() {
-  const { user, tenantId } = useAuth();
+  const { user } = useAuth();
+  const tenantId = user?.tenantId;
   const [activeTab, setActiveTab] = useState<Tab>('agent');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState<string>('');

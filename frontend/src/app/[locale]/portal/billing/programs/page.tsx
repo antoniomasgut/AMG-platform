@@ -388,7 +388,7 @@ export default function CommercialProgramsPage() {
                 </div>
               ) : referrals.length === 0 ? (
                 <div className="p-8 text-center">
-                  <I.Inbox size={28} stroke="#6c757d" className="mx-auto mb-3" />
+                  <I.Box size={28} stroke="#6c757d" className="mx-auto mb-3" />
                   <div className="f-display font-bold text-sm mb-1 text-ink-2">Cap codi referit</div>
                   <p className="f-mono text-label text-ink-2">No hi ha referits aún</p>
                 </div>
