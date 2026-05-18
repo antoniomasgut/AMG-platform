@@ -37,6 +37,10 @@ export const BlockProperties: FC = () => {
       );
     }
     if (key === 'items' && Array.isArray(value)) {
+      const templateItems = tpl?.defaultProps?.items;
+      const blankItem = Array.isArray(templateItems) && templateItems.length > 0
+        ? Object.fromEntries(Object.keys(templateItems[0] as object).map((k) => [k, '']))
+        : { name: '', desc: '' };
       return (
         <div key={key} className="mb-2">
           <label className="f-mono text-label uppercase text-ink-3 block mb-1">{key}</label>
@@ -68,7 +72,7 @@ export const BlockProperties: FC = () => {
             </div>
           ))}
           <button
-            onClick={() => handleChange(key, [...value, { name: '', desc: '' }])}
+            onClick={() => handleChange(key, [...value, blankItem])}
             className="text-accent-light text-label mt-1"
           >
             + Afegir
@@ -101,7 +105,10 @@ export const BlockProperties: FC = () => {
       <div className="f-mono text-label uppercase tracking-widest text-accent-light mb-3">
         {tpl?.label || block.type}
       </div>
-      {Object.entries((tpl?.defaultProps || {})).map(([key, value]) => renderField(key, value))}
+      {Object.keys(tpl?.defaultProps || {}).map((key) => {
+        const value = key in (block.props || {}) ? block.props[key] : (tpl?.defaultProps || {})[key];
+        return renderField(key, value);
+      })}
     </div>
   );
 };

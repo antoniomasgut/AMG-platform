@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, type FC } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEditorStore } from '@/store/editor';
 import { createVersion, updateVersion, publishLanding } from '@/services/factory';
 import { BlockCatalog } from './BlockCatalog';
@@ -10,6 +11,7 @@ import { FactoryCanvas } from './FactoryCanvas';
 import { PreviewToolbar } from './PreviewToolbar';
 import { BlockRenderer } from './BlockRenderer';
 import { VersionHistory } from './VersionHistory';
+import { I } from '@/components/ui/icons';
 import type { BlockType } from '@/services/factory';
 
 type SidebarTab = 'blocks' | 'properties' | 'styles' | 'versions';
@@ -18,7 +20,13 @@ interface Props {
   landingId: string;
 }
 
+const LOCALES = ['ca', 'es', 'en', 'de'];
+
 export const FactoryLayout: FC<Props> = ({ landingId }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const locale = LOCALES.find((l) => pathname.startsWith(`/${l}/`)) ?? '';
+  const localePrefix = locale ? `/${locale}` : '';
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('blocks');
   const [statusMsg, setStatusMsg] = useState('');
   const [showPreview, setShowPreview] = useState(false);
@@ -102,6 +110,13 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
     <div className="flex flex-col h-full">
       {/* Topbar */}
       <div className="h-12 shrink-0 bg-[#0d0d1a] border-b border-border-base flex items-center px-4 gap-3">
+        <button
+          onClick={() => router.push(`${localePrefix}/portal/landings`)}
+          className="flex items-center gap-1 text-ink-2 hover:text-ink-0 transition shrink-0 f-mono text-xs"
+          title="Tornar a Landings"
+        >
+          <I.Chevron size={16} className="rotate-180" />
+        </button>
         <span className="f-mono text-xs uppercase tracking-wider text-ink-0 truncate max-w-[180px]">
           {landing?.title || 'Editor'}
         </span>

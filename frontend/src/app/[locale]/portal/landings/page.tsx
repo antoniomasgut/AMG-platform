@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/auth';
@@ -8,6 +7,7 @@ import { listLandings } from '@/services/factory';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { I } from '@/components/ui/icons';
+import { PortalShell } from '@/components/portal/PortalShell';
 
 export default function LandingsPage() {
   const router = useRouter();
@@ -28,6 +28,7 @@ export default function LandingsPage() {
   }
 
   return (
+    <PortalShell breadcrumb="landings">
     <div className="p-4 sm:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -88,5 +89,6 @@ export default function LandingsPage() {
         </div>
       )}
     </div>
+    </PortalShell>
   );
 }
