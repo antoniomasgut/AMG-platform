@@ -3,51 +3,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useApiErrorHandler } from '@/lib/use-api-error';
+import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { AMGSectionTitle } from '@/components/ui/stat';
 import { I } from '@/components/ui/icons';
-import { AMGLogo } from '@/components/ui/AMGLogo';
 import {
   fetchBillingDashboard, fetchInvoices, fetchLandings, fetchWorkflows,
   type BillingDashboard, type Invoice, type LandingSummary, type WorkflowSummary,
 } from '@/services/dashboard';
+import { listTenants } from '@/services/admin';
+import { getLeadStats, type LeadStats } from '@/services/leads';
+import { getOpsDashboard, type OpsDashboard } from '@/services/ops';
+import { getInfraStatus, type InfraStatus } from '@/services/infraops';
 import { OnboardingGuide } from '@/components/portal/OnboardingGuide';
 
-/* ─────────── Skeleton ─────────── */
-function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse bg-[#212140] rounded ${className}`} />;
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="flex w-full min-h-dvh bg-[#0d0d1a] overflow-hidden">
-      <aside className="hidden lg:flex w-[240px] shrink-0 bg-[#13132a] border-r border-border-base flex-col p-4 space-y-4">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-8 w-3/4" />
-        <div className="flex-1" />
-        <Skeleton className="h-14 w-full" />
-      </aside>
-      <main className="flex-1 p-8 space-y-6">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-48 w-full" />
-      </main>
-    </div>
-  );
-}
-
-/* ─────────── Helpers ─────────── */
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function formatEur(cents: number | null): string {
-  if (cents == null) return '€0,00';
-  return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(cents);
+  if (cents == null) return '€0';
+  return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(cents);
 }
 
 const BADGE_TONE: Record<string, 'success' | 'warning' | 'danger' | 'accent'> = {
@@ -56,378 +33,430 @@ const BADGE_TONE: Record<string, 'success' | 'warning' | 'danger' | 'accent'> = 
   DRAFT: 'accent',
 };
 
-/* ─────────── PortalSidebar ─────────── */
-interface SidebarProps {
-  userName: string;
-  userEmail: string;
-  userRole: string;
-  isSuperAdmin: boolean;
-  isAdmin: boolean;
-  initial: string;
-}
-
-function PortalSidebar({ userName, userEmail, userRole: _userRole, isSuperAdmin, isAdmin, initial }: SidebarProps) {
-  return (
-    <aside aria-label="Navegació del portal" className="hidden lg:flex w-[240px] shrink-0 bg-[#13132a] border-r border-border-base flex-col">
-      <div className="h-16 border-b border-border-base flex items-center px-4">
-        <a href="/portal">
-          <AMGLogo className="h-9 w-auto" />
-        </a>
+/* ─── KPI card ─── */
+function KpiCard({ label, value, sub, tone = 'default', icon: Icon, href }: {
+  label: string; value: string | number; sub?: string;
+  tone?: 'default' | 'ok' | 'warn' | 'crit'; icon?: React.FC<{ size?: number }>;
+  href?: string;
+}) {
+  const bar = tone === 'ok' ? 'bg-[#39d353]' : tone === 'warn' ? 'bg-[#f0b429]' : tone === 'crit' ? 'bg-[#f85149]' : 'bg-[#FF6B00]';
+  const content = (
+    <div className={`amg-card card-clip p-4 relative overflow-hidden ${href ? 'cursor-pointer hover:border-border-strong transition-colors' : ''}`}>
+      <div className={`absolute top-0 left-0 right-0 h-[2px] ${bar}`} />
+      <div className="flex items-start justify-between gap-2">
+        <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mt-1">{label}</div>
+        {Icon && <Icon size={13} />}
       </div>
-      <nav aria-label="Menú principal" className="flex-1 p-3 space-y-1 overflow-y-auto">
-        <div className="f-mono text-[9px] uppercase tracking-widest text-ink-2 px-3 py-2">El meu compte</div>
-        {([
-          { label: 'Dashboard', icon: I.Dashboard, active: true, href: '/portal' },
-          { label: 'Landings', icon: I.Globe, active: false, href: '/portal/landings' },
-          { label: 'Billing', icon: I.CreditCard, active: false, href: '/portal/billing' },
-          { label: 'FinOps', icon: I.Receipt, active: false, href: '/portal/finops' },
-          { label: 'Automatitzacions', icon: I.Zap, active: false, href: '/portal/automations' },
-          ...(isAdmin ? [{ label: 'Ops & Health', icon: I.Activity, active: false, href: '/portal/ops' }] : []),
-          ...(isSuperAdmin ? [{ label: 'Admin', icon: I.Settings, active: false, href: '/portal/admin/users' }] : []),
-        ]).map(({ label, icon: Icon, active, href }) => (
-          <a key={label} href={href}
-            className={`relative flex items-center gap-3 px-3 h-10 f-mono text-xs uppercase tracking-wider cursor-pointer ${
-              active ? 'bg-accent-muted text-accent-light' : 'text-ink-1 hover:text-ink-0'
-            }`}>
-            {active && <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#FF6B00]"></span>}
-            <Icon size={14} />
-            {label}
-          </a>
-        ))}
-      </nav>
-      <div className="p-4 border-t border-border-base">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-gradient-to-br from-[#58a6ff] to-[#FF9A3C] btn-clip flex items-center justify-center text-black font-bold text-xs">{initial}</div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold truncate">{userName}</div>
-            <div className="f-mono text-label text-ink-2 truncate">{userEmail}</div>
-          </div>
-        </div>
-      </div>
-    </aside>
+      <div className="f-display font-black text-2xl mt-2 leading-none">{value}</div>
+      {sub && <div className="f-mono text-[10px] text-ink-2 mt-1 uppercase">{sub}</div>}
+    </div>
   );
+  if (href) return <a href={href}>{content}</a>;
+  return content;
 }
 
-/* ─────────── ServiceCards ─────────── */
-interface ServiceCard {
-  name: string;
-  icon: React.FC<{ size?: number; stroke?: string }>;
-  used: number;
-  total: number;
-  unit: string;
-}
-
-function ServiceCards({ cards, landingCount, workflowCount }: { cards: ServiceCard[]; landingCount: number; workflowCount: number }) {
+/* ─── Gauge bar ─── */
+function Gauge({ label, pct }: { label: string; pct: number }) {
+  const color = pct >= 90 ? 'bg-[#f85149]' : pct >= 75 ? 'bg-[#f0b429]' : 'bg-[#39d353]';
   return (
     <div>
-      <AMGSectionTitle eyebrow="Resum" title="Serveis">
-        <span className="f-mono text-caption text-ink-2 uppercase">{landingCount} landings · {workflowCount} workflows</span>
-      </AMGSectionTitle>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {cards.map((s, i) => {
-          const Icon = s.icon;
-          const pct = Math.min(Math.round((s.used / s.total) * 100), 100);
-          const warn = pct > 80;
-          return (
-            <div key={i} className="amg-card card-clip p-4 sm:p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-accent-muted border border-border-strong flex items-center justify-center">
-                  <Icon size={16} stroke="#FF9A3C" />
-                </div>
-                <div className="flex-1">
-                  <div className="f-display font-bold text-sm">{s.name.toUpperCase()}</div>
-                  <div className="f-mono text-label text-ink-2 uppercase flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${s.used > 0 ? 'bg-[#39d353] amg-blink' : 'bg-[#8896aa]'}`}></span>
-                    {s.used > 0 ? 'OPERATIU' : 'SENSE DADES'}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-baseline justify-between mb-1.5">
-                <span className="f-mono text-caption text-ink-1 uppercase">{s.used} / {s.total} {s.unit}</span>
-                <span className={`f-mono text-caption ${warn ? 'text-warning' : 'text-ink-2'}`}>{pct}%</span>
-              </div>
-              <div className="h-1.5 bg-[#212140] overflow-hidden">
-                <div className={`h-full ${warn ? 'bg-[#f0b429]' : 'bg-[#FF6B00]'}`} style={{ width: `${pct}%` }}></div>
-              </div>
-            </div>
-          );
-        })}
+      <div className="flex justify-between mb-1">
+        <span className="f-mono text-[10px] uppercase text-ink-2">{label}</span>
+        <span className={`f-mono text-[10px] font-bold ${pct >= 90 ? 'text-[#f85149]' : pct >= 75 ? 'text-[#f0b429]' : 'text-ink-1'}`}>{pct}%</span>
+      </div>
+      <div className="h-1 bg-[#212140] overflow-hidden rounded-full">
+        <div className={`h-full ${color} transition-all`} style={{ width: `${Math.min(pct, 100)}%` }} />
       </div>
     </div>
   );
 }
 
-/* ─────────── InvoicesTable ─────────── */
-function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
+/* ─────────────────────────────────────────────
+   SUPER_ADMIN / ADMIN dashboard
+───────────────────────────────────────────── */
+interface AdminData {
+  totalTenants: number;
+  leads: LeadStats | null;
+  ops: OpsDashboard | null;
+  infra: InfraStatus | null;
+}
+
+function AdminDashboard({ data, loading }: { data: AdminData; loading: boolean }) {
+  const { leads, ops, infra, totalTenants } = data;
+
+  const sysOk = ops ? ops.currentStatus.up === ops.currentStatus.services && ops.openIncidents === 0 : null;
+  const infraTone = infra
+    ? (infra.cpu.percent >= 90 || infra.ram.percent >= 90 || infra.disk.percent >= 90 ? 'crit'
+      : infra.cpu.percent >= 75 || infra.ram.percent >= 75 || infra.disk.percent >= 75 ? 'warn' : 'ok')
+    : 'default';
+
+  const STAGES = ['PROSPECTING', 'CONTACT', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'];
+  const STAGE_LABEL: Record<string, string> = {
+    PROSPECTING: 'Prospecció', CONTACT: 'Contacte', PROPOSAL: 'Proposta',
+    NEGOTIATION: 'Negociació', WON: 'Guanyat', LOST: 'Perdut',
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-24 animate-pulse bg-[#212140] rounded" />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="amg-card card-clip p-4 sm:p-5">
-      <AMGSectionTitle eyebrow="Historial" title="Últimes factures">
-        <a className="f-mono text-label uppercase text-accent-light cursor-pointer">VEURE TOTES →</a>
-      </AMGSectionTitle>
-      {invoices.length === 0 ? (
-        <div className="py-8 text-center">
-          <I.Receipt size={24} stroke="#8896aa" className="mx-auto mb-2" />
-          <p className="f-mono text-caption text-ink-2 uppercase">Cap factura encara</p>
+    <div className="p-4 sm:p-6 space-y-6">
+
+      {/* KPIs principals */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard
+          label="Tenants actius"
+          value={totalTenants}
+          sub="clients"
+          icon={I.Building}
+          href="/portal/admin/tenants"
+        />
+        <KpiCard
+          label="Leads actius"
+          value={leads ? (leads.total - (leads.byStage?.LOST ?? 0) - (leads.byStage?.WON ?? 0)) : '—'}
+          sub={leads ? `${leads.total} total · ${Math.round(leads.conversionRate ?? 0)}% conv.` : ''}
+          icon={I.Users}
+          href="/portal/leads"
+        />
+        <KpiCard
+          label="Serveis monitorats"
+          value={ops ? `${ops.currentStatus.up}/${ops.currentStatus.services}` : '—'}
+          sub={ops ? (ops.openIncidents > 0 ? `${ops.openIncidents} incidents oberts` : 'Sense incidents') : ''}
+          tone={sysOk === true ? 'ok' : sysOk === false ? 'crit' : 'default'}
+          icon={I.Activity}
+          href="/portal/ops"
+        />
+        <KpiCard
+          label="Infraestructura"
+          value={infra ? `${infra.cpu.percent}% CPU` : '—'}
+          sub={infra ? `RAM ${infra.ram.percent}% · Disk ${infra.disk.percent}%` : ''}
+          tone={infraTone}
+          icon={I.Server}
+          href="/portal/admin/infraops"
+        />
+      </div>
+
+      {/* Leads pipeline + Infra */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        {/* Pipeline de leads */}
+        <div className="amg-card card-clip p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">Captació</div>
+              <div className="f-display font-bold text-sm mt-0.5">Pipeline de leads</div>
+            </div>
+            <a href="/portal/leads" className="f-mono text-[10px] uppercase text-accent-light hover:underline">VEURE TOT →</a>
+          </div>
+          {leads ? (
+            <div className="space-y-2">
+              {STAGES.filter(s => s !== 'LOST').map(stage => {
+                const count = leads.byStage?.[stage] ?? 0;
+                const total = leads.total || 1;
+                return (
+                  <div key={stage} className="flex items-center gap-3">
+                    <span className="f-mono text-[10px] uppercase text-ink-2 w-24 shrink-0">{STAGE_LABEL[stage]}</span>
+                    <div className="flex-1 h-1.5 bg-[#212140] overflow-hidden">
+                      <div
+                        className={`h-full ${stage === 'WON' ? 'bg-[#39d353]' : 'bg-[#FF6B00]'}`}
+                        style={{ width: `${Math.round((count / total) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="f-mono text-[11px] font-bold w-6 text-right">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-6 text-center f-mono text-[10px] uppercase text-ink-3">Sense dades</div>
+          )}
         </div>
-      ) : (
-        <div className="overflow-x-auto -mx-4 sm:mx-0">
-          <div className="min-w-[340px] space-y-0">
-            {invoices.slice(0, 5).map((inv) => (
+
+        {/* Recursos del servidor */}
+        <div className="amg-card card-clip p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">Servidor</div>
+              <div className="f-display font-bold text-sm mt-0.5">Recursos</div>
+            </div>
+            <a href="/portal/admin/infraops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">DETALL →</a>
+          </div>
+          {infra ? (
+            <div className="space-y-4">
+              <Gauge label="CPU" pct={infra.cpu.percent} />
+              <Gauge label="RAM" pct={infra.ram.percent} />
+              <Gauge label="Disc" pct={infra.disk.percent} />
+              <Gauge label="Connexions DB" pct={infra.database.percent} />
+              {infra.tenants && (
+                <div className="pt-2 border-t border-border-subtle flex justify-between">
+                  <span className="f-mono text-[10px] uppercase text-ink-3">Tenants n8n</span>
+                  <span className="f-mono text-[10px] font-bold">{infra.tenants.active}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="py-6 text-center f-mono text-[10px] uppercase text-ink-3">Sense dades de servidor</div>
+          )}
+        </div>
+      </div>
+
+      {/* Accions ràpides */}
+      <div className="amg-card card-clip p-4 sm:p-5">
+        <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-3">Accions ràpides</div>
+        <div className="flex flex-wrap gap-2">
+          <a href="/portal/process">
+            <AMGButton size="sm" icon={I.Flow}>PROCÉS COMPLET</AMGButton>
+          </a>
+          <a href="/portal/leads/new">
+            <AMGButton size="sm" variant="outline" icon={I.Plus}>NOU LEAD</AMGButton>
+          </a>
+          <a href="/portal/admin/tenants">
+            <AMGButton size="sm" variant="outline" icon={I.Building}>TENANTS</AMGButton>
+          </a>
+          <a href="/portal/admin/config">
+            <AMGButton size="sm" variant="outline" icon={I.Key}>API KEYS</AMGButton>
+          </a>
+          <a href="/portal/admin/backup">
+            <AMGButton size="sm" variant="outline" icon={I.Database}>BACKUP</AMGButton>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   CLIENT dashboard
+───────────────────────────────────────────── */
+interface ClientData {
+  billing: BillingDashboard | null;
+  invoices: Invoice[];
+  landings: LandingSummary[];
+  workflows: WorkflowSummary[];
+}
+
+function ClientDashboard({ data, loading, userName, onboardingSkipped, onboardingComplete, onSkip, onComplete }: {
+  data: ClientData; loading: boolean; userName: string;
+  onboardingSkipped: boolean; onboardingComplete: boolean;
+  onSkip: () => void; onComplete: () => void;
+}) {
+  const { billing, invoices, landings, workflows } = data;
+  const activeLandings = landings.filter(l => l.status === 'PUBLISHED' || l.status === 'ACTIVE').length;
+  const activeWorkflows = workflows.filter(w => w.status === 'ACTIVE').length;
+
+  const pendingSteps = [
+    ...(landings.length === 0 ? ['landing' as const] : []),
+    ...(workflows.length === 0 ? ['automation' as const] : []),
+    ...(invoices.length === 0 ? ['billing' as const] : []),
+  ];
+  const showOnboarding = !onboardingSkipped && !onboardingComplete && pendingSteps.length > 0;
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-24 animate-pulse bg-[#212140] rounded" />
+        ))}
+      </div>
+    );
+  }
+
+  if (showOnboarding) {
+    return (
+      <div className="p-4 sm:p-6">
+        <OnboardingGuide
+          userName={userName}
+          landingsCount={landings.length}
+          workflowsCount={workflows.length}
+          invoicesCount={invoices.length}
+          onSkip={onSkip}
+          onComplete={onComplete}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 sm:p-6 space-y-6">
+
+      {/* Hero billing */}
+      <div className="amg-card card-clip p-4 sm:p-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[3px] h-16 bg-[#FF6B00]" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <span className="f-mono text-[10px] uppercase tracking-widest text-ink-3">Total invertit</span>
+            <div className="f-display font-black text-2xl mt-1">{formatEur(billing?.totalSpent ?? 0)}</div>
+            <AMGBadge tone={billing && billing.pendingBudgets > 0 ? 'warning' : 'success'} className="mt-2">
+              {billing && billing.pendingBudgets > 0 ? `${billing.pendingBudgets} pendents` : 'AL DIA'}
+            </AMGBadge>
+          </div>
+          <div>
+            <div className="f-mono text-[10px] uppercase text-ink-3">Últim pressupost</div>
+            <div className="f-display font-bold text-lg mt-1">{billing?.lastBudget?.budgetNumber ?? 'Cap'}</div>
+            <div className="f-mono text-[10px] text-ink-2 mt-0.5">{formatDate(billing?.lastBudget?.sentAt ?? null)}</div>
+          </div>
+          <div>
+            <div className="f-mono text-[10px] uppercase text-ink-3">Import</div>
+            <div className="f-display font-bold text-lg mt-1 text-accent-light">{billing?.lastBudget ? formatEur(billing.lastBudget.total) : '€0'}</div>
+            <div className="f-mono text-[10px] text-ink-2 mt-0.5">{billing?.lastBudget?.status ?? '—'}</div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 content-start">
+            <KpiCard label="Webs" value={activeLandings} sub={`${landings.length} total`} />
+            <KpiCard label="Workflows" value={activeWorkflows} sub={`${workflows.length} total`} />
+          </div>
+        </div>
+      </div>
+
+      {/* Últimes factures */}
+      <div className="amg-card card-clip p-4 sm:p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">Historial</div>
+            <div className="f-display font-bold text-sm mt-0.5">Últimes factures</div>
+          </div>
+          <a href="/portal/finops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">VEURE TOTES →</a>
+        </div>
+        {invoices.length === 0 ? (
+          <div className="py-8 text-center">
+            <I.Receipt size={24} className="mx-auto mb-2 opacity-30" />
+            <p className="f-mono text-[10px] uppercase text-ink-3">Cap factura encara</p>
+          </div>
+        ) : (
+          <div className="space-y-0">
+            {invoices.slice(0, 5).map(inv => (
               <div key={inv.id}
-                className="grid grid-cols-[1fr_72px_24px] sm:grid-cols-[80px_1fr_80px_80px_24px] gap-2 sm:gap-3 px-4 sm:px-2 h-11 items-center border-b border-[rgba(226,232,240,0.04)] text-sm last:border-b-0">
-                <span className="hidden sm:block f-mono text-accent-light text-xs">#{inv.invoiceNumber || '---'}</span>
-                <span className="f-mono text-data text-ink-1">{formatDate(inv.createdAt)}</span>
-                <span className="f-mono text-ink-0">{formatEur(inv.amount)}</span>
-                <span className="hidden sm:block"><AMGBadge tone={BADGE_TONE[inv.status] || 'accent'}>{inv.status}</AMGBadge></span>
+                className="grid grid-cols-[1fr_80px_80px_20px] gap-3 h-10 items-center border-b border-[rgba(226,232,240,0.04)] last:border-0">
+                <span className="f-mono text-[11px] text-ink-1">{formatDate(inv.createdAt)}</span>
+                <span className="f-mono text-[11px] font-bold">{formatEur(inv.amount)}</span>
+                <AMGBadge tone={BADGE_TONE[inv.status] || 'accent'}>{inv.status}</AMGBadge>
                 <a href={inv.invoicePdfUrl || '#'} target="_blank" rel="noopener"
-                  className={`text-ink-1 hover:text-accent-light ${!inv.invoicePdfUrl ? 'opacity-30 pointer-events-none' : ''}`}>
+                  className={`text-ink-2 hover:text-accent-light ${!inv.invoicePdfUrl ? 'opacity-30 pointer-events-none' : ''}`}>
                   <I.Download size={12} />
                 </a>
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Ajuda */}
+      <div className="amg-card card-clip p-4 sm:p-5 flex items-start gap-4">
+        <I.Sparkles size={20} className="text-accent shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <div className="f-display font-bold text-sm">NECESSITES AJUDA?</div>
+          <p className="text-ui text-ink-1 mt-1 text-sm">El teu tècnic assignat està disponible per respondre els teus dubtes.</p>
         </div>
-      )}
+        <AMGButton size="sm" icon={I.Mail}>CONTACTE</AMGButton>
+      </div>
+
     </div>
   );
 }
 
-/* ─────────── Main ─────────── */
+/* ─────────────────────────────────────────────
+   Page
+───────────────────────────────────────────── */
 export default function PortalPage() {
-  const { user, logout, isSuperAdmin, isAdmin } = useAuth();
+  const { user, isSuperAdmin, isAdmin } = useAuth();
   const handleApiError = useApiErrorHandler();
-  const [loggingOut, setLoggingOut] = useState(false);
+  const isStaff = isSuperAdmin || isAdmin;
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [billing, setBilling] = useState<BillingDashboard | null>(null);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [landings, setLandings] = useState<LandingSummary[]>([]);
-  const [workflows, setWorkflows] = useState<WorkflowSummary[]>([]);
+
+  // Admin data
+  const [adminData, setAdminData] = useState<AdminData>({
+    totalTenants: 0, leads: null, ops: null, infra: null,
+  });
+
+  // Client data
+  const [clientData, setClientData] = useState<ClientData>({
+    billing: null, invoices: [], landings: [], workflows: [],
+  });
 
   const [onboardingSkipped, setOnboardingSkipped] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   useEffect(() => {
     if (user?.tenantId) {
-      setOnboardingSkipped(
-        localStorage.getItem(`amg_onboarding_skipped_${user.tenantId}`) === 'true'
-      );
+      setOnboardingSkipped(localStorage.getItem(`amg_onboarding_skipped_${user.tenantId}`) === 'true');
     }
   }, [user?.tenantId]);
 
   const loadDashboard = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    setError(null);
     try {
-      const tid = user.tenantId;
-      const [bill, inv, lnd, wf] = await Promise.all([
-        tid ? fetchBillingDashboard(tid).catch(() => null) : Promise.resolve(null),
-        fetchInvoices().catch(() => [] as Invoice[]),
-        tid ? fetchLandings(tid).catch(() => [] as LandingSummary[]) : Promise.resolve([]),
-        tid ? fetchWorkflows(tid).catch(() => [] as WorkflowSummary[]) : Promise.resolve([]),
-      ]);
-      setBilling(bill);
-      setInvoices(inv);
-      setLandings(lnd);
-      setWorkflows(wf);
+      if (isStaff) {
+        const [tenants, leads, ops, infra] = await Promise.all([
+          listTenants({ size: 1 }).catch(() => ({ totalElements: 0 })),
+          getLeadStats().catch(() => null),
+          getOpsDashboard().catch(() => null),
+          getInfraStatus().catch(() => null),
+        ]);
+        setAdminData({
+          totalTenants: (tenants as { totalElements: number }).totalElements,
+          leads,
+          ops,
+          infra,
+        });
+      } else {
+        const tid = user.tenantId;
+        const [bill, inv, lnd, wf] = await Promise.all([
+          tid ? fetchBillingDashboard(tid).catch(() => null) : Promise.resolve(null),
+          fetchInvoices().catch(() => [] as Invoice[]),
+          tid ? fetchLandings(tid).catch(() => [] as LandingSummary[]) : Promise.resolve([]),
+          tid ? fetchWorkflows(tid).catch(() => [] as WorkflowSummary[]) : Promise.resolve([]),
+        ]);
+        setClientData({ billing: bill, invoices: inv, landings: lnd, workflows: wf });
+      }
     } catch (err: unknown) {
       handleApiError(err, 'Dashboard');
-      setError('No s\'ha pogut carregar el dashboard');
     } finally {
       setLoading(false);
     }
-  }, [user, handleApiError]);
+  }, [user, isStaff, handleApiError]);
 
-  useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
-
-  // Refetch every 30s while onboarding is active (not skipped, not complete)
-  const onboardingActive = !onboardingSkipped && !onboardingComplete;
-  useEffect(() => {
-    if (!onboardingActive) return;
-    const id = setInterval(loadDashboard, 30000);
-    return () => clearInterval(id);
-  }, [onboardingActive, loadDashboard]);
-
-  const handleLogout = async () => {
-    setLoggingOut(true);
-    try { await logout(); } finally { window.location.href = '/login'; }
-  };
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
   const handleSkipOnboarding = () => {
-    if (user?.tenantId) {
-      localStorage.setItem(`amg_onboarding_skipped_${user.tenantId}`, 'true');
-    }
+    if (user?.tenantId) localStorage.setItem(`amg_onboarding_skipped_${user.tenantId}`, 'true');
     setOnboardingSkipped(true);
   };
 
   if (!user) return null;
-  if (loading) return <DashboardSkeleton />;
 
-  const initial = (user.name || user.email)[0].toUpperCase();
-  const activeLandings = landings.filter((l) => l.status === 'PUBLISHED' || l.status === 'ACTIVE').length;
-  const activeWorkflows = workflows.filter((w) => w.status === 'ACTIVE').length;
-
-  const serviceCards: ServiceCard[] = [
-    { name: 'Landings', icon: I.Globe, used: activeLandings, total: landings.length || 1, unit: 'actives' },
-    { name: 'Workflows', icon: I.Zap, used: activeWorkflows, total: workflows.length || 1, unit: 'actius' },
-    { name: 'Factures', icon: I.Receipt, used: invoices.length, total: Math.max(invoices.length, 1), unit: 'emeses' },
-    { name: 'Pressupostos', icon: I.CreditCard, used: billing?.pendingBudgets ?? 0, total: Math.max(billing?.pendingBudgets ?? 0, 1), unit: 'pendents' },
-  ];
-
-  // Steps with no resources yet = pending
-  const pendingSteps = [
-    ...(landings.length === 0 ? ['landing' as const] : []),
-    ...(workflows.length === 0 ? ['automation' as const] : []),
-    ...(invoices.length === 0 ? ['billing' as const] : []),
-  ];
-  const showOnboarding =
-    !onboardingSkipped &&
-    !onboardingComplete &&
-    !error &&
-    pendingSteps.length > 0;
+  const firstName = user.name?.split(' ')[0] || 'usuari';
 
   return (
-    <div className="flex w-full min-h-dvh bg-[#0d0d1a] overflow-hidden">
-      <PortalSidebar
-        userName={user.name ?? ''}
-        userEmail={user.email}
-        userRole={user.role}
-        isSuperAdmin={isSuperAdmin}
-        isAdmin={isAdmin}
-        initial={initial}
-      />
+    <PortalShell breadcrumb="dashboard">
+      {/* Topbar greeting */}
+      <div className="h-10 flex items-center px-4 sm:px-6 border-b border-border-subtle">
+        <span className="f-mono text-[10px] uppercase text-ink-3">
+          Bon dia, {firstName}
+        </span>
+      </div>
 
-      <main aria-label="Contingut principal" className="flex-1 flex flex-col min-w-0">
-        {/* Topbar */}
-        <div className="h-16 border-b border-border-base flex items-center px-4 sm:px-8 gap-4">
-          <button aria-label="Obrir menú" className="lg:hidden text-ink-1"><I.Menu size={20} /></button>
-          <div className="flex-1 hidden sm:block">
-            <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal /</span>
-            <div className="f-display font-bold text-lg leading-tight mt-0.5">
-              Bon dia, {user.name?.split(' ')[0] || 'usuari'}
-            </div>
-          </div>
-          <AMGButton variant="outline" size="sm" icon={I.Globe}>VER LANDING</AMGButton>
-          <AMGButton size="sm" icon={I.Bell}>SUPORT</AMGButton>
-        </div>
-
-        <div className="flex-1 overflow-auto amg-grid p-4 sm:p-8 space-y-6">
-          {/* Error banner */}
-          {error && (
-            <div className="flex items-center gap-3 p-4 border-l-[3px] border-l-[#f0b429] amg-card card-clip">
-              <I.AlertCircle size={16} stroke="#f0b429" />
-              <span className="text-ui text-warning flex-1">{error}</span>
-              <button onClick={loadDashboard} className="f-mono text-caption uppercase text-accent-light hover:underline">REINTENTAR</button>
-            </div>
-          )}
-
-          {showOnboarding ? (
-            <OnboardingGuide
-              userName={user.name?.split(' ')[0] || 'usuari'}
-              landingsCount={landings.length}
-              workflowsCount={workflows.length}
-              invoicesCount={invoices.length}
-              onSkip={handleSkipOnboarding}
-              onComplete={() => setOnboardingComplete(true)}
-            />
-          ) : (
-            <>
-              {/* Billing hero */}
-              <div className="amg-card card-clip p-4 sm:p-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-[3px] h-16 bg-[#FF6B00]"></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
-                  <div>
-                    <span className="f-mono text-label uppercase tracking-widest text-accent-light">Total gastat</span>
-                    <div className="f-display font-black text-2xl sm:text-3xl mt-1">{formatEur(billing?.totalSpent ?? 0)}</div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <AMGBadge tone={billing && billing.pendingBudgets > 0 ? 'warning' : 'success'}>
-                        <span className={`w-1 h-1 rounded-full ${billing && billing.pendingBudgets > 0 ? 'bg-[#f0b429]' : 'bg-[#39d353]'}`}></span>
-                        {billing && billing.pendingBudgets > 0 ? `${billing.pendingBudgets} pendents` : 'AL DIA'}
-                      </AMGBadge>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="f-mono text-label uppercase text-ink-2">Últim pressupost</div>
-                    <div className="f-display font-bold text-lg sm:text-xl mt-1">
-                      {billing?.lastBudget ? billing.lastBudget.budgetNumber : 'Cap'}
-                    </div>
-                    <div className="f-mono text-caption text-ink-1 mt-0.5">
-                      {billing?.lastBudget ? formatDate(billing.lastBudget.sentAt) : '—'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="f-mono text-label uppercase text-ink-2">Import</div>
-                    <div className="f-display font-bold text-lg sm:text-xl mt-1 text-accent-light">
-                      {billing?.lastBudget ? formatEur(billing.lastBudget.total) : '€0'}
-                    </div>
-                    <div className="f-mono text-caption text-ink-1 mt-0.5">
-                      {billing?.lastBudget?.status?.toLowerCase() === 'accepted' ? 'Acceptat' : billing?.lastBudget?.status ?? '—'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="f-mono text-label uppercase text-ink-2">Rol</div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <AMGBadge tone="accent">{user.role === 'SUPER_ADMIN' ? 'SUPER ADMIN' : user.role === 'ADMIN' ? 'ADMIN' : 'CLIENT'}</AMGBadge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <ServiceCards cards={serviceCards} landingCount={landings.length} workflowCount={workflows.length} />
-
-              {/* Invoices + CTA */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2">
-                  <InvoicesTable invoices={invoices} />
-                </div>
-                <div className="amg-card card-clip p-4 sm:p-5 flex flex-col">
-                  <I.Sparkles size={20} stroke="#FF9A3C" />
-                  <div className="f-display font-bold text-base mt-3">NECESSITES AJUDA?</div>
-                  <p className="text-ui text-ink-1 mt-1 flex-1">
-                    El teu tècnic assignat està disponible per respondre els teus dubtes.
-                  </p>
-                  <div className="space-y-2 mt-4">
-                    <AMGButton size="sm" icon={I.Mail} className="w-full justify-center">ESCRIURE AL EQUIP</AMGButton>
-                    <AMGButton variant="outline" size="sm" icon={I.Play} className="w-full justify-center">VEURE TUTORIALS</AMGButton>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Logout mobile */}
-          <div className="flex justify-center pt-4 lg:hidden">
-            <AMGButton variant="ghost" onClick={handleLogout} disabled={loggingOut}>
-              {loggingOut ? 'SORTINT...' : 'TANCAR SESSIÓ'}
-            </AMGButton>
-          </div>
-
-          {/* Legal footer */}
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-6 pb-8 border-t border-border-subtle">
-            {[
-              { label: 'Avís Legal', href: '/legal/avis-legal' },
-              { label: 'Privacitat', href: '/legal/privacitat' },
-              { label: 'Cookies', href: '/legal/cookies' },
-              { label: 'Suport', href: 'mailto:hola@amg.digital' },
-            ].map(({ label, href }) => (
-              <a
-                key={label}
-                href={href}
-                className="f-mono text-label text-ink-3 hover:text-ink-2 tracking-caption transition-colors"
-              >
-                {label.toUpperCase()}
-              </a>
-            ))}
-            <span className="f-mono text-label text-ink-3 tracking-caption ml-auto hidden sm:block">
-              © {new Date().getFullYear()} AMG DIGITALITZACIÓ
-            </span>
-          </div>
-        </div>
-      </main>
-    </div>
+      {isStaff ? (
+        <AdminDashboard data={adminData} loading={loading} />
+      ) : (
+        <ClientDashboard
+          data={clientData}
+          loading={loading}
+          userName={firstName}
+          onboardingSkipped={onboardingSkipped}
+          onboardingComplete={onboardingComplete}
+          onSkip={handleSkipOnboarding}
+          onComplete={() => setOnboardingComplete(true)}
+        />
+      )}
+    </PortalShell>
   );
 }
