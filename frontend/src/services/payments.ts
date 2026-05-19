@@ -12,10 +12,12 @@ export interface Payment {
 }
 
 export interface PaymentDashboard {
-  totalCollected: number;
-  totalPending: number;
-  totalRefunded: number;
-  recentPayments: Payment[];
+  totalPayments: number;
+  completedCount: number;
+  pendingCount: number;
+  failedCount: number;
+  totalAmount: number;
+  totalCompleted: number;
 }
 
 export const getPayments = (tenantId?: string) => {

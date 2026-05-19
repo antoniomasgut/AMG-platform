@@ -77,19 +77,19 @@ export default function PaymentsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <AMGStat
               label="Total cobrat"
-              value={fmt(dashboard.totalCollected)}
+              value={String(dashboard.completedCount)}
               icon={I.CreditCard}
               tone="success"
             />
             <AMGStat
               label="Pendent"
-              value={fmt(dashboard.totalPending)}
+              value={String(dashboard.pendingCount)}
               icon={I.Clock}
-              tone={dashboard.totalPending > 0 ? 'danger' : 'accent'}
+              tone={dashboard.pendingCount > 0 ? 'danger' : 'accent'}
             />
             <AMGStat
-              label="Reemborsat"
-              value={fmt(dashboard.totalRefunded)}
+              label="Fallits"
+              value={String(dashboard.failedCount)}
               icon={I.ArrowRight}
               tone="info"
             />

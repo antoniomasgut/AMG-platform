@@ -14,7 +14,7 @@ public interface PaymentService {
     String getReceiptUrl(UUID paymentId, UUID currentTenantId);
     PaymentResponse refundPayment(UUID paymentId);
     Page<PaymentResponse> listPayments(UUID tenantId, String status, int page, int size);
-    PaymentDashboardResponse getDashboard(UUID tenantId);
+    PaymentDashboardResponse getDashboard(@org.springframework.lang.Nullable UUID tenantId);
     WebhookResponse processWebhook(WebhookRequest request);
     ProviderSummaryResponse getProviders(UUID tenantId);
 }

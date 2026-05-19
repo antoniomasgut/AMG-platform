@@ -13,4 +13,5 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     Optional<Payment> findByIdAndTenantId(UUID id, UUID tenantId);
     Optional<Payment> findByStripeSessionId(String stripeSessionId);
     long countByTenantIdAndStatus(UUID tenantId, PaymentStatus status);
+    long countByStatus(PaymentStatus status);
 }

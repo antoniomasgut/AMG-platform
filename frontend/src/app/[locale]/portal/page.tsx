@@ -15,6 +15,7 @@ import { listTenants } from '@/services/admin';
 import { getLeadStats, type LeadStats } from '@/services/leads';
 import { getOpsDashboard, type OpsDashboard } from '@/services/ops';
 import { getInfraStatus, type InfraStatus } from '@/services/infraops';
+import { getPaymentDashboard, type PaymentDashboard } from '@/services/payments';
 import { OnboardingGuide } from '@/components/portal/OnboardingGuide';
 
 function formatDate(iso: string | null): string {
@@ -79,10 +80,11 @@ interface AdminData {
   leads: LeadStats | null;
   ops: OpsDashboard | null;
   infra: InfraStatus | null;
+  payments: PaymentDashboard | null;
 }
 
-function AdminDashboard({ data, loading }: { data: AdminData; loading: boolean }) {
-  const { leads, ops, infra, totalTenants } = data;
+function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; loading: boolean; isSuperAdmin: boolean }) {
+  const { leads, ops, infra, totalTenants, payments } = data;
 
   const sysOk = ops ? ops.currentStatus.up === ops.currentStatus.services && ops.openIncidents === 0 : null;
   const infraTone = infra
@@ -90,10 +92,10 @@ function AdminDashboard({ data, loading }: { data: AdminData; loading: boolean }
       : infra.cpu.percent >= 75 || infra.ram.percent >= 75 || infra.disk.percent >= 75 ? 'warn' : 'ok')
     : 'default';
 
-  const STAGES = ['PROSPECTING', 'CONTACT', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'];
+  const STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON'];
   const STAGE_LABEL: Record<string, string> = {
-    PROSPECTING: 'Prospecció', CONTACT: 'Contacte', PROPOSAL: 'Proposta',
-    NEGOTIATION: 'Negociació', WON: 'Guanyat', LOST: 'Perdut',
+    NEW: 'Nou', CONTACTED: 'Contactat', QUALIFIED: 'Qualificat',
+    PROPOSAL: 'Proposta', NEGOTIATION: 'Negociació', WON: 'Guanyat',
   };
 
   if (loading) {
@@ -111,13 +113,15 @@ function AdminDashboard({ data, loading }: { data: AdminData; loading: boolean }
 
       {/* KPIs principals */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard
-          label="Tenants actius"
-          value={totalTenants}
-          sub="clients"
-          icon={I.Building}
-          href="/portal/admin/tenants"
-        />
+        {isSuperAdmin && (
+          <KpiCard
+            label="Tenants actius"
+            value={totalTenants}
+            sub="clients"
+            icon={I.Building}
+            href="/portal/admin/tenants"
+          />
+        )}
         <KpiCard
           label="Leads actius"
           value={leads ? (leads.total - (leads.byStage?.LOST ?? 0) - (leads.byStage?.WON ?? 0)) : '—'}
@@ -133,17 +137,26 @@ function AdminDashboard({ data, loading }: { data: AdminData; loading: boolean }
           icon={I.Activity}
           href="/portal/ops"
         />
-        <KpiCard
-          label="Infraestructura"
-          value={infra ? `${infra.cpu.percent}% CPU` : '—'}
-          sub={infra ? `RAM ${infra.ram.percent}% · Disk ${infra.disk.percent}%` : ''}
-          tone={infraTone}
-          icon={I.Server}
-          href="/portal/admin/infraops"
-        />
+        {isSuperAdmin ? (
+          <KpiCard
+            label="Infraestructura"
+            value={infra ? `${infra.cpu.percent}% CPU` : '—'}
+            sub={infra ? `RAM ${infra.ram.percent}% · Disk ${infra.disk.percent}%` : ''}
+            tone={infraTone}
+            icon={I.Server}
+            href="/portal/admin/infraops"
+          />
+        ) : (
+          <KpiCard
+            label="Pagaments pendents"
+            value={payments ? payments.pendingCount : '—'}
+            sub={payments ? `${payments.completedCount} completats` : ''}
+            icon={I.CreditCard}
+          />
+        )}
       </div>
 
-      {/* Leads pipeline + Infra */}
+      {/* Leads pipeline + Infra (SUPER_ADMIN only per la columna dreta) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Pipeline de leads */}
@@ -157,7 +170,7 @@ function AdminDashboard({ data, loading }: { data: AdminData; loading: boolean }
           </div>
           {leads ? (
             <div className="space-y-2">
-              {STAGES.filter(s => s !== 'LOST').map(stage => {
+              {STAGES.map(stage => {
                 const count = leads.byStage?.[stage] ?? 0;
                 const total = leads.total || 1;
                 return (
@@ -179,32 +192,39 @@ function AdminDashboard({ data, loading }: { data: AdminData; loading: boolean }
           )}
         </div>
 
-        {/* Recursos del servidor */}
-        <div className="amg-card card-clip p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">Servidor</div>
-              <div className="f-display font-bold text-sm mt-0.5">Recursos</div>
+        {/* Recursos del servidor — SUPER_ADMIN only */}
+        {isSuperAdmin ? (
+          <div className="amg-card card-clip p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">Servidor</div>
+                <div className="f-display font-bold text-sm mt-0.5">Recursos</div>
+              </div>
+              <a href="/portal/admin/infraops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">DETALL →</a>
             </div>
-            <a href="/portal/admin/infraops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">DETALL →</a>
+            {infra ? (
+              <div className="space-y-4">
+                <Gauge label="CPU" pct={infra.cpu.percent} />
+                <Gauge label="RAM" pct={infra.ram.percent} />
+                <Gauge label="Disc" pct={infra.disk.percent} />
+                <Gauge label="Connexions DB" pct={infra.database.percent} />
+                {infra.tenants && (
+                  <div className="pt-2 border-t border-border-subtle flex justify-between">
+                    <span className="f-mono text-[10px] uppercase text-ink-3">Tenants n8n</span>
+                    <span className="f-mono text-[10px] font-bold">{infra.tenants.active}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="py-6 text-center f-mono text-[10px] uppercase text-ink-3">Sense dades de servidor</div>
+            )}
           </div>
-          {infra ? (
-            <div className="space-y-4">
-              <Gauge label="CPU" pct={infra.cpu.percent} />
-              <Gauge label="RAM" pct={infra.ram.percent} />
-              <Gauge label="Disc" pct={infra.disk.percent} />
-              <Gauge label="Connexions DB" pct={infra.database.percent} />
-              {infra.tenants && (
-                <div className="pt-2 border-t border-border-subtle flex justify-between">
-                  <span className="f-mono text-[10px] uppercase text-ink-3">Tenants n8n</span>
-                  <span className="f-mono text-[10px] font-bold">{infra.tenants.active}</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="py-6 text-center f-mono text-[10px] uppercase text-ink-3">Sense dades de servidor</div>
-          )}
-        </div>
+        ) : (
+          /* ADMIN: placeholder fins que hi hagi resum de factures */
+          <div className="amg-card card-clip p-4 sm:p-5 flex items-center justify-center">
+            <p className="f-mono text-[10px] uppercase text-ink-3">Resum de factures — pròximament</p>
+          </div>
+        )}
       </div>
 
       {/* Accions ràpides */}
@@ -217,15 +237,19 @@ function AdminDashboard({ data, loading }: { data: AdminData; loading: boolean }
           <a href="/portal/leads/new">
             <AMGButton size="sm" variant="outline" icon={I.Plus}>NOU LEAD</AMGButton>
           </a>
-          <a href="/portal/admin/tenants">
-            <AMGButton size="sm" variant="outline" icon={I.Building}>TENANTS</AMGButton>
-          </a>
-          <a href="/portal/admin/config">
-            <AMGButton size="sm" variant="outline" icon={I.Key}>API KEYS</AMGButton>
-          </a>
-          <a href="/portal/admin/backup">
-            <AMGButton size="sm" variant="outline" icon={I.Database}>BACKUP</AMGButton>
-          </a>
+          {isSuperAdmin && (
+            <>
+              <a href="/portal/admin/tenants">
+                <AMGButton size="sm" variant="outline" icon={I.Building}>TENANTS</AMGButton>
+              </a>
+              <a href="/portal/admin/config">
+                <AMGButton size="sm" variant="outline" icon={I.Key}>API KEYS</AMGButton>
+              </a>
+              <a href="/portal/admin/backup">
+                <AMGButton size="sm" variant="outline" icon={I.Database}>BACKUP</AMGButton>
+              </a>
+            </>
+          )}
         </div>
       </div>
 
@@ -354,7 +378,9 @@ function ClientDashboard({ data, loading, userName, onboardingSkipped, onboardin
           <div className="f-display font-bold text-sm">NECESSITES AJUDA?</div>
           <p className="text-ui text-ink-1 mt-1 text-sm">El teu tècnic assignat està disponible per respondre els teus dubtes.</p>
         </div>
-        <AMGButton size="sm" icon={I.Mail}>CONTACTE</AMGButton>
+        <a href="mailto:hola@amgdigital.com">
+          <AMGButton size="sm" icon={I.Mail}>CONTACTE</AMGButton>
+        </a>
       </div>
 
     </div>
@@ -373,7 +399,7 @@ export default function PortalPage() {
 
   // Admin data
   const [adminData, setAdminData] = useState<AdminData>({
-    totalTenants: 0, leads: null, ops: null, infra: null,
+    totalTenants: 0, leads: null, ops: null, infra: null, payments: null,
   });
 
   // Client data
@@ -395,17 +421,19 @@ export default function PortalPage() {
     setLoading(true);
     try {
       if (isStaff) {
-        const [tenants, leads, ops, infra] = await Promise.all([
+        const [tenants, leads, ops, infra, payments] = await Promise.all([
           listTenants({ size: 1 }).catch(() => ({ totalElements: 0 })),
           getLeadStats().catch(() => null),
           getOpsDashboard().catch(() => null),
-          getInfraStatus().catch(() => null),
+          isSuperAdmin ? getInfraStatus().catch(() => null) : Promise.resolve(null),
+          !isSuperAdmin ? getPaymentDashboard().catch(() => null) : Promise.resolve(null),
         ]);
         setAdminData({
           totalTenants: (tenants as { totalElements: number }).totalElements,
           leads,
           ops,
           infra,
+          payments,
         });
       } else {
         const tid = user.tenantId;
@@ -422,9 +450,16 @@ export default function PortalPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, isStaff, handleApiError]);
+  }, [user, isStaff, isSuperAdmin, handleApiError]);
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
+
+  /* Refresc automàtic cada 30s mentre l'onboarding client és actiu */
+  useEffect(() => {
+    if (isStaff || onboardingSkipped || onboardingComplete) return;
+    const interval = setInterval(() => { loadDashboard(); }, 30_000);
+    return () => clearInterval(interval);
+  }, [isStaff, onboardingSkipped, onboardingComplete, loadDashboard]);
 
   const handleSkipOnboarding = () => {
     if (user?.tenantId) localStorage.setItem(`amg_onboarding_skipped_${user.tenantId}`, 'true');
@@ -445,7 +480,7 @@ export default function PortalPage() {
       </div>
 
       {isStaff ? (
-        <AdminDashboard data={adminData} loading={loading} />
+        <AdminDashboard data={adminData} loading={loading} isSuperAdmin={isSuperAdmin} />
       ) : (
         <ClientDashboard
           data={clientData}

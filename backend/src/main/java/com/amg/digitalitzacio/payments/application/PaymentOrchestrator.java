@@ -152,10 +152,18 @@ public class PaymentOrchestrator implements PaymentService {
     @Override
     @Transactional(readOnly = true)
     public PaymentDashboardResponse getDashboard(UUID tenantId) {
-        var totalPayments = paymentRepository.countByTenantIdAndStatus(tenantId, PaymentStatus.COMPLETED);
-        var pendingCount = paymentRepository.countByTenantIdAndStatus(tenantId, PaymentStatus.PENDING);
-        var failedCount = paymentRepository.countByTenantIdAndStatus(tenantId, PaymentStatus.FAILED);
-        var refundedCount = paymentRepository.countByTenantIdAndStatus(tenantId, PaymentStatus.REFUNDED);
+        long totalPayments, pendingCount, failedCount, refundedCount;
+        if (tenantId != null) {
+            totalPayments = paymentRepository.countByTenantIdAndStatus(tenantId, PaymentStatus.COMPLETED);
+            pendingCount  = paymentRepository.countByTenantIdAndStatus(tenantId, PaymentStatus.PENDING);
+            failedCount   = paymentRepository.countByTenantIdAndStatus(tenantId, PaymentStatus.FAILED);
+            refundedCount = paymentRepository.countByTenantIdAndStatus(tenantId, PaymentStatus.REFUNDED);
+        } else {
+            totalPayments = paymentRepository.countByStatus(PaymentStatus.COMPLETED);
+            pendingCount  = paymentRepository.countByStatus(PaymentStatus.PENDING);
+            failedCount   = paymentRepository.countByStatus(PaymentStatus.FAILED);
+            refundedCount = paymentRepository.countByStatus(PaymentStatus.REFUNDED);
+        }
 
         return new PaymentDashboardResponse(
                 totalPayments + pendingCount + failedCount + refundedCount,

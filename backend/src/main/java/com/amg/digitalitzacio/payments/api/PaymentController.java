@@ -72,7 +72,7 @@ public class PaymentController {
 
     @GetMapping("/dashboard")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public PaymentDashboardResponse getDashboard(@RequestParam UUID tenantId) {
+    public PaymentDashboardResponse getDashboard(@RequestParam(required = false) UUID tenantId) {
         return paymentService.getDashboard(tenantId);
     }
 
