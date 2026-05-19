@@ -58,4 +58,5 @@ export const I = {
   Database: (p: IconProps) => <Icon {...p}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></Icon>,
   Server: (p: IconProps) => <Icon {...p}><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01"/></Icon>,
   Key: (p: IconProps) => <Icon {...p}><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6M15.5 7.5l2 2L21 6l-2-2"/></Icon>,
+  Flow: (p: IconProps) => <Icon {...p}><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="16" y="16" width="5" height="5" rx="1"/><path d="M8 5.5h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H8"/><path d="M18.5 8v4a1 1 0 0 1-1 1h-1"/><path d="M18.5 16V14"/></Icon>,
 };

@@ -4,13 +4,26 @@ import { useAuth } from '@/lib/auth-context';
 import { usePathname } from 'next/navigation';
 import { I } from '@/components/ui/icons';
 import { AMGLogo } from '@/components/ui/AMGLogo';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 
 const LOCALES = ['ca', 'es', 'en', 'de'];
 
+type NavItem = {
+  label: string;
+  icon: (p: { size?: number }) => ReactNode;
+  href: string;
+};
+
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
 export function PortalShell({ children, breadcrumb }: { children: ReactNode; breadcrumb: string }) {
   const { user, isSuperAdmin, isAdmin } = useAuth();
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   if (!user) return null;
 
@@ -21,79 +34,151 @@ export function PortalShell({ children, breadcrumb }: { children: ReactNode; bre
   const isActive = (href: string) =>
     href === '/portal' ? normalized === '/portal' : normalized.startsWith(href);
 
-  const navItems: { label: string; icon: (p: { size?: number }) => ReactNode; href: string }[] = [
-    { label: 'Dashboard', icon: I.Dashboard, href: '/portal' },
-    // 1. Prospectar el mercat
-    ...(isAdmin ? [
-      { label: 'Prospecció', icon: I.Search, href: '/portal/prospecting' },
-    ] : []),
-    { label: 'Leads', icon: I.Users, href: '/portal/leads' },
-    // 2. Fer pressupostos
-    { label: 'Pressupostos', icon: I.Receipt, href: '/portal/billing' },
-    // 3. Implementar serveis
-    { label: 'Landings', icon: I.Globe, href: '/portal/landings' },
-    { label: 'Assets', icon: I.Image, href: '/portal/assets' },
-    { label: 'Automatitzacions', icon: I.Zap, href: '/portal/automations' },
-    // 4. Pagaments
-    { label: 'Pagaments', icon: I.CreditCard, href: '/portal/payments' },
-    { label: 'FinOps', icon: I.Receipt, href: '/portal/finops' },
-    // 5. Agents de comunicació
-    { label: 'Agents', icon: I.Bot, href: '/portal/agents' },
-    // 5. Monitoritzar
-    ...(isAdmin ? [
-      { label: 'Ops & Health', icon: I.Activity, href: '/portal/ops' },
-    ] : []),
-    // 6. Còpies de seguretat i infraestructura
-    ...(isSuperAdmin ? [
-      { label: 'Catàleg', icon: I.Box, href: '/portal/admin/vault' },
-      { label: 'Admin', icon: I.Settings, href: '/portal/admin/users' },
-      { label: 'Backup', icon: I.Database, href: '/portal/admin/backup' },
-      { label: 'InfraOps', icon: I.Server, href: '/portal/admin/infraops' },
-      { label: 'API Keys', icon: I.Key, href: '/portal/admin/config' },
-    ] : []),
-  ];
+  // ── Navigation groups by workflow phase ────────────────────────────────────
+  const groups: NavGroup[] = [
+    {
+      label: 'Visió general',
+      items: [
+        { label: 'Dashboard', icon: I.Dashboard, href: '/portal' },
+        { label: 'Procés', icon: I.Flow, href: '/portal/process' },
+      ],
+    },
+    {
+      label: '1. Captació',
+      items: [
+        ...(isAdmin ? [{ label: 'Prospecció', icon: I.Search, href: '/portal/prospecting' }] : []),
+        { label: 'Leads CRM', icon: I.Users, href: '/portal/leads' },
+      ],
+    },
+    {
+      label: '2. Comercial',
+      items: [
+        { label: 'Pressupostos', icon: I.Receipt, href: '/portal/billing' },
+        { label: 'Pagaments', icon: I.CreditCard, href: '/portal/payments' },
+        { label: 'FinOps', icon: I.Trending, href: '/portal/finops' },
+      ],
+    },
+    {
+      label: '3. Serveis',
+      items: [
+        { label: 'Landings', icon: I.Globe, href: '/portal/landings' },
+        { label: 'Assets', icon: I.Image, href: '/portal/assets' },
+        { label: 'Automatitzacions', icon: I.Zap, href: '/portal/automations' },
+        { label: 'Agents IA', icon: I.Bot, href: '/portal/agents' },
+      ],
+    },
+    {
+      label: '4. Operacions',
+      items: [
+        ...(isAdmin ? [{ label: 'Ops & Health', icon: I.Activity, href: '/portal/ops' }] : []),
+      ],
+    },
+    ...(isSuperAdmin ? [{
+      label: 'Administració',
+      items: [
+        { label: 'Tenants', icon: I.Building, href: '/portal/admin/tenants' },
+        { label: 'Usuaris', icon: I.Shield, href: '/portal/admin/users' },
+        { label: 'Catàleg', icon: I.Box, href: '/portal/admin/vault' },
+        { label: 'Plantilles', icon: I.Layers, href: '/portal/admin/templates' },
+        { label: 'Programes', icon: I.Sparkles, href: '/portal/billing/programs' },
+        { label: 'Backup', icon: I.Database, href: '/portal/admin/backup' },
+        { label: 'InfraOps', icon: I.Server, href: '/portal/admin/infraops' },
+        { label: 'API Keys', icon: I.Key, href: '/portal/admin/config' },
+      ],
+    }] : []),
+  ].filter((g) => g.items.length > 0);
+
+  const NavContent = () => (
+    <>
+      <div className="h-16 border-b border-border-base flex items-center px-4 shrink-0">
+        <a href="/portal" onClick={() => setMobileOpen(false)}>
+          <AMGLogo className="h-9 w-auto" />
+        </a>
+      </div>
+
+      <nav aria-label="Menú principal" className="flex-1 py-3 overflow-y-auto">
+        {groups.map((group) => (
+          <div key={group.label} className="mb-2">
+            <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 px-4 py-1.5">
+              {group.label}
+            </div>
+            {group.items.map(({ label, icon: Icon, href }) => {
+              const active = isActive(href);
+              return (
+                <a
+                  key={label}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`relative flex items-center gap-3 px-4 h-9 f-mono text-xs uppercase tracking-wider transition-colors ${
+                    active
+                      ? 'bg-accent-muted text-accent-light'
+                      : 'text-ink-1 hover:text-ink-0 hover:bg-[rgba(255,255,255,0.03)]'
+                  }`}
+                >
+                  {active && (
+                    <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#FF6B00]" />
+                  )}
+                  <Icon size={13} />
+                  {label}
+                </a>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      <div className="p-4 border-t border-border-base shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-[#58a6ff] to-[#FF9A3C] btn-clip flex items-center justify-center text-black font-bold text-xs shrink-0">
+            {initial}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold truncate">{user.name ?? ''}</div>
+            <div className="f-mono text-[10px] text-ink-2 truncate">{user.email}</div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 
   return (
     <div className="flex w-full min-h-dvh bg-[#0d0d1a] overflow-hidden">
-      <aside aria-label="Navegació del portal" className="hidden lg:flex w-[240px] shrink-0 bg-[#13132a] border-r border-border-base flex-col">
-        <div className="h-16 border-b border-border-base flex items-center px-4">
-          <a href="/portal">
-            <AMGLogo className="h-9 w-auto" />
-          </a>
-        </div>
-        <nav aria-label="Menú principal" className="flex-1 p-3 space-y-1 overflow-y-auto">
-          <div className="f-mono text-[9px] uppercase tracking-widest text-ink-2 px-3 py-2">El meu compte</div>
-          {navItems.map(({ label, icon: Icon, href }) => {
-            const active = isActive(href);
-            return (
-              <a key={label} href={href}
-                className={`relative flex items-center gap-3 px-3 h-10 f-mono text-xs uppercase tracking-wider transition-colors ${
-                  active ? 'bg-accent-muted text-accent-light' : 'text-ink-1 hover:text-ink-0'
-                }`}>
-                {active && <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#FF6B00]" />}
-                <Icon size={14} />
-                {label}
-              </a>
-            );
-          })}
-        </nav>
-        <div className="p-4 border-t border-border-base">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-[#58a6ff] to-[#FF9A3C] btn-clip flex items-center justify-center text-black font-bold text-xs">
-              {initial}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold truncate">{user.name ?? ''}</div>
-              <div className="f-mono text-label text-ink-2 truncate">{user.email}</div>
-            </div>
-          </div>
-        </div>
+
+      {/* Desktop sidebar */}
+      <aside
+        aria-label="Navegació del portal"
+        className="hidden lg:flex w-[220px] shrink-0 bg-[#13132a] border-r border-border-base flex-col"
+      >
+        <NavContent />
       </aside>
 
+      {/* Mobile sidebar overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/60" />
+          <aside
+            className="absolute left-0 top-0 bottom-0 w-[220px] bg-[#13132a] border-r border-border-base flex flex-col z-50"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <NavContent />
+          </aside>
+        </div>
+      )}
+
+      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="h-16 border-b border-border-base flex items-center px-4 sm:px-8 gap-3">
-          <button aria-label="Obrir menú" className="lg:hidden text-ink-1"><I.Menu size={20} /></button>
-          <span className="f-mono text-label uppercase text-accent-light tracking-widest">
+        <div className="h-14 border-b border-border-base flex items-center px-4 sm:px-6 gap-3 shrink-0">
+          <button
+            aria-label="Obrir menú"
+            className="lg:hidden text-ink-1 hover:text-ink-0 transition-colors"
+            onClick={() => setMobileOpen(true)}
+          >
+            <I.Menu size={20} />
+          </button>
+          <span className="f-mono text-label uppercase text-accent-light tracking-widest text-xs">
             / portal / {breadcrumb} /
           </span>
         </div>
