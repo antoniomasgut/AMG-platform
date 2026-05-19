@@ -107,7 +107,7 @@ export default function BackupPage() {
               label="Últim backup"
               value={dashboard.lastBackup ? new Date(dashboard.lastBackup).toLocaleDateString('ca-ES') : 'Mai'}
               icon={I.Clock}
-              tone={dashboard.lastBackupStatus === 'COMPLETED' ? 'success' : 'warning'}
+              tone={dashboard.lastBackupStatus === 'COMPLETED' ? 'success' : 'danger'}
             />
             <AMGStat
               label="Proper programat"

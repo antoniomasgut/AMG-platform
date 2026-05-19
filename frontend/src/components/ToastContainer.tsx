@@ -38,6 +38,14 @@ export function ToastContainer() {
               <div className="flex-1 min-w-0">
                 <div className="f-display font-bold text-sm">{t.title}</div>
                 {t.message && <div className="text-data text-ink-1 mt-0.5">{t.message}</div>}
+                {t.action && (
+                  <button
+                    onClick={() => { t.action!.onClick(); dismiss(t.id); }}
+                    className="mt-2 f-mono text-label text-xs text-accent hover:text-accent-light underline underline-offset-2"
+                  >
+                    {t.action.label}
+                  </button>
+                )}
               </div>
               <button onClick={() => dismiss(t.id)} className="text-ink-3 hover:text-ink-0 transition shrink-0">
                 <I.X size={12} />

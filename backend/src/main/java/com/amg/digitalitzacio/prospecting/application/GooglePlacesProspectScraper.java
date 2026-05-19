@@ -3,6 +3,8 @@ package com.amg.digitalitzacio.prospecting.application;
 import com.amg.digitalitzacio.prospecting.domain.Prospect;
 import com.amg.digitalitzacio.prospecting.domain.ProspectSource;
 import com.amg.digitalitzacio.prospecting.domain.ProspectStatus;
+import com.amg.digitalitzacio.shared.exception.MissingApiKeyException;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -27,34 +29,33 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
-
-    @Value("${app.prospecting.google.places-api-key:#{null}}")
-    private String apiKey;
+    private final SystemConfigService sysConfig;
 
     @Value("${app.prospecting.google.rate-limit-per-second:10}")
     private int rateLimitPerSecond;
 
     private long lastRequestTime = 0;
 
-    public GooglePlacesProspectScraper() {
+    public GooglePlacesProspectScraper(SystemConfigService sysConfig) {
         this.webClient = WebClient.builder().baseUrl(PLACES_API_BASE).build();
         this.objectMapper = new ObjectMapper();
+        this.sysConfig = sysConfig;
     }
 
     @PostConstruct
     void init() {
-        if (apiKey == null || apiKey.isBlank()) {
-            log.warn("GooglePlacesProspectScraper initialized without API key — set app.prospecting.google.places-api-key");
+        if (!sysConfig.isConfigured("GOOGLE_PLACES_API_KEY")) {
+            log.warn("GooglePlacesProspectScraper: GOOGLE_PLACES_API_KEY no configurada — configura-la a /portal/admin/config");
         } else {
-            log.info("GooglePlacesProspectScraper initialized (rate limit: {}/s)", rateLimitPerSecond);
+            log.info("GooglePlacesProspectScraper inicialitzat (rate limit: {}/s)", rateLimitPerSecond);
         }
     }
 
     @Override
     public List<Prospect> search(String sector, String location, Map<String, Object> params, UUID campaignId) {
+        String apiKey = sysConfig.get("GOOGLE_PLACES_API_KEY");
         if (apiKey == null || apiKey.isBlank()) {
-            log.warn("Google Places API key not configured");
-            return List.of();
+            throw new MissingApiKeyException("Google Places", "GOOGLE_PLACES_API_KEY");
         }
 
         var query = sector + " a " + location + ", Mallorca";
@@ -119,7 +120,7 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
                             .build();
 
                     // Enriquir amb Place Details per obtenir telèfon i web
-                    enrichFromDetails(prospect);
+                    enrichFromDetails(prospect, apiKey);
 
                     prospects.add(prospect);
                 }
@@ -152,7 +153,7 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
         );
     }
 
-    private void enrichFromDetails(Prospect prospect) {
+    private void enrichFromDetails(Prospect prospect, String apiKey) {
         try {
             throttle();
 

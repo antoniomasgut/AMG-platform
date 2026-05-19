@@ -4,16 +4,22 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
-interface Toast {
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
+export interface Toast {
   id: string;
   type: ToastType;
   title: string;
   message?: string;
+  action?: ToastAction;
 }
 
 interface ToastContextType {
   toasts: Toast[];
-  toast: (type: ToastType, title: string, message?: string) => void;
+  toast: (type: ToastType, title: string, messageOrOpts?: string | { action?: ToastAction }) => void;
   dismiss: (id: string) => void;
 }
 
@@ -26,10 +32,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  const toast = useCallback((type: ToastType, title: string, message?: string) => {
+  const toast = useCallback((type: ToastType, title: string, messageOrOpts?: string | { action?: ToastAction }) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    setToasts(prev => [...prev, { id, type, title, message }]);
-    setTimeout(() => dismiss(id), 4500);
+    const message = typeof messageOrOpts === 'string' ? messageOrOpts : undefined;
+    const action = typeof messageOrOpts === 'object' ? messageOrOpts?.action : undefined;
+    setToasts(prev => [...prev, { id, type, title, message, action }]);
+    setTimeout(() => dismiss(id), action ? 8000 : 4500);
   }, [dismiss]);
 
   return (

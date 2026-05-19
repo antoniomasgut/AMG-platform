@@ -5,6 +5,8 @@ import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.ConversationRole;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.shared.exception.MissingApiKeyException;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,12 +34,10 @@ public class ConversationalAgentService {
     private final EmailChannel emailChannel;
     private final RestClient.Builder restClientBuilder;
     private final ObjectMapper objectMapper;
+    private final SystemConfigService sysConfig;
 
     @Value("${app.agents.conversational.claude-model:claude-haiku-4-5-20251001}")
     private String claudeModel;
-
-    @Value("${app.agents.conversational.anthropic-api-key:${ANTHROPIC_API_KEY:}}")
-    private String anthropicApiKey;
 
     public void handleIncoming(UUID tenantId, String customerIdentifier, ConversationChannel channel, String text) {
         try {
@@ -103,6 +103,11 @@ public class ConversationalAgentService {
     }
 
     private String callClaudeApi(String systemPrompt, java.util.List<com.amg.digitalitzacio.agents.domain.Conversation> history, String userText) {
+        String apiKey = sysConfig.get("ANTHROPIC_API_KEY");
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new MissingApiKeyException("Anthropic Claude", "ANTHROPIC_API_KEY");
+        }
+
         try {
             RestClient client = restClientBuilder
                     .baseUrl("https://api.anthropic.com")
@@ -123,7 +128,7 @@ public class ConversationalAgentService {
 
             var response = client.post()
                     .uri("/v1/messages")
-                    .header("x-api-key", anthropicApiKey)
+                    .header("x-api-key", apiKey)
                     .header("anthropic-version", "2023-06-01")
                     .body(requestBody)
                     .retrieve()

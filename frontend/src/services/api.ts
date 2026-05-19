@@ -106,12 +106,20 @@ export async function apiFetch<T = unknown>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    const error = new Error(body.message || `Request failed: ${res.status}`) as Error & {
+    const error = new Error(body.message || body.detail || `Request failed: ${res.status}`) as Error & {
       status: number;
       body: unknown;
     };
     error.status = res.status;
     error.body = body;
+
+    // Dispatch event so the UI can show a config prompt
+    if (res.status === 503 && body?.properties?.errorCode === 'MISSING_API_KEY' && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('missing-api-key', {
+        detail: { service: body?.properties?.service, configKey: body?.properties?.configKey },
+      }));
+    }
+
     throw error;
   }
 

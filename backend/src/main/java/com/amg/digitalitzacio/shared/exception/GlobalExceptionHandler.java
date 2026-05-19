@@ -68,4 +68,14 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleResourceNotFound(ResourceNotFoundException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
+
+    @ExceptionHandler(MissingApiKeyException.class)
+    public ProblemDetail handleMissingApiKey(MissingApiKeyException ex) {
+        var detail = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        detail.setTitle("API key no configurada");
+        detail.setProperty("errorCode", "MISSING_API_KEY");
+        detail.setProperty("service", ex.getService());
+        detail.setProperty("configKey", ex.getConfigKey());
+        return detail;
+    }
 }

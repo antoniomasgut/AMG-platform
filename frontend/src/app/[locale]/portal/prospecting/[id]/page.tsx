@@ -108,8 +108,8 @@ export default function CampaignDetailPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { label: 'Sector', value: c.sector },
-              { label: 'Ciutat', value: c.city },
-              { label: 'Màx. resultats', value: String(c.maxResults) },
+              { label: 'Localitat', value: c.location },
+              { label: 'Font', value: c.source },
               { label: 'Prospects trobats', value: String(c.prospectsFound) },
             ].map(({ label, value }) => (
               <div key={label}>

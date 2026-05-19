@@ -49,6 +49,7 @@ export function PortalShell({ children, breadcrumb }: { children: ReactNode; bre
       { label: 'Admin', icon: I.Settings, href: '/portal/admin/users' },
       { label: 'Backup', icon: I.Database, href: '/portal/admin/backup' },
       { label: 'InfraOps', icon: I.Server, href: '/portal/admin/infraops' },
+      { label: 'API Keys', icon: I.Key, href: '/portal/admin/config' },
     ] : []),
   ];
 
