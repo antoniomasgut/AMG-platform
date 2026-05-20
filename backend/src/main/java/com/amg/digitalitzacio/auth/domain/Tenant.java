@@ -48,6 +48,20 @@ public class Tenant {
     @Column(name = "preferred_channel", length = 20)
     private PreferredChannel preferredChannel;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private BusinessSector sector;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "business_size", length = 20)
+    private BusinessSize businessSize;
+
+    @Column(name = "contracted_phases", columnDefinition = "TEXT")
+    private String contractedPhases; // comma-separated: "F1", "F2,F4", "F1,F3,F5"
+
+    @Column(name = "agent_system_prompt", columnDefinition = "TEXT")
+    private String agentSystemPrompt;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = true;

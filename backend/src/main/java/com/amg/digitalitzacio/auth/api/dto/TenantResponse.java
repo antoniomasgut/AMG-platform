@@ -13,6 +13,10 @@ public record TenantResponse(
         String nif,
         String contactPhone,
         String preferredChannel,
+        String sector,
+        String businessSize,
+        java.util.List<String> contractedPhases,
+        String agentSystemPrompt,
         boolean isActive,
         Instant createdAt
 ) {}

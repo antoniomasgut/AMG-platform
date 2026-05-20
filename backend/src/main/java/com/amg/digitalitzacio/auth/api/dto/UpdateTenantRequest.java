@@ -8,5 +8,9 @@ public record UpdateTenantRequest(
         String address,
         String nif,
         String contactPhone,
-        String preferredChannel
+        String preferredChannel,
+        String sector,
+        String businessSize,
+        java.util.List<String> contractedPhases,
+        String agentSystemPrompt
 ) {}

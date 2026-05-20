@@ -1,9 +1,15 @@
 package com.amg.digitalitzacio.auth.application;
 
 import com.amg.digitalitzacio.auth.api.dto.*;
+import com.amg.digitalitzacio.auth.domain.BusinessSector;
+import com.amg.digitalitzacio.auth.domain.BusinessSize;
 import com.amg.digitalitzacio.auth.domain.PreferredChannel;
 import com.amg.digitalitzacio.auth.domain.Tenant;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +32,8 @@ public class TenantService {
             throw new IllegalArgumentException("Slug ja existeix");
         }
 
+        BusinessSector sector = request.sector() != null ? BusinessSector.valueOf(request.sector().toUpperCase()) : null;
+
         var tenant = Tenant.builder()
                 .name(request.name())
                 .slug(request.slug())
@@ -36,6 +45,10 @@ public class TenantService {
                 .preferredChannel(request.preferredChannel() != null
                         ? PreferredChannel.valueOf(request.preferredChannel().toUpperCase())
                         : null)
+                .sector(sector)
+                .businessSize(request.businessSize() != null ? BusinessSize.valueOf(request.businessSize().toUpperCase()) : null)
+                .contractedPhases(toPhaseString(request.contractedPhases()))
+                .agentSystemPrompt(resolveAgentPrompt(request.agentSystemPrompt(), sector))
                 .isActive(true)
                 .build();
 
@@ -72,9 +85,32 @@ public class TenantService {
         if (request.contactPhone() != null) tenant.setContactPhone(request.contactPhone());
         if (request.preferredChannel() != null) tenant.setPreferredChannel(
                 PreferredChannel.valueOf(request.preferredChannel().toUpperCase()));
+        if (request.sector() != null) tenant.setSector(BusinessSector.valueOf(request.sector().toUpperCase()));
+        if (request.businessSize() != null) tenant.setBusinessSize(BusinessSize.valueOf(request.businessSize().toUpperCase()));
+        if (request.contractedPhases() != null) tenant.setContractedPhases(toPhaseString(request.contractedPhases()));
+        if (request.agentSystemPrompt() != null) tenant.setAgentSystemPrompt(request.agentSystemPrompt());
 
         tenant = tenantRepository.save(tenant);
         return toResponse(tenant);
+    }
+
+    private String toPhaseString(List<String> phases) {
+        if (phases == null || phases.isEmpty()) return null;
+        return phases.stream()
+                .map(String::toUpperCase)
+                .sorted()
+                .collect(Collectors.joining(","));
+    }
+
+    private List<String> fromPhaseString(String phases) {
+        if (phases == null || phases.isBlank()) return null;
+        return Arrays.asList(phases.split(","));
+    }
+
+    private String resolveAgentPrompt(String provided, BusinessSector sector) {
+        if (provided != null && !provided.isBlank()) return provided;
+        if (sector != null) return SectorPromptTemplates.getTemplate(sector);
+        return null;
     }
 
     private TenantResponse toResponse(Tenant tenant) {
@@ -83,6 +119,10 @@ public class TenantService {
                 tenant.getEmail(), tenant.getPhone(), tenant.getAddress(),
                 tenant.getNif(), tenant.getContactPhone(),
                 tenant.getPreferredChannel() != null ? tenant.getPreferredChannel().name() : null,
+                tenant.getSector() != null ? tenant.getSector().name() : null,
+                tenant.getBusinessSize() != null ? tenant.getBusinessSize().name() : null,
+                fromPhaseString(tenant.getContractedPhases()),
+                tenant.getAgentSystemPrompt(),
                 tenant.getIsActive(), tenant.getCreatedAt());
     }
 }

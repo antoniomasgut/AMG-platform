@@ -7,8 +7,10 @@ import { useToast } from '@/lib/toast-context';
 import {
   getTenant, getTenantSetup, listCatalogServices,
   listProfiles, assignProfileToTenant, removeProfileFromTenant,
+  lookupSectorPricing,
+  SECTOR_LABELS, SIZE_LABELS, PHASE_LABELS, PHASE_UPGRADE_PRICE,
   type TenantResponse, type TenantSetup, type CatalogService,
-  type CatalogProfileResponse,
+  type CatalogProfileResponse, type SectorPricingResponse,
 } from '@/services/admin';
 import { listLandings } from '@/services/factory';
 import { getWizardConfig } from '@/config/service-wizards';
@@ -200,6 +202,93 @@ function AssignProfileModal({ tenantId, onClose, onAssigned }: { tenantId: strin
   );
 }
 
+const MONTHLY_BY_COUNT: Record<number, keyof SectorPricingResponse> = {
+  1: 'monthlyF1', 2: 'monthlyF1f2', 3: 'monthlyF1f2f3',
+};
+
+function ContractSection({ tenant }: { tenant: TenantResponse }) {
+  const { data: pricing } = useQuery({
+    queryKey: ['pricing', tenant.sector, tenant.businessSize],
+    queryFn: () => lookupSectorPricing(tenant.sector!, tenant.businessSize!),
+    enabled: !!tenant.sector && !!tenant.businessSize,
+  });
+
+  const phases = tenant.contractedPhases ?? [];
+  const phaseCount = phases.length;
+  const hasMeta = tenant.sector || tenant.businessSize || phaseCount > 0;
+  if (!hasMeta) return null;
+
+  const monthlyKey = MONTHLY_BY_COUNT[phaseCount] ?? 'monthlyComplete';
+  const monthlyPrice = pricing && phaseCount > 0 ? (pricing[monthlyKey] as number) : null;
+
+  return (
+    <div className="amg-card card-clip">
+      <div className="p-4 sm:p-5 border-b border-border-base">
+        <AMGSectionTitle eyebrow="NexeLocal" title="Contracte" />
+      </div>
+      <div className="p-5 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {tenant.sector && (
+            <div>
+              <div className="f-mono text-label uppercase text-ink-3 mb-1">Sector</div>
+              <div className="text-sm text-ink-1 font-semibold">{SECTOR_LABELS[tenant.sector] ?? tenant.sector}</div>
+            </div>
+          )}
+          {tenant.businessSize && (
+            <div>
+              <div className="f-mono text-label uppercase text-ink-3 mb-1">Mida</div>
+              <div className="text-sm text-ink-1 font-semibold">{SIZE_LABELS[tenant.businessSize] ?? tenant.businessSize}</div>
+            </div>
+          )}
+          {phaseCount > 0 && (
+            <div>
+              <div className="f-mono text-label uppercase text-ink-3 mb-1">
+                Fases contractades
+                <span className="ml-1 normal-case">({phaseCount})</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {phases.sort().map((ph) => (
+                  <span key={ph} className="f-mono text-xs px-2 py-0.5 border border-[rgba(255,107,0,0.4)] bg-[rgba(255,107,0,0.08)] text-accent-light rounded">
+                    {ph}
+                  </span>
+                ))}
+              </div>
+              <div className="f-mono text-[10px] text-ink-3 mt-1">
+                {phases.sort().map(ph => PHASE_LABELS[ph]?.split(' — ')[1]).filter(Boolean).join(' · ')}
+              </div>
+            </div>
+          )}
+        </div>
+        {pricing && (
+          <div className="border-t border-border-base pt-4 flex gap-8 flex-wrap">
+            <div>
+              <div className="f-mono text-label uppercase text-ink-3 mb-1">Setup</div>
+              <div className="f-display font-bold text-lg text-white">{pricing.setupPrice} €</div>
+            </div>
+            {monthlyPrice !== null && (
+              <div>
+                <div className="f-mono text-label uppercase text-ink-3 mb-1">Mensual ({phaseCount} fase{phaseCount > 1 ? 's' : ''})</div>
+                <div className="f-display font-bold text-lg text-accent-light">{monthlyPrice} €/mes</div>
+              </div>
+            )}
+            <div className="self-end">
+              <div className="f-mono text-[10px] text-ink-3">Ampliació futura: <span className="text-ink-2 font-semibold">{PHASE_UPGRADE_PRICE} € / fase</span></div>
+            </div>
+          </div>
+        )}
+        {tenant.agentSystemPrompt && (
+          <div className="border-t border-border-base pt-4">
+            <div className="f-mono text-label uppercase text-ink-3 mb-2">Prompt agent IA</div>
+            <pre className="text-xs f-mono text-ink-2 whitespace-pre-wrap bg-[rgba(255,255,255,0.02)] border border-border-base rounded p-3 max-h-48 overflow-y-auto">
+              {tenant.agentSystemPrompt}
+            </pre>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function TenantDetailPage() {
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
@@ -332,6 +421,9 @@ export default function TenantDetailPage() {
             <div className="f-display font-bold text-2xl text-accent-light mt-2">{serviceCount}</div>
           </div>
         </div>
+
+        {/* Contracte NexeLocal */}
+        <ContractSection tenant={tenant} />
 
         {/* Serveis assignats */}
         <div className="amg-card card-clip">

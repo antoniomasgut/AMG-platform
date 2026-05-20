@@ -11,7 +11,10 @@ export interface UserResponse {
 export interface TenantResponse {
   id: string; name: string; slug: string;
   email: string | null; phone: string | null;
-  address: string | null; isActive: boolean; createdAt: string;
+  address: string | null;
+  sector: string | null; businessSize: string | null; contractedPhases: string[] | null;
+  agentSystemPrompt: string | null;
+  isActive: boolean; createdAt: string;
 }
 
 export interface PageResponse<T> {
@@ -87,7 +90,18 @@ export const updateTenant = (id: string, data: UpdateTenantRequest) =>
 export interface CatalogService {
   id: string; name: string; slug: string;
   description: string; type: string; isAddon: boolean;
-  cost: number; salePrice: number;
+  cost: number; salePrice: number; monthlyPrice: number; version: number;
+}
+
+export interface OutdatedServiceResponse {
+  tenantServiceId: string;
+  tenantId: string;
+  serviceId: string;
+  serviceName: string;
+  serviceSlug: string;
+  catalogVersion: number;
+  lockedVersion: number;
+  outdatedAt: string;
 }
 
 export interface TenantSetup {
@@ -209,3 +223,88 @@ export const deleteService = (serviceId: string) =>
 
 export const createAddonService = (data: CreateCatalogServiceRequest) =>
   apiFetch<CatalogProfileResponse>('/vault/services', { method: 'POST', body: JSON.stringify(data) });
+
+export const bumpCatalogVersion = (serviceId: string) =>
+  apiFetch<void>(`/vault/catalog-services/${serviceId}/bump`, { method: 'POST' });
+
+export const acknowledgeOutdated = (tenantId: string, serviceId: string) =>
+  apiFetch<void>(`/vault/tenants/${tenantId}/services/${serviceId}/acknowledge`, { method: 'POST' });
+
+export const listOutdatedServices = () =>
+  apiFetch<OutdatedServiceResponse[]>('/vault/outdated');
+
+// --- Sector Pricing (NexeLocal model) ---
+
+export const SECTOR_SIZES: Record<string, string[]> = {
+  PINTOR: ['AUTONOMO', 'PETIT'],
+  ELECTRICISTA: ['AUTONOMO', 'PETIT'],
+  FONTANER: ['AUTONOMO'],
+  JARDINER: ['AUTONOMO'],
+  NETEJA: ['AUTONOMO', 'MITJA'],
+  FISIOTERAPEUTA: ['AUTONOMO', 'PETIT', 'MITJA'],
+  PSICOLEG: ['AUTONOMO', 'PETIT'],
+  NUTRICIONISTA: ['AUTONOMO'],
+  PERRUQUERIA: ['AUTONOMO', 'PETIT'],
+  ESTETICA: ['AUTONOMO', 'MITJA'],
+  GESTORIA: ['AUTONOMO', 'MITJA'],
+  ACADEMIA: ['AUTONOMO', 'MITJA'],
+  TALLER_MECANIC: ['PETIT', 'MITJA'],
+  VETERINARI: ['AUTONOMO', 'PETIT'],
+  PERRUQUERIA_CANINA: ['AUTONOMO'],
+};
+
+export const SECTORS = [
+  'PINTOR', 'ELECTRICISTA', 'FONTANER', 'JARDINER', 'NETEJA',
+  'FISIOTERAPEUTA', 'PSICOLEG', 'NUTRICIONISTA',
+  'PERRUQUERIA', 'ESTETICA',
+  'GESTORIA', 'ACADEMIA',
+  'TALLER_MECANIC', 'VETERINARI', 'PERRUQUERIA_CANINA',
+] as const;
+
+export const SIZES = ['AUTONOMO', 'PETIT', 'MITJA'] as const;
+export const PHASES = ['F1', 'F2', 'F3', 'F4', 'F5'] as const;
+
+export const SECTOR_LABELS: Record<string, string> = {
+  PINTOR: 'Pintor', ELECTRICISTA: 'Electricista', FONTANER: 'Fontaner',
+  JARDINER: 'Jardiner', NETEJA: 'Neteja', FISIOTERAPEUTA: 'Fisioterapeuta',
+  PSICOLEG: 'Psicòleg', NUTRICIONISTA: 'Nutricionista', PERRUQUERIA: 'Perruqueria',
+  ESTETICA: 'Estètica', GESTORIA: 'Gestoria', ACADEMIA: 'Acadèmia',
+  TALLER_MECANIC: 'Taller mecànic', VETERINARI: 'Veterinari',
+  PERRUQUERIA_CANINA: 'Perruqueria canina',
+};
+
+export const SIZE_LABELS: Record<string, string> = {
+  AUTONOMO: 'Autònom (1 persona)',
+  PETIT: 'Equip petit (2-3 persones)',
+  MITJA: 'Equip mitjà (3-5+ persones)',
+};
+
+export const PHASE_LABELS: Record<string, string> = {
+  F1: 'F1 — Comunicació 24/7',
+  F2: 'F2 — Gestió de cites',
+  F3: 'F3 — Pressupostos',
+  F4: 'F4 — Fidelització',
+  F5: 'F5 — Equip',
+};
+
+export interface SectorPricingResponse {
+  sector: string;
+  businessSize: string;
+  setupPrice: number;
+  monthlyF1: number;
+  monthlyF1f2: number;
+  monthlyF1f2f3: number;
+  monthlyComplete: number;
+}
+
+export const listSectorPricing = () =>
+  apiFetch<SectorPricingResponse[]>('/pricing');
+
+export const lookupSectorPricing = (sector: string, size: string) =>
+  apiFetch<SectorPricingResponse>(`/pricing/lookup?sector=${sector}&size=${size}`);
+
+export const getSectorPromptTemplate = (sector: string) =>
+  apiFetch<{ sector: string; template: string }>(`/prompts/sector/${sector}`);
+
+// Preu fix d'ampliació de fase per a clients existents
+export const PHASE_UPGRADE_PRICE = 75;

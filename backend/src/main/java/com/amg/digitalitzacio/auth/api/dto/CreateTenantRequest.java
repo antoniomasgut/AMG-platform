@@ -11,5 +11,9 @@ public record CreateTenantRequest(
         @Size(max = 255) String address,
         @Size(max = 20) String nif,
         @Size(max = 20) String contactPhone,
-        String preferredChannel
+        String preferredChannel,
+        String sector,
+        String businessSize,
+        java.util.List<String> contractedPhases,
+        String agentSystemPrompt
 ) {}
