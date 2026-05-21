@@ -36,8 +36,8 @@ public class DataSeeder {
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void seed() {
-        if (profileRepository.count() > 0) {
-            log.info("Seeders: ja hi ha perfils al sistema, ometent seeder");
+        if (profileRepository.count() > 0 || serviceRepository.count() > 0) {
+            log.info("Seeders: ja hi ha dades al sistema, ometent seeder");
             return;
         }
 
