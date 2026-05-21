@@ -75,8 +75,8 @@ app:
 
   payments:
     provider: ${PAYMENTS_PROVIDER:mock}
-    success-url: https://portal.amg.cat/payments/success
-    cancel-url: https://portal.amg.cat/payments/cancel
+    success-url: ${PAYMENTS_SUCCESS_URL:https://amgdl.com/payments/success}
+    cancel-url: ${PAYMENTS_CANCEL_URL:https://amgdl.com/payments/cancel}
 
   stripe:
     api-key: ${STRIPE_API_KEY:}
@@ -127,6 +127,11 @@ app:
     telegram:
       bot-token: ${TELEGRAM_BOT_TOKEN:}
       chat-id: ${TELEGRAM_CHAT_ID:}
+
+  domains:
+    provider: mock
+    server-ip: ${SERVER_IP:65.108.148.62}
+    auto-renew-days-before: 30
 
   agents:
     telegram:

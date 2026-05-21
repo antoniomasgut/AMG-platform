@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/portal/', '/reset-password'],
     },
-    sitemap: 'https://amg.cat/sitemap.xml',
+    sitemap: 'https://amgdl.com/sitemap.xml',
   };
 }

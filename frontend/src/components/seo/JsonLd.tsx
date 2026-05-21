@@ -7,8 +7,8 @@ export async function JsonLd({ locale }: { locale: string }) {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'AMG · Enginyeria Digital',
-    url: `https://amg.cat/${locale}`,
-    logo: 'https://amg.cat/logo.png',
+    url: `https://amgdl.com/${locale}`,
+    logo: 'https://amgdl.com/logo.png',
     description: t('tagline'),
     address: {
       '@type': 'PostalAddress',
@@ -21,7 +21,7 @@ export async function JsonLd({ locale }: { locale: string }) {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'AMG · Enginyeria Digital',
-    url: `https://amg.cat/${locale}`,
+    url: `https://amgdl.com/${locale}`,
     description: t('tagline'),
     inLanguage: locale,
   };
