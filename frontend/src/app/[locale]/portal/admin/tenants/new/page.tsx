@@ -25,6 +25,7 @@ export default function NewTenantPage() {
     agentSystemPrompt: '',
   });
   const [selectedPhases, setSelectedPhases] = useState<string[]>([]);
+  const [isFree, setIsFree] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [pricing, setPricing] = useState<SectorPricingResponse | null>(null);
@@ -95,6 +96,7 @@ export default function NewTenantPage() {
         email: form.email || undefined, phone: form.phone || undefined, address: form.address || undefined,
         sector: form.sector || undefined, businessSize: form.businessSize || undefined,
         contractedPhases: selectedPhases.length > 0 ? selectedPhases : undefined,
+        isFree,
       });
       router.push('/portal/admin/tenants');
     } catch (err: any) {
@@ -259,6 +261,25 @@ export default function NewTenantPage() {
             )}
           </div>
         )}
+
+        {/* Compte gratuït */}
+        <div className="space-y-2">
+          <div className="f-mono text-label uppercase tracking-widest text-ink-3">Facturació</div>
+          <button type="button" onClick={() => setIsFree(p => !p)}
+            className={`flex items-center gap-3 w-full px-4 py-3 border rounded text-sm transition ${
+              isFree
+                ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.08)] text-white'
+                : 'border-border-base hover:border-ink-2 text-ink-2'
+            }`}>
+            <div className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${isFree ? 'bg-[#FF6B00]' : 'bg-[rgba(255,255,255,0.12)]'}`}>
+              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${isFree ? 'left-5' : 'left-0.5'}`} />
+            </div>
+            <div>
+              <div className="font-semibold">Compte gratuït</div>
+              <div className="text-xs opacity-60">No es generaran factures ni quotes mensuals per a aquest tenant</div>
+            </div>
+          </button>
+        </div>
 
         {errors.submit && (
           <div className="bg-[rgba(255,68,68,0.12)] border border-[rgba(255,68,68,0.35)] rounded p-3 text-sm text-[#ff6666]">

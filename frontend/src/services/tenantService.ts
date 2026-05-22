@@ -12,6 +12,7 @@ export interface TenantResponse {
   businessSize: string | null;
   contractedPhases: string[] | null;
   isActive: boolean;
+  isFree: boolean;
   createdAt: string;
 }
 
@@ -24,6 +25,7 @@ export interface CreateTenantRequest {
   sector?: string;
   businessSize?: string;
   contractedPhases?: string[];
+  isFree?: boolean;
 }
 
 export interface UpdateTenantRequest {
@@ -35,6 +37,7 @@ export interface UpdateTenantRequest {
   sector?: string;
   businessSize?: string;
   contractedPhases?: string[];
+  isFree?: boolean;
 }
 
 export interface ListTenantsParams {

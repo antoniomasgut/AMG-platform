@@ -7,7 +7,7 @@ import { useToast } from '@/lib/toast-context';
 import {
   getTenant, getTenantSetup, listCatalogServices,
   listProfiles, assignProfileToTenant, removeProfileFromTenant,
-  lookupSectorPricing,
+  lookupSectorPricing, updateTenant,
   SECTOR_LABELS, SIZE_LABELS, PHASE_LABELS, PHASE_UPGRADE_PRICE,
   type TenantResponse, type TenantSetup, type CatalogService,
   type CatalogProfileResponse, type SectorPricingResponse, calcMonthly,
@@ -289,6 +289,20 @@ export default function TenantDetailPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [showAssignProfile, setShowAssignProfile] = useState(false);
+  const [togglingFree, setTogglingFree] = useState(false);
+
+  const toggleFree = async (current: boolean) => {
+    setTogglingFree(true);
+    try {
+      await updateTenant(id, { isFree: !current });
+      qc.invalidateQueries({ queryKey: ['tenant', id] });
+      toast('success', !current ? 'Compte marcat com a gratuït' : 'Facturació activada');
+    } catch {
+      toast('error', 'Error actualitzant la facturació');
+    } finally {
+      setTogglingFree(false);
+    }
+  };
 
   const { data: tenant, isLoading: loadingTenant, error: tenantErr } = useQuery({
     queryKey: ['tenant', id],
@@ -414,6 +428,37 @@ export default function TenantDetailPage() {
           <div className="card-clip amg-card p-5">
             <span className="f-mono uppercase text-label tracking-widest text-ink-3">Serveis actius</span>
             <div className="f-display font-bold text-2xl text-accent-light mt-2">{serviceCount}</div>
+          </div>
+        </div>
+
+        {/* Facturació */}
+        <div className="amg-card card-clip">
+          <div className="p-4 sm:p-5 border-b border-border-base">
+            <AMGSectionTitle eyebrow="Facturació" title="Compte gratuït" />
+          </div>
+          <div className="p-5">
+            <button
+              type="button"
+              disabled={togglingFree}
+              onClick={() => toggleFree(tenant.isFree)}
+              className={`flex items-center gap-3 w-full max-w-sm px-4 py-3 border rounded text-sm transition ${
+                tenant.isFree
+                  ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.08)] text-white'
+                  : 'border-border-base hover:border-ink-2 text-ink-2'
+              } ${togglingFree ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <div className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${tenant.isFree ? 'bg-[#FF6B00]' : 'bg-[rgba(255,255,255,0.12)]'}`}>
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${tenant.isFree ? 'left-5' : 'left-0.5'}`} />
+              </div>
+              <div>
+                <div className="font-semibold">{tenant.isFree ? 'Compte gratuït activat' : 'Compte de pagament'}</div>
+                <div className="text-xs opacity-60">
+                  {tenant.isFree
+                    ? 'No es generen factures ni quotes mensuals'
+                    : 'Es generen factures i quotes mensuals'}
+                </div>
+              </div>
+            </button>
           </div>
         </div>
 

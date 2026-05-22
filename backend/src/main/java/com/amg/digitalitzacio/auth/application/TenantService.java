@@ -50,6 +50,7 @@ public class TenantService {
                 .contractedPhases(toPhaseString(request.contractedPhases()))
                 .agentSystemPrompt(resolveAgentPrompt(request.agentSystemPrompt(), sector))
                 .isActive(true)
+                .isFree(request.isFree() != null && request.isFree())
                 .build();
 
         tenant = tenantRepository.save(tenant);
@@ -89,6 +90,7 @@ public class TenantService {
         if (request.businessSize() != null) tenant.setBusinessSize(BusinessSize.valueOf(request.businessSize().toUpperCase()));
         if (request.contractedPhases() != null) tenant.setContractedPhases(toPhaseString(request.contractedPhases()));
         if (request.agentSystemPrompt() != null) tenant.setAgentSystemPrompt(request.agentSystemPrompt());
+        if (request.isFree() != null) tenant.setIsFree(request.isFree());
 
         tenant = tenantRepository.save(tenant);
         return toResponse(tenant);
@@ -123,6 +125,6 @@ public class TenantService {
                 tenant.getBusinessSize() != null ? tenant.getBusinessSize().name() : null,
                 fromPhaseString(tenant.getContractedPhases()),
                 tenant.getAgentSystemPrompt(),
-                tenant.getIsActive(), tenant.getCreatedAt());
+                tenant.getIsActive(), Boolean.TRUE.equals(tenant.getIsFree()), tenant.getCreatedAt());
     }
 }

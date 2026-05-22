@@ -18,5 +18,6 @@ public record TenantResponse(
         java.util.List<String> contractedPhases,
         String agentSystemPrompt,
         boolean isActive,
+        boolean isFree,
         Instant createdAt
 ) {}

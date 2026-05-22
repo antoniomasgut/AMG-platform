@@ -66,6 +66,10 @@ public class Tenant {
     @Builder.Default
     private Boolean isActive = true;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isFree = false;
+
     @CreatedDate
     @Column(updatable = false)
     private Instant createdAt;

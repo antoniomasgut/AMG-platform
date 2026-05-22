@@ -14,7 +14,7 @@ export interface TenantResponse {
   address: string | null;
   sector: string | null; businessSize: string | null; contractedPhases: string[] | null;
   agentSystemPrompt: string | null;
-  isActive: boolean; createdAt: string;
+  isActive: boolean; isFree: boolean; createdAt: string;
 }
 
 export interface PageResponse<T> {
@@ -38,7 +38,7 @@ export interface CreateTenantRequest {
 }
 
 export interface UpdateTenantRequest {
-  name?: string; email?: string; phone?: string; address?: string; isActive?: boolean;
+  name?: string; email?: string; phone?: string; address?: string; isActive?: boolean; isFree?: boolean;
 }
 
 export const listUsers = (params: { page?: number; size?: number; role?: string; tenantId?: string; search?: string } = {}) => {
