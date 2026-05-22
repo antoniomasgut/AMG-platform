@@ -29,14 +29,16 @@ export default function TernesServeiPage() {
 
           <section>
             <h2 className="f-display font-black text-xl text-ink-0 mb-3">2. Serveis i preus</h2>
-            <p className="mb-3">Els serveis contractats i els seus preus queden definits a l'oferta personalitzada enviada al client. Tots els preus s'indiquen sense IVA i corresponen a un pagament únic de setup, sense quotes mensuals recurrents, llevat que s'indiqui expressament el contrari.</p>
-            <p>El catàleg de serveis i tarifes vigents es pot consultar a l'apartat de preus del portal.</p>
+            <p className="mb-3">Els serveis contractats i els seus preus queden definits a l'oferta personalitzada enviada al client. Tots els preus s'indiquen sense IVA i comprenen dos conceptes: (a) un pagament únic de <strong>setup</strong> (implementació i posada en marxa) i (b) una <strong>quota mensual fixa</strong> per al servei actiu, que inclou l'agent IA 24/7, la monitorització i fins a 2 canvis menors al mes.</p>
+            <p className="mb-3">Les fases del servei (F1, F2, F3, F4) són acumulatives. El client contracta les fases que necessita i pot ampliar en qualsevol moment abonant el cost d'ampliació corresponent. Les tarifes varien per sector professional i mida del negoci.</p>
+            <p>El catàleg de serveis i tarifes vigents es pot consultar a l'apartat de preus del lloc web.</p>
           </section>
 
           <section>
             <h2 className="f-display font-black text-xl text-ink-0 mb-3">3. Condicions de pagament</h2>
-            <p className="mb-3">El pagament s'efectua mitjançant transferència bancària o targeta de crèdit, prèviament a l'inici dels treballs, llevat d'acord exprés diferent. El servei no s'activarà fins a la confirmació del pagament.</p>
-            <p>AMG Digitalització emetrà la factura corresponent en el termini de 30 dies des de la recepció del pagament.</p>
+            <p className="mb-3"><strong>Setup:</strong> El pagament del setup s'efectua en acceptar el pressupost, prèviament a l'inici dels treballs, mitjançant transferència bancària o targeta de crèdit. El servei no s'activarà fins a la confirmació del pagament.</p>
+            <p className="mb-3"><strong>Quota mensual:</strong> La quota mensual es factura el primer dia de cada mes per al mes en curs. El primer mes es prorrategeja des de la data d'activació. El no-pagament en els terminis establerts pot comportar la suspensió temporal del servei amb preavís de 10 dies.</p>
+            <p>AMG Digitalització emetrà la factura corresponent en el termini de 30 dies des de cada pagament.</p>
           </section>
 
           <section>
@@ -56,8 +58,9 @@ export default function TernesServeiPage() {
 
           <section>
             <h2 className="f-display font-black text-xl text-ink-0 mb-3">6. Cancel·lació i devolucions</h2>
-            <p className="mb-3">El client pot cancel·lar la contractació en el termini de 14 dies naturals des de la confirmació del pagament, sempre que els treballs no hagin estat iniciats. En aquest cas, AMG Digitalització reembossarà l'import íntegre.</p>
-            <p>Un cop iniciats els treballs, no procedirà cap devolució, però AMG Digitalització s'compromet a completar el servei contractat.</p>
+            <p className="mb-3"><strong>Setup:</strong> El client pot cancel·lar la contractació en el termini de 14 dies naturals des de la confirmació del pagament del setup, sempre que els treballs d'implementació no hagin estat iniciats. En aquest cas, AMG Digitalització reembossarà l'import íntegre del setup. Un cop iniciada la implementació, no procedirà devolució del setup.</p>
+            <p className="mb-3"><strong>Quota mensual:</strong> El client pot donar de baixa el servei en qualsevol moment amb un preavís mínim de 30 dies naturals. Les quotes mensuals ja facturades no es reembossen. No es cobren penalitzacions per baixa voluntària.</p>
+            <p>En cas de discrepàncies tècniques, AMG Digitalització es compromet a resoldre les incidències cobertes pel servei sense cost addicional.</p>
           </section>
 
           <section>
