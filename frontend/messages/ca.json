@@ -22,13 +22,13 @@
     "hero": {
       "badge": "Per a autònoms i petits negocis de Mallorca",
       "title": "LA TEVA WEB. ELS TEUS PROCESSOS.",
-      "titleAccent": "PAGUES UNA VEGADA.",
-      "subtitle": "Creem la teva web, automatitzem els teus processos i gestionem el teu negoci digital — sense quotes mensuals ni sorpreses. Pagues un cop, és teu per sempre.",
+      "titleAccent": "PREUS CLARS PER FASES.",
+      "subtitle": "Dissenyem, implementem i mantenim la teva presència digital per fases. Setup únic per servei + manteniment mensual baix. Transparent, sense contractes forçats ni sorpreses.",
       "cta": "CONSULTA GRATUÏTA",
-      "ctaSecondary": "Veure serveis i preus",
+      "ctaSecondary": "Veure fases i preus",
       "stats": {
-        "uptimeValue": "0€",
-        "uptimeLabel": "Quota mensual",
+        "uptimeValue": "10€",
+        "uptimeLabel": "Per servei/mes",
         "clientsValue": "8+",
         "clientsLabel": "Pimes actives",
         "automationsValue": "< 4h",
@@ -175,38 +175,41 @@
       ]
     },
     "pricing": {
-      "badge": "Preus transparents",
+      "badge": "Preus per fases",
       "title": "SAPS EXACTAMENT\nQUANT ET COSTARÀ.",
-      "subtitle": "Sense quotes mensuals. Pagues un sol cop per cada servei i és teu per sempre. Sense contractes forçats ni sorpreses.",
-      "note": "Primera consulta gratuïta · Pressupost en 24h · Sense compromís",
-      "popular": "Més sol·licitat",
-      "oneTime": "pagament únic",
-      "from": "des de",
-      "included": "Inclòs:",
-      "plans": [
+      "subtitle": "Setup únic per fase + manteniment mensual baix. Cada fase inclou implementació, monitorització 24/7 i fins a 1 canvi menor al mes.",
+      "note": "Primera consulta gratuïta · Pressupost personalitzat en 24h · Sense compromís",
+      "popular": "Recomanada per començar",
+      "setupLabel": "Setup",
+      "monthlyLabel": "/mes",
+      "included": "Inclou:",
+      "individualNote": "O contracta serveis solts: Landing 100€ setup · Bot IA 100€ setup · tots a 10€/mes",
+      "fases": [
         {
-          "icon": "🌐",
-          "name": "Micro-landing",
-          "price": "30€",
-          "description": "Web de presentació professional. Disseny, formulari de contacte i WhatsApp integrat.",
-          "features": ["Disseny responsive", "Formulari de contacte", "Botó WhatsApp", "SEO bàsic"],
-          "highlight": false
-        },
-        {
-          "icon": "🚀",
-          "name": "Landing Pro",
-          "price": "80€",
-          "description": "Landing premium optimitzada per a conversió, amb SEO tècnic i analítica avançada.",
-          "features": ["Disseny premium + animacions", "SEO tècnic", "Google Analytics", "Formularis intel·ligents"],
+          "number": "F1",
+          "name": "Presència Digital",
+          "setup": "150€",
+          "monthly": "20€",
+          "description": "La teva web professional i domini propi, funcionant en menys d'una setmana.",
+          "services": ["Landing professional (multi-bloc)", "Domini gestionat (1r any inclòs)", "SSL + allotjament", "SEO bàsic + formulari RGPD"],
           "highlight": true
         },
         {
-          "icon": "🤖",
-          "name": "Bot IA + Automatitzacions",
-          "price": "40€",
-          "pricePrefix": "des de",
-          "description": "Bot de WhatsApp, automatització de reserves o seguiment de clients.",
-          "features": ["Bot IA personalitzat", "WhatsApp automatitzat", "Integració CRM", "Workflows a mida"],
+          "number": "F2",
+          "name": "Comunicació i Automatització",
+          "setup": "180€",
+          "monthly": "30€",
+          "description": "Automatitza la comunicació amb clients i elimina tasques repetitives.",
+          "services": ["WhatsApp Business API", "2 automatitzacions (n8n)", "Integració CRM o fulls de càlcul", "Respostes automàtiques"],
+          "highlight": false
+        },
+        {
+          "number": "F3",
+          "name": "Intel·ligència Avançada",
+          "setup": "350€",
+          "monthly": "20€",
+          "description": "Bot IA amb la teva base de coneixement i automatitzacions complexes.",
+          "services": ["Bot IA amb RAG (base de coneixement pròpia)", "Automatització avançada (3+ nodes)", "Memòria de conversa", "Actualització KB inclosa"],
           "highlight": false
         }
       ]

@@ -1,18 +1,18 @@
 import { useTranslations } from 'next-intl';
 
-interface Plan {
-  icon: string;
+interface Fase {
+  number: string;
   name: string;
-  price: string;
-  pricePrefix?: string;
+  setup: string;
+  monthly: string;
   description: string;
-  features: string[];
+  services: string[];
   highlight: boolean;
 }
 
 export function PricingSection() {
   const t = useTranslations('landing.pricing');
-  const plans = t.raw('plans') as Plan[];
+  const fases = t.raw('fases') as Fase[];
 
   return (
     <section id="pricing" className="py-24 px-6 border-t border-border-subtle">
@@ -30,53 +30,57 @@ export function PricingSection() {
         </div>
 
         <div className="grid sm:grid-cols-3 gap-4">
-          {plans.map((plan, i) => (
+          {fases.map((fase, i) => (
             <div
               key={i}
               className={`relative card-clip flex flex-col gap-5 p-6 border transition-colors ${
-                plan.highlight
+                fase.highlight
                   ? 'bg-accent-muted border-accent'
                   : 'bg-bg-1 border-border-base hover:border-border-medium'
               }`}
             >
-              {plan.highlight && (
+              {fase.highlight && (
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-accent" />
               )}
-              {plan.highlight && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 f-mono text-[9px] uppercase tracking-widest bg-accent text-black px-3 py-1">
+              {fase.highlight && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 f-mono text-[9px] uppercase tracking-widest bg-accent text-black px-3 py-1 whitespace-nowrap">
                   {t('popular')}
                 </span>
               )}
 
-              <div className="flex items-start justify-between">
-                <span className="text-3xl">{plan.icon}</span>
-              </div>
-
+              {/* Phase number + name */}
               <div>
-                <h3 className="f-display font-black text-md mb-1">{plan.name}</h3>
-                <p className="text-data text-ink-2 leading-relaxed">{plan.description}</p>
+                <span className="f-mono text-[10px] uppercase tracking-widest text-accent-light">{fase.number}</span>
+                <h3 className="f-display font-black text-md mt-1">{fase.name}</h3>
+                <p className="text-data text-ink-2 leading-relaxed mt-1">{fase.description}</p>
               </div>
 
-              <div className="mt-auto">
-                <div className="flex items-baseline gap-1 mb-1">
-                  {plan.pricePrefix && (
-                    <span className="f-mono text-xs text-ink-3 uppercase">{t('from')}</span>
-                  )}
-                  <span className={`f-display font-black text-3xl ${plan.highlight ? 'text-accent-light' : 'text-ink-0'}`}>
-                    {plan.price}
+              {/* Pricing */}
+              <div className="flex items-end gap-4 border-t border-border-subtle pt-4">
+                <div>
+                  <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-0.5">{t('setupLabel')}</div>
+                  <span className={`f-display font-black text-2xl ${fase.highlight ? 'text-accent-light' : 'text-ink-0'}`}>
+                    {fase.setup}
                   </span>
                 </div>
-                <span className="f-mono text-[10px] uppercase tracking-widest text-ink-3">{t('oneTime')}</span>
+                <div className="text-ink-3 text-lg pb-0.5">+</div>
+                <div>
+                  <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-0.5">Mensual</div>
+                  <span className="f-display font-bold text-xl text-ink-1">
+                    {fase.monthly}<span className="f-mono text-xs text-ink-3">{t('monthlyLabel')}</span>
+                  </span>
+                </div>
               </div>
 
-              <div className="border-t border-border-subtle pt-4 space-y-2">
+              {/* Services list */}
+              <div className="space-y-2">
                 <span className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('included')}</span>
-                {plan.features.map((feature, j) => (
-                  <div key={j} className="flex items-center gap-2">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-accent shrink-0">
+                {fase.services.map((service, j) => (
+                  <div key={j} className="flex items-start gap-2">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-accent shrink-0 mt-1">
                       <path d="M20 6L9 17l-5-5" />
                     </svg>
-                    <span className="text-data text-ink-2 text-[12px]">{feature}</span>
+                    <span className="text-data text-ink-2 text-[12px] leading-snug">{service}</span>
                   </div>
                 ))}
               </div>
@@ -84,8 +88,9 @@ export function PricingSection() {
           ))}
         </div>
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-2">
           <p className="f-mono text-[10px] uppercase tracking-widest text-ink-3">{t('note')}</p>
+          <p className="f-mono text-[10px] text-ink-3 opacity-60">{t('individualNote')}</p>
         </div>
       </div>
     </section>

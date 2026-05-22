@@ -22,13 +22,13 @@
     "hero": {
       "badge": "Für Selbständige und Kleinbetriebe auf Mallorca",
       "title": "IHRE WEBSITE. IHRE PROZESSE.",
-      "titleAccent": "EINMALIGE ZAHLUNG.",
-      "subtitle": "Wir erstellen Ihre Website, automatisieren Ihre Prozesse und verwalten Ihr digitales Geschäft — ohne monatliche Gebühren oder Überraschungen. Einmal bezahlen, für immer Ihres.",
+      "titleAccent": "KLARE PREISE. PHASENWEISE.",
+      "subtitle": "Wir entwerfen, implementieren und pflegen Ihre digitale Präsenz phasenweise. Einmaliges Setup + niedrige monatliche Wartung. Transparent, ohne erzwungene Verträge.",
       "cta": "KOSTENLOSE BERATUNG",
-      "ctaSecondary": "Leistungen & Preise ansehen",
+      "ctaSecondary": "Phasen & Preise ansehen",
       "stats": {
-        "uptimeValue": "0€",
-        "uptimeLabel": "Monatliche Gebühr",
+        "uptimeValue": "10€",
+        "uptimeLabel": "Pro Dienst/Monat",
         "clientsValue": "8+",
         "clientsLabel": "Aktive KMU",
         "automationsValue": "< 4h",
@@ -175,38 +175,41 @@
       ]
     },
     "pricing": {
-      "badge": "Transparente Preise",
+      "badge": "Phasenbasierte Preise",
       "title": "SIE WISSEN GENAU,\nWAS ES KOSTEN WIRD.",
-      "subtitle": "Keine monatlichen Gebühren. Sie zahlen einmal pro Dienst und er gehört Ihnen für immer. Keine erzwungenen Verträge, keine versteckten Kosten.",
-      "note": "Kostenlose Erstberatung · Angebot in 24h · Keine Verpflichtung",
-      "popular": "Am häufigsten angefragt",
-      "oneTime": "Einmalzahlung",
-      "from": "ab",
+      "subtitle": "Einmaliges Setup pro Phase + niedrige monatliche Wartung. Jede Phase umfasst Implementierung, 24/7-Überwachung und bis zu 1 kleine Änderung pro Monat.",
+      "note": "Kostenlose Erstberatung · Individuelles Angebot in 24h · Keine Verpflichtung",
+      "popular": "Empfohlen für den Start",
+      "setupLabel": "Setup",
+      "monthlyLabel": "/Monat",
       "included": "Enthält:",
-      "plans": [
+      "individualNote": "Oder Einzelleistungen: Landing 100€ Setup · KI-Bot 100€ Setup · alle 10€/Monat",
+      "fases": [
         {
-          "icon": "🌐",
-          "name": "Micro-Landing",
-          "price": "30€",
-          "description": "Professionelle Präsentationsseite. Design, Kontaktformular und WhatsApp-Integration.",
-          "features": ["Responsives Design", "Kontaktformular", "WhatsApp-Button", "Basis-SEO"],
-          "highlight": false
-        },
-        {
-          "icon": "🚀",
-          "name": "Landing Pro",
-          "price": "80€",
-          "description": "Premium-Landing optimiert für Conversion, mit technischem SEO und erweiterter Analyse.",
-          "features": ["Premium-Design + Animationen", "Technisches SEO", "Google Analytics", "Intelligente Formulare"],
+          "number": "F1",
+          "name": "Digitale Präsenz",
+          "setup": "150€",
+          "monthly": "20€",
+          "description": "Ihre professionelle Website mit eigenem Domain, in weniger als einer Woche online.",
+          "services": ["Professionelle Landing Page (Multi-Block)", "Verwaltete Domain (1. Jahr inklusive)", "SSL + Hosting", "Basis-SEO + DSGVO-Formular"],
           "highlight": true
         },
         {
-          "icon": "🤖",
-          "name": "KI-Bot + Automatisierungen",
-          "price": "40€",
-          "pricePrefix": "ab",
-          "description": "WhatsApp-Bot, Buchungsautomatisierung oder Kundennachverfolgung.",
-          "features": ["Individueller KI-Bot", "Automatisiertes WhatsApp", "CRM-Integration", "Maßgeschneiderte Workflows"],
+          "number": "F2",
+          "name": "Kommunikation & Automatisierung",
+          "setup": "180€",
+          "monthly": "30€",
+          "description": "Automatisieren Sie die Kundenkommunikation und eliminieren Sie wiederkehrende Aufgaben.",
+          "services": ["WhatsApp Business API", "2 Automatisierungen (n8n)", "CRM- oder Tabellenintegration", "Automatische Antworten"],
+          "highlight": false
+        },
+        {
+          "number": "F3",
+          "name": "Erweiterte Intelligenz",
+          "setup": "350€",
+          "monthly": "20€",
+          "description": "KI-Bot mit Ihrer eigenen Wissensbasis und komplexen Automatisierungen.",
+          "services": ["KI-Bot mit RAG (eigene Wissensbasis)", "Erweiterte Automatisierung (3+ Knoten)", "Konversationsgedächtnis", "KB-Updates inklusive"],
           "highlight": false
         }
       ]

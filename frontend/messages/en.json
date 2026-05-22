@@ -22,13 +22,13 @@
     "hero": {
       "badge": "For freelancers and small businesses in Mallorca",
       "title": "YOUR WEBSITE. YOUR PROCESSES.",
-      "titleAccent": "YOU PAY ONCE.",
-      "subtitle": "We build your website, automate your processes and manage your digital business — no monthly fees, no surprises. Pay once, it's yours forever.",
+      "titleAccent": "CLEAR PRICES. BY PHASE.",
+      "subtitle": "We design, build and maintain your digital presence in phases. One-off setup per service + low monthly maintenance. Transparent, no forced contracts.",
       "cta": "FREE CONSULTATION",
-      "ctaSecondary": "See services & prices",
+      "ctaSecondary": "See phases & prices",
       "stats": {
-        "uptimeValue": "€0",
-        "uptimeLabel": "Monthly fee",
+        "uptimeValue": "€10",
+        "uptimeLabel": "Per service/month",
         "clientsValue": "8+",
         "clientsLabel": "Active SMEs",
         "automationsValue": "< 4h",
@@ -175,38 +175,41 @@
       ]
     },
     "pricing": {
-      "badge": "Transparent pricing",
+      "badge": "Phase-based pricing",
       "title": "YOU KNOW EXACTLY\nWHAT IT WILL COST.",
-      "subtitle": "No monthly fees. You pay once per service and it's yours forever. No forced contracts, no hidden costs.",
-      "note": "Free first consultation · Quote within 24h · No commitment",
-      "popular": "Most requested",
-      "oneTime": "one-off payment",
-      "from": "from",
-      "included": "Included:",
-      "plans": [
+      "subtitle": "One-off setup per phase + low monthly maintenance. Each phase includes implementation, 24/7 monitoring and up to 1 minor change per month.",
+      "note": "Free first consultation · Custom quote within 24h · No commitment",
+      "popular": "Recommended to start",
+      "setupLabel": "Setup",
+      "monthlyLabel": "/month",
+      "included": "Includes:",
+      "individualNote": "Or individual services: Landing €100 setup · AI Bot €100 setup · all at €10/month",
+      "fases": [
         {
-          "icon": "🌐",
-          "name": "Micro-landing",
-          "price": "€30",
-          "description": "Professional presentation page. Design, contact form and WhatsApp integration.",
-          "features": ["Responsive design", "Contact form", "WhatsApp button", "Basic SEO"],
-          "highlight": false
-        },
-        {
-          "icon": "🚀",
-          "name": "Landing Pro",
-          "price": "€80",
-          "description": "Premium landing optimised for conversion, with technical SEO and advanced analytics.",
-          "features": ["Premium design + animations", "Technical SEO", "Google Analytics", "Smart forms"],
+          "number": "F1",
+          "name": "Digital Presence",
+          "setup": "€150",
+          "monthly": "€20",
+          "description": "Your professional website and own domain, live in less than a week.",
+          "services": ["Professional landing page (multi-block)", "Managed domain (1st year included)", "SSL + hosting", "Basic SEO + GDPR form"],
           "highlight": true
         },
         {
-          "icon": "🤖",
-          "name": "AI Bot + Automations",
-          "price": "€40",
-          "pricePrefix": "from",
-          "description": "WhatsApp bot, booking automation or customer follow-up workflows.",
-          "features": ["Custom AI bot", "Automated WhatsApp", "CRM integration", "Custom workflows"],
+          "number": "F2",
+          "name": "Communication & Automation",
+          "setup": "€180",
+          "monthly": "€30",
+          "description": "Automate client communication and eliminate repetitive tasks.",
+          "services": ["WhatsApp Business API", "2 automations (n8n)", "CRM or spreadsheet integration", "Automated replies"],
+          "highlight": false
+        },
+        {
+          "number": "F3",
+          "name": "Advanced Intelligence",
+          "setup": "€350",
+          "monthly": "€20",
+          "description": "AI bot with your own knowledge base and complex automations.",
+          "services": ["AI Bot with RAG (own knowledge base)", "Advanced automation (3+ nodes)", "Conversation memory", "KB updates included"],
           "highlight": false
         }
       ]

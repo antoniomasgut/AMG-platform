@@ -22,13 +22,13 @@
     "hero": {
       "badge": "Para autónomos y pequeños negocios de Mallorca",
       "title": "TU WEB. TUS PROCESOS.",
-      "titleAccent": "PAGAS UNA SOLA VEZ.",
-      "subtitle": "Creamos tu web, automatizamos tus procesos y gestionamos tu negocio digital — sin cuotas mensuales ni sorpresas. Pagas una vez, es tuyo para siempre.",
+      "titleAccent": "PRECIOS CLAROS POR FASES.",
+      "subtitle": "Diseñamos, implementamos y mantenemos tu presencia digital por fases. Setup único por servicio + mantenimiento mensual bajo. Transparente, sin contratos forzados.",
       "cta": "CONSULTA GRATUITA",
-      "ctaSecondary": "Ver servicios y precios",
+      "ctaSecondary": "Ver fases y precios",
       "stats": {
-        "uptimeValue": "0€",
-        "uptimeLabel": "Cuota mensual",
+        "uptimeValue": "10€",
+        "uptimeLabel": "Por servicio/mes",
         "clientsValue": "8+",
         "clientsLabel": "Pymes activas",
         "automationsValue": "< 4h",
@@ -175,38 +175,41 @@
       ]
     },
     "pricing": {
-      "badge": "Precios transparentes",
+      "badge": "Precios por fases",
       "title": "SABES EXACTAMENTE\nCUÁNTO TE COSTARÁ.",
-      "subtitle": "Sin cuotas mensuales. Pagas una sola vez por cada servicio y es tuyo para siempre. Sin contratos forzados ni sorpresas.",
-      "note": "Primera consulta gratuita · Presupuesto en 24h · Sin compromiso",
-      "popular": "Más solicitado",
-      "oneTime": "pago único",
-      "from": "desde",
+      "subtitle": "Setup único por fase + mantenimiento mensual bajo. Cada fase incluye implementación, monitorización 24/7 y hasta 1 cambio menor al mes.",
+      "note": "Primera consulta gratuita · Presupuesto personalizado en 24h · Sin compromiso",
+      "popular": "Recomendada para empezar",
+      "setupLabel": "Setup",
+      "monthlyLabel": "/mes",
       "included": "Incluye:",
-      "plans": [
+      "individualNote": "O contrata servicios sueltos: Landing 100€ setup · Bot IA 100€ setup · todos a 10€/mes",
+      "fases": [
         {
-          "icon": "🌐",
-          "name": "Micro-landing",
-          "price": "30€",
-          "description": "Web de presentación profesional. Diseño, formulario de contacto y WhatsApp integrado.",
-          "features": ["Diseño responsive", "Formulario de contacto", "Botón WhatsApp", "SEO básico"],
-          "highlight": false
-        },
-        {
-          "icon": "🚀",
-          "name": "Landing Pro",
-          "price": "80€",
-          "description": "Landing premium optimizada para conversión, con SEO técnico y analítica avanzada.",
-          "features": ["Diseño premium + animaciones", "SEO técnico", "Google Analytics", "Formularios inteligentes"],
+          "number": "F1",
+          "name": "Presencia Digital",
+          "setup": "150€",
+          "monthly": "20€",
+          "description": "Tu web profesional y dominio propio, funcionando en menos de una semana.",
+          "services": ["Landing profesional (multi-bloque)", "Dominio gestionado (1er año incluido)", "SSL + alojamiento", "SEO básico + formulario RGPD"],
           "highlight": true
         },
         {
-          "icon": "🤖",
-          "name": "Bot IA + Automatizaciones",
-          "price": "40€",
-          "pricePrefix": "desde",
-          "description": "Bot de WhatsApp, automatización de reservas o seguimiento de clientes.",
-          "features": ["Bot IA personalizado", "WhatsApp automatizado", "Integración CRM", "Workflows a medida"],
+          "number": "F2",
+          "name": "Comunicación y Automatización",
+          "setup": "180€",
+          "monthly": "30€",
+          "description": "Automatiza la comunicación con clientes y elimina tareas repetitivas.",
+          "services": ["WhatsApp Business API", "2 automatizaciones (n8n)", "Integración CRM o hojas de cálculo", "Respuestas automáticas"],
+          "highlight": false
+        },
+        {
+          "number": "F3",
+          "name": "Inteligencia Avanzada",
+          "setup": "350€",
+          "monthly": "20€",
+          "description": "Bot IA con tu base de conocimiento y automatizaciones complejas.",
+          "services": ["Bot IA con RAG (base de conocimiento propia)", "Automatización avanzada (3+ nodos)", "Memoria de conversación", "Actualización KB incluida"],
           "highlight": false
         }
       ]
