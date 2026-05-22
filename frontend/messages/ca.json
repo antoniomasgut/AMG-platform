@@ -20,29 +20,30 @@
   },
   "landing": {
     "hero": {
-      "badge": "Enginyeria digital per a pimes",
-      "title": "DIGITALITZA EL TEU NEGOCI",
-      "titleAccent": "AMB UN SOL PARTNER.",
-      "subtitle": "Webs, automatitzacions, manteniment i suport tècnic — tot gestionat per un equip que coneix el teu negoci en profunditat.",
-      "cta": "PARLEM DEL TEU PROJECTE",
-      "ctaSecondary": "Veure serveis",
+      "badge": "Per a autònoms i petits negocis de Mallorca",
+      "title": "LA TEVA WEB. ELS TEUS PROCESSOS.",
+      "titleAccent": "PAGUES UNA VEGADA.",
+      "subtitle": "Creem la teva web, automatitzem els teus processos i gestionem el teu negoci digital — sense quotes mensuals ni sorpreses. Pagues un cop, és teu per sempre.",
+      "cta": "CONSULTA GRATUÏTA",
+      "ctaSecondary": "Veure serveis i preus",
       "stats": {
-        "uptimeValue": "< 4h",
-        "uptimeLabel": "Resposta",
+        "uptimeValue": "0€",
+        "uptimeLabel": "Quota mensual",
         "clientsValue": "8+",
         "clientsLabel": "Pimes actives",
-        "automationsValue": "15+",
-        "automationsLabel": "Automatitzacions"
-      }
+        "automationsValue": "< 4h",
+        "automationsLabel": "Temps de resposta"
+      },
+      "sectors": ["Clíniques", "Reformes", "Advocats", "Comerços", "Restaurants", "Perruqueries", "Assessories"]
     },
     "problem": {
-      "badge": "El problema",
-      "title": "MASSES EINES,\nPOC SUPORT REAL.",
-      "description": "Les pimes acaben amb eines disperses i cap referent tècnic al costat. Quan alguna cosa falla — i sempre falla — ningú sap a qui trucar ni com solucionar-ho ràpid.",
+      "badge": "El problema real",
+      "title": "ETS AUTÒNOM/A I HAS\nDE FER-HO TOT TU.",
+      "description": "Gestiones la web, les reserves, els pressupostos i el WhatsApp — tot alhora. I cada eina nova afegeix una quota mensual. Quan alguna cosa falla, no saps a qui trucar.",
       "items": [
-        { "icon": "⏳", "text": "Hores perdudes entre plataformes que no es comuniquen" },
-        { "icon": "🚨", "text": "Cap suport quan el sistema cau o es produeix una incidència" },
-        { "icon": "📊", "text": "Sense visió global ni control del negoci digital" }
+        { "icon": "💸", "text": "Quotes mensuals que s'acumulen: hosting, email, CRM, formularis..." },
+        { "icon": "🚨", "text": "Cap suport real quan el sistema cau o la web deixa de funcionar" },
+        { "icon": "⏳", "text": "Hores perdudes amb eines que no es comuniquen entre elles" }
       ]
     },
     "services": {
@@ -173,12 +174,49 @@
         }
       ]
     },
+    "pricing": {
+      "badge": "Preus transparents",
+      "title": "SAPS EXACTAMENT\nQUANT ET COSTARÀ.",
+      "subtitle": "Sense quotes mensuals. Pagues un sol cop per cada servei i és teu per sempre. Sense contractes forçats ni sorpreses.",
+      "note": "Primera consulta gratuïta · Pressupost en 24h · Sense compromís",
+      "popular": "Més sol·licitat",
+      "oneTime": "pagament únic",
+      "from": "des de",
+      "included": "Inclòs:",
+      "plans": [
+        {
+          "icon": "🌐",
+          "name": "Micro-landing",
+          "price": "30€",
+          "description": "Web de presentació professional. Disseny, formulari de contacte i WhatsApp integrat.",
+          "features": ["Disseny responsive", "Formulari de contacte", "Botó WhatsApp", "SEO bàsic"],
+          "highlight": false
+        },
+        {
+          "icon": "🚀",
+          "name": "Landing Pro",
+          "price": "80€",
+          "description": "Landing premium optimitzada per a conversió, amb SEO tècnic i analítica avançada.",
+          "features": ["Disseny premium + animacions", "SEO tècnic", "Google Analytics", "Formularis intel·ligents"],
+          "highlight": true
+        },
+        {
+          "icon": "🤖",
+          "name": "Bot IA + Automatitzacions",
+          "price": "40€",
+          "pricePrefix": "des de",
+          "description": "Bot de WhatsApp, automatització de reserves o seguiment de clients.",
+          "features": ["Bot IA personalitzat", "WhatsApp automatitzat", "Integració CRM", "Workflows a mida"],
+          "highlight": false
+        }
+      ]
+    },
     "cta": {
-      "title": "PREPARAT PER\nDIGITALITZAR EL TEU NEGOCI?",
-      "subtitle": "Primera consulta gratuïta. Sense compromisos, sense lletra petita. Parlem del que necessites.",
-      "button": "PARLAR PER WHATSAPP",
+      "title": "PARLEM DEL\nTEU NEGOCI.",
+      "subtitle": "Consulta gratuïta i sense compromís. T'expliquem com podem ajudar-te i et donem pressupost en 24h.",
+      "button": "CONSULTA PER WHATSAPP",
       "buttonSecondary": "ACCEDIR AL PORTAL",
-      "buttonDemo": "RESERVAR UNA DEMO"
+      "buttonDemo": "ESCRIURE'NS UN EMAIL"
     },
     "footer": {
       "description": "Plataforma de digitalització per a negocis locals a Mallorca.",

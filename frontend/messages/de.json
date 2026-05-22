@@ -20,29 +20,30 @@
   },
   "landing": {
     "hero": {
-      "badge": "Digitale Technik für KMU",
-      "title": "DIGITALISIEREN SIE\nIHR UNTERNEHMEN",
-      "titleAccent": "MIT EINEM PARTNER.",
-      "subtitle": "Websites, Automatisierungen, Wartung und technischer Support — alles von einem Team verwaltet, das Ihr Unternehmen in- und auswendig kennt.",
-      "cta": "ÜBER IHR PROJEKT SPRECHEN",
-      "ctaSecondary": "Leistungen ansehen",
+      "badge": "Für Selbständige und Kleinbetriebe auf Mallorca",
+      "title": "IHRE WEBSITE. IHRE PROZESSE.",
+      "titleAccent": "EINMALIGE ZAHLUNG.",
+      "subtitle": "Wir erstellen Ihre Website, automatisieren Ihre Prozesse und verwalten Ihr digitales Geschäft — ohne monatliche Gebühren oder Überraschungen. Einmal bezahlen, für immer Ihres.",
+      "cta": "KOSTENLOSE BERATUNG",
+      "ctaSecondary": "Leistungen & Preise ansehen",
       "stats": {
-        "uptimeValue": "< 4h",
-        "uptimeLabel": "Reaktionszeit",
+        "uptimeValue": "0€",
+        "uptimeLabel": "Monatliche Gebühr",
         "clientsValue": "8+",
         "clientsLabel": "Aktive KMU",
-        "automationsValue": "15+",
-        "automationsLabel": "Automatisierungen"
-      }
+        "automationsValue": "< 4h",
+        "automationsLabel": "Reaktionszeit"
+      },
+      "sectors": ["Kliniken", "Renovierungen", "Anwälte", "Geschäfte", "Restaurants", "Friseure", "Beratungen"]
     },
     "problem": {
-      "badge": "Das Problem",
-      "title": "ZU VIELE TOOLS,\nZU WENIG ECHTER SUPPORT.",
-      "description": "KMU enden mit verstreuten Tools und keinem technischen Ansprechpartner. Wenn etwas ausfällt — und das passiert immer — weiß niemand, wen man anrufen soll oder wie man das schnell beheben kann.",
+      "badge": "Das echte Problem",
+      "title": "SIE SIND SELBSTÄNDIG UND\nMACHEN ALLES SELBST.",
+      "description": "Sie verwalten Website, Buchungen, Angebote und WhatsApp — alles gleichzeitig. Jedes neue Tool fügt eine weitere monatliche Gebühr hinzu. Wenn etwas ausfällt, wissen Sie nicht, wen Sie anrufen sollen.",
       "items": [
-        { "icon": "⏳", "text": "Stunden verloren zwischen nicht verbundenen Plattformen" },
-        { "icon": "🚨", "text": "Kein Support, wenn das System ausfällt oder eine Störung auftritt" },
-        { "icon": "📊", "text": "Keine einheitliche Übersicht oder Kontrolle über das digitale Geschäft" }
+        { "icon": "💸", "text": "Monatliche Gebühren häufen sich: Hosting, E-Mail, CRM, Formulare..." },
+        { "icon": "🚨", "text": "Kein echter Support, wenn das System oder die Website ausfällt" },
+        { "icon": "⏳", "text": "Stunden verloren mit Tools, die nicht miteinander kommunizieren" }
       ]
     },
     "services": {
@@ -173,12 +174,49 @@
         }
       ]
     },
+    "pricing": {
+      "badge": "Transparente Preise",
+      "title": "SIE WISSEN GENAU,\nWAS ES KOSTEN WIRD.",
+      "subtitle": "Keine monatlichen Gebühren. Sie zahlen einmal pro Dienst und er gehört Ihnen für immer. Keine erzwungenen Verträge, keine versteckten Kosten.",
+      "note": "Kostenlose Erstberatung · Angebot in 24h · Keine Verpflichtung",
+      "popular": "Am häufigsten angefragt",
+      "oneTime": "Einmalzahlung",
+      "from": "ab",
+      "included": "Enthält:",
+      "plans": [
+        {
+          "icon": "🌐",
+          "name": "Micro-Landing",
+          "price": "30€",
+          "description": "Professionelle Präsentationsseite. Design, Kontaktformular und WhatsApp-Integration.",
+          "features": ["Responsives Design", "Kontaktformular", "WhatsApp-Button", "Basis-SEO"],
+          "highlight": false
+        },
+        {
+          "icon": "🚀",
+          "name": "Landing Pro",
+          "price": "80€",
+          "description": "Premium-Landing optimiert für Conversion, mit technischem SEO und erweiterter Analyse.",
+          "features": ["Premium-Design + Animationen", "Technisches SEO", "Google Analytics", "Intelligente Formulare"],
+          "highlight": true
+        },
+        {
+          "icon": "🤖",
+          "name": "KI-Bot + Automatisierungen",
+          "price": "40€",
+          "pricePrefix": "ab",
+          "description": "WhatsApp-Bot, Buchungsautomatisierung oder Kundennachverfolgung.",
+          "features": ["Individueller KI-Bot", "Automatisiertes WhatsApp", "CRM-Integration", "Maßgeschneiderte Workflows"],
+          "highlight": false
+        }
+      ]
+    },
     "cta": {
-      "title": "BEREIT ZUR\nDIGITALISIERUNG?",
-      "subtitle": "Kostenlose Erstberatung. Keine Verpflichtungen, kein Kleingedrucktes. Sprechen wir über Ihre Bedürfnisse.",
+      "title": "SPRECHEN WIR ÜBER\nIHR UNTERNEHMEN.",
+      "subtitle": "Kostenlose Beratung, keine Verpflichtung. Wir erklären, wie wir Ihnen helfen können und senden Ihnen innerhalb von 24h ein Angebot.",
       "button": "PER WHATSAPP SCHREIBEN",
       "buttonSecondary": "ZUM PORTAL ANMELDEN",
-      "buttonDemo": "DEMO BUCHEN"
+      "buttonDemo": "UNS EINE E-MAIL SCHREIBEN"
     },
     "footer": {
       "description": "Digitalisierungsplattform für lokale Unternehmen auf Mallorca.",

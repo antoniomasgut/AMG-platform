@@ -20,29 +20,30 @@
   },
   "landing": {
     "hero": {
-      "badge": "Ingeniería digital para pymes",
-      "title": "DIGITALIZA TU NEGOCIO",
-      "titleAccent": "CON UN SOLO PARTNER.",
-      "subtitle": "Webs, automatizaciones, mantenimiento y soporte técnico — todo gestionado por un equipo que conoce tu negocio en profundidad.",
-      "cta": "HABLEMOS DE TU PROYECTO",
-      "ctaSecondary": "Ver servicios",
+      "badge": "Para autónomos y pequeños negocios de Mallorca",
+      "title": "TU WEB. TUS PROCESOS.",
+      "titleAccent": "PAGAS UNA SOLA VEZ.",
+      "subtitle": "Creamos tu web, automatizamos tus procesos y gestionamos tu negocio digital — sin cuotas mensuales ni sorpresas. Pagas una vez, es tuyo para siempre.",
+      "cta": "CONSULTA GRATUITA",
+      "ctaSecondary": "Ver servicios y precios",
       "stats": {
-        "uptimeValue": "< 4h",
-        "uptimeLabel": "Respuesta",
+        "uptimeValue": "0€",
+        "uptimeLabel": "Cuota mensual",
         "clientsValue": "8+",
         "clientsLabel": "Pymes activas",
-        "automationsValue": "15+",
-        "automationsLabel": "Automatizaciones"
-      }
+        "automationsValue": "< 4h",
+        "automationsLabel": "Tiempo de respuesta"
+      },
+      "sectors": ["Clínicas", "Reformas", "Abogados", "Comercios", "Restaurantes", "Peluquerías", "Asesorías"]
     },
     "problem": {
-      "badge": "El problema",
-      "title": "DEMASIADAS HERRAMIENTAS,\nPOCO SOPORTE REAL.",
-      "description": "Las pymes acaban con herramientas dispersas y sin un referente técnico al lado. Cuando algo falla — y siempre falla — nadie sabe a quién llamar ni cómo solucionarlo rápido.",
+      "badge": "El problema real",
+      "title": "ERES AUTÓNOMO/A Y LO\nHACES TODO TÚ.",
+      "description": "Gestionas la web, las reservas, los presupuestos y el WhatsApp — todo a la vez. Y cada nueva herramienta añade una cuota mensual. Cuando algo falla, no sabes a quién llamar.",
       "items": [
-        { "icon": "⏳", "text": "Horas perdidas entre plataformas que no se comunican" },
-        { "icon": "🚨", "text": "Sin soporte cuando el sistema cae o hay una incidencia" },
-        { "icon": "📊", "text": "Sin visión global ni control del negocio digital" }
+        { "icon": "💸", "text": "Cuotas mensuales que se acumulan: hosting, email, CRM, formularios..." },
+        { "icon": "🚨", "text": "Sin soporte real cuando el sistema cae o la web deja de funcionar" },
+        { "icon": "⏳", "text": "Horas perdidas con herramientas que no se comunican entre sí" }
       ]
     },
     "services": {
@@ -173,12 +174,49 @@
         }
       ]
     },
+    "pricing": {
+      "badge": "Precios transparentes",
+      "title": "SABES EXACTAMENTE\nCUÁNTO TE COSTARÁ.",
+      "subtitle": "Sin cuotas mensuales. Pagas una sola vez por cada servicio y es tuyo para siempre. Sin contratos forzados ni sorpresas.",
+      "note": "Primera consulta gratuita · Presupuesto en 24h · Sin compromiso",
+      "popular": "Más solicitado",
+      "oneTime": "pago único",
+      "from": "desde",
+      "included": "Incluye:",
+      "plans": [
+        {
+          "icon": "🌐",
+          "name": "Micro-landing",
+          "price": "30€",
+          "description": "Web de presentación profesional. Diseño, formulario de contacto y WhatsApp integrado.",
+          "features": ["Diseño responsive", "Formulario de contacto", "Botón WhatsApp", "SEO básico"],
+          "highlight": false
+        },
+        {
+          "icon": "🚀",
+          "name": "Landing Pro",
+          "price": "80€",
+          "description": "Landing premium optimizada para conversión, con SEO técnico y analítica avanzada.",
+          "features": ["Diseño premium + animaciones", "SEO técnico", "Google Analytics", "Formularios inteligentes"],
+          "highlight": true
+        },
+        {
+          "icon": "🤖",
+          "name": "Bot IA + Automatizaciones",
+          "price": "40€",
+          "pricePrefix": "desde",
+          "description": "Bot de WhatsApp, automatización de reservas o seguimiento de clientes.",
+          "features": ["Bot IA personalizado", "WhatsApp automatizado", "Integración CRM", "Workflows a medida"],
+          "highlight": false
+        }
+      ]
+    },
     "cta": {
-      "title": "¿LISTO PARA\nDIGITALIZAR TU NEGOCIO?",
-      "subtitle": "Primera consulta gratuita. Sin compromisos, sin letra pequeña. Hablemos de lo que necesitas.",
-      "button": "HABLAR POR WHATSAPP",
+      "title": "HABLEMOS DE\nTU NEGOCIO.",
+      "subtitle": "Consulta gratuita y sin compromiso. Te explicamos cómo podemos ayudarte y te damos presupuesto en 24h.",
+      "button": "CONSULTA POR WHATSAPP",
       "buttonSecondary": "ACCEDER AL PORTAL",
-      "buttonDemo": "RESERVAR UNA DEMO"
+      "buttonDemo": "ESCRÍBENOS UN EMAIL"
     },
     "footer": {
       "description": "Plataforma de digitalización para negocios locales en Mallorca.",

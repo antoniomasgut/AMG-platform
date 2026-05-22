@@ -1,9 +1,12 @@
+'use client';
+
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 
 export function HeroSection() {
   const t = useTranslations('landing.hero');
   const locale = useLocale();
+  const sectors = t.raw('sectors') as string[];
 
   return (
     <section className="relative min-h-dvh flex flex-col items-center justify-center px-6 pt-20 pb-16 text-center overflow-hidden">
@@ -55,7 +58,7 @@ export function HeroSection() {
           <div className="flex flex-col items-center gap-1 px-4">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#39d353] shrink-0" />
-              <span className="f-display font-black text-2xl sm:text-3xl text-ink-0">{t('stats.uptimeValue')}</span>
+              <span className="f-display font-black text-2xl sm:text-3xl text-accent-light">{t('stats.uptimeValue')}</span>
             </span>
             <span className="f-mono text-label uppercase text-ink-3 tracking-widest">{t('stats.uptimeLabel')}</span>
           </div>
@@ -67,6 +70,18 @@ export function HeroSection() {
             <span className="f-display font-black text-2xl sm:text-3xl text-ink-0">{t('stats.automationsValue')}</span>
             <span className="f-mono text-label uppercase text-ink-3 tracking-widest">{t('stats.automationsLabel')}</span>
           </div>
+        </div>
+
+        {/* Sectors strip */}
+        <div className="mt-8 flex flex-wrap justify-center gap-2">
+          {sectors.map((s) => (
+            <span
+              key={s}
+              className="f-mono text-label uppercase text-ink-3 border border-border-subtle px-3 py-1 text-[10px] tracking-widest"
+            >
+              {s}
+            </span>
+          ))}
         </div>
       </div>
     </section>

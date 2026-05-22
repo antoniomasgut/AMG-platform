@@ -20,29 +20,30 @@
   },
   "landing": {
     "hero": {
-      "badge": "Digital engineering for SMEs",
-      "title": "DIGITISE YOUR BUSINESS",
-      "titleAccent": "WITH ONE PARTNER.",
-      "subtitle": "Websites, automations, maintenance and technical support — all managed by a team that knows your business inside out.",
-      "cta": "LET'S TALK ABOUT YOUR PROJECT",
-      "ctaSecondary": "See services",
+      "badge": "For freelancers and small businesses in Mallorca",
+      "title": "YOUR WEBSITE. YOUR PROCESSES.",
+      "titleAccent": "YOU PAY ONCE.",
+      "subtitle": "We build your website, automate your processes and manage your digital business — no monthly fees, no surprises. Pay once, it's yours forever.",
+      "cta": "FREE CONSULTATION",
+      "ctaSecondary": "See services & prices",
       "stats": {
-        "uptimeValue": "< 4h",
-        "uptimeLabel": "Response",
+        "uptimeValue": "€0",
+        "uptimeLabel": "Monthly fee",
         "clientsValue": "8+",
         "clientsLabel": "Active SMEs",
-        "automationsValue": "15+",
-        "automationsLabel": "Automations"
-      }
+        "automationsValue": "< 4h",
+        "automationsLabel": "Response time"
+      },
+      "sectors": ["Clinics", "Renovations", "Lawyers", "Shops", "Restaurants", "Hair salons", "Consultancies"]
     },
     "problem": {
-      "badge": "The problem",
-      "title": "TOO MANY TOOLS,\nTOO LITTLE REAL SUPPORT.",
-      "description": "SMEs end up with scattered tools and no trusted technical partner. When something breaks — and it always does — nobody knows who to call or how to fix it fast.",
+      "badge": "The real problem",
+      "title": "YOU'RE A FREELANCER AND\nYOU DO EVERYTHING YOURSELF.",
+      "description": "You manage the website, bookings, quotes and WhatsApp — all at once. And every new tool adds another monthly fee. When something breaks, you don't know who to call.",
       "items": [
-        { "icon": "⏳", "text": "Hours lost switching between disconnected platforms" },
-        { "icon": "🚨", "text": "No support when the system goes down or an incident occurs" },
-        { "icon": "📊", "text": "No unified view or control of the digital business" }
+        { "icon": "💸", "text": "Monthly fees piling up: hosting, email, CRM, forms..." },
+        { "icon": "🚨", "text": "No real support when the system goes down or the website stops working" },
+        { "icon": "⏳", "text": "Hours lost with tools that don't talk to each other" }
       ]
     },
     "services": {
@@ -173,12 +174,49 @@
         }
       ]
     },
+    "pricing": {
+      "badge": "Transparent pricing",
+      "title": "YOU KNOW EXACTLY\nWHAT IT WILL COST.",
+      "subtitle": "No monthly fees. You pay once per service and it's yours forever. No forced contracts, no hidden costs.",
+      "note": "Free first consultation · Quote within 24h · No commitment",
+      "popular": "Most requested",
+      "oneTime": "one-off payment",
+      "from": "from",
+      "included": "Included:",
+      "plans": [
+        {
+          "icon": "🌐",
+          "name": "Micro-landing",
+          "price": "€30",
+          "description": "Professional presentation page. Design, contact form and WhatsApp integration.",
+          "features": ["Responsive design", "Contact form", "WhatsApp button", "Basic SEO"],
+          "highlight": false
+        },
+        {
+          "icon": "🚀",
+          "name": "Landing Pro",
+          "price": "€80",
+          "description": "Premium landing optimised for conversion, with technical SEO and advanced analytics.",
+          "features": ["Premium design + animations", "Technical SEO", "Google Analytics", "Smart forms"],
+          "highlight": true
+        },
+        {
+          "icon": "🤖",
+          "name": "AI Bot + Automations",
+          "price": "€40",
+          "pricePrefix": "from",
+          "description": "WhatsApp bot, booking automation or customer follow-up workflows.",
+          "features": ["Custom AI bot", "Automated WhatsApp", "CRM integration", "Custom workflows"],
+          "highlight": false
+        }
+      ]
+    },
     "cta": {
-      "title": "READY TO\nDIGITISE YOUR BUSINESS?",
-      "subtitle": "Free first consultation. No commitments, no fine print. Let's talk about what you need.",
+      "title": "LET'S TALK ABOUT\nYOUR BUSINESS.",
+      "subtitle": "Free consultation, no commitment. We'll explain how we can help and send you a quote within 24h.",
       "button": "CHAT ON WHATSAPP",
       "buttonSecondary": "SIGN IN TO PORTAL",
-      "buttonDemo": "BOOK A DEMO"
+      "buttonDemo": "SEND US AN EMAIL"
     },
     "footer": {
       "description": "Digitalisation platform for local businesses in Mallorca.",
