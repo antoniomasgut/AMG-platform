@@ -176,40 +176,45 @@
     },
     "pricing": {
       "badge": "Phase-based pricing",
-      "title": "YOU KNOW EXACTLY\nWHAT IT WILL COST.",
-      "subtitle": "One-off setup per phase + low monthly maintenance. Each phase includes implementation, 24/7 monitoring and up to 1 minor change per month.",
-      "note": "Free first consultation · Custom quote within 24h · No commitment",
-      "popular": "Recommended to start",
-      "setupLabel": "Setup",
-      "monthlyLabel": "/month",
+      "title": "START SMALL,\nGROW WHEN YOU'RE READY.",
+      "subtitle": "Contract the phases you need now. Add more when you're ready. One-off setup + fixed monthly fee. No surprises, no small print.",
+      "setupNote": "One-off setup from €150 · Monthly includes: AI Agent 24/7, monitoring, up to 2 minor changes/month and technical support · Phase upgrade: €75 + monthly increment",
+      "fromLabel": "from",
+      "monthLabel": "/mo",
+      "popular": "Most chosen",
       "included": "Includes:",
-      "individualNote": "Or individual services: Landing €100 setup · AI Bot €100 setup · all at €10/month",
+      "ctaNote": "Free consultation · Exact price for your sector in 24h · No commitment",
       "fases": [
         {
-          "number": "F1",
-          "name": "Digital Presence",
-          "setup": "€150",
-          "monthly": "€20",
-          "description": "Your professional website and own domain, live in less than a week.",
-          "services": ["Professional landing page (multi-block)", "Managed domain (1st year included)", "SSL + hosting", "Basic SEO + GDPR form"],
-          "highlight": true
-        },
-        {
-          "number": "F2",
-          "name": "Communication & Automation",
-          "setup": "€180",
-          "monthly": "€30",
-          "description": "Automate client communication and eliminate repetitive tasks.",
-          "services": ["WhatsApp Business API", "2 automations (n8n)", "CRM or spreadsheet integration", "Automated replies"],
+          "code": "F1",
+          "name": "Base communication",
+          "price": "€59",
+          "description": "The agent replies via WhatsApp, Telegram and Email 24/7. Hybrid mode: the bot and you can both reply in the same thread.",
+          "services": ["Automatic replies 24/7", "WhatsApp + Telegram + Email", "Hybrid mode (bot + person)", "Info, hours and prices"],
           "highlight": false
         },
         {
-          "number": "F3",
-          "name": "Advanced Intelligence",
-          "setup": "€350",
-          "monthly": "€20",
-          "description": "AI bot with your own knowledge base and complex automations.",
-          "services": ["AI Bot with RAG (own knowledge base)", "Advanced automation (3+ nodes)", "Conversation memory", "KB updates included"],
+          "code": "F1+F2",
+          "name": "+ Appointment management",
+          "price": "€79",
+          "description": "The agent manages your calendar: confirms appointments, sends reminders and handles cancellations without you having to intervene.",
+          "services": ["Everything in F1 included", "Automatic appointment confirmation", "Day-before reminders", "Cancellation management"],
+          "highlight": true
+        },
+        {
+          "code": "F1+F2+F3",
+          "name": "+ Quotes",
+          "price": "€99",
+          "description": "The agent generates PDF quotes, automatically follows up and records client responses.",
+          "services": ["Everything in F1+F2 included", "Automatic PDF quotes", "Active follow-up (unanswered)", "Response tracking"],
+          "highlight": false
+        },
+        {
+          "code": "Complete",
+          "name": "+ Loyalty",
+          "price": "€129",
+          "description": "Post-sale follow-up, reactivation of inactive clients and automatic Google review requests.",
+          "services": ["Everything in F3 included", "Automatic post-sale follow-up", "Inactive client reactivation", "Google review requests"],
           "highlight": false
         }
       ]

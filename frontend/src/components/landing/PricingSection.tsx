@@ -1,10 +1,9 @@
 import { useTranslations } from 'next-intl';
 
 interface Fase {
-  number: string;
+  code: string;
   name: string;
-  setup: string;
-  monthly: string;
+  price: string;
   description: string;
   services: string[];
   highlight: boolean;
@@ -29,7 +28,7 @@ export function PricingSection() {
           <p className="text-ui text-ink-2 lg:text-right max-w-xs">{t('subtitle')}</p>
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {fases.map((fase, i) => (
             <div
               key={i}
@@ -48,27 +47,21 @@ export function PricingSection() {
                 </span>
               )}
 
-              {/* Phase number + name */}
+              {/* Phase code + name */}
               <div>
-                <span className="f-mono text-[10px] uppercase tracking-widest text-accent-light">{fase.number}</span>
+                <span className="f-mono text-[10px] uppercase tracking-widest text-accent-light">{fase.code}</span>
                 <h3 className="f-display font-black text-md mt-1">{fase.name}</h3>
                 <p className="text-data text-ink-2 leading-relaxed mt-1">{fase.description}</p>
               </div>
 
               {/* Pricing */}
-              <div className="flex items-end gap-4 border-t border-border-subtle pt-4">
-                <div>
-                  <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-0.5">{t('setupLabel')}</div>
+              <div className="border-t border-border-subtle pt-4">
+                <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-0.5">{t('fromLabel')}</div>
+                <div className="flex items-baseline gap-0.5">
                   <span className={`f-display font-black text-2xl ${fase.highlight ? 'text-accent-light' : 'text-ink-0'}`}>
-                    {fase.setup}
+                    {fase.price}
                   </span>
-                </div>
-                <div className="text-ink-3 text-lg pb-0.5">+</div>
-                <div>
-                  <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-0.5">Mensual</div>
-                  <span className="f-display font-bold text-xl text-ink-1">
-                    {fase.monthly}<span className="f-mono text-xs text-ink-3">{t('monthlyLabel')}</span>
-                  </span>
+                  <span className="f-mono text-xs text-ink-3">{t('monthLabel')}</span>
                 </div>
               </div>
 
@@ -88,9 +81,9 @@ export function PricingSection() {
           ))}
         </div>
 
-        <div className="mt-8 text-center space-y-2">
-          <p className="f-mono text-[10px] uppercase tracking-widest text-ink-3">{t('note')}</p>
-          <p className="f-mono text-[10px] text-ink-3 opacity-60">{t('individualNote')}</p>
+        <div className="mt-8 space-y-2">
+          <p className="f-mono text-[10px] uppercase tracking-widest text-ink-3">{t('setupNote')}</p>
+          <p className="f-mono text-[10px] text-ink-3 opacity-60">{t('ctaNote')}</p>
         </div>
       </div>
     </section>

@@ -21,14 +21,14 @@
   "landing": {
     "hero": {
       "badge": "Para autónomos y pequeños negocios de Mallorca",
-      "title": "TU WEB. TUS PROCESOS.",
-      "titleAccent": "PRECIOS CLAROS POR FASES.",
-      "subtitle": "Diseñamos, implementamos y mantenemos tu presencia digital por fases. Setup único por servicio + mantenimiento mensual bajo. Transparente, sin contratos forzados.",
+      "title": "EL AGENTE IA QUE TRABAJA",
+      "titleAccent": "MIENTRAS TÚ DUERMES.",
+      "subtitle": "Responde por WhatsApp, Telegram y email — gestiona citas, envía presupuestos y fideliza clientes. Setup único + cuota mensual fija. Sin sorpresas, sin letra pequeña.",
       "cta": "CONSULTA GRATUITA",
       "ctaSecondary": "Ver fases y precios",
       "stats": {
-        "uptimeValue": "10€",
-        "uptimeLabel": "Por servicio/mes",
+        "uptimeValue": "desde 49€",
+        "uptimeLabel": "Al mes",
         "clientsValue": "8+",
         "clientsLabel": "Pymes activas",
         "automationsValue": "< 4h",
@@ -176,40 +176,45 @@
     },
     "pricing": {
       "badge": "Precios por fases",
-      "title": "SABES EXACTAMENTE\nCUÁNTO TE COSTARÁ.",
-      "subtitle": "Setup único por fase + mantenimiento mensual bajo. Cada fase incluye implementación, monitorización 24/7 y hasta 1 cambio menor al mes.",
-      "note": "Primera consulta gratuita · Presupuesto personalizado en 24h · Sin compromiso",
-      "popular": "Recomendada para empezar",
-      "setupLabel": "Setup",
-      "monthlyLabel": "/mes",
+      "title": "EMPIEZA PEQUEÑO,\nCRECE CUANDO QUIERAS.",
+      "subtitle": "Contratas las fases que necesitas ahora. Añades las siguientes cuando estés listo. Setup único + cuota mensual fija sin sorpresas.",
+      "setupNote": "Setup único desde 150€ · Mensual incluye: Agente IA 24/7, monitorización, hasta 2 cambios/mes y soporte técnico · Ampliación de fase: 75€ + incremento mensual",
+      "fromLabel": "desde",
+      "monthLabel": "/mes",
+      "popular": "La más elegida",
       "included": "Incluye:",
-      "individualNote": "O contrata servicios sueltos: Landing 100€ setup · Bot IA 100€ setup · todos a 10€/mes",
+      "ctaNote": "Consulta gratuita · Precio exacto para tu sector en 24h · Sin compromiso",
       "fases": [
         {
-          "number": "F1",
-          "name": "Presencia Digital",
-          "setup": "150€",
-          "monthly": "20€",
-          "description": "Tu web profesional y dominio propio, funcionando en menos de una semana.",
-          "services": ["Landing profesional (multi-bloque)", "Dominio gestionado (1er año incluido)", "SSL + alojamiento", "SEO básico + formulario RGPD"],
-          "highlight": true
-        },
-        {
-          "number": "F2",
-          "name": "Comunicación y Automatización",
-          "setup": "180€",
-          "monthly": "30€",
-          "description": "Automatiza la comunicación con clientes y elimina tareas repetitivas.",
-          "services": ["WhatsApp Business API", "2 automatizaciones (n8n)", "Integración CRM o hojas de cálculo", "Respuestas automáticas"],
+          "code": "F1",
+          "name": "Comunicación base",
+          "price": "59€",
+          "description": "El agente responde por WhatsApp, Telegram y Email las 24h. Modo híbrido: el bot y tú podéis contestar en el mismo hilo.",
+          "services": ["Respuestas automáticas 24/7", "WhatsApp + Telegram + Email", "Modo híbrido (bot + persona)", "Información, horarios y precios"],
           "highlight": false
         },
         {
-          "number": "F3",
-          "name": "Inteligencia Avanzada",
-          "setup": "350€",
-          "monthly": "20€",
-          "description": "Bot IA con tu base de conocimiento y automatizaciones complejas.",
-          "services": ["Bot IA con RAG (base de conocimiento propia)", "Automatización avanzada (3+ nodos)", "Memoria de conversación", "Actualización KB incluida"],
+          "code": "F1+F2",
+          "name": "+ Gestión de citas",
+          "price": "79€",
+          "description": "El agente gestiona la agenda: confirma citas, envía recordatorios y gestiona cancelaciones sin que tengas que intervenir.",
+          "services": ["Todo de F1 incluido", "Confirmación de citas automática", "Recordatorios el día antes", "Gestión de cancelaciones"],
+          "highlight": true
+        },
+        {
+          "code": "F1+F2+F3",
+          "name": "+ Presupuestos",
+          "price": "99€",
+          "description": "El agente genera presupuestos en PDF, hace el seguimiento automático y registra las respuestas del cliente.",
+          "services": ["Todo de F1+F2 incluido", "Presupuestos PDF automáticos", "Seguimiento activo (no contestados)", "Registro de respuestas"],
+          "highlight": false
+        },
+        {
+          "code": "Completo",
+          "name": "+ Fidelización",
+          "price": "129€",
+          "description": "Seguimiento postventa, reactivación de clientes inactivos y generación de reseñas Google de forma automática.",
+          "services": ["Todo de F3 incluido", "Seguimiento postventa automático", "Reactivación de clientes inactivos", "Solicitud reseñas Google"],
           "highlight": false
         }
       ]
