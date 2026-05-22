@@ -291,10 +291,17 @@ export interface SectorPricingResponse {
   sector: string;
   businessSize: string;
   setupPrice: number;
-  monthlyF1: number;
-  monthlyF1f2: number;
-  monthlyF1f2f3: number;
-  monthlyComplete: number;
+  priceF1: number;
+  priceF2: number;
+  priceF3: number;
+  priceF4: number;
+  priceF5: number;
+}
+
+// Calcula el mensual sumant els N primers tiers (igual que el backend: count fases → priceF1+priceF2+...)
+export function calcMonthly(pricing: SectorPricingResponse, phaseCount: number): number {
+  const tiers = [pricing.priceF1, pricing.priceF2, pricing.priceF3, pricing.priceF4, pricing.priceF5];
+  return tiers.slice(0, phaseCount).reduce((sum, p) => sum + (p ?? 0), 0);
 }
 
 export const listSectorPricing = () =>

@@ -27,8 +27,8 @@
       "cta": "KOSTENLOSE BERATUNG",
       "ctaSecondary": "Phasen & Preise ansehen",
       "stats": {
-        "uptimeValue": "10€",
-        "uptimeLabel": "Pro Dienst/Monat",
+        "uptimeValue": "ab 49€",
+        "uptimeLabel": "Pro Monat",
         "clientsValue": "8+",
         "clientsLabel": "Aktive KMU",
         "automationsValue": "< 4h",
@@ -59,9 +59,9 @@
         },
         {
           "icon": "🤖",
-          "title": "Automatisierungen",
-          "description": "Individuelle Workflows für WhatsApp, E-Mail, CRM und jeden wiederkehrenden Prozess in Ihrem Unternehmen.",
-          "tag": "n8n · KI · Integrationen"
+          "title": "KI-Agent",
+          "description": "Der Agent antwortet rund um die Uhr per WhatsApp, Telegram und E-Mail. Er verwaltet Termine, sendet Angebote und bindet Kunden — ohne Ihr Zutun.",
+          "tag": "KI · WhatsApp · Telegram"
         },
         {
           "icon": "🛡️",
@@ -385,10 +385,11 @@
     "termes": "Nutzungsbedingungen"
   },
   "cookies": {
-    "message": "Wir verwenden Cookies, um Ihre Erfahrung zu verbessern. Technische Cookies sind für das Funktionieren des Portals erforderlich.",
-    "accept": "Alle akzeptieren",
+    "message": "Wir verwenden technische Cookies, die für den Betrieb des Portals erforderlich sind.",
+    "moreInfo": "Cookie-Richtlinie",
+    "accept": "Akzeptieren",
     "configure": "Konfigurieren",
-    "reject": "Optionale ablehnen"
+    "reject": "Ablehnen"
   },
   "portalNav": {
     "groups": {

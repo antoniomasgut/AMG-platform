@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://amg.digital';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://amgdl.com';
 const LOCALES = ['ca', 'es', 'en', 'de'] as const;
 
 const PUBLIC_PATHS = [
@@ -8,7 +8,7 @@ const PUBLIC_PATHS = [
   '/login',
   '/forgot-password',
   '/legal/avis-legal',
-  '/legal/politica-privacitat',
+  '/legal/privacitat',
   '/legal/cookies',
   '/legal/termes-servei',
 ];

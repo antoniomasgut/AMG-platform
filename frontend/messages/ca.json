@@ -59,9 +59,9 @@
         },
         {
           "icon": "🤖",
-          "title": "Automatitzacions",
-          "description": "Workflows personalitzats per a WhatsApp, email, CRM i qualsevol procés repetitiu del teu negoci.",
-          "tag": "n8n · IA · Integracions"
+          "title": "Agent IA",
+          "description": "L'agent respon per WhatsApp, Telegram i email les 24h. Gestiona cites, envia pressupostos i fidelitza clients sense que hagis d'intervenir.",
+          "tag": "IA · WhatsApp · Telegram"
         },
         {
           "icon": "🛡️",
@@ -385,10 +385,11 @@
     "termes": "Termes del Servei"
   },
   "cookies": {
-    "message": "Fem servir galetes per millorar la teva experiència. Les galetes tècniques són necessàries per al funcionament del portal.",
-    "accept": "Acceptar totes",
+    "message": "Fem servir galetes tècniques necessàries per al funcionament del portal.",
+    "moreInfo": "Política de cookies",
+    "accept": "Acceptar",
     "configure": "Configurar",
-    "reject": "Rebutjar opcionals"
+    "reject": "Rebutjar"
   },
   "wizard": {
     "start": "Començar",

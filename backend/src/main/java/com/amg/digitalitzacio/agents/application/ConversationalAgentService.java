@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.agents.application;
 
 import com.amg.digitalitzacio.agents.application.channel.EmailChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.ConversationRole;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
@@ -28,6 +29,7 @@ public class ConversationalAgentService {
     private final TenantAIConfigRepository tenantAIConfigRepository;
     private final TelegramBotClient telegramBotClient;
     private final WhatsAppChannel whatsAppChannel;
+    private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final EmailChannel emailChannel;
     private final AIProviderRouter aiProviderRouter;
 
@@ -65,7 +67,10 @@ public class ConversationalAgentService {
             var chatLink = chatLinkOpt.get();
             switch (chatLink.getAgentMode()) {
                 case AUTO:
-                    sendViaChannel(chatLink.getWhatsappPhoneNumber(), customerIdentifier, channel, assistantResponse);
+                    String senderId = channel == ConversationChannel.WHATSAPP_META
+                            ? chatLink.getWhatsappMetaPhoneNumberId()
+                            : chatLink.getWhatsappPhoneNumber();
+                    sendViaChannel(senderId, customerIdentifier, channel, assistantResponse);
                     conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.ASSISTANT, assistantResponse, false);
                     break;
                 case HYBRID:
@@ -87,10 +92,11 @@ public class ConversationalAgentService {
     private void sendViaChannel(String fromNumber, String customerIdentifier, ConversationChannel channel, String text) {
         try {
             switch (channel) {
-                case WHATSAPP -> whatsAppChannel.sendMessage(fromNumber != null ? fromNumber : "", customerIdentifier, text);
-                case TELEGRAM -> telegramBotClient.sendMessage(Long.parseLong(customerIdentifier), text);
-                case EMAIL    -> emailChannel.sendMessage(customerIdentifier, "Response from Agent", text);
-                default       -> log.warn("Unsupported channel: {}", channel);
+                case WHATSAPP      -> whatsAppChannel.sendMessage(fromNumber != null ? fromNumber : "", customerIdentifier, text);
+                case WHATSAPP_META -> whatsAppMetaChannel.sendMessage(fromNumber != null ? fromNumber : "", customerIdentifier, text);
+                case TELEGRAM      -> telegramBotClient.sendMessage(Long.parseLong(customerIdentifier), text);
+                case EMAIL         -> emailChannel.sendMessage(customerIdentifier, "Response from Agent", text);
+                default            -> log.warn("Unsupported channel: {}", channel);
             }
         } catch (Exception e) {
             log.error("Error sending via channel {} to {}: {}", channel, customerIdentifier, e.getMessage());

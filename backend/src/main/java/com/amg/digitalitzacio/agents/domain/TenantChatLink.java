@@ -41,6 +41,9 @@ public class TenantChatLink {
     @Column(name = "whatsapp_phone_number", length = 20)
     private String whatsappPhoneNumber;
 
+    @Column(name = "whatsapp_meta_phone_number_id", length = 30)
+    private String whatsappMetaPhoneNumberId;
+
     @Column(name = "email_address", length = 100)
     private String emailAddress;
 

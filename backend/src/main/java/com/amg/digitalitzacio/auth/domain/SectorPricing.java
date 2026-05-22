@@ -36,17 +36,35 @@ public class SectorPricing {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal setupPrice;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal monthlyF1;
+    // Preu de cada fase individual. El mensual total = suma de priceF{n} per cada fase contractada.
+    @Column(name = "price_f1", columnDefinition = "numeric(10,2) DEFAULT 0")
+    private BigDecimal priceF1;
 
-    @Column(name = "monthly_f1f2", nullable = false, precision = 10, scale = 2)
-    private BigDecimal monthlyF1f2;
+    @Column(name = "price_f2", columnDefinition = "numeric(10,2) DEFAULT 0")
+    private BigDecimal priceF2;
 
-    @Column(name = "monthly_f1f2f3", nullable = false, precision = 10, scale = 2)
-    private BigDecimal monthlyF1f2f3;
+    @Column(name = "price_f3", columnDefinition = "numeric(10,2) DEFAULT 0")
+    private BigDecimal priceF3;
 
-    @Column(name = "monthly_complete", nullable = false, precision = 10, scale = 2)
-    private BigDecimal monthlyComplete;
+    @Column(name = "price_f4", columnDefinition = "numeric(10,2) DEFAULT 0")
+    private BigDecimal priceF4;
+
+    @Column(name = "price_f5", columnDefinition = "numeric(10,2) DEFAULT 0")
+    private BigDecimal priceF5;
+
+    public BigDecimal totalMonthly(java.util.Collection<String> phases) {
+        if (phases == null || phases.isEmpty()) return BigDecimal.ZERO;
+        var sorted = phases.stream()
+                .filter(p -> p != null && p.matches("F[1-5]"))
+                .sorted()
+                .toList();
+        BigDecimal total = BigDecimal.ZERO;
+        java.math.BigDecimal[] tierPrices = { priceF1, priceF2, priceF3, priceF4, priceF5 };
+        for (int i = 0; i < sorted.size() && i < tierPrices.length; i++) {
+            if (tierPrices[i] != null) total = total.add(tierPrices[i]);
+        }
+        return total;
+    }
 
     @CreatedDate
     @Column(updatable = false)

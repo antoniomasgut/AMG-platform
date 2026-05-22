@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import Link from 'next/link';
 
 const STORAGE_KEY = 'cookie_consent';
 
 export function CookieConsentBanner() {
   const t = useTranslations('cookies');
+  const locale = useLocale();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -34,7 +36,12 @@ export function CookieConsentBanner() {
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-base bg-bg-1/95 backdrop-blur-sm p-4 sm:p-6"
     >
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
-        <p className="text-data text-ink-1 max-w-2xl">{t('message')}</p>
+        <p className="text-data text-ink-1 max-w-2xl">
+          {t('message')}{' '}
+          <Link href={`/${locale}/legal/cookies`} className="underline hover:text-accent-light transition-colors">
+            {t('moreInfo')}
+          </Link>
+        </p>
         <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={reject}

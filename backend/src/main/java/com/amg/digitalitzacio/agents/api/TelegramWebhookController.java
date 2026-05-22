@@ -1,14 +1,18 @@
 package com.amg.digitalitzacio.agents.api;
 
 import com.amg.digitalitzacio.agents.application.AgentRegistry;
+import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
+import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/agents/telegram")
@@ -18,6 +22,7 @@ public class TelegramWebhookController {
 
     private final TenantChatLinkRepository chatLinkRepository;
     private final AgentRegistry agentRegistry;
+    private final ConversationalAgentService conversationalAgentService;
 
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody Map<String, Object> payload) {
@@ -95,6 +100,36 @@ public class TelegramWebhookController {
             log.error("Error processing webhook: {}", e.getMessage());
             return ResponseEntity.ok("ok");
         }
+    }
+
+    // Endpoint per-tenant: cada client té el seu bot amb la seva URL
+    @PostMapping("/webhook/{tenantId}")
+    public ResponseEntity<String> handleCustomerWebhook(
+            @PathVariable UUID tenantId,
+            @RequestBody Map<String, Object> payload) {
+        try {
+            var message = extractMessage(payload);
+            if (message == null) return ResponseEntity.ok("ok");
+
+            var chatId = message.get("chat") instanceof Map<?, ?> chat
+                    ? ((Number) chat.get("id")).longValue() : null;
+            var text = message.get("text") instanceof String t ? t.trim() : "";
+
+            if (chatId == null || text.isBlank()) return ResponseEntity.ok("ok");
+
+            log.info("Missatge TG client rebut per tenant={} de chat={}: {}", tenantId, chatId,
+                    text.substring(0, Math.min(text.length(), 50)));
+
+            handleCustomerAsync(tenantId, chatId, text);
+        } catch (Exception e) {
+            log.error("Error processing customer Telegram webhook: {}", e.getMessage());
+        }
+        return ResponseEntity.ok("ok");
+    }
+
+    @Async
+    private void handleCustomerAsync(UUID tenantId, Long chatId, String text) {
+        conversationalAgentService.handleIncoming(tenantId, chatId.toString(), ConversationChannel.TELEGRAM, text);
     }
 
     @SuppressWarnings("unchecked")

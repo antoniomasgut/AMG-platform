@@ -66,7 +66,8 @@ export default async function LocaleLayout({ children, params }: Props) {
     logo: `${SITE_URL}/favicon.svg`,
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+34-971-000-000',
+      telephone: '+34-614-492-062',
+      email: 'hola@amgdl.com',
       contactType: 'customer service',
       availableLanguage: ['Catalan', 'Spanish', 'English', 'German'],
     },

@@ -12,14 +12,8 @@ import {
   SECTORS, SIZES, PHASES, SECTOR_SIZES,
   SECTOR_LABELS, SIZE_LABELS, PHASE_LABELS,
   lookupSectorPricing, getSectorPromptTemplate,
-  PHASE_UPGRADE_PRICE, type SectorPricingResponse,
+  PHASE_UPGRADE_PRICE, calcMonthly, type SectorPricingResponse,
 } from '@/services/admin';
-
-const MONTHLY_BY_COUNT: Record<number, keyof SectorPricingResponse> = {
-  1: 'monthlyF1',
-  2: 'monthlyF1f2',
-  3: 'monthlyF1f2f3',
-};
 
 export default function NewTenantPage() {
   const t = useTranslations('admin');
@@ -83,8 +77,7 @@ export default function NewTenantPage() {
 
   const availableSizes = form.sector ? (SECTOR_SIZES[form.sector] ?? SIZES) : [];
   const phaseCount = selectedPhases.length;
-  const monthlyKey = MONTHLY_BY_COUNT[phaseCount] ?? 'monthlyComplete';
-  const monthlyPrice = pricing ? (pricing[monthlyKey] as number) : null;
+  const monthlyPrice = pricing && phaseCount > 0 ? calcMonthly(pricing, phaseCount) : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

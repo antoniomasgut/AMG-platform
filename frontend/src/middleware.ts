@@ -8,7 +8,7 @@ const intlMiddleware = createIntlMiddleware(routing);
 export default function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
 
-  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://amg.digital';
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://amgdl.com';
   const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
   const isDev = process.env.NODE_ENV === 'development';

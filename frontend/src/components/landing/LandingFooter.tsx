@@ -47,8 +47,8 @@ export function LandingFooter() {
               <a href="mailto:hola@amgdl.com" className="f-mono text-label text-ink-3 hover:text-ink-1 transition-colors">
                 hola@amgdl.com
               </a>
-              <a href="tel:+34971000000" className="f-mono text-label text-ink-3 hover:text-ink-1 transition-colors">
-                971 000 000
+              <a href="tel:+34614492062" className="f-mono text-label text-ink-3 hover:text-ink-1 transition-colors">
+                614 492 062
               </a>
             </div>
           </div>

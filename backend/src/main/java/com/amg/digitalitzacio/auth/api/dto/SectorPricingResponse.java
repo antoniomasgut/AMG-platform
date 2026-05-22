@@ -1,28 +1,36 @@
 package com.amg.digitalitzacio.auth.api.dto;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 
 public record SectorPricingResponse(
         String sector,
         String businessSize,
         BigDecimal setupPrice,
-        BigDecimal monthlyF1,
-        BigDecimal monthlyF1f2,
-        BigDecimal monthlyF1f2f3,
-        BigDecimal monthlyComplete
+        BigDecimal priceF1,
+        BigDecimal priceF2,
+        BigDecimal priceF3,
+        BigDecimal priceF4,
+        BigDecimal priceF5
 ) {
-    // Preu fix d'ampliació de fase per a clients existents (Opció B)
     public static final BigDecimal PHASE_UPGRADE_PRICE = new BigDecimal("75.00");
 
     public record PhaseLookup(BigDecimal setup, BigDecimal monthly) {}
 
+    // Calcula el mensual sumant els preus de les N primeres posicions (independentment de quines fases)
     public PhaseLookup forPhaseCount(int count) {
-        return switch (count) {
-            case 0 -> new PhaseLookup(setupPrice, BigDecimal.ZERO);
-            case 1 -> new PhaseLookup(setupPrice, monthlyF1);
-            case 2 -> new PhaseLookup(setupPrice, monthlyF1f2);
-            case 3 -> new PhaseLookup(setupPrice, monthlyF1f2f3);
-            default -> new PhaseLookup(setupPrice, monthlyComplete);
-        };
+        BigDecimal[] tiers = { priceF1, priceF2, priceF3, priceF4, priceF5 };
+        BigDecimal total = BigDecimal.ZERO;
+        for (int i = 0; i < count && i < tiers.length; i++) {
+            if (tiers[i] != null) total = total.add(tiers[i]);
+        }
+        return new PhaseLookup(setupPrice, total);
+    }
+
+    // Calcula el mensual a partir d'una col·lecció de fases ("F1","F3",...)
+    public PhaseLookup forPhases(Collection<String> phases) {
+        return forPhaseCount(phases == null ? 0 : (int) phases.stream()
+                .filter(p -> p != null && p.matches("F[1-5]"))
+                .distinct().count());
     }
 }

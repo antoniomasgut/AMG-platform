@@ -119,26 +119,38 @@ Cada servei es pot contractar solt (add-on) o dins d'una fase. **Tots a 10 €/m
 
 El preu que paga el client ve de `SectorPricing` (Spec 22), no de la suma de `CatalogService.salePrice`. Veure `specs/22-sector-pricing.md` per a la matriu completa de preus per sector i mida.
 
-| Fase NexeLocal | Serveis del catàleg inclosos | Setup client | Mensual client (autònom base) |
-|---------------|------------------------------|-------------|-------------------------------|
-| **F1** Comunicació base | `whatsapp-business` + `bot-ia-basic` | des de 150€ | des de 59€/mes |
-| **F1+F2** + Gestió cites | F1 + `automatitzacio-basica` (agenda + recordatoris) | des de 150€ | des de 79€/mes |
-| **F1+F2+F3** + Pressupostos | F1+F2 + `automatitzacio-avancada` (PDFs + seguiment) | des de 150€ | des de 99€/mes |
-| **Complet (F4)** + Fidelització | F1+F2+F3 + `google-analytics` + addon postvenda | des de 150€ | des de 129€/mes |
-| **F5** Equip | Complet + gestió d'equip (pendent d'implementació) | — | — |
+Les fases **no són acumulatives** — el client pot contractar qualsevol combinació. El mensual total = suma dels tiers en ordre (la 1a fase contractada = priceF1, la 2a = priceF2, etc.), independentment de quines fases siguin.
 
-**Ampliació de fase:** 75€ setup únic + increment mensual corresponent.
+| Fase | Serveis del catàleg inclosos | Setup client | Mensual base (autònom) |
+|------|------------------------------|-------------|------------------------|
+| **F1** Comunicació 24/7 | `whatsapp-business` + `bot-ia-basic` | des de 150€ | **59€/mes** (priceF1) |
+| **F2** Gestió de cites | `automatitzacio-basica` (agenda + recordatoris) | — | **+20€/mes** (priceF2) |
+| **F3** Pressupostos | `automatitzacio-avancada` (PDFs + seguiment) | — | **+20€/mes** (priceF3) |
+| **F4** Fidelització | `google-analytics` + addon postvenda | — | **+30€/mes** (priceF4) |
+| **F5** Equip | gestió d'equip (pendent) | — | **+20€/mes** (priceF5) |
+
+**Exemples de combinacions (autònom base):**
+- F1 → 59€/mes
+- F1 + F3 → 59 + 20 = **79€/mes** (2 fases)
+- F1 + F4 → 59 + 20 = **79€/mes** (2 fases, mateix preu)
+- F1 + F2 + F3 → 59 + 20 + 20 = **99€/mes**
+- F1 + F3 + F5 → 59 + 20 + 20 = **99€/mes** (3 fases, mateix preu)
+
+**Ampliació de fase:** 75€ setup únic per cada nova fase afegida.
 
 ---
 
 ## 4. Exemple de facturació
 
-**Client: Pintor autònom (sector PINTOR, mida AUTONOMO)**
-- Contracta: F1 Comunicació base el 10 de maig
+**Client: Pintor autònom — contracta F1 + F3 el 10 de maig**
 - Setup: 150 € (facturat en acceptar, via Billing)
-- Mensual: 59 €/mes (bloquejat a `TenantService.monthlyPriceLocked`)
-- Primera factura mensual (31 de maig): 59 € × (16 dies / 31 dies) = **30,45 €** pro rata
-- Factures següents: **59 €/mes** complets
+- Fases contractades: `["F1", "F3"]` — 2 fases → priceF1 + priceF2 = 59 + 20 = **79 €/mes**
+- Primera factura mensual (31 de maig): 79 € × (16 dies / 31 dies) = **40,77 €** pro rata
+- Factures següents: **79 €/mes** complets (bloquejat a `TenantService.monthlyPriceLocked`)
+
+**Mateix client afegeix F5 el mes següent:**
+- 3 fases → priceF1 + priceF2 + priceF3 = 59 + 20 + 20 = **99 €/mes**
+- Setup d'ampliació: 75 € únic
 
 ---
 

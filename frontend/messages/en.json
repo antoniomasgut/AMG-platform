@@ -27,8 +27,8 @@
       "cta": "FREE CONSULTATION",
       "ctaSecondary": "See phases & prices",
       "stats": {
-        "uptimeValue": "€10",
-        "uptimeLabel": "Per service/month",
+        "uptimeValue": "from €49",
+        "uptimeLabel": "Per month",
         "clientsValue": "8+",
         "clientsLabel": "Active SMEs",
         "automationsValue": "< 4h",
@@ -59,9 +59,9 @@
         },
         {
           "icon": "🤖",
-          "title": "Automations",
-          "description": "Custom workflows for WhatsApp, email, CRM and any repetitive process in your business.",
-          "tag": "n8n · AI · Integrations"
+          "title": "AI Agent",
+          "description": "The agent replies via WhatsApp, Telegram and email 24/7. It manages appointments, sends quotes and retains clients — without you having to lift a finger.",
+          "tag": "AI · WhatsApp · Telegram"
         },
         {
           "icon": "🛡️",
@@ -385,10 +385,11 @@
     "termes": "Terms of Service"
   },
   "cookies": {
-    "message": "We use cookies to improve your experience. Technical cookies are necessary for the portal to function.",
-    "accept": "Accept all",
+    "message": "We use technical cookies necessary for the portal to function.",
+    "moreInfo": "Cookie policy",
+    "accept": "Accept",
     "configure": "Configure",
-    "reject": "Reject optional"
+    "reject": "Reject"
   },
   "portalNav": {
     "groups": {

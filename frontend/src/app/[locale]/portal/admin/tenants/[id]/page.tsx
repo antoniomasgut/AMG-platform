@@ -10,7 +10,7 @@ import {
   lookupSectorPricing,
   SECTOR_LABELS, SIZE_LABELS, PHASE_LABELS, PHASE_UPGRADE_PRICE,
   type TenantResponse, type TenantSetup, type CatalogService,
-  type CatalogProfileResponse, type SectorPricingResponse,
+  type CatalogProfileResponse, type SectorPricingResponse, calcMonthly,
 } from '@/services/admin';
 import { listLandings } from '@/services/factory';
 import { getWizardConfig } from '@/config/service-wizards';
@@ -202,10 +202,6 @@ function AssignProfileModal({ tenantId, onClose, onAssigned }: { tenantId: strin
   );
 }
 
-const MONTHLY_BY_COUNT: Record<number, keyof SectorPricingResponse> = {
-  1: 'monthlyF1', 2: 'monthlyF1f2', 3: 'monthlyF1f2f3',
-};
-
 function ContractSection({ tenant }: { tenant: TenantResponse }) {
   const { data: pricing } = useQuery({
     queryKey: ['pricing', tenant.sector, tenant.businessSize],
@@ -218,8 +214,7 @@ function ContractSection({ tenant }: { tenant: TenantResponse }) {
   const hasMeta = tenant.sector || tenant.businessSize || phaseCount > 0;
   if (!hasMeta) return null;
 
-  const monthlyKey = MONTHLY_BY_COUNT[phaseCount] ?? 'monthlyComplete';
-  const monthlyPrice = pricing && phaseCount > 0 ? (pricing[monthlyKey] as number) : null;
+  const monthlyPrice = pricing && phaseCount > 0 ? calcMonthly(pricing, phaseCount) : null;
 
   return (
     <div className="amg-card card-clip">

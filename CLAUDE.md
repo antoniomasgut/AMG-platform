@@ -158,7 +158,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 
 ## Model de preus (referència per Billing)
 
-Cada servei es paga una vegada (setup). No hi ha quotes mensuals recurrents. La tarifa d'enginyeria/hora és configurable via `ENGINEER_HOURLY_RATE` (defecte: 30 €/h). Cada client rep una oferta personalitzada per fases. Veure `specs/serveis-cataleg.md` per al catàleg complet.
+Cada fase té un cost de setup únic i una quota mensual. Les fases (F1–F5) **no són acumulatives**: el client pot contractar qualsevol combinació. El mensual total = suma dels tiers en ordre (1a fase = priceF1, 2a = priceF2...) independentment de quines fases específiques. La tarifa d'enginyeria/hora: **50 €/h** (`ENGINEER_HOURLY_RATE`). Veure `specs/serveis-cataleg.md` i `specs/22-sector-pricing.md`.
 
 | Servei | Setup |
 |--------|-------|

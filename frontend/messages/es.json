@@ -59,9 +59,9 @@
         },
         {
           "icon": "🤖",
-          "title": "Automatizaciones",
-          "description": "Workflows personalizados para WhatsApp, email, CRM y cualquier proceso repetitivo de tu negocio.",
-          "tag": "n8n · IA · Integraciones"
+          "title": "Agente IA",
+          "description": "El agente responde por WhatsApp, Telegram y email las 24h. Gestiona citas, envía presupuestos y fideliza clientes sin que tengas que intervenir.",
+          "tag": "IA · WhatsApp · Telegram"
         },
         {
           "icon": "🛡️",
@@ -385,10 +385,11 @@
     "termes": "Términos del Servicio"
   },
   "cookies": {
-    "message": "Usamos cookies para mejorar tu experiencia. Las cookies técnicas son necesarias para el funcionamiento del portal.",
-    "accept": "Aceptar todas",
+    "message": "Usamos cookies técnicas necesarias para el funcionamiento del portal.",
+    "moreInfo": "Política de cookies",
+    "accept": "Aceptar",
     "configure": "Configurar",
-    "reject": "Rechazar opcionales"
+    "reject": "Rechazar"
   },
   "portalNav": {
     "groups": {

@@ -21,7 +21,7 @@ export function CTASection() {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
-                href="https://wa.me/34654048164"
+                href="https://wa.me/34614492062"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-clip bg-accent hover:bg-accent-light text-black font-semibold f-mono text-xs uppercase px-8 h-12 flex items-center gap-2 transition-colors"
@@ -33,7 +33,7 @@ export function CTASection() {
                 {t('button')}
               </a>
               <a
-                href="mailto:hola@amgdl.com?subject=Consulta%20AMG%20Digitalització&body=Hola!%20M'agradaria%20rebre%20informació%20sobre%20els%20vostres%20serveis."
+                href="mailto:hola@amgdl.com?subject=Consulta%20AMG%20Digitalitzacions&body=Hola!%20M'agradaria%20rebre%20informació%20sobre%20els%20vostres%20serveis."
                 className="btn-clip border border-accent hover:bg-accent hover:text-black text-accent-light font-semibold f-mono text-xs uppercase px-8 h-12 flex items-center gap-2 transition-colors"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

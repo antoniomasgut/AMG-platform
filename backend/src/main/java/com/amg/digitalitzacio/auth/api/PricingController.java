@@ -23,14 +23,7 @@ public class PricingController {
     public List<SectorPricingResponse> listAll() {
         return sectorPricingRepository.findAllByOrderBySectorAscBusinessSizeAsc()
                 .stream()
-                .map(p -> new SectorPricingResponse(
-                        p.getSector().name(),
-                        p.getBusinessSize().name(),
-                        p.getSetupPrice(),
-                        p.getMonthlyF1(),
-                        p.getMonthlyF1f2(),
-                        p.getMonthlyF1f2f3(),
-                        p.getMonthlyComplete()))
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -43,14 +36,19 @@ public class PricingController {
                 .findBySectorAndBusinessSize(
                         BusinessSector.valueOf(sector.toUpperCase()),
                         BusinessSize.valueOf(size.toUpperCase()))
-                .map(p -> ResponseEntity.ok(new SectorPricingResponse(
-                        p.getSector().name(),
-                        p.getBusinessSize().name(),
-                        p.getSetupPrice(),
-                        p.getMonthlyF1(),
-                        p.getMonthlyF1f2(),
-                        p.getMonthlyF1f2f3(),
-                        p.getMonthlyComplete())))
+                .map(p -> ResponseEntity.ok(toResponse(p)))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    private SectorPricingResponse toResponse(com.amg.digitalitzacio.auth.domain.SectorPricing p) {
+        return new SectorPricingResponse(
+                p.getSector().name(),
+                p.getBusinessSize().name(),
+                p.getSetupPrice(),
+                p.getPriceF1(),
+                p.getPriceF2(),
+                p.getPriceF3(),
+                p.getPriceF4(),
+                p.getPriceF5());
     }
 }
