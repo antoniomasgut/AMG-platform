@@ -6,7 +6,7 @@ export async function JsonLd({ locale }: { locale: string }) {
   const organization = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'AMG · Enginyeria Digital',
+    name: 'AMG Digitalitzacions',
     url: `https://amgdl.com/${locale}`,
     logo: 'https://amgdl.com/logo.png',
     description: t('tagline'),
@@ -20,7 +20,7 @@ export async function JsonLd({ locale }: { locale: string }) {
   const website = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'AMG · Enginyeria Digital',
+    name: 'AMG Digitalitzacions',
     url: `https://amgdl.com/${locale}`,
     description: t('tagline'),
     inLanguage: locale,

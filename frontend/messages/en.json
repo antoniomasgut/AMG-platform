@@ -1,7 +1,7 @@
 {
   "common": {
     "amg": "AMG",
-    "tagline": "Digital Engineering",
+    "tagline": "AI Agent for local businesses in Mallorca",
     "back": "Back",
     "send": "Send",
     "save": "Save",
@@ -236,7 +236,7 @@
         "termes": "Terms of Service"
       },
       "contact": "Contact",
-      "copyright": "AMG Digitalisation. All rights reserved."
+      "copyright": "AMG Digitalitzacions. All rights reserved."
     }
   },
   "auth": {

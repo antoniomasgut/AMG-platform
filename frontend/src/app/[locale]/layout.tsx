@@ -11,7 +11,7 @@ type Props = {
   params: Promise<{ locale: string }>;
 };
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://amg.digital';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://amgdl.com';
 const OG_LOCALES: Record<string, string> = { ca: 'ca_ES', es: 'es_ES', en: 'en_US', de: 'de_DE' };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -20,8 +20,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: {
-      default: `AMG · ${locale === 'ca' ? 'Enginyeria Digital per a Pimes' : locale === 'es' ? 'Ingeniería Digital para Pymes' : locale === 'de' ? 'Digitale Technik für KMU' : 'Digital Engineering for SMBs'}`,
-      template: '%s · AMG',
+      default: 'AMG Digitalitzacions · Agent IA per a negocis locals',
+      template: '%s · AMG Digitalitzacions',
     },
     description: t('subtitle'),
     alternates: {
@@ -29,16 +29,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       languages: Object.fromEntries(routing.locales.map(l => [l, `${SITE_URL}/${l}`])),
     },
     openGraph: {
-      title: 'AMG · Enginyeria Digital',
+      title: 'AMG Digitalitzacions',
       description: t('subtitle'),
       url: `${SITE_URL}/${locale}`,
-      siteName: 'AMG Digitalització',
+      siteName: 'AMG Digitalitzacions',
       locale: OG_LOCALES[locale] ?? 'ca_ES',
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'AMG · Enginyeria Digital',
+      title: 'AMG Digitalitzacions',
       description: t('subtitle'),
     },
   };
@@ -61,7 +61,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'AMG Digitalització',
+    name: 'AMG Digitalitzacions',
     url: `${SITE_URL}/${locale}`,
     logo: `${SITE_URL}/favicon.svg`,
     contactPoint: {

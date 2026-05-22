@@ -1,6 +1,6 @@
 {
   "common": {
-    "siteName": "AMG · Digital Engineering",
+    "siteName": "AMG Digitalitzacions",
     "tagline": "Digitale Automatisierung für KMU auf Mallorca",
     "cta": "DEMO ANFORDERN",
     "seeServices": "DIENSTLEISTUNGEN",
@@ -173,7 +173,7 @@
     "privacitat": "Datenschutz",
     "termes": "AGB",
     "contacte": "Kontakt",
-    "copyright": "AMG Digital Engineering. Alle Rechte vorbehalten."
+    "copyright": "AMG Digitalitzacions. Alle Rechte vorbehalten."
   },
   "auth": {
     "login": {
@@ -288,11 +288,11 @@
       "sections": {
         "ownership": {
           "title": "1. Verantwortlicher",
-          "content": "AMG Digital Engineering ist eine Handelsmarke von Antonio Más Gutiérrez, mit Steuer-ID 12345678A und Sitz in Mallorca, Balearische Inseln. Kontakt: hola@amg.cat."
+          "content": "AMG Digitalitzacions ist eine Handelsmarke von Antonio Más Gutiérrez, mit Steuer-ID 12345678A und Sitz in Mallorca, Balearische Inseln. Kontakt: hola@amgdl.com."
         },
         "purpose": {
           "title": "2. Zweck der Website",
-          "content": "Diese Website dient der Information über digitale Automatisierungs-, Webentwicklungs- und KI-Dienstleistungen von AMG Digital Engineering."
+          "content": "Diese Website dient der Information über digitale Automatisierungs-, Webentwicklungs- und KI-Dienstleistungen von AMG Digitalitzacions."
         },
         "terms": {
           "title": "3. Nutzungsbedingungen",
@@ -307,7 +307,7 @@
       "sections": {
         "controller": {
           "title": "1. Verantwortlicher",
-          "content": "Der Verantwortliche für die Verarbeitung personenbezogener Daten auf dieser Website ist Antonio Más Gutiérrez (AMG Digital Engineering)."
+          "content": "Der Verantwortliche für die Verarbeitung personenbezogener Daten auf dieser Website ist Antonio Más Gutiérrez (AMG Digitalitzacions)."
         },
         "dataCollected": {
           "title": "2. Erhobene Daten",
@@ -323,7 +323,7 @@
         },
         "rights": {
           "title": "5. Betroffenenrechte",
-          "content": "Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch per E-Mail an hola@amg.cat."
+          "content": "Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch per E-Mail an hola@amgdl.com."
         },
         "security": {
           "title": "6. Sicherheitsmaßnahmen",
@@ -338,7 +338,7 @@
       "sections": {
         "object": {
           "title": "1. Gegenstand",
-          "content": "Diese AGB regeln die Beauftragung von digitalen Automatisierungs-, Webentwicklungs- und KI-Dienstleistungen durch AMG Digital Engineering."
+          "content": "Diese AGB regeln die Beauftragung von digitalen Automatisierungs-, Webentwicklungs- und KI-Dienstleistungen durch AMG Digitalitzacions."
         },
         "services": {
           "title": "2. Dienstleistungen",

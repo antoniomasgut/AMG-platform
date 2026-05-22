@@ -1,6 +1,6 @@
 {
   "common": {
-    "siteName": "AMG · Digital Engineering",
+    "siteName": "AMG Digitalitzacions",
     "tagline": "Digital automation for small businesses in Mallorca",
     "cta": "REQUEST DEMO",
     "seeServices": "VIEW SERVICES",
@@ -173,7 +173,7 @@
     "privacitat": "Privacy Policy",
     "termes": "Terms of Service",
     "contacte": "Contact",
-    "copyright": "AMG Digital Engineering. All rights reserved."
+    "copyright": "AMG Digitalitzacions. All rights reserved."
   },
   "auth": {
     "login": {
@@ -288,11 +288,11 @@
       "sections": {
         "ownership": {
           "title": "1. Owner details",
-          "content": "AMG Digital Engineering is a trademark of Antonio Más Gutiérrez, with tax ID 12345678A and registered address in Mallorca, Balearic Islands. For any enquiries, contact us at hola@amg.cat."
+          "content": "AMG Digitalitzacions is a trademark of Antonio Más Gutiérrez, with tax ID 12345678A and registered address in Mallorca, Balearic Islands. For any enquiries, contact us at hola@amgdl.com."
         },
         "purpose": {
           "title": "2. Website purpose",
-          "content": "This website aims to provide information about digital automation, web development and artificial intelligence services offered by AMG Digital Engineering to small and medium businesses in Mallorca."
+          "content": "This website aims to provide information about digital automation, web development and artificial intelligence services offered by AMG Digitalitzacions to small and medium businesses in Mallorca."
         },
         "terms": {
           "title": "3. Terms of use",
@@ -307,7 +307,7 @@
       "sections": {
         "controller": {
           "title": "1. Data controller",
-          "content": "The data controller for personal data collected on this website is Antonio Más Gutiérrez (AMG Digital Engineering)."
+          "content": "The data controller for personal data collected on this website is Antonio Más Gutiérrez (AMG Digitalitzacions)."
         },
         "dataCollected": {
           "title": "2. Data collected",
@@ -323,7 +323,7 @@
         },
         "rights": {
           "title": "5. Data subject rights",
-          "content": "Users may exercise their rights of access, rectification, deletion, restriction, portability and objection by emailing hola@amg.cat."
+          "content": "Users may exercise their rights of access, rectification, deletion, restriction, portability and objection by emailing hola@amgdl.com."
         },
         "security": {
           "title": "6. Security measures",
@@ -338,7 +338,7 @@
       "sections": {
         "object": {
           "title": "1. Purpose",
-          "content": "These Terms of Service govern the contracting of digital automation, web development and artificial intelligence services offered by AMG Digital Engineering."
+          "content": "These Terms of Service govern the contracting of digital automation, web development and artificial intelligence services offered by AMG Digitalitzacions."
         },
         "services": {
           "title": "2. Services",

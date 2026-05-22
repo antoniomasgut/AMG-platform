@@ -276,7 +276,7 @@ export default function LoginPage() {
             <span className="mx-2">·</span>
             <Link href={`/${locale}/legal/privacitat`} className="hover:text-accent-light transition">PRIVACITAT</Link>
             <span className="mx-2">·</span>
-            <a href="mailto:hola@amg.digital" className="hover:text-accent-light transition">SUPORT</a>
+            <a href="mailto:hola@amgdl.com" className="hover:text-accent-light transition">SUPORT</a>
           </div>
         </div>
       </div>

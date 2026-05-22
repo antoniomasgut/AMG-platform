@@ -1,7 +1,7 @@
 {
   "common": {
     "amg": "AMG",
-    "tagline": "Digitale Technik",
+    "tagline": "KI-Agent für lokale Unternehmen auf Mallorca",
     "back": "Zurück",
     "send": "Senden",
     "save": "Speichern",
@@ -236,7 +236,7 @@
         "termes": "Nutzungsbedingungen"
       },
       "contact": "Kontakt",
-      "copyright": "AMG Digitalisierung. Alle Rechte vorbehalten."
+      "copyright": "AMG Digitalitzacions. Alle Rechte vorbehalten."
     }
   },
   "auth": {

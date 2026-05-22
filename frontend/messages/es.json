@@ -1,7 +1,7 @@
 {
   "common": {
     "amg": "AMG",
-    "tagline": "Ingeniería Digital",
+    "tagline": "Agente IA para negocios locales de Mallorca",
     "back": "Volver",
     "send": "Enviar",
     "save": "Guardar",
@@ -236,7 +236,7 @@
         "termes": "Términos del Servicio"
       },
       "contact": "Contacto",
-      "copyright": "AMG Digitalización. Todos los derechos reservados."
+      "copyright": "AMG Digitalitzacions. Todos los derechos reservados."
     }
   },
   "auth": {

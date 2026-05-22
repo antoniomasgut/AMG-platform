@@ -18,10 +18,10 @@ export default function PrivacitatPage() {
           <div>
             <h2 className="text-lg font-semibold text-ink-0 mb-3">1. Responsable del tractament</h2>
             <ul className="space-y-1 pl-4 border-l border-[#FF6B00]/30">
-              <li><strong className="text-ink-0">Responsable:</strong> Antonio Mas Gutiérrez (AMG Digitalització)</li>
+              <li><strong className="text-ink-0">Responsable:</strong> Antonio Mas Gutiérrez (AMG Digitalitzacions)</li>
               <li><strong className="text-ink-0">NIF:</strong> 182237442B</li>
               <li><strong className="text-ink-0">Adreça:</strong> Carrer Joan Capó, núm. 7, 1r esquerra, 07200 Felanitx, Illes Balears</li>
-              <li><strong className="text-ink-0">Contacte:</strong> privacitat@amg.digital</li>
+              <li><strong className="text-ink-0">Contacte:</strong> privacitat@amgdl.com</li>
             </ul>
           </div>
 
@@ -67,7 +67,7 @@ export default function PrivacitatPage() {
 
           <div>
             <h2 className="text-lg font-semibold text-ink-0 mb-3">6. Els teus drets</h2>
-            <p>Pots exercir en qualsevol moment els següents drets enviant un correu a <strong className="text-ink-0">privacitat@amg.digital</strong> amb una còpia del teu DNI:</p>
+            <p>Pots exercir en qualsevol moment els següents drets enviant un correu a <strong className="text-ink-0">privacitat@amgdl.com</strong> amb una còpia del teu DNI:</p>
             <ul className="mt-3 space-y-1 pl-4">
               <li>• <strong className="text-ink-0">Accés:</strong> conèixer quines dades tenim sobre tu</li>
               <li>• <strong className="text-ink-0">Rectificació:</strong> corregir dades inexactes</li>

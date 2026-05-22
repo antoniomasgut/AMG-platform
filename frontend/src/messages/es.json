@@ -1,6 +1,6 @@
 {
   "common": {
-    "siteName": "AMG · Ingeniería Digital",
+    "siteName": "AMG Digitalitzacions",
     "tagline": "Automatización digital para pymes de Mallorca",
     "cta": "SOLICITAR DEMO",
     "seeServices": "VER SERVICIOS",
@@ -173,7 +173,7 @@
     "privacitat": "Política de Privacidad",
     "termes": "Términos del Servicio",
     "contacte": "Contacto",
-    "copyright": "AMG Ingeniería Digital. Todos los derechos reservados."
+    "copyright": "AMG Digitalitzacions. Todos los derechos reservados."
   },
   "auth": {
     "login": {
@@ -288,11 +288,11 @@
       "sections": {
         "ownership": {
           "title": "1. Datos del titular",
-          "content": "AMG Ingeniería Digital es una marca comercial de Antonio Más Gutiérrez, con NIF 12345678A y domicilio en Mallorca, Islas Baleares. Para cualquier consulta, puedes contactar a través del correo electrónico hola@amg.cat."
+          "content": "AMG Digitalitzacions es una marca comercial de Antonio Más Gutiérrez, con NIF 12345678A y domicilio en Mallorca, Islas Baleares. Para cualquier consulta, puedes contactar a través del correo electrónico hola@amgdl.com."
         },
         "purpose": {
           "title": "2. Finalidad del web",
-          "content": "El presente web tiene como finalidad principal ofrecer información sobre los servicios de automatización digital, desarrollo web e inteligencia artificial ofrecidos por AMG Ingeniería Digital."
+          "content": "El presente web tiene como finalidad principal ofrecer información sobre los servicios de automatización digital, desarrollo web e inteligencia artificial ofrecidos por AMG Digitalitzacions."
         },
         "terms": {
           "title": "3. Condiciones de uso",
@@ -307,7 +307,7 @@
       "sections": {
         "controller": {
           "title": "1. Responsable del tratamiento",
-          "content": "El responsable del tratamiento de los datos personales recogidos en este web es Antonio Más Gutiérrez (AMG Ingeniería Digital)."
+          "content": "El responsable del tratamiento de los datos personales recogidos en este web es Antonio Más Gutiérrez (AMG Digitalitzacions)."
         },
         "dataCollected": {
           "title": "2. Datos recogidos",
@@ -323,7 +323,7 @@
         },
         "rights": {
           "title": "5. Derechos del interesado",
-          "content": "El usuario puede ejercer los derechos de acceso, rectificación, supresión, limitación, portabilidad y oposición enviando un email a hola@amg.cat."
+          "content": "El usuario puede ejercer los derechos de acceso, rectificación, supresión, limitación, portabilidad y oposición enviando un email a hola@amgdl.com."
         },
         "security": {
           "title": "6. Medidas de seguridad",
@@ -338,7 +338,7 @@
       "sections": {
         "object": {
           "title": "1. Objeto",
-          "content": "Estos Términos del Servicio regulan la contratación de los servicios de automatización digital, desarrollo web e inteligencia artificial ofrecidos por AMG Ingeniería Digital."
+          "content": "Estos Términos del Servicio regulan la contratación de los servicios de automatización digital, desarrollo web e inteligencia artificial ofrecidos por AMG Digitalitzacions."
         },
         "services": {
           "title": "2. Servicios",

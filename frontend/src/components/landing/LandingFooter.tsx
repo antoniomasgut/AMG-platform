@@ -44,8 +44,8 @@ export function LandingFooter() {
           <div>
             <div className="f-mono text-label uppercase text-ink-3 mb-3 tracking-widest">{t('contact')}</div>
             <div className="flex flex-col gap-2">
-              <a href="mailto:hola@amg.digital" className="f-mono text-label text-ink-3 hover:text-ink-1 transition-colors">
-                hola@amg.digital
+              <a href="mailto:hola@amgdl.com" className="f-mono text-label text-ink-3 hover:text-ink-1 transition-colors">
+                hola@amgdl.com
               </a>
               <a href="tel:+34971000000" className="f-mono text-label text-ink-3 hover:text-ink-1 transition-colors">
                 971 000 000

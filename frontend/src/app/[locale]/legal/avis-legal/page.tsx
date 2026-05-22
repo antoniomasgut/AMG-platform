@@ -19,17 +19,17 @@ export default function AvisLegalPage() {
             <h2 className="text-lg font-semibold text-ink-0 mb-3">1. Titular del lloc web</h2>
             <p>En compliment de la Llei 34/2002, d'11 de juliol, de Serveis de la Societat de la Informació i del Comerç Electrònic (LSSI-CE), s'informa que el titular d'aquest lloc web és:</p>
             <ul className="mt-3 space-y-1 pl-4 border-l border-[#FF6B00]/30">
-              <li><strong className="text-ink-0">Denominació:</strong> AMG Digitalització</li>
+              <li><strong className="text-ink-0">Denominació:</strong> AMG Digitalitzacions</li>
               <li><strong className="text-ink-0">Titular:</strong> Antonio Mas Gutiérrez</li>
               <li><strong className="text-ink-0">NIF:</strong> 182237442B</li>
               <li><strong className="text-ink-0">Domicili:</strong> Carrer Joan Capó, núm. 7, 1r esquerra, 07200 Felanitx, Illes Balears</li>
-              <li><strong className="text-ink-0">Correu electrònic:</strong> hola@amg.digital</li>
+              <li><strong className="text-ink-0">Correu electrònic:</strong> hola@amgdl.com</li>
             </ul>
           </div>
 
           <div>
             <h2 className="text-lg font-semibold text-ink-0 mb-3">2. Objecte i àmbit d'aplicació</h2>
-            <p>Aquest avís legal regula l'accés i l'ús del lloc web <strong className="text-ink-0">amg.digital</strong> i dels seus subdominis, posats a disposició dels usuaris per AMG Digitalització amb la finalitat de proporcionar informació sobre els seus serveis de digitalització per a pimes.</p>
+            <p>Aquest avís legal regula l'accés i l'ús del lloc web <strong className="text-ink-0">amgdl.com</strong> i dels seus subdominis, posats a disposició dels usuaris per AMG Digitalitzacions amb la finalitat de proporcionar informació sobre els seus serveis de digitalització per a pimes.</p>
           </div>
 
           <div>
@@ -39,12 +39,12 @@ export default function AvisLegalPage() {
 
           <div>
             <h2 className="text-lg font-semibold text-ink-0 mb-3">4. Propietat intel·lectual</h2>
-            <p>Tots els continguts d'aquest lloc web (textos, imatges, logotips, dissenys, codi font i qualsevol altre element) són propietat de AMG Digitalització o de tercers que n'han autoritzat l'ús. Queda prohibida la seva reproducció, distribució o comunicació pública sense autorització expressa.</p>
+            <p>Tots els continguts d'aquest lloc web (textos, imatges, logotips, dissenys, codi font i qualsevol altre element) són propietat de AMG Digitalitzacions o de tercers que n'han autoritzat l'ús. Queda prohibida la seva reproducció, distribució o comunicació pública sense autorització expressa.</p>
           </div>
 
           <div>
             <h2 className="text-lg font-semibold text-ink-0 mb-3">5. Exclusió de responsabilitat</h2>
-            <p>AMG Digitalització no es fa responsable dels danys que puguin derivar-se de la interrupció, errors o desconnexions del servei, ni de la presència de virus en els continguts accessibles a través d'internet.</p>
+            <p>AMG Digitalitzacions no es fa responsable dels danys que puguin derivar-se de la interrupció, errors o desconnexions del servei, ni de la presència de virus en els continguts accessibles a través d'internet.</p>
           </div>
 
           <div>

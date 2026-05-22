@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'AMG · Enginyeria Digital per a Pimes';
+export const alt = 'AMG Digitalitzacions · Agent IA per a negocis locals';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -73,7 +73,7 @@ export default function OgImage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ color: '#e2e8f0', fontWeight: 800, fontSize: 20, letterSpacing: '0.12em' }}>AMG</span>
               <span style={{ color: '#FF9A3C', fontSize: 11, letterSpacing: '0.25em', fontFamily: 'monospace' }}>
-                ENGINYERIA DIGITAL
+                DIGITALITZACIONS
               </span>
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function OgImage() {
                 letterSpacing: '0.08em',
               }}
             >
-              amg.digital
+              amgdl.com
             </div>
           </div>
         </div>
