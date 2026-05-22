@@ -736,5 +736,80 @@
       "infraOps": "InfraOps",
       "apiKeys": "API Keys"
     }
+  },
+  "portalDashboard": {
+    "greeting": "Bon dia, {name}",
+    "noData": "Sense dades",
+    "seeAll": "VEURE TOT →",
+    "seeAllFem": "VEURE TOTES →",
+    "detail": "DETALL →",
+    "admin": {
+      "kpi": {
+        "tenantsActive": "Tenants actius",
+        "clients": "clients",
+        "leadsActive": "Leads actius",
+        "convRateSub": "{total} total · {rate}% conv.",
+        "servicesMonitored": "Serveis monitorats",
+        "incidents": "{count} incidents oberts",
+        "noIncidents": "Sense incidents",
+        "infra": "Infraestructura",
+        "paymentsPending": "Pagaments pendents",
+        "completed": "{count} completats"
+      },
+      "pipeline": {
+        "section": "Captació",
+        "title": "Pipeline de leads",
+        "stages": {
+          "NEW": "Nou",
+          "CONTACTED": "Contactat",
+          "QUALIFIED": "Qualificat",
+          "PROPOSAL": "Proposta",
+          "NEGOTIATION": "Negociació",
+          "WON": "Guanyat"
+        }
+      },
+      "resources": {
+        "section": "Servidor",
+        "title": "Recursos",
+        "noData": "Sense dades de servidor",
+        "disc": "Disc",
+        "dbConnections": "Connexions DB",
+        "n8nTenants": "Tenants n8n"
+      },
+      "actions": {
+        "title": "Accions ràpides",
+        "process": "PROCÉS COMPLET",
+        "newLead": "NOU LEAD",
+        "tenants": "TENANTS",
+        "apiKeys": "API KEYS",
+        "backup": "BACKUP"
+      },
+      "invoicesSummaryComingSoon": "Resum de factures — pròximament"
+    },
+    "client": {
+      "billing": {
+        "totalInvested": "Total invertit",
+        "pending": "{count} pendents",
+        "upToDate": "AL DIA",
+        "lastQuote": "Últim pressupost",
+        "none": "Cap",
+        "amount": "Import"
+      },
+      "kpi": {
+        "webs": "Webs",
+        "total": "{count} total"
+      },
+      "invoices": {
+        "section": "Historial",
+        "title": "Últimes factures",
+        "seeAll": "VEURE TOTES →",
+        "empty": "Cap factura encara"
+      },
+      "help": {
+        "title": "NECESSITES AJUDA?",
+        "subtitle": "El teu tècnic assignat està disponible per respondre els teus dubtes.",
+        "contact": "CONTACTE"
+      }
+    }
   }
 }

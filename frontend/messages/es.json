@@ -384,5 +384,80 @@
       "infraOps": "InfraOps",
       "apiKeys": "API Keys"
     }
+  },
+  "portalDashboard": {
+    "greeting": "Buenos días, {name}",
+    "noData": "Sin datos",
+    "seeAll": "VER TODO →",
+    "seeAllFem": "VER TODAS →",
+    "detail": "DETALLE →",
+    "admin": {
+      "kpi": {
+        "tenantsActive": "Tenants activos",
+        "clients": "clientes",
+        "leadsActive": "Leads activos",
+        "convRateSub": "{total} total · {rate}% conv.",
+        "servicesMonitored": "Servicios monitorizados",
+        "incidents": "{count} incidentes abiertos",
+        "noIncidents": "Sin incidentes",
+        "infra": "Infraestructura",
+        "paymentsPending": "Pagos pendientes",
+        "completed": "{count} completados"
+      },
+      "pipeline": {
+        "section": "Captación",
+        "title": "Pipeline de leads",
+        "stages": {
+          "NEW": "Nuevo",
+          "CONTACTED": "Contactado",
+          "QUALIFIED": "Cualificado",
+          "PROPOSAL": "Propuesta",
+          "NEGOTIATION": "Negociación",
+          "WON": "Ganado"
+        }
+      },
+      "resources": {
+        "section": "Servidor",
+        "title": "Recursos",
+        "noData": "Sin datos del servidor",
+        "disc": "Disco",
+        "dbConnections": "Conexiones DB",
+        "n8nTenants": "Tenants n8n"
+      },
+      "actions": {
+        "title": "Acciones rápidas",
+        "process": "PROCESO COMPLETO",
+        "newLead": "NUEVO LEAD",
+        "tenants": "TENANTS",
+        "apiKeys": "API KEYS",
+        "backup": "BACKUP"
+      },
+      "invoicesSummaryComingSoon": "Resumen de facturas — próximamente"
+    },
+    "client": {
+      "billing": {
+        "totalInvested": "Total invertido",
+        "pending": "{count} pendientes",
+        "upToDate": "AL DÍA",
+        "lastQuote": "Último presupuesto",
+        "none": "Ninguno",
+        "amount": "Importe"
+      },
+      "kpi": {
+        "webs": "Webs",
+        "total": "{count} total"
+      },
+      "invoices": {
+        "section": "Historial",
+        "title": "Últimas facturas",
+        "seeAll": "VER TODAS →",
+        "empty": "Aún no hay facturas"
+      },
+      "help": {
+        "title": "¿NECESITAS AYUDA?",
+        "subtitle": "Tu técnico asignado está disponible para responder tus dudas.",
+        "contact": "CONTACTO"
+      }
+    }
   }
 }

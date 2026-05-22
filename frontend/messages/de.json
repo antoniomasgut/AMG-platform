@@ -384,5 +384,80 @@
       "infraOps": "InfraOps",
       "apiKeys": "API Keys"
     }
+  },
+  "portalDashboard": {
+    "greeting": "Guten Morgen, {name}",
+    "noData": "Keine Daten",
+    "seeAll": "ALLE ANZEIGEN →",
+    "seeAllFem": "ALLE ANZEIGEN →",
+    "detail": "DETAILS →",
+    "admin": {
+      "kpi": {
+        "tenantsActive": "Aktive Tenants",
+        "clients": "Kunden",
+        "leadsActive": "Aktive Leads",
+        "convRateSub": "{total} gesamt · {rate}% Konv.",
+        "servicesMonitored": "Überwachte Dienste",
+        "incidents": "{count} offene Vorfälle",
+        "noIncidents": "Keine Vorfälle",
+        "infra": "Infrastruktur",
+        "paymentsPending": "Ausstehende Zahlungen",
+        "completed": "{count} abgeschlossen"
+      },
+      "pipeline": {
+        "section": "Akquise",
+        "title": "Lead-Pipeline",
+        "stages": {
+          "NEW": "Neu",
+          "CONTACTED": "Kontaktiert",
+          "QUALIFIED": "Qualifiziert",
+          "PROPOSAL": "Angebot",
+          "NEGOTIATION": "Verhandlung",
+          "WON": "Gewonnen"
+        }
+      },
+      "resources": {
+        "section": "Server",
+        "title": "Ressourcen",
+        "noData": "Keine Serverdaten",
+        "disc": "Festplatte",
+        "dbConnections": "DB-Verbindungen",
+        "n8nTenants": "n8n-Tenants"
+      },
+      "actions": {
+        "title": "Schnellaktionen",
+        "process": "VOLLSTÄNDIGER PROZESS",
+        "newLead": "NEUER LEAD",
+        "tenants": "TENANTS",
+        "apiKeys": "API KEYS",
+        "backup": "BACKUP"
+      },
+      "invoicesSummaryComingSoon": "Rechnungsübersicht — demnächst"
+    },
+    "client": {
+      "billing": {
+        "totalInvested": "Gesamt investiert",
+        "pending": "{count} ausstehend",
+        "upToDate": "AKTUELL",
+        "lastQuote": "Letztes Angebot",
+        "none": "Keines",
+        "amount": "Betrag"
+      },
+      "kpi": {
+        "webs": "Websites",
+        "total": "{count} gesamt"
+      },
+      "invoices": {
+        "section": "Verlauf",
+        "title": "Letzte Rechnungen",
+        "seeAll": "ALLE ANZEIGEN →",
+        "empty": "Noch keine Rechnungen"
+      },
+      "help": {
+        "title": "BRAUCHEN SIE HILFE?",
+        "subtitle": "Ihr zugewiesener Techniker steht zur Beantwortung Ihrer Fragen zur Verfügung.",
+        "contact": "KONTAKT"
+      }
+    }
   }
 }

@@ -384,5 +384,80 @@
       "infraOps": "InfraOps",
       "apiKeys": "API Keys"
     }
+  },
+  "portalDashboard": {
+    "greeting": "Good morning, {name}",
+    "noData": "No data",
+    "seeAll": "SEE ALL →",
+    "seeAllFem": "SEE ALL →",
+    "detail": "DETAIL →",
+    "admin": {
+      "kpi": {
+        "tenantsActive": "Active tenants",
+        "clients": "clients",
+        "leadsActive": "Active leads",
+        "convRateSub": "{total} total · {rate}% conv.",
+        "servicesMonitored": "Monitored services",
+        "incidents": "{count} open incidents",
+        "noIncidents": "No incidents",
+        "infra": "Infrastructure",
+        "paymentsPending": "Pending payments",
+        "completed": "{count} completed"
+      },
+      "pipeline": {
+        "section": "Acquisition",
+        "title": "Lead pipeline",
+        "stages": {
+          "NEW": "New",
+          "CONTACTED": "Contacted",
+          "QUALIFIED": "Qualified",
+          "PROPOSAL": "Proposal",
+          "NEGOTIATION": "Negotiation",
+          "WON": "Won"
+        }
+      },
+      "resources": {
+        "section": "Server",
+        "title": "Resources",
+        "noData": "No server data",
+        "disc": "Disk",
+        "dbConnections": "DB Connections",
+        "n8nTenants": "n8n tenants"
+      },
+      "actions": {
+        "title": "Quick actions",
+        "process": "FULL PROCESS",
+        "newLead": "NEW LEAD",
+        "tenants": "TENANTS",
+        "apiKeys": "API KEYS",
+        "backup": "BACKUP"
+      },
+      "invoicesSummaryComingSoon": "Invoice summary — coming soon"
+    },
+    "client": {
+      "billing": {
+        "totalInvested": "Total invested",
+        "pending": "{count} pending",
+        "upToDate": "UP TO DATE",
+        "lastQuote": "Last quote",
+        "none": "None",
+        "amount": "Amount"
+      },
+      "kpi": {
+        "webs": "Webs",
+        "total": "{count} total"
+      },
+      "invoices": {
+        "section": "History",
+        "title": "Latest invoices",
+        "seeAll": "SEE ALL →",
+        "empty": "No invoices yet"
+      },
+      "help": {
+        "title": "NEED HELP?",
+        "subtitle": "Your assigned technician is available to answer your questions.",
+        "contact": "CONTACT"
+      }
+    }
   }
 }

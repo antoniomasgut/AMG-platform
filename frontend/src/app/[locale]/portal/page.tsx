@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/auth-context';
 import { useApiErrorHandler } from '@/lib/use-api-error';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -92,11 +93,8 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
       : infra.cpu.percent >= 75 || infra.ram.percent >= 75 || infra.disk.percent >= 75 ? 'warn' : 'ok')
     : 'default';
 
+  const t = useTranslations('portalDashboard');
   const STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON'];
-  const STAGE_LABEL: Record<string, string> = {
-    NEW: 'Nou', CONTACTED: 'Contactat', QUALIFIED: 'Qualificat',
-    PROPOSAL: 'Proposta', NEGOTIATION: 'Negociació', WON: 'Guanyat',
-  };
 
   if (loading) {
     return (
@@ -115,31 +113,31 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {isSuperAdmin && (
           <KpiCard
-            label="Tenants actius"
+            label={t('admin.kpi.tenantsActive')}
             value={totalTenants}
-            sub="clients"
+            sub={t('admin.kpi.clients')}
             icon={I.Building}
             href="/portal/admin/tenants"
           />
         )}
         <KpiCard
-          label="Leads actius"
+          label={t('admin.kpi.leadsActive')}
           value={leads ? (leads.total - (leads.byStage?.LOST ?? 0) - (leads.byStage?.WON ?? 0)) : '—'}
-          sub={leads ? `${leads.total} total · ${Math.round(leads.conversionRate ?? 0)}% conv.` : ''}
+          sub={leads ? t('admin.kpi.convRateSub', { total: leads.total, rate: Math.round(leads.conversionRate ?? 0) }) : ''}
           icon={I.Users}
           href="/portal/leads"
         />
         <KpiCard
-          label="Serveis monitorats"
+          label={t('admin.kpi.servicesMonitored')}
           value={ops ? `${ops.currentStatus.up}/${ops.currentStatus.services}` : '—'}
-          sub={ops ? (ops.openIncidents > 0 ? `${ops.openIncidents} incidents oberts` : 'Sense incidents') : ''}
+          sub={ops ? (ops.openIncidents > 0 ? t('admin.kpi.incidents', { count: ops.openIncidents }) : t('admin.kpi.noIncidents')) : ''}
           tone={sysOk === true ? 'ok' : sysOk === false ? 'crit' : 'default'}
           icon={I.Activity}
           href="/portal/ops"
         />
         {isSuperAdmin ? (
           <KpiCard
-            label="Infraestructura"
+            label={t('admin.kpi.infra')}
             value={infra ? `${infra.cpu.percent}% CPU` : '—'}
             sub={infra ? `RAM ${infra.ram.percent}% · Disk ${infra.disk.percent}%` : ''}
             tone={infraTone}
@@ -148,9 +146,9 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
           />
         ) : (
           <KpiCard
-            label="Pagaments pendents"
+            label={t('admin.kpi.paymentsPending')}
             value={payments ? payments.pendingCount : '—'}
-            sub={payments ? `${payments.completedCount} completats` : ''}
+            sub={payments ? t('admin.kpi.completed', { count: payments.completedCount }) : ''}
             icon={I.CreditCard}
           />
         )}
@@ -163,10 +161,10 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
         <div className="amg-card card-clip p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">Captació</div>
-              <div className="f-display font-bold text-sm mt-0.5">Pipeline de leads</div>
+              <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('admin.pipeline.section')}</div>
+              <div className="f-display font-bold text-sm mt-0.5">{t('admin.pipeline.title')}</div>
             </div>
-            <a href="/portal/leads" className="f-mono text-[10px] uppercase text-accent-light hover:underline">VEURE TOT →</a>
+            <a href="/portal/leads" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('seeAll')}</a>
           </div>
           {leads ? (
             <div className="space-y-2">
@@ -175,7 +173,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
                 const total = leads.total || 1;
                 return (
                   <div key={stage} className="flex items-center gap-3">
-                    <span className="f-mono text-[10px] uppercase text-ink-2 w-24 shrink-0">{STAGE_LABEL[stage]}</span>
+                    <span className="f-mono text-[10px] uppercase text-ink-2 w-24 shrink-0">{t((`admin.pipeline.stages.${stage}`) as any)}</span>
                     <div className="flex-1 h-1.5 bg-[#212140] overflow-hidden">
                       <div
                         className={`h-full ${stage === 'WON' ? 'bg-[#39d353]' : 'bg-[#FF6B00]'}`}
@@ -188,7 +186,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
               })}
             </div>
           ) : (
-            <div className="py-6 text-center f-mono text-[10px] uppercase text-ink-3">Sense dades</div>
+            <div className="py-6 text-center f-mono text-[10px] uppercase text-ink-3">{t('noData')}</div>
           )}
         </div>
 
@@ -197,56 +195,56 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
           <div className="amg-card card-clip p-4 sm:p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">Servidor</div>
-                <div className="f-display font-bold text-sm mt-0.5">Recursos</div>
+                <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('admin.resources.section')}</div>
+                <div className="f-display font-bold text-sm mt-0.5">{t('admin.resources.title')}</div>
               </div>
-              <a href="/portal/admin/infraops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">DETALL →</a>
+              <a href="/portal/admin/infraops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('detail')}</a>
             </div>
             {infra ? (
               <div className="space-y-4">
                 <Gauge label="CPU" pct={infra.cpu.percent} />
                 <Gauge label="RAM" pct={infra.ram.percent} />
-                <Gauge label="Disc" pct={infra.disk.percent} />
-                <Gauge label="Connexions DB" pct={infra.database.percent} />
+                <Gauge label={t('admin.resources.disc')} pct={infra.disk.percent} />
+                <Gauge label={t('admin.resources.dbConnections')} pct={infra.database.percent} />
                 {infra.tenants && (
                   <div className="pt-2 border-t border-border-subtle flex justify-between">
-                    <span className="f-mono text-[10px] uppercase text-ink-3">Tenants n8n</span>
+                    <span className="f-mono text-[10px] uppercase text-ink-3">{t('admin.resources.n8nTenants')}</span>
                     <span className="f-mono text-[10px] font-bold">{infra.tenants.active}</span>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="py-6 text-center f-mono text-[10px] uppercase text-ink-3">Sense dades de servidor</div>
+              <div className="py-6 text-center f-mono text-[10px] uppercase text-ink-3">{t('admin.resources.noData')}</div>
             )}
           </div>
         ) : (
           /* ADMIN: placeholder fins que hi hagi resum de factures */
           <div className="amg-card card-clip p-4 sm:p-5 flex items-center justify-center">
-            <p className="f-mono text-[10px] uppercase text-ink-3">Resum de factures — pròximament</p>
+            <p className="f-mono text-[10px] uppercase text-ink-3">{t('admin.invoicesSummaryComingSoon')}</p>
           </div>
         )}
       </div>
 
       {/* Accions ràpides */}
       <div className="amg-card card-clip p-4 sm:p-5">
-        <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-3">Accions ràpides</div>
+        <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-3">{t('admin.actions.title')}</div>
         <div className="flex flex-wrap gap-2">
           <a href="/portal/process">
-            <AMGButton size="sm" icon={I.Flow}>PROCÉS COMPLET</AMGButton>
+            <AMGButton size="sm" icon={I.Flow}>{t('admin.actions.process')}</AMGButton>
           </a>
           <a href="/portal/leads/new">
-            <AMGButton size="sm" variant="outline" icon={I.Plus}>NOU LEAD</AMGButton>
+            <AMGButton size="sm" variant="outline" icon={I.Plus}>{t('admin.actions.newLead')}</AMGButton>
           </a>
           {isSuperAdmin && (
             <>
               <a href="/portal/admin/tenants">
-                <AMGButton size="sm" variant="outline" icon={I.Building}>TENANTS</AMGButton>
+                <AMGButton size="sm" variant="outline" icon={I.Building}>{t('admin.actions.tenants')}</AMGButton>
               </a>
               <a href="/portal/admin/config">
-                <AMGButton size="sm" variant="outline" icon={I.Key}>API KEYS</AMGButton>
+                <AMGButton size="sm" variant="outline" icon={I.Key}>{t('admin.actions.apiKeys')}</AMGButton>
               </a>
               <a href="/portal/admin/backup">
-                <AMGButton size="sm" variant="outline" icon={I.Database}>BACKUP</AMGButton>
+                <AMGButton size="sm" variant="outline" icon={I.Database}>{t('admin.actions.backup')}</AMGButton>
               </a>
             </>
           )}
@@ -272,6 +270,7 @@ function ClientDashboard({ data, loading, userName, onboardingSkipped, onboardin
   onboardingSkipped: boolean; onboardingComplete: boolean;
   onSkip: () => void; onComplete: () => void;
 }) {
+  const t = useTranslations('portalDashboard');
   const { billing, invoices, landings, workflows } = data;
   const activeLandings = landings.filter(l => l.status === 'PUBLISHED' || l.status === 'ACTIVE').length;
   const activeWorkflows = workflows.filter(w => w.status === 'ACTIVE').length;
@@ -316,25 +315,25 @@ function ClientDashboard({ data, loading, userName, onboardingSkipped, onboardin
         <div className="absolute top-0 right-0 w-[3px] h-16 bg-[#FF6B00]" />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <span className="f-mono text-[10px] uppercase tracking-widest text-ink-3">Total invertit</span>
+            <span className="f-mono text-[10px] uppercase tracking-widest text-ink-3">{t('client.billing.totalInvested')}</span>
             <div className="f-display font-black text-2xl mt-1">{formatEur(billing?.totalSpent ?? 0)}</div>
             <AMGBadge tone={billing && billing.pendingBudgets > 0 ? 'warning' : 'success'} className="mt-2">
-              {billing && billing.pendingBudgets > 0 ? `${billing.pendingBudgets} pendents` : 'AL DIA'}
+              {billing && billing.pendingBudgets > 0 ? t('client.billing.pending', { count: billing.pendingBudgets }) : t('client.billing.upToDate')}
             </AMGBadge>
           </div>
           <div>
-            <div className="f-mono text-[10px] uppercase text-ink-3">Últim pressupost</div>
-            <div className="f-display font-bold text-lg mt-1">{billing?.lastBudget?.budgetNumber ?? 'Cap'}</div>
+            <div className="f-mono text-[10px] uppercase text-ink-3">{t('client.billing.lastQuote')}</div>
+            <div className="f-display font-bold text-lg mt-1">{billing?.lastBudget?.budgetNumber ?? t('client.billing.none')}</div>
             <div className="f-mono text-[10px] text-ink-2 mt-0.5">{formatDate(billing?.lastBudget?.sentAt ?? null)}</div>
           </div>
           <div>
-            <div className="f-mono text-[10px] uppercase text-ink-3">Import</div>
+            <div className="f-mono text-[10px] uppercase text-ink-3">{t('client.billing.amount')}</div>
             <div className="f-display font-bold text-lg mt-1 text-accent-light">{billing?.lastBudget ? formatEur(billing.lastBudget.total) : '€0'}</div>
             <div className="f-mono text-[10px] text-ink-2 mt-0.5">{billing?.lastBudget?.status ?? '—'}</div>
           </div>
           <div className="grid grid-cols-2 gap-2 content-start">
-            <KpiCard label="Webs" value={activeLandings} sub={`${landings.length} total`} />
-            <KpiCard label="Workflows" value={activeWorkflows} sub={`${workflows.length} total`} />
+            <KpiCard label={t('client.kpi.webs')} value={activeLandings} sub={t('client.kpi.total', { count: landings.length })} />
+            <KpiCard label="Workflows" value={activeWorkflows} sub={t('client.kpi.total', { count: workflows.length })} />
           </div>
         </div>
       </div>
@@ -343,15 +342,15 @@ function ClientDashboard({ data, loading, userName, onboardingSkipped, onboardin
       <div className="amg-card card-clip p-4 sm:p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">Historial</div>
-            <div className="f-display font-bold text-sm mt-0.5">Últimes factures</div>
+            <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('client.invoices.section')}</div>
+            <div className="f-display font-bold text-sm mt-0.5">{t('client.invoices.title')}</div>
           </div>
-          <a href="/portal/finops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">VEURE TOTES →</a>
+          <a href="/portal/finops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('client.invoices.seeAll')}</a>
         </div>
         {invoices.length === 0 ? (
           <div className="py-8 text-center">
             <I.Receipt size={24} className="mx-auto mb-2 opacity-30" />
-            <p className="f-mono text-[10px] uppercase text-ink-3">Cap factura encara</p>
+            <p className="f-mono text-[10px] uppercase text-ink-3">{t('client.invoices.empty')}</p>
           </div>
         ) : (
           <div className="space-y-0">
@@ -375,11 +374,11 @@ function ClientDashboard({ data, loading, userName, onboardingSkipped, onboardin
       <div className="amg-card card-clip p-4 sm:p-5 flex items-start gap-4">
         <I.Sparkles size={20} className="text-accent shrink-0 mt-0.5" />
         <div className="flex-1">
-          <div className="f-display font-bold text-sm">NECESSITES AJUDA?</div>
-          <p className="text-ui text-ink-1 mt-1 text-sm">El teu tècnic assignat està disponible per respondre els teus dubtes.</p>
+          <div className="f-display font-bold text-sm">{t('client.help.title')}</div>
+          <p className="text-ui text-ink-1 mt-1 text-sm">{t('client.help.subtitle')}</p>
         </div>
         <a href="mailto:hola@amgdigital.com">
-          <AMGButton size="sm" icon={I.Mail}>CONTACTE</AMGButton>
+          <AMGButton size="sm" icon={I.Mail}>{t('client.help.contact')}</AMGButton>
         </a>
       </div>
 
@@ -393,6 +392,7 @@ function ClientDashboard({ data, loading, userName, onboardingSkipped, onboardin
 export default function PortalPage() {
   const { user, isSuperAdmin, isAdmin } = useAuth();
   const handleApiError = useApiErrorHandler();
+  const t = useTranslations('portalDashboard');
   const isStaff = isSuperAdmin || isAdmin;
 
   const [loading, setLoading] = useState(true);
@@ -475,7 +475,7 @@ export default function PortalPage() {
       {/* Topbar greeting */}
       <div className="h-10 flex items-center px-4 sm:px-6 border-b border-border-subtle">
         <span className="f-mono text-[10px] uppercase text-ink-3">
-          Bon dia, {firstName}
+          {t('greeting', { name: firstName })}
         </span>
       </div>
 
