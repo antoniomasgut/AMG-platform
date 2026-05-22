@@ -38,7 +38,7 @@
     "problem": {
       "badge": "Das Problem",
       "title": "ZU VIELE TOOLS,\nZU WENIG ECHTER SUPPORT.",
-      "description": "KMU enden mit verstreuten Tools und keinem technischen Ansprechpartner. Wenn etwas ausfällt — und das passiert immer — weiß niemand, wen man anrufen oder wie man das schnell beheben kann.",
+      "description": "KMU enden mit verstreuten Tools und keinem technischen Ansprechpartner. Wenn etwas ausfällt — und das passiert immer — weiß niemand, wen man anrufen soll oder wie man das schnell beheben kann.",
       "items": [
         { "icon": "⏳", "text": "Stunden verloren zwischen nicht verbundenen Plattformen" },
         { "icon": "🚨", "text": "Kein Support, wenn das System ausfällt oder eine Störung auftritt" },
@@ -343,5 +343,46 @@
     "accept": "Alle akzeptieren",
     "configure": "Konfigurieren",
     "reject": "Optionale ablehnen"
+  },
+  "portalNav": {
+    "groups": {
+      "summary": "Übersicht",
+      "myServices": "Meine Dienste",
+      "clientsLeads": "Kunden & Leads",
+      "finances": "Finanzen",
+      "overview": "Übersicht",
+      "acquisition": "1. Akquise",
+      "commercial": "2. Vertrieb",
+      "services": "3. Dienste",
+      "operations": "4. Betrieb",
+      "clients": "Kunden",
+      "system": "System"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "myWebs": "Meine Websites",
+      "automations": "Automatisierungen",
+      "agentAI": "KI-Agent",
+      "agentsAI": "KI-Agenten",
+      "files": "Dateien",
+      "leadsCRM": "Leads CRM",
+      "quotes": "Angebote",
+      "invoices": "Rechnungen",
+      "payments": "Zahlungen",
+      "process": "Prozess",
+      "prospecting": "Akquise",
+      "landings": "Landings",
+      "domains": "Domains",
+      "assets": "Assets",
+      "opsHealth": "Ops & Status",
+      "tenants": "Tenants",
+      "users": "Benutzer",
+      "programs": "Programme",
+      "catalog": "Katalog",
+      "templates": "Vorlagen",
+      "backup": "Backup",
+      "infraOps": "InfraOps",
+      "apiKeys": "API Keys"
+    }
   }
 }

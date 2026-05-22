@@ -69,6 +69,7 @@ public class TenantVaultService implements VaultService {
                             .tenantId(tenantId).serviceId(svc.getId()).phaseId(phase.getId())
                             .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : BigDecimal.ZERO)
                             .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : BigDecimal.TEN)
+                            .catalogVersionLocked(svc.getVersion() != null ? svc.getVersion() : 1)
                             .build();
                     tenantServiceRepository.save(ts);
                 }
@@ -324,6 +325,7 @@ public class TenantVaultService implements VaultService {
                 .tenantId(tenantId).serviceId(serviceId).phaseId(null)
                 .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : BigDecimal.ZERO)
                 .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : BigDecimal.TEN)
+                .catalogVersionLocked(svc.getVersion() != null ? svc.getVersion() : 1)
                 .build();
         tenantServiceRepository.save(ts);
 
@@ -706,5 +708,54 @@ public class TenantVaultService implements VaultService {
         }).toList();
 
         return new MonitoringResponse.PhaseMonitoring(total, pendingApproval, inProgress, completed, rejected, phases);
+    }
+
+    @Override
+    @Transactional
+    public void bumpCatalogVersion(UUID serviceId) {
+        var svc = catalogServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Catalog service not found: " + serviceId));
+        svc.setVersion(svc.getVersion() + 1);
+        catalogServiceRepository.save(svc);
+
+        var newVersion = svc.getVersion();
+        tenantServiceRepository.findByServiceId(serviceId).forEach(ts -> {
+            if (ts.getCatalogVersionLocked() < newVersion) {
+                ts.setOutdated(true);
+                ts.setOutdatedAt(Instant.now());
+                tenantServiceRepository.save(ts);
+                log.info("TenantService {} marcat com a desfassat (v{} → v{})", ts.getId(), ts.getCatalogVersionLocked(), newVersion);
+            }
+        });
+    }
+
+    @Override
+    @Transactional
+    public void acknowledgeOutdated(UUID tenantId, UUID serviceId) {
+        var ts = tenantServiceRepository.findByTenantIdAndServiceId(tenantId, serviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant service not found"));
+        ts.setOutdated(false);
+        ts.setOutdatedAt(null);
+        tenantServiceRepository.save(ts);
+        log.info("TenantService {} revisat i desfàs netejat per tenant {}", serviceId, tenantId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<com.amg.digitalitzacio.vault.api.dto.OutdatedServiceResponse> listOutdatedServices() {
+        return tenantServiceRepository.findByOutdatedTrue().stream()
+                .map(ts -> {
+                    var svc = catalogServiceRepository.findById(ts.getServiceId()).orElse(null);
+                    return new com.amg.digitalitzacio.vault.api.dto.OutdatedServiceResponse(
+                            ts.getId(),
+                            ts.getTenantId(),
+                            ts.getServiceId(),
+                            svc != null ? svc.getName() : "Desconegut",
+                            svc != null ? svc.getSlug() : "",
+                            svc != null ? svc.getVersion() : -1,
+                            ts.getCatalogVersionLocked(),
+                            ts.getOutdatedAt()
+                    );
+                }).toList();
     }
 }

@@ -29,4 +29,8 @@ public interface VaultService {
     MonitoringResponse.InvoiceMonitoring getInvoiceMonitoring(UUID tenantId);
     MonitoringResponse.PaymentMonitoring getPaymentMonitoring(UUID tenantId);
     MonitoringResponse.PhaseMonitoring getPhaseMonitoring(UUID tenantId);
+
+    void bumpCatalogVersion(UUID serviceId);
+    void acknowledgeOutdated(UUID tenantId, UUID serviceId);
+    List<OutdatedServiceResponse> listOutdatedServices();
 }

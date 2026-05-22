@@ -22,6 +22,9 @@ public class TenantService {
     @Enumerated(EnumType.STRING) @Builder.Default @Column(nullable = false) private ServiceStatus status = ServiceStatus.PENDING;
     @Column(nullable = false, precision = 10, scale = 2) @Builder.Default private BigDecimal setupPriceLocked = BigDecimal.ZERO;
     @Column(nullable = false, precision = 10, scale = 2) @Builder.Default private BigDecimal monthlyPriceLocked = BigDecimal.TEN;
+    @Builder.Default @Column(nullable = false) private Integer catalogVersionLocked = 1;
+    @Builder.Default @Column(nullable = false) private Boolean outdated = false;
+    private Instant outdatedAt;
     private Instant activatedAt;
     private Instant statusChangedAt;
     @CreatedDate @Column(updatable = false) private Instant createdAt;

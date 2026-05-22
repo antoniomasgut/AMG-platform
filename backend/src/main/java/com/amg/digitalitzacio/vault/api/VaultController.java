@@ -282,4 +282,26 @@ public class VaultController {
     public MonitoringResponse.PhaseMonitoring getPhaseMonitoring(@PathVariable UUID tenantId) {
         return vaultService.getPhaseMonitoring(tenantId);
     }
+
+    // --- Versionat de catàleg ---
+
+    @PostMapping("/catalog-services/{id}/bump")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void bumpCatalogVersion(@PathVariable UUID id) {
+        vaultService.bumpCatalogVersion(id);
+    }
+
+    @PostMapping("/tenants/{tenantId}/services/{serviceId}/acknowledge")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void acknowledgeOutdated(@PathVariable UUID tenantId, @PathVariable UUID serviceId) {
+        vaultService.acknowledgeOutdated(tenantId, serviceId);
+    }
+
+    @GetMapping("/outdated")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public List<OutdatedServiceResponse> listOutdatedServices() {
+        return vaultService.listOutdatedServices();
+    }
 }

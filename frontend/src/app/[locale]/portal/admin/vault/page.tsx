@@ -7,8 +7,10 @@ import { useToast } from '@/lib/toast-context';
 import {
   listProfiles, createProfile, deleteProfile,
   listCatalogServices, createAddonService,
+  bumpCatalogVersion, acknowledgeOutdated, listOutdatedServices,
   type CatalogProfileResponse,
   type CatalogService,
+  type OutdatedServiceResponse,
 } from '@/services/admin';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
@@ -18,7 +20,7 @@ import { I } from '@/components/ui/icons';
 import { profileFormSchema, serviceFormSchema } from '@/lib/validations/vault';
 import { FieldError } from '@/components/ui/field-error';
 
-type Tab = 'profiles' | 'services';
+type Tab = 'profiles' | 'services' | 'outdated';
 
 const SERVICE_TYPE_OPTIONS = ['CREDENTIALS', 'LANDING', 'AUTOMATION', 'BILLING', 'OTHER'];
 
@@ -256,15 +258,35 @@ export default function AdminVaultPage() {
     queryFn: () => listCatalogServices(),
   });
 
+  const { data: outdated, isLoading: loadingOutdated } = useQuery({
+    queryKey: ['vault-outdated'],
+    queryFn: () => listOutdatedServices(),
+    enabled: tab === 'outdated',
+  });
+
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['vault-profiles'] });
     qc.invalidateQueries({ queryKey: ['vault-services'] });
+    qc.invalidateQueries({ queryKey: ['vault-outdated'] });
   };
 
   const { mutate: doDeleteProfile } = useMutation({
     mutationFn: (id: string) => deleteProfile(id),
     onSuccess: () => { toast('success', 'Perfil eliminat'); invalidate(); },
     onError: () => toast('error', 'Error eliminant el perfil'),
+  });
+
+  const { mutate: doBump } = useMutation({
+    mutationFn: (id: string) => bumpCatalogVersion(id),
+    onSuccess: () => { toast('success', 'Versió incrementada — clients afectats marcats com a desfasats'); invalidate(); },
+    onError: () => toast('error', 'Error incrementant la versió'),
+  });
+
+  const { mutate: doAcknowledge } = useMutation({
+    mutationFn: ({ tenantId, serviceId }: { tenantId: string; serviceId: string }) =>
+      acknowledgeOutdated(tenantId, serviceId),
+    onSuccess: () => { toast('success', 'Marcat com a revisat'); invalidate(); },
+    onError: () => toast('error', 'Error marcant com a revisat'),
   });
 
   return (
@@ -293,6 +315,15 @@ export default function AdminVaultPage() {
           <button onClick={() => setTab('services')}
             className={`f-mono text-label uppercase pb-3 transition-colors ${tab === 'services' ? 'text-accent-light border-b-2 border-[#FF6B00]' : 'text-ink-2 hover:text-ink-0'}`}>
             Serveis
+          </button>
+          <button onClick={() => setTab('outdated')}
+            className={`f-mono text-label uppercase pb-3 transition-colors flex items-center gap-1.5 ${tab === 'outdated' ? 'text-accent-light border-b-2 border-[#FF6B00]' : 'text-ink-2 hover:text-ink-0'}`}>
+            Desfasats
+            {outdated && outdated.length > 0 && (
+              <span className="bg-amber-500/20 text-amber-400 text-[10px] f-mono px-1.5 py-0.5 rounded-full">
+                {outdated.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -348,10 +379,10 @@ export default function AdminVaultPage() {
               </div>
             ) : (
               <div className="amg-card card-clip overflow-hidden">
-                <table className="w-full min-w-[600px]">
+                <table className="w-full min-w-[700px]">
                   <thead>
                     <tr className="border-b border-border-base">
-                      {['Servei', 'Slug', 'Tipus', 'Cost', 'Preu venda', 'Addon'].map(h => (
+                      {['Servei', 'Slug', 'Tipus', 'Setup', 'Mensual', 'Versió', ''].map(h => (
                         <th key={h} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal">{h}</th>
                       ))}
                     </tr>
@@ -369,9 +400,89 @@ export default function AdminVaultPage() {
                             {s.type}
                           </AMGBadge>
                         </td>
-                        <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{s.cost?.toFixed(2)} €</td>
-                        <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{s.salePrice?.toFixed(2)} €</td>
-                        <td className="px-4 sm:px-5 py-3">{s.isAddon ? <AMGBadge tone="info">Addon</AMGBadge> : '—'}</td>
+                        <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{s.salePrice?.toFixed(0)} €</td>
+                        <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{s.monthlyPrice?.toFixed(0)} €/mes</td>
+                        <td className="px-4 sm:px-5 py-3">
+                          <span className="f-mono text-xs text-ink-2 bg-[rgba(255,255,255,0.05)] px-2 py-0.5 rounded">
+                            v{s.version ?? 1}
+                          </span>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3">
+                          <button
+                            onClick={() => { if (confirm(`Incrementar versió de "${s.name}"? Els clients existents amb aquest servei quedaran marcats com a desfasats.`)) doBump(s.id); }}
+                            className="f-mono text-[10px] uppercase text-ink-2 hover:text-amber-400 border border-border-base hover:border-amber-500/40 px-2 py-1 transition-colors"
+                            title="Incrementar versió del catàleg"
+                          >
+                            Bump
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Outdated tab */}
+        {tab === 'outdated' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="f-mono text-label uppercase text-ink-3">Serveis de client desfasats</span>
+              <span className="f-mono text-xs text-ink-3">Catàleg actualitzat · cal revisar amb el client</span>
+            </div>
+            {loadingOutdated ? (
+              <div className="flex justify-center py-12">
+                <span className="w-4 h-4 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : !outdated || outdated.length === 0 ? (
+              <div className="amg-card card-clip p-8 text-center">
+                <I.Check size={28} stroke="#22c55e" className="mx-auto mb-3" />
+                <div className="f-display font-bold text-sm mb-1">Tot actualitzat</div>
+                <p className="f-mono text-xs text-ink-2">Cap servei de client desfassat</p>
+              </div>
+            ) : (
+              <div className="amg-card card-clip overflow-hidden">
+                <table className="w-full min-w-[700px]">
+                  <thead>
+                    <tr className="border-b border-border-base">
+                      {['Servei', 'Tenant', 'Versió client', 'Versió actual', 'Desfassat des de', ''].map(h => (
+                        <th key={h} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {outdated.map((o: OutdatedServiceResponse) => (
+                      <tr key={o.tenantServiceId} className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                        <td className="px-4 sm:px-5 py-3">
+                          <div className="f-display font-bold text-sm">{o.serviceName}</div>
+                          <div className="f-mono text-xs text-ink-3">{o.serviceSlug}</div>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-2">
+                          {o.tenantId.slice(0, 8)}…
+                        </td>
+                        <td className="px-4 sm:px-5 py-3">
+                          <span className="f-mono text-xs bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded">
+                            v{o.lockedVersion}
+                          </span>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3">
+                          <span className="f-mono text-xs bg-[rgba(255,255,255,0.05)] text-ink-1 px-2 py-0.5 rounded">
+                            v{o.catalogVersion}
+                          </span>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-2">
+                          {new Date(o.outdatedAt).toLocaleDateString('ca-ES')}
+                        </td>
+                        <td className="px-4 sm:px-5 py-3">
+                          <button
+                            onClick={() => doAcknowledge({ tenantId: o.tenantId, serviceId: o.serviceId })}
+                            className="f-mono text-[10px] uppercase text-ink-2 hover:text-green-400 border border-border-base hover:border-green-500/40 px-2 py-1 transition-colors"
+                          >
+                            Revisat
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

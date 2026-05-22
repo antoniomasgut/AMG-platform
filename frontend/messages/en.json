@@ -327,8 +327,8 @@
       "automation_title": "Connect an automation",
       "automation_desc": "Connect n8n to send emails, WhatsApp, or receive automatic notifications.",
       "automation_cta": "GET STARTED",
-      "billing_title": "Generate your first budget",
-      "billing_desc": "Create a custom budget and send it to your client as a PDF.",
+      "billing_title": "Generate your first quote",
+      "billing_desc": "Create a custom quote and send it to your client as a PDF.",
       "billing_cta": "GET STARTED"
     }
   },
@@ -343,5 +343,46 @@
     "accept": "Accept all",
     "configure": "Configure",
     "reject": "Reject optional"
+  },
+  "portalNav": {
+    "groups": {
+      "summary": "Overview",
+      "myServices": "My services",
+      "clientsLeads": "Clients & leads",
+      "finances": "Finances",
+      "overview": "Overview",
+      "acquisition": "1. Acquisition",
+      "commercial": "2. Sales",
+      "services": "3. Services",
+      "operations": "4. Operations",
+      "clients": "Clients",
+      "system": "System"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "myWebs": "My websites",
+      "automations": "Automations",
+      "agentAI": "AI Agent",
+      "agentsAI": "AI Agents",
+      "files": "Files",
+      "leadsCRM": "Leads CRM",
+      "quotes": "Quotes",
+      "invoices": "Invoices",
+      "payments": "Payments",
+      "process": "Process",
+      "prospecting": "Prospecting",
+      "landings": "Landings",
+      "domains": "Domains",
+      "assets": "Assets",
+      "opsHealth": "Ops & Health",
+      "tenants": "Tenants",
+      "users": "Users",
+      "programs": "Programmes",
+      "catalog": "Catalogue",
+      "templates": "Templates",
+      "backup": "Backup",
+      "infraOps": "InfraOps",
+      "apiKeys": "API Keys"
+    }
   }
 }

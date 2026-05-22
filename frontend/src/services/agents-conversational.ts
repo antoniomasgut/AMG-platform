@@ -58,3 +58,54 @@ export const updateAgentMode = (tenantId: string, mode: 'AUTO' | 'HYBRID' | 'MAN
     method: 'PUT',
     body: JSON.stringify({ mode }),
   });
+
+export interface ModelInfo {
+  id: string;
+  label: string;
+  provider: string;
+  requiresApiKey: boolean;
+}
+
+export interface TenantAIConfig {
+  tenantId: string;
+  preferredModel: string;
+  maxTokens: number;
+  temperature: number;
+}
+
+export interface AIConfigRequest {
+  preferredModel?: string;
+  maxTokens?: number;
+  temperature?: number;
+}
+
+export interface AIModelTestRequest {
+  model: string;
+  message: string;
+  systemPrompt?: string;
+}
+
+export interface AIModelTestResponse {
+  model: string;
+  provider: string;
+  response: string;
+  error?: string;
+}
+
+export const getAvailableModels = () =>
+  apiFetch<ModelInfo[]>('/agents/conversational/models');
+
+export const getAIConfig = (tenantId: string) =>
+  apiFetch<TenantAIConfig>(`/agents/conversational/${tenantId}/ai-config`);
+
+export const updateAIConfig = (tenantId: string, config: AIConfigRequest) =>
+  apiFetch<TenantAIConfig>(`/agents/conversational/${tenantId}/ai-config`, {
+    method: 'PUT',
+    body: JSON.stringify(config),
+  });
+
+export const testModel = (request: AIModelTestRequest) =>
+  apiFetch<AIModelTestResponse>('/agents/conversational/test-model', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });

@@ -154,7 +154,7 @@
     },
     "testimonials": {
       "badge": "Testimonis",
-      "title": "QUÈ DIUEN ELS\nNOSALTRES CLIENTS.",
+      "title": "QUÈ DIUEN ELS\nNOSTRES CLIENTS.",
       "items": [
         {
           "name": "Maria Rosselló",
@@ -267,7 +267,7 @@
   },
   "portal": {
     "sidebar": {
-      "system": "Sistema operatiu",
+      "system": "Estat del sistema",
       "nav": {
         "dashboard": "Dashboard",
         "landings": "Landings",
@@ -279,7 +279,7 @@
     },
     "dashboard": {
       "welcome": "Bon dia",
-      "status": "Sistema operatiu",
+      "status": "Estat del sistema",
       "services": {
         "landings": "Landings actives",
         "automations": "Automatitzacions",
@@ -417,7 +417,7 @@
       "description": "Configurarem un sistema de reserves online. El client podrà reservar visites directament des d'un enllaç.",
       "prerequisites": "Necessitaràs: API Key de Google Calendar o Calendly.",
       "step1": { "title": "Integració de calendari", "description": "Connecta el calendari on es crearan les cites." },
-      "step2": { "title": "Plantilla de confirmació", "description": "Configura el missatge de confirmació que es enviarà al client." },
+      "step2": { "title": "Plantilla de confirmació", "description": "Configura el missatge de confirmació que s'enviarà al client." },
       "step3": { "title": "Verificació", "description": "Prova que el flux de reserva funciona correctament." },
       "field": {
         "calendar_type": "Tipus de calendari",
@@ -475,7 +475,7 @@
       "description": "Configurarem un formulari interactiu que calcula i envia pressupostos automàticament.",
       "prerequisites": "Necessitaràs: les regles de càlcul de preus del negoci.",
       "step1": { "title": "Regles de càlcul", "description": "Defineix com es calcula el pressupost segons les dades del formulari." },
-      "step2": { "title": "Notificació", "description": "Configura la plantilla del pressupost que es enviarà al client." },
+      "step2": { "title": "Notificació", "description": "Configura la plantilla del pressupost que s'enviarà al client." },
       "step3": { "title": "Activar", "description": "Activa el workflow de càlcul i enviament." },
       "field": {
         "rules": "Regles de càlcul",
@@ -694,6 +694,47 @@
       "email": "El correu electrònic no és vàlid",
       "port": "El port no és vàlid",
       "domain": "El format del domini no és vàlid"
+    }
+  },
+  "portalNav": {
+    "groups": {
+      "summary": "Resum",
+      "myServices": "Els meus serveis",
+      "clientsLeads": "Clients i leads",
+      "finances": "Finances",
+      "overview": "Visió general",
+      "acquisition": "1. Captació",
+      "commercial": "2. Comercial",
+      "services": "3. Serveis",
+      "operations": "4. Operacions",
+      "clients": "Clients",
+      "system": "Sistema"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "myWebs": "Les meves webs",
+      "automations": "Automatitzacions",
+      "agentAI": "Agent IA",
+      "agentsAI": "Agents IA",
+      "files": "Arxius",
+      "leadsCRM": "Leads CRM",
+      "quotes": "Pressupostos",
+      "invoices": "Factures",
+      "payments": "Pagaments",
+      "process": "Procés",
+      "prospecting": "Prospecció",
+      "landings": "Landings",
+      "domains": "Dominis",
+      "assets": "Assets",
+      "opsHealth": "Ops & Health",
+      "tenants": "Tenants",
+      "users": "Usuaris",
+      "programs": "Programes",
+      "catalog": "Catàleg",
+      "templates": "Plantilles",
+      "backup": "Backup",
+      "infraOps": "InfraOps",
+      "apiKeys": "API Keys"
     }
   }
 }

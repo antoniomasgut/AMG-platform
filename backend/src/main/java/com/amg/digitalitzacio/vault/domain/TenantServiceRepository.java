@@ -10,4 +10,6 @@ public interface TenantServiceRepository extends JpaRepository<TenantService, UU
     List<TenantService> findByTenantId(UUID tenantId);
     List<TenantService> findByTenantIdAndPhaseId(UUID tenantId, UUID phaseId);
     Optional<TenantService> findByTenantIdAndServiceId(UUID tenantId, UUID serviceId);
+    List<TenantService> findByServiceId(UUID serviceId);
+    List<TenantService> findByOutdatedTrue();
 }

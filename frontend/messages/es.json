@@ -267,7 +267,7 @@
   },
   "portal": {
     "sidebar": {
-      "system": "Sistema operativo",
+      "system": "Estado del sistema",
       "nav": {
         "dashboard": "Dashboard",
         "landings": "Landings",
@@ -279,7 +279,7 @@
     },
     "dashboard": {
       "welcome": "Buenos días",
-      "status": "Sistema operativo",
+      "status": "Estado del sistema",
       "services": {
         "landings": "Landings activas",
         "automations": "Automatizaciones",
@@ -343,5 +343,46 @@
     "accept": "Aceptar todas",
     "configure": "Configurar",
     "reject": "Rechazar opcionales"
+  },
+  "portalNav": {
+    "groups": {
+      "summary": "Resumen",
+      "myServices": "Mis servicios",
+      "clientsLeads": "Clientes y leads",
+      "finances": "Finanzas",
+      "overview": "Visión general",
+      "acquisition": "1. Captación",
+      "commercial": "2. Comercial",
+      "services": "3. Servicios",
+      "operations": "4. Operaciones",
+      "clients": "Clientes",
+      "system": "Sistema"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "myWebs": "Mis webs",
+      "automations": "Automatizaciones",
+      "agentAI": "Agente IA",
+      "agentsAI": "Agentes IA",
+      "files": "Archivos",
+      "leadsCRM": "Leads CRM",
+      "quotes": "Presupuestos",
+      "invoices": "Facturas",
+      "payments": "Pagos",
+      "process": "Proceso",
+      "prospecting": "Prospección",
+      "landings": "Landings",
+      "domains": "Dominios",
+      "assets": "Assets",
+      "opsHealth": "Ops & Salud",
+      "tenants": "Tenants",
+      "users": "Usuarios",
+      "programs": "Programas",
+      "catalog": "Catálogo",
+      "templates": "Plantillas",
+      "backup": "Backup",
+      "infraOps": "InfraOps",
+      "apiKeys": "API Keys"
+    }
   }
 }

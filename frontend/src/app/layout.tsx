@@ -41,8 +41,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const nonce = (await headers()).get('x-nonce') ?? '';
 
   return (
-    <html className={`${orbitron.variable} ${spaceGrotesk.variable} ${shareTechMono.variable}`}>
+    <html
+      translate="no"
+      className={`${orbitron.variable} ${spaceGrotesk.variable} ${shareTechMono.variable}`}
+    >
       <head>
+        <meta name="google" content="notranslate" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>

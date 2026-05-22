@@ -198,11 +198,11 @@
       "errorBlocked": "Konto gesperrt. Versuchen Sie es später erneut oder setzen Sie Ihr Passwort zurück.",
       "errorTooManyAttempts": "Zu viele Versuche. Versuchen Sie es in ein paar Minuten erneut.",
       "errorGeneral": "Anmeldefehler",
-      "entering": "EINLOGGEN...",
-      "sending": "SENDE..."
+      "entering": "ANMELDEN...",
+      "sending": "WIRD GESENDET..."
     },
     "forgotPassword": {
-      "title": "PASSWORT WIEDERHERSTELLEN",
+      "title": "PASSWORT ZURÜCKSETZEN",
       "subtitle": "Geben Sie Ihre E-Mail ein und wir senden Ihnen einen Link zum Zurücksetzen des Passworts.",
       "emailLabel": "Unternehmens-E-Mail",
       "sendLink": "LINK SENDEN",
@@ -210,7 +210,7 @@
       "sentDesc": "Wenn die E-Mail existiert, erhalten Sie einen Wiederherstellungslink an",
       "sentExpiry": "Der Link läuft in {minutes} Min. ab. Prüfen Sie Ihren Spam-Ordner.",
       "backToLogin": "ZURÜCK ZUM LOGIN",
-      "sending": "SENDE...",
+      "sending": "WIRD GESENDET...",
       "error": "Fehler beim Senden der Anfrage"
     },
     "resetPassword": {
@@ -224,7 +224,7 @@
       "successTitle": "PASSWORT AKTUALISIERT",
       "successDesc": "Weiterleitung zum Login...",
       "goToLogin": "ZUM LOGIN",
-      "updating": "AKTUALISIERE...",
+      "updating": "WIRD AKTUALISIERT...",
       "errorInvalidToken": "Ungültiger oder abgelaufener Wiederherstellungslink",
       "errorMinLength": "Das Passwort muss mindestens 4 Zeichen lang sein",
       "errorMismatch": "Passwörter stimmen nicht überein",

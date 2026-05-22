@@ -70,7 +70,7 @@
         ]
       },
       {
-        "name": "Assistant IA",
+        "name": "Assistent IA",
         "tagline": "Intel·ligència artificial per al teu negoci",
         "price": "des de 99€/mes",
         "features": [
@@ -234,11 +234,11 @@
   "portal": {
     "greeting": "Bon dia, {name}",
     "subscription": {
-      "badge": "Suscripció activa",
-      "plan": "PLAN {name}",
+      "badge": "Subscripció activa",
+      "plan": "PLA {name}",
       "upToDate": "AL DIA",
       "active": "En actiu",
-      "nextBilling": "Pròxim cobro",
+      "nextBilling": "Pròxim cobrament",
       "monthlyAmount": "Import mensual",
       "role": "Rol",
       "cycle": "Cicle {start} → {end}"
@@ -257,7 +257,7 @@
     "help": {
       "title": "NECESSITES AJUDA?",
       "description": "El teu tècnic assignat està disponible per respondre els teus dubtes.",
-      "contactTeam": "ESCRIURE AL EQUIP",
+      "contactTeam": "ESCRIURE A L'EQUIP",
       "viewTutorials": "VEURE TUTORIALS"
     },
     "sidebar": {
@@ -415,7 +415,7 @@
       "users": "Usuaris",
       "tenants": "Tenants"
     },
-    "save": "Guardar",
+    "save": "Desar",
     "cancel": "Cancel·lar",
     "loading": "Carregant..."
   }

@@ -9,6 +9,29 @@
 
 ---
 
+## 0. Relació amb el model NexeLocal (Spec 22)
+
+Els 10 serveis del catàleg (`CatalogService`) són els **blocs tècnics** que s'assignen als tenants. El **preu que veu i paga el client**, però, ve del model de fases de NexeLocal (Spec 22), no de `CatalogService.salePrice` ni `monthlyPrice`.
+
+| Capa | Entitat | Propòsit |
+|------|---------|---------|
+| Tècnica | `CatalogService` | Quins serveis existeixen i com es configuren |
+| Comercial | `SectorPricing` | Quant paga el client (per sector, mida i fase) |
+
+**Mapeig fases → serveis del catàleg:**
+
+| Fase | Serveis inclosos |
+|------|----------------|
+| F1 | `whatsapp-business` + `bot-ia-basic` |
+| F2 | `automatitzacio-basica` (recordatoris + agenda) |
+| F3 | `automatitzacio-avancada` (pressupostos PDF) |
+| F4 | `google-analytics` + addon fidelització |
+| F5 | (gestió equip — pendent d'implementació) |
+
+El setup cobrat al client és `SectorPricing.setupPrice`, no la suma dels `salePrice` individuals.
+
+---
+
 ## 1. Model de costos
 
 ### 1.1 Tipus de costos per servei
@@ -158,9 +181,11 @@ Cada fase agrupa serveis amb un descompte al setup respecte a contractar-los sol
 
 - [x] `CatalogService.salePrice` — preu de setup al client
 - [x] `CatalogService.cost` — cost intern
-- [ ] **Afegir `monthlyPrice` a l'entitat `CatalogService`** (default: 10.00€) — migració JPA necessària
-- [ ] **Afegir `setupPriceLocked`, `monthlyPriceLocked`, `activatedAt` a `TenantService`** — migració JPA necessària
-- [ ] **Actualitzar `CatalogSeeder`**: afegir `monthlyPrice = 10` a tots els serveis base
+- [x] `CatalogService.monthlyPrice` — 10€/mes per defecte
+- [x] `TenantService.setupPriceLocked`, `monthlyPriceLocked`, `activatedAt` — congelat en crear
+- [x] `CatalogSeeder` v2.0 — 10 serveis del catàleg definitiu
+- [x] `CatalogService.version` — versió del servei al catàleg
+- [x] `TenantService.catalogVersionLocked`, `outdated`, `outdatedAt` — tracking de desfàs
 - [ ] **Endpoint `PATCH /vault/services/{id}/price`**: actualitza catàleg sense tocar clients existents
 - [ ] **`BillingCalculator`**: lògica de pro-rata mensual (dies actius / dies del mes)
 - [ ] **`MonthlyBillingJob`** (`@Scheduled`): genera factures a final de mes via FinOps
@@ -173,10 +198,10 @@ Cada fase agrupa serveis amb un descompte al setup respecte a contractar-los sol
 
 ```
 ADMIN crea servei al catàleg:
-  CatalogService { salePrice: 100€, monthlyPrice: 10€, cost: 20€ }
+  CatalogService { salePrice: 100€, monthlyPrice: 10€, cost: 20€, version: 1 }
 
 ADMIN assigna perfil a tenant (ara o en 2 anys):
-  TenantService { setupPriceLocked: 100€, monthlyPriceLocked: 10€ }
+  TenantService { setupPriceLocked: 100€, monthlyPriceLocked: 10€, catalogVersionLocked: 1 }
 
 ADMIN modifica preu al catàleg:
   CatalogService { salePrice: 120€, monthlyPrice: 12€ }  ← client antic no es veu afectat
@@ -185,5 +210,62 @@ Client antic facturació mensual (sempre):
   monthlyPriceLocked = 10€  ← congèlat des del dia de l'assignació
 
 Client nou (assignació posterior al canvi):
-  TenantService { setupPriceLocked: 120€, monthlyPriceLocked: 12€ }
+  TenantService { setupPriceLocked: 120€, monthlyPriceLocked: 12€, catalogVersionLocked: 1 }
 ```
+
+---
+
+## 7. Versionat de serveis i desfàs
+
+### 7.1 Principi fonamental
+
+**Un client que ha acceptat unes condicions no es veu mai afectat per canvis al catàleg.** El seu `TenantService` és un snapshot immutable del moment d'acceptació. Cap modificació al `CatalogService` (ni de preu, ni de descripció, ni de funcionament) toca el servei del client.
+
+### 7.2 Mecanisme de versió
+
+| Camp | Entitat | Descripció |
+|------|---------|-----------|
+| `version` | `CatalogService` | S'incrementa cada vegada que SUPER_ADMIN fa canvis rellevants |
+| `catalogVersionLocked` | `TenantService` | Copia de `version` en el moment d'assignació |
+| `outdated` | `TenantService` | `true` quan `catalogVersion > catalogVersionLocked` |
+| `outdatedAt` | `TenantService` | Timestamp del moment en què es va marcar desfassat |
+
+### 7.3 Flux de versió
+
+```
+SUPER_ADMIN millora el servei Landing (nova funció, canvi de proveïdor, etc.):
+  POST /vault/catalog-services/{id}/bump
+  → CatalogService.version: 1 → 2
+  → Tots els TenantService amb aquest servei: outdated = true
+
+ADMIN revisa la situació i parla amb el client:
+  Opció A: El client no vol canvis
+    POST /vault/tenants/{tenantId}/services/{serviceId}/acknowledge
+    → outdated = false (catalogVersionLocked continua sent 1)
+    → El client segueix amb la v1 per sempre
+
+  Opció B: El client vol el servei nou (potser amb cost addicional)
+    → Es fa manualment: nova implementació, nova facturació si escau
+    → Quan estigui llest, acknowledge per netejar el flag
+```
+
+### 7.4 Endpoints de versió
+
+| Mètode | Endpoint | Rol | Descripció |
+|--------|---------|-----|-----------|
+| `POST` | `/vault/catalog-services/{id}/bump` | SUPER_ADMIN | Incrementa versió, marca desfasats |
+| `POST` | `/vault/tenants/{tenantId}/services/{serviceId}/acknowledge` | ADMIN/SUPER_ADMIN | Neteja flag `outdated` |
+| `GET` | `/vault/outdated` | ADMIN/SUPER_ADMIN | Llista tots els serveis de client desfasats |
+
+### 7.5 Política de quan fer bump
+
+No tots els canvis al catàleg requereixen bump. Fer-ne un implica notificar (via flag) tots els clients afectats i haver de gestionar la conversa. Utilitzar quan:
+
+| Acció | Bump? |
+|-------|-------|
+| Canvi de preu al catàleg | ❌ (els clients existents no es veuen afectats de totes formes) |
+| Canvi de descripció o nom del servei | ❌ (cosmètic) |
+| Canvi de proveïdor que afecta al client | ✅ |
+| Nova funcionalitat rellevant per al client | ✅ |
+| Canvi de procediment que requereix acció del client | ✅ |
+| Reestructuració del servei (ex: landing ara inclou multilingüe) | ✅ |

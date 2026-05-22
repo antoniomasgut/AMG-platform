@@ -142,6 +142,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 09b | GoCardless (domiciliació SEPA automàtica) | ✅ Completat | specs/09b-gocardless.md |
 | 19 | InfraOps (monitorització servidor + escalat) | ✅ Completat | specs/19-infraops.md |
 | 20 | Agents Autònoms (Telegram, substitueix n8n) | ✅ Completat | specs/20-agents.md |
+| 22 | Sector Pricing (model NexeLocal F1-F5) | ✅ Completat | specs/22-sector-pricing.md |
 
 ---
 

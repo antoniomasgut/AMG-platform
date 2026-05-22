@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 const LOCALES = [
-  { code: 'ca', label: 'CAT' },
+  { code: 'ca', label: 'CA' },
   { code: 'es', label: 'ES' },
   { code: 'en', label: 'EN' },
   { code: 'de', label: 'DE' },

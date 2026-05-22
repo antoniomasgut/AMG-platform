@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/lib/auth-context';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { I } from '@/components/ui/icons';
 import { AMGLogo } from '@/components/ui/AMGLogo';
 import { useState } from 'react';
@@ -11,39 +12,40 @@ const LOCALES = ['ca', 'es', 'en', 'de'];
 
 type NavItem = { label: string; icon: (p: { size?: number }) => ReactNode; href: string };
 type NavGroup = { label: string; items: NavItem[] };
+type T = ReturnType<typeof useTranslations<'portalNav'>>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CLIENT: veu els seus serveis i el seu compte
 // ─────────────────────────────────────────────────────────────────────────────
-function clientGroups(): NavGroup[] {
+function clientGroups(t: T): NavGroup[] {
   return [
     {
-      label: 'Resum',
+      label: t('groups.summary'),
       items: [
-        { label: 'Dashboard', icon: I.Dashboard, href: '/portal' },
+        { label: t('items.dashboard'), icon: I.Dashboard, href: '/portal' },
       ],
     },
     {
-      label: 'Els meus serveis',
+      label: t('groups.myServices'),
       items: [
-        { label: 'Les meves webs', icon: I.Globe, href: '/portal/landings' },
-        { label: 'Automatitzacions', icon: I.Zap, href: '/portal/automations' },
-        { label: 'Agent IA', icon: I.Bot, href: '/portal/agents' },
-        { label: 'Arxius', icon: I.Image, href: '/portal/assets' },
+        { label: t('items.myWebs'), icon: I.Globe, href: '/portal/landings' },
+        { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
+        { label: t('items.agentAI'), icon: I.Bot, href: '/portal/agents' },
+        { label: t('items.files'), icon: I.Image, href: '/portal/assets' },
       ],
     },
     {
-      label: 'Clients i leads',
+      label: t('groups.clientsLeads'),
       items: [
-        { label: 'Leads CRM', icon: I.Users, href: '/portal/leads' },
+        { label: t('items.leadsCRM'), icon: I.Users, href: '/portal/leads' },
       ],
     },
     {
-      label: 'Finances',
+      label: t('groups.finances'),
       items: [
-        { label: 'Pressupostos', icon: I.Receipt, href: '/portal/billing' },
-        { label: 'Factures', icon: I.Trending, href: '/portal/finops' },
-        { label: 'Pagaments', icon: I.CreditCard, href: '/portal/payments' },
+        { label: t('items.quotes'), icon: I.Receipt, href: '/portal/billing' },
+        { label: t('items.invoices'), icon: I.Trending, href: '/portal/finops' },
+        { label: t('items.payments'), icon: I.CreditCard, href: '/portal/payments' },
       ],
     },
   ];
@@ -52,43 +54,44 @@ function clientGroups(): NavGroup[] {
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN: gestiona el flux complet (captació → implementació) sense infra
 // ─────────────────────────────────────────────────────────────────────────────
-function adminGroups(): NavGroup[] {
+function adminGroups(t: T): NavGroup[] {
   return [
     {
-      label: 'Visió general',
+      label: t('groups.overview'),
       items: [
-        { label: 'Dashboard', icon: I.Dashboard, href: '/portal' },
-        { label: 'Procés', icon: I.Flow, href: '/portal/process' },
+        { label: t('items.dashboard'), icon: I.Dashboard, href: '/portal' },
+        { label: t('items.process'), icon: I.Flow, href: '/portal/process' },
       ],
     },
     {
-      label: '1. Captació',
+      label: t('groups.acquisition'),
       items: [
-        { label: 'Prospecció', icon: I.Search, href: '/portal/prospecting' },
-        { label: 'Leads CRM', icon: I.Users, href: '/portal/leads' },
+        { label: t('items.prospecting'), icon: I.Search, href: '/portal/prospecting' },
+        { label: t('items.leadsCRM'), icon: I.Users, href: '/portal/leads' },
       ],
     },
     {
-      label: '2. Comercial',
+      label: t('groups.commercial'),
       items: [
-        { label: 'Pressupostos', icon: I.Receipt, href: '/portal/billing' },
-        { label: 'Pagaments', icon: I.CreditCard, href: '/portal/payments' },
-        { label: 'Factures', icon: I.Trending, href: '/portal/finops' },
+        { label: t('items.quotes'), icon: I.Receipt, href: '/portal/billing' },
+        { label: t('items.payments'), icon: I.CreditCard, href: '/portal/payments' },
+        { label: t('items.invoices'), icon: I.Trending, href: '/portal/finops' },
       ],
     },
     {
-      label: '3. Serveis',
+      label: t('groups.services'),
       items: [
-        { label: 'Landings', icon: I.Globe, href: '/portal/landings' },
-        { label: 'Assets', icon: I.Image, href: '/portal/assets' },
-        { label: 'Automatitzacions', icon: I.Zap, href: '/portal/automations' },
-        { label: 'Agents IA', icon: I.Bot, href: '/portal/agents' },
+        { label: t('items.landings'), icon: I.Globe, href: '/portal/landings' },
+        { label: t('items.domains'), icon: I.Link, href: '/portal/admin/domains' },
+        { label: t('items.assets'), icon: I.Image, href: '/portal/assets' },
+        { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
+        { label: t('items.agentsAI'), icon: I.Bot, href: '/portal/agents' },
       ],
     },
     {
-      label: '4. Operacions',
+      label: t('groups.operations'),
       items: [
-        { label: 'Ops & Health', icon: I.Activity, href: '/portal/ops' },
+        { label: t('items.opsHealth'), icon: I.Activity, href: '/portal/ops' },
       ],
     },
   ];
@@ -97,61 +100,62 @@ function adminGroups(): NavGroup[] {
 // ─────────────────────────────────────────────────────────────────────────────
 // SUPER_ADMIN: tot + configuració del sistema + infraestructura
 // ─────────────────────────────────────────────────────────────────────────────
-function superAdminGroups(): NavGroup[] {
+function superAdminGroups(t: T): NavGroup[] {
   return [
     {
-      label: 'Visió general',
+      label: t('groups.overview'),
       items: [
-        { label: 'Dashboard', icon: I.Dashboard, href: '/portal' },
-        { label: 'Procés', icon: I.Flow, href: '/portal/process' },
+        { label: t('items.dashboard'), icon: I.Dashboard, href: '/portal' },
+        { label: t('items.process'), icon: I.Flow, href: '/portal/process' },
       ],
     },
     {
-      label: '1. Captació',
+      label: t('groups.acquisition'),
       items: [
-        { label: 'Prospecció', icon: I.Search, href: '/portal/prospecting' },
-        { label: 'Leads CRM', icon: I.Users, href: '/portal/leads' },
+        { label: t('items.prospecting'), icon: I.Search, href: '/portal/prospecting' },
+        { label: t('items.leadsCRM'), icon: I.Users, href: '/portal/leads' },
       ],
     },
     {
-      label: '2. Comercial',
+      label: t('groups.commercial'),
       items: [
-        { label: 'Pressupostos', icon: I.Receipt, href: '/portal/billing' },
-        { label: 'Pagaments', icon: I.CreditCard, href: '/portal/payments' },
-        { label: 'Factures', icon: I.Trending, href: '/portal/finops' },
+        { label: t('items.quotes'), icon: I.Receipt, href: '/portal/billing' },
+        { label: t('items.payments'), icon: I.CreditCard, href: '/portal/payments' },
+        { label: t('items.invoices'), icon: I.Trending, href: '/portal/finops' },
       ],
     },
     {
-      label: '3. Serveis',
+      label: t('groups.services'),
       items: [
-        { label: 'Landings', icon: I.Globe, href: '/portal/landings' },
-        { label: 'Assets', icon: I.Image, href: '/portal/assets' },
-        { label: 'Automatitzacions', icon: I.Zap, href: '/portal/automations' },
-        { label: 'Agents IA', icon: I.Bot, href: '/portal/agents' },
+        { label: t('items.landings'), icon: I.Globe, href: '/portal/landings' },
+        { label: t('items.domains'), icon: I.Link, href: '/portal/admin/domains' },
+        { label: t('items.assets'), icon: I.Image, href: '/portal/assets' },
+        { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
+        { label: t('items.agentsAI'), icon: I.Bot, href: '/portal/agents' },
       ],
     },
     {
-      label: '4. Operacions',
+      label: t('groups.operations'),
       items: [
-        { label: 'Ops & Health', icon: I.Activity, href: '/portal/ops' },
+        { label: t('items.opsHealth'), icon: I.Activity, href: '/portal/ops' },
       ],
     },
     {
-      label: 'Clients',
+      label: t('groups.clients'),
       items: [
-        { label: 'Tenants', icon: I.Building, href: '/portal/admin/tenants' },
-        { label: 'Usuaris', icon: I.Shield, href: '/portal/admin/users' },
-        { label: 'Programes', icon: I.Sparkles, href: '/portal/billing/programs' },
+        { label: t('items.tenants'), icon: I.Building, href: '/portal/admin/tenants' },
+        { label: t('items.users'), icon: I.Shield, href: '/portal/admin/users' },
+        { label: t('items.programs'), icon: I.Sparkles, href: '/portal/billing/programs' },
       ],
     },
     {
-      label: 'Sistema',
+      label: t('groups.system'),
       items: [
-        { label: 'Catàleg', icon: I.Box, href: '/portal/admin/vault' },
-        { label: 'Plantilles', icon: I.Layers, href: '/portal/admin/templates' },
-        { label: 'Backup', icon: I.Database, href: '/portal/admin/backup' },
-        { label: 'InfraOps', icon: I.Server, href: '/portal/admin/infraops' },
-        { label: 'API Keys', icon: I.Key, href: '/portal/admin/config' },
+        { label: t('items.catalog'), icon: I.Box, href: '/portal/admin/vault' },
+        { label: t('items.templates'), icon: I.Layers, href: '/portal/admin/templates' },
+        { label: t('items.backup'), icon: I.Database, href: '/portal/admin/backup' },
+        { label: t('items.infraOps'), icon: I.Server, href: '/portal/admin/infraops' },
+        { label: t('items.apiKeys'), icon: I.Key, href: '/portal/admin/config' },
       ],
     },
   ];
@@ -163,6 +167,7 @@ function superAdminGroups(): NavGroup[] {
 export function PortalShell({ children, breadcrumb }: { children: ReactNode; breadcrumb: string }) {
   const { user, isSuperAdmin, isAdmin } = useAuth();
   const pathname = usePathname();
+  const t = useTranslations('portalNav');
   const [mobileOpen, setMobileOpen] = useState(false);
 
   if (!user) return null;
@@ -174,7 +179,7 @@ export function PortalShell({ children, breadcrumb }: { children: ReactNode; bre
   const isActive = (href: string) =>
     href === '/portal' ? normalized === '/portal' : normalized.startsWith(href);
 
-  const groups = isSuperAdmin ? superAdminGroups() : isAdmin ? adminGroups() : clientGroups();
+  const groups = isSuperAdmin ? superAdminGroups(t) : isAdmin ? adminGroups(t) : clientGroups(t);
 
   const NavContent = () => (
     <>

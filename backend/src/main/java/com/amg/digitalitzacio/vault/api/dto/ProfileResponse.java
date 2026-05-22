@@ -15,7 +15,7 @@ public record ProfileResponse(
 ) {
     public record PhaseResponse(UUID id, String name, String description, Integer sortOrder, List<ServiceResponse> services) {}
     public record ServiceResponse(UUID id, String name, String slug, String description, ServiceType type, Boolean isAddon,
-                                  BigDecimal cost, BigDecimal salePrice, BigDecimal monthlyPrice, Integer sortOrder, List<CredentialFieldResponse> fields) {}
+                                  BigDecimal cost, BigDecimal salePrice, BigDecimal monthlyPrice, Integer version, Integer sortOrder, List<CredentialFieldResponse> fields) {}
     public record CredentialFieldResponse(UUID id, String key, String label, FieldType fieldType, Boolean isRequired,
                                           String placeholder, String validationRegex, Integer sortOrder) {}
 }

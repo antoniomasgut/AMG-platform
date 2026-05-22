@@ -4,13 +4,17 @@ import com.amg.digitalitzacio.agents.api.dto.*;
 import com.amg.digitalitzacio.agents.domain.Conversation;
 import com.amg.digitalitzacio.agents.domain.ConversationRepository;
 import com.amg.digitalitzacio.agents.domain.ConversationRole;
+import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
+import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +31,8 @@ public class ConversationalAgentController {
 
     private final ConversationRepository conversationRepository;
     private final TenantChatLinkRepository tenantChatLinkRepository;
+    private final TenantAIConfigRepository tenantAIConfigRepository;
+    private final AIProviderRouter aiProviderRouter;
 
     @GetMapping("/{tenantId}/conversations")
     public ResponseEntity<List<ConversationResponse>> getConversations(
@@ -234,6 +240,60 @@ public class ConversationalAgentController {
         } catch (Exception e) {
             log.error("Error fetching status for tenant {}", tenantId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /** Retorna els models disponibles (Anthropic, DeepSeek, Ollama) */
+    @GetMapping("/models")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<List<AIProviderRouter.ModelInfo>> getAvailableModels() {
+        return ResponseEntity.ok(aiProviderRouter.availableModels());
+    }
+
+    /** Retorna la configuració d'IA d'un tenant */
+    @GetMapping("/{tenantId}/ai-config")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<TenantAIConfig> getAIConfig(@PathVariable UUID tenantId) {
+        var config = tenantAIConfigRepository.findById(tenantId)
+                .orElse(TenantAIConfig.defaultFor(tenantId));
+        return ResponseEntity.ok(config);
+    }
+
+    /** Actualitza el model d'IA d'un tenant */
+    @PutMapping("/{tenantId}/ai-config")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<TenantAIConfig> updateAIConfig(
+            @PathVariable UUID tenantId,
+            @RequestBody AIConfigRequest request) {
+        var config = tenantAIConfigRepository.findById(tenantId)
+                .orElse(TenantAIConfig.defaultFor(tenantId));
+        if (request.preferredModel() != null && !request.preferredModel().isBlank())
+            config.setPreferredModel(request.preferredModel());
+        if (request.maxTokens() != null)
+            config.setMaxTokens(request.maxTokens());
+        if (request.temperature() != null)
+            config.setTemperature(request.temperature());
+        return ResponseEntity.ok(tenantAIConfigRepository.save(config));
+    }
+
+    /** Test directe d'un model: envia un missatge i retorna la resposta */
+    @PostMapping("/test-model")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<Map<String, String>> testModel(@RequestBody AIModelTestRequest request) {
+        try {
+            var provider = aiProviderRouter.forModel(request.model());
+            String response = provider.chat(
+                    request.systemPrompt() != null ? request.systemPrompt() : "Ets un assistent útil.",
+                    List.of(),
+                    request.message()
+            );
+            return ResponseEntity.ok(Map.of(
+                    "model", request.model(),
+                    "provider", provider.providerName(),
+                    "response", response != null ? response : "(sense resposta)"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 

@@ -311,7 +311,7 @@ public class ProfileManagementService implements ProfileService {
     private ProfileResponse.ServiceResponse toServiceResponse(CatalogService svc, List<CredentialField> fields) {
         return new ProfileResponse.ServiceResponse(svc.getId(), svc.getName(), svc.getSlug(),
                 svc.getDescription(), svc.getType(), svc.getIsAddon(),
-                svc.getCost(), svc.getSalePrice(), svc.getMonthlyPrice(), svc.getSortOrder(),
+                svc.getCost(), svc.getSalePrice(), svc.getMonthlyPrice(), svc.getVersion(), svc.getSortOrder(),
                 fields.stream().map(f -> new ProfileResponse.CredentialFieldResponse(
                         f.getId(), f.getKey(), f.getLabel(), f.getType(), f.getIsRequired(),
                         f.getPlaceholder(), f.getValidationRegex(), f.getSortOrder())).toList());

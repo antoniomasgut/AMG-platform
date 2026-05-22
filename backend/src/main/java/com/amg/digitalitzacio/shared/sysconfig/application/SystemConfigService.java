@@ -28,6 +28,8 @@ public class SystemConfigService {
     /** Definició de totes les claus conegudes del sistema */
     public static final List<KnownKey> KNOWN_KEYS = List.of(
         new KnownKey("ANTHROPIC_API_KEY",      "Anthropic API Key",          "Clau per als agents IA conversacionals (Claude)", "AGENTS",   true),
+        new KnownKey("DEEPSEEK_API_KEY",        "DeepSeek API Key",           "Clau per als models DeepSeek V3 / R1 (alternativa a Claude)", "AGENTS", true),
+        new KnownKey("OLLAMA_BASE_URL",         "Ollama Base URL",            "URL de la instància Ollama (per defecte: http://localhost:11434)", "AGENTS", false),
         new KnownKey("TELEGRAM_BOT_TOKEN",      "Telegram Bot Token",         "Token del bot Telegram per a agents i notificacions", "AGENTS", true),
         new KnownKey("TELEGRAM_CHAT_ID",        "Telegram Chat ID (InfraOps)","ID del chat on enviar alertes d'infraestructura", "INFRAOPS", false),
         new KnownKey("TWILIO_ACCOUNT_SID",      "Twilio Account SID",         "SID del compte Twilio per a WhatsApp Business", "AGENTS",    false),
