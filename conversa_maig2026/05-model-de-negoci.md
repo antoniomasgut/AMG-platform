@@ -29,33 +29,33 @@ El client contracta les fases que necessita. Pot ampliar en qualsevol moment.
 
 | Sector | Mida | Setup | F1 | F1+F2 | F1+F2+F3 | Complet |
 |---|---|---|---|---|---|---|
-| Pintor | Autònom | €150 | €49 | €69 | €89 | €109 |
+| Pintor | Autònom | €150 | €59 | €79 | €99 | €129 |
 | Pintor | + ajudants | €250 | €79 | €99 | €129 | €159 |
-| Electricista | Autònom | €150 | €49 | €69 | €89 | €109 |
+| Electricista | Autònom | €150 | €59 | €79 | €99 | €129 |
 | Electricista | Equip 2-3 | €250 | €79 | €99 | €129 | €159 |
-| Fontaner | Autònom | €150 | €49 | €69 | €89 | €109 |
-| Jardiner | Autònom | €150 | €49 | €69 | €89 | €109 |
-| Neteja | Autònom | €150 | €49 | €69 | €89 | €109 |
+| Fontaner | Autònom | €150 | €59 | €79 | €99 | €129 |
+| Jardiner | Autònom | €150 | €59 | €79 | €99 | €129 |
+| Neteja | Autònom | €150 | €59 | €79 | €99 | €129 |
 | Neteja | Empresa 3-5 | €300 | €89 | €119 | €149 | €179 |
 
 ### Salut i benestar
 
 | Sector | Mida | Setup | F1 | F1+F2 | F1+F2+F3 | Complet |
 |---|---|---|---|---|---|---|
-| Fisioterapeuta | Autònom | €175 | €69 | €89 | €109 | €129 |
+| Fisioterapeuta | Autònom | €175 | €69 | €89 | €109 | €139 |
 | Fisioterapeuta | Gabinet 2 | €275 | €99 | €129 | €169 | €199 |
 | Fisioterapeuta | Gabinet 3-5 | €375 | €129 | €169 | €229 | €279 |
-| Psicòleg | Autònom | €175 | €69 | €89 | €109 | €129 |
+| Psicòleg | Autònom | €175 | €69 | €89 | €109 | €139 |
 | Psicòleg | Centre 2-3 | €300 | €109 | €149 | €189 | €229 |
-| Nutricionista | Autònom | €175 | €59 | €79 | €99 | €119 |
+| Nutricionista | Autònom | €175 | €59 | €79 | €99 | €129 |
 
 ### Estètica
 
 | Sector | Mida | Setup | F1 | F1+F2 | F1+F2+F3 | Complet |
 |---|---|---|---|---|---|---|
-| Perruqueria | Autònom | €150 | €59 | €79 | €99 | €119 |
+| Perruqueria | Autònom | €150 | €59 | €79 | €99 | €129 |
 | Perruqueria | Saló 3-4 | €300 | €99 | €139 | €179 | €219 |
-| Estètica/Spa | Autònom | €150 | €59 | €79 | €99 | €119 |
+| Estètica/Spa | Autònom | €150 | €59 | €79 | €99 | €129 |
 | Estètica/Spa | Centre 3-5 | €350 | €109 | €149 | €189 | €229 |
 
 ### Professionals
@@ -64,18 +64,18 @@ El client contracta les fases que necessita. Pot ampliar en qualsevol moment.
 |---|---|---|---|---|---|---|
 | Gestoria | Autònom | €200 | €69 | €89 | €109 | €139 |
 | Gestoria | 3-5 gestors | €400 | €109 | €149 | €199 | €249 |
-| Academia | Autònom | €175 | €59 | €79 | €99 | €119 |
+| Academia | Autònom | €175 | €59 | €79 | €99 | €129 |
 | Academia | Centre 3-5 | €300 | €99 | €139 | €169 | €209 |
 
 ### Automoció i mascotes
 
 | Sector | Mida | Setup | F1 | F1+F2 | F1+F2+F3 | Complet |
 |---|---|---|---|---|---|---|
-| Taller mecànic | Petit | €150 | €59 | €79 | €99 | €119 |
+| Taller mecànic | Petit | €150 | €59 | €79 | €99 | €129 |
 | Taller mecànic | 3-5 mecànics | €275 | €89 | €119 | €149 | €179 |
-| Veterinari | Autònom | €175 | €69 | €89 | €109 | €129 |
+| Veterinari | Autònom | €175 | €69 | €89 | €109 | €139 |
 | Veterinari | Clínica 2-3 | €325 | €109 | €149 | €189 | €229 |
-| Perruqueria canina | — | €150 | €49 | €69 | €89 | €109 |
+| Perruqueria canina | — | €150 | €49 | €69 | €89 | €119 |
 
 ---
 
@@ -158,7 +158,7 @@ Tot inclòs en el preu mensual — el client no veu mai aquests costos:
 
 | Segment | Preu mensual | Cost intern | **Marge net** |
 |---|---|---|---|
-| Autònom serveis llar F3 | €89 | €17 | **€72** |
+| Autònom serveis llar F3 | €99 | €17 | **€82** |
 | Fisioterapeuta autònom F3 | €109 | €24 | **€85** |
 | Gabinet 3-5 fisios complet | €279 | €48 | **€231** |
 | Gestoria 3-5 gestors F3 | €199 | €32 | **€167** |

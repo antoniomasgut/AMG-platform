@@ -115,39 +115,30 @@ Cada servei es pot contractar solt (add-on) o dins d'una fase. **Tots a 10 €/m
 
 ---
 
-## 3. Fases d'implementació
+## 3. Fases NexeLocal (mapeig comercial → serveis tècnics)
 
-Cada fase agrupa serveis amb un descompte al setup respecte a contractar-los solts. Les fases es configuren independentment.
+El preu que paga el client ve de `SectorPricing` (Spec 22), no de la suma de `CatalogService.salePrice`. Veure `specs/22-sector-pricing.md` per a la matriu completa de preus per sector i mida.
 
-### Fase 1 — Presència Digital
+| Fase NexeLocal | Serveis del catàleg inclosos | Setup client | Mensual client (autònom base) |
+|---------------|------------------------------|-------------|-------------------------------|
+| **F1** Comunicació base | `whatsapp-business` + `bot-ia-basic` | des de 150€ | des de 59€/mes |
+| **F1+F2** + Gestió cites | F1 + `automatitzacio-basica` (agenda + recordatoris) | des de 150€ | des de 79€/mes |
+| **F1+F2+F3** + Pressupostos | F1+F2 + `automatitzacio-avancada` (PDFs + seguiment) | des de 150€ | des de 99€/mes |
+| **Complet (F4)** + Fidelització | F1+F2+F3 + `google-analytics` + addon postvenda | des de 150€ | des de 129€/mes |
+| **F5** Equip | Complet + gestió d'equip (pendent d'implementació) | — | — |
 
-| Serveis inclosos | Setup per separat | Setup fase | Mensual fase |
-|-----------------|------------------|-----------|-------------|
-| Landing (2h) + Domini gestionat (1h + 12 €) | 100 + 62 = 162 € | 150 € (3h eng + 12 €) | 20 €/mes (2 serveis × 10 €) |
-
-### Fase 2 — Comunicació i Automatització
-
-| Serveis inclosos | Setup per separat | Setup fase | Mensual fase |
-|-----------------|------------------|-----------|-------------|
-| WhatsApp (2h) + 2 Automatitzacions bàsiques (2h) | 100 + 100 = 200 € | 180 € (4h eng) | 30 €/mes (3 serveis × 10 €) |
-
-### Fase 3 — Intel·ligència Avançada
-
-| Serveis inclosos | Setup per separat | Setup fase | Mensual fase |
-|-----------------|------------------|-----------|-------------|
-| Bot IA RAG (5h) + Automatització avançada (3h) | 250 + 150 = 400 € | 350 € (6h eng) | 20 €/mes (2 serveis × 10 €) |
+**Ampliació de fase:** 75€ setup únic + increment mensual corresponent.
 
 ---
 
 ## 4. Exemple de facturació
 
-**Client: Restaurant Can Pedro**
-- Contracta: Fase 1 (Presència Digital) el 10 de maig
-- Setup: 150 € (facturat en acceptar)
-- Implementació: 5 dies (del 10 al 15 de maig)
-- Primera factura mensual (31 de maig):
-  - 2 serveis × 10 € × (16 dies actius / 31 dies) = **10,32 €** pro rata
-- Factures següents: **20 €/mes** complets
+**Client: Pintor autònom (sector PINTOR, mida AUTONOMO)**
+- Contracta: F1 Comunicació base el 10 de maig
+- Setup: 150 € (facturat en acceptar, via Billing)
+- Mensual: 59 €/mes (bloquejat a `TenantService.monthlyPriceLocked`)
+- Primera factura mensual (31 de maig): 59 € × (16 dies / 31 dies) = **30,45 €** pro rata
+- Factures següents: **59 €/mes** complets
 
 ---
 
