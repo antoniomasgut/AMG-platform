@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { AMGButton } from '@/components/ui/button';
 import type { ServiceWizardConfig } from '@/config/service-wizards';
 
@@ -11,6 +12,7 @@ interface WizardWelcomeProps {
 }
 
 export function WizardWelcome({ serviceName, config, onStart, onCancel }: WizardWelcomeProps) {
+  const t = useTranslations();
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -24,7 +26,7 @@ export function WizardWelcome({ serviceName, config, onStart, onCancel }: Wizard
           </svg>
         </div>
         <div>
-          <div className="f-display font-bold text-lg">{config.titleKey}</div>
+          <div className="f-display font-bold text-lg">{t(config.titleKey)}</div>
           <p className="text-sm text-ink-2 mt-1">{serviceName}</p>
         </div>
       </div>
@@ -32,10 +34,10 @@ export function WizardWelcome({ serviceName, config, onStart, onCancel }: Wizard
       {/* Description */}
       <div className="amg-card card-clip p-5 space-y-3">
         <div className="f-display font-bold text-sm">Què farem?</div>
-        <p className="text-sm text-ink-2 leading-relaxed">{config.descriptionKey}</p>
+        <p className="text-sm text-ink-2 leading-relaxed">{t(config.descriptionKey)}</p>
 
         <div className="f-display font-bold text-sm mt-4">Necessitaràs:</div>
-        <p className="text-sm text-ink-2 leading-relaxed">{config.prerequisitesKey}</p>
+        <p className="text-sm text-ink-2 leading-relaxed">{t(config.prerequisitesKey)}</p>
       </div>
 
       {/* Steps overview */}
@@ -50,7 +52,7 @@ export function WizardWelcome({ serviceName, config, onStart, onCancel }: Wizard
                 {i + 1}
               </div>
               <div className="min-w-0">
-                <div className="f-display font-bold text-sm">{step.titleKey}</div>
+                <div className="f-display font-bold text-sm">{t(step.titleKey)}</div>
                 <div className="f-mono text-[10px] text-ink-3 uppercase">{step.type}</div>
               </div>
             </div>

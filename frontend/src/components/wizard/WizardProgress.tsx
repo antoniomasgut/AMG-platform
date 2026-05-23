@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface StepSummary {
   id: string;
   titleKey: string;
@@ -7,6 +9,7 @@ interface StepSummary {
 }
 
 export function WizardProgress({ steps, currentStep }: { steps: StepSummary[]; currentStep: number }) {
+  const t = useTranslations();
   return (
     <div className="flex items-center gap-2 mb-6">
       {steps.map((step, i) => {
@@ -29,7 +32,7 @@ export function WizardProgress({ steps, currentStep }: { steps: StepSummary[]; c
                     ? 'bg-[#FF6B00] text-black'
                     : 'bg-[#1a1a2e] text-ink-3 border border-border-base'
                 }`}
-                title={step.titleKey}
+                title={t(step.titleKey)}
               >
                 {isDone ? (
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -47,7 +50,7 @@ export function WizardProgress({ steps, currentStep }: { steps: StepSummary[]; c
                   isActive ? 'text-accent-light' : 'text-ink-3'
                 }`}
               >
-                {step.titleKey}
+                {t(step.titleKey)}
               </span>
             </div>
             {/* Connector line */}

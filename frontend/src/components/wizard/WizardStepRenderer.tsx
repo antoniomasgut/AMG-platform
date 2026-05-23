@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { WizardStep } from '@/config/service-wizards';
 
 interface StepRendererProps {
@@ -12,7 +13,8 @@ interface StepRendererProps {
   onVerify?: () => Promise<boolean>;
 }
 
-function CopyField({ value, label }: { value: string; label: string }) {
+function CopyField({ value, labelKey }: { value: string; labelKey: string }) {
+  const t = useTranslations();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -35,7 +37,7 @@ function CopyField({ value, label }: { value: string; label: string }) {
 
   return (
     <div className="space-y-2">
-      <div className="f-mono text-[10px] uppercase text-ink-3 tracking-widest">{label}</div>
+      <div className="f-mono text-[10px] uppercase text-ink-3 tracking-widest">{t(labelKey)}</div>
       <div className="flex gap-2">
         <code className="flex-1 p-3 rounded bg-[#0d0d1a] border border-border-base text-sm text-ink-1 font-mono truncate">
           {value}
@@ -77,12 +79,13 @@ function CredentialsForm({
   onFieldChange: (id: string, value: string) => void;
   errors: Record<string, string>;
 }) {
+  const t = useTranslations();
   return (
     <div className="space-y-4">
       {fields.map((field) => (
         <div key={field.id}>
           <label className="f-mono text-[10px] uppercase text-ink-2 tracking-widest block mb-1.5">
-            {field.labelKey}
+            {t(field.labelKey)}
             {field.required && <span className="text-red-400 ml-1">*</span>}
           </label>
           {field.type === 'select' && field.options && field.options.length > 0 ? (
@@ -94,7 +97,7 @@ function CredentialsForm({
               <option value="">Selecciona...</option>
               {field.options.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.labelKey}
+                  {t(opt.labelKey)}
                 </option>
               ))}
             </select>
@@ -103,14 +106,14 @@ function CredentialsForm({
               type={field.type}
               value={formData[field.id] ?? ''}
               onChange={(e) => onFieldChange(field.id, e.target.value)}
-              placeholder={field.placeholderKey}
+              placeholder={field.placeholderKey ? t(field.placeholderKey) : undefined}
               className={`w-full p-2.5 rounded bg-[#0d0d1a] border text-sm text-ink-0 focus:outline-none transition ${
                 errors[field.id] ? 'border-red-500' : 'border-border-base focus:border-accent-light'
               }`}
             />
           )}
           {field.hintKey && (
-            <p className="text-[10px] text-ink-3 mt-1">{field.hintKey}</p>
+            <p className="text-[10px] text-ink-3 mt-1">{t(field.hintKey)}</p>
           )}
           {errors[field.id] && (
             <p className="text-[10px] text-red-400 mt-1">{errors[field.id]}</p>
@@ -129,6 +132,7 @@ export function WizardStepRenderer({
   onFieldChange,
   onVerify,
 }: StepRendererProps) {
+  const t = useTranslations();
   const [verifyStatus, setVerifyStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [verifyMessage, setVerifyMessage] = useState('');
 
@@ -153,8 +157,8 @@ export function WizardStepRenderer({
         <div className="f-mono text-[10px] uppercase text-ink-3 tracking-widest">
           Pas {stepIndex + 1} de {totalSteps}
         </div>
-        <div className="f-display font-bold text-lg mt-1">{step.titleKey}</div>
-        <p className="text-sm text-ink-2 mt-1">{step.descriptionKey}</p>
+        <div className="f-display font-bold text-lg mt-1">{t(step.titleKey)}</div>
+        <p className="text-sm text-ink-2 mt-1">{t(step.descriptionKey)}</p>
       </div>
 
       {/* Step content based on type */}
@@ -203,7 +207,7 @@ export function WizardStepRenderer({
             <CopyField
               key={field.id}
               value={formData[field.id] ?? '---'}
-              label={field.labelKey}
+              labelKey={field.labelKey}
             />
           ))}
         </div>

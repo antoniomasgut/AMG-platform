@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { AMGButton } from '@/components/ui/button';
 
 interface StepSummary {
@@ -15,6 +16,7 @@ interface WizardCompleteProps {
 }
 
 export function WizardComplete({ serviceName, steps, onFinish }: WizardCompleteProps) {
+  const t = useTranslations();
   return (
     <div className="space-y-6 text-center">
       {/* Checkmark animation */}
@@ -52,7 +54,7 @@ export function WizardComplete({ serviceName, steps, onFinish }: WizardCompleteP
                 )}
               </div>
               <span className={`text-sm ${step.done ? 'text-ink-0' : 'text-ink-3'}`}>
-                {step.titleKey}
+                {t(step.titleKey)}
               </span>
             </div>
           ))}

@@ -63,6 +63,14 @@ export function registerWizard(config: ServiceWizardConfig) {
 export function getWizardConfig(slug: string, serviceType?: string): ServiceWizardConfig | undefined {
   const exact = slugMap().get(slug);
   if (exact) return exact;
+  // Profile-specific slugs follow '{order}-{profile}-{base}' pattern (e.g., '2-agencia-ia-bot-ia-basic')
+  // Try progressively shorter suffixes to find the base wizard slug
+  const parts = slug.split('-');
+  for (let i = 1; i < parts.length; i++) {
+    const candidate = parts.slice(i).join('-');
+    const match = slugMap().get(candidate);
+    if (match) return match;
+  }
   if (serviceType) {
     const fallbackSlug = typeMap().get(serviceType);
     if (fallbackSlug) return slugMap().get(fallbackSlug);
