@@ -24,7 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AIProviderRouter {
 
-    public static final String DEFAULT_MODEL = "claude-haiku-4-5-20251001";
+    public static final String FALLBACK_MODEL = "claude-haiku-4-5-20251001";
     private static final String DEEPSEEK_BASE_URL = "https://api.deepseek.com";
     private static final String OLLAMA_DEFAULT_URL = "http://localhost:11434";
 
@@ -32,8 +32,13 @@ public class AIProviderRouter {
     private final RestClient.Builder restClientBuilder;
     private final ObjectMapper objectMapper;
 
+    public String defaultModel() {
+        String configured = sysConfig.get("AGENTS_DEFAULT_MODEL");
+        return (configured != null && !configured.isBlank()) ? configured : FALLBACK_MODEL;
+    }
+
     public AIProvider forModel(String model) {
-        String m = (model == null || model.isBlank()) ? DEFAULT_MODEL : model;
+        String m = (model == null || model.isBlank()) ? defaultModel() : model;
 
         if (m.startsWith("claude-")) {
             String apiKey = sysConfig.get("ANTHROPIC_API_KEY");

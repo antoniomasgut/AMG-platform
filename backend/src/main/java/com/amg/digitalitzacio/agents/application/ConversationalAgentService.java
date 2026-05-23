@@ -44,7 +44,7 @@ public class ConversationalAgentService {
 
             String model = tenantAIConfigRepository.findById(tenantId)
                     .map(TenantAIConfig::getPreferredModel)
-                    .orElse(AIProviderRouter.DEFAULT_MODEL);
+                    .orElse(aiProviderRouter.defaultModel());
 
             var chatHistory = history.stream()
                     .map(c -> new ChatMessage(c.getRole().name(), c.getContent()))
