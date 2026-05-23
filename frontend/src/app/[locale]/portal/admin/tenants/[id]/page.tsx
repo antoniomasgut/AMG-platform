@@ -7,10 +7,12 @@ import { useToast } from '@/lib/toast-context';
 import {
   getTenant, getTenantSetup, listCatalogServices,
   listProfiles, assignProfileToTenant, removeProfileFromTenant,
-  lookupSectorPricing, updateTenant,
+  lookupSectorPricing, updateTenant, toggleTenantService,
+  getAgentChannels, updateAgentChannels, getAIConfig, updateAIConfig, getAvailableModels,
   SECTOR_LABELS, SIZE_LABELS, PHASE_LABELS, PHASE_UPGRADE_PRICE,
   type TenantResponse, type TenantSetup, type CatalogService,
-  type CatalogProfileResponse, type SectorPricingResponse, calcMonthly,
+  type CatalogProfileResponse, type SectorPricingResponse, type ChannelsConfig, type AIConfig, type ModelInfo,
+  calcMonthly,
 } from '@/services/admin';
 import { listLandings } from '@/services/factory';
 import { getWizardConfig } from '@/config/service-wizards';
@@ -60,7 +62,40 @@ function ServiceCatalogTable({ services }: { services: CatalogService[] }) {
   );
 }
 
-function SetupSection({ setup, tenantId }: { setup: TenantSetup; tenantId: string }) {
+function ServiceToggle({ tenantId, serviceId, enabled, onToggle }: {
+  tenantId: string; serviceId: string; enabled: boolean; onToggle: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleToggle = async () => {
+    setLoading(true);
+    try {
+      await toggleTenantService(tenantId, serviceId);
+      onToggle();
+    } catch {
+      toast('error', 'Error canviant l\'estat del servei');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleToggle}
+      disabled={loading}
+      title={enabled ? 'Desactivar servei' : 'Activar servei'}
+      className={`flex-shrink-0 w-9 h-5 rounded-full transition-colors relative ${
+        enabled ? 'bg-[#FF6B00]' : 'bg-[rgba(255,255,255,0.12)]'
+      } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
+      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${enabled ? 'left-4' : 'left-0.5'}`} />
+    </button>
+  );
+}
+
+function SetupSection({ setup, tenantId, onRefresh }: { setup: TenantSetup; tenantId: string; onRefresh: () => void }) {
   const hasProfiles = setup.profiles.length > 0;
   const hasAddons = setup.addons.length > 0;
 
@@ -91,8 +126,13 @@ function SetupSection({ setup, tenantId }: { setup: TenantSetup; tenantId: strin
               {ph.services.map((svc) => {
                 const isPending = svc.status === 'PENDING' || svc.status === 'CONFIGURING' || svc.status === 'AWAITING_CLIENT';
                 return (
-                  <div key={svc.service.id} className="flex items-center gap-2 pl-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-ink-3 flex-shrink-0" />
+                  <div key={svc.service.id} className={`flex items-center gap-2 pl-2 transition-opacity ${!svc.isEnabled ? 'opacity-40' : ''}`}>
+                    <ServiceToggle
+                      tenantId={tenantId}
+                      serviceId={svc.service.id}
+                      enabled={svc.isEnabled}
+                      onToggle={onRefresh}
+                    />
                     <span className="text-sm text-ink-1">{svc.service.name}</span>
                     <span className="f-mono text-[10px] text-ink-3 uppercase">{svc.service.type}</span>
                     {statusBadge(svc.status, 'Actiu', 'Inactiu')}
@@ -279,6 +319,205 @@ function ContractSection({ tenant }: { tenant: TenantResponse }) {
             </pre>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+const MODE_LABELS: Record<string, { label: string; desc: string }> = {
+  AUTO: { label: 'Automàtic', desc: 'L\'agent respon immediatament' },
+  HYBRID: { label: 'Híbrid', desc: 'Respostes pendents d\'aprovació' },
+  MANUAL: { label: 'Manual', desc: 'Només notifica, no respon' },
+};
+
+function AgentConfigCard({ tenantId, agentSystemPrompt }: { tenantId: string; agentSystemPrompt: string | null }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [saving, setSaving] = useState<string | null>(null);
+  const [promptDraft, setPromptDraft] = useState<string | null>(null);
+
+  const { data: channels } = useQuery({
+    queryKey: ['agent-channels', tenantId],
+    queryFn: () => getAgentChannels(tenantId),
+  });
+
+  const { data: aiConfig } = useQuery({
+    queryKey: ['agent-ai-config', tenantId],
+    queryFn: () => getAIConfig(tenantId),
+  });
+
+  const { data: models } = useQuery({
+    queryKey: ['agent-models'],
+    queryFn: () => getAvailableModels(),
+  });
+
+  const save = async (key: string, fn: () => Promise<unknown>) => {
+    setSaving(key);
+    try {
+      await fn();
+      qc.invalidateQueries({ queryKey: ['agent-channels', tenantId] });
+      qc.invalidateQueries({ queryKey: ['agent-ai-config', tenantId] });
+      qc.invalidateQueries({ queryKey: ['tenant', tenantId] });
+      toast('success', 'Guardat');
+    } catch {
+      toast('error', 'Error guardant la configuració');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const telegramWebhookUrl = `https://api.amgdl.com/api/v1/agents/telegram/webhook/${tenantId}`;
+
+  return (
+    <div className="amg-card card-clip">
+      <div className="p-4 sm:p-5 border-b border-border-base">
+        <AMGSectionTitle eyebrow="Mòdul 20" title="Agent IA & Canals" />
+      </div>
+      <div className="p-5 space-y-6">
+
+        {/* Mode de l'agent */}
+        <div className="space-y-2">
+          <div className="f-mono text-label uppercase tracking-widest text-ink-3">Mode de resposta</div>
+          <div className="flex gap-2 flex-wrap">
+            {(['AUTO', 'HYBRID', 'MANUAL'] as const).map((mode) => {
+              const active = channels?.agentMode === mode;
+              return (
+                <button key={mode} type="button"
+                  disabled={saving === 'mode'}
+                  onClick={() => save('mode', () => updateAgentChannels(tenantId, { agentMode: mode }))}
+                  className={`flex-1 min-w-[120px] text-left px-3 py-2.5 border rounded text-sm transition ${
+                    active ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.12)] text-white' : 'border-border-base hover:border-ink-2 text-ink-2'
+                  }`}>
+                  <div className="font-semibold">{MODE_LABELS[mode].label}</div>
+                  <div className="text-[10px] opacity-70">{MODE_LABELS[mode].desc}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Bot actiu */}
+        <div className="space-y-2">
+          <div className="f-mono text-label uppercase tracking-widest text-ink-3">Bot actiu</div>
+          <button type="button"
+            disabled={saving === 'active'}
+            onClick={() => save('active', () => updateAgentChannels(tenantId, { isActive: !channels?.isActive }))}
+            className={`flex items-center gap-3 px-4 py-3 border rounded text-sm transition w-full max-w-sm ${
+              channels?.isActive ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.08)] text-white' : 'border-border-base text-ink-2'
+            }`}>
+            <div className={`w-10 h-5 rounded-full transition-colors relative flex-shrink-0 ${channels?.isActive ? 'bg-[#FF6B00]' : 'bg-[rgba(255,255,255,0.12)]'}`}>
+              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${channels?.isActive ? 'left-5' : 'left-0.5'}`} />
+            </div>
+            <span className="font-semibold">{channels?.isActive ? 'Bot activat' : 'Bot desactivat'}</span>
+          </button>
+        </div>
+
+        {/* Telegram */}
+        <div className="space-y-2">
+          <div className="f-mono text-label uppercase tracking-widest text-ink-3">Telegram</div>
+          <div className="space-y-2 p-3 border border-border-base rounded">
+            <div className="flex items-center gap-2">
+              {channels?.telegramLinked
+                ? <><span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" /><span className="text-sm text-ink-1">Vinculat (chat {channels.telegramChatId})</span></>
+                : <><span className="w-2 h-2 rounded-full bg-ink-3 flex-shrink-0" /><span className="text-sm text-ink-2">No vinculat — el client ha d&apos;enviar un missatge primer</span></>
+              }
+            </div>
+            <div className="f-mono text-[10px] text-ink-3">Webhook URL:</div>
+            <div className="flex items-center gap-2">
+              <code className="f-mono text-[10px] text-ink-2 bg-[rgba(255,255,255,0.04)] px-2 py-1 rounded flex-1 truncate">
+                {telegramWebhookUrl}
+              </code>
+              <button type="button" onClick={() => { navigator.clipboard.writeText(telegramWebhookUrl); toast('success', 'Copiat'); }}
+                className="text-[10px] f-mono text-accent-light hover:text-accent transition flex-shrink-0">
+                Copiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* WhatsApp */}
+        <div className="space-y-2">
+          <div className="f-mono text-label uppercase tracking-widest text-ink-3">WhatsApp</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="f-mono text-xs text-ink-2">Twilio (número E.164)</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  defaultValue={channels?.whatsappPhoneNumber ?? ''}
+                  key={channels?.whatsappPhoneNumber ?? 'wa-twilio'}
+                  placeholder="+34612345678"
+                  className="flex-1 bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00] transition"
+                  onBlur={(e) => {
+                    const val = e.target.value.trim();
+                    if (val !== (channels?.whatsappPhoneNumber ?? ''))
+                      save('wa-twilio', () => updateAgentChannels(tenantId, { whatsappPhoneNumber: val }));
+                  }}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="f-mono text-xs text-ink-2">Meta (Phone Number ID)</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  defaultValue={channels?.whatsappMetaPhoneNumberId ?? ''}
+                  key={channels?.whatsappMetaPhoneNumberId ?? 'wa-meta'}
+                  placeholder="123456789012345"
+                  className="flex-1 bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00] transition"
+                  onBlur={(e) => {
+                    const val = e.target.value.trim();
+                    if (val !== (channels?.whatsappMetaPhoneNumberId ?? ''))
+                      save('wa-meta', () => updateAgentChannels(tenantId, { whatsappMetaPhoneNumberId: val }));
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Model d'IA */}
+        <div className="space-y-2">
+          <div className="f-mono text-label uppercase tracking-widest text-ink-3">Model d&apos;IA</div>
+          <select
+            value={aiConfig?.preferredModel ?? ''}
+            onChange={(e) => save('model', () => updateAIConfig(tenantId, { preferredModel: e.target.value }))}
+            className="w-full sm:w-auto bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2.5 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00] transition">
+            {models?.map((m) => (
+              <option key={m.id} value={m.id}>{m.label} ({m.provider})</option>
+            ))}
+            {(!models || models.length === 0) && aiConfig?.preferredModel && (
+              <option value={aiConfig.preferredModel}>{aiConfig.preferredModel}</option>
+            )}
+          </select>
+        </div>
+
+        {/* Prompt del sistema */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="f-mono text-label uppercase tracking-widest text-ink-3">Prompt del sistema</div>
+            {saving === 'prompt' && <span className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" />}
+          </div>
+          <textarea
+            value={promptDraft ?? agentSystemPrompt ?? ''}
+            onChange={(e) => setPromptDraft(e.target.value)}
+            rows={10}
+            placeholder="Introdueix el prompt del sistema per a l'agent..."
+            className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2.5 text-xs f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00] transition resize-y"
+          />
+          {promptDraft !== null && promptDraft !== (agentSystemPrompt ?? '') && (
+            <div className="flex gap-2">
+              <AMGButton size="sm" loading={saving === 'prompt'}
+                onClick={() => save('prompt', () => updateTenant(tenantId, { agentSystemPrompt: promptDraft }).then(() => setPromptDraft(null)))}>
+                Guardar prompt
+              </AMGButton>
+              <AMGButton size="sm" variant="ghost" onClick={() => setPromptDraft(null)}>
+                Cancel·lar
+              </AMGButton>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
@@ -476,7 +715,7 @@ export default function TenantDetailPage() {
               <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
             </div>
           ) : setup ? (
-            <SetupSection setup={setup} tenantId={id} />
+            <SetupSection setup={setup} tenantId={id} onRefresh={invalidateSetup} />
           ) : (
             <div className="p-8 text-center">
               <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
@@ -484,6 +723,9 @@ export default function TenantDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Agent IA & Canals */}
+        <AgentConfigCard tenantId={id} agentSystemPrompt={tenant.agentSystemPrompt} />
 
         {/* Catàleg de serveis */}
         <div className="amg-card card-clip">

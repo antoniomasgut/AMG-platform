@@ -19,8 +19,10 @@ public record SetupResponse(
         ) {
             public record PhaseRef(UUID id, String name, Integer sortOrder) {}
             public record ServiceSetup(
+                UUID tenantServiceId,
                 ServiceRef service,
                 String status,
+                Boolean isEnabled,
                 List<FieldSetup> fields
             ) {
                 public record ServiceRef(UUID id, String name, String slug, String type) {}

@@ -25,6 +25,7 @@ public class TenantService {
     @Builder.Default @Column(nullable = false) private Integer catalogVersionLocked = 1;
     @Builder.Default @Column(nullable = false) private Boolean outdated = false;
     private Instant outdatedAt;
+    @Builder.Default @Column(nullable = false, name = "is_enabled") private Boolean isEnabled = true;
     private Instant activatedAt;
     private Instant statusChangedAt;
     @CreatedDate @Column(updatable = false) private Instant createdAt;

@@ -167,6 +167,16 @@ public class TenantVaultService implements VaultService {
         tenantServiceRepository.save(ts);
     }
 
+    @Transactional
+    public boolean toggleService(UUID tenantId, UUID serviceId) {
+        var ts = tenantServiceRepository.findByTenantIdAndServiceId(tenantId, serviceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant service not found"));
+        boolean newState = !Boolean.TRUE.equals(ts.getIsEnabled());
+        ts.setIsEnabled(newState);
+        tenantServiceRepository.save(ts);
+        return newState;
+    }
+
     @Override
     @Transactional
     public void setCredential(UUID tenantId, UUID serviceId, UUID fieldId, String value, UUID userId) {
@@ -395,9 +405,12 @@ public class TenantVaultService implements VaultService {
                     }).toList();
 
                     serviceSetups.add(new SetupResponse.ProfileSetup.PhaseSetup.ServiceSetup(
+                            ts.getId(),
                             new SetupResponse.ProfileSetup.PhaseSetup.ServiceSetup.ServiceRef(
                                     svc.getId(), svc.getName(), svc.getSlug(), svc.getType().name()),
-                            ts.getStatus().name(), fieldSetups));
+                            ts.getStatus().name(),
+                            Boolean.TRUE.equals(ts.getIsEnabled()),
+                            fieldSetups));
                 }
 
                 phaseSetups.add(new SetupResponse.ProfileSetup.PhaseSetup(

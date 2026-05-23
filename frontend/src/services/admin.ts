@@ -38,7 +38,8 @@ export interface CreateTenantRequest {
 }
 
 export interface UpdateTenantRequest {
-  name?: string; email?: string; phone?: string; address?: string; isActive?: boolean; isFree?: boolean;
+  name?: string; email?: string; phone?: string; address?: string;
+  isActive?: boolean; isFree?: boolean; agentSystemPrompt?: string;
 }
 
 export const listUsers = (params: { page?: number; size?: number; role?: string; tenantId?: string; search?: string } = {}) => {
@@ -111,8 +112,10 @@ export interface TenantSetup {
       phase: { id: string; name: string; sortOrder: number };
       approvalStatus: string;
       services: Array<{
+        tenantServiceId: string;
         service: { id: string; name: string; slug: string; type: string };
         status: string;
+        isEnabled: boolean;
       }>;
     }>;
   }>;
@@ -121,6 +124,27 @@ export interface TenantSetup {
     approvalRequired: boolean;
     approvalStatus: string;
   }>;
+}
+
+export interface ChannelsConfig {
+  tenantId: string;
+  agentMode: 'AUTO' | 'HYBRID' | 'MANUAL';
+  isActive: boolean;
+  telegramLinked: boolean;
+  telegramChatId: number | null;
+  whatsappPhoneNumber: string | null;
+  whatsappMetaPhoneNumberId: string | null;
+}
+
+export interface AIConfig {
+  tenantId: string;
+  preferredModel: string;
+  maxTokens: number;
+  temperature: number;
+}
+
+export interface ModelInfo {
+  id: string; label: string; provider: string; requiresApiKey: boolean;
 }
 
 export interface AssignProfileResponse {
@@ -140,6 +164,28 @@ export const assignProfileToTenant = (tenantId: string, profileId: string) =>
 
 export const removeProfileFromTenant = (tenantId: string, profileId: string) =>
   apiFetch<void>(`/vault/tenants/${tenantId}/profiles/${profileId}`, { method: 'DELETE' });
+
+export const toggleTenantService = (tenantId: string, serviceId: string) =>
+  apiFetch<{ isEnabled: boolean }>(`/vault/tenants/${tenantId}/services/${serviceId}/toggle`, { method: 'PATCH' });
+
+export const getAgentChannels = (tenantId: string) =>
+  apiFetch<ChannelsConfig>(`/agents/conversational/${tenantId}/channels`);
+
+export const updateAgentChannels = (tenantId: string, data: Partial<ChannelsConfig>) =>
+  apiFetch<ChannelsConfig>(`/agents/conversational/${tenantId}/channels`, {
+    method: 'PUT', body: JSON.stringify(data),
+  });
+
+export const getAIConfig = (tenantId: string) =>
+  apiFetch<AIConfig>(`/agents/conversational/${tenantId}/ai-config`);
+
+export const updateAIConfig = (tenantId: string, data: Partial<AIConfig>) =>
+  apiFetch<AIConfig>(`/agents/conversational/${tenantId}/ai-config`, {
+    method: 'PUT', body: JSON.stringify(data),
+  });
+
+export const getAvailableModels = () =>
+  apiFetch<ModelInfo[]>('/agents/conversational/models');
 
 // --- Vault Catalog Management (profiles, phases, services) ---
 

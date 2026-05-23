@@ -8,6 +8,7 @@ import com.amg.digitalitzacio.vault.domain.ImplementationStatus;
 import com.amg.digitalitzacio.vault.domain.ServiceStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -180,6 +181,14 @@ public class VaultController {
     public void changeServiceStatus(@PathVariable UUID tenantId, @PathVariable UUID serviceId,
                                      @RequestBody ChangeServiceStatusRequest request) {
         vaultService.changeServiceStatus(tenantId, serviceId, ServiceStatus.valueOf(request.status()));
+    }
+
+    @PatchMapping("/tenants/{tenantId}/services/{serviceId}/toggle")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<java.util.Map<String, Boolean>> toggleService(
+            @PathVariable UUID tenantId, @PathVariable UUID serviceId) {
+        boolean enabled = vaultService.toggleService(tenantId, serviceId);
+        return ResponseEntity.ok(java.util.Map.of("isEnabled", enabled));
     }
 
     // --- Credentials ---

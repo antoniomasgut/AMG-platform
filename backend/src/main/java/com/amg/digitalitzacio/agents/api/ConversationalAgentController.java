@@ -243,6 +243,55 @@ public class ConversationalAgentController {
         }
     }
 
+    /** Retorna la configuració de canals d'un tenant (Telegram, WhatsApp, mode) */
+    @GetMapping("/{tenantId}/channels")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<com.amg.digitalitzacio.agents.api.dto.ChannelsResponse> getChannels(@PathVariable UUID tenantId) {
+        var chatLink = tenantChatLinkRepository.findByTenantId(tenantId).orElse(null);
+        if (chatLink == null) {
+            return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
+                    tenantId, "AUTO", false, false, null, null, null));
+        }
+        return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
+                tenantId,
+                chatLink.getAgentMode().name(),
+                chatLink.getIsActive(),
+                chatLink.getTelegramChatId() != null,
+                chatLink.getTelegramChatId(),
+                chatLink.getWhatsappPhoneNumber(),
+                chatLink.getWhatsappMetaPhoneNumberId()
+        ));
+    }
+
+    /** Actualitza la configuració de canals d'un tenant */
+    @PutMapping("/{tenantId}/channels")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<com.amg.digitalitzacio.agents.api.dto.ChannelsResponse> updateChannels(
+            @PathVariable UUID tenantId,
+            @RequestBody com.amg.digitalitzacio.agents.api.dto.UpdateChannelsRequest request) {
+        var chatLink = tenantChatLinkRepository.findByTenantId(tenantId)
+                .orElseGet(() -> com.amg.digitalitzacio.agents.domain.TenantChatLink.builder()
+                        .tenantId(tenantId).build());
+        if (request.agentMode() != null)
+            chatLink.setAgentMode(com.amg.digitalitzacio.agents.domain.AgentMode.valueOf(request.agentMode()));
+        if (request.isActive() != null)
+            chatLink.setIsActive(request.isActive());
+        if (request.whatsappPhoneNumber() != null)
+            chatLink.setWhatsappPhoneNumber(request.whatsappPhoneNumber().isBlank() ? null : request.whatsappPhoneNumber());
+        if (request.whatsappMetaPhoneNumberId() != null)
+            chatLink.setWhatsappMetaPhoneNumberId(request.whatsappMetaPhoneNumberId().isBlank() ? null : request.whatsappMetaPhoneNumberId());
+        chatLink = tenantChatLinkRepository.save(chatLink);
+        return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
+                tenantId,
+                chatLink.getAgentMode().name(),
+                chatLink.getIsActive(),
+                chatLink.getTelegramChatId() != null,
+                chatLink.getTelegramChatId(),
+                chatLink.getWhatsappPhoneNumber(),
+                chatLink.getWhatsappMetaPhoneNumberId()
+        ));
+    }
+
     /** Retorna els models disponibles (Anthropic, DeepSeek, Ollama) */
     @GetMapping("/models")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")

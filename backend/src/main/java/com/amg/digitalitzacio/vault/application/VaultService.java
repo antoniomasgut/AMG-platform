@@ -14,6 +14,7 @@ public interface VaultService {
     void rejectPhase(UUID tenantId, UUID phaseId);
     void advancePhase(UUID tenantId, UUID phaseId, ImplementationStatus status);
     void changeServiceStatus(UUID tenantId, UUID serviceId, ServiceStatus newStatus);
+    boolean toggleService(UUID tenantId, UUID serviceId);
     void setCredential(UUID tenantId, UUID serviceId, UUID fieldId, String value, UUID userId);
     boolean verifyService(UUID tenantId, UUID serviceId);
     AddonResponse addAddon(UUID tenantId, UUID serviceId, UUID addedBy);
