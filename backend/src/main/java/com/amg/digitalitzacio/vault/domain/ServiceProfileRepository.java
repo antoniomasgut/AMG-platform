@@ -7,4 +7,5 @@ import java.util.UUID;
 
 public interface ServiceProfileRepository extends JpaRepository<ServiceProfile, UUID> {
     Optional<ServiceProfile> findBySlug(String slug);
+    boolean existsBySlug(String slug);
 }
