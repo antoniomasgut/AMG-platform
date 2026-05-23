@@ -418,5 +418,71 @@
     "save": "Save",
     "cancel": "Cancel",
     "loading": "Loading..."
+  },
+  "onboarding": {
+    "eyebrow": "GETTING STARTED",
+    "title": "Welcome, {name}! Let's get started.",
+    "subtitle": "Complete the steps to get the most out of your portal.",
+    "progress": "{completed} / {total} steps",
+    "skip": "Skip onboarding",
+    "complete_title": "You're all set!",
+    "complete_subtitle": "Everything is configured. Your portal is ready.",
+    "complete_cta": "Go to dashboard",
+    "vault_pending": "Configuration pending",
+    "vault_pending_desc": "Your account has services pending configuration. Review them to activate.",
+    "vault_pending_cta": "Review →",
+    "steps": {
+      "landing_title": "Create your first landing page",
+      "landing_desc": "Publish your website in under 5 minutes with the visual editor.",
+      "landing_cta": "Get started",
+      "automation_title": "Connect an automation",
+      "automation_desc": "Connect n8n to send emails, WhatsApp, or receive automatic notifications.",
+      "automation_cta": "Get started",
+      "billing_title": "Generate your first budget",
+      "billing_desc": "Create a custom budget and send it to your client as a PDF.",
+      "billing_cta": "Get started"
+    }
+  },
+  "portalNav": {
+    "groups": {
+      "summary": "Summary",
+      "myServices": "My services",
+      "clientsLeads": "Clients & leads",
+      "finances": "Finances",
+      "overview": "Overview",
+      "acquisition": "Acquisition",
+      "commercial": "Commercial",
+      "services": "Services",
+      "operations": "Operations",
+      "clients": "Clients",
+      "system": "System"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "myWebs": "My websites",
+      "automations": "Automations",
+      "agentAI": "AI Agent",
+      "agentsAI": "AI Agents",
+      "inbox": "Conversations",
+      "files": "Files",
+      "leadsCRM": "Leads CRM",
+      "quotes": "Quotes",
+      "invoices": "Invoices",
+      "payments": "Payments",
+      "process": "Process",
+      "prospecting": "Prospecting",
+      "landings": "Landings",
+      "domains": "Domains",
+      "assets": "Files",
+      "opsHealth": "System health",
+      "tenants": "Tenants",
+      "users": "Users",
+      "programs": "Programs",
+      "catalog": "Catalog",
+      "templates": "Templates",
+      "backup": "Backups",
+      "infraOps": "Infrastructure",
+      "apiKeys": "API Keys"
+    }
   }
 }

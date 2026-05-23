@@ -49,3 +49,19 @@ export const listDiscounts = (tenantId?: string, isActive?: boolean) => {
   if (isActive !== undefined) params.set('isActive', String(isActive));
   return apiFetch<DiscountResponse[]>(`/billing/discounts?${params}`);
 };
+
+export interface CreateBudgetRequest {
+  profileId?: string;
+  phaseIds?: string[];
+  addonIds?: string[];
+  notes?: string;
+  clientNotes?: string;
+  discountIds?: string[];
+  validUntil?: string;
+}
+
+export const createBudget = (tenantId: string, data: CreateBudgetRequest) =>
+  apiFetch<BudgetResponse>(`/billing/tenants/${tenantId}/budgets`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });

@@ -24,6 +24,16 @@ public class Contact {
     @Column(name = "display_name")
     private String displayName;
 
+    @Column(name = "conversation_summary", columnDefinition = "TEXT")
+    private String conversationSummary;
+
+    @Builder.Default
+    @Column(name = "total_message_count", nullable = false)
+    private Integer totalMessageCount = 0;
+
+    @Column(name = "summary_updated_at")
+    private Instant summaryUpdatedAt;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

@@ -54,14 +54,14 @@ public class ConversationalAgentService {
 
             conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.USER, text, false);
 
-            var history = conversationService.loadHistory(tenantId, customerIdentifier, channel);
-            String systemPrompt = promptBuilder.build(tenantId);
+            var context = conversationService.loadCustomerContext(tenantId, customerIdentifier, channel);
+            String systemPrompt = promptBuilder.build(tenantId, context);
 
             String model = tenantAIConfigRepository.findById(tenantId)
                     .map(TenantAIConfig::getPreferredModel)
                     .orElse(aiProviderRouter.defaultModel());
 
-            var chatHistory = history.stream()
+            var chatHistory = context.recentMessages().stream()
                     .map(c -> new ChatMessage(c.getRole().name(), c.getContent()))
                     .toList();
 

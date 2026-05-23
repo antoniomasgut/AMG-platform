@@ -1,14 +1,17 @@
 package com.amg.digitalitzacio.agents.api;
 
 import com.amg.digitalitzacio.agents.api.dto.*;
+import com.amg.digitalitzacio.agents.application.TelegramBotClient;
 import com.amg.digitalitzacio.agents.domain.Conversation;
 import com.amg.digitalitzacio.agents.domain.ConversationRepository;
 import com.amg.digitalitzacio.agents.domain.ConversationRole;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
+import com.amg.digitalitzacio.agents.domain.TenantChatLink;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,6 +37,8 @@ public class ConversationalAgentController {
     private final TenantChatLinkRepository tenantChatLinkRepository;
     private final TenantAIConfigRepository tenantAIConfigRepository;
     private final AIProviderRouter aiProviderRouter;
+    private final TelegramBotClient telegramBotClient;
+    private final SystemConfigService systemConfigService;
 
     @GetMapping("/{tenantId}/conversations")
     public ResponseEntity<List<ConversationResponse>> getConversations(
@@ -343,6 +349,121 @@ public class ConversationalAgentController {
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /** Retorna les instruccions d'activació per canal (Telegram, WhatsApp) */
+    @GetMapping("/{tenantId}/activation-instructions")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<Map<String, Object>> getActivationInstructions(@PathVariable UUID tenantId) {
+        try {
+            var chatLink = tenantChatLinkRepository.findByTenantId(tenantId).orElse(null);
+
+            String botUsername = systemConfigService.get("TELEGRAM_BOT_USERNAME");
+            if (botUsername == null || botUsername.isBlank()) {
+                botUsername = "AMGDL_Bot";
+            }
+
+            boolean telegramLinked = chatLink != null && chatLink.getTelegramChatId() != null;
+            boolean whatsappConfigured = chatLink != null && chatLink.getWhatsappPhoneNumber() != null
+                    && !chatLink.getWhatsappPhoneNumber().isBlank();
+
+            Map<String, Object> telegram = new LinkedHashMap<>();
+            telegram.put("active", telegramLinked);
+            telegram.put("configured", telegramLinked);
+            telegram.put("instructions", telegramLinked
+                    ? "Els vostres clients poden parlar amb el bot a t.me/" + botUsername
+                    : null);
+            telegram.put("link", telegramLinked ? "https://t.me/" + botUsername : null);
+
+            Map<String, Object> whatsapp = new LinkedHashMap<>();
+            whatsapp.put("active", whatsappConfigured);
+            whatsapp.put("configured", whatsappConfigured);
+            whatsapp.put("instructions", null);
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("telegram", telegram);
+            result.put("whatsapp", whatsapp);
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Error fetching activation instructions for tenant {}", tenantId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /** Activa el bot per al tenant */
+    @PostMapping("/{tenantId}/activate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<com.amg.digitalitzacio.agents.api.dto.ChannelsResponse> activate(@PathVariable UUID tenantId) {
+        try {
+            var chatLink = tenantChatLinkRepository.findByTenantId(tenantId)
+                    .orElseGet(() -> TenantChatLink.builder().tenantId(tenantId).build());
+
+            boolean hasChannel = chatLink.getTelegramChatId() != null
+                    || (chatLink.getWhatsappPhoneNumber() != null && !chatLink.getWhatsappPhoneNumber().isBlank())
+                    || (chatLink.getEmailAddress() != null && !chatLink.getEmailAddress().isBlank());
+
+            if (!hasChannel) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            chatLink.setIsActive(true);
+            chatLink = tenantChatLinkRepository.save(chatLink);
+
+            if (chatLink.getTelegramChatId() != null) {
+                String botUsername = systemConfigService.get("TELEGRAM_BOT_USERNAME");
+                if (botUsername == null || botUsername.isBlank()) {
+                    botUsername = "AMGDL_Bot";
+                }
+                String msg = "✅ Bot activat\n\n"
+                        + "El vostre assistent virtual ja és en línia. Els vostres clients poden escriure-us i rebran resposta automàtica.\n\n"
+                        + "Canal Telegram actiu: t.me/" + botUsername;
+                telegramBotClient.sendMessage(chatLink.getTelegramChatId(), msg);
+            }
+
+            log.info("Bot activat per al tenant {}", tenantId);
+            return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
+                    tenantId,
+                    chatLink.getAgentMode().name(),
+                    chatLink.getIsActive(),
+                    chatLink.getTelegramChatId() != null,
+                    chatLink.getTelegramChatId(),
+                    chatLink.getWhatsappPhoneNumber(),
+                    chatLink.getWhatsappMetaPhoneNumberId()
+            ));
+        } catch (Exception e) {
+            log.error("Error activant bot per al tenant {}", tenantId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /** Desactiva el bot per al tenant */
+    @PostMapping("/{tenantId}/deactivate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<com.amg.digitalitzacio.agents.api.dto.ChannelsResponse> deactivate(@PathVariable UUID tenantId) {
+        try {
+            var chatLink = tenantChatLinkRepository.findByTenantId(tenantId)
+                    .orElseThrow(() -> new IllegalArgumentException("Chat link not found"));
+
+            chatLink.setIsActive(false);
+            chatLink = tenantChatLinkRepository.save(chatLink);
+
+            log.info("Bot desactivat per al tenant {}", tenantId);
+            return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
+                    tenantId,
+                    chatLink.getAgentMode().name(),
+                    chatLink.getIsActive(),
+                    chatLink.getTelegramChatId() != null,
+                    chatLink.getTelegramChatId(),
+                    chatLink.getWhatsappPhoneNumber(),
+                    chatLink.getWhatsappMetaPhoneNumberId()
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error desactivant bot per al tenant {}", tenantId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

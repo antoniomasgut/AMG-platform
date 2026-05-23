@@ -5,7 +5,9 @@ import com.amg.digitalitzacio.auth.application.TenantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,7 +36,9 @@ public class TenantController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(required = false) Boolean isFree) {
-        return ResponseEntity.ok(tenantService.listTenants(pageable, search, isActive, isFree));
+        // Native query with explicit ORDER BY — force unsorted pageable to avoid camelCase column translation
+        Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
+        return ResponseEntity.ok(tenantService.listTenants(unsorted, search, isActive, isFree));
     }
 
     @GetMapping("/{id}")

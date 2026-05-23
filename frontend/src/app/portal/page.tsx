@@ -320,6 +320,7 @@ export default function PortalPage() {
           {showOnboarding ? (
             <OnboardingGuide
               userName={user.name?.split(' ')[0] || 'usuari'}
+              assignedServiceTypes={new Set(['LANDING', 'AUTOMATION', 'BILLING'])}
               landingsCount={landings.length}
               workflowsCount={workflows.length}
               invoicesCount={invoices.length}

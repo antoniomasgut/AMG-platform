@@ -332,6 +332,7 @@ interface ClientData {
   invoices: Invoice[];
   landings: LandingSummary[];
   workflows: WorkflowSummary[];
+  tenantSetup: TenantSetup | null;
 }
 
 function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped, onboardingComplete, onSkip, onComplete }: {
@@ -340,16 +341,38 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
   onSkip: () => void; onComplete: () => void;
 }) {
   const t = useTranslations('portalDashboard');
-  const { billing, invoices, landings, workflows } = data;
+  const { billing, invoices, landings, workflows, tenantSetup } = data;
   const activeLandings = landings.filter(l => l.status === 'PUBLISHED' || l.status === 'ACTIVE').length;
   const activeWorkflows = workflows.filter(w => w.status === 'ACTIVE').length;
 
-  const pendingSteps = [
-    ...(landings.length === 0 ? ['landing' as const] : []),
-    ...(workflows.length === 0 ? ['automation' as const] : []),
-    ...(invoices.length === 0 ? ['billing' as const] : []),
-  ];
-  const showOnboarding = !onboardingSkipped && !onboardingComplete && pendingSteps.length > 0;
+  // Assigned service types from Vault
+  const assignedServiceTypes = new Set(
+    (tenantSetup?.profiles ?? [])
+      .flatMap(p => p.phases)
+      .flatMap(ph => ph.services)
+      .map(s => s.service.type)
+  );
+  // Vault pending: any phase not yet APPROVED
+  const vaultPending = (tenantSetup?.profiles ?? [])
+    .flatMap(p => p.phases)
+    .some(ph => ph.approvalStatus !== 'APPROVED');
+
+  // Only show onboarding if Vault has relevant assigned services and at least one is pending
+  const hasOnboardingServices = assignedServiceTypes.has('LANDING') || assignedServiceTypes.has('AUTOMATION') || assignedServiceTypes.has('BILLING');
+  const hasPendingStep =
+    (assignedServiceTypes.has('LANDING') && landings.length === 0) ||
+    (assignedServiceTypes.has('AUTOMATION') && workflows.length === 0) ||
+    (assignedServiceTypes.has('BILLING') && invoices.length === 0);
+
+  // Fallback: if vault data unavailable, use simple check (all 3 resources empty)
+  const fallbackPending = !tenantSetup && landings.length === 0 && workflows.length === 0 && invoices.length === 0;
+  const showOnboarding = !onboardingSkipped && !onboardingComplete && !loading &&
+    (hasOnboardingServices ? hasPendingStep : fallbackPending);
+
+  // Fallback service types when vault not loaded (show all 3 steps)
+  const effectiveTypes = assignedServiceTypes.size > 0
+    ? assignedServiceTypes
+    : new Set(['LANDING', 'AUTOMATION', 'BILLING']);
 
   if (loading) {
     return (
@@ -366,9 +389,11 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
       <div className="p-4 sm:p-6">
         <OnboardingGuide
           userName={userName}
+          assignedServiceTypes={effectiveTypes}
           landingsCount={landings.length}
           workflowsCount={workflows.length}
           invoicesCount={invoices.length}
+          vaultPending={vaultPending}
           onSkip={onSkip}
           onComplete={onComplete}
         />
@@ -476,7 +501,7 @@ export default function PortalPage() {
 
   // Client data
   const [clientData, setClientData] = useState<ClientData>({
-    billing: null, invoices: [], landings: [], workflows: [],
+    billing: null, invoices: [], landings: [], workflows: [], tenantSetup: null,
   });
 
   const [onboardingSkipped, setOnboardingSkipped] = useState(false);
@@ -509,13 +534,14 @@ export default function PortalPage() {
         });
       } else {
         const tid = user.tenantId;
-        const [bill, inv, lnd, wf] = await Promise.all([
+        const [bill, inv, lnd, wf, setup] = await Promise.all([
           tid ? fetchBillingDashboard(tid).catch(() => null) : Promise.resolve(null),
           fetchInvoices().catch(() => [] as Invoice[]),
           tid ? fetchLandings(tid).catch(() => [] as LandingSummary[]) : Promise.resolve([]),
           tid ? fetchWorkflows(tid).catch(() => [] as WorkflowSummary[]) : Promise.resolve([]),
+          tid ? getTenantSetup(tid).catch(() => null) : Promise.resolve(null),
         ]);
-        setClientData({ billing: bill, invoices: inv, landings: lnd, workflows: wf });
+        setClientData({ billing: bill, invoices: inv, landings: lnd, workflows: wf, tenantSetup: setup });
       }
     } catch (err: unknown) {
       handleApiError(err, 'Dashboard');

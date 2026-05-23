@@ -20,6 +20,7 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
                OR lower(t.slug) LIKE '%' || lower(CAST(:search AS text)) || '%')
           AND (CAST(:isActive AS boolean) IS NULL OR t.is_active = CAST(:isActive AS boolean))
           AND (CAST(:isFree AS boolean) IS NULL OR t.is_free = CAST(:isFree AS boolean))
+        ORDER BY t.created_at DESC
         """,
         countQuery = """
         SELECT count(*) FROM tenants t

@@ -9,11 +9,15 @@ import {
   listProfiles, assignProfileToTenant, removeProfileFromTenant,
   lookupSectorPricing, updateTenant, toggleTenantService,
   getAgentChannels, updateAgentChannels, getAIConfig, updateAIConfig, getAvailableModels,
+  getGoCardlessConfig, getGoCardlessMandate, initiateGoCardlessMandate, cancelGoCardlessMandate,
+  listGoCardlessPayments, configureGoCardless,
   SECTOR_LABELS, SIZE_LABELS, PHASE_LABELS, PHASE_UPGRADE_PRICE,
   type TenantResponse, type TenantSetup, type CatalogService,
   type CatalogProfileResponse, type SectorPricingResponse, type ChannelsConfig, type AIConfig, type ModelInfo,
+  type GoCardlessConfig, type GoCardlessMandate,
   calcMonthly,
 } from '@/services/admin';
+import { createBudget, listBudgets, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
 import { listLandings } from '@/services/factory';
 import { getWizardConfig } from '@/config/service-wizards';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -625,11 +629,380 @@ function AgentConfigCard({ tenantId, agentSystemPrompt }: { tenantId: string; ag
   );
 }
 
+const MANDATE_STATUS_LABEL: Record<string, string> = {
+  PENDING_SUBMISSION: 'Pendent d\'enviament',
+  SUBMITTED: 'Enviat al banc',
+  ACTIVE: 'Actiu',
+  FAILED: 'Fallat',
+  CANCELLED: 'Cancel·lat',
+  EXPIRED: 'Expirat',
+};
+const MANDATE_STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'neutral'> = {
+  ACTIVE: 'success', SUBMITTED: 'warning', PENDING_SUBMISSION: 'warning',
+  FAILED: 'danger', CANCELLED: 'danger', EXPIRED: 'danger',
+};
+
+function GoCardlessCard({ tenantId }: { tenantId: string }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [showConfigForm, setShowConfigForm] = useState(false);
+  const [configForm, setConfigForm] = useState({ apiKeyRef: '', environment: 'SANDBOX' as 'SANDBOX' | 'LIVE', creditorId: '', webhookSecret: '' });
+  const [configuring, setConfiguring] = useState(false);
+  const [initiating, setInitiating] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [mandateUrl, setMandateUrl] = useState<string | null>(null);
+
+  const { data: gcConfig } = useQuery({
+    queryKey: ['gc-config', tenantId],
+    queryFn: () => getGoCardlessConfig(tenantId),
+  });
+
+  const { data: mandate } = useQuery({
+    queryKey: ['gc-mandate', tenantId],
+    queryFn: () => getGoCardlessMandate(tenantId),
+    enabled: !!gcConfig?.isActive,
+  });
+
+  const { data: payments } = useQuery({
+    queryKey: ['gc-payments', tenantId],
+    queryFn: () => listGoCardlessPayments(tenantId),
+    enabled: mandate?.status === 'ACTIVE',
+  });
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['gc-config', tenantId] });
+    qc.invalidateQueries({ queryKey: ['gc-mandate', tenantId] });
+    qc.invalidateQueries({ queryKey: ['gc-payments', tenantId] });
+  };
+
+  const handleConfigure = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfiguring(true);
+    try {
+      await configureGoCardless(tenantId, configForm);
+      toast('success', 'GoCardless configurat');
+      invalidate();
+      setShowConfigForm(false);
+    } catch {
+      toast('error', 'Error configurant GoCardless');
+    } finally {
+      setConfiguring(false);
+    }
+  };
+
+  const handleInitiate = async () => {
+    setInitiating(true);
+    try {
+      const resp = await initiateGoCardlessMandate(tenantId);
+      setMandateUrl(resp.redirectUrl);
+      invalidate();
+    } catch {
+      toast('error', 'Error iniciant el mandat SEPA');
+    } finally {
+      setInitiating(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!confirm('Cancel·lar el mandat SEPA? Deixarà de funcionar el cobrament automàtic.')) return;
+    setCancelling(true);
+    try {
+      await cancelGoCardlessMandate(tenantId);
+      toast('success', 'Mandat cancel·lat');
+      invalidate();
+    } catch {
+      toast('error', 'Error cancel·lant el mandat');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  return (
+    <div className="amg-card card-clip">
+      <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
+        <AMGSectionTitle eyebrow="Spec 09b" title="GoCardless — SEPA Directe" />
+        <div className="flex items-center gap-2">
+          {gcConfig?.isActive
+            ? <span className="f-mono text-[10px] px-2 py-1 rounded bg-[rgba(57,211,83,0.12)] text-[#39d353] border border-[rgba(57,211,83,0.3)]">● Configurat</span>
+            : <span className="f-mono text-[10px] px-2 py-1 rounded bg-[rgba(255,255,255,0.04)] text-ink-3 border border-border-base">○ No configurat</span>
+          }
+          {!showConfigForm && (
+            <AMGButton size="sm" variant="ghost" onClick={() => setShowConfigForm(true)}>
+              {gcConfig ? 'Actualitzar' : 'Configurar'}
+            </AMGButton>
+          )}
+        </div>
+      </div>
+
+      <div className="p-5 space-y-5">
+        {/* Config form */}
+        {showConfigForm && (
+          <form onSubmit={handleConfigure} className="space-y-3 p-4 border border-border-base rounded bg-[rgba(255,255,255,0.02)]">
+            <div className="f-mono text-label uppercase text-ink-3 text-xs tracking-widest mb-2">Configuració GoCardless</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="f-mono text-xs text-ink-2 block mb-1">API Key Ref</label>
+                <input type="text" required value={configForm.apiKeyRef}
+                  onChange={(e) => setConfigForm(f => ({ ...f, apiKeyRef: e.target.value }))}
+                  placeholder="GC_API_KEY_SANDBOX"
+                  className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+              </div>
+              <div>
+                <label className="f-mono text-xs text-ink-2 block mb-1">Entorn</label>
+                <select value={configForm.environment}
+                  onChange={(e) => setConfigForm(f => ({ ...f, environment: e.target.value as 'SANDBOX' | 'LIVE' }))}
+                  className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00]">
+                  <option value="SANDBOX">Sandbox (proves)</option>
+                  <option value="LIVE">Live (producció)</option>
+                </select>
+              </div>
+              <div>
+                <label className="f-mono text-xs text-ink-2 block mb-1">Creditor ID (opcional)</label>
+                <input type="text" value={configForm.creditorId}
+                  onChange={(e) => setConfigForm(f => ({ ...f, creditorId: e.target.value }))}
+                  placeholder="CR000..."
+                  className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+              </div>
+              <div>
+                <label className="f-mono text-xs text-ink-2 block mb-1">Webhook Secret (opcional)</label>
+                <input type="password" value={configForm.webhookSecret}
+                  onChange={(e) => setConfigForm(f => ({ ...f, webhookSecret: e.target.value }))}
+                  className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <AMGButton type="submit" size="sm" loading={configuring}>Guardar</AMGButton>
+              <AMGButton type="button" size="sm" variant="ghost" onClick={() => setShowConfigForm(false)}>Cancel·lar</AMGButton>
+            </div>
+          </form>
+        )}
+
+        {/* Mandate status */}
+        {gcConfig?.isActive && (
+          <div className="space-y-3">
+            <div className="f-mono text-label uppercase text-ink-3 text-xs tracking-widest">Mandat SEPA</div>
+
+            {!mandate ? (
+              <div className="p-4 bg-[rgba(255,255,255,0.02)] border border-border-base rounded space-y-3">
+                <p className="text-sm text-ink-2">Cap mandat actiu. Inicia el flux de domiciliació per al client.</p>
+                <AMGButton size="sm" onClick={handleInitiate} loading={initiating} icon={I.Zap}>
+                  Iniciar mandat SEPA
+                </AMGButton>
+              </div>
+            ) : (
+              <div className="p-4 bg-[rgba(255,255,255,0.02)] border border-border-base rounded space-y-2">
+                <div className="flex items-center gap-2">
+                  <AMGBadge tone={MANDATE_STATUS_TONE[mandate.status] ?? 'neutral'}>
+                    {MANDATE_STATUS_LABEL[mandate.status] ?? mandate.status}
+                  </AMGBadge>
+                  {mandate.accountHolderName && (
+                    <span className="text-sm text-ink-1">{mandate.accountHolderName}</span>
+                  )}
+                </div>
+                {mandate.bankName && (
+                  <div className="f-mono text-xs text-ink-3">
+                    {mandate.bankName}{mandate.lastFourDigits && ` ····${mandate.lastFourDigits}`}
+                  </div>
+                )}
+                {mandate.status === 'ACTIVE' && (
+                  <AMGButton size="sm" variant="ghost" onClick={handleCancel} loading={cancelling}>
+                    Cancel·lar mandat
+                  </AMGButton>
+                )}
+              </div>
+            )}
+
+            {/* Redirect URL (after initiating) */}
+            {mandateUrl && (
+              <div className="p-3 bg-[rgba(255,107,0,0.06)] border border-[rgba(255,107,0,0.2)] rounded space-y-2">
+                <p className="text-xs text-ink-2">Envia aquesta URL al client per autoritzar la domiciliació:</p>
+                <div className="flex items-center gap-2">
+                  <code className="f-mono text-xs text-ink-1 bg-[rgba(255,255,255,0.04)] px-2 py-1 rounded flex-1 truncate">
+                    {mandateUrl}
+                  </code>
+                  <button onClick={() => { navigator.clipboard.writeText(mandateUrl); toast('success', 'URL copiada'); }}
+                    className="text-xs f-mono text-accent-light hover:text-accent transition flex-shrink-0">
+                    Copiar
+                  </button>
+                </div>
+                <button onClick={() => setMandateUrl(null)} className="text-xs text-ink-3 hover:text-ink-1">Tancar</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Recent payments */}
+        {payments && payments.content.length > 0 && (
+          <div className="space-y-2">
+            <div className="f-mono text-label uppercase text-ink-3 text-xs tracking-widest">Últims pagaments</div>
+            {payments.content.slice(0, 5).map((p) => (
+              <div key={p.id} className="flex items-center justify-between px-3 py-2 bg-[rgba(255,255,255,0.02)] rounded">
+                <div className="flex items-center gap-2">
+                  <AMGBadge tone={p.status === 'PAID_OUT' ? 'success' : p.status === 'FAILED' ? 'danger' : 'warning'}>
+                    {p.status}
+                  </AMGBadge>
+                  <span className="f-mono text-xs text-ink-3">
+                    {p.chargeDate ? new Date(p.chargeDate).toLocaleDateString('ca-ES') : '—'}
+                  </span>
+                </div>
+                <span className="f-mono text-sm text-ink-1">{Number(p.amount).toFixed(2)} €</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!gcConfig && !showConfigForm && (
+          <div className="text-center py-6">
+            <I.CreditCard size={28} stroke="#64748b" className="mx-auto mb-3" />
+            <p className="text-sm text-ink-2 mb-3">GoCardless no està configurat per aquest tenant.</p>
+            <AMGButton size="sm" onClick={() => setShowConfigForm(true)}>Configurar GoCardless</AMGButton>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NewBudgetModal({ tenantId, setup, onClose, onCreated }: {
+  tenantId: string;
+  setup: TenantSetup | null;
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const { toast } = useToast();
+  const [selectedProfileId, setSelectedProfileId] = useState('');
+  const [selectedPhaseIds, setSelectedPhaseIds] = useState<Set<string>>(new Set());
+  const [notes, setNotes] = useState('');
+  const [clientNotes, setClientNotes] = useState('');
+  const [validUntil, setValidUntil] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  const profiles = setup?.profiles ?? [];
+  const selectedProfile = profiles.find(p => p.profile.id === selectedProfileId);
+
+  const togglePhase = (phaseId: string) => {
+    setSelectedPhaseIds(prev => {
+      const next = new Set(prev);
+      if (next.has(phaseId)) next.delete(phaseId);
+      else next.add(phaseId);
+      return next;
+    });
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProfileId) { toast('error', 'Selecciona un perfil'); return; }
+    if (selectedPhaseIds.size === 0) { toast('error', 'Selecciona almenys una fase'); return; }
+    setCreating(true);
+    try {
+      const req: CreateBudgetRequest = {
+        profileId: selectedProfileId,
+        phaseIds: Array.from(selectedPhaseIds),
+        notes: notes || undefined,
+        clientNotes: clientNotes || undefined,
+        validUntil: validUntil || undefined,
+      };
+      await createBudget(tenantId, req);
+      toast('success', 'Pressupost creat');
+      onCreated();
+      onClose();
+    } catch {
+      toast('error', 'Error creant el pressupost');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="amg-card card-clip w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <div className="f-display font-bold text-base">Nou pressupost</div>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+        </div>
+
+        <form onSubmit={handleCreate} className="space-y-4">
+          {/* Profile selector */}
+          <div>
+            <label className="f-mono text-label uppercase text-ink-2 block mb-2">Perfil</label>
+            {profiles.length === 0 ? (
+              <p className="text-sm text-ink-3">Cap perfil assignat a aquest tenant. Assigna primer un perfil.</p>
+            ) : (
+              <div className="space-y-2">
+                {profiles.map((p) => (
+                  <button key={p.profile.id} type="button"
+                    onClick={() => { setSelectedProfileId(p.profile.id); setSelectedPhaseIds(new Set()); }}
+                    className={`w-full text-left p-3 border rounded transition text-sm ${
+                      selectedProfileId === p.profile.id
+                        ? 'border-[#FF6B00] bg-accent-muted'
+                        : 'border-border-base hover:border-ink-2'
+                    }`}>
+                    <span className="font-semibold">{p.profile.name}</span>
+                    <span className="text-ink-3 ml-2 text-xs">{p.phases.length} fases</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Phases selector */}
+          {selectedProfile && (
+            <div>
+              <label className="f-mono text-label uppercase text-ink-2 block mb-2">Fases a incloure</label>
+              <div className="space-y-2">
+                {selectedProfile.phases.map((ph) => (
+                  <label key={ph.phase.id} className="flex items-center gap-3 p-3 border border-border-base rounded cursor-pointer hover:border-ink-2 transition">
+                    <input type="checkbox" checked={selectedPhaseIds.has(ph.phase.id)}
+                      onChange={() => togglePhase(ph.phase.id)}
+                      className="accent-[#FF6B00]" />
+                    <div className="flex-1">
+                      <span className="text-sm">{ph.phase.name}</span>
+                      <span className="f-mono text-xs text-ink-3 ml-2">{ph.services.length} serveis</span>
+                    </div>
+                    <AMGBadge tone={ph.approvalStatus === 'APPROVED' ? 'success' : 'neutral'}>
+                      {ph.approvalStatus}
+                    </AMGBadge>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Optional fields */}
+          <div>
+            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Notes internes (opcional)</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
+              className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00] resize-none" />
+          </div>
+          <div>
+            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Notes per al client (opcional)</label>
+            <textarea value={clientNotes} onChange={(e) => setClientNotes(e.target.value)} rows={2}
+              className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00] resize-none" />
+          </div>
+          <div>
+            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Vàlid fins (opcional)</label>
+            <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)}
+              className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+          </div>
+
+          <div className="flex gap-3 pt-2 border-t border-border-base">
+            <AMGButton type="submit" disabled={creating || profiles.length === 0} loading={creating} className="flex-1 justify-center">
+              Crear pressupost
+            </AMGButton>
+            <AMGButton type="button" variant="outline" onClick={onClose}>Cancel·lar</AMGButton>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function TenantDetailPage() {
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [showAssignProfile, setShowAssignProfile] = useState(false);
+  const [showNewBudget, setShowNewBudget] = useState(false);
   const [togglingFree, setTogglingFree] = useState(false);
   const [togglingActive, setTogglingActive] = useState(false);
 
@@ -678,6 +1051,12 @@ export default function TenantDetailPage() {
   const { data: landings } = useQuery({
     queryKey: ['tenant-landings', id],
     queryFn: () => listLandings(id),
+    enabled: !!tenant,
+  });
+
+  const { data: budgets, refetch: refetchBudgets } = useQuery({
+    queryKey: ['budgets', id],
+    queryFn: () => listBudgets(id),
     enabled: !!tenant,
   });
 
@@ -765,6 +1144,14 @@ export default function TenantDetailPage() {
             >
               Crear landing
             </AMGButton>
+            <AMGButton
+              size="sm"
+              variant="secondary"
+              icon={I.Receipt}
+              onClick={() => setShowNewBudget(true)}
+            >
+              Nou pressupost
+            </AMGButton>
             {pendingServices.map((svc) => (
               <AMGButton
                 key={svc.serviceId}
@@ -851,6 +1238,49 @@ export default function TenantDetailPage() {
         {/* Agent IA & Canals */}
         <AgentConfigCard tenantId={id} agentSystemPrompt={tenant.agentSystemPrompt} />
 
+        {/* GoCardless SEPA */}
+        <GoCardlessCard tenantId={id} />
+
+        {/* Pressupostos */}
+        <div className="amg-card card-clip">
+          <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
+            <AMGSectionTitle eyebrow="Spec 07" title="Pressupostos" />
+            <AMGButton size="sm" icon={I.Plus} onClick={() => setShowNewBudget(true)}>
+              Nou pressupost
+            </AMGButton>
+          </div>
+          <div className="p-5">
+            {!budgets || budgets.length === 0 ? (
+              <div className="text-center py-6">
+                <I.Receipt size={28} stroke="#64748b" className="mx-auto mb-3" />
+                <p className="text-sm text-ink-2">Cap pressupost generat per aquest tenant.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {budgets.map((b) => (
+                  <div key={b.id} className="flex items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.02)] border border-border-base rounded hover:border-ink-2 transition">
+                    <div className="flex items-center gap-3">
+                      <AMGBadge tone={
+                        b.status === 'ACCEPTED' ? 'success'
+                        : b.status === 'REJECTED' ? 'danger'
+                        : b.status === 'SENT' ? 'info'
+                        : 'neutral'
+                      }>
+                        {b.status}
+                      </AMGBadge>
+                      <span className="f-mono text-sm text-ink-1">{b.budgetNumber}</span>
+                      {b.sentAt && (
+                        <span className="f-mono text-xs text-ink-3">Enviat {fmtDate(b.sentAt)}</span>
+                      )}
+                    </div>
+                    <span className="f-display font-bold text-sm text-white">{b.total.toFixed(2)} €</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Catàleg de serveis */}
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base">
@@ -870,6 +1300,15 @@ export default function TenantDetailPage() {
 
       {showAssignProfile && (
         <AssignProfileModal tenantId={id} onClose={() => setShowAssignProfile(false)} onAssigned={invalidateSetup} />
+      )}
+
+      {showNewBudget && (
+        <NewBudgetModal
+          tenantId={id}
+          setup={setup ?? null}
+          onClose={() => setShowNewBudget(false)}
+          onCreated={() => refetchBudgets()}
+        />
       )}
     </PortalShell>
   );

@@ -418,5 +418,71 @@
     "save": "Desar",
     "cancel": "Cancel·lar",
     "loading": "Carregant..."
+  },
+  "onboarding": {
+    "eyebrow": "PRIMERS PASSOS",
+    "title": "Benvingut, {name}! Comencem.",
+    "subtitle": "Completa els passos per treure el màxim profit del portal.",
+    "progress": "{completed} / {total} passos",
+    "skip": "Salta l'onboarding",
+    "complete_title": "Estàs a punt!",
+    "complete_subtitle": "Ja tens tot configurat. El teu portal està llest.",
+    "complete_cta": "Anar al dashboard",
+    "vault_pending": "Configuració pendent",
+    "vault_pending_desc": "El teu compte té serveis pendents de configurar. Revisa'ls per activar-los.",
+    "vault_pending_cta": "Revisar →",
+    "steps": {
+      "landing_title": "Crea la teva primera landing",
+      "landing_desc": "Publica la teva web en menys de 5 minuts amb l'editor visual.",
+      "landing_cta": "Comença",
+      "automation_title": "Connecta una automatització",
+      "automation_desc": "Connecta n8n per enviar emails, WhatsApp o rebre notificacions automàtiques.",
+      "automation_cta": "Comença",
+      "billing_title": "Genera el teu primer pressupost",
+      "billing_desc": "Crea un pressupost personalitzat i envia'l al client en PDF.",
+      "billing_cta": "Comença"
+    }
+  },
+  "portalNav": {
+    "groups": {
+      "summary": "Resum",
+      "myServices": "Els meus serveis",
+      "clientsLeads": "Clients i prospectes",
+      "finances": "Finances",
+      "overview": "Visió general",
+      "acquisition": "Captació",
+      "commercial": "Comercial",
+      "services": "Serveis",
+      "operations": "Operacions",
+      "clients": "Clients",
+      "system": "Sistema"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "myWebs": "Les meves webs",
+      "automations": "Automatitzacions",
+      "agentAI": "Agent IA",
+      "agentsAI": "Agents IA",
+      "inbox": "Converses",
+      "files": "Fitxers",
+      "leadsCRM": "Leads CRM",
+      "quotes": "Pressupostos",
+      "invoices": "Factures",
+      "payments": "Pagaments",
+      "process": "Procés",
+      "prospecting": "Prospecció",
+      "landings": "Landings",
+      "domains": "Dominis",
+      "assets": "Fitxers",
+      "opsHealth": "Salut del sistema",
+      "tenants": "Tenants",
+      "users": "Usuaris",
+      "programs": "Programes",
+      "catalog": "Catàleg",
+      "templates": "Plantilles",
+      "backup": "Còpies de seguretat",
+      "infraOps": "Infraestructura",
+      "apiKeys": "Claus API"
+    }
   }
 }

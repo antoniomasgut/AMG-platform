@@ -418,5 +418,71 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "loading": "Laden..."
+  },
+  "onboarding": {
+    "eyebrow": "ERSTE SCHRITTE",
+    "title": "Willkommen, {name}! Legen wir los.",
+    "subtitle": "Schließe die Schritte ab, um das Beste aus deinem Portal herauszuholen.",
+    "progress": "{completed} / {total} Schritte",
+    "skip": "Onboarding überspringen",
+    "complete_title": "Du bist startklar!",
+    "complete_subtitle": "Alles ist konfiguriert. Dein Portal ist bereit.",
+    "complete_cta": "Zum Dashboard",
+    "vault_pending": "Konfiguration ausstehend",
+    "vault_pending_desc": "Dein Konto hat Dienste, die noch konfiguriert werden müssen. Überprüfe sie zur Aktivierung.",
+    "vault_pending_cta": "Überprüfen →",
+    "steps": {
+      "landing_title": "Erstelle deine erste Landing Page",
+      "landing_desc": "Veröffentliche deine Website in unter 5 Minuten mit dem visuellen Editor.",
+      "landing_cta": "Loslegen",
+      "automation_title": "Verbinde eine Automatisierung",
+      "automation_desc": "Verbinde n8n, um E-Mails, WhatsApp zu senden oder automatische Benachrichtigungen zu erhalten.",
+      "automation_cta": "Loslegen",
+      "billing_title": "Erstelle dein erstes Angebot",
+      "billing_desc": "Erstelle ein personalisiertes Angebot und sende es als PDF an den Kunden.",
+      "billing_cta": "Loslegen"
+    }
+  },
+  "portalNav": {
+    "groups": {
+      "summary": "Übersicht",
+      "myServices": "Meine Dienste",
+      "clientsLeads": "Kunden & Leads",
+      "finances": "Finanzen",
+      "overview": "Übersicht",
+      "acquisition": "Akquise",
+      "commercial": "Vertrieb",
+      "services": "Dienste",
+      "operations": "Betrieb",
+      "clients": "Kunden",
+      "system": "System"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "myWebs": "Meine Websites",
+      "automations": "Automatisierungen",
+      "agentAI": "KI-Agent",
+      "agentsAI": "KI-Agenten",
+      "inbox": "Gespräche",
+      "files": "Dateien",
+      "leadsCRM": "Leads CRM",
+      "quotes": "Angebote",
+      "invoices": "Rechnungen",
+      "payments": "Zahlungen",
+      "process": "Prozess",
+      "prospecting": "Akquise",
+      "landings": "Landings",
+      "domains": "Domains",
+      "assets": "Dateien",
+      "opsHealth": "Systemstatus",
+      "tenants": "Tenants",
+      "users": "Benutzer",
+      "programs": "Programme",
+      "catalog": "Katalog",
+      "templates": "Vorlagen",
+      "backup": "Backups",
+      "infraOps": "Infrastruktur",
+      "apiKeys": "API-Schlüssel"
+    }
   }
 }

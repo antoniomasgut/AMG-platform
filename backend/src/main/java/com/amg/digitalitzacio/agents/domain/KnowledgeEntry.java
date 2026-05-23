@@ -1,0 +1,44 @@
+package com.amg.digitalitzacio.agents.domain;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Entity
+@Table(name = "knowledge_entries")
+@EntityListeners(AuditingEntityListener.class)
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public class KnowledgeEntry {
+
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(name = "knowledge_base_id", nullable = false)
+    private UUID knowledgeBaseId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private KnowledgeCategory category;
+
+    @Column(name = "entry_key", nullable = false, length = 100)
+    private String key;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String content;
+
+    @Builder.Default
+    @Column(name = "sort_order", nullable = false)
+    private Integer sortOrder = 0;
+
+    @Builder.Default
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+}

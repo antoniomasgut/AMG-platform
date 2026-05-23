@@ -13,10 +13,13 @@ import java.util.UUID;
 public interface ConversationRepository extends JpaRepository<Conversation, Long> {
 
     List<Conversation> findTop20ByTenantIdAndCustomerIdentifierAndChannelOrderByCreatedAtDesc(
-        UUID tenantId,
-        String customerIdentifier,
-        ConversationChannel channel
-    );
+        UUID tenantId, String customerIdentifier, ConversationChannel channel);
+
+    List<Conversation> findTop30ByTenantIdAndCustomerIdentifierAndChannelOrderByCreatedAtDesc(
+        UUID tenantId, String customerIdentifier, ConversationChannel channel);
+
+    long countByTenantIdAndCustomerIdentifierAndChannel(
+        UUID tenantId, String customerIdentifier, ConversationChannel channel);
 
     List<Conversation> findByTenantIdAndPendingApprovalTrueOrderByCreatedAtDesc(UUID tenantId);
 

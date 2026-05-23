@@ -138,13 +138,16 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 15 | Demo (tenant demo automàtic) | ✅ Completat | specs/15-demo.md |
 | 16 | Onboarding (guia ràpida post-registre) | ⏳ Esborrany | specs/16-onboarding.md |
 | 17 | Service Setup Wizard (assistent implementació) | ✅ Completat | specs/17-service-setup-wizard.md |
-| 18 | Backup Operacional (còpia seguretat dades a GCS) | ✅ Spec | specs/18-backup-operacional.md |
+| 18 | Backup Operacional (còpia seguretat dades a GCS) | ✅ Completat | specs/18-backup-operacional.md |
 | 09b | GoCardless (domiciliació SEPA automàtica) | ✅ Completat | specs/09b-gocardless.md |
 | 19 | InfraOps (monitorització servidor + escalat) | ✅ Completat | specs/19-infraops.md |
 | 20 | Agents Autònoms (Telegram, substitueix n8n) | ✅ Completat | specs/20-agents.md |
+| 21 | Dashboards per rol (SUPER_ADMIN / ADMIN / CLIENT) | ✅ Completat | specs/21-dashboards.md |
 | 22 | Sector Pricing (model NexeLocal F1-F5) | ✅ Completat | specs/22-sector-pricing.md |
-| 25 | Omnichannel Inbox (converses unificades) | ✅ Spec | specs/25-omnichannel-inbox.md |
-| 26 | RAG Knowledge Base (base de coneixement IA) | ⏳ Esborrany | specs/26-rag-knowledge-base.md |
+| 23 | Domain Reseller (registre i gestió de dominis) | ✅ Completat | specs/23-domain-reseller.md |
+| 24 | Agent Activation Flows (activació + canals + mode) | ✅ Completat | specs/24-agent-activation-flows.md |
+| 25 | Omnichannel Inbox (converses unificades) | ✅ Completat | specs/25-omnichannel-inbox.md |
+| 26 | RAG Knowledge Base (base de coneixement IA) | 🔨 En curs | specs/26-rag-knowledge-base.md |
 
 ---
 

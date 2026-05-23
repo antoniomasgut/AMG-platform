@@ -364,3 +364,66 @@ export const getSectorPromptTemplate = (sector: string) =>
 
 // Preu fix d'ampliació de fase per a clients existents
 export const PHASE_UPGRADE_PRICE = 75;
+
+// --- GoCardless (Spec 09b) ---
+
+export interface GoCardlessConfig {
+  id: string;
+  tenantId: string;
+  environment: 'SANDBOX' | 'LIVE';
+  creditorId: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface GoCardlessMandate {
+  id: string;
+  tenantId: string;
+  gcMandateId: string | null;
+  status: string;
+  accountHolderName: string | null;
+  bankName: string | null;
+  lastFourDigits: string | null;
+  createdAt: string;
+}
+
+export interface GoCardlessPaymentItem {
+  id: string;
+  gcPaymentId: string;
+  amount: number;
+  status: string;
+  chargeDate: string | null;
+  paidOutAt: string | null;
+  failureReason: string | null;
+  createdAt: string;
+}
+
+export interface InitiateMandateResponse {
+  redirectFlowId: string;
+  redirectUrl: string;
+}
+
+export const getGoCardlessConfig = (tenantId: string) =>
+  apiFetch<GoCardlessConfig>(`/gocardless/configure/${tenantId}`);
+
+export const configureGoCardless = (tenantId: string, data: {
+  apiKeyRef: string; environment: 'SANDBOX' | 'LIVE'; creditorId?: string; webhookSecret?: string;
+}) =>
+  apiFetch<GoCardlessConfig>(`/gocardless/configure/${tenantId}`, {
+    method: 'POST',
+    body: JSON.stringify({ tenantId, ...data }),
+  });
+
+export const getGoCardlessMandate = (tenantId: string) =>
+  apiFetch<GoCardlessMandate>(`/gocardless/tenants/${tenantId}/mandate`);
+
+export const initiateGoCardlessMandate = (tenantId: string, successReturnUrl?: string) => {
+  const params = successReturnUrl ? `?successReturnUrl=${encodeURIComponent(successReturnUrl)}` : '';
+  return apiFetch<InitiateMandateResponse>(`/gocardless/tenants/${tenantId}/mandate/initiate${params}`, { method: 'POST' });
+};
+
+export const cancelGoCardlessMandate = (tenantId: string) =>
+  apiFetch<void>(`/gocardless/tenants/${tenantId}/mandate`, { method: 'DELETE' });
+
+export const listGoCardlessPayments = (tenantId: string) =>
+  apiFetch<{ content: GoCardlessPaymentItem[] }>(`/gocardless/tenants/${tenantId}/payments?size=10`);

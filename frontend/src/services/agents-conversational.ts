@@ -141,3 +141,45 @@ export const renameContact = (tenantId: string, contactId: string, displayName: 
     method: 'PATCH',
     body: JSON.stringify({ displayName }),
   });
+
+// --- Channels & Activation (Spec 24) ---
+
+export interface ChannelsConfig {
+  tenantId: string;
+  agentMode: 'AUTO' | 'HYBRID' | 'MANUAL';
+  isActive: boolean;
+  telegramLinked: boolean;
+  telegramChatId: number | null;
+  whatsappPhoneNumber: string | null;
+  whatsappMetaPhoneNumberId: string | null;
+}
+
+export interface ChannelInstruction {
+  active: boolean;
+  configured: boolean;
+  instructions: string | null;
+  link: string | null;
+}
+
+export interface ActivationInstructions {
+  telegram: ChannelInstruction;
+  whatsapp: ChannelInstruction;
+}
+
+export const getChannels = (tenantId: string) =>
+  apiFetch<ChannelsConfig>(`/agents/conversational/${tenantId}/channels`);
+
+export const updateChannels = (tenantId: string, data: { agentMode?: string; whatsappPhoneNumber?: string; whatsappMetaPhoneNumberId?: string }) =>
+  apiFetch<ChannelsConfig>(`/agents/conversational/${tenantId}/channels`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
+export const activateAgent = (tenantId: string) =>
+  apiFetch<ChannelsConfig>(`/agents/conversational/${tenantId}/activate`, { method: 'POST' });
+
+export const deactivateAgent = (tenantId: string) =>
+  apiFetch<ChannelsConfig>(`/agents/conversational/${tenantId}/deactivate`, { method: 'POST' });
+
+export const getActivationInstructions = (tenantId: string) =>
+  apiFetch<ActivationInstructions>(`/agents/conversational/${tenantId}/activation-instructions`);

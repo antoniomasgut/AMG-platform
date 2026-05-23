@@ -14,4 +14,6 @@ public interface ContactIdentifierRepository extends JpaRepository<ContactIdenti
         UUID tenantId, ConversationChannel channel, String identifier);
 
     List<ContactIdentifier> findByContactId(UUID contactId);
+
+    Optional<ContactIdentifier> findByTenantIdAndIdentifier(UUID tenantId, String identifier);
 }
