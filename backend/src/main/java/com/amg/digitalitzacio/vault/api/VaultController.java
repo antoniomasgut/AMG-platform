@@ -184,9 +184,10 @@ public class VaultController {
     }
 
     @PatchMapping("/tenants/{tenantId}/services/{serviceId}/toggle")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     public ResponseEntity<java.util.Map<String, Boolean>> toggleService(
-            @PathVariable UUID tenantId, @PathVariable UUID serviceId) {
+            @PathVariable UUID tenantId, @PathVariable UUID serviceId,
+            @AuthenticationPrincipal UserPrincipal principal) {
         boolean enabled = vaultService.toggleService(tenantId, serviceId);
         return ResponseEntity.ok(java.util.Map.of("isEnabled", enabled));
     }

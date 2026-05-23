@@ -12,7 +12,7 @@ import {
   fetchBillingDashboard, fetchInvoices, fetchLandings, fetchWorkflows,
   type BillingDashboard, type Invoice, type LandingSummary, type WorkflowSummary,
 } from '@/services/dashboard';
-import { listTenants } from '@/services/admin';
+import { listTenants, getTenantSetup, toggleTenantService, type TenantSetup } from '@/services/admin';
 import { getLeadStats, type LeadStats } from '@/services/leads';
 import { getOpsDashboard, type OpsDashboard } from '@/services/ops';
 import { getInfraStatus, type InfraStatus } from '@/services/infraops';
@@ -256,6 +256,75 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
 }
 
 /* ─────────────────────────────────────────────
+   Client services toggle section
+───────────────────────────────────────────── */
+function ClientServicesCard({ tenantId }: { tenantId: string }) {
+  const [setup, setSetup] = useState<TenantSetup | null>(null);
+  const [toggling, setToggling] = useState<string | null>(null);
+
+  useEffect(() => {
+    getTenantSetup(tenantId).then(setSetup).catch(() => {});
+  }, [tenantId]);
+
+  const allServices = setup?.profiles.flatMap(p =>
+    p.phases.flatMap(ph => ph.services)
+  ) ?? [];
+
+  if (allServices.length === 0) return null;
+
+  const handleToggle = async (serviceId: string, tenantServiceId: string) => {
+    setToggling(serviceId);
+    try {
+      const { isEnabled } = await toggleTenantService(tenantId, serviceId);
+      setSetup(prev => prev ? {
+        ...prev,
+        profiles: prev.profiles.map(p => ({
+          ...p,
+          phases: p.phases.map(ph => ({
+            ...ph,
+            services: ph.services.map(svc =>
+              svc.service.id === serviceId ? { ...svc, isEnabled } : svc
+            ),
+          })),
+        })),
+      } : prev);
+    } finally {
+      setToggling(null);
+    }
+  };
+
+  return (
+    <div className="amg-card card-clip p-4 sm:p-5">
+      <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-4">Els meus serveis</div>
+      <div className="space-y-2">
+        {allServices.map((svc) => {
+          const isLoading = toggling === svc.service.id;
+          return (
+            <div key={svc.service.id}
+              className="flex items-center justify-between gap-3 py-2 border-b border-[rgba(226,232,240,0.04)] last:border-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${svc.isEnabled ? 'bg-[#39d353]' : 'bg-ink-3'}`} />
+                <span className="text-sm text-ink-1 truncate">{svc.service.name}</span>
+              </div>
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => handleToggle(svc.service.id, svc.tenantServiceId)}
+                className={`flex-shrink-0 w-10 h-5 rounded-full transition-colors relative ${
+                  svc.isEnabled ? 'bg-[#FF6B00]' : 'bg-[rgba(255,255,255,0.12)]'
+                } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${svc.isEnabled ? 'left-5' : 'left-0.5'}`} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
    CLIENT dashboard
 ───────────────────────────────────────────── */
 interface ClientData {
@@ -265,8 +334,8 @@ interface ClientData {
   workflows: WorkflowSummary[];
 }
 
-function ClientDashboard({ data, loading, userName, onboardingSkipped, onboardingComplete, onSkip, onComplete }: {
-  data: ClientData; loading: boolean; userName: string;
+function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped, onboardingComplete, onSkip, onComplete }: {
+  data: ClientData; loading: boolean; userName: string; tenantId: string | null;
   onboardingSkipped: boolean; onboardingComplete: boolean;
   onSkip: () => void; onComplete: () => void;
 }) {
@@ -337,6 +406,9 @@ function ClientDashboard({ data, loading, userName, onboardingSkipped, onboardin
           </div>
         </div>
       </div>
+
+      {/* Serveis contractats */}
+      {tenantId && <ClientServicesCard tenantId={tenantId} />}
 
       {/* Últimes factures */}
       <div className="amg-card card-clip p-4 sm:p-5">
@@ -486,6 +558,7 @@ export default function PortalPage() {
           data={clientData}
           loading={loading}
           userName={firstName}
+          tenantId={user.tenantId ?? null}
           onboardingSkipped={onboardingSkipped}
           onboardingComplete={onboardingComplete}
           onSkip={handleSkipOnboarding}
