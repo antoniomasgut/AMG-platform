@@ -283,7 +283,7 @@ Client final del negoci
 
 **Índexs:** `(tenant_id, customer_identifier, channel)`, `(tenant_id, pending_approval) WHERE pending_approval = true`
 
-**Caché Redis:** clau `conv:{tenantId}:{channel}:{customerIdentifier}` → últims 20 missatges · TTL 48h
+**Persistència:** tots els missatges es guarden a PostgreSQL (font de veritat). Redis és caché de lectura ràpida (TTL 10 min), no és la font principal. Veure Spec 26 secció 5 per a la gestió de l'historial llarg (resum automàtic).
 
 ### AgentMode (extensió a TenantChatLink)
 
@@ -304,8 +304,12 @@ Nou camp a `TenantChatLink`:
 ```
 handleIncoming(tenantId, customerIdentifier, channel, text):
   1. Carrega TenantChatLink → agentMode, canals actius
-  2. ConversationService.loadHistory(tenantId, customerIdentifier, channel) → últims 20
-  3. PromptBuilder.build(tenantId) → system prompt
+  2. ConversationService.loadHistory(tenantId, customerIdentifier, channel)
+        → últims 30 missatges de PostgreSQL
+        → Contact.conversationSummary (resum de missatges anteriors, si n > 30)
+  3. PromptBuilder.build(tenantId, customerContext) → system prompt
+        → inclou KnowledgeBase del tenant (Spec 26)
+        → inclou historial del client (resum + missatges recents)
   4. Claude API (claude-haiku-4-5) → resposta
   5. switch(agentMode):
        AUTO   → sendViaChannel() → saveConversation(pendingApproval=false)

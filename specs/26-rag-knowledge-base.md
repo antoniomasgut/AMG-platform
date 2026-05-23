@@ -168,9 +168,108 @@ A banda dels camps estructurats, el client pot pujar **documents** que la IA usa
 
 ---
 
-## 5. Estratègia RAG tècnica
+## 5. Memòria del client (Customer Memory)
 
-### 5.1 Enfocament: Context Injection (v1)
+### 5.1 Principi fonamental
+
+> **L'agent ha de poder respondre com si hagués parlat sempre amb aquell client.**
+
+Quan un client torna a escriure, el bot ha de saber:
+- Quines consultes ha fet anteriorment ("la setmana passada em vas dir que el preu de l'empast era 80 €")
+- Cites o comandes passades ("vaig demanar hora per al dijous, hi ha algun canvi?")
+- Preferències o acords prèvis ("recordo que estàs en llista d'espera per als implants")
+- Queixes o incidències anteriors (tractament especial)
+
+Sense aquesta memòria, el bot sembla que "no recorda res" i és molt frustrant per al client.
+
+### 5.2 Estratègia de memòria en dues capes
+
+```
+Conversa entrant (nou missatge del client)
+        ↓
+ConversationService.buildContext(tenantId, customerIdentifier, channel)
+        │
+        ├── CAPA 1: Conversa recent (< 30 missatges)
+        │   └── SELECT * FROM conversations WHERE tenant_id = ? AND customer_identifier = ?
+        │       ORDER BY created_at DESC LIMIT 30
+        │       → inclou directament al context com a historial complet
+        │
+        └── CAPA 2: Resum de converses anteriors (> 30 missatges)
+            └── Contact.conversationSummary (text generat automàticament)
+                → inclou com a bloc "HISTORIAL DEL CLIENT"
+```
+
+### 5.3 Generació automàtica del resum
+
+Quan el nombre total de missatges d'un client supera **30**, el sistema:
+
+1. Pren els missatges antics (> 30) que encara no estan resumits
+2. Envia a Claude Haiku un prompt de compressió:
+   ```
+   Fes un resum molt compacte d'aquesta conversa passada entre un assistent
+   virtual i un client. Destaca: compromisos adquirits, serveis esmentats,
+   preferències del client, incidències, cites acordades. Màxim 200 paraules.
+   
+   [missatges anteriors]
+   ```
+3. Desa el resum a `Contact.conversationSummary` (s'acumula, no se substitueix)
+4. Marca els missatges antics com a `summarized = true`
+
+El resum s'actualitza automàticament cada 30 missatges nous. El procés és asíncron (background job), no bloqueja la conversa en curs.
+
+### 5.4 Context complet que rep la IA
+
+```
+SYSTEM PROMPT:
+  [comportament del bot]
+  [informació del negoci]
+  [serveis i preus]
+  [FAQ]
+  [restriccions]
+
+HISTORIAL DEL CLIENT (si existeix):
+  Resum de converses anteriors amb aquest client:
+  "{Contact.conversationSummary}"
+
+CONVERSA ACTUAL:
+  [últims 30 missatges en ordre cronològic]
+
+USER:
+  [nou missatge del client]
+```
+
+### 5.5 Privacitat i RGPD
+
+- El `conversationSummary` és part de les dades personals del client (Reglament RGPD art. 17)
+- S'esborrarà quan el tenant elimini el contacte
+- El tenant pot esborrar l'historial d'un client des de la pestanya "Coneixement" → "Contactes"
+- Tots els missatges es guarden a PostgreSQL (no a Redis, que és només caché temporal)
+- Temps de retenció configurable per tenant: 6 mesos / 1 any / indefinit (default: 1 any)
+
+### 5.6 Canvi a Spec 20 — `ConversationService.loadHistory`
+
+El mètode actual carrega "últims 20 missatges de Redis (TTL 48h)".
+
+**Comportament corregit:**
+
+```
+loadHistory(tenantId, customerIdentifier, channel):
+  1. Busca Contact per (tenantId, customerIdentifier, channel)
+  2. Si no existeix → retorna historial buit + crea Contact
+  3. Si existeix:
+     a. Carrega els últims 30 missatges de PostgreSQL (conversations, no Redis)
+     b. Carrega Contact.conversationSummary (pot ser null)
+     c. Retorna { recentMessages: [...], summary: "..." }
+
+Redis ara s'usa NOMÉS per caché de lectura ràpida (TTL 10 min).
+PostgreSQL és la font de veritat per a l'historial.
+```
+
+---
+
+## 6. Estratègia RAG tècnica
+
+### 6.1 Enfocament: Context Injection (v1)
 
 Per a la majoria de negocis locals, el volum de coneixement és petit (< 50 KB de text). En comptes d'un vector store dedicat (complex, costós), usem **injecció directa al context**:
 
@@ -178,13 +277,14 @@ Per a la majoria de negocis locals, el volum de coneixement és petit (< 50 KB d
 system_prompt = comportament_base
               + dades_negoci_estructurades  (JSON compacte del Vault)
               + text_documents_rellevants   (chunks seleccionats per keyword)
-              + historial_conversacio       (últims 20 missatges)
+              + resum_historial_client      (Contact.conversationSummary)
+              + conversa_recent             (últims 30 missatges de PostgreSQL)
 ```
 
 Avantages: zero infraestructura extra, tot a PostgreSQL, fàcil de mantenir.
 Limitació: knowledge bases molt grans (> 100 KB) degraden la qualitat de resposta.
 
-### 5.2 Migració a pgvector (v2, futur)
+### 6.2 Migració a pgvector (v2, futur)
 
 Quan un client supera el llindar de 50 KB de coneixement:
 - Activar `pgvector` a la instància PostgreSQL existent
@@ -195,7 +295,17 @@ La interfície del `PromptBuilder` no canvia — la migració és transparent.
 
 ---
 
-## 6. Entitats de domini
+## 7. Entitats de domini
+
+### Canvi a `Contact` (Spec 25 — extensió)
+
+S'afegeix el camp `conversationSummary` a l'entitat `Contact` existent:
+
+| Camp | Tipus | Notes |
+|------|-------|-------|
+| `conversationSummary` | TEXT | Resum generat automàticament de converses passades. Null si < 30 missatges totals. |
+| `totalMessageCount` | Integer | Comptador de missatges totals (per disparar la generació del resum) |
+| `summaryUpdatedAt` | Instant | Data de l'últim resum generat |
 
 ### KnowledgeBase
 
@@ -331,9 +441,27 @@ Pàgina `/portal/agents` → nova pestanya **"Coneixement"**:
 - Indicador de si el bot és actiu i un botó "Actualitzar bot" (regenera el context en cache)
 - Historial de canvis (data + qui ho va modificar)
 
+### Secció "Contactes i memòria"
+
+Subtaula per gestionar la memòria del bot per client:
+
+| Columna | Descripció |
+|---------|-----------|
+| Client | Identifier del client (nom editable si s'ha assignat) |
+| Canal | WhatsApp / Telegram / Email |
+| Total missatges | Comptador de tota la conversa |
+| Darrer contacte | Data de l'últim missatge |
+| Resum | Previsualització del resum generat (expandible) |
+| Accions | Veure historial complet · Esborrar memòria · Esborrar tot l'historial |
+
+**Esborrar memòria** esborra el `conversationSummary` però manté els missatges.
+**Esborrar tot l'historial** esborra tots els missatges i el resum (RGPD dret d'oblit).
+
 ---
 
 ## 11. Casos QA
+
+### Base de coneixement
 
 | # | Cas | Resultat esperat |
 |---|-----|-----------------|
@@ -348,16 +476,34 @@ Pàgina `/portal/agents` → nova pestanya **"Coneixement"**:
 | KB-09 | Upload PDF corrupte | Error clar a la UI; no es desa |
 | KB-10 | Test de resposta pre-activació | Mostra resposta real de la IA amb el system prompt configurat |
 
+### Memòria del client
+
+| # | Cas | Resultat esperat |
+|---|-----|-----------------|
+| MEM-01 | Client nou, 1r missatge | No hi ha historial; bot respon sense context previ |
+| MEM-02 | Client amb 15 missatges previs torna al cap de 2 dies | Bot carrega els 15 missatges de PostgreSQL i té context complet |
+| MEM-03 | Client amb 50 missatges previs | Bot carrega: resum comprimit dels primers 20 + últims 30 missatges |
+| MEM-04 | Client diu "la setmana passada em vas dir que el preu era X" | Bot consulta el resum/historial i confirma o corregeix la informació |
+| MEM-05 | Client té converses per WhatsApp i per Telegram | Dos contactes separats (per canal); si es fa merge manual, comparten resum |
+| MEM-06 | Admin esborra la memòria d'un client | Proper missatge del client: bot comença sense context previ |
+| MEM-07 | Conversa supera 30 missatges nous des de l'últim resum | Background job genera resum; `summaryUpdatedAt` s'actualitza |
+| MEM-08 | Error a l'API en generar resum | Resum no s'actualitza; bot continua funcionant amb l'últim resum vàlid |
+| MEM-09 | Client demana "esborra el meu historial" | Bot informa que cal contactar directament; admin pot fer-ho des del portal |
+| MEM-10 | Resum + missatges recents + KB superen 8.000 tokens | Es trunca el resum (no els missatges recents); avís a l'admin |
+
 ---
 
 ## 12. Estat i planificació
 
 | Ítem | Estat |
 |------|-------|
-| Spec | ✅ Esborrany v1.0 |
+| Spec | ✅ Esborrany v1.1 |
 | Entitats de domini (`KnowledgeBase`, `KnowledgeEntry`, `KnowledgeDocument`) | ⏳ Pendent |
+| Extensió `Contact` amb `conversationSummary` (Spec 25) | ⏳ Pendent |
 | Migració BD | ⏳ Pendent |
 | API REST `/api/v1/knowledge` | ⏳ Pendent |
+| Fix `ConversationService.loadHistory` (PostgreSQL + resum) | ⏳ Pendent |
+| Background job de generació de resums | ⏳ Pendent |
 | Integració PromptBuilder (Spec 20) | ⏳ Pendent |
 | Wizard ampliació 4 passos | ⏳ Pendent |
 | Extracció text de PDFs (background job) | ⏳ Pendent |
