@@ -34,16 +34,33 @@
         "automationsValue": "< 4h",
         "automationsLabel": "Response time"
       },
-      "sectors": ["Clinics", "Renovations", "Lawyers", "Shops", "Restaurants", "Hair salons", "Consultancies"]
+      "sectors": [
+        "Clinics",
+        "Renovations",
+        "Lawyers",
+        "Shops",
+        "Restaurants",
+        "Hair salons",
+        "Consultancies"
+      ]
     },
     "problem": {
       "badge": "The real problem",
       "title": "YOU'RE A FREELANCER AND\nYOU DO EVERYTHING YOURSELF.",
       "description": "You manage the website, bookings, quotes and WhatsApp — all at once. And every new tool adds another monthly fee. When something breaks, you don't know who to call.",
       "items": [
-        { "icon": "💸", "text": "Monthly fees piling up: hosting, email, CRM, forms..." },
-        { "icon": "🚨", "text": "No real support when the system goes down or the website stops working" },
-        { "icon": "⏳", "text": "Hours lost with tools that don't talk to each other" }
+        {
+          "icon": "💸",
+          "text": "Monthly fees piling up: hosting, email, CRM, forms..."
+        },
+        {
+          "icon": "🚨",
+          "text": "No real support when the system goes down or the website stops working"
+        },
+        {
+          "icon": "⏳",
+          "text": "Hours lost with tools that don't talk to each other"
+        }
       ]
     },
     "services": {
@@ -190,7 +207,12 @@
           "name": "Base communication",
           "price": "€59",
           "description": "The agent replies via WhatsApp, Telegram and Email 24/7. Hybrid mode: the bot and you can both reply in the same thread.",
-          "services": ["Automatic replies 24/7", "WhatsApp + Telegram + Email", "Hybrid mode (bot + person)", "Info, hours and prices"],
+          "services": [
+            "Automatic replies 24/7",
+            "WhatsApp + Telegram + Email",
+            "Hybrid mode (bot + person)",
+            "Info, hours and prices"
+          ],
           "highlight": false
         },
         {
@@ -198,7 +220,12 @@
           "name": "+ Appointment management",
           "price": "€79",
           "description": "The agent manages your calendar: confirms appointments, sends reminders and handles cancellations without you having to intervene.",
-          "services": ["Everything in F1 included", "Automatic appointment confirmation", "Day-before reminders", "Cancellation management"],
+          "services": [
+            "Everything in F1 included",
+            "Automatic appointment confirmation",
+            "Day-before reminders",
+            "Cancellation management"
+          ],
           "highlight": true
         },
         {
@@ -206,7 +233,12 @@
           "name": "+ Quotes",
           "price": "€99",
           "description": "The agent generates PDF quotes, automatically follows up and records client responses.",
-          "services": ["Everything in F1+F2 included", "Automatic PDF quotes", "Active follow-up (unanswered)", "Response tracking"],
+          "services": [
+            "Everything in F1+F2 included",
+            "Automatic PDF quotes",
+            "Active follow-up (unanswered)",
+            "Response tracking"
+          ],
           "highlight": false
         },
         {
@@ -214,7 +246,12 @@
           "name": "+ Loyalty",
           "price": "€129",
           "description": "Post-sale follow-up, reactivation of inactive clients and automatic Google review requests.",
-          "services": ["Everything in F3 included", "Automatic post-sale follow-up", "Inactive client reactivation", "Google review requests"],
+          "services": [
+            "Everything in F3 included",
+            "Automatic post-sale follow-up",
+            "Inactive client reactivation",
+            "Google review requests"
+          ],
           "highlight": false
         }
       ]
@@ -429,7 +466,8 @@
       "templates": "Templates",
       "backup": "Backup",
       "infraOps": "InfraOps",
-      "apiKeys": "API Keys"
+      "apiKeys": "API Keys",
+      "inbox": "Conversations"
     }
   },
   "portalDashboard": {

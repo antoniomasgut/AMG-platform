@@ -78,16 +78,35 @@ function NewTenantModal({ onClose, onCreated }: { onClose: () => void; onCreated
   );
 }
 
+type ActiveFilter = 'all' | 'active' | 'inactive';
+type FreeFilter = 'all' | 'free' | 'paying';
+type SortOption = 'name,asc' | 'name,desc' | 'createdAt,desc' | 'createdAt,asc';
+
 export default function AdminTenantsPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [showNewTenant, setShowNewTenant] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all');
+  const [freeFilter, setFreeFilter] = useState<FreeFilter>('all');
+  const [sort, setSort] = useState<SortOption>('createdAt,desc');
+
+  const isActiveParam = activeFilter === 'active' ? true : activeFilter === 'inactive' ? false : undefined;
+  const isFreeParam = freeFilter === 'free' ? true : freeFilter === 'paying' ? false : undefined;
+
+  const resetPage = () => setPage(0);
 
   const { data: tenantsPage, isLoading } = useQuery({
-    queryKey: ['tenants', search, page],
-    queryFn: () => listTenants({ search: search || undefined, page, size: PAGE_SIZE }),
+    queryKey: ['tenants', search, page, activeFilter, freeFilter, sort],
+    queryFn: () => listTenants({
+      search: search || undefined,
+      page,
+      size: PAGE_SIZE,
+      isActive: isActiveParam,
+      isFree: isFreeParam,
+      sort,
+    }),
   });
 
   const tenants = tenantsPage?.content ?? [];
@@ -123,16 +142,64 @@ export default function AdminTenantsPage() {
           </a>
         </div>
 
-        {/* Search */}
-        <div className="relative max-w-sm">
-          <I.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-2" />
-          <input
-            type="search"
-            placeholder="Cerca per nom o slug..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            className="w-full bg-[#0d0d1a] border border-border-base pl-9 pr-3 h-9 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]"
-          />
+        {/* Search + filtres + ordenació */}
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="relative">
+            <I.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-2" />
+            <input
+              type="search"
+              placeholder="Cerca per nom o slug..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+              className="bg-[#0d0d1a] border border-border-base pl-9 pr-3 h-9 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00] w-56"
+            />
+          </div>
+
+          {/* Estat */}
+          <div className="flex gap-1">
+            {([['all', 'Tots'], ['active', 'Actius'], ['inactive', 'Inactius']] as [ActiveFilter, string][]).map(([val, label]) => (
+              <button
+                key={val}
+                onClick={() => { setActiveFilter(val); resetPage(); }}
+                className={`f-mono text-[10px] uppercase tracking-wider px-2.5 py-1 border transition-colors ${
+                  activeFilter === val
+                    ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.12)] text-white'
+                    : 'border-border-base text-ink-2 hover:text-ink-0 hover:border-ink-2'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Facturació */}
+          <div className="flex gap-1">
+            {([['all', 'Tots'], ['free', 'Gratuïts'], ['paying', 'De pagament']] as [FreeFilter, string][]).map(([val, label]) => (
+              <button
+                key={val}
+                onClick={() => { setFreeFilter(val); resetPage(); }}
+                className={`f-mono text-[10px] uppercase tracking-wider px-2.5 py-1 border transition-colors ${
+                  freeFilter === val
+                    ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.12)] text-white'
+                    : 'border-border-base text-ink-2 hover:text-ink-0 hover:border-ink-2'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Ordenació */}
+          <select
+            value={sort}
+            onChange={(e) => { setSort(e.target.value as SortOption); resetPage(); }}
+            className="bg-[#0d0d1a] border border-border-base px-2 h-9 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00] f-mono"
+          >
+            <option value="createdAt,desc">Més recents</option>
+            <option value="createdAt,asc">Més antics</option>
+            <option value="name,asc">Nom A→Z</option>
+            <option value="name,desc">Nom Z→A</option>
+          </select>
         </div>
 
         <div className="amg-card card-clip">
@@ -155,7 +222,7 @@ export default function AdminTenantsPage() {
                 <table className="w-full min-w-[580px]">
                   <thead>
                     <tr className="border-b border-border-base">
-                      {['Tenant', 'Slug', 'Email', 'Estat', 'Creat', 'Accions'].map((h) => (
+                      {['Tenant', 'Slug', 'Email', 'Estat', 'Facturació', 'Creat', 'Accions'].map((h) => (
                         <th key={h} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal">{h}</th>
                       ))}
                     </tr>
@@ -174,6 +241,11 @@ export default function AdminTenantsPage() {
                           ) : (
                             <AMGBadge tone="neutral">Inactiu</AMGBadge>
                           )}
+                        </td>
+                        <td className="px-4 sm:px-5 py-3">
+                          {t.isFree
+                            ? <AMGBadge tone="warning">Gratuït</AMGBadge>
+                            : <AMGBadge tone="neutral">Pagament</AMGBadge>}
                         </td>
                         <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{fmtDate(t.createdAt)}</td>
                         <td className="px-4 sm:px-5 py-3">

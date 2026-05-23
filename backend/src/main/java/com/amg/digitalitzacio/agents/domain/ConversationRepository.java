@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -23,4 +24,13 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     @Query("SELECT DISTINCT c.customerIdentifier FROM Conversation c WHERE c.tenantId = ?1 ORDER BY c.createdAt DESC")
     List<String> findDistinctCustomerIdentifiersByTenantId(UUID tenantId);
+
+    List<Conversation> findByTenantIdAndCustomerIdentifierAndChannelOrderByCreatedAtAsc(
+        UUID tenantId, String customerIdentifier, ConversationChannel channel);
+
+    Optional<Conversation> findTop1ByTenantIdAndCustomerIdentifierAndChannelOrderByCreatedAtDesc(
+        UUID tenantId, String customerIdentifier, ConversationChannel channel);
+
+    long countByTenantIdAndCustomerIdentifierAndChannelAndPendingApprovalTrue(
+        UUID tenantId, String customerIdentifier, ConversationChannel channel);
 }

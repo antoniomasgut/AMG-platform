@@ -68,12 +68,15 @@ export const deleteUser = (id: string) =>
 export const unlockUser = (id: string) =>
   apiFetch<UserResponse>(`/users/${id}/unlock`, { method: 'POST' });
 
-export const listTenants = (params: { page?: number; size?: number; search?: string } = {}) => {
+export const listTenants = (params: { page?: number; size?: number; search?: string; isActive?: boolean; isFree?: boolean; sort?: string } = {}) => {
   const q = new URLSearchParams({
     page: String(params.page ?? 0),
     size: String(params.size ?? 20),
   });
   if (params.search) q.set('search', params.search);
+  if (params.isActive !== undefined) q.set('isActive', String(params.isActive));
+  if (params.isFree !== undefined) q.set('isFree', String(params.isFree));
+  if (params.sort) q.set('sort', params.sort);
   return apiFetch<PageResponse<TenantResponse>>(`/tenants?${q}`);
 };
 

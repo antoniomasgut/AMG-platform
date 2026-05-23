@@ -57,8 +57,9 @@ public class TenantService {
         return toResponse(tenant);
     }
 
-    public Page<TenantResponse> listTenants(Pageable pageable, String search) {
-        return tenantRepository.findAll(pageable).map(this::toResponse);
+    public Page<TenantResponse> listTenants(Pageable pageable, String search, Boolean isActive, Boolean isFree) {
+        String searchParam = (search != null && !search.isBlank()) ? search : null;
+        return tenantRepository.findFiltered(searchParam, isActive, isFree, pageable).map(this::toResponse);
     }
 
     public TenantResponse getTenant(UUID id) {
@@ -91,6 +92,7 @@ public class TenantService {
         if (request.contractedPhases() != null) tenant.setContractedPhases(toPhaseString(request.contractedPhases()));
         if (request.agentSystemPrompt() != null) tenant.setAgentSystemPrompt(request.agentSystemPrompt());
         if (request.isFree() != null) tenant.setIsFree(request.isFree());
+        if (request.isActive() != null) tenant.setIsActive(request.isActive());
 
         tenant = tenantRepository.save(tenant);
         return toResponse(tenant);

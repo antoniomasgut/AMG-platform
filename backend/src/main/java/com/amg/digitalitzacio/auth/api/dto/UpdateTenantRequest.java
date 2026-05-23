@@ -13,5 +13,6 @@ public record UpdateTenantRequest(
         String businessSize,
         java.util.List<String> contractedPhases,
         String agentSystemPrompt,
-        Boolean isFree
+        Boolean isFree,
+        Boolean isActive
 ) {}

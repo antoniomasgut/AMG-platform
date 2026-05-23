@@ -631,6 +631,20 @@ export default function TenantDetailPage() {
   const { toast } = useToast();
   const [showAssignProfile, setShowAssignProfile] = useState(false);
   const [togglingFree, setTogglingFree] = useState(false);
+  const [togglingActive, setTogglingActive] = useState(false);
+
+  const toggleActive = async (current: boolean) => {
+    setTogglingActive(true);
+    try {
+      await updateTenant(id, { isActive: !current });
+      qc.invalidateQueries({ queryKey: ['tenant', id] });
+      toast('success', !current ? 'Tenant activat' : 'Tenant desactivat');
+    } catch {
+      toast('error', 'Error actualitzant l\'estat del tenant');
+    } finally {
+      setTogglingActive(false);
+    }
+  };
 
   const toggleFree = async (current: boolean) => {
     setTogglingFree(true);
@@ -736,6 +750,14 @@ export default function TenantDetailPage() {
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <AMGButton
+              size="sm"
+              variant={tenant.isActive ? 'ghost' : 'secondary'}
+              disabled={togglingActive}
+              onClick={() => toggleActive(tenant.isActive)}
+            >
+              {tenant.isActive ? 'Desactivar' : 'Activar'}
+            </AMGButton>
             <AMGButton
               size="sm"
               icon={I.Plus}

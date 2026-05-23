@@ -24,6 +24,7 @@ import java.util.UUID;
 public class ConversationalAgentService {
 
     private final ConversationService conversationService;
+    private final ContactService contactService;
     private final PromptBuilder promptBuilder;
     private final TenantChatLinkRepository tenantChatLinkRepository;
     private final TenantAIConfigRepository tenantAIConfigRepository;
@@ -36,6 +37,20 @@ public class ConversationalAgentService {
     public void handleIncoming(UUID tenantId, String customerIdentifier, ConversationChannel channel, String text) {
         try {
             log.info("Handling incoming message for tenantId={}, channel={}", tenantId, channel);
+
+            var chatLinkOpt = tenantChatLinkRepository.findByTenantId(tenantId);
+            if (chatLinkOpt.isEmpty()) {
+                log.warn("TenantChatLink not found for tenant {}", tenantId);
+                return;
+            }
+            var chatLink = chatLinkOpt.get();
+
+            if (!Boolean.TRUE.equals(chatLink.getIsActive())) {
+                log.info("Agent is inactive for tenant {} — message ignored", tenantId);
+                return;
+            }
+
+            contactService.findOrCreate(tenantId, channel, customerIdentifier);
 
             conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.USER, text, false);
 
@@ -58,13 +73,6 @@ public class ConversationalAgentService {
                 return;
             }
 
-            var chatLinkOpt = tenantChatLinkRepository.findByTenantId(tenantId);
-            if (chatLinkOpt.isEmpty()) {
-                log.warn("TenantChatLink not found for tenant {}", tenantId);
-                return;
-            }
-
-            var chatLink = chatLinkOpt.get();
             switch (chatLink.getAgentMode()) {
                 case AUTO:
                     String senderId = channel == ConversationChannel.WHATSAPP_META

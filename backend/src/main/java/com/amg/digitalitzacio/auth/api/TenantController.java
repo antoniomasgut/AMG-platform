@@ -31,8 +31,10 @@ public class TenantController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Page<TenantResponse>> listTenants(
             Pageable pageable,
-            @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(tenantService.listTenants(pageable, search));
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) Boolean isFree) {
+        return ResponseEntity.ok(tenantService.listTenants(pageable, search, isActive, isFree));
     }
 
     @GetMapping("/{id}")

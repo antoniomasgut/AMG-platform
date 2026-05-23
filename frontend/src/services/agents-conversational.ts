@@ -109,3 +109,35 @@ export const testModel = (request: AIModelTestRequest) =>
     method: 'POST',
     body: JSON.stringify(request),
   });
+
+// --- Omnichannel Inbox (Spec 25) ---
+
+export interface ContactSummary {
+  contactId: string;
+  displayName: string;
+  channels: { channel: string; identifier: string }[];
+  lastMessage: string | null;
+  lastMessageRole: 'USER' | 'ASSISTANT' | null;
+  lastMessageAt: string | null;
+  lastChannel: string | null;
+  lastIdentifier: string | null;
+  pendingCount: number;
+}
+
+export const listContacts = (tenantId: string) =>
+  apiFetch<ContactSummary[]>(`/agents/contacts/${tenantId}`);
+
+export const getContactThread = (tenantId: string, contactId: string) =>
+  apiFetch<ConversationResponse[]>(`/agents/contacts/${tenantId}/${contactId}/thread`);
+
+export const sendReply = (tenantId: string, contactId: string, text: string) =>
+  apiFetch<void>(`/agents/contacts/${tenantId}/${contactId}/reply`, {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  });
+
+export const renameContact = (tenantId: string, contactId: string, displayName: string) =>
+  apiFetch<void>(`/agents/contacts/${tenantId}/${contactId}/name`, {
+    method: 'PATCH',
+    body: JSON.stringify({ displayName }),
+  });

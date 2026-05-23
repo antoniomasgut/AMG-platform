@@ -31,6 +31,7 @@ function clientGroups(t: T): NavGroup[] {
         { label: t('items.myWebs'), icon: I.Globe, href: '/portal/landings' },
         { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
         { label: t('items.agentAI'), icon: I.Bot, href: '/portal/agents' },
+        { label: t('items.inbox'), icon: I.Mail, href: '/portal/agents/inbox' },
         { label: t('items.files'), icon: I.Image, href: '/portal/assets' },
       ],
     },
@@ -86,6 +87,7 @@ function adminGroups(t: T): NavGroup[] {
         { label: t('items.assets'), icon: I.Image, href: '/portal/assets' },
         { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
         { label: t('items.agentsAI'), icon: I.Bot, href: '/portal/agents' },
+        { label: t('items.inbox'), icon: I.Mail, href: '/portal/agents/inbox' },
       ],
     },
     {
@@ -132,6 +134,7 @@ function superAdminGroups(t: T): NavGroup[] {
         { label: t('items.assets'), icon: I.Image, href: '/portal/assets' },
         { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
         { label: t('items.agentsAI'), icon: I.Bot, href: '/portal/agents' },
+        { label: t('items.inbox'), icon: I.Mail, href: '/portal/agents/inbox' },
       ],
     },
     {

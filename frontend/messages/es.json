@@ -34,16 +34,33 @@
         "automationsValue": "< 4h",
         "automationsLabel": "Tiempo de respuesta"
       },
-      "sectors": ["Clínicas", "Reformas", "Abogados", "Comercios", "Restaurantes", "Peluquerías", "Asesorías"]
+      "sectors": [
+        "Clínicas",
+        "Reformas",
+        "Abogados",
+        "Comercios",
+        "Restaurantes",
+        "Peluquerías",
+        "Asesorías"
+      ]
     },
     "problem": {
       "badge": "El problema real",
       "title": "ERES AUTÓNOMO/A Y LO\nHACES TODO TÚ.",
       "description": "Gestionas la web, las reservas, los presupuestos y el WhatsApp — todo a la vez. Y cada nueva herramienta añade una cuota mensual. Cuando algo falla, no sabes a quién llamar.",
       "items": [
-        { "icon": "💸", "text": "Cuotas mensuales que se acumulan: hosting, email, CRM, formularios..." },
-        { "icon": "🚨", "text": "Sin soporte real cuando el sistema cae o la web deja de funcionar" },
-        { "icon": "⏳", "text": "Horas perdidas con herramientas que no se comunican entre sí" }
+        {
+          "icon": "💸",
+          "text": "Cuotas mensuales que se acumulan: hosting, email, CRM, formularios..."
+        },
+        {
+          "icon": "🚨",
+          "text": "Sin soporte real cuando el sistema cae o la web deja de funcionar"
+        },
+        {
+          "icon": "⏳",
+          "text": "Horas perdidas con herramientas que no se comunican entre sí"
+        }
       ]
     },
     "services": {
@@ -190,7 +207,12 @@
           "name": "Comunicación base",
           "price": "59€",
           "description": "El agente responde por WhatsApp, Telegram y Email las 24h. Modo híbrido: el bot y tú podéis contestar en el mismo hilo.",
-          "services": ["Respuestas automáticas 24/7", "WhatsApp + Telegram + Email", "Modo híbrido (bot + persona)", "Información, horarios y precios"],
+          "services": [
+            "Respuestas automáticas 24/7",
+            "WhatsApp + Telegram + Email",
+            "Modo híbrido (bot + persona)",
+            "Información, horarios y precios"
+          ],
           "highlight": false
         },
         {
@@ -198,7 +220,12 @@
           "name": "+ Gestión de citas",
           "price": "79€",
           "description": "El agente gestiona la agenda: confirma citas, envía recordatorios y gestiona cancelaciones sin que tengas que intervenir.",
-          "services": ["Todo de F1 incluido", "Confirmación de citas automática", "Recordatorios el día antes", "Gestión de cancelaciones"],
+          "services": [
+            "Todo de F1 incluido",
+            "Confirmación de citas automática",
+            "Recordatorios el día antes",
+            "Gestión de cancelaciones"
+          ],
           "highlight": true
         },
         {
@@ -206,7 +233,12 @@
           "name": "+ Presupuestos",
           "price": "99€",
           "description": "El agente genera presupuestos en PDF, hace el seguimiento automático y registra las respuestas del cliente.",
-          "services": ["Todo de F1+F2 incluido", "Presupuestos PDF automáticos", "Seguimiento activo (no contestados)", "Registro de respuestas"],
+          "services": [
+            "Todo de F1+F2 incluido",
+            "Presupuestos PDF automáticos",
+            "Seguimiento activo (no contestados)",
+            "Registro de respuestas"
+          ],
           "highlight": false
         },
         {
@@ -214,7 +246,12 @@
           "name": "+ Fidelización",
           "price": "129€",
           "description": "Seguimiento postventa, reactivación de clientes inactivos y generación de reseñas Google de forma automática.",
-          "services": ["Todo de F3 incluido", "Seguimiento postventa automático", "Reactivación de clientes inactivos", "Solicitud reseñas Google"],
+          "services": [
+            "Todo de F3 incluido",
+            "Seguimiento postventa automático",
+            "Reactivación de clientes inactivos",
+            "Solicitud reseñas Google"
+          ],
           "highlight": false
         }
       ]
@@ -429,7 +466,8 @@
       "templates": "Plantillas",
       "backup": "Backup",
       "infraOps": "InfraOps",
-      "apiKeys": "API Keys"
+      "apiKeys": "API Keys",
+      "inbox": "Conversaciones"
     }
   },
   "portalDashboard": {
