@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.auth.application;
 
 import com.amg.digitalitzacio.agents.domain.KnowledgeBaseRepository;
+import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.api.dto.*;
 import com.amg.digitalitzacio.auth.domain.BusinessSector;
@@ -39,6 +40,7 @@ public class TenantService {
     private final TenantProfileRepository tenantProfileRepository;
     private final TenantChatLinkRepository tenantChatLinkRepository;
     private final KnowledgeBaseRepository knowledgeBaseRepository;
+    private final TenantAIConfigRepository tenantAIConfigRepository;
     private final BudgetRepository budgetRepository;
     private final MonthlyInvoiceRepository monthlyInvoiceRepository;
     private final GoCardlessConfigRepository goCardlessConfigRepository;
@@ -192,6 +194,7 @@ public class TenantService {
         tenantProfileRepository.deleteByTenantId(id);
         tenantChatLinkRepository.deleteByTenantId(id);
         knowledgeBaseRepository.deleteByTenantId(id);
+        tenantAIConfigRepository.deleteById(id);
         goCardlessMandateRepository.deleteByTenantId(id);
         goCardlessConfigRepository.deleteByTenantId(id);
         whatsAppWabaConfigRepository.deleteByTenantId(id);
