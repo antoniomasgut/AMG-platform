@@ -144,14 +144,11 @@ public class TenantService {
         tenantRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tenant no trobat"));
 
-        long invoices = monthlyInvoiceRepository.countByTenantId(id);
-        if (invoices > 0) {
-            String msg = "El tenant té " + invoices + " factura" + (invoices > 1 ? "es" : "") +
-                    " que no es poden eliminar (registre legal)";
-            return new DeleteTenantCheckResponse(false, List.of(msg), List.of());
-        }
-
         List<String> warnings = new ArrayList<>();
+
+        long invoices = monthlyInvoiceRepository.countByTenantId(id);
+        if (invoices > 0) warnings.add(invoices + " factura" + (invoices > 1 ? "es" : "") +
+                " quedaran com a registre històric (no s'eliminaran)");
 
         long activeServices = tenantServiceRepository.countByTenantIdAndIsEnabled(id, true);
         long disabledServices = tenantServiceRepository.countByTenantIdAndIsEnabled(id, false);
