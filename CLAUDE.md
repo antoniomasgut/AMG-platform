@@ -148,6 +148,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 24 | Agent Activation Flows (activació + canals + mode) | ✅ Completat | specs/24-agent-activation-flows.md |
 | 25 | Omnichannel Inbox (converses unificades) | ✅ Completat | specs/25-omnichannel-inbox.md |
 | 26 | RAG Knowledge Base (base de coneixement IA) | 🔨 En curs | specs/26-rag-knowledge-base.md |
+| 27 | WhatsApp Business API (Meta Cloud, per tenant) | ✅ Completat | specs/27-whatsapp-business.md |
 
 ---
 
