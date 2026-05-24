@@ -1301,48 +1301,23 @@ function DeleteTenantModal({ tenantId, tenantName, onClose, onDeleted }: {
           <div className="flex justify-center py-8">
             <span className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : !check ? null : !check.canDelete ? (
-          /* Bloquejat */
-          <div className="space-y-4">
-            <div className="p-4 bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.3)] rounded space-y-2">
-              <div className="flex items-center gap-2 text-red-400 font-semibold text-sm">
-                <I.AlertCircle size={16} />
-                No es pot eliminar &quot;{tenantName}&quot;
-              </div>
-              <ul className="space-y-1">
-                {check.blockers.map((b, i) => (
-                  <li key={i} className="f-mono text-xs text-ink-2 flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-red-400 flex-shrink-0" />
-                    {b}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <p className="text-xs text-ink-3">Desactiva tots els serveis i elimina pressupostos i factures abans de poder eliminar el tenant.</p>
-            <AMGButton variant="outline" onClick={onClose} className="w-full justify-center">Tancar</AMGButton>
-          </div>
-        ) : (
-          /* Confirmació */
+        ) : check && (
           <div className="space-y-4">
             <p className="text-sm text-ink-2">
               Estàs a punt d&apos;eliminar <span className="font-semibold text-white">{tenantName}</span> de forma permanent.
             </p>
-            {check.warnings.length > 0 && (
-              <div className="p-4 bg-[rgba(251,191,36,0.08)] border border-[rgba(251,191,36,0.3)] rounded space-y-2">
-                <div className="flex items-center gap-2 text-yellow-400 font-semibold text-xs f-mono uppercase tracking-widest">
-                  <I.AlertCircle size={14} />
-                  S&apos;eliminaran:
-                </div>
-                <ul className="space-y-1">
-                  {check.warnings.map((w, i) => (
-                    <li key={i} className="f-mono text-xs text-ink-2 flex items-center gap-2">
-                      <span className="w-1 h-1 rounded-full bg-yellow-400 flex-shrink-0" />
-                      {w}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+
+            {[...check.blockers, ...check.warnings].length > 0 && (
+              <ul className="space-y-2">
+                {[...check.blockers, ...check.warnings].map((msg, i) => (
+                  <li key={i} className="flex items-start gap-2.5 f-mono text-xs text-ink-2">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#FF6B00] flex-shrink-0" />
+                    {msg}
+                  </li>
+                ))}
+              </ul>
             )}
+
             <p className="text-xs text-ink-3">Aquesta acció és irreversible.</p>
             <div className="flex gap-3 pt-1 border-t border-border-base">
               <button
