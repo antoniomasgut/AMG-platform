@@ -41,30 +41,81 @@ function statusBadge(status: string, activeLabel: string, inactiveLabel: string)
 }
 
 function ServiceCatalogTable({ services }: { services: CatalogService[] }) {
-  if (services.length === 0) return <p className="text-sm text-ink-2 py-4">Cap servei al catàleg</p>;
+  const [query, setQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'RECURRING' | 'ONE_TIME'>('ALL');
+  const [addonOnly, setAddonOnly] = useState(false);
+
+  const filtered = services.filter((s) => {
+    const q = query.toLowerCase();
+    const matchesQuery = !q || s.name.toLowerCase().includes(q) || s.slug.toLowerCase().includes(q);
+    const matchesType = typeFilter === 'ALL' || s.type === typeFilter;
+    const matchesAddon = !addonOnly || s.isAddon;
+    return matchesQuery && matchesType && matchesAddon;
+  });
+
+  const filterBtn = (label: string, active: boolean, onClick: () => void) => (
+    <button type="button" onClick={onClick}
+      className={`px-3 py-1.5 rounded text-xs f-mono transition border ${
+        active
+          ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.12)] text-white'
+          : 'border-border-base text-ink-2 hover:border-ink-2'
+      }`}>
+      {label}
+    </button>
+  );
+
   return (
-    <table className="w-full min-w-[500px]">
-      <thead>
-        <tr className="border-b border-border-base">
-          {['Servei', 'Tipus', 'Preu venda', 'Addon'].map((h) => (
-            <th key={h} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal">{h}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {services.map((s) => (
-          <tr key={s.id} className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)] transition-colors">
-            <td className="px-4 sm:px-5 py-3">
-              <div className="f-display font-bold text-sm">{s.name}</div>
-              <div className="f-mono text-xs text-ink-3 mt-0.5">{s.slug}</div>
-            </td>
-            <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-2 capitalize">{s.type.toLowerCase()}</td>
-            <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{s.salePrice.toFixed(2)} €</td>
-            <td className="px-4 sm:px-5 py-3">{s.isAddon ? <AMGBadge tone="info">Addon</AMGBadge> : '—'}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div>
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-3 px-4 sm:px-5 py-3 border-b border-border-base">
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <I.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Cercar servei..."
+            className="w-full pl-8 pr-3 py-1.5 bg-[rgba(255,255,255,0.04)] border border-border-base rounded text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00] placeholder:text-ink-3"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          {filterBtn('Tots', typeFilter === 'ALL', () => setTypeFilter('ALL'))}
+          {filterBtn('Recurrent', typeFilter === 'RECURRING', () => setTypeFilter('RECURRING'))}
+          {filterBtn('Únic', typeFilter === 'ONE_TIME', () => setTypeFilter('ONE_TIME'))}
+          {filterBtn('Addon', addonOnly, () => setAddonOnly(v => !v))}
+        </div>
+        {(query || typeFilter !== 'ALL' || addonOnly) && (
+          <span className="f-mono text-xs text-ink-3">{filtered.length} / {services.length}</span>
+        )}
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="text-sm text-ink-2 px-5 py-6">Cap servei coincideix amb el filtre.</p>
+      ) : (
+        <table className="w-full min-w-[500px]">
+          <thead>
+            <tr className="border-b border-border-base">
+              {['Servei', 'Tipus', 'Preu venda', 'Addon'].map((h) => (
+                <th key={h} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((s) => (
+              <tr key={s.id} className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                <td className="px-4 sm:px-5 py-3">
+                  <div className="f-display font-bold text-sm">{s.name}</div>
+                  <div className="f-mono text-xs text-ink-3 mt-0.5">{s.slug}</div>
+                </td>
+                <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-2 capitalize">{s.type.toLowerCase()}</td>
+                <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{s.salePrice.toFixed(2)} €</td>
+                <td className="px-4 sm:px-5 py-3">{s.isAddon ? <AMGBadge tone="info">Addon</AMGBadge> : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }
 
