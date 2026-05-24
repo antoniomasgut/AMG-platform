@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.finops.application;
 
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.finops.api.dto.*;
 import com.amg.digitalitzacio.finops.domain.*;
@@ -32,6 +33,7 @@ public class FinOpsOrchestrator implements FinOpsService {
     private final MonthlyInvoiceRepository monthlyInvoiceRepository;
     private final BillingCalculator billingCalculator;
     private final SepaXmlGenerator sepaXmlGenerator;
+    private final TenantRepository tenantRepository;
 
     @Override
     @Transactional
@@ -296,6 +298,8 @@ public class FinOpsOrchestrator implements FinOpsService {
             var amount = billingCalculator.calculateMonthlyAmount(tenantId, period);
             if (amount.compareTo(BigDecimal.ZERO) == 0) continue;
 
+            var tenant = tenantRepository.findById(tenantId).orElse(null);
+
             var holdedInvoiceId = finOpsClient.createInvoice(
                     config.getHoldedContactId() != null ? config.getHoldedContactId() : "UNKNOWN",
                     amount,
@@ -315,6 +319,10 @@ public class FinOpsOrchestrator implements FinOpsService {
                     .status(InvoiceStatus.SENT)
                     .sepaCollectionDate(collectionDate)
                     .sepaCollected(false)
+                    .tenantName(tenant != null ? tenant.getName() : null)
+                    .tenantNif(tenant != null ? tenant.getNif() : null)
+                    .tenantAddress(tenant != null ? tenant.getAddress() : null)
+                    .tenantEmail(tenant != null ? tenant.getEmail() : null)
                     .build();
             invoice = monthlyInvoiceRepository.save(invoice);
             results.add(toMonthlyInvoiceResponse(invoice));
@@ -384,6 +392,7 @@ public class FinOpsOrchestrator implements FinOpsService {
     private MonthlyInvoiceResponse toMonthlyInvoiceResponse(MonthlyInvoice inv) {
         return new MonthlyInvoiceResponse(inv.getId(), inv.getTenantId(), inv.getPeriod(),
                 inv.getInvoiceNumber(), inv.getAmount(), inv.getStatus().name(),
-                inv.getSepaCollectionDate(), inv.getSepaCollected(), inv.getInvoicePdfUrl(), inv.getCreatedAt());
+                inv.getSepaCollectionDate(), inv.getSepaCollected(), inv.getInvoicePdfUrl(), inv.getCreatedAt(),
+                inv.getTenantName(), inv.getTenantNif(), inv.getTenantAddress(), inv.getTenantEmail());
     }
 }

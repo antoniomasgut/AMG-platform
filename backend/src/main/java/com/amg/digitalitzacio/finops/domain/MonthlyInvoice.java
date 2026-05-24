@@ -21,6 +21,12 @@ public class MonthlyInvoice {
     @Column(nullable = false, length = 7) private String period;  // ex: "2026-05"
     @Column(unique = true, length = 50) private String holdedInvoiceId;
     @Column(length = 20) private String invoiceNumber;
+
+    /** Snapshot de les dades del tenant en el moment de facturar */
+    @Column(length = 200) private String tenantName;
+    @Column(length = 50) private String tenantNif;
+    @Column(length = 500) private String tenantAddress;
+    @Column(length = 200) private String tenantEmail;
     @Column(nullable = false, precision = 10, scale = 2) private BigDecimal amount;
     @Enumerated(EnumType.STRING) @Builder.Default @Column(nullable = false) private InvoiceStatus status = InvoiceStatus.PENDING;
     private LocalDate sepaCollectionDate;

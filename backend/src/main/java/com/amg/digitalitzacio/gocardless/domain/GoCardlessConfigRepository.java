@@ -7,5 +7,6 @@ import java.util.UUID;
 
 public interface GoCardlessConfigRepository extends JpaRepository<GoCardlessConfig, UUID> {
     Optional<GoCardlessConfig> findByTenantId(UUID tenantId);
+    long countByTenantId(UUID tenantId);
     void deleteByTenantId(UUID tenantId);
 }

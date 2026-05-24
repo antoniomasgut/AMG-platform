@@ -7,4 +7,5 @@ import java.util.UUID;
 
 public record MonthlyInvoiceResponse(UUID id, UUID tenantId, String period, String invoiceNumber,
                                       BigDecimal amount, String status, LocalDate sepaCollectionDate,
-                                      Boolean sepaCollected, String invoicePdfUrl, Instant createdAt) {}
+                                      Boolean sepaCollected, String invoicePdfUrl, Instant createdAt,
+                                      String tenantName, String tenantNif, String tenantAddress, String tenantEmail) {}

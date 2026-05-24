@@ -138,42 +138,41 @@ public class TenantService {
         return null;
     }
 
-    /** Comprova si un tenant es pot eliminar i retorna el motiu si no pot. */
+    /** Comprova si un tenant es pot eliminar. Només les factures bloquegen l'eliminació. */
     @Transactional(readOnly = true)
     public DeleteTenantCheckResponse checkDeletion(UUID id) {
         tenantRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tenant no trobat"));
 
-        List<String> blockers = new ArrayList<>();
-
-        long activeServices = tenantServiceRepository.countByTenantIdAndIsEnabled(id, true);
-        if (activeServices > 0) {
-            blockers.add("El tenant té " + activeServices + " servei" + (activeServices > 1 ? "s" : "") + " actiu" + (activeServices > 1 ? "s" : ""));
-        }
-
-        long budgets = budgetRepository.countByTenantId(id);
-        if (budgets > 0) {
-            blockers.add("El tenant té " + budgets + " pressupost" + (budgets > 1 ? "s" : ""));
-        }
-
         long invoices = monthlyInvoiceRepository.countByTenantId(id);
         if (invoices > 0) {
-            blockers.add("El tenant té " + invoices + " factura" + (invoices > 1 ? "s" : ""));
-        }
-
-        if (!blockers.isEmpty()) {
-            return new DeleteTenantCheckResponse(false, blockers, List.of());
+            String msg = "El tenant té " + invoices + " factura" + (invoices > 1 ? "es" : "") +
+                    " que no es poden eliminar (registre legal)";
+            return new DeleteTenantCheckResponse(false, List.of(msg), List.of());
         }
 
         List<String> warnings = new ArrayList<>();
+
+        long activeServices = tenantServiceRepository.countByTenantIdAndIsEnabled(id, true);
         long disabledServices = tenantServiceRepository.countByTenantIdAndIsEnabled(id, false);
-        if (disabledServices > 0) warnings.add(disabledServices + " servei" + (disabledServices > 1 ? "s" : "") + " desactivat" + (disabledServices > 1 ? "s" : "") + " s'eliminaran");
+        long totalServices = activeServices + disabledServices;
+        if (totalServices > 0) warnings.add(totalServices + " servei" + (totalServices > 1 ? "s" : "") +
+                " (" + activeServices + " actiu" + (activeServices != 1 ? "s" : "") + ") s'eliminaran");
+
+        long budgets = budgetRepository.countByTenantId(id);
+        if (budgets > 0) warnings.add(budgets + " pressupost" + (budgets > 1 ? "os" : "") + " s'eliminaran");
 
         var chatLink = tenantChatLinkRepository.findByTenantId(id);
         if (chatLink.isPresent()) warnings.add("La configuració de l'agent IA s'eliminarà");
 
         var kb = knowledgeBaseRepository.findByTenantId(id);
         if (kb.isPresent()) warnings.add("La base de coneixement s'eliminarà");
+
+        long gcConfigs = goCardlessConfigRepository.countByTenantId(id);
+        if (gcConfigs > 0) warnings.add("La configuració de GoCardless s'eliminarà");
+
+        long wabaConfigs = whatsAppWabaConfigRepository.countByTenantId(id);
+        if (wabaConfigs > 0) warnings.add("La configuració de WhatsApp Business s'eliminarà");
 
         return new DeleteTenantCheckResponse(true, List.of(), warnings);
     }
@@ -192,6 +191,7 @@ public class TenantService {
 
         tenantServiceRepository.deleteByTenantId(id);
         tenantProfileRepository.deleteByTenantId(id);
+        budgetRepository.deleteByTenantId(id);
         tenantChatLinkRepository.deleteByTenantId(id);
         knowledgeBaseRepository.deleteByTenantId(id);
         tenantAIConfigRepository.deleteById(id);
