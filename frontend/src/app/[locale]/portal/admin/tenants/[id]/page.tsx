@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { useToast } from '@/lib/toast-context';
@@ -1269,12 +1269,12 @@ function DeleteTenantModal({ tenantId, tenantName, onClose, onDeleted }: {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     checkTenantDeletion(tenantId)
       .then(setCheck)
       .catch(() => toast('error', 'Error comprovant les condicions d\'eliminació'))
       .finally(() => setLoading(false));
-  });
+  }, [tenantId]);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -1282,8 +1282,9 @@ function DeleteTenantModal({ tenantId, tenantName, onClose, onDeleted }: {
       await deleteTenant(tenantId);
       toast('success', `Tenant "${tenantName}" eliminat`);
       onDeleted();
-    } catch {
-      toast('error', 'Error eliminant el tenant');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error desconegut';
+      toast('error', `Error eliminant el tenant: ${msg}`);
     } finally {
       setDeleting(false);
     }
