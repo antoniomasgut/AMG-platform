@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface TenantProfileRepository extends JpaRepository<TenantProfile, UUID> {
     Optional<TenantProfile> findByTenantIdAndProfileId(UUID tenantId, UUID profileId);
     List<TenantProfile> findByTenantId(UUID tenantId);
+    void deleteByTenantId(UUID tenantId);
 }

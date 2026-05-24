@@ -17,6 +17,8 @@ import {
   type GoCardlessConfig, type GoCardlessMandate,
   type WhatsAppWabaConfig,
   getWhatsAppConfig, connectWhatsApp, verifyWhatsApp, disconnectWhatsApp, sendWhatsAppTest,
+  checkTenantDeletion, deleteTenant,
+  type DeleteTenantCheck,
   calcMonthly,
 } from '@/services/admin';
 import { createBudget, listBudgets, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
@@ -1258,12 +1260,113 @@ function NewBudgetModal({ tenantId, setup, onClose, onCreated }: {
   );
 }
 
+function DeleteTenantModal({ tenantId, tenantName, onClose, onDeleted }: {
+  tenantId: string; tenantName: string;
+  onClose: () => void; onDeleted: () => void;
+}) {
+  const { toast } = useToast();
+  const [check, setCheck] = useState<DeleteTenantCheck | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+
+  useState(() => {
+    checkTenantDeletion(tenantId)
+      .then(setCheck)
+      .catch(() => toast('error', 'Error comprovant les condicions d\'eliminació'))
+      .finally(() => setLoading(false));
+  });
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteTenant(tenantId);
+      toast('success', `Tenant "${tenantName}" eliminat`);
+      onDeleted();
+    } catch {
+      toast('error', 'Error eliminant el tenant');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="amg-card card-clip w-full max-w-md p-6 space-y-5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <div className="f-display font-bold text-base text-white">Eliminar tenant</div>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <span className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : !check ? null : !check.canDelete ? (
+          /* Bloquejat */
+          <div className="space-y-4">
+            <div className="p-4 bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.3)] rounded space-y-2">
+              <div className="flex items-center gap-2 text-red-400 font-semibold text-sm">
+                <I.AlertCircle size={16} />
+                No es pot eliminar &quot;{tenantName}&quot;
+              </div>
+              <ul className="space-y-1">
+                {check.blockers.map((b, i) => (
+                  <li key={i} className="f-mono text-xs text-ink-2 flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-red-400 flex-shrink-0" />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <p className="text-xs text-ink-3">Desactiva tots els serveis i elimina pressupostos i factures abans de poder eliminar el tenant.</p>
+            <AMGButton variant="outline" onClick={onClose} className="w-full justify-center">Tancar</AMGButton>
+          </div>
+        ) : (
+          /* Confirmació */
+          <div className="space-y-4">
+            <p className="text-sm text-ink-2">
+              Estàs a punt d&apos;eliminar <span className="font-semibold text-white">{tenantName}</span> de forma permanent.
+            </p>
+            {check.warnings.length > 0 && (
+              <div className="p-4 bg-[rgba(251,191,36,0.08)] border border-[rgba(251,191,36,0.3)] rounded space-y-2">
+                <div className="flex items-center gap-2 text-yellow-400 font-semibold text-xs f-mono uppercase tracking-widest">
+                  <I.AlertCircle size={14} />
+                  S&apos;eliminaran:
+                </div>
+                <ul className="space-y-1">
+                  {check.warnings.map((w, i) => (
+                    <li key={i} className="f-mono text-xs text-ink-2 flex items-center gap-2">
+                      <span className="w-1 h-1 rounded-full bg-yellow-400 flex-shrink-0" />
+                      {w}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <p className="text-xs text-ink-3">Aquesta acció és irreversible.</p>
+            <div className="flex gap-3 pt-1 border-t border-border-base">
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className={`flex-1 px-4 py-2.5 rounded text-sm font-semibold transition border border-red-500 bg-[rgba(239,68,68,0.12)] text-red-400 hover:bg-[rgba(239,68,68,0.2)] ${deleting ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                {deleting ? 'Eliminant...' : 'Confirmar i eliminar'}
+              </button>
+              <AMGButton variant="ghost" onClick={onClose}>Cancel·lar</AMGButton>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function TenantDetailPage() {
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [showAssignProfile, setShowAssignProfile] = useState(false);
   const [showNewBudget, setShowNewBudget] = useState(false);
+  const [showDeleteTenant, setShowDeleteTenant] = useState(false);
   const [togglingFree, setTogglingFree] = useState(false);
   const [togglingActive, setTogglingActive] = useState(false);
 
@@ -1423,6 +1526,13 @@ export default function TenantDetailPage() {
                 Configurar {svc.serviceName}
               </AMGButton>
             ))}
+            <button
+              type="button"
+              onClick={() => setShowDeleteTenant(true)}
+              className="px-3 py-1.5 rounded text-xs f-mono font-semibold border border-red-500/40 bg-[rgba(239,68,68,0.06)] text-red-400 hover:bg-[rgba(239,68,68,0.15)] transition"
+            >
+              Eliminar
+            </button>
           </div>
         </div>
 
@@ -1572,6 +1682,15 @@ export default function TenantDetailPage() {
           setup={setup ?? null}
           onClose={() => setShowNewBudget(false)}
           onCreated={() => refetchBudgets()}
+        />
+      )}
+
+      {showDeleteTenant && (
+        <DeleteTenantModal
+          tenantId={id}
+          tenantName={tenant.name}
+          onClose={() => setShowDeleteTenant(false)}
+          onDeleted={() => { window.location.href = '/portal/admin/tenants'; }}
         />
       )}
     </PortalShell>

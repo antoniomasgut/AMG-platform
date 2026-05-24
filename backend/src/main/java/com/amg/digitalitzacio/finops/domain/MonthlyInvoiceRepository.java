@@ -13,4 +13,5 @@ public interface MonthlyInvoiceRepository extends JpaRepository<MonthlyInvoice, 
     Page<MonthlyInvoice> findByTenantId(UUID tenantId, Pageable pageable);
     Page<MonthlyInvoice> findByPeriod(String period, Pageable pageable);
     List<MonthlyInvoice> findByPeriod(String period);
+    long countByTenantId(UUID tenantId);
 }

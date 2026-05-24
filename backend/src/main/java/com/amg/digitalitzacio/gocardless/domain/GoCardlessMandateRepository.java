@@ -9,4 +9,5 @@ public interface GoCardlessMandateRepository extends JpaRepository<GoCardlessMan
     Optional<GoCardlessMandate> findByTenantId(UUID tenantId);
     Optional<GoCardlessMandate> findByTenantIdAndStatus(UUID tenantId, GoCardlessMandateStatus status);
     Optional<GoCardlessMandate> findByGcRedirectFlowId(String gcRedirectFlowId);
+    void deleteByTenantId(UUID tenantId);
 }

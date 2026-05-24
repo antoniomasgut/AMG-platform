@@ -12,4 +12,6 @@ public interface TenantServiceRepository extends JpaRepository<TenantService, UU
     Optional<TenantService> findByTenantIdAndServiceId(UUID tenantId, UUID serviceId);
     List<TenantService> findByServiceId(UUID serviceId);
     List<TenantService> findByOutdatedTrue();
+    long countByTenantIdAndIsEnabled(UUID tenantId, Boolean isEnabled);
+    void deleteByTenantId(UUID tenantId);
 }

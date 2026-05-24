@@ -461,3 +461,17 @@ export const sendWhatsAppTest = (tenantId: string, toPhone: string) =>
     method: 'POST',
     body: JSON.stringify({ toPhone }),
   });
+
+// ─── Delete tenant (Spec 14) ──────────────────────────────────────────────────
+
+export interface DeleteTenantCheck {
+  canDelete: boolean;
+  blockers: string[];
+  warnings: string[];
+}
+
+export const checkTenantDeletion = (id: string) =>
+  apiFetch<DeleteTenantCheck>(`/tenants/${id}/delete-check`);
+
+export const deleteTenant = (id: string) =>
+  apiFetch<void>(`/tenants/${id}`, { method: 'DELETE' });

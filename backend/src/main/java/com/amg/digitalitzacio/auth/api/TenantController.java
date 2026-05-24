@@ -53,4 +53,17 @@ public class TenantController {
                                                        @Valid @RequestBody UpdateTenantRequest request) {
         return ResponseEntity.ok(tenantService.updateTenant(id, request));
     }
+
+    @GetMapping("/{id}/delete-check")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<TenantService.DeleteTenantCheckResponse> checkDeletion(@PathVariable UUID id) {
+        return ResponseEntity.ok(tenantService.checkDeletion(id));
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public void deleteTenant(@PathVariable UUID id) {
+        tenantService.deleteTenant(id);
+    }
 }

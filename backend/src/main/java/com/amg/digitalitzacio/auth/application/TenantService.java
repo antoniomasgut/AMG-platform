@@ -1,12 +1,22 @@
 package com.amg.digitalitzacio.auth.application;
 
+import com.amg.digitalitzacio.agents.domain.KnowledgeBaseRepository;
+import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.api.dto.*;
 import com.amg.digitalitzacio.auth.domain.BusinessSector;
 import com.amg.digitalitzacio.auth.domain.BusinessSize;
 import com.amg.digitalitzacio.auth.domain.PreferredChannel;
 import com.amg.digitalitzacio.auth.domain.Tenant;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
+import com.amg.digitalitzacio.billing.domain.BudgetRepository;
+import com.amg.digitalitzacio.finops.domain.MonthlyInvoiceRepository;
+import com.amg.digitalitzacio.gocardless.domain.GoCardlessConfigRepository;
+import com.amg.digitalitzacio.gocardless.domain.GoCardlessMandateRepository;
+import com.amg.digitalitzacio.vault.domain.TenantProfileRepository;
+import com.amg.digitalitzacio.vault.domain.TenantServiceRepository;
+import com.amg.digitalitzacio.whatsapp.domain.WhatsAppWabaConfigRepository;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +35,15 @@ import java.util.stream.Collectors;
 public class TenantService {
 
     private final TenantRepository tenantRepository;
+    private final TenantServiceRepository tenantServiceRepository;
+    private final TenantProfileRepository tenantProfileRepository;
+    private final TenantChatLinkRepository tenantChatLinkRepository;
+    private final KnowledgeBaseRepository knowledgeBaseRepository;
+    private final BudgetRepository budgetRepository;
+    private final MonthlyInvoiceRepository monthlyInvoiceRepository;
+    private final GoCardlessConfigRepository goCardlessConfigRepository;
+    private final GoCardlessMandateRepository goCardlessMandateRepository;
+    private final WhatsAppWabaConfigRepository whatsAppWabaConfigRepository;
 
     @Transactional
     public TenantResponse createTenant(@Valid CreateTenantRequest request) {
@@ -116,6 +135,71 @@ public class TenantService {
         if (sector != null) return SectorPromptTemplates.getTemplate(sector);
         return null;
     }
+
+    /** Comprova si un tenant es pot eliminar i retorna el motiu si no pot. */
+    @Transactional(readOnly = true)
+    public DeleteTenantCheckResponse checkDeletion(UUID id) {
+        tenantRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Tenant no trobat"));
+
+        List<String> blockers = new ArrayList<>();
+
+        long activeServices = tenantServiceRepository.countByTenantIdAndIsEnabled(id, true);
+        if (activeServices > 0) {
+            blockers.add("El tenant té " + activeServices + " servei" + (activeServices > 1 ? "s" : "") + " actiu" + (activeServices > 1 ? "s" : ""));
+        }
+
+        long budgets = budgetRepository.countByTenantId(id);
+        if (budgets > 0) {
+            blockers.add("El tenant té " + budgets + " pressupost" + (budgets > 1 ? "s" : ""));
+        }
+
+        long invoices = monthlyInvoiceRepository.countByTenantId(id);
+        if (invoices > 0) {
+            blockers.add("El tenant té " + invoices + " factura" + (invoices > 1 ? "s" : ""));
+        }
+
+        if (!blockers.isEmpty()) {
+            return new DeleteTenantCheckResponse(false, blockers, List.of());
+        }
+
+        List<String> warnings = new ArrayList<>();
+        long disabledServices = tenantServiceRepository.countByTenantIdAndIsEnabled(id, false);
+        if (disabledServices > 0) warnings.add(disabledServices + " servei" + (disabledServices > 1 ? "s" : "") + " desactivat" + (disabledServices > 1 ? "s" : "") + " s'eliminaran");
+
+        var chatLink = tenantChatLinkRepository.findByTenantId(id);
+        if (chatLink.isPresent()) warnings.add("La configuració de l'agent IA s'eliminarà");
+
+        var kb = knowledgeBaseRepository.findByTenantId(id);
+        if (kb.isPresent()) warnings.add("La base de coneixement s'eliminarà");
+
+        return new DeleteTenantCheckResponse(true, List.of(), warnings);
+    }
+
+    /** Elimina un tenant i totes les seves dades associades (serveis, agent, KB, pagament). */
+    @Transactional
+    public void deleteTenant(UUID id) {
+        tenantRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Tenant no trobat"));
+
+        // Re-validates before deleting
+        var check = checkDeletion(id);
+        if (!check.canDelete()) {
+            throw new IllegalStateException("No es pot eliminar: " + String.join(", ", check.blockers()));
+        }
+
+        tenantServiceRepository.deleteByTenantId(id);
+        tenantProfileRepository.deleteByTenantId(id);
+        tenantChatLinkRepository.deleteByTenantId(id);
+        knowledgeBaseRepository.deleteByTenantId(id);
+        goCardlessMandateRepository.deleteByTenantId(id);
+        goCardlessConfigRepository.deleteByTenantId(id);
+        whatsAppWabaConfigRepository.deleteByTenantId(id);
+        tenantRepository.deleteById(id);
+    }
+
+    /** DTO de resposta per a la comprovació prèvia a l'eliminació */
+    public record DeleteTenantCheckResponse(boolean canDelete, List<String> blockers, List<String> warnings) {}
 
     private TenantResponse toResponse(Tenant tenant) {
         return new TenantResponse(

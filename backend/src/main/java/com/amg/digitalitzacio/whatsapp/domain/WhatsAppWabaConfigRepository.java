@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface WhatsAppWabaConfigRepository extends JpaRepository<WhatsAppWabaConfig, UUID> {
     Optional<WhatsAppWabaConfig> findByTenantId(UUID tenantId);
     Optional<WhatsAppWabaConfig> findByPhoneNumberId(String phoneNumberId);
+    void deleteByTenantId(UUID tenantId);
 }

@@ -9,4 +9,5 @@ import java.util.UUID;
 @Repository
 public interface KnowledgeBaseRepository extends JpaRepository<KnowledgeBase, UUID> {
     Optional<KnowledgeBase> findByTenantId(UUID tenantId);
+    void deleteByTenantId(UUID tenantId);
 }
