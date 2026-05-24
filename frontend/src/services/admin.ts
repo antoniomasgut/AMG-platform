@@ -427,3 +427,37 @@ export const cancelGoCardlessMandate = (tenantId: string) =>
 
 export const listGoCardlessPayments = (tenantId: string) =>
   apiFetch<{ content: GoCardlessPaymentItem[] }>(`/gocardless/tenants/${tenantId}/payments?size=10`);
+
+// ─── WhatsApp Business API (Spec 27) ─────────────────────────────────────────
+
+export interface WhatsAppWabaConfig {
+  id: string; tenantId: string;
+  wabaId: string | null; phoneNumberId: string | null;
+  displayPhoneNumber: string | null; businessName: string | null;
+  status: 'PENDING' | 'CONNECTED' | 'ERROR' | 'DISCONNECTED';
+  webhookRegistered: boolean;
+  connectedAt: string | null; createdAt: string;
+}
+
+export const getWhatsAppConfig = (tenantId: string) =>
+  apiFetch<WhatsAppWabaConfig>(`/whatsapp/tenants/${tenantId}/config`);
+
+export const connectWhatsApp = (tenantId: string, data: {
+  phoneNumberId: string; accessToken: string; wabaId?: string;
+}) =>
+  apiFetch<WhatsAppWabaConfig>(`/whatsapp/tenants/${tenantId}/connect`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const verifyWhatsApp = (tenantId: string) =>
+  apiFetch<WhatsAppWabaConfig>(`/whatsapp/tenants/${tenantId}/verify`, { method: 'POST' });
+
+export const disconnectWhatsApp = (tenantId: string) =>
+  apiFetch<void>(`/whatsapp/tenants/${tenantId}/config`, { method: 'DELETE' });
+
+export const sendWhatsAppTest = (tenantId: string, toPhone: string) =>
+  apiFetch<void>(`/whatsapp/tenants/${tenantId}/test`, {
+    method: 'POST',
+    body: JSON.stringify({ toPhone }),
+  });

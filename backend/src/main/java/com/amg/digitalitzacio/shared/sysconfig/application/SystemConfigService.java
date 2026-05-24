@@ -43,7 +43,10 @@ public class SystemConfigService {
         new KnownKey("GCS_PROJECT_ID",          "GCS Project ID",             "ID del projecte Google Cloud Storage per a backups", "BACKUP", false),
         new KnownKey("GCS_BUCKET_NAME",         "GCS Bucket Name",            "Nom del bucket GCS per a backups", "BACKUP",                   false),
         new KnownKey("N8N_API_URL",             "n8n API URL",                "URL base de la instància n8n", "AUTOMATIONS",                   false),
-        new KnownKey("N8N_API_KEY",             "n8n API Key",                "Clau API n8n per a gestió de workflows", "AUTOMATIONS",         true)
+        new KnownKey("N8N_API_KEY",             "n8n API Key",                "Clau API n8n per a gestió de workflows", "AUTOMATIONS",         true),
+        new KnownKey("WHATSAPP_WEBHOOK_SECRET", "WhatsApp Webhook Secret",     "Token de verificació del webhook de Meta (Spec 27)", "AGENTS",      true),
+        new KnownKey("META_APP_ID",             "Meta App ID",                "ID de la Facebook App per a Embedded Signup", "AGENTS",               false),
+        new KnownKey("META_APP_SECRET",         "Meta App Secret",            "Secret de la Facebook App (Embedded Signup)", "AGENTS",               true)
     );
 
     /**

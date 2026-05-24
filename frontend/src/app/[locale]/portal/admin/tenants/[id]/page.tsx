@@ -15,6 +15,8 @@ import {
   type TenantResponse, type TenantSetup, type CatalogService,
   type CatalogProfileResponse, type SectorPricingResponse, type ChannelsConfig, type AIConfig, type ModelInfo,
   type GoCardlessConfig, type GoCardlessMandate,
+  type WhatsAppWabaConfig,
+  getWhatsAppConfig, connectWhatsApp, verifyWhatsApp, disconnectWhatsApp, sendWhatsAppTest,
   calcMonthly,
 } from '@/services/admin';
 import { createBudget, listBudgets, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
@@ -629,6 +631,214 @@ function AgentConfigCard({ tenantId, agentSystemPrompt }: { tenantId: string; ag
   );
 }
 
+const WA_STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'neutral'> = {
+  CONNECTED: 'success', PENDING: 'warning', ERROR: 'danger', DISCONNECTED: 'neutral',
+};
+const WA_STATUS_LABEL: Record<string, string> = {
+  CONNECTED: 'Connectat', PENDING: 'Pendent', ERROR: 'Error', DISCONNECTED: 'Desconnectat',
+};
+
+function WhatsAppMetaCard({ tenantId }: { tenantId: string }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ phoneNumberId: '', accessToken: '', wabaId: '' });
+  const [saving, setSaving] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [testPhone, setTestPhone] = useState('');
+  const [sendingTest, setSendingTest] = useState(false);
+
+  const { data: wabaConfig } = useQuery({
+    queryKey: ['wa-config', tenantId],
+    queryFn: () => getWhatsAppConfig(tenantId),
+    retry: false,
+  });
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['wa-config', tenantId] });
+
+  const handleConnect = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await connectWhatsApp(tenantId, form);
+      toast('success', 'Configuració desada — prem "Verificar" per activar');
+      invalidate();
+      setShowForm(false);
+    } catch {
+      toast('error', 'Error desant la configuració');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    setVerifying(true);
+    try {
+      await verifyWhatsApp(tenantId);
+      toast('success', 'WhatsApp connectat correctament');
+      invalidate();
+    } catch {
+      toast('error', 'Verificació fallida — comprova el token i el Phone Number ID');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!confirm('Desconnectar WhatsApp Business? Els missatges deixaran d\'arribar.')) return;
+    try {
+      await disconnectWhatsApp(tenantId);
+      toast('success', 'WhatsApp desconnectat');
+      invalidate();
+    } catch {
+      toast('error', 'Error desconnectant');
+    }
+  };
+
+  const handleTest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSendingTest(true);
+    try {
+      await sendWhatsAppTest(tenantId, testPhone);
+      toast('success', 'Missatge de prova enviat');
+    } catch {
+      toast('error', 'Error enviant el missatge de prova');
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
+  return (
+    <div className="amg-card card-clip">
+      <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
+        <AMGSectionTitle eyebrow="Spec 27" title="WhatsApp Business API" />
+        <div className="flex items-center gap-2">
+          {wabaConfig ? (
+            <AMGBadge tone={WA_STATUS_TONE[wabaConfig.status] ?? 'neutral'}>
+              {WA_STATUS_LABEL[wabaConfig.status] ?? wabaConfig.status}
+            </AMGBadge>
+          ) : (
+            <span className="f-mono text-[10px] px-2 py-1 rounded bg-[rgba(255,255,255,0.04)] text-ink-3 border border-border-base">○ No configurat</span>
+          )}
+          <AMGButton size="sm" variant="ghost" onClick={() => setShowForm(v => !v)}>
+            {wabaConfig ? 'Editar' : 'Configurar'}
+          </AMGButton>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-5">
+        {/* Embedded Signup info */}
+        <div className="p-3 bg-[rgba(255,107,0,0.04)] border border-[rgba(255,107,0,0.15)] rounded text-xs text-ink-2 space-y-1">
+          <div className="font-semibold text-accent-light">Embedded Signup (recomanat)</div>
+          <p>Quan la Facebook App estigui aprovada per Meta, el client podrà connectar el seu WABA directament des d&apos;aquí amb un clic. Fins llavors, usa la configuració manual.</p>
+        </div>
+
+        {/* Manual config form */}
+        {showForm && (
+          <form onSubmit={handleConnect} className="space-y-3 p-4 border border-border-base rounded bg-[rgba(255,255,255,0.02)]">
+            <div className="f-mono text-label uppercase text-ink-3 text-xs tracking-widest mb-2">Configuració manual</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="f-mono text-xs text-ink-2 block mb-1">Phone Number ID *</label>
+                <input type="text" required value={form.phoneNumberId}
+                  onChange={(e) => setForm(f => ({ ...f, phoneNumberId: e.target.value }))}
+                  placeholder="123456789012345"
+                  className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+              </div>
+              <div>
+                <label className="f-mono text-xs text-ink-2 block mb-1">WABA ID (opcional)</label>
+                <input type="text" value={form.wabaId}
+                  onChange={(e) => setForm(f => ({ ...f, wabaId: e.target.value }))}
+                  placeholder="987654321098765"
+                  className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="f-mono text-xs text-ink-2 block mb-1">Access Token permanent *</label>
+                <input type="password" required value={form.accessToken}
+                  onChange={(e) => setForm(f => ({ ...f, accessToken: e.target.value }))}
+                  placeholder="EAAxxxxxxxxxx..."
+                  className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+                <p className="f-mono text-[10px] text-ink-3 mt-1">System User Access Token del Meta Business Manager</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <AMGButton type="submit" size="sm" loading={saving}>Desar</AMGButton>
+              <AMGButton type="button" size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel·lar</AMGButton>
+            </div>
+          </form>
+        )}
+
+        {/* Status details */}
+        {wabaConfig && !showForm && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {wabaConfig.displayPhoneNumber && (
+                <div>
+                  <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Número</div>
+                  <div className="text-sm text-ink-1 font-semibold">{wabaConfig.displayPhoneNumber}</div>
+                </div>
+              )}
+              {wabaConfig.businessName && (
+                <div>
+                  <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Negoci</div>
+                  <div className="text-sm text-ink-1">{wabaConfig.businessName}</div>
+                </div>
+              )}
+              {wabaConfig.phoneNumberId && (
+                <div>
+                  <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Phone Number ID</div>
+                  <div className="f-mono text-xs text-ink-2 truncate">{wabaConfig.phoneNumberId}</div>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {wabaConfig.status === 'PENDING' && (
+                <AMGButton size="sm" icon={I.Zap} onClick={handleVerify} loading={verifying}>
+                  Verificar connexió
+                </AMGButton>
+              )}
+              {wabaConfig.status === 'ERROR' && (
+                <AMGButton size="sm" icon={I.Zap} onClick={handleVerify} loading={verifying}>
+                  Reintentar verificació
+                </AMGButton>
+              )}
+              {wabaConfig.status !== 'DISCONNECTED' && (
+                <AMGButton size="sm" variant="ghost" onClick={handleDisconnect}>
+                  Desconnectar
+                </AMGButton>
+              )}
+            </div>
+
+            {/* Test message */}
+            {wabaConfig.status === 'CONNECTED' && (
+              <form onSubmit={handleTest} className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <label className="f-mono text-xs text-ink-3 block mb-1">Número de prova (E.164)</label>
+                  <input type="text" value={testPhone}
+                    onChange={(e) => setTestPhone(e.target.value)}
+                    placeholder="+34612345678"
+                    className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+                </div>
+                <AMGButton type="submit" size="sm" variant="secondary" loading={sendingTest}>
+                  Enviar prova
+                </AMGButton>
+              </form>
+            )}
+          </div>
+        )}
+
+        {!wabaConfig && !showForm && (
+          <div className="text-center py-6">
+            <I.Smartphone size={28} stroke="#64748b" className="mx-auto mb-3" />
+            <p className="text-sm text-ink-2 mb-3">WhatsApp Business no configurat per aquest tenant.</p>
+            <AMGButton size="sm" onClick={() => setShowForm(true)}>Configurar WhatsApp</AMGButton>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const MANDATE_STATUS_LABEL: Record<string, string> = {
   PENDING_SUBMISSION: 'Pendent d\'enviament',
   SUBMITTED: 'Enviat al banc',
@@ -1237,6 +1447,9 @@ export default function TenantDetailPage() {
 
         {/* Agent IA & Canals */}
         <AgentConfigCard tenantId={id} agentSystemPrompt={tenant.agentSystemPrompt} />
+
+        {/* WhatsApp Business API */}
+        <WhatsAppMetaCard tenantId={id} />
 
         {/* GoCardless SEPA */}
         <GoCardlessCard tenantId={id} />
