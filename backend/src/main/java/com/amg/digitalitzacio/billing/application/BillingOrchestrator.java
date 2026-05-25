@@ -46,13 +46,13 @@ public class BillingOrchestrator implements BillingService {
         int sortOrder = 0;
         for (var phase : budgetResponse.phases()) {
             for (var svc : phase.services()) {
-                var lineTotal = svc.salePrice();
+                var lineTotal = svc.monthlyPrice();
                 subtotal = subtotal.add(lineTotal);
                 lines.add(BudgetLine.builder()
                         .phaseId(phase.phase().id())
                         .serviceId(svc.id())
                         .serviceName(svc.name())
-                        .unitPrice(svc.salePrice())
+                        .unitPrice(svc.monthlyPrice())
                         .total(lineTotal)
                         .sortOrder(sortOrder++)
                         .build());
@@ -139,11 +139,11 @@ public class BillingOrchestrator implements BillingService {
         int sortOrder = 0;
         for (var phase : budgetResponse.phases()) {
             for (var svc : phase.services()) {
-                var lineTotal = svc.salePrice();
+                var lineTotal = svc.monthlyPrice();
                 subtotal = subtotal.add(lineTotal);
                 lines.add(BudgetLine.builder().budgetId(budgetId)
                         .phaseId(phase.phase().id()).serviceId(svc.id())
-                        .serviceName(svc.name()).unitPrice(svc.salePrice())
+                        .serviceName(svc.name()).unitPrice(svc.monthlyPrice())
                         .total(lineTotal).sortOrder(sortOrder++).build());
             }
         }

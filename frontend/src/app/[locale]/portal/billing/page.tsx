@@ -191,7 +191,7 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
             <div className="section-title">Fase</div>
             <div className="phase-header"><span>{phase.name}</span><span>{phase.phaseTotal.toFixed(2)} €</span></div>
             {phase.lines.map((line, li) => (
-              <div key={li} className="line"><span>{line.serviceName}</span><div className="prices"><span>{line.unitPrice.toFixed(2)} €</span><span>{line.total.toFixed(2)} €</span></div></div>
+              <div key={li} className="line"><span>{line.serviceName}</span><span>{line.total.toFixed(2)} €/mes</span></div>
             ))}
           </div>
         ))}
@@ -276,10 +276,7 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
                         {phase.lines.map((line, li) => (
                           <div key={li} className="flex items-center justify-between px-4 py-2">
                             <span className="text-xs text-ink-2">{line.serviceName}</span>
-                            <div className="flex items-center gap-4 text-xs f-mono text-ink-1">
-                              <span>{line.unitPrice.toFixed(2)} €</span>
-                              <span className="text-white">{line.total.toFixed(2)} €</span>
-                            </div>
+                            <span className="text-xs f-mono text-white">{line.total.toFixed(2)} €/mes</span>
                           </div>
                         ))}
                       </div>
