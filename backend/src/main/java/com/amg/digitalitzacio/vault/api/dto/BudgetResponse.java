@@ -14,7 +14,7 @@ public record BudgetResponse(
     public record BudgetPhase(PhaseRef phase, List<BudgetService> services,
                               BigDecimal phaseTotal, BigDecimal phaseCost, BigDecimal phaseMargin) {
         public record PhaseRef(UUID id, String name, Integer sortOrder) {}
-        public record BudgetService(UUID id, String name, BigDecimal monthlyPrice, BigDecimal cost) {}
+        public record BudgetService(UUID id, String name, BigDecimal setupPrice, BigDecimal monthlyPrice, BigDecimal cost) {}
     }
     public record BudgetAddon(UUID id, String name, BigDecimal salePrice, BigDecimal cost) {}
 }

@@ -191,7 +191,7 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
             <div className="section-title">Fase</div>
             <div className="phase-header"><span>{phase.name}</span><span>{phase.phaseTotal.toFixed(2)} €</span></div>
             {phase.lines.map((line, li) => (
-              <div key={li} className="line"><span>{line.serviceName}</span><span>{line.total.toFixed(2)} €/mes</span></div>
+              <div key={li} className="line"><span>{line.serviceName}</span><div className="prices"><span>{line.setupPrice.toFixed(2)} €</span><span>{line.monthlyPrice.toFixed(2)} €/mes</span></div></div>
             ))}
           </div>
         ))}
@@ -274,9 +274,12 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
                       </div>
                       <div className="divide-y divide-border-base">
                         {phase.lines.map((line, li) => (
-                          <div key={li} className="flex items-center justify-between px-4 py-2">
-                            <span className="text-xs text-ink-2">{line.serviceName}</span>
-                            <span className="text-xs f-mono text-white">{line.total.toFixed(2)} €/mes</span>
+                          <div key={li} className="flex items-center justify-between px-4 py-2 gap-4">
+                            <span className="text-xs text-ink-2 flex-1">{line.serviceName}</span>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className="text-xs f-mono text-ink-3">{line.setupPrice.toFixed(2)} €</span>
+                              <span className="text-xs f-mono text-white">{line.monthlyPrice.toFixed(2)} €/mes</span>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -299,10 +302,13 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
                 </div>
               )}
 
-              <div className="rounded border border-border-base p-4 bg-[rgba(255,255,255,0.02)]">
-                {row('Subtotal', `${budget.subtotal.toFixed(2)} €`)}
+              <div className="rounded border border-border-base p-4 bg-[rgba(255,255,255,0.02)] space-y-0">
+                {row('Setup (únic)', `${budget.subtotal.toFixed(2)} €`)}
                 {budget.discountTotal > 0 && row('Descompte', `-${budget.discountTotal.toFixed(2)} €`)}
-                {row('Total', `${budget.total.toFixed(2)} €`, true)}
+                {row('Total setup', `${budget.total.toFixed(2)} €`, true)}
+                <div className="border-t border-border-base mt-3 pt-3">
+                  {row('Mensual recurrent', `${(budget.monthlyTotal ?? 0).toFixed(2)} €/mes`, true)}
+                </div>
               </div>
             </div>
           ) : (

@@ -235,11 +235,12 @@ public class ProfileManagementService implements ProfileService {
             var phaseCost = BigDecimal.ZERO;
 
             for (var svc : services) {
+                var setup = svc.getSalePrice() != null ? svc.getSalePrice() : BigDecimal.ZERO;
                 var monthly = svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : BigDecimal.ZERO;
-                phaseTotal = phaseTotal.add(monthly);
+                phaseTotal = phaseTotal.add(setup);
                 phaseCost = phaseCost.add(svc.getCost());
                 budgetServices.add(new BudgetResponse.BudgetPhase.BudgetService(
-                        svc.getId(), svc.getName(), monthly,
+                        svc.getId(), svc.getName(), setup, monthly,
                         includeCost ? svc.getCost() : null));
             }
 

@@ -1,12 +1,12 @@
 import { apiFetch } from './api';
 
-export interface BudgetLine { serviceName: string; unitPrice: number; total: number; }
-export interface BudgetPhase { name: string; sortOrder: number; lines: BudgetLine[]; phaseTotal: number; }
+export interface BudgetLine { serviceName: string; setupPrice: number; monthlyPrice: number; }
+export interface BudgetPhase { name: string; sortOrder: number; lines: BudgetLine[]; phaseTotal: number; phaseMonthlyTotal: number; }
 export interface BudgetAddon { serviceName: string; unitPrice: number; }
 export interface BudgetResponse {
   id: string; budgetNumber: string; status: string;
   phases: BudgetPhase[]; addons: BudgetAddon[];
-  subtotal: number; discountTotal: number; total: number;
+  subtotal: number; discountTotal: number; total: number; monthlyTotal: number;
   sentAt: string | null; acceptedAt: string | null; rejectedAt: string | null;
   rejectionUrl: string | null; validUntil: string; createdAt: string;
   profileId: string | null; phaseIds: string[]; notes: string | null; clientNotes: string | null;

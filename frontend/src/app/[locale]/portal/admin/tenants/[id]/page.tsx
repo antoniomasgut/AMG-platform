@@ -1625,7 +1625,7 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
             {phase.lines.map((line, li) => (
               <div key={li} className="line">
                 <span>{line.serviceName}</span>
-                <div className="prices"><span>{line.unitPrice.toFixed(2)} €</span><span>{line.total.toFixed(2)} €</span></div>
+                <div className="prices"><span>{line.setupPrice.toFixed(2)} €</span><span>{line.monthlyPrice.toFixed(2)} €/mes</span></div>
               </div>
             ))}
           </div>
@@ -1639,9 +1639,10 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
           </div>
         )}
         <div className="totals">
-          <div className="total-row"><span>Subtotal</span><span>{budget.subtotal.toFixed(2)} €</span></div>
+          <div className="total-row"><span>Setup (únic)</span><span>{budget.subtotal.toFixed(2)} €</span></div>
           {budget.discountTotal > 0 && <div className="total-row"><span>Descompte</span><span>-{budget.discountTotal.toFixed(2)} €</span></div>}
-          <div className="total-row bold"><span>Total</span><span>{budget.total.toFixed(2)} €</span></div>
+          <div className="total-row bold"><span>Total setup</span><span>{budget.total.toFixed(2)} €</span></div>
+          <div className="total-row bold" style={{borderTop:'1px solid #ddd',marginTop:'8px',paddingTop:'8px'}}><span>Mensual</span><span>{(budget.monthlyTotal ?? 0).toFixed(2)} €/mes</span></div>
         </div>
       </div>
 
@@ -1713,11 +1714,11 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
                       </div>
                       <div className="divide-y divide-border-base">
                         {phase.lines.map((line, li) => (
-                          <div key={li} className="flex items-center justify-between px-4 py-2">
-                            <span className="text-xs text-ink-2">{line.serviceName}</span>
-                            <div className="flex items-center gap-4 text-xs f-mono text-ink-1">
-                              <span>{line.unitPrice.toFixed(2)} €</span>
-                              <span className="text-white">{line.total.toFixed(2)} €</span>
+                          <div key={li} className="flex items-center justify-between px-4 py-2 gap-4">
+                            <span className="text-xs text-ink-2 flex-1">{line.serviceName}</span>
+                            <div className="flex items-center gap-3 shrink-0 text-xs f-mono">
+                              <span className="text-ink-3">{line.setupPrice.toFixed(2)} €</span>
+                              <span className="text-white">{line.monthlyPrice.toFixed(2)} €/mes</span>
                             </div>
                           </div>
                         ))}

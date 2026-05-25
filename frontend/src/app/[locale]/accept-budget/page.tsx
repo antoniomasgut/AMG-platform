@@ -101,8 +101,11 @@ function PhaseCard({ phase, selected, onToggle }: {
         <div className="border-t border-[#1e293b] divide-y divide-[#0f172a]" onClick={e => e.stopPropagation()}>
           {phase.lines.map((line, i) => (
             <div key={i} className="flex items-center justify-between px-5 py-3">
-              <span className="text-[#94a3b8] text-sm">{line.serviceName}</span>
-              <span className="text-white text-sm font-mono">{fmt(line.total)}</span>
+              <span className="text-[#94a3b8] text-sm flex-1">{line.serviceName}</span>
+              <div className="flex items-center gap-3 text-sm font-mono">
+                <span className="text-[#64748b]">{fmt(line.setupPrice)}</span>
+                <span className="text-white">{fmt(line.monthlyPrice)}/mes</span>
+              </div>
             </div>
           ))}
         </div>

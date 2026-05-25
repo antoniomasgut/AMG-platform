@@ -18,5 +18,6 @@ public class BudgetLine {
     @Builder.Default private Integer quantity = 1;
     @Column(nullable = false, precision = 10, scale = 2) private BigDecimal unitPrice;
     @Column(nullable = false, precision = 10, scale = 2) private BigDecimal total;
+    @Builder.Default @Column(precision = 10, scale = 2) private BigDecimal monthlyPrice = BigDecimal.ZERO;
     private Integer sortOrder;
 }

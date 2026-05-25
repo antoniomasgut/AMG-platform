@@ -46,14 +46,16 @@ public class BillingOrchestrator implements BillingService {
         int sortOrder = 0;
         for (var phase : budgetResponse.phases()) {
             for (var svc : phase.services()) {
-                var lineTotal = svc.monthlyPrice();
-                subtotal = subtotal.add(lineTotal);
+                var lineSetup = svc.setupPrice();
+                var lineMonthly = svc.monthlyPrice();
+                subtotal = subtotal.add(lineSetup);
                 lines.add(BudgetLine.builder()
                         .phaseId(phase.phase().id())
                         .serviceId(svc.id())
                         .serviceName(svc.name())
-                        .unitPrice(svc.monthlyPrice())
-                        .total(lineTotal)
+                        .unitPrice(lineSetup)
+                        .total(lineSetup)
+                        .monthlyPrice(lineMonthly)
                         .sortOrder(sortOrder++)
                         .build());
             }
@@ -67,6 +69,7 @@ public class BillingOrchestrator implements BillingService {
                         .serviceName(addon.name())
                         .unitPrice(addon.salePrice())
                         .total(addon.salePrice())
+                        .monthlyPrice(BigDecimal.ZERO)
                         .sortOrder(sortOrder++)
                         .build());
             }
@@ -139,12 +142,14 @@ public class BillingOrchestrator implements BillingService {
         int sortOrder = 0;
         for (var phase : budgetResponse.phases()) {
             for (var svc : phase.services()) {
-                var lineTotal = svc.monthlyPrice();
-                subtotal = subtotal.add(lineTotal);
+                var lineSetup = svc.setupPrice();
+                var lineMonthly = svc.monthlyPrice();
+                subtotal = subtotal.add(lineSetup);
                 lines.add(BudgetLine.builder().budgetId(budgetId)
                         .phaseId(phase.phase().id()).serviceId(svc.id())
-                        .serviceName(svc.name()).unitPrice(svc.monthlyPrice())
-                        .total(lineTotal).sortOrder(sortOrder++).build());
+                        .serviceName(svc.name()).unitPrice(lineSetup)
+                        .total(lineSetup).monthlyPrice(lineMonthly)
+                        .sortOrder(sortOrder++).build());
             }
         }
         if (budgetResponse.addons() != null) {
@@ -345,14 +350,18 @@ public class BillingOrchestrator implements BillingService {
                     var phaseLines = lines.stream()
                             .filter(l -> phaseResp.id() != null && l.getPhaseId() != null && l.getPhaseId().equals(phaseResp.id()))
                             .map(l -> new BudgetResponse.BudgetPhase.BudgetLine(
-                                    l.getServiceName(), l.getUnitPrice(), l.getTotal()))
+                                    l.getServiceName(), l.getUnitPrice(),
+                                    l.getMonthlyPrice() != null ? l.getMonthlyPrice() : BigDecimal.ZERO))
                             .toList();
                     if (!phaseLines.isEmpty()) {
                         var phaseTotal = phaseLines.stream()
-                                .map(BudgetResponse.BudgetPhase.BudgetLine::total)
+                                .map(BudgetResponse.BudgetPhase.BudgetLine::setupPrice)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                        var phaseMonthlyTotal = phaseLines.stream()
+                                .map(BudgetResponse.BudgetPhase.BudgetLine::monthlyPrice)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
                         phases.add(new BudgetResponse.BudgetPhase(
-                                phaseResp.name(), phaseResp.sortOrder(), phaseLines, phaseTotal));
+                                phaseResp.name(), phaseResp.sortOrder(), phaseLines, phaseTotal, phaseMonthlyTotal));
                     }
                 }
             } catch (Exception ignored) {}
@@ -373,9 +382,14 @@ public class BillingOrchestrator implements BillingService {
                 ? tenantRepository.findById(budget.getTenantId()).map(t -> t.getName()).orElse(null)
                 : null;
 
+        var monthlyTotal = lines.stream()
+                .map(l -> l.getMonthlyPrice() != null ? l.getMonthlyPrice() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         return new BudgetResponse(
                 budget.getId(), budget.getBudgetNumber(), budget.getStatus().name(),
                 phases, addons, budget.getSubtotal(), budget.getDiscountTotal(), budget.getTotal(),
+                monthlyTotal,
                 budget.getSentAt(), budget.getAcceptedAt(), budget.getRejectedAt(),
                 null, budget.getValidUntil(), budget.getCreatedAt(),
                 profileId, phaseIds, budget.getNotes(), budget.getClientNotes(),
