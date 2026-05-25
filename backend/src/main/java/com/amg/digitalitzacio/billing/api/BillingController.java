@@ -86,7 +86,7 @@ public class BillingController {
     @PostMapping("/budgets/accept-phases")
     public AcceptRejectResponse acceptBudgetPhases(@RequestParam String token,
                                                     @RequestBody AcceptPhasesRequest request) {
-        return billingService.acceptBudgetPhases(token, request.phaseIds());
+        return billingService.acceptBudgetPhases(token, request.phaseKeys());
     }
 
     @PostMapping("/budgets/reject")

@@ -12,7 +12,7 @@ import {
   getAgentChannels, updateAgentChannels, getAIConfig, updateAIConfig, getAvailableModels,
   getGoCardlessConfig, getGoCardlessMandate, initiateGoCardlessMandate, cancelGoCardlessMandate,
   listGoCardlessPayments, configureGoCardless,
-  SECTOR_LABELS, SIZE_LABELS, PHASE_LABELS, PHASE_UPGRADE_PRICE,
+  SECTOR_LABELS, SIZE_LABELS, SECTOR_SIZES, PHASE_LABELS, PHASE_UPGRADE_PRICE,
   type TenantResponse, type TenantSetup, type CatalogService, type CatalogPhaseResponse,
   type CatalogProfileResponse, type SectorPricingResponse, type ChannelsConfig, type AIConfig, type ModelInfo,
   type GoCardlessConfig, type GoCardlessMandate,
@@ -31,9 +31,22 @@ import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
 import { I } from '@/components/ui/icons';
 
-function fmtDate(d: string) {
+function fmtDate(d: string | null) {
+  if (!d) return '—';
   return new Date(d).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+function fmt(n: number) {
+  return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(n);
+}
+
+const NEXE_PHASE_NAMES: Record<number, string> = {
+  1: 'Comunicació 24/7',
+  2: 'Gestió de cites',
+  3: 'Pressupostos',
+  4: 'Fidelització',
+  5: 'Equip',
+};
 
 function statusBadge(status: string, activeLabel: string, inactiveLabel: string) {
   return status === 'APPROVED' || status === 'ACTIVE' || status === 'COMPLETED'
@@ -500,82 +513,166 @@ function AddServiceModal({ tenantId, onClose, onAdded }: { tenantId: string; onC
   );
 }
 
-function ContractSection({ tenant }: { tenant: TenantResponse }) {
+function ContractSection({ tenant, onRefresh }: { tenant: TenantResponse; onRefresh: () => void }) {
+  const { toast } = useToast();
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editSector, setEditSector] = useState(tenant.sector ?? '');
+  const [editSize, setEditSize] = useState(tenant.businessSize ?? '');
+
   const { data: pricing } = useQuery({
     queryKey: ['pricing', tenant.sector, tenant.businessSize],
     queryFn: () => lookupSectorPricing(tenant.sector!, tenant.businessSize!),
     enabled: !!tenant.sector && !!tenant.businessSize,
   });
 
+  const { data: editPricing } = useQuery({
+    queryKey: ['pricing', editSector, editSize],
+    queryFn: () => lookupSectorPricing(editSector, editSize),
+    enabled: !!editSector && !!editSize,
+  });
+
   const phases = tenant.contractedPhases ?? [];
   const phaseCount = phases.length;
-  const hasMeta = tenant.sector || tenant.businessSize || phaseCount > 0;
-  if (!hasMeta) return null;
-
   const monthlyPrice = pricing && phaseCount > 0 ? calcMonthly(pricing, phaseCount) : null;
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updateTenant(tenant.id, { sector: editSector || null, businessSize: editSize || null });
+      toast('success', 'Contracte actualitzat');
+      onRefresh();
+      setEditing(false);
+    } catch {
+      toast('error', 'Error desant els canvis');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const availableSizes = editSector ? (SECTOR_SIZES[editSector] ?? []) : [];
+  const lbl = 'f-mono text-[10px] uppercase tracking-wider text-ink-3 block mb-1.5';
 
   return (
     <div className="amg-card card-clip">
-      <div className="p-4 sm:p-5 border-b border-border-base">
+      <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
         <AMGSectionTitle eyebrow="NexeLocal" title="Contracte" />
-      </div>
-      <div className="p-5 space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {tenant.sector && (
-            <div>
-              <div className="f-mono text-label uppercase text-ink-3 mb-1">Sector</div>
-              <div className="text-sm text-ink-1 font-semibold">{SECTOR_LABELS[tenant.sector] ?? tenant.sector}</div>
-            </div>
-          )}
-          {tenant.businessSize && (
-            <div>
-              <div className="f-mono text-label uppercase text-ink-3 mb-1">Mida</div>
-              <div className="text-sm text-ink-1 font-semibold">{SIZE_LABELS[tenant.businessSize] ?? tenant.businessSize}</div>
-            </div>
-          )}
-          {phaseCount > 0 && (
-            <div>
-              <div className="f-mono text-label uppercase text-ink-3 mb-1">
-                Fases contractades
-                <span className="ml-1 normal-case">({phaseCount})</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {phases.sort().map((ph) => (
-                  <span key={ph} className="f-mono text-xs px-2 py-0.5 border border-[rgba(255,107,0,0.4)] bg-[rgba(255,107,0,0.08)] text-accent-light rounded">
-                    {ph}
-                  </span>
-                ))}
-              </div>
-              <div className="f-mono text-[10px] text-ink-3 mt-1">
-                {phases.sort().map(ph => PHASE_LABELS[ph]?.split(' — ')[1]).filter(Boolean).join(' · ')}
-              </div>
-            </div>
-          )}
-        </div>
-        {pricing && (
-          <div className="border-t border-border-base pt-4 flex gap-8 flex-wrap">
-            <div>
-              <div className="f-mono text-label uppercase text-ink-3 mb-1">Setup</div>
-              <div className="f-display font-bold text-lg text-white">{pricing.setupPrice} €</div>
-            </div>
-            {monthlyPrice !== null && (
-              <div>
-                <div className="f-mono text-label uppercase text-ink-3 mb-1">Mensual ({phaseCount} fase{phaseCount > 1 ? 's' : ''})</div>
-                <div className="f-display font-bold text-lg text-accent-light">{monthlyPrice} €/mes</div>
-              </div>
-            )}
-            <div className="self-end">
-              <div className="f-mono text-[10px] text-ink-3">Ampliació futura: <span className="text-ink-2 font-semibold">{PHASE_UPGRADE_PRICE} € / fase</span></div>
-            </div>
+        {!editing ? (
+          <AMGButton size="sm" variant="ghost" icon={I.Edit} onClick={() => { setEditSector(tenant.sector ?? ''); setEditSize(tenant.businessSize ?? ''); setEditing(true); }}>
+            Editar
+          </AMGButton>
+        ) : (
+          <div className="flex gap-2">
+            <AMGButton size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel·lar</AMGButton>
+            <AMGButton size="sm" loading={saving} onClick={handleSave}>Desar</AMGButton>
           </div>
         )}
-        {tenant.agentSystemPrompt && (
-          <div className="border-t border-border-base pt-4">
-            <div className="f-mono text-label uppercase text-ink-3 mb-2">Prompt agent IA</div>
-            <pre className="text-xs f-mono text-ink-2 whitespace-pre-wrap bg-[rgba(255,255,255,0.02)] border border-border-base rounded p-3 max-h-48 overflow-y-auto">
-              {tenant.agentSystemPrompt}
-            </pre>
+      </div>
+      <div className="p-5 space-y-4">
+        {editing ? (
+          <div className="space-y-4">
+            <div>
+              <label className={lbl}>Sector</label>
+              <div className="grid grid-cols-3 gap-1.5 max-h-48 overflow-y-auto pr-1">
+                {(Object.keys(SECTOR_LABELS) as string[]).map(k => (
+                  <button key={k} type="button"
+                    onClick={() => { setEditSector(k); setEditSize(''); }}
+                    className={`px-2 py-2 text-xs border rounded text-center transition leading-tight ${editSector === k ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.12)] text-white font-semibold' : 'border-border-base text-ink-2 hover:border-ink-2'}`}>
+                    {SECTOR_LABELS[k]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {editSector && availableSizes.length > 0 && (
+              <div>
+                <label className={lbl}>Mida de negoci</label>
+                <div className="flex gap-2 flex-wrap">
+                  {availableSizes.map(sz => (
+                    <button key={sz} type="button"
+                      onClick={() => setEditSize(sz)}
+                      className={`px-4 py-2 text-sm border rounded transition ${editSize === sz ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.12)] text-white font-semibold' : 'border-border-base text-ink-2 hover:border-ink-2'}`}>
+                      {SIZE_LABELS[sz] ?? sz}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {editPricing && editSector && editSize && (
+              <div className="bg-[rgba(255,107,0,0.06)] border border-[rgba(255,107,0,0.2)] rounded p-3 flex gap-6 flex-wrap">
+                <div>
+                  <div className="f-mono text-[10px] text-ink-3 uppercase">Setup</div>
+                  <div className="f-display font-bold text-white">{editPricing.setupPrice} €</div>
+                </div>
+                <div>
+                  <div className="f-mono text-[10px] text-ink-3 uppercase">1 fase/mes</div>
+                  <div className="f-display font-bold text-accent-light">{editPricing.priceF1} €</div>
+                </div>
+                <div>
+                  <div className="f-mono text-[10px] text-ink-3 uppercase">2 fases/mes</div>
+                  <div className="f-display font-bold text-accent-light">{editPricing.priceF1 + editPricing.priceF2} €</div>
+                </div>
+              </div>
+            )}
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <div className="f-mono text-label uppercase text-ink-3 mb-1">Sector</div>
+                <div className="text-sm text-ink-1 font-semibold">
+                  {tenant.sector ? (SECTOR_LABELS[tenant.sector] ?? tenant.sector) : <span className="text-ink-3 italic">Sense sector</span>}
+                </div>
+              </div>
+              <div>
+                <div className="f-mono text-label uppercase text-ink-3 mb-1">Mida</div>
+                <div className="text-sm text-ink-1 font-semibold">
+                  {tenant.businessSize ? (SIZE_LABELS[tenant.businessSize] ?? tenant.businessSize) : <span className="text-ink-3 italic">Sense mida</span>}
+                </div>
+              </div>
+              {phaseCount > 0 && (
+                <div>
+                  <div className="f-mono text-label uppercase text-ink-3 mb-1">
+                    Fases contractades <span className="normal-case">({phaseCount})</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {phases.sort().map((ph) => (
+                      <span key={ph} className="f-mono text-xs px-2 py-0.5 border border-[rgba(255,107,0,0.4)] bg-[rgba(255,107,0,0.08)] text-accent-light rounded">
+                        {ph}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="f-mono text-[10px] text-ink-3 mt-1">
+                    {phases.sort().map(ph => PHASE_LABELS[ph]?.split(' — ')[1]).filter(Boolean).join(' · ')}
+                  </div>
+                </div>
+              )}
+            </div>
+            {pricing && (
+              <div className="border-t border-border-base pt-4 flex gap-8 flex-wrap">
+                <div>
+                  <div className="f-mono text-label uppercase text-ink-3 mb-1">Setup</div>
+                  <div className="f-display font-bold text-lg text-white">{pricing.setupPrice} €</div>
+                </div>
+                {monthlyPrice !== null && (
+                  <div>
+                    <div className="f-mono text-label uppercase text-ink-3 mb-1">Mensual ({phaseCount} fase{phaseCount > 1 ? 's' : ''})</div>
+                    <div className="f-display font-bold text-lg text-accent-light">{monthlyPrice} €/mes</div>
+                  </div>
+                )}
+                <div className="self-end">
+                  <div className="f-mono text-[10px] text-ink-3">Ampliació futura: <span className="text-ink-2 font-semibold">{PHASE_UPGRADE_PRICE} € / fase</span></div>
+                </div>
+              </div>
+            )}
+            {tenant.agentSystemPrompt && (
+              <div className="border-t border-border-base pt-4">
+                <div className="f-mono text-label uppercase text-ink-3 mb-2">Prompt agent IA</div>
+                <pre className="text-xs f-mono text-ink-2 whitespace-pre-wrap bg-[rgba(255,255,255,0.02)] border border-border-base rounded p-3 max-h-48 overflow-y-auto">
+                  {tenant.agentSystemPrompt}
+                </pre>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -1325,50 +1422,61 @@ function GoCardlessCard({ tenantId }: { tenantId: string }) {
   );
 }
 
-function NewBudgetModal({ tenantId, setup, onClose, onCreated }: {
+function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
   tenantId: string;
+  tenant?: TenantResponse;
   setup: TenantSetup | null;
   onClose: () => void;
   onCreated: () => void;
 }) {
   const { toast } = useToast();
+  const isNexeLocal = !!(tenant?.sector && tenant?.businessSize);
+
+  const { data: pricing } = useQuery({
+    queryKey: ['pricing', tenant?.sector, tenant?.businessSize],
+    queryFn: () => lookupSectorPricing(tenant!.sector!, tenant!.businessSize!),
+    enabled: isNexeLocal,
+  });
+
+  // NexeLocal state
+  const [selectedPhaseNums, setSelectedPhaseNums] = useState<Set<number>>(new Set());
+
+  // Catalog state
   const [selectedProfileId, setSelectedProfileId] = useState('');
   const [selectedPhaseIds, setSelectedPhaseIds] = useState<Set<string>>(new Set());
+  const [recommendedPhaseIds, setRecommendedPhaseIds] = useState<Set<string>>(new Set());
+
   const [notes, setNotes] = useState('');
   const [clientNotes, setClientNotes] = useState('');
   const [validUntil, setValidUntil] = useState('');
   const [recommendation, setRecommendation] = useState('');
-  const [recommendedPhaseIds, setRecommendedPhaseIds] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
 
   const profiles = setup?.profiles ?? [];
   const selectedProfile = profiles.find(p => p.profile.id === selectedProfileId);
 
-  const togglePhase = (phaseId: string) => {
-    setSelectedPhaseIds(prev => {
-      const next = new Set(prev);
-      if (next.has(phaseId)) next.delete(phaseId);
-      else next.add(phaseId);
-      return next;
-    });
-  };
-
-  const toggleRecommended = (phaseId: string) => {
-    setRecommendedPhaseIds(prev => {
-      const next = new Set(prev);
-      if (next.has(phaseId)) next.delete(phaseId);
-      else next.add(phaseId);
-      return next;
-    });
-  };
+  const priceFns = pricing ? [pricing.priceF1, pricing.priceF2, pricing.priceF3, pricing.priceF4, pricing.priceF5] : [];
+  const selectedPhasesArr = Array.from(selectedPhaseNums).sort((a, b) => a - b);
+  const nexeLocalMonthly = selectedPhasesArr.reduce((sum, _pn, i) => sum + (priceFns[i] ?? 0), 0);
+  const nexeLocalSetup = selectedPhaseNums.size > 0 ? (pricing?.setupPrice ?? 0) : 0;
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProfileId) { toast('error', 'Selecciona un perfil'); return; }
-    if (selectedPhaseIds.size === 0) { toast('error', 'Selecciona almenys una fase'); return; }
+    if (isNexeLocal) {
+      if (selectedPhaseNums.size === 0) { toast('error', 'Selecciona almenys una fase'); return; }
+    } else {
+      if (!selectedProfileId) { toast('error', 'Selecciona un perfil'); return; }
+      if (selectedPhaseIds.size === 0) { toast('error', 'Selecciona almenys una fase'); return; }
+    }
     setCreating(true);
     try {
-      const req: CreateBudgetRequest = {
+      const req: CreateBudgetRequest = isNexeLocal ? {
+        phaseNumbers: Array.from(selectedPhaseNums).sort(),
+        notes: notes || undefined,
+        clientNotes: clientNotes || undefined,
+        validUntil: validUntil || undefined,
+        recommendation: recommendation || undefined,
+      } : {
         profileId: selectedProfileId,
         phaseIds: Array.from(selectedPhaseIds),
         notes: notes || undefined,
@@ -1388,6 +1496,9 @@ function NewBudgetModal({ tenantId, setup, onClose, onCreated }: {
     }
   };
 
+  const ta = 'w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00] resize-none';
+  const lbl = 'f-mono text-[10px] uppercase tracking-wider text-ink-3 block mb-1';
+
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="amg-card card-clip w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -1397,80 +1508,114 @@ function NewBudgetModal({ tenantId, setup, onClose, onCreated }: {
         </div>
 
         <form onSubmit={handleCreate} className="space-y-4">
-          {/* Profile selector */}
-          <div>
-            <label className="f-mono text-label uppercase text-ink-2 block mb-2">Perfil</label>
-            {profiles.length === 0 ? (
-              <p className="text-sm text-ink-3">Cap perfil assignat a aquest tenant. Assigna primer un perfil.</p>
-            ) : (
-              <div className="space-y-2">
-                {profiles.map((p) => (
-                  <button key={p.profile.id} type="button"
-                    onClick={() => { setSelectedProfileId(p.profile.id); setSelectedPhaseIds(new Set()); }}
-                    className={`w-full text-left p-3 border rounded transition text-sm ${
-                      selectedProfileId === p.profile.id
-                        ? 'border-[#FF6B00] bg-accent-muted'
-                        : 'border-border-base hover:border-ink-2'
-                    }`}>
-                    <span className="font-semibold">{p.profile.name}</span>
-                    <span className="text-ink-3 ml-2 text-xs">{p.phases.length} fases</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Phases selector */}
-          {selectedProfile && (
+          {isNexeLocal ? (
+            /* Mode NexeLocal: F1-F5 phases with sector pricing */
             <div>
-              <label className="f-mono text-label uppercase text-ink-2 block mb-2">Fases a incloure</label>
-              <div className="space-y-2">
-                {selectedProfile.phases.map((ph) => (
-                  <div key={ph.phase.id} className="flex items-center gap-2 p-3 border border-border-base rounded">
-                    <input type="checkbox" checked={selectedPhaseIds.has(ph.phase.id)}
-                      onChange={() => togglePhase(ph.phase.id)} className="accent-[#FF6B00]" />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm">{ph.phase.name}</span>
-                      <span className="f-mono text-xs text-ink-3 ml-2">{ph.services.length} serveis</span>
+              <label className={lbl}>Fases NexeLocal</label>
+              {!pricing ? (
+                <p className="text-sm text-ink-3">Carregant preus…</p>
+              ) : (
+                <div className="space-y-2">
+                  {[1, 2, 3, 4, 5].map((pn) => {
+                    const ordinal = selectedPhasesArr.filter(x => x < pn).length;
+                    const monthly = priceFns[ordinal] ?? 0;
+                    const checked = selectedPhaseNums.has(pn);
+                    return (
+                      <label key={pn} className={`flex items-center gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
+                        <input type="checkbox" checked={checked}
+                          onChange={() => setSelectedPhaseNums(prev => { const s = new Set(prev); s.has(pn) ? s.delete(pn) : s.add(pn); return s; })}
+                          className="accent-[#FF6B00]" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium">F{pn} · {NEXE_PHASE_NAMES[pn]}</div>
+                          {checked && <div className="text-xs text-ink-3 f-mono">{fmt(monthly)}/mes</div>}
+                        </div>
+                      </label>
+                    );
+                  })}
+                  {selectedPhaseNums.size > 0 && (
+                    <div className="mt-2 p-3 rounded bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.2)] grid grid-cols-2 gap-2">
+                      <div>
+                        <div className="text-xs text-ink-3">Setup</div>
+                        <div className="text-sm font-bold f-mono text-white">{fmt(nexeLocalSetup)}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-ink-3">Mensual</div>
+                        <div className="text-sm font-bold f-mono text-[#FF6B00]">{fmt(nexeLocalMonthly)}/mes</div>
+                      </div>
                     </div>
-                    <label className="flex items-center gap-1.5 cursor-pointer shrink-0" title="Marcar com a recomanada al client">
-                      <input type="checkbox" checked={recommendedPhaseIds.has(ph.phase.id)}
-                        onChange={() => toggleRecommended(ph.phase.id)} className="accent-amber-500" />
-                      <span className="text-xs text-amber-400">Recomanada</span>
-                    </label>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
+          ) : (
+            /* Mode catàleg */
+            <>
+              <div>
+                <label className={lbl}>Perfil</label>
+                {profiles.length === 0 ? (
+                  <p className="text-sm text-ink-3">Cap perfil assignat. Assigna primer un perfil.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {profiles.map((p) => (
+                      <button key={p.profile.id} type="button"
+                        onClick={() => { setSelectedProfileId(p.profile.id); setSelectedPhaseIds(new Set()); }}
+                        className={`w-full text-left p-3 border rounded transition text-sm ${selectedProfileId === p.profile.id ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
+                        <span className="font-semibold">{p.profile.name}</span>
+                        <span className="text-ink-3 ml-2 text-xs">{p.phases.length} fases</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {selectedProfile && (
+                <div>
+                  <label className={lbl}>Fases a incloure</label>
+                  <div className="space-y-2">
+                    {selectedProfile.phases.map((ph) => (
+                      <div key={ph.phase.id} className="flex items-center gap-2 p-3 border border-border-base rounded">
+                        <input type="checkbox" checked={selectedPhaseIds.has(ph.phase.id)}
+                          onChange={() => setSelectedPhaseIds(prev => { const s = new Set(prev); s.has(ph.phase.id) ? s.delete(ph.phase.id) : s.add(ph.phase.id); return s; })}
+                          className="accent-[#FF6B00]" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm">{ph.phase.name}</span>
+                          <span className="f-mono text-xs text-ink-3 ml-2">{ph.services.length} serveis</span>
+                        </div>
+                        <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
+                          <input type="checkbox" checked={recommendedPhaseIds.has(ph.phase.id)}
+                            onChange={() => setRecommendedPhaseIds(prev => { const s = new Set(prev); s.has(ph.phase.id) ? s.delete(ph.phase.id) : s.add(ph.phase.id); return s; })}
+                            className="accent-amber-500" />
+                          <span className="text-xs text-amber-400">Recomanada</span>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
-          {/* Recomanació per al client */}
           <div>
-            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Recomanació per al client</label>
+            <label className={lbl}>Recomanació per al client</label>
             <textarea value={recommendation} onChange={(e) => setRecommendation(e.target.value)} rows={3}
-              placeholder="Ex: Per a un restaurant com el teu, et recomanem les fases F1 i F2 per arrancar. Amb F1 tindràs presència online i amb F2 automatitzaràs les reserves."
-              className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00] resize-none" />
-          </div>
-
-          {/* Optional fields */}
-          <div>
-            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Notes internes (opcional)</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
-              className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00] resize-none" />
+              placeholder="Per a un negoci com el teu, et recomanem les fases F1 i F2 per arrancar..."
+              className={ta} />
           </div>
           <div>
-            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Notes per al client (opcional)</label>
-            <textarea value={clientNotes} onChange={(e) => setClientNotes(e.target.value)} rows={2}
-              className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00] resize-none" />
+            <label className={lbl}>Notes internes</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={ta} />
           </div>
           <div>
-            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Vàlid fins (opcional)</label>
+            <label className={lbl}>Notes per al client</label>
+            <textarea value={clientNotes} onChange={(e) => setClientNotes(e.target.value)} rows={2} className={ta} />
+          </div>
+          <div>
+            <label className={lbl}>Vàlid fins</label>
             <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)}
               className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
           </div>
 
           <div className="flex gap-3 pt-2 border-t border-border-base">
-            <AMGButton type="submit" disabled={creating || profiles.length === 0} loading={creating} className="flex-1 justify-center">
+            <AMGButton type="submit" disabled={creating} loading={creating} className="flex-1 justify-center">
               Crear pressupost
             </AMGButton>
             <AMGButton type="button" variant="outline" onClick={onClose}>Cancel·lar</AMGButton>
@@ -1481,9 +1626,10 @@ function NewBudgetModal({ tenantId, setup, onClose, onCreated }: {
   );
 }
 
-function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
+function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh }: {
   budget: BudgetResponse;
   tenantId: string;
+  tenant?: TenantResponse;
   setup: TenantSetup | null;
   onClose: () => void;
   onRefresh: () => void;
@@ -1496,13 +1642,23 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
   const [cloning, setCloning] = useState(false);
   const [acceptanceUrl, setAcceptanceUrl] = useState<string | null>(null);
 
+  const isNexeLocal = !!(budget.phaseNumbers?.length);
+
   // Edit state — pre-filled from budget
+  const [editPhaseNums, setEditPhaseNums] = useState<Set<number>>(new Set(budget.phaseNumbers ?? []));
   const [editProfileId, setEditProfileId] = useState(budget.profileId ?? '');
   const [editPhaseIds, setEditPhaseIds] = useState<Set<string>>(new Set(budget.phaseIds ?? []));
   const [editNotes, setEditNotes] = useState(budget.notes ?? '');
   const [editClientNotes, setEditClientNotes] = useState(budget.clientNotes ?? '');
   const [editValidUntil, setEditValidUntil] = useState(budget.validUntil ? budget.validUntil.slice(0, 10) : '');
+  const [editRecommendation, setEditRecommendation] = useState(budget.recommendation ?? '');
   const [saving, setSaving] = useState(false);
+
+  const { data: pricing } = useQuery({
+    queryKey: ['pricing', tenant?.sector, tenant?.businessSize],
+    queryFn: () => lookupSectorPricing(tenant!.sector!, tenant!.businessSize!),
+    enabled: !!(tenant?.sector && tenant?.businessSize),
+  });
 
   const isDraft = budget.status === 'DRAFT';
   const statusTone = budget.status === 'ACCEPTED' ? 'success'
@@ -1513,14 +1669,10 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
   const profiles = setup?.profiles ?? [];
   const editProfile = profiles.find(p => p.profile.id === editProfileId);
 
-  const toggleEditPhase = (phaseId: string) => {
-    setEditPhaseIds(prev => {
-      const next = new Set(prev);
-      if (next.has(phaseId)) next.delete(phaseId);
-      else next.add(phaseId);
-      return next;
-    });
-  };
+  const priceFns = pricing ? [pricing.priceF1, pricing.priceF2, pricing.priceF3, pricing.priceF4, pricing.priceF5] : [];
+  const editPhasesArr = Array.from(editPhaseNums).sort((a, b) => a - b);
+  const editMonthly = editPhasesArr.reduce((sum, _pn, i) => sum + (priceFns[i] ?? 0), 0);
+  const editSetup = editPhaseNums.size > 0 ? (pricing?.setupPrice ?? 0) : 0;
 
   const handleSend = async () => {
     setSending(true);
@@ -1528,7 +1680,6 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
       const res = await sendBudget(budget.id);
       if (res?.acceptanceUrl) setAcceptanceUrl(res.acceptanceUrl);
       toast('success', 'Pressupost enviat — copia l\'enllaç per compartir-lo');
-      // Refresca la llista sense tancar el modal (l'usuari ha de copiar l'URL)
       qc.invalidateQueries({ queryKey: ['budgets', tenantId] });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error desconegut';
@@ -1555,18 +1706,12 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
   };
 
   const handleClone = async () => {
-    if (!budget.profileId || !budget.phaseIds?.length) {
-      toast('error', 'No es pot clonar: dades de perfil no disponibles');
-      return;
-    }
     setCloning(true);
     try {
-      await createBudget(tenantId, {
-        profileId: budget.profileId,
-        phaseIds: budget.phaseIds,
-        notes: budget.notes ?? undefined,
-        clientNotes: budget.clientNotes ?? undefined,
-      });
+      const req: CreateBudgetRequest = isNexeLocal
+        ? { phaseNumbers: budget.phaseNumbers!, notes: budget.notes ?? undefined, clientNotes: budget.clientNotes ?? undefined }
+        : { profileId: budget.profileId ?? undefined, phaseIds: budget.phaseIds, notes: budget.notes ?? undefined, clientNotes: budget.clientNotes ?? undefined };
+      await createBudget(tenantId, req);
       toast('success', 'Pressupost clonat com a DRAFT');
       onRefresh();
       onClose();
@@ -1580,17 +1725,18 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editProfileId) { toast('error', 'Selecciona un perfil'); return; }
-    if (editPhaseIds.size === 0) { toast('error', 'Selecciona almenys una fase'); return; }
+    if (isNexeLocal) {
+      if (editPhaseNums.size === 0) { toast('error', 'Selecciona almenys una fase'); return; }
+    } else {
+      if (!editProfileId) { toast('error', 'Selecciona un perfil'); return; }
+      if (editPhaseIds.size === 0) { toast('error', 'Selecciona almenys una fase'); return; }
+    }
     setSaving(true);
     try {
-      await updateBudget(budget.id, {
-        profileId: editProfileId,
-        phaseIds: Array.from(editPhaseIds),
-        notes: editNotes || undefined,
-        clientNotes: editClientNotes || undefined,
-        validUntil: editValidUntil || undefined,
-      });
+      const req = isNexeLocal
+        ? { phaseNumbers: Array.from(editPhaseNums).sort(), notes: editNotes || undefined, clientNotes: editClientNotes || undefined, validUntil: editValidUntil || undefined, recommendation: editRecommendation || undefined }
+        : { profileId: editProfileId, phaseIds: Array.from(editPhaseIds), notes: editNotes || undefined, clientNotes: editClientNotes || undefined, validUntil: editValidUntil || undefined, recommendation: editRecommendation || undefined };
+      await updateBudget(budget.id, req);
       toast('success', 'Pressupost actualitzat');
       onRefresh();
       onClose();
@@ -1602,104 +1748,40 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
     }
   };
 
-  const handlePrint = () => {
-    const printContent = document.getElementById('budget-print-area');
-    if (!printContent) return;
-    const win = window.open('', '_blank', 'width=800,height=900');
-    if (!win) return;
-    win.document.write(`<!DOCTYPE html><html><head><title>Pressupost ${budget.budgetNumber}</title>
-      <style>
-        body { font-family: sans-serif; color: #111; padding: 32px; max-width: 700px; margin: 0 auto; }
-        h1 { font-size: 22px; margin-bottom: 4px; }
-        .meta { color: #666; font-size: 13px; margin-bottom: 24px; }
-        .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #888; font-weight: 700; margin: 20px 0 8px; }
-        .phase-header { display: flex; justify-content: space-between; background: #f5f5f5; padding: 8px 12px; font-weight: 700; font-size: 14px; }
-        .line { display: flex; justify-content: space-between; padding: 6px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
-        .line .prices { display: flex; gap: 24px; color: #444; }
-        .totals { border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-top: 24px; }
-        .total-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
-        .total-row.bold { font-weight: 700; font-size: 16px; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 4px; }
-        @media print { body { padding: 0; } }
-      </style></head><body>`);
-    win.document.write(printContent.innerHTML);
-    win.document.write('</body></html>');
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 400);
-  };
-
-  const row = (label: string, value: string, bold = false) => (
-    <div className="flex items-center justify-between py-1.5 border-b border-border-base last:border-0">
-      <span className="text-xs text-ink-3 f-mono">{label}</span>
-      <span className={`text-sm f-mono ${bold ? 'font-bold text-white' : 'text-ink-1'}`}>{value}</span>
+  const inputCls = 'w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00]';
+  const labelCls = 'f-mono text-[10px] uppercase tracking-wider text-ink-3 block mb-1';
+  const metaRow = (label: string, value: string) => (
+    <div className="flex justify-between py-1.5 border-b border-border-base last:border-0">
+      <span className="text-xs text-ink-3">{label}</span>
+      <span className="text-xs f-mono text-ink-1">{value}</span>
     </div>
   );
 
-  const inputCls = 'w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00]';
-  const labelCls = 'f-mono text-[10px] uppercase tracking-wider text-ink-3 block mb-1';
-
   return (
     <>
-      {/* hidden print area */}
-      <div id="budget-print-area" style={{ display: 'none' }}>
-        <h1>Pressupost {budget.budgetNumber}</h1>
-        <div className="meta">Creat: {fmtDate(budget.createdAt)} · Vàlid fins: {fmtDate(budget.validUntil)} · Estat: {budget.status}</div>
-        {budget.phases.map((phase, pi) => (
-          <div key={pi}>
-            <div className="section-title">Fase</div>
-            <div className="phase-header"><span>{phase.name}</span><span>{phase.phaseTotal.toFixed(2)} €</span></div>
-            {phase.lines.map((line, li) => (
-              <div key={li} className="line">
-                <span>{line.serviceName}</span>
-                <div className="prices"><span>{line.setupPrice.toFixed(2)} €</span><span>{line.monthlyPrice.toFixed(2)} €/mes</span></div>
-              </div>
-            ))}
-          </div>
-        ))}
-        {budget.addons.length > 0 && (
-          <div>
-            <div className="section-title">Addons</div>
-            {budget.addons.map((a, i) => (
-              <div key={i} className="line"><span>{a.serviceName}</span><span>{a.unitPrice.toFixed(2)} €</span></div>
-            ))}
-          </div>
-        )}
-        <div className="totals">
-          <div className="total-row"><span>Setup (únic)</span><span>{budget.subtotal.toFixed(2)} €</span></div>
-          {budget.discountTotal > 0 && <div className="total-row"><span>Descompte</span><span>-{budget.discountTotal.toFixed(2)} €</span></div>}
-          <div className="total-row bold"><span>Total setup</span><span>{budget.total.toFixed(2)} €</span></div>
-          <div className="total-row bold" style={{borderTop:'1px solid #ddd',marginTop:'8px',paddingTop:'8px'}}><span>Mensual</span><span>{(budget.monthlyTotal ?? 0).toFixed(2)} €/mes</span></div>
-        </div>
-      </div>
-
       <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
         <div className="amg-card card-clip w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
 
           {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-border-base sticky top-0 bg-[var(--surface-card)] z-10">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between p-4 border-b border-border-base sticky top-0 bg-[var(--surface-card)] z-10">
+            <div className="flex items-center gap-2 min-w-0">
               <AMGBadge tone={statusTone}>{budget.status}</AMGBadge>
-              <span className="f-mono font-bold text-white">{budget.budgetNumber}</span>
+              <span className="f-mono font-bold text-white truncate">{budget.budgetNumber}</span>
               {mode === 'edit' && <AMGBadge tone="warning">Editant</AMGBadge>}
             </div>
-            <div className="flex items-center gap-1">
-              {/* Action toolbar */}
+            <div className="flex items-center gap-1 shrink-0">
               {isDraft && mode === 'view' && (
                 <button title="Editar" onClick={() => setMode('edit')}
                   className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition">
                   <I.Edit size={15} />
                 </button>
               )}
-              <button title="Imprimir / PDF" onClick={handlePrint}
-                className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition">
-                <I.Download size={15} />
-              </button>
-              <button title={cloning ? 'Clonant...' : 'Clonar pressupost'} onClick={handleClone} disabled={cloning}
+              <button title="Clonar" onClick={handleClone} disabled={cloning}
                 className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition disabled:opacity-40">
                 <I.Copy size={15} />
               </button>
               {isDraft && mode === 'view' && (
-                <button title={sending ? 'Enviant...' : 'Enviar al client'} onClick={handleSend} disabled={sending}
+                <button title="Enviar al client" onClick={handleSend} disabled={sending}
                   className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition disabled:opacity-40">
                   <I.ArrowRight size={15} />
                 </button>
@@ -1725,119 +1807,172 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
                   <div className="flex items-center gap-2">
                     <input readOnly value={budget.acceptanceUrl ?? acceptanceUrl ?? ''}
                       className="flex-1 bg-[rgba(255,255,255,0.05)] border border-border-base rounded px-3 py-1.5 text-xs text-ink-1 f-mono truncate focus:outline-none" />
-                    <button
-                      onClick={() => { navigator.clipboard.writeText(budget.acceptanceUrl ?? acceptanceUrl ?? ''); toast('success', 'Enllaç copiat'); }}
+                    <button onClick={() => { navigator.clipboard.writeText(budget.acceptanceUrl ?? acceptanceUrl ?? ''); toast('success', 'Copiat'); }}
                       className="shrink-0 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 text-green-400 text-xs rounded transition">
                       Copiar
                     </button>
                   </div>
-                  <p className="text-ink-3 text-xs">Comparteix aquest enllaç amb el client perquè pugui revisar i acceptar la proposta.</p>
                 </div>
               )}
 
-              {/* Meta */}
-              <div className="space-y-0">
-                {row('Creat', fmtDate(budget.createdAt))}
-                {row('Vàlid fins', fmtDate(budget.validUntil))}
-                {budget.sentAt && row('Enviat', fmtDate(budget.sentAt))}
-                {budget.acceptedAt && row('Acceptat', fmtDate(budget.acceptedAt))}
-                {budget.rejectedAt && row('Rebutjat', fmtDate(budget.rejectedAt))}
-                {budget.notes && row('Notes', budget.notes)}
-                {budget.clientNotes && row('Notes client', budget.clientNotes)}
+              {/* Recomanació */}
+              {budget.recommendation && (
+                <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4">
+                  <div className="text-amber-400 text-xs font-semibold uppercase tracking-wider mb-1">Recomanació</div>
+                  <p className="text-sm text-ink-1">{budget.recommendation}</p>
+                </div>
+              )}
+
+              {/* Meta dates */}
+              <div>
+                {metaRow('Creat', fmtDate(budget.createdAt))}
+                {metaRow('Vàlid fins', fmtDate(budget.validUntil))}
+                {budget.sentAt && metaRow('Enviat', fmtDate(budget.sentAt))}
+                {budget.acceptedAt && metaRow('Acceptat', fmtDate(budget.acceptedAt))}
+                {budget.rejectedAt && metaRow('Rebutjat', fmtDate(budget.rejectedAt))}
+                {budget.notes && metaRow('Notes', budget.notes)}
+                {budget.clientNotes && metaRow('Notes client', budget.clientNotes)}
               </div>
 
-              {/* Fases */}
+              {/* Fases — estil accept-budget */}
               {budget.phases.length > 0 && (
                 <div className="space-y-3">
-                  <div className="f-display font-bold text-xs text-ink-3 uppercase tracking-wider">Fases</div>
-                  {budget.phases.map((phase, pi) => (
-                    <div key={pi} className="rounded border border-border-base overflow-hidden">
-                      <div className="flex items-center justify-between px-4 py-2 bg-[rgba(255,255,255,0.04)]">
-                        <span className="f-display font-bold text-sm text-white">{phase.name}</span>
-                        <span className="f-mono text-sm text-white">{phase.phaseTotal.toFixed(2)} €</span>
-                      </div>
-                      <div className="divide-y divide-border-base">
-                        {phase.lines.map((line, li) => (
-                          <div key={li} className="flex items-center justify-between px-4 py-2 gap-4">
-                            <span className="text-xs text-ink-2 flex-1">{line.serviceName}</span>
-                            <div className="flex items-center gap-3 shrink-0 text-xs f-mono">
-                              <span className="text-ink-3">{line.setupPrice.toFixed(2)} €</span>
-                              <span className="text-white">{line.monthlyPrice.toFixed(2)} €/mes</span>
+                  <div className="text-xs text-ink-3 uppercase tracking-wider font-bold">Fases</div>
+                  {budget.phases.map((phase, pi) => {
+                    const isRec = budget.recommendedPhaseIds?.includes(phase.phaseId ?? '');
+                    return (
+                      <div key={pi} className="rounded-lg border border-border-base overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.04)]">
+                          <div className="flex items-center gap-3">
+                            <div className="w-7 h-7 rounded-full bg-[#FF6B00]/20 border border-[#FF6B00]/40 flex items-center justify-center text-xs font-bold text-[#FF6B00] shrink-0">
+                              {phase.sortOrder ?? pi + 1}
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold text-white">{phase.name}</div>
+                              {isRec && <div className="text-xs text-amber-400">★ Recomanada</div>}
                             </div>
                           </div>
-                        ))}
+                          <div className="flex gap-4 text-right shrink-0">
+                            <div>
+                              <div className="text-xs text-ink-3">Setup</div>
+                              <div className="text-sm f-mono font-bold text-white">{fmt(phase.phaseTotal)}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-ink-3">Mensual</div>
+                              <div className="text-sm f-mono font-bold text-[#FF6B00]">{fmt(phase.phaseMonthlyTotal)}/mes</div>
+                            </div>
+                          </div>
+                        </div>
+                        {phase.lines.length > 1 && (
+                          <div className="divide-y divide-border-base">
+                            {phase.lines.map((line, li) => (
+                              <div key={li} className="flex items-center justify-between px-4 py-2 gap-4">
+                                <span className="text-xs text-ink-3 flex-1">{line.serviceName}</span>
+                                <div className="flex gap-3 text-xs f-mono text-ink-3 shrink-0">
+                                  {line.setupPrice > 0 && <span>{fmt(line.setupPrice)}</span>}
+                                  {line.monthlyPrice > 0 && <span className="text-[#FF6B00]">{fmt(line.monthlyPrice)}/mes</span>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
-              {/* Addons */}
-              {budget.addons.length > 0 && (
-                <div className="space-y-2">
-                  <div className="f-display font-bold text-xs text-ink-3 uppercase tracking-wider">Addons</div>
-                  <div className="rounded border border-border-base divide-y divide-border-base">
-                    {budget.addons.map((addon, ai) => (
-                      <div key={ai} className="flex items-center justify-between px-4 py-2">
-                        <span className="text-xs text-ink-2">{addon.serviceName}</span>
-                        <span className="text-xs f-mono text-ink-1">{addon.unitPrice.toFixed(2)} €</span>
-                      </div>
-                    ))}
+              {/* Resum de preus */}
+              <div className="rounded-lg border border-border-base overflow-hidden">
+                <div className="grid grid-cols-2 divide-x divide-border-base">
+                  <div className="p-4 text-center">
+                    <div className="text-xs text-ink-3 uppercase tracking-wider mb-1">Inversió inicial</div>
+                    <div className="text-xl font-bold f-mono text-white">{fmt(budget.total)}</div>
+                    {budget.discountTotal > 0 && (
+                      <div className="text-xs text-green-400 mt-0.5">Descompte: -{fmt(budget.discountTotal)}</div>
+                    )}
+                  </div>
+                  <div className="p-4 text-center">
+                    <div className="text-xs text-ink-3 uppercase tracking-wider mb-1">Quota mensual</div>
+                    <div className="text-xl font-bold f-mono text-[#FF6B00]">{fmt(budget.monthlyTotal ?? 0)}<span className="text-sm font-normal text-ink-3">/mes</span></div>
                   </div>
                 </div>
-              )}
-
-              {/* Totals */}
-              <div className="rounded border border-border-base p-4 bg-[rgba(255,255,255,0.02)]">
-                {row('Subtotal', `${budget.subtotal.toFixed(2)} €`)}
-                {budget.discountTotal > 0 && row('Descompte', `-${budget.discountTotal.toFixed(2)} €`)}
-                {row('Total', `${budget.total.toFixed(2)} €`, true)}
               </div>
             </div>
           ) : (
-            /* Edit mode */
+            /* Edit mode — similar al formulari de creació */
             <form onSubmit={handleSave} className="p-5 space-y-4">
-              {/* Profile */}
-              <div>
-                <label className={labelCls}>Perfil</label>
-                {profiles.length === 0 ? (
-                  <p className="text-sm text-ink-3">Cap perfil assignat.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {profiles.map((p) => (
-                      <button key={p.profile.id} type="button"
-                        onClick={() => { setEditProfileId(p.profile.id); setEditPhaseIds(new Set()); }}
-                        className={`w-full text-left p-3 border rounded transition text-sm ${
-                          editProfileId === p.profile.id
-                            ? 'border-[#FF6B00] bg-accent-muted'
-                            : 'border-border-base hover:border-ink-2'
-                        }`}>
-                        <span className="font-semibold">{p.profile.name}</span>
-                        <span className="text-ink-3 ml-2 text-xs">{p.phases.length} fases</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Phases */}
-              {editProfile && (
+              {isNexeLocal ? (
                 <div>
-                  <label className={labelCls}>Fases a incloure</label>
+                  <label className={labelCls}>Fases NexeLocal</label>
                   <div className="space-y-2">
-                    {editProfile.phases.map((ph) => (
-                      <label key={ph.phase.id} className="flex items-center gap-3 p-3 border border-border-base rounded cursor-pointer hover:border-ink-2 transition">
-                        <input type="checkbox" checked={editPhaseIds.has(ph.phase.id)}
-                          onChange={() => toggleEditPhase(ph.phase.id)}
-                          className="accent-[#FF6B00]" />
-                        <span className="text-sm flex-1">{ph.phase.name}</span>
-                        <span className="f-mono text-xs text-ink-3">{ph.services.length} serveis</span>
-                      </label>
-                    ))}
+                    {[1, 2, 3, 4, 5].map((pn) => {
+                      const ordinal = editPhasesArr.filter(x => x < pn).length;
+                      const monthly = priceFns[ordinal] ?? 0;
+                      const checked = editPhaseNums.has(pn);
+                      return (
+                        <label key={pn} className={`flex items-center gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
+                          <input type="checkbox" checked={checked}
+                            onChange={() => setEditPhaseNums(prev => { const s = new Set(prev); s.has(pn) ? s.delete(pn) : s.add(pn); return s; })}
+                            className="accent-[#FF6B00]" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium">F{pn} · {NEXE_PHASE_NAMES[pn]}</div>
+                            {checked && <div className="text-xs text-ink-3 f-mono">{fmt(monthly)}/mes</div>}
+                          </div>
+                        </label>
+                      );
+                    })}
+                    {editPhaseNums.size > 0 && pricing && (
+                      <div className="p-3 rounded bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.2)] grid grid-cols-2 gap-2">
+                        <div><div className="text-xs text-ink-3">Setup</div><div className="text-sm font-bold f-mono text-white">{fmt(editSetup)}</div></div>
+                        <div><div className="text-xs text-ink-3">Mensual</div><div className="text-sm font-bold f-mono text-[#FF6B00]">{fmt(editMonthly)}/mes</div></div>
+                      </div>
+                    )}
                   </div>
                 </div>
+              ) : (
+                <>
+                  <div>
+                    <label className={labelCls}>Perfil</label>
+                    {profiles.length === 0 ? (
+                      <p className="text-sm text-ink-3">Cap perfil assignat.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {profiles.map((p) => (
+                          <button key={p.profile.id} type="button"
+                            onClick={() => { setEditProfileId(p.profile.id); setEditPhaseIds(new Set()); }}
+                            className={`w-full text-left p-3 border rounded transition text-sm ${editProfileId === p.profile.id ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
+                            <span className="font-semibold">{p.profile.name}</span>
+                            <span className="text-ink-3 ml-2 text-xs">{p.phases.length} fases</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {editProfile && (
+                    <div>
+                      <label className={labelCls}>Fases a incloure</label>
+                      <div className="space-y-2">
+                        {editProfile.phases.map((ph) => (
+                          <label key={ph.phase.id} className="flex items-center gap-3 p-3 border border-border-base rounded cursor-pointer hover:border-ink-2 transition">
+                            <input type="checkbox" checked={editPhaseIds.has(ph.phase.id)}
+                              onChange={() => setEditPhaseIds(prev => { const s = new Set(prev); s.has(ph.phase.id) ? s.delete(ph.phase.id) : s.add(ph.phase.id); return s; })}
+                              className="accent-[#FF6B00]" />
+                            <span className="text-sm flex-1">{ph.phase.name}</span>
+                            <span className="f-mono text-xs text-ink-3">{ph.services.length} serveis</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
+              <div>
+                <label className={labelCls}>Recomanació per al client</label>
+                <textarea value={editRecommendation} onChange={(e) => setEditRecommendation(e.target.value)} rows={3}
+                  className={`${inputCls} resize-none`} />
+              </div>
               <div>
                 <label className={labelCls}>Notes internes</label>
                 <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={2}
@@ -2011,6 +2146,8 @@ export default function TenantDetailPage() {
     enabled: !!tenant,
   });
 
+  const invalidateTenant = () => qc.invalidateQueries({ queryKey: ['tenant', id] });
+
   const invalidateSetup = () => {
     qc.invalidateQueries({ queryKey: ['tenant-setup', id] });
     qc.invalidateQueries({ queryKey: ['tenant-landings', id] });
@@ -2171,7 +2308,7 @@ export default function TenantDetailPage() {
         </div>
 
         {/* Contracte NexeLocal */}
-        <ContractSection tenant={tenant} />
+        <ContractSection tenant={tenant} onRefresh={invalidateTenant} />
 
         {/* Serveis assignats */}
         <div className="amg-card card-clip">
@@ -2284,6 +2421,7 @@ export default function TenantDetailPage() {
       {showNewBudget && (
         <NewBudgetModal
           tenantId={id}
+          tenant={tenant}
           setup={setup ?? null}
           onClose={() => setShowNewBudget(false)}
           onCreated={() => refetchBudgets()}
@@ -2294,6 +2432,7 @@ export default function TenantDetailPage() {
         <BudgetDetailModal
           budget={selectedBudget}
           tenantId={id}
+          tenant={tenant}
           setup={setup ?? null}
           onClose={() => setSelectedBudget(null)}
           onRefresh={() => { refetchBudgets(); setSelectedBudget(null); }}

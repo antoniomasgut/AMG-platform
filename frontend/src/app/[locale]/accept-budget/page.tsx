@@ -152,7 +152,7 @@ function AcceptBudgetContent() {
   const [budget, setBudget] = useState<BudgetResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPhaseIds, setSelectedPhaseIds] = useState<Set<string>>(new Set());
+  const [selectedPhaseKeys, setSelectedPhaseKeys] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ status: 'ACCEPTED' | 'REJECTED' | 'ERROR'; message: string } | null>(null);
   const [rejectMode, setRejectMode] = useState(false);
@@ -164,28 +164,31 @@ function AcceptBudgetContent() {
       .then(b => {
         setBudget(b);
         const rec = b.recommendedPhaseIds ?? [];
-        const ids = rec.length > 0 ? new Set(rec) : new Set(b.phases.map(p => p.phaseId).filter(Boolean));
-        setSelectedPhaseIds(ids as Set<string>);
+        const keys = b.phases.map(p => p.phaseKey ?? p.phaseId).filter(Boolean) as string[];
+        const recKeys = rec.length > 0
+          ? rec.map(id => b.phases.find(p => p.phaseId === id)?.phaseKey ?? id).filter(Boolean) as string[]
+          : keys;
+        setSelectedPhaseKeys(new Set(recKeys));
       })
       .catch(() => setError('El pressupost no s\'ha trobat o el token ha caducat.'))
       .finally(() => setLoading(false));
   }, [token]);
 
-  const togglePhase = (phaseId: string) => {
-    setSelectedPhaseIds(prev => {
+  const togglePhase = (key: string) => {
+    setSelectedPhaseKeys(prev => {
       const next = new Set(prev);
-      if (next.has(phaseId)) next.delete(phaseId);
-      else next.add(phaseId);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
 
   const handleAccept = async () => {
-    if (!budget || selectedPhaseIds.size === 0) return;
+    if (!budget || selectedPhaseKeys.size === 0) return;
     setSubmitting(true);
     try {
-      await acceptBudgetPhases(token, Array.from(selectedPhaseIds));
-      setResult({ status: 'ACCEPTED', message: `Has acceptat ${selectedPhaseIds.size} fase${selectedPhaseIds.size !== 1 ? 's' : ''}. Gràcies per la teva confiança!` });
+      await acceptBudgetPhases(token, Array.from(selectedPhaseKeys));
+      setResult({ status: 'ACCEPTED', message: `Has acceptat ${selectedPhaseKeys.size} fase${selectedPhaseKeys.size !== 1 ? 's' : ''}. Gràcies per la teva confiança!` });
     } catch {
       setResult({ status: 'ERROR', message: 'Hi ha hagut un error en processar l\'acceptació. Contacta\'ns directament.' });
     } finally { setSubmitting(false); }
@@ -226,12 +229,12 @@ function AcceptBudgetContent() {
     );
   }
 
-  const allPhaseIds = budget.phases.map(p => p.phaseId);
-  const allSelected = allPhaseIds.length > 0 && allPhaseIds.every(id => selectedPhaseIds.has(id));
-  const noneSelected = selectedPhaseIds.size === 0;
+  const allPhaseKeys = budget.phases.map(p => p.phaseKey ?? p.phaseId).filter(Boolean) as string[];
+  const allSelected = allPhaseKeys.length > 0 && allPhaseKeys.every(k => selectedPhaseKeys.has(k));
+  const noneSelected = selectedPhaseKeys.size === 0;
   const recIds = new Set(budget.recommendedPhaseIds ?? []);
 
-  const selectedPhases = budget.phases.filter(p => selectedPhaseIds.has(p.phaseId));
+  const selectedPhases = budget.phases.filter(p => selectedPhaseKeys.has(p.phaseKey ?? p.phaseId ?? ''));
   const selSetupTotal = selectedPhases.reduce((s, p) => s + p.phaseTotal, 0);
   const selMonthlyTotal = selectedPhases.reduce((s, p) => s + p.phaseMonthlyTotal, 0);
   const addonsSetup = budget.addons.reduce((s, a) => s + a.unitPrice, 0);
@@ -314,8 +317,8 @@ function AcceptBudgetContent() {
               {budget.phases.length > 1 && (
                 <button type="button"
                   onClick={() => allSelected
-                    ? setSelectedPhaseIds(new Set())
-                    : setSelectedPhaseIds(new Set(allPhaseIds))
+                    ? setSelectedPhaseKeys(new Set())
+                    : setSelectedPhaseKeys(new Set(allPhaseKeys))
                   }
                   className="text-[#FF6B00] text-xs font-semibold hover:underline shrink-0 ml-4">
                   {allSelected ? 'Deseleccionar tot' : 'Seleccionar tot'}
@@ -323,16 +326,19 @@ function AcceptBudgetContent() {
               )}
             </div>
             <div className="space-y-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-              {budget.phases.map((phase, i) => (
-                <PhaseCard
-                  key={phase.phaseId}
-                  phase={phase}
-                  index={i}
-                  selected={selectedPhaseIds.has(phase.phaseId)}
-                  recommended={recIds.has(phase.phaseId)}
-                  onToggle={() => togglePhase(phase.phaseId)}
-                />
-              ))}
+              {budget.phases.map((phase, i) => {
+                const key = phase.phaseKey ?? phase.phaseId ?? String(i);
+                return (
+                  <PhaseCard
+                    key={key}
+                    phase={phase}
+                    index={i}
+                    selected={selectedPhaseKeys.has(key)}
+                    recommended={recIds.has(phase.phaseId ?? '')}
+                    onToggle={() => togglePhase(key)}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
@@ -358,7 +364,7 @@ function AcceptBudgetContent() {
             <h2 className="font-bold text-gray-900">
               Resum de la teva selecció
               <span className="ml-2 text-sm font-normal text-gray-400">
-                {selectedPhaseIds.size} fase{selectedPhaseIds.size !== 1 ? 's' : ''} seleccionada{selectedPhaseIds.size !== 1 ? 's' : ''}
+                {selectedPhaseKeys.size} fase{selectedPhaseKeys.size !== 1 ? 's' : ''} seleccionada{selectedPhaseKeys.size !== 1 ? 's' : ''}
               </span>
             </h2>
           </div>
@@ -398,7 +404,7 @@ function AcceptBudgetContent() {
             >
               {submitting ? 'Processant...'
                 : noneSelected ? 'Selecciona almenys una fase per continuar'
-                : `Acceptar proposta (${selectedPhaseIds.size} fase${selectedPhaseIds.size !== 1 ? 's' : ''})`}
+                : `Acceptar proposta (${selectedPhaseKeys.size} fase${selectedPhaseKeys.size !== 1 ? 's' : ''})`}
             </button>
             <button
               type="button"

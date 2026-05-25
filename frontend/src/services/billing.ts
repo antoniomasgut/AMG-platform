@@ -1,7 +1,7 @@
 import { apiFetch } from './api';
 
 export interface BudgetLine { serviceName: string; setupPrice: number; monthlyPrice: number; }
-export interface BudgetPhase { name: string; sortOrder: number; lines: BudgetLine[]; phaseTotal: number; phaseMonthlyTotal: number; phaseId: string; }
+export interface BudgetPhase { name: string; sortOrder: number; lines: BudgetLine[]; phaseTotal: number; phaseMonthlyTotal: number; phaseId: string | null; phaseKey: string | null; }
 export interface BudgetAddon { serviceName: string; unitPrice: number; }
 export interface BudgetResponse {
   id: string; budgetNumber: string; status: string;
@@ -12,6 +12,7 @@ export interface BudgetResponse {
   profileId: string | null; phaseIds: string[]; notes: string | null; clientNotes: string | null;
   tenantId: string | null; tenantName: string | null;
   recommendation: string | null; recommendedPhaseIds: string[];
+  phaseNumbers: number[] | null;
 }
 
 export interface BudgetSummary { id: string; budgetNumber: string; total: number; status: string; sentAt: string | null; }
@@ -63,6 +64,7 @@ export interface CreateBudgetRequest {
   validUntil?: string;
   recommendation?: string;
   recommendedPhaseIds?: string[];
+  phaseNumbers?: number[];
 }
 
 export const createBudget = (tenantId: string, data: CreateBudgetRequest) =>
@@ -90,10 +92,10 @@ export const previewBudget = (token: string) =>
 export const acceptBudgetFull = (token: string) =>
   apiFetch<{ status: string; message: string }>(`/billing/budgets/accept?token=${encodeURIComponent(token)}`, { method: 'POST' });
 
-export const acceptBudgetPhases = (token: string, phaseIds: string[]) =>
+export const acceptBudgetPhases = (token: string, phaseKeys: string[]) =>
   apiFetch<{ status: string; message: string }>(`/billing/budgets/accept-phases?token=${encodeURIComponent(token)}`, {
     method: 'POST',
-    body: JSON.stringify({ phaseIds }),
+    body: JSON.stringify({ phaseKeys }),
   });
 
 export const rejectBudget = (token: string, reason?: string) =>

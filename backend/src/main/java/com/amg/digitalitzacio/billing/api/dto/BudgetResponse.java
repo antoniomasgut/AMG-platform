@@ -15,11 +15,12 @@ public record BudgetResponse(
     String rejectionUrl, String acceptanceUrl, LocalDate validUntil, Instant createdAt,
     UUID profileId, List<UUID> phaseIds, String notes, String clientNotes,
     UUID tenantId, String tenantName,
-    String recommendation, List<UUID> recommendedPhaseIds
+    String recommendation, List<UUID> recommendedPhaseIds,
+    List<Integer> phaseNumbers
 ) {
     public record BudgetPhase(String name, Integer sortOrder, List<BudgetLine> lines,
                                BigDecimal phaseTotal, BigDecimal phaseMonthlyTotal,
-                               UUID phaseId) {
+                               UUID phaseId, String phaseKey) {
         public record BudgetLine(String serviceName, BigDecimal setupPrice, BigDecimal monthlyPrice) {}
     }
     public record BudgetAddon(String serviceName, BigDecimal unitPrice) {}

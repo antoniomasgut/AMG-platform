@@ -40,6 +40,7 @@ export interface CreateTenantRequest {
 export interface UpdateTenantRequest {
   name?: string; email?: string; phone?: string; address?: string;
   isActive?: boolean; isFree?: boolean; agentSystemPrompt?: string;
+  sector?: string | null; businessSize?: string | null; contractedPhases?: string[] | null;
 }
 
 export const listUsers = (params: { page?: number; size?: number; role?: string; tenantId?: string; search?: string } = {}) => {

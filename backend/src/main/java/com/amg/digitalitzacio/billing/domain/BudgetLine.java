@@ -13,7 +13,8 @@ public class BudgetLine {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(nullable = false) private UUID budgetId;
     private UUID phaseId;
-    @Column(nullable = false) private UUID serviceId;
+    private Integer phaseNumber;
+    private UUID serviceId;
     @Column(length = 100) private String serviceName;
     @Builder.Default private Integer quantity = 1;
     @Column(nullable = false, precision = 10, scale = 2) private BigDecimal unitPrice;

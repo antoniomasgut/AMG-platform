@@ -16,6 +16,6 @@ public interface BillingService {
     AcceptRejectResponse acceptBudget(String token);
     AcceptRejectResponse rejectBudget(String token, String reason);
     BudgetResponse previewBudget(String token);
-    AcceptRejectResponse acceptBudgetPhases(String token, List<UUID> phaseIds);
+    AcceptRejectResponse acceptBudgetPhases(String token, List<String> phaseKeys);
     DashboardResponse getDashboard(UUID tenantId);
 }

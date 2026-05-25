@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.billing.application;
 
+import com.amg.digitalitzacio.auth.domain.SectorPricingRepository;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.billing.api.dto.*;
 import com.amg.digitalitzacio.billing.domain.*;
@@ -25,6 +26,14 @@ import java.util.*;
 @RequiredArgsConstructor
 public class BillingOrchestrator implements BillingService {
 
+    private static final Map<Integer, String> PHASE_NAMES = Map.of(
+        1, "F1 · Comunicació base",
+        2, "F2 · Gestió de cites",
+        3, "F3 · Pressupostos",
+        4, "F4 · Fidelització",
+        5, "F5 · Equip"
+    );
+
     private final BudgetRepository budgetRepository;
     private final BudgetLineRepository budgetLineRepository;
     private final DiscountRepository discountRepository;
@@ -33,45 +42,77 @@ public class BillingOrchestrator implements BillingService {
     private final InvoiceService invoiceService;
     private final PaymentService paymentService;
     private final TenantRepository tenantRepository;
+    private final SectorPricingRepository sectorPricingRepository;
 
     @Override
     @Transactional
     public BudgetResponse createBudget(UUID tenantId, CreateBudgetRequest request) {
-        var budgetResponse = profileService.calculateBudget(request.profileId(),
-                request.addonIds(), true);
-
         var subtotal = BigDecimal.ZERO;
         var lines = new ArrayList<BudgetLine>();
 
-        int sortOrder = 0;
-        for (var phase : budgetResponse.phases()) {
-            for (var svc : phase.services()) {
-                var lineSetup = svc.setupPrice();
-                var lineMonthly = svc.monthlyPrice();
-                subtotal = subtotal.add(lineSetup);
+        if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
+            // Mode NexeLocal: preus des de sector_pricing
+            var tenant = tenantRepository.findById(tenantId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Tenant not found: " + tenantId));
+            var pricing = (tenant.getSector() != null && tenant.getBusinessSize() != null)
+                    ? sectorPricingRepository.findBySectorAndBusinessSize(
+                            tenant.getSector(), tenant.getBusinessSize()).orElse(null)
+                    : null;
+
+            var sortedPhases = request.phaseNumbers().stream().sorted().toList();
+            var setupPrice = pricing != null ? pricing.getSetupPrice() : BigDecimal.ZERO;
+            var priceFn = pricing != null
+                    ? new BigDecimal[]{ pricing.getPriceF1(), pricing.getPriceF2(),
+                                        pricing.getPriceF3(), pricing.getPriceF4(), pricing.getPriceF5() }
+                    : new BigDecimal[]{ BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+                                        BigDecimal.ZERO, BigDecimal.ZERO };
+
+            for (int i = 0; i < sortedPhases.size(); i++) {
+                var pn = sortedPhases.get(i);
+                var setupLine = (i == 0) ? setupPrice : BigDecimal.ZERO;
+                // Posició ordinal: 1a fase seleccionada → priceF1, 2a → priceF2, etc.
+                // "dona igual quina fase sigui" — el preu depèn de l'ordre, no del número de fase
+                var monthly = (i < priceFn.length && priceFn[i] != null) ? priceFn[i] : BigDecimal.ZERO;
+                subtotal = subtotal.add(setupLine);
                 lines.add(BudgetLine.builder()
-                        .phaseId(phase.phase().id())
-                        .serviceId(svc.id())
-                        .serviceName(svc.name())
-                        .unitPrice(lineSetup)
-                        .total(lineSetup)
-                        .monthlyPrice(lineMonthly)
-                        .sortOrder(sortOrder++)
+                        .phaseNumber(pn)
+                        .serviceName(PHASE_NAMES.getOrDefault(pn, "Fase " + pn))
+                        .unitPrice(setupLine).total(setupLine)
+                        .monthlyPrice(monthly)
+                        .sortOrder(i)
                         .build());
             }
-        }
-
-        if (budgetResponse.addons() != null) {
-            for (var addon : budgetResponse.addons()) {
-                subtotal = subtotal.add(addon.salePrice());
-                lines.add(BudgetLine.builder()
-                        .serviceId(addon.id())
-                        .serviceName(addon.name())
-                        .unitPrice(addon.salePrice())
-                        .total(addon.salePrice())
-                        .monthlyPrice(BigDecimal.ZERO)
-                        .sortOrder(sortOrder++)
-                        .build());
+        } else {
+            // Mode catàleg: preus des del perfil
+            var budgetResponse = profileService.calculateBudget(request.profileId(),
+                    request.addonIds(), true);
+            int sortOrder = 0;
+            for (var phase : budgetResponse.phases()) {
+                for (var svc : phase.services()) {
+                    var lineSetup = svc.setupPrice();
+                    var lineMonthly = svc.monthlyPrice();
+                    subtotal = subtotal.add(lineSetup);
+                    lines.add(BudgetLine.builder()
+                            .phaseId(phase.phase().id())
+                            .serviceId(svc.id())
+                            .serviceName(svc.name())
+                            .unitPrice(lineSetup).total(lineSetup)
+                            .monthlyPrice(lineMonthly)
+                            .sortOrder(sortOrder++)
+                            .build());
+                }
+            }
+            if (budgetResponse.addons() != null) {
+                for (var addon : budgetResponse.addons()) {
+                    subtotal = subtotal.add(addon.salePrice());
+                    lines.add(BudgetLine.builder()
+                            .serviceId(addon.id())
+                            .serviceName(addon.name())
+                            .unitPrice(addon.salePrice()).total(addon.salePrice())
+                            .monthlyPrice(BigDecimal.ZERO)
+                            .sortOrder(lines.size())
+                            .build());
+                }
             }
         }
 
@@ -142,30 +183,62 @@ public class BillingOrchestrator implements BillingService {
 
         budgetLineRepository.deleteByBudgetId(budgetId);
 
-        var budgetResponse = profileService.calculateBudget(request.profileId(),
-                request.addonIds(), true);
         var subtotal = BigDecimal.ZERO;
         var lines = new ArrayList<BudgetLine>();
-        int sortOrder = 0;
-        for (var phase : budgetResponse.phases()) {
-            for (var svc : phase.services()) {
-                var lineSetup = svc.setupPrice();
-                var lineMonthly = svc.monthlyPrice();
-                subtotal = subtotal.add(lineSetup);
+
+        if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
+            var tenant = tenantRepository.findById(budget.getTenantId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
+            var pricing = (tenant.getSector() != null && tenant.getBusinessSize() != null)
+                    ? sectorPricingRepository.findBySectorAndBusinessSize(
+                            tenant.getSector(), tenant.getBusinessSize()).orElse(null)
+                    : null;
+
+            var sortedPhases = request.phaseNumbers().stream().sorted().toList();
+            var setupPrice = pricing != null ? pricing.getSetupPrice() : BigDecimal.ZERO;
+            var priceFn = pricing != null
+                    ? new BigDecimal[]{ pricing.getPriceF1(), pricing.getPriceF2(),
+                                        pricing.getPriceF3(), pricing.getPriceF4(), pricing.getPriceF5() }
+                    : new BigDecimal[]{ BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+                                        BigDecimal.ZERO, BigDecimal.ZERO };
+
+            for (int i = 0; i < sortedPhases.size(); i++) {
+                var pn = sortedPhases.get(i);
+                var setupLine = (i == 0) ? setupPrice : BigDecimal.ZERO;
+                var monthly = (i < priceFn.length && priceFn[i] != null) ? priceFn[i] : BigDecimal.ZERO;
+                subtotal = subtotal.add(setupLine);
                 lines.add(BudgetLine.builder().budgetId(budgetId)
-                        .phaseId(phase.phase().id()).serviceId(svc.id())
-                        .serviceName(svc.name()).unitPrice(lineSetup)
-                        .total(lineSetup).monthlyPrice(lineMonthly)
-                        .sortOrder(sortOrder++).build());
+                        .phaseNumber(pn)
+                        .serviceName(PHASE_NAMES.getOrDefault(pn, "Fase " + pn))
+                        .unitPrice(setupLine).total(setupLine)
+                        .monthlyPrice(monthly)
+                        .sortOrder(i)
+                        .build());
             }
-        }
-        if (budgetResponse.addons() != null) {
-            for (var addon : budgetResponse.addons()) {
-                subtotal = subtotal.add(addon.salePrice());
-                lines.add(BudgetLine.builder().budgetId(budgetId)
-                        .serviceId(addon.id()).serviceName(addon.name())
-                        .unitPrice(addon.salePrice()).total(addon.salePrice())
-                        .sortOrder(sortOrder++).build());
+        } else {
+            var budgetResponse = profileService.calculateBudget(request.profileId(),
+                    request.addonIds(), true);
+            int sortOrder = 0;
+            for (var phase : budgetResponse.phases()) {
+                for (var svc : phase.services()) {
+                    var lineSetup = svc.setupPrice();
+                    var lineMonthly = svc.monthlyPrice();
+                    subtotal = subtotal.add(lineSetup);
+                    lines.add(BudgetLine.builder().budgetId(budgetId)
+                            .phaseId(phase.phase().id()).serviceId(svc.id())
+                            .serviceName(svc.name()).unitPrice(lineSetup)
+                            .total(lineSetup).monthlyPrice(lineMonthly)
+                            .sortOrder(sortOrder++).build());
+                }
+            }
+            if (budgetResponse.addons() != null) {
+                for (var addon : budgetResponse.addons()) {
+                    subtotal = subtotal.add(addon.salePrice());
+                    lines.add(BudgetLine.builder().budgetId(budgetId)
+                            .serviceId(addon.id()).serviceName(addon.name())
+                            .unitPrice(addon.salePrice()).total(addon.salePrice())
+                            .sortOrder(lines.size()).build());
+                }
             }
         }
 
@@ -270,31 +343,27 @@ public class BillingOrchestrator implements BillingService {
 
     @Override
     @Transactional
-    public AcceptRejectResponse acceptBudgetPhases(String token, List<UUID> phaseIds) {
+    public AcceptRejectResponse acceptBudgetPhases(String token, List<String> phaseKeys) {
         var budget = budgetRepository.findByAcceptanceToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
         if (budget.getStatus() != BudgetStatus.SENT) {
             throw new IllegalArgumentException("Budget is not in SENT status");
         }
-        // Si la llista de fases és buida o nul·la, s'accepten totes les fases
-        var lines = budgetLineRepository.findByBudgetIdOrderBySortOrder(budget.getId());
-        var allPhaseIds = lines.stream()
-                .map(BudgetLine::getPhaseId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-        var selectedPhaseIds = (phaseIds == null || phaseIds.isEmpty()) ? allPhaseIds : phaseIds;
 
         budget.setStatus(BudgetStatus.ACCEPTED);
         budget.setAcceptedAt(Instant.now());
         budget.setAcceptanceToken(null);
         budgetRepository.save(budget);
 
-        for (var phaseId : selectedPhaseIds) {
-            try {
-                vaultService.approvePhase(budget.getTenantId(), phaseId);
-            } catch (Exception ignored) {
-                // Continua — la fase pot estar ja aprovada
+        if (phaseKeys != null && !phaseKeys.isEmpty()) {
+            for (var key : phaseKeys) {
+                // NexeLocal: claus "F1".."F5"
+                if (key != null && key.matches("F[1-5]")) continue;
+                // Catàleg: UUID → aprova la fase al vault
+                try {
+                    var phaseId = UUID.fromString(key);
+                    vaultService.approvePhase(budget.getTenantId(), phaseId);
+                } catch (Exception ignored) {}
             }
         }
         return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament");
@@ -354,7 +423,31 @@ public class BillingOrchestrator implements BillingService {
         var phases = new ArrayList<BudgetResponse.BudgetPhase>();
         var addons = new ArrayList<BudgetResponse.BudgetAddon>();
 
-        if (profileId != null) {
+        var nexeLocalLines = lines.stream().filter(l -> l.getPhaseNumber() != null).toList();
+        if (!nexeLocalLines.isEmpty()) {
+            // Mode NexeLocal: agrupa per phaseNumber
+            var byPhase = new java.util.TreeMap<Integer, java.util.List<BudgetLine>>();
+            for (var l : nexeLocalLines) {
+                byPhase.computeIfAbsent(l.getPhaseNumber(), k -> new ArrayList<>()).add(l);
+            }
+            for (var entry : byPhase.entrySet()) {
+                var pn = entry.getKey();
+                var phLines = entry.getValue();
+                var phaseTotal = phLines.stream().map(BudgetLine::getUnitPrice)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                var phaseMonthly = phLines.stream()
+                        .map(l -> l.getMonthlyPrice() != null ? l.getMonthlyPrice() : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                var budgetLines = phLines.stream()
+                        .map(l -> new BudgetResponse.BudgetPhase.BudgetLine(
+                                l.getServiceName(), l.getUnitPrice(),
+                                l.getMonthlyPrice() != null ? l.getMonthlyPrice() : BigDecimal.ZERO))
+                        .toList();
+                phases.add(new BudgetResponse.BudgetPhase(
+                        PHASE_NAMES.getOrDefault(pn, "Fase " + pn), pn, budgetLines,
+                        phaseTotal, phaseMonthly, null, "F" + pn));
+            }
+        } else if (profileId != null) {
             try {
                 var profile = profileService.getProfile(profileId);
                 for (var phaseResp : profile.phases()) {
@@ -372,13 +465,14 @@ public class BillingOrchestrator implements BillingService {
                                 .map(BudgetResponse.BudgetPhase.BudgetLine::monthlyPrice)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
                         phases.add(new BudgetResponse.BudgetPhase(
-                                phaseResp.name(), phaseResp.sortOrder(), phaseLines, phaseTotal, phaseMonthlyTotal, phaseResp.id()));
+                                phaseResp.name(), phaseResp.sortOrder(), phaseLines, phaseTotal, phaseMonthlyTotal,
+                                phaseResp.id(), phaseResp.id() != null ? phaseResp.id().toString() : null));
                     }
                 }
             } catch (Exception ignored) {}
         }
 
-        var addonLines = lines.stream().filter(l -> l.getPhaseId() == null).toList();
+        var addonLines = lines.stream().filter(l -> l.getPhaseId() == null && l.getPhaseNumber() == null).toList();
         for (var line : addonLines) {
             addons.add(new BudgetResponse.BudgetAddon(line.getServiceName(), line.getUnitPrice()));
         }
@@ -387,6 +481,12 @@ public class BillingOrchestrator implements BillingService {
                 .map(l -> l.getPhaseId())
                 .filter(id -> id != null)
                 .distinct()
+                .toList();
+
+        var phaseNumbers = lines.stream()
+                .map(BudgetLine::getPhaseNumber)
+                .filter(n -> n != null)
+                .distinct().sorted()
                 .toList();
 
         var tenantName = budget.getTenantId() != null
@@ -416,6 +516,7 @@ public class BillingOrchestrator implements BillingService {
                 budget.getValidUntil(), budget.getCreatedAt(),
                 profileId, phaseIds, budget.getNotes(), budget.getClientNotes(),
                 budget.getTenantId(), tenantName,
-                budget.getRecommendation(), recPhaseIds);
+                budget.getRecommendation(), recPhaseIds,
+                phaseNumbers.isEmpty() ? null : phaseNumbers);
     }
 }
