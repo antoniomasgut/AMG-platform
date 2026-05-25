@@ -13,6 +13,7 @@ export interface BudgetResponse {
   tenantId: string | null; tenantName: string | null;
   recommendation: string | null; recommendedPhaseIds: string[];
   phaseNumbers: number[] | null;
+  sector: string | null; businessSize: string | null;
 }
 
 export interface BudgetSummary { id: string; budgetNumber: string; total: number; status: string; sentAt: string | null; }
@@ -65,6 +66,8 @@ export interface CreateBudgetRequest {
   recommendation?: string;
   recommendedPhaseIds?: string[];
   phaseNumbers?: number[];
+  sector?: string;
+  businessSize?: string;
 }
 
 export const createBudget = (tenantId: string, data: CreateBudgetRequest) =>

@@ -358,12 +358,28 @@ export interface SectorPricingResponse {
   priceF3: number;
   priceF4: number;
   priceF5: number;
+  setupF2: number;
+  setupF3: number;
+  setupF4: number;
+  setupF5: number;
 }
 
 // Calcula el mensual sumant els N primers tiers (igual que el backend: count fases → priceF1+priceF2+...)
 export function calcMonthly(pricing: SectorPricingResponse, phaseCount: number): number {
   const tiers = [pricing.priceF1, pricing.priceF2, pricing.priceF3, pricing.priceF4, pricing.priceF5];
   return tiers.slice(0, phaseCount).reduce((sum, p) => sum + (p ?? 0), 0);
+}
+
+// Calcula el setup total sumant el setup de cada fase seleccionada per ordinal
+export function calcSetup(pricing: SectorPricingResponse, phaseCount: number): number {
+  const setups = [pricing.setupPrice, pricing.setupF2 ?? 0, pricing.setupF3 ?? 0, pricing.setupF4 ?? 0, pricing.setupF5 ?? 0];
+  return setups.slice(0, phaseCount).reduce((sum, s) => sum + (s ?? 0), 0);
+}
+
+// Retorna el setup per a una fase concreta per ordinal (0-based)
+export function setupForOrdinal(pricing: SectorPricingResponse, ordinal: number): number {
+  const setups = [pricing.setupPrice, pricing.setupF2 ?? 0, pricing.setupF3 ?? 0, pricing.setupF4 ?? 0, pricing.setupF5 ?? 0];
+  return setups[ordinal] ?? 0;
 }
 
 export const listSectorPricing = () =>

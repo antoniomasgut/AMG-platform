@@ -1432,10 +1432,14 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
   const { toast } = useToast();
   const isNexeLocal = !!(tenant?.sector && tenant?.businessSize);
 
+  // Sector/size state — default to tenant values but editable
+  const [budgetSector, setBudgetSector] = useState(tenant?.sector ?? '');
+  const [budgetSize, setBudgetSize] = useState(tenant?.businessSize ?? '');
+
   const { data: pricing } = useQuery({
-    queryKey: ['pricing', tenant?.sector, tenant?.businessSize],
-    queryFn: () => lookupSectorPricing(tenant!.sector!, tenant!.businessSize!),
-    enabled: isNexeLocal,
+    queryKey: ['pricing', budgetSector, budgetSize],
+    queryFn: () => lookupSectorPricing(budgetSector, budgetSize),
+    enabled: !!(budgetSector && budgetSize),
   });
 
   // NexeLocal state
@@ -1456,9 +1460,10 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
   const selectedProfile = profiles.find(p => p.profile.id === selectedProfileId);
 
   const priceFns = pricing ? [pricing.priceF1, pricing.priceF2, pricing.priceF3, pricing.priceF4, pricing.priceF5] : [];
+  const setupFns = pricing ? [pricing.setupPrice, pricing.setupF2 ?? 0, pricing.setupF3 ?? 0, pricing.setupF4 ?? 0, pricing.setupF5 ?? 0] : [];
   const selectedPhasesArr = Array.from(selectedPhaseNums).sort((a, b) => a - b);
   const nexeLocalMonthly = selectedPhasesArr.reduce((sum, _pn, i) => sum + (priceFns[i] ?? 0), 0);
-  const nexeLocalSetup = selectedPhaseNums.size > 0 ? (pricing?.setupPrice ?? 0) : 0;
+  const nexeLocalSetup = selectedPhasesArr.reduce((sum, _pn, i) => sum + (setupFns[i] ?? 0), 0);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1476,6 +1481,8 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
         clientNotes: clientNotes || undefined,
         validUntil: validUntil || undefined,
         recommendation: recommendation || undefined,
+        sector: budgetSector || undefined,
+        businessSize: budgetSize || undefined,
       } : {
         profileId: selectedProfileId,
         phaseIds: Array.from(selectedPhaseIds),
@@ -1498,6 +1505,7 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
 
   const ta = 'w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00] resize-none';
   const lbl = 'f-mono text-[10px] uppercase tracking-wider text-ink-3 block mb-1';
+  const sel = 'w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00]';
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -1510,43 +1518,75 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
         <form onSubmit={handleCreate} className="space-y-4">
           {isNexeLocal ? (
             /* Mode NexeLocal: F1-F5 phases with sector pricing */
-            <div>
-              <label className={lbl}>Fases NexeLocal</label>
-              {!pricing ? (
-                <p className="text-sm text-ink-3">Carregant preus…</p>
-              ) : (
-                <div className="space-y-2">
-                  {[1, 2, 3, 4, 5].map((pn) => {
-                    const ordinal = selectedPhasesArr.filter(x => x < pn).length;
-                    const monthly = priceFns[ordinal] ?? 0;
-                    const checked = selectedPhaseNums.has(pn);
-                    return (
-                      <label key={pn} className={`flex items-center gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
-                        <input type="checkbox" checked={checked}
-                          onChange={() => setSelectedPhaseNums(prev => { const s = new Set(prev); s.has(pn) ? s.delete(pn) : s.add(pn); return s; })}
-                          className="accent-[#FF6B00]" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium">F{pn} · {NEXE_PHASE_NAMES[pn]}</div>
-                          {checked && <div className="text-xs text-ink-3 f-mono">{fmt(monthly)}/mes</div>}
-                        </div>
-                      </label>
-                    );
-                  })}
-                  {selectedPhaseNums.size > 0 && (
-                    <div className="mt-2 p-3 rounded bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.2)] grid grid-cols-2 gap-2">
-                      <div>
-                        <div className="text-xs text-ink-3">Setup</div>
-                        <div className="text-sm font-bold f-mono text-white">{fmt(nexeLocalSetup)}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-ink-3">Mensual</div>
-                        <div className="text-sm font-bold f-mono text-[#FF6B00]">{fmt(nexeLocalMonthly)}/mes</div>
-                      </div>
-                    </div>
-                  )}
+            <>
+              {/* Sector i mida d'empresa */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Tipus d&apos;empresa</label>
+                  <select value={budgetSector} onChange={e => { setBudgetSector(e.target.value); setBudgetSize(''); }} className={sel}>
+                    <option value="">Selecciona sector</option>
+                    {(Object.keys(SECTOR_LABELS) as string[]).map(k => (
+                      <option key={k} value={k}>{SECTOR_LABELS[k]}</option>
+                    ))}
+                  </select>
                 </div>
-              )}
-            </div>
+                <div>
+                  <label className={lbl}>Nombre de treballadors</label>
+                  <select value={budgetSize} onChange={e => setBudgetSize(e.target.value)} className={sel} disabled={!budgetSector}>
+                    <option value="">Selecciona mida</option>
+                    {(SECTOR_SIZES[budgetSector] ?? []).map(sz => (
+                      <option key={sz} value={sz}>{SIZE_LABELS[sz] ?? sz}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className={lbl}>Fases NexeLocal</label>
+                {!(budgetSector && budgetSize) ? (
+                  <p className="text-sm text-ink-3 italic">Selecciona primer el tipus d&apos;empresa i la mida</p>
+                ) : !pricing ? (
+                  <p className="text-sm text-ink-3">Carregant preus…</p>
+                ) : (
+                  <div className="space-y-2">
+                    {[1, 2, 3, 4, 5].map((pn) => {
+                      const ordinal = selectedPhasesArr.filter(x => x < pn).length;
+                      const monthly = priceFns[ordinal] ?? 0;
+                      const setup = setupFns[ordinal] ?? 0;
+                      const checked = selectedPhaseNums.has(pn);
+                      return (
+                        <label key={pn} className={`flex items-center gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
+                          <input type="checkbox" checked={checked}
+                            onChange={() => setSelectedPhaseNums(prev => { const s = new Set(prev); s.has(pn) ? s.delete(pn) : s.add(pn); return s; })}
+                            className="accent-[#FF6B00]" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium">F{pn} · {NEXE_PHASE_NAMES[pn]}</div>
+                            {checked && (
+                              <div className="text-xs text-ink-3 f-mono flex gap-3">
+                                <span>Setup: {fmt(setup)}</span>
+                                <span>{fmt(monthly)}/mes</span>
+                              </div>
+                            )}
+                          </div>
+                        </label>
+                      );
+                    })}
+                    {selectedPhaseNums.size > 0 && (
+                      <div className="mt-2 p-3 rounded bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.2)] grid grid-cols-2 gap-2">
+                        <div>
+                          <div className="text-xs text-ink-3">Setup total</div>
+                          <div className="text-sm font-bold f-mono text-white">{fmt(nexeLocalSetup)}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-ink-3">Mensual</div>
+                          <div className="text-sm font-bold f-mono text-[#FF6B00]">{fmt(nexeLocalMonthly)}/mes</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
             /* Mode catàleg */
             <>
@@ -1654,10 +1694,14 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
   const [editRecommendation, setEditRecommendation] = useState(budget.recommendation ?? '');
   const [saving, setSaving] = useState(false);
 
+  // Sector/size for pricing — default to tenant values but editable
+  const [editBudgetSector, setEditBudgetSector] = useState(budget.sector ?? tenant?.sector ?? '');
+  const [editBudgetSize, setEditBudgetSize] = useState(budget.businessSize ?? tenant?.businessSize ?? '');
+
   const { data: pricing } = useQuery({
-    queryKey: ['pricing', tenant?.sector, tenant?.businessSize],
-    queryFn: () => lookupSectorPricing(tenant!.sector!, tenant!.businessSize!),
-    enabled: !!(tenant?.sector && tenant?.businessSize),
+    queryKey: ['pricing', editBudgetSector, editBudgetSize],
+    queryFn: () => lookupSectorPricing(editBudgetSector, editBudgetSize),
+    enabled: !!(editBudgetSector && editBudgetSize),
   });
 
   const isDraft = budget.status === 'DRAFT';
@@ -1670,9 +1714,10 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
   const editProfile = profiles.find(p => p.profile.id === editProfileId);
 
   const priceFns = pricing ? [pricing.priceF1, pricing.priceF2, pricing.priceF3, pricing.priceF4, pricing.priceF5] : [];
+  const setupFns = pricing ? [pricing.setupPrice, pricing.setupF2 ?? 0, pricing.setupF3 ?? 0, pricing.setupF4 ?? 0, pricing.setupF5 ?? 0] : [];
   const editPhasesArr = Array.from(editPhaseNums).sort((a, b) => a - b);
   const editMonthly = editPhasesArr.reduce((sum, _pn, i) => sum + (priceFns[i] ?? 0), 0);
-  const editSetup = editPhaseNums.size > 0 ? (pricing?.setupPrice ?? 0) : 0;
+  const editSetup = editPhasesArr.reduce((sum, _pn, i) => sum + (setupFns[i] ?? 0), 0);
 
   const handleSend = async () => {
     setSending(true);
@@ -1734,7 +1779,7 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
     setSaving(true);
     try {
       const req = isNexeLocal
-        ? { phaseNumbers: Array.from(editPhaseNums).sort(), notes: editNotes || undefined, clientNotes: editClientNotes || undefined, validUntil: editValidUntil || undefined, recommendation: editRecommendation || undefined }
+        ? { phaseNumbers: Array.from(editPhaseNums).sort(), notes: editNotes || undefined, clientNotes: editClientNotes || undefined, validUntil: editValidUntil || undefined, recommendation: editRecommendation || undefined, sector: editBudgetSector || undefined, businessSize: editBudgetSize || undefined }
         : { profileId: editProfileId, phaseIds: Array.from(editPhaseIds), notes: editNotes || undefined, clientNotes: editClientNotes || undefined, validUntil: editValidUntil || undefined, recommendation: editRecommendation || undefined };
       await updateBudget(budget.id, req);
       toast('success', 'Pressupost actualitzat');
@@ -1903,33 +1948,62 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
             /* Edit mode — similar al formulari de creació */
             <form onSubmit={handleSave} className="p-5 space-y-4">
               {isNexeLocal ? (
-                <div>
-                  <label className={labelCls}>Fases NexeLocal</label>
-                  <div className="space-y-2">
-                    {[1, 2, 3, 4, 5].map((pn) => {
-                      const ordinal = editPhasesArr.filter(x => x < pn).length;
-                      const monthly = priceFns[ordinal] ?? 0;
-                      const checked = editPhaseNums.has(pn);
-                      return (
-                        <label key={pn} className={`flex items-center gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
-                          <input type="checkbox" checked={checked}
-                            onChange={() => setEditPhaseNums(prev => { const s = new Set(prev); s.has(pn) ? s.delete(pn) : s.add(pn); return s; })}
-                            className="accent-[#FF6B00]" />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium">F{pn} · {NEXE_PHASE_NAMES[pn]}</div>
-                            {checked && <div className="text-xs text-ink-3 f-mono">{fmt(monthly)}/mes</div>}
-                          </div>
-                        </label>
-                      );
-                    })}
-                    {editPhaseNums.size > 0 && pricing && (
-                      <div className="p-3 rounded bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.2)] grid grid-cols-2 gap-2">
-                        <div><div className="text-xs text-ink-3">Setup</div><div className="text-sm font-bold f-mono text-white">{fmt(editSetup)}</div></div>
-                        <div><div className="text-xs text-ink-3">Mensual</div><div className="text-sm font-bold f-mono text-[#FF6B00]">{fmt(editMonthly)}/mes</div></div>
-                      </div>
-                    )}
+                <>
+                  {/* Sector i mida d'empresa */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelCls}>Tipus d&apos;empresa</label>
+                      <select value={editBudgetSector} onChange={e => { setEditBudgetSector(e.target.value); setEditBudgetSize(''); }} className={inputCls}>
+                        <option value="">Selecciona sector</option>
+                        {(Object.keys(SECTOR_LABELS) as string[]).map(k => (
+                          <option key={k} value={k}>{SECTOR_LABELS[k]}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Nombre de treballadors</label>
+                      <select value={editBudgetSize} onChange={e => setEditBudgetSize(e.target.value)} className={inputCls} disabled={!editBudgetSector}>
+                        <option value="">Selecciona mida</option>
+                        {(SECTOR_SIZES[editBudgetSector] ?? []).map(sz => (
+                          <option key={sz} value={sz}>{SIZE_LABELS[sz] ?? sz}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                </div>
+                  <div>
+                    <label className={labelCls}>Fases NexeLocal</label>
+                    <div className="space-y-2">
+                      {[1, 2, 3, 4, 5].map((pn) => {
+                        const ordinal = editPhasesArr.filter(x => x < pn).length;
+                        const monthly = priceFns[ordinal] ?? 0;
+                        const setup = setupFns[ordinal] ?? 0;
+                        const checked = editPhaseNums.has(pn);
+                        return (
+                          <label key={pn} className={`flex items-center gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
+                            <input type="checkbox" checked={checked}
+                              onChange={() => setEditPhaseNums(prev => { const s = new Set(prev); s.has(pn) ? s.delete(pn) : s.add(pn); return s; })}
+                              className="accent-[#FF6B00]" />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium">F{pn} · {NEXE_PHASE_NAMES[pn]}</div>
+                              {checked && (
+                                <div className="text-xs text-ink-3 f-mono flex gap-3">
+                                  <span>Setup: {fmt(setup)}</span>
+                                  <span>{fmt(monthly)}/mes</span>
+                                </div>
+                              )}
+                            </div>
+                          </label>
+                        );
+                      })}
+                      {editPhaseNums.size > 0 && pricing && (
+                        <div className="p-3 rounded bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.2)] grid grid-cols-2 gap-2">
+                          <div><div className="text-xs text-ink-3">Setup total</div><div className="text-sm font-bold f-mono text-white">{fmt(editSetup)}</div></div>
+                          <div><div className="text-xs text-ink-3">Mensual</div><div className="text-sm font-bold f-mono text-[#FF6B00]">{fmt(editMonthly)}/mes</div></div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
               ) : (
                 <>
                   <div>

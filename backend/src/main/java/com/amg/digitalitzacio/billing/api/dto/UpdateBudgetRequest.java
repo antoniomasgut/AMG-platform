@@ -8,4 +8,5 @@ public record UpdateBudgetRequest(UUID profileId, List<UUID> phaseIds, List<UUID
                                    String notes, String clientNotes, List<UUID> discountIds,
                                    LocalDate validUntil,
                                    String recommendation, List<UUID> recommendedPhaseIds,
-                                   List<Integer> phaseNumbers) {}
+                                   List<Integer> phaseNumbers,
+                                   String sector, String businessSize) {}

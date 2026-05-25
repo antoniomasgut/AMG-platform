@@ -52,6 +52,19 @@ public class SectorPricing {
     @Column(name = "price_f5", columnDefinition = "numeric(10,2) DEFAULT 0")
     private BigDecimal priceF5;
 
+    // Setup per fase addicional F2..F5. F1 = setupPrice. Varia per mida d'empresa, no per sector.
+    @Column(name = "setup_f2", precision = 10, scale = 2)
+    private BigDecimal setupF2;
+
+    @Column(name = "setup_f3", precision = 10, scale = 2)
+    private BigDecimal setupF3;
+
+    @Column(name = "setup_f4", precision = 10, scale = 2)
+    private BigDecimal setupF4;
+
+    @Column(name = "setup_f5", precision = 10, scale = 2)
+    private BigDecimal setupF5;
+
     public BigDecimal totalMonthly(java.util.Collection<String> phases) {
         if (phases == null || phases.isEmpty()) return BigDecimal.ZERO;
         var sorted = phases.stream()

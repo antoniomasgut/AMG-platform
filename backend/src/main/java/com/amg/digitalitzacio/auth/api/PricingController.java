@@ -49,6 +49,10 @@ public class PricingController {
                 p.getPriceF2(),
                 p.getPriceF3(),
                 p.getPriceF4(),
-                p.getPriceF5());
+                p.getPriceF5(),
+                p.getSetupF2(),
+                p.getSetupF3(),
+                p.getSetupF4(),
+                p.getSetupF5());
     }
 }

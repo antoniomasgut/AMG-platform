@@ -52,15 +52,17 @@ public class BillingOrchestrator implements BillingService {
 
         if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
             // Mode NexeLocal: preus des de sector_pricing
-            var tenant = tenantRepository.findById(tenantId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Tenant not found: " + tenantId));
-            var pricing = (tenant.getSector() != null && tenant.getBusinessSize() != null)
-                    ? sectorPricingRepository.findBySectorAndBusinessSize(
-                            tenant.getSector(), tenant.getBusinessSize()).orElse(null)
-                    : null;
+            // Sector/mida del request té prioritat; si no, s'usa el del tenant
+            var pricing = resolvePricing(tenantId, request.sector(), request.businessSize());
 
             var sortedPhases = request.phaseNumbers().stream().sorted().toList();
-            var setupPrice = pricing != null ? pricing.getSetupPrice() : BigDecimal.ZERO;
+            // setupFn[i] = setup per la fase en posició ordinal i (F1=setupPrice, F2..F5=setupFn)
+            var setupFn = pricing != null
+                    ? new BigDecimal[]{ pricing.getSetupPrice(),
+                            safe(pricing.getSetupF2()), safe(pricing.getSetupF3()),
+                            safe(pricing.getSetupF4()), safe(pricing.getSetupF5()) }
+                    : new BigDecimal[]{ BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+                                        BigDecimal.ZERO, BigDecimal.ZERO };
             var priceFn = pricing != null
                     ? new BigDecimal[]{ pricing.getPriceF1(), pricing.getPriceF2(),
                                         pricing.getPriceF3(), pricing.getPriceF4(), pricing.getPriceF5() }
@@ -69,9 +71,9 @@ public class BillingOrchestrator implements BillingService {
 
             for (int i = 0; i < sortedPhases.size(); i++) {
                 var pn = sortedPhases.get(i);
-                var setupLine = (i == 0) ? setupPrice : BigDecimal.ZERO;
+                // Cada fase té el seu propi setup (posició ordinal i)
+                var setupLine = (i < setupFn.length && setupFn[i] != null) ? setupFn[i] : BigDecimal.ZERO;
                 // Posició ordinal: 1a fase seleccionada → priceF1, 2a → priceF2, etc.
-                // "dona igual quina fase sigui" — el preu depèn de l'ordre, no del número de fase
                 var monthly = (i < priceFn.length && priceFn[i] != null) ? priceFn[i] : BigDecimal.ZERO;
                 subtotal = subtotal.add(setupLine);
                 lines.add(BudgetLine.builder()
@@ -125,6 +127,15 @@ public class BillingOrchestrator implements BillingService {
                         .collect(java.util.stream.Collectors.joining(","))
                 : null;
 
+        var resolvedSector = request.sector() != null ? request.sector()
+                : (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()
+                    ? tenantRepository.findById(tenantId).map(t -> t.getSector() != null ? t.getSector().name() : null).orElse(null)
+                    : null);
+        var resolvedSize = request.businessSize() != null ? request.businessSize()
+                : (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()
+                    ? tenantRepository.findById(tenantId).map(t -> t.getBusinessSize() != null ? t.getBusinessSize().name() : null).orElse(null)
+                    : null);
+
         var budget = Budget.builder()
                 .tenantId(tenantId).profileId(request.profileId())
                 .budgetNumber(generateBudgetNumber())
@@ -134,6 +145,8 @@ public class BillingOrchestrator implements BillingService {
                 .recommendation(request.recommendation())
                 .recommendedPhaseIds(recPhaseIds)
                 .validUntil(validUntil)
+                .sector(resolvedSector)
+                .businessSize(resolvedSize)
                 .build();
         budget = budgetRepository.save(budget);
 
@@ -187,15 +200,15 @@ public class BillingOrchestrator implements BillingService {
         var lines = new ArrayList<BudgetLine>();
 
         if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
-            var tenant = tenantRepository.findById(budget.getTenantId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
-            var pricing = (tenant.getSector() != null && tenant.getBusinessSize() != null)
-                    ? sectorPricingRepository.findBySectorAndBusinessSize(
-                            tenant.getSector(), tenant.getBusinessSize()).orElse(null)
-                    : null;
+            var pricing = resolvePricing(budget.getTenantId(), request.sector(), request.businessSize());
 
             var sortedPhases = request.phaseNumbers().stream().sorted().toList();
-            var setupPrice = pricing != null ? pricing.getSetupPrice() : BigDecimal.ZERO;
+            var setupFn = pricing != null
+                    ? new BigDecimal[]{ pricing.getSetupPrice(),
+                            safe(pricing.getSetupF2()), safe(pricing.getSetupF3()),
+                            safe(pricing.getSetupF4()), safe(pricing.getSetupF5()) }
+                    : new BigDecimal[]{ BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+                                        BigDecimal.ZERO, BigDecimal.ZERO };
             var priceFn = pricing != null
                     ? new BigDecimal[]{ pricing.getPriceF1(), pricing.getPriceF2(),
                                         pricing.getPriceF3(), pricing.getPriceF4(), pricing.getPriceF5() }
@@ -204,7 +217,7 @@ public class BillingOrchestrator implements BillingService {
 
             for (int i = 0; i < sortedPhases.size(); i++) {
                 var pn = sortedPhases.get(i);
-                var setupLine = (i == 0) ? setupPrice : BigDecimal.ZERO;
+                var setupLine = (i < setupFn.length && setupFn[i] != null) ? setupFn[i] : BigDecimal.ZERO;
                 var monthly = (i < priceFn.length && priceFn[i] != null) ? priceFn[i] : BigDecimal.ZERO;
                 subtotal = subtotal.add(setupLine);
                 lines.add(BudgetLine.builder().budgetId(budgetId)
@@ -253,6 +266,8 @@ public class BillingOrchestrator implements BillingService {
         if (request.recommendedPhaseIds() != null) budget.setRecommendedPhaseIds(
                 request.recommendedPhaseIds().stream().map(UUID::toString)
                         .collect(java.util.stream.Collectors.joining(",")));
+        if (request.sector() != null) budget.setSector(request.sector());
+        if (request.businessSize() != null) budget.setBusinessSize(request.businessSize());
 
         budget = budgetRepository.save(budget);
         budgetLineRepository.saveAll(lines);
@@ -412,6 +427,28 @@ public class BillingOrchestrator implements BillingService {
         return String.format("BUD-%d-%04d", year, count);
     }
 
+    // Lookup de sector_pricing: primer usa el sector/mida del request; si no, els del tenant
+    private com.amg.digitalitzacio.auth.domain.SectorPricing resolvePricing(
+            UUID tenantId, String reqSector, String reqBusinessSize) {
+        if (reqSector != null && reqBusinessSize != null) {
+            try {
+                return sectorPricingRepository.findBySectorAndBusinessSize(
+                        com.amg.digitalitzacio.auth.domain.BusinessSector.valueOf(reqSector.toUpperCase()),
+                        com.amg.digitalitzacio.auth.domain.BusinessSize.valueOf(reqBusinessSize.toUpperCase()))
+                        .orElse(null);
+            } catch (IllegalArgumentException ignored) {}
+        }
+        var tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found: " + tenantId));
+        if (tenant.getSector() == null || tenant.getBusinessSize() == null) return null;
+        return sectorPricingRepository.findBySectorAndBusinessSize(
+                tenant.getSector(), tenant.getBusinessSize()).orElse(null);
+    }
+
+    private static BigDecimal safe(BigDecimal v) {
+        return v != null ? v : BigDecimal.ZERO;
+    }
+
     private Budget findBudget(UUID id) {
         return budgetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Budget not found: " + id));
@@ -517,6 +554,7 @@ public class BillingOrchestrator implements BillingService {
                 profileId, phaseIds, budget.getNotes(), budget.getClientNotes(),
                 budget.getTenantId(), tenantName,
                 budget.getRecommendation(), recPhaseIds,
-                phaseNumbers.isEmpty() ? null : phaseNumbers);
+                phaseNumbers.isEmpty() ? null : phaseNumbers,
+                budget.getSector(), budget.getBusinessSize());
     }
 }

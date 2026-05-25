@@ -75,6 +75,12 @@ public class SectorPricingSeeder implements CommandLineRunner {
 
     private SectorPricing entry(BusinessSector sector, BusinessSize size,
                                 int setup, int f1, int f2, int f3, int f4, int f5) {
+        // Setup per fase addicional (F2..F5): fix per mida, independent del sector
+        // hores estimades × 50€/h: F2=1.5/2/2.5h, F3=1/1.5/2h, F4=1/1/1.5h, F5=1/1/1h (AUTO/PETIT/MITJA)
+        int sf2 = size == BusinessSize.MITJA ? 125 : size == BusinessSize.PETIT ? 100 : 75;
+        int sf3 = size == BusinessSize.MITJA ? 100 : size == BusinessSize.PETIT ? 75 : 50;
+        int sf4 = size == BusinessSize.MITJA ? 75 : 50;
+        int sf5 = 50;
         return SectorPricing.builder()
                 .sector(sector).businessSize(size)
                 .setupPrice(BigDecimal.valueOf(setup))
@@ -83,6 +89,10 @@ public class SectorPricingSeeder implements CommandLineRunner {
                 .priceF3(BigDecimal.valueOf(f3))
                 .priceF4(BigDecimal.valueOf(f4))
                 .priceF5(BigDecimal.valueOf(f5))
+                .setupF2(BigDecimal.valueOf(sf2))
+                .setupF3(BigDecimal.valueOf(sf3))
+                .setupF4(BigDecimal.valueOf(sf4))
+                .setupF5(BigDecimal.valueOf(sf5))
                 .build();
     }
 }

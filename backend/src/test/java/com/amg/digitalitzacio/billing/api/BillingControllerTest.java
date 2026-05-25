@@ -223,7 +223,7 @@ class BillingControllerTest {
                 .cost(BigDecimal.TEN).salePrice(BigDecimal.valueOf(50)).sortOrder(1).build());
 
         var request = new CreateBudgetRequest(profile.getId(), List.of(), List.of(),
-                "Notes", null, List.of(), LocalDate.now().plusDays(30), null, null);
+                "Notes", null, List.of(), LocalDate.now().plusDays(30), null, null, null, null, null);
 
         mockMvc.perform(post("/api/v1/billing/tenants/{tenantId}/budgets", tenant.getId())
                 .header("Authorization", "Bearer " + superAdminToken)
@@ -238,7 +238,7 @@ class BillingControllerTest {
     @Test
     void tc09_clientNoPotCrearPressupost_Returns403() throws Exception {
         var request = new CreateBudgetRequest(UUID.randomUUID(), List.of(), List.of(),
-                null, null, List.of(), LocalDate.now().plusDays(30), null, null);
+                null, null, List.of(), LocalDate.now().plusDays(30), null, null, null, null, null);
 
         mockMvc.perform(post("/api/v1/billing/tenants/{tenantId}/budgets", tenant.getId())
                 .header("Authorization", "Bearer " + clientToken)

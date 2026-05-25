@@ -16,7 +16,8 @@ public record BudgetResponse(
     UUID profileId, List<UUID> phaseIds, String notes, String clientNotes,
     UUID tenantId, String tenantName,
     String recommendation, List<UUID> recommendedPhaseIds,
-    List<Integer> phaseNumbers
+    List<Integer> phaseNumbers,
+    String sector, String businessSize
 ) {
     public record BudgetPhase(String name, Integer sortOrder, List<BudgetLine> lines,
                                BigDecimal phaseTotal, BigDecimal phaseMonthlyTotal,

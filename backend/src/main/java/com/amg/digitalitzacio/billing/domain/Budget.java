@@ -38,6 +38,8 @@ public class Budget {
     private Instant acceptedAt;
     private Instant rejectedAt;
     @Column(length = 255) private String rejectedReason;
+    @Column(length = 50) private String sector;
+    @Column(length = 50) private String businessSize;
     @CreatedDate @Column(updatable = false) private Instant createdAt;
     @LastModifiedDate private Instant updatedAt;
 }
