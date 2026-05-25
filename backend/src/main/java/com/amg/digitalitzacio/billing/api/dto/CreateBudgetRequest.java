@@ -6,4 +6,5 @@ import java.util.UUID;
 
 public record CreateBudgetRequest(UUID profileId, List<UUID> phaseIds, List<UUID> addonIds,
                                    String notes, String clientNotes, List<UUID> discountIds,
-                                   LocalDate validUntil) {}
+                                   LocalDate validUntil,
+                                   String recommendation, List<UUID> recommendedPhaseIds) {}

@@ -31,6 +31,8 @@ public class Budget {
     private LocalDate validUntil;
     @Column(columnDefinition = "TEXT") private String notes;
     @Column(columnDefinition = "TEXT") private String clientNotes;
+    @Column(columnDefinition = "TEXT") private String recommendation;
+    @Column(columnDefinition = "TEXT") private String recommendedPhaseIds;
     @Column(length = 64) private String acceptanceToken;
     private Instant sentAt;
     private Instant acceptedAt;

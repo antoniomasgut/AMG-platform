@@ -1337,6 +1337,8 @@ function NewBudgetModal({ tenantId, setup, onClose, onCreated }: {
   const [notes, setNotes] = useState('');
   const [clientNotes, setClientNotes] = useState('');
   const [validUntil, setValidUntil] = useState('');
+  const [recommendation, setRecommendation] = useState('');
+  const [recommendedPhaseIds, setRecommendedPhaseIds] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
 
   const profiles = setup?.profiles ?? [];
@@ -1344,6 +1346,15 @@ function NewBudgetModal({ tenantId, setup, onClose, onCreated }: {
 
   const togglePhase = (phaseId: string) => {
     setSelectedPhaseIds(prev => {
+      const next = new Set(prev);
+      if (next.has(phaseId)) next.delete(phaseId);
+      else next.add(phaseId);
+      return next;
+    });
+  };
+
+  const toggleRecommended = (phaseId: string) => {
+    setRecommendedPhaseIds(prev => {
       const next = new Set(prev);
       if (next.has(phaseId)) next.delete(phaseId);
       else next.add(phaseId);
@@ -1363,6 +1374,8 @@ function NewBudgetModal({ tenantId, setup, onClose, onCreated }: {
         notes: notes || undefined,
         clientNotes: clientNotes || undefined,
         validUntil: validUntil || undefined,
+        recommendation: recommendation || undefined,
+        recommendedPhaseIds: recommendedPhaseIds.size > 0 ? Array.from(recommendedPhaseIds) : undefined,
       };
       await createBudget(tenantId, req);
       toast('success', 'Pressupost creat');
@@ -1413,22 +1426,31 @@ function NewBudgetModal({ tenantId, setup, onClose, onCreated }: {
               <label className="f-mono text-label uppercase text-ink-2 block mb-2">Fases a incloure</label>
               <div className="space-y-2">
                 {selectedProfile.phases.map((ph) => (
-                  <label key={ph.phase.id} className="flex items-center gap-3 p-3 border border-border-base rounded cursor-pointer hover:border-ink-2 transition">
+                  <div key={ph.phase.id} className="flex items-center gap-2 p-3 border border-border-base rounded">
                     <input type="checkbox" checked={selectedPhaseIds.has(ph.phase.id)}
-                      onChange={() => togglePhase(ph.phase.id)}
-                      className="accent-[#FF6B00]" />
-                    <div className="flex-1">
+                      onChange={() => togglePhase(ph.phase.id)} className="accent-[#FF6B00]" />
+                    <div className="flex-1 min-w-0">
                       <span className="text-sm">{ph.phase.name}</span>
                       <span className="f-mono text-xs text-ink-3 ml-2">{ph.services.length} serveis</span>
                     </div>
-                    <AMGBadge tone={ph.approvalStatus === 'APPROVED' ? 'success' : 'neutral'}>
-                      {ph.approvalStatus}
-                    </AMGBadge>
-                  </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer shrink-0" title="Marcar com a recomanada al client">
+                      <input type="checkbox" checked={recommendedPhaseIds.has(ph.phase.id)}
+                        onChange={() => toggleRecommended(ph.phase.id)} className="accent-amber-500" />
+                      <span className="text-xs text-amber-400">Recomanada</span>
+                    </label>
+                  </div>
                 ))}
               </div>
             </div>
           )}
+
+          {/* Recomanació per al client */}
+          <div>
+            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Recomanació per al client</label>
+            <textarea value={recommendation} onChange={(e) => setRecommendation(e.target.value)} rows={3}
+              placeholder="Ex: Per a un restaurant com el teu, et recomanem les fases F1 i F2 per arrancar. Amb F1 tindràs presència online i amb F2 automatitzaràs les reserves."
+              className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00] resize-none" />
+          </div>
 
           {/* Optional fields */}
           <div>

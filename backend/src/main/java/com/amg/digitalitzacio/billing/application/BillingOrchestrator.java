@@ -79,12 +79,19 @@ public class BillingOrchestrator implements BillingService {
         var total = subtotal.subtract(discountTotal);
         var validUntil = request.validUntil() != null ? request.validUntil() : LocalDate.now().plus(30, ChronoUnit.DAYS);
 
+        var recPhaseIds = request.recommendedPhaseIds() != null
+                ? request.recommendedPhaseIds().stream().map(UUID::toString)
+                        .collect(java.util.stream.Collectors.joining(","))
+                : null;
+
         var budget = Budget.builder()
                 .tenantId(tenantId).profileId(request.profileId())
                 .budgetNumber(generateBudgetNumber())
                 .status(BudgetStatus.DRAFT)
                 .subtotal(subtotal).discountTotal(discountTotal).total(total)
                 .notes(request.notes()).clientNotes(request.clientNotes())
+                .recommendation(request.recommendation())
+                .recommendedPhaseIds(recPhaseIds)
                 .validUntil(validUntil)
                 .build();
         budget = budgetRepository.save(budget);
@@ -169,6 +176,10 @@ public class BillingOrchestrator implements BillingService {
         if (request.validUntil() != null) budget.setValidUntil(request.validUntil());
         if (request.notes() != null) budget.setNotes(request.notes());
         if (request.clientNotes() != null) budget.setClientNotes(request.clientNotes());
+        if (request.recommendation() != null) budget.setRecommendation(request.recommendation());
+        if (request.recommendedPhaseIds() != null) budget.setRecommendedPhaseIds(
+                request.recommendedPhaseIds().stream().map(UUID::toString)
+                        .collect(java.util.stream.Collectors.joining(",")));
 
         budget = budgetRepository.save(budget);
         budgetLineRepository.saveAll(lines);
@@ -361,7 +372,7 @@ public class BillingOrchestrator implements BillingService {
                                 .map(BudgetResponse.BudgetPhase.BudgetLine::monthlyPrice)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
                         phases.add(new BudgetResponse.BudgetPhase(
-                                phaseResp.name(), phaseResp.sortOrder(), phaseLines, phaseTotal, phaseMonthlyTotal));
+                                phaseResp.name(), phaseResp.sortOrder(), phaseLines, phaseTotal, phaseMonthlyTotal, phaseResp.id()));
                     }
                 }
             } catch (Exception ignored) {}
@@ -386,6 +397,13 @@ public class BillingOrchestrator implements BillingService {
                 .map(l -> l.getMonthlyPrice() != null ? l.getMonthlyPrice() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        var recPhaseIds = budget.getRecommendedPhaseIds() != null
+                && !budget.getRecommendedPhaseIds().isBlank()
+                ? java.util.Arrays.stream(budget.getRecommendedPhaseIds().split(","))
+                        .map(String::trim).filter(s -> !s.isEmpty())
+                        .map(UUID::fromString).toList()
+                : List.<UUID>of();
+
         return new BudgetResponse(
                 budget.getId(), budget.getBudgetNumber(), budget.getStatus().name(),
                 phases, addons, budget.getSubtotal(), budget.getDiscountTotal(), budget.getTotal(),
@@ -393,6 +411,7 @@ public class BillingOrchestrator implements BillingService {
                 budget.getSentAt(), budget.getAcceptedAt(), budget.getRejectedAt(),
                 null, budget.getValidUntil(), budget.getCreatedAt(),
                 profileId, phaseIds, budget.getNotes(), budget.getClientNotes(),
-                budget.getTenantId(), tenantName);
+                budget.getTenantId(), tenantName,
+                budget.getRecommendation(), recPhaseIds);
     }
 }

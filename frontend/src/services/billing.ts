@@ -1,7 +1,7 @@
 import { apiFetch } from './api';
 
 export interface BudgetLine { serviceName: string; setupPrice: number; monthlyPrice: number; }
-export interface BudgetPhase { name: string; sortOrder: number; lines: BudgetLine[]; phaseTotal: number; phaseMonthlyTotal: number; }
+export interface BudgetPhase { name: string; sortOrder: number; lines: BudgetLine[]; phaseTotal: number; phaseMonthlyTotal: number; phaseId: string; }
 export interface BudgetAddon { serviceName: string; unitPrice: number; }
 export interface BudgetResponse {
   id: string; budgetNumber: string; status: string;
@@ -11,6 +11,7 @@ export interface BudgetResponse {
   rejectionUrl: string | null; validUntil: string; createdAt: string;
   profileId: string | null; phaseIds: string[]; notes: string | null; clientNotes: string | null;
   tenantId: string | null; tenantName: string | null;
+  recommendation: string | null; recommendedPhaseIds: string[];
 }
 
 export interface BudgetSummary { id: string; budgetNumber: string; total: number; status: string; sentAt: string | null; }
@@ -60,6 +61,8 @@ export interface CreateBudgetRequest {
   clientNotes?: string;
   discountIds?: string[];
   validUntil?: string;
+  recommendation?: string;
+  recommendedPhaseIds?: string[];
 }
 
 export const createBudget = (tenantId: string, data: CreateBudgetRequest) =>
