@@ -1493,6 +1493,7 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
   const [sending, setSending] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cloning, setCloning] = useState(false);
+  const [acceptanceUrl, setAcceptanceUrl] = useState<string | null>(null);
 
   // Edit state — pre-filled from budget
   const [editProfileId, setEditProfileId] = useState(budget.profileId ?? '');
@@ -1523,8 +1524,9 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
   const handleSend = async () => {
     setSending(true);
     try {
-      await sendBudget(budget.id);
-      toast('success', 'Pressupost enviat al client');
+      const res = await sendBudget(budget.id);
+      if (res?.acceptanceUrl) setAcceptanceUrl(res.acceptanceUrl);
+      toast('success', 'Pressupost enviat — copia l\'enllaç per compartir-lo');
       onRefresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error desconegut';
@@ -1713,6 +1715,24 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
 
           {mode === 'view' ? (
             <div className="p-5 space-y-5">
+
+              {/* Enllaç d'acceptació */}
+              {acceptanceUrl && (
+                <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-4 space-y-2">
+                  <div className="text-green-400 text-xs font-semibold uppercase tracking-wider">Enllaç per al client</div>
+                  <div className="flex items-center gap-2">
+                    <input readOnly value={acceptanceUrl}
+                      className="flex-1 bg-[rgba(255,255,255,0.05)] border border-border-base rounded px-3 py-1.5 text-xs text-ink-1 f-mono truncate focus:outline-none" />
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(acceptanceUrl); toast('success', 'Enllaç copiat'); }}
+                      className="shrink-0 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 text-green-400 text-xs rounded transition">
+                      Copiar
+                    </button>
+                  </div>
+                  <p className="text-ink-3 text-xs">Comparteix aquest enllaç amb el client perquè pugui revisar i acceptar la proposta.</p>
+                </div>
+              )}
+
               {/* Meta */}
               <div className="space-y-0">
                 {row('Creat', fmtDate(budget.createdAt))}
