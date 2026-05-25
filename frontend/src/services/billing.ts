@@ -9,6 +9,8 @@ export interface BudgetResponse {
   subtotal: number; discountTotal: number; total: number;
   sentAt: string | null; acceptedAt: string | null; rejectedAt: string | null;
   rejectionUrl: string | null; validUntil: string; createdAt: string;
+  profileId: string | null; phaseIds: string[]; notes: string | null; clientNotes: string | null;
+  tenantId: string | null; tenantName: string | null;
 }
 
 export interface BudgetSummary { id: string; budgetNumber: string; total: number; status: string; sentAt: string | null; }
@@ -64,4 +66,35 @@ export const createBudget = (tenantId: string, data: CreateBudgetRequest) =>
   apiFetch<BudgetResponse>(`/billing/tenants/${tenantId}/budgets`, {
     method: 'POST',
     body: JSON.stringify(data),
+  });
+
+export const updateBudget = (id: string, data: CreateBudgetRequest) =>
+  apiFetch<BudgetResponse>(`/billing/budgets/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
+export const listAllBudgets = (status?: string, page = 0, size = 50) => {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  if (status) params.set('status', status);
+  return apiFetch<BudgetResponse[]>(`/billing/budgets?${params}`);
+};
+
+// Públic (sense auth) — per a la pàgina d'acceptació del client
+export const previewBudget = (token: string) =>
+  apiFetch<BudgetResponse>(`/billing/budgets/preview?token=${encodeURIComponent(token)}`);
+
+export const acceptBudgetFull = (token: string) =>
+  apiFetch<{ status: string; message: string }>(`/billing/budgets/accept?token=${encodeURIComponent(token)}`, { method: 'POST' });
+
+export const acceptBudgetPhases = (token: string, phaseIds: string[]) =>
+  apiFetch<{ status: string; message: string }>(`/billing/budgets/accept-phases?token=${encodeURIComponent(token)}`, {
+    method: 'POST',
+    body: JSON.stringify({ phaseIds }),
+  });
+
+export const rejectBudget = (token: string, reason?: string) =>
+  apiFetch<{ status: string; message: string }>(`/billing/budgets/reject?token=${encodeURIComponent(token)}`, {
+    method: 'POST',
+    body: JSON.stringify({ reason: reason ?? '' }),
   });

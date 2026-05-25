@@ -12,6 +12,8 @@ import java.util.UUID;
 public interface BudgetRepository extends JpaRepository<Budget, UUID> {
     Page<Budget> findByTenantId(UUID tenantId, Pageable pageable);
     Page<Budget> findByTenantIdAndStatus(UUID tenantId, BudgetStatus status, Pageable pageable);
+    Page<Budget> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    Page<Budget> findByStatusOrderByCreatedAtDesc(BudgetStatus status, Pageable pageable);
     Optional<Budget> findByAcceptanceToken(String acceptanceToken);
     long countByTenantIdAndStatus(UUID tenantId, BudgetStatus status);
     long countByTenantId(UUID tenantId);

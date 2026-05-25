@@ -138,6 +138,27 @@ public class VaultController {
         vaultService.removeProfile(tenantId, profileId);
     }
 
+    @PostMapping("/tenants/{tenantId}/phases/{phaseId}/assign")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void assignPhase(@PathVariable UUID tenantId, @PathVariable UUID phaseId) {
+        vaultService.assignPhase(tenantId, phaseId);
+    }
+
+    @PostMapping("/tenants/{tenantId}/catalog-services/{serviceId}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void addStandaloneService(@PathVariable UUID tenantId, @PathVariable UUID serviceId) {
+        vaultService.addStandaloneService(tenantId, serviceId);
+    }
+
+    @DeleteMapping("/tenants/{tenantId}/tenant-services/{tenantServiceId}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeTenantService(@PathVariable UUID tenantId, @PathVariable UUID tenantServiceId) {
+        vaultService.removeTenantService(tenantId, tenantServiceId);
+    }
+
     // --- Budget ---
 
     @GetMapping("/tenants/{tenantId}/budget")

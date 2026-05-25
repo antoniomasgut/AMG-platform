@@ -10,6 +10,9 @@ import java.util.UUID;
 public interface VaultService {
     AssignProfileResponse assignProfile(UUID tenantId, UUID profileId);
     void removeProfile(UUID tenantId, UUID profileId);
+    void assignPhase(UUID tenantId, UUID phaseId);
+    void addStandaloneService(UUID tenantId, UUID catalogServiceId);
+    void removeTenantService(UUID tenantId, UUID tenantServiceId);
     ApprovePhaseResponse approvePhase(UUID tenantId, UUID phaseId);
     void rejectPhase(UUID tenantId, UUID phaseId);
     void advancePhase(UUID tenantId, UUID phaseId, ImplementationStatus status);

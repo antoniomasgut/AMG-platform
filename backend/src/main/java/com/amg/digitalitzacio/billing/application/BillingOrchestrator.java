@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.billing.application;
 
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.billing.api.dto.*;
 import com.amg.digitalitzacio.billing.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
@@ -9,8 +10,10 @@ import com.amg.digitalitzacio.vault.application.ProfileService;
 import com.amg.digitalitzacio.vault.application.VaultService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -29,6 +32,7 @@ public class BillingOrchestrator implements BillingService {
     private final VaultService vaultService;
     private final InvoiceService invoiceService;
     private final PaymentService paymentService;
+    private final TenantRepository tenantRepository;
 
     @Override
     @Transactional
@@ -87,7 +91,7 @@ public class BillingOrchestrator implements BillingService {
         }
         budgetLineRepository.saveAll(lines);
 
-        return toBudgetResponse(budget, request.profileId());
+        return toBudgetResponse(budget);
     }
 
     @Override
@@ -97,14 +101,24 @@ public class BillingOrchestrator implements BillingService {
         var budgetPage = (status != null && !status.isBlank())
                 ? budgetRepository.findByTenantIdAndStatus(tenantId, BudgetStatus.valueOf(status), pageable)
                 : budgetRepository.findByTenantId(tenantId, pageable);
-        return budgetPage.stream().map(b -> toBudgetResponse(b, b.getProfileId())).toList();
+        return budgetPage.stream().map(b -> toBudgetResponse(b)).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BudgetResponse> listAllBudgets(String status, int page, int size) {
+        var pageable = PageRequest.of(page, size);
+        var budgetPage = (status != null && !status.isBlank())
+                ? budgetRepository.findByStatusOrderByCreatedAtDesc(BudgetStatus.valueOf(status), pageable)
+                : budgetRepository.findAllByOrderByCreatedAtDesc(pageable);
+        return budgetPage.stream().map(b -> toBudgetResponse(b)).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public BudgetResponse getBudget(UUID budgetId, boolean includeInternalNotes) {
         var budget = findBudget(budgetId);
-        return toBudgetResponse(budget, budget.getProfileId());
+        return toBudgetResponse(budget);
     }
 
     @Override
@@ -153,7 +167,7 @@ public class BillingOrchestrator implements BillingService {
 
         budget = budgetRepository.save(budget);
         budgetLineRepository.saveAll(lines);
-        return toBudgetResponse(budget, budget.getProfileId());
+        return toBudgetResponse(budget);
     }
 
     @Override
@@ -232,6 +246,46 @@ public class BillingOrchestrator implements BillingService {
 
     @Override
     @Transactional(readOnly = true)
+    public BudgetResponse previewBudget(String token) {
+        var budget = budgetRepository.findByAcceptanceToken(token)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Token invàlid o caducat"));
+        return toBudgetResponse(budget);
+    }
+
+    @Override
+    @Transactional
+    public AcceptRejectResponse acceptBudgetPhases(String token, List<UUID> phaseIds) {
+        var budget = budgetRepository.findByAcceptanceToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
+        if (budget.getStatus() != BudgetStatus.SENT) {
+            throw new IllegalArgumentException("Budget is not in SENT status");
+        }
+        // Si la llista de fases és buida o nul·la, s'accepten totes les fases
+        var lines = budgetLineRepository.findByBudgetIdOrderBySortOrder(budget.getId());
+        var allPhaseIds = lines.stream()
+                .map(BudgetLine::getPhaseId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        var selectedPhaseIds = (phaseIds == null || phaseIds.isEmpty()) ? allPhaseIds : phaseIds;
+
+        budget.setStatus(BudgetStatus.ACCEPTED);
+        budget.setAcceptedAt(Instant.now());
+        budget.setAcceptanceToken(null);
+        budgetRepository.save(budget);
+
+        for (var phaseId : selectedPhaseIds) {
+            try {
+                vaultService.approvePhase(budget.getTenantId(), phaseId);
+            } catch (Exception ignored) {
+                // Continua — la fase pot estar ja aprovada
+            }
+        }
+        return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public DashboardResponse getDashboard(UUID tenantId) {
         var pending = budgetRepository.countByTenantIdAndStatus(tenantId, BudgetStatus.SENT);
 
@@ -278,9 +332,9 @@ public class BillingOrchestrator implements BillingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Budget not found: " + id));
     }
 
-    private BudgetResponse toBudgetResponse(Budget budget, UUID profileId) {
+    private BudgetResponse toBudgetResponse(Budget budget) {
+        var profileId = budget.getProfileId();
         var lines = budgetLineRepository.findByBudgetIdOrderBySortOrder(budget.getId());
-        var phaseMap = new LinkedHashMap<UUID, List<BudgetResponse.BudgetPhase.BudgetLine>>();
         var phases = new ArrayList<BudgetResponse.BudgetPhase>();
         var addons = new ArrayList<BudgetResponse.BudgetAddon>();
 
@@ -309,10 +363,22 @@ public class BillingOrchestrator implements BillingService {
             addons.add(new BudgetResponse.BudgetAddon(line.getServiceName(), line.getUnitPrice()));
         }
 
+        var phaseIds = lines.stream()
+                .map(l -> l.getPhaseId())
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+
+        var tenantName = budget.getTenantId() != null
+                ? tenantRepository.findById(budget.getTenantId()).map(t -> t.getName()).orElse(null)
+                : null;
+
         return new BudgetResponse(
                 budget.getId(), budget.getBudgetNumber(), budget.getStatus().name(),
                 phases, addons, budget.getSubtotal(), budget.getDiscountTotal(), budget.getTotal(),
                 budget.getSentAt(), budget.getAcceptedAt(), budget.getRejectedAt(),
-                null, budget.getValidUntil(), budget.getCreatedAt());
+                null, budget.getValidUntil(), budget.getCreatedAt(),
+                profileId, phaseIds, budget.getNotes(), budget.getClientNotes(),
+                budget.getTenantId(), tenantName);
     }
 }

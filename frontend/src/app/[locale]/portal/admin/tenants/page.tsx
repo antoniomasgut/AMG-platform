@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/lib/toast-context';
 import {
-  listTenants, createTenant, updateTenant,
+  listTenants, createTenant, updateTenant, deleteTenant,
   type TenantResponse,
 } from '@/services/admin';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -91,6 +91,9 @@ export default function AdminTenantsPage() {
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all');
   const [freeFilter, setFreeFilter] = useState<FreeFilter>('all');
   const [sort, setSort] = useState<SortOption>('createdAt,desc');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isActiveParam = activeFilter === 'active' ? true : activeFilter === 'inactive' ? false : undefined;
   const isFreeParam = freeFilter === 'free' ? true : freeFilter === 'paying' ? false : undefined;
@@ -112,7 +115,10 @@ export default function AdminTenantsPage() {
   const tenants = tenantsPage?.content ?? [];
   const totalPages = tenantsPage?.totalPages ?? 1;
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ['tenants'] });
+  const invalidate = () => {
+    setSelected(new Set());
+    qc.invalidateQueries({ queryKey: ['tenants'] });
+  };
 
   const { mutate: doToggle } = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
@@ -120,6 +126,55 @@ export default function AdminTenantsPage() {
     onSuccess: () => { toast('success', 'Tenant actualitzat'); invalidate(); },
     onError: () => toast('error', 'Error actualitzant el tenant'),
   });
+
+  const allOnPageIds = tenants.map(t => t.id);
+  const allSelected = allOnPageIds.length > 0 && allOnPageIds.every(id => selected.has(id));
+  const someSelected = allOnPageIds.some(id => selected.has(id));
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelected(prev => { const next = new Set(prev); allOnPageIds.forEach(id => next.delete(id)); return next; });
+    } else {
+      setSelected(prev => new Set(Array.from(prev).concat(allOnPageIds)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const selectedIds = Array.from(selected);
+
+  const handleBulkActivate = async (activate: boolean) => {
+    setBulkLoading(true);
+    try {
+      await Promise.all(selectedIds.map(id => updateTenant(id, { isActive: activate })));
+      toast('success', `${selectedIds.length} tenant${selectedIds.length > 1 ? 's' : ''} ${activate ? 'activat' : 'desactivat'}${selectedIds.length > 1 ? 's' : ''}`);
+      invalidate();
+    } catch {
+      toast('error', 'Error actualitzant tenants');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkLoading(true);
+    const errors: string[] = [];
+    for (const id of selectedIds) {
+      try { await deleteTenant(id); } catch { errors.push(id); }
+    }
+    const deleted = selectedIds.length - errors.length;
+    if (deleted > 0) toast('success', `${deleted} tenant${deleted > 1 ? 's' : ''} eliminat${deleted > 1 ? 's' : ''}`);
+    if (errors.length > 0) toast('error', `${errors.length} tenant${errors.length > 1 ? 's' : ''} no s\'han pogut eliminar`);
+    setConfirmDelete(false);
+    invalidate();
+    setBulkLoading(false);
+  };
 
   return (
     <PortalShell breadcrumb="admin · tenants">
@@ -203,8 +258,27 @@ export default function AdminTenantsPage() {
         </div>
 
         <div className="amg-card card-clip">
-          <div className="p-4 sm:p-5 border-b border-border-base">
+          <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between gap-4">
             <AMGSectionTitle eyebrow="Registre" title="Tenants" />
+            {selected.size > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="f-mono text-xs text-ink-2">{selected.size} seleccionat{selected.size > 1 ? 's' : ''}</span>
+                <AMGButton size="sm" variant="ghost" disabled={bulkLoading} onClick={() => handleBulkActivate(true)}>
+                  Activar
+                </AMGButton>
+                <AMGButton size="sm" variant="ghost" disabled={bulkLoading} onClick={() => handleBulkActivate(false)}>
+                  Desactivar
+                </AMGButton>
+                <AMGButton size="sm" variant="ghost" disabled={bulkLoading}
+                  onClick={() => setConfirmDelete(true)}
+                  className="text-red-400 hover:text-red-300">
+                  <I.Trash size={14} className="mr-1" />Eliminar
+                </AMGButton>
+                <button onClick={() => setSelected(new Set())} className="text-ink-3 hover:text-ink-1 ml-1">
+                  <I.X size={14} />
+                </button>
+              </div>
+            )}
           </div>
 
           {isLoading ? (
@@ -222,6 +296,15 @@ export default function AdminTenantsPage() {
                 <table className="w-full min-w-[580px]">
                   <thead>
                     <tr className="border-b border-border-base">
+                      <th className="px-4 py-3 w-10">
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          ref={el => { if (el) el.indeterminate = someSelected && !allSelected; }}
+                          onChange={toggleSelectAll}
+                          className="accent-[#FF6B00] w-3.5 h-3.5 cursor-pointer"
+                        />
+                      </th>
                       {['Tenant', 'Slug', 'Email', 'Estat', 'Facturació', 'Creat', 'Accions'].map((h) => (
                         <th key={h} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal">{h}</th>
                       ))}
@@ -229,7 +312,17 @@ export default function AdminTenantsPage() {
                   </thead>
                   <tbody>
                     {tenants.map((t: TenantResponse) => (
-                      <tr key={t.id} className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                      <tr key={t.id} className={`border-b border-[rgba(226,232,240,0.04)] transition-colors ${
+                        selected.has(t.id) ? 'bg-[rgba(255,107,0,0.06)]' : 'hover:bg-[rgba(255,255,255,0.02)]'
+                      }`}>
+                        <td className="px-4 py-3 w-10">
+                          <input
+                            type="checkbox"
+                            checked={selected.has(t.id)}
+                            onChange={() => toggleSelect(t.id)}
+                            className="accent-[#FF6B00] w-3.5 h-3.5 cursor-pointer"
+                          />
+                        </td>
                         <td className="px-4 sm:px-5 py-3">
                           <div className="f-display font-bold text-sm">{t.name}</div>
                         </td>
@@ -290,6 +383,29 @@ export default function AdminTenantsPage() {
 
       {showNewTenant && (
         <NewTenantModal onClose={() => setShowNewTenant(false)} onCreated={invalidate} />
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setConfirmDelete(false)}>
+          <div className="amg-card card-clip w-full max-w-sm p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3">
+              <I.AlertCircle size={20} className="text-red-400 flex-shrink-0" />
+              <div className="f-display font-bold text-base">Eliminar {selected.size} tenant{selected.size > 1 ? 's' : ''}</div>
+            </div>
+            <p className="text-sm text-ink-2">Aquesta acció és irreversible. S&apos;eliminaran tots els serveis i dades associats.</p>
+            <div className="flex gap-3">
+              <AMGButton
+                onClick={handleBulkDelete}
+                disabled={bulkLoading}
+                loading={bulkLoading}
+                className="flex-1 justify-center bg-red-600 hover:bg-red-700 border-red-600"
+              >
+                Confirmar eliminació
+              </AMGButton>
+              <AMGButton variant="outline" onClick={() => setConfirmDelete(false)}>Cancel·lar</AMGButton>
+            </div>
+          </div>
+        </div>
       )}
     </PortalShell>
   );

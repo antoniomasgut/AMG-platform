@@ -5,7 +5,8 @@ import java.util.UUID;
 
 public record SetupResponse(
     List<ProfileSetup> profiles,
-    List<AddonSetup> addons
+    List<AddonSetup> addons,
+    List<StandaloneSetup> standalone
 ) {
     public record ProfileSetup(
         ProfileRef profile,
@@ -34,5 +35,13 @@ public record SetupResponse(
         ServiceRef service, Boolean approvalRequired, String approvalStatus
     ) {
         public record ServiceRef(UUID id, String name) {}
+    }
+    public record StandaloneSetup(
+        UUID tenantServiceId,
+        ServiceRef service,
+        String status,
+        Boolean isEnabled
+    ) {
+        public record ServiceRef(UUID id, String name, String slug, String type) {}
     }
 }

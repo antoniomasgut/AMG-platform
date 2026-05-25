@@ -44,3 +44,16 @@ export async function apiPost(page: Page, token: string, path: string, data: obj
     data,
   });
 }
+
+export async function apiPut(page: Page, token: string, path: string, data: object) {
+  return page.request.put(`${API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    data,
+  });
+}
+
+export async function apiDelete(page: Page, token: string, path: string) {
+  return page.request.delete(`${API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}

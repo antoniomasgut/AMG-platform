@@ -96,6 +96,59 @@ public class TenantVaultService implements VaultService {
 
     @Override
     @Transactional
+    public void assignPhase(UUID tenantId, UUID phaseId) {
+        var phase = phaseRepository.findById(phaseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Phase not found: " + phaseId));
+        if (tenantPhaseRepository.findByTenantIdAndPhaseId(tenantId, phaseId).isPresent()) {
+            throw new ConflictException("Phase already assigned to tenant");
+        }
+        var tph = TenantPhase.builder()
+                .tenantId(tenantId).profileId(phase.getProfileId()).phaseId(phaseId).build();
+        tenantPhaseRepository.save(tph);
+        var services = catalogServiceRepository.findByPhaseIdOrderBySortOrder(phaseId);
+        for (var svc : services) {
+            if (tenantServiceRepository.findByTenantIdAndServiceId(tenantId, svc.getId()).isEmpty()) {
+                var ts = TenantService.builder()
+                        .tenantId(tenantId).serviceId(svc.getId()).phaseId(phaseId)
+                        .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : java.math.BigDecimal.ZERO)
+                        .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : java.math.BigDecimal.TEN)
+                        .catalogVersionLocked(svc.getVersion() != null ? svc.getVersion() : 1)
+                        .build();
+                tenantServiceRepository.save(ts);
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void addStandaloneService(UUID tenantId, UUID catalogServiceId) {
+        var svc = catalogServiceRepository.findById(catalogServiceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found: " + catalogServiceId));
+        if (tenantServiceRepository.findByTenantIdAndServiceId(tenantId, catalogServiceId).isPresent()) {
+            throw new ConflictException("Service already assigned to tenant");
+        }
+        var ts = TenantService.builder()
+                .tenantId(tenantId).serviceId(catalogServiceId).phaseId(null)
+                .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : java.math.BigDecimal.ZERO)
+                .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : java.math.BigDecimal.TEN)
+                .catalogVersionLocked(svc.getVersion() != null ? svc.getVersion() : 1)
+                .build();
+        tenantServiceRepository.save(ts);
+    }
+
+    @Override
+    @Transactional
+    public void removeTenantService(UUID tenantId, UUID tenantServiceId) {
+        var ts = tenantServiceRepository.findById(tenantServiceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant service not found: " + tenantServiceId));
+        if (!ts.getTenantId().equals(tenantId)) {
+            throw new ResourceNotFoundException("Tenant service not found: " + tenantServiceId);
+        }
+        tenantServiceRepository.delete(ts);
+    }
+
+    @Override
+    @Transactional
     public ApprovePhaseResponse approvePhase(UUID tenantId, UUID phaseId) {
         var tph = tenantPhaseRepository.findByTenantIdAndPhaseId(tenantId, phaseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant phase not found"));
@@ -429,6 +482,7 @@ public class TenantVaultService implements VaultService {
         }
 
         var addons = tenantServiceAddonRepository.findByTenantId(tenantId);
+        var addonServiceIds = addons.stream().map(a -> a.getServiceId()).collect(java.util.stream.Collectors.toSet());
         var addonSetups = addons.stream().map(a -> {
             var svc = catalogServiceRepository.findById(a.getServiceId()).orElse(null);
             return new SetupResponse.AddonSetup(
@@ -438,7 +492,23 @@ public class TenantVaultService implements VaultService {
                     a.getApprovalStatus() != null ? a.getApprovalStatus().name() : null);
         }).toList();
 
-        return new SetupResponse(profileSetups, addonSetups);
+        var allTenantServices = tenantServiceRepository.findByTenantId(tenantId);
+        var standaloneSetups = allTenantServices.stream()
+                .filter(ts -> ts.getPhaseId() == null && !addonServiceIds.contains(ts.getServiceId()))
+                .map(ts -> {
+                    var svc = catalogServiceRepository.findById(ts.getServiceId()).orElse(null);
+                    return new SetupResponse.StandaloneSetup(
+                            ts.getId(),
+                            new SetupResponse.StandaloneSetup.ServiceRef(
+                                    ts.getServiceId(),
+                                    svc != null ? svc.getName() : "Unknown",
+                                    svc != null ? svc.getSlug() : "",
+                                    svc != null ? svc.getType().name() : ""),
+                            ts.getStatus().name(),
+                            Boolean.TRUE.equals(ts.getIsEnabled()));
+                }).toList();
+
+        return new SetupResponse(profileSetups, addonSetups, standaloneSetups);
     }
 
     // --- Guided Configuration ---

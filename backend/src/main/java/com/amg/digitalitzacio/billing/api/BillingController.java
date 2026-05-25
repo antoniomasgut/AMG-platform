@@ -40,6 +40,14 @@ public class BillingController {
         return billingService.listBudgets(tenantId, status, page, size);
     }
 
+    @GetMapping("/budgets")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public List<BudgetResponse> listAllBudgets(@RequestParam(required = false) String status,
+                                                @RequestParam(defaultValue = "0") int page,
+                                                @RequestParam(defaultValue = "50") int size) {
+        return billingService.listAllBudgets(status, page, size);
+    }
+
     @GetMapping("/tenants/{tenantId}/budgets/{id}")
     @PreAuthorize("isAuthenticated()")
     public BudgetResponse getBudget(@PathVariable UUID id) {
@@ -65,9 +73,20 @@ public class BillingController {
         return billingService.sendBudget(id);
     }
 
+    @GetMapping("/budgets/preview")
+    public BudgetResponse previewBudget(@RequestParam String token) {
+        return billingService.previewBudget(token);
+    }
+
     @PostMapping("/budgets/accept")
     public AcceptRejectResponse acceptBudget(@RequestParam String token) {
         return billingService.acceptBudget(token);
+    }
+
+    @PostMapping("/budgets/accept-phases")
+    public AcceptRejectResponse acceptBudgetPhases(@RequestParam String token,
+                                                    @RequestBody AcceptPhasesRequest request) {
+        return billingService.acceptBudgetPhases(token, request.phaseIds());
     }
 
     @PostMapping("/budgets/reject")

@@ -108,18 +108,20 @@ export interface OutdatedServiceResponse {
   outdatedAt: string;
 }
 
+export type TenantServiceEntry = {
+  tenantServiceId: string;
+  service: { id: string; name: string; slug: string; type: string };
+  status: string;
+  isEnabled: boolean;
+};
+
 export interface TenantSetup {
   profiles: Array<{
     profile: { id: string; name: string; slug: string };
     phases: Array<{
       phase: { id: string; name: string; sortOrder: number };
       approvalStatus: string;
-      services: Array<{
-        tenantServiceId: string;
-        service: { id: string; name: string; slug: string; type: string };
-        status: string;
-        isEnabled: boolean;
-      }>;
+      services: TenantServiceEntry[];
     }>;
   }>;
   addons: Array<{
@@ -127,6 +129,7 @@ export interface TenantSetup {
     approvalRequired: boolean;
     approvalStatus: string;
   }>;
+  standalone?: TenantServiceEntry[];
 }
 
 export interface ChannelsConfig {
@@ -170,6 +173,15 @@ export const removeProfileFromTenant = (tenantId: string, profileId: string) =>
 
 export const toggleTenantService = (tenantId: string, serviceId: string) =>
   apiFetch<{ isEnabled: boolean }>(`/vault/tenants/${tenantId}/services/${serviceId}/toggle`, { method: 'PATCH' });
+
+export const assignPhaseToTenant = (tenantId: string, phaseId: string) =>
+  apiFetch<void>(`/vault/tenants/${tenantId}/phases/${phaseId}/assign`, { method: 'POST' });
+
+export const addStandaloneServiceToTenant = (tenantId: string, catalogServiceId: string) =>
+  apiFetch<void>(`/vault/tenants/${tenantId}/catalog-services/${catalogServiceId}`, { method: 'POST' });
+
+export const removeTenantService = (tenantId: string, tenantServiceId: string) =>
+  apiFetch<void>(`/vault/tenants/${tenantId}/tenant-services/${tenantServiceId}`, { method: 'DELETE' });
 
 export const getAgentChannels = (tenantId: string) =>
   apiFetch<ChannelsConfig>(`/agents/conversational/${tenantId}/channels`);

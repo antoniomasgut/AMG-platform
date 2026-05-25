@@ -7,12 +7,13 @@ import { useToast } from '@/lib/toast-context';
 import {
   getTenant, getTenantSetup, listCatalogServices,
   listProfiles, assignProfileToTenant, removeProfileFromTenant,
+  assignPhaseToTenant, addStandaloneServiceToTenant, removeTenantService,
   lookupSectorPricing, updateTenant, toggleTenantService,
   getAgentChannels, updateAgentChannels, getAIConfig, updateAIConfig, getAvailableModels,
   getGoCardlessConfig, getGoCardlessMandate, initiateGoCardlessMandate, cancelGoCardlessMandate,
   listGoCardlessPayments, configureGoCardless,
   SECTOR_LABELS, SIZE_LABELS, PHASE_LABELS, PHASE_UPGRADE_PRICE,
-  type TenantResponse, type TenantSetup, type CatalogService,
+  type TenantResponse, type TenantSetup, type CatalogService, type CatalogPhaseResponse,
   type CatalogProfileResponse, type SectorPricingResponse, type ChannelsConfig, type AIConfig, type ModelInfo,
   type GoCardlessConfig, type GoCardlessMandate,
   type WhatsAppWabaConfig,
@@ -21,7 +22,7 @@ import {
   type DeleteTenantCheck,
   calcMonthly,
 } from '@/services/admin';
-import { createBudget, listBudgets, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
+import { createBudget, listBudgets, sendBudget, cancelBudget, updateBudget, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
 import { listLandings } from '@/services/factory';
 import { getWizardConfig } from '@/config/service-wizards';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -157,8 +158,26 @@ function ServiceToggle({ tenantId, serviceId, enabled, onToggle }: {
 function SetupSection({ setup, tenantId, onRefresh }: { setup: TenantSetup; tenantId: string; onRefresh: () => void }) {
   const hasProfiles = setup.profiles.length > 0;
   const hasAddons = setup.addons.length > 0;
+  const hasStandalone = (setup.standalone?.length ?? 0) > 0;
+  const { toast } = useToast();
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
-  if (!hasProfiles && !hasAddons) {
+  const handleRemove = async (tenantServiceId: string) => {
+    setRemovingId(tenantServiceId);
+    try {
+      await removeTenantService(tenantId, tenantServiceId);
+      onRefresh();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast('error', `Error eliminant el servei: ${msg}`);
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
+  const canRemove = (status: string, isEnabled: boolean) => !isEnabled || status !== 'VERIFIED';
+
+  if (!hasProfiles && !hasAddons && !hasStandalone) {
     return (
       <div className="p-8 text-center">
         <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
@@ -167,6 +186,37 @@ function SetupSection({ setup, tenantId, onRefresh }: { setup: TenantSetup; tena
       </div>
     );
   }
+
+  const ServiceRow = ({ svc }: { svc: TenantSetup['profiles'][0]['phases'][0]['services'][0] }) => {
+    const isPending = svc.status === 'PENDING' || svc.status === 'CONFIGURING' || svc.status === 'AWAITING_CLIENT';
+    return (
+      <div className={`flex items-center gap-2 pl-2 transition-opacity ${!svc.isEnabled ? 'opacity-40' : ''}`}>
+        <ServiceToggle tenantId={tenantId} serviceId={svc.service.id} enabled={svc.isEnabled} onToggle={onRefresh} />
+        <span className="text-sm text-ink-1">{svc.service.name}</span>
+        <span className="f-mono text-[10px] text-ink-3 uppercase">{svc.service.type}</span>
+        {statusBadge(svc.status, 'Actiu', 'Inactiu')}
+        {isPending && getWizardConfig(svc.service.slug, svc.service.type) && (
+          <a href={`/portal/admin/tenants/${tenantId}/services/${svc.service.id}/setup`}
+            className="ml-auto text-[10px] f-mono uppercase text-accent-light hover:text-accent transition">
+            Configurar
+          </a>
+        )}
+        {canRemove(svc.status, svc.isEnabled) && (
+          <button
+            type="button"
+            onClick={() => handleRemove(svc.tenantServiceId)}
+            disabled={removingId === svc.tenantServiceId}
+            title="Eliminar servei"
+            className="ml-auto text-ink-3 hover:text-red-400 transition disabled:opacity-40"
+          >
+            {removingId === svc.tenantServiceId
+              ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
+              : <I.Trash size={13} />}
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 p-5">
@@ -182,34 +232,24 @@ function SetupSection({ setup, tenantId, onRefresh }: { setup: TenantSetup; tena
                 <span className="f-mono text-label uppercase text-ink-3">{ph.phase.name}</span>
                 {statusBadge(ph.approvalStatus, 'Aprovat', 'Pendent')}
               </div>
-              {ph.services.map((svc) => {
-                const isPending = svc.status === 'PENDING' || svc.status === 'CONFIGURING' || svc.status === 'AWAITING_CLIENT';
-                return (
-                  <div key={svc.service.id} className={`flex items-center gap-2 pl-2 transition-opacity ${!svc.isEnabled ? 'opacity-40' : ''}`}>
-                    <ServiceToggle
-                      tenantId={tenantId}
-                      serviceId={svc.service.id}
-                      enabled={svc.isEnabled}
-                      onToggle={onRefresh}
-                    />
-                    <span className="text-sm text-ink-1">{svc.service.name}</span>
-                    <span className="f-mono text-[10px] text-ink-3 uppercase">{svc.service.type}</span>
-                    {statusBadge(svc.status, 'Actiu', 'Inactiu')}
-                    {isPending && getWizardConfig(svc.service.slug, svc.service.type) && (
-                      <a
-                        href={`/portal/admin/tenants/${tenantId}/services/${svc.service.id}/setup`}
-                        className="ml-auto text-[10px] f-mono uppercase text-accent-light hover:text-accent transition"
-                      >
-                        Configurar
-                      </a>
-                    )}
-                  </div>
-                );
-              })}
+              {ph.services.map((svc) => (
+                <ServiceRow key={svc.tenantServiceId} svc={svc} />
+              ))}
             </div>
           ))}
         </div>
       ))}
+      {hasStandalone && (
+        <div className="border border-border-base rounded p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <I.Zap size={14} className="text-accent-light" />
+            <span className="f-display font-bold text-sm">Serveis individuals</span>
+          </div>
+          {setup.standalone!.map((svc) => (
+            <ServiceRow key={svc.tenantServiceId} svc={svc} />
+          ))}
+        </div>
+      )}
       {hasAddons && (
         <div className="border border-border-base rounded p-4 space-y-2">
           <div className="flex items-center gap-2">
@@ -291,6 +331,165 @@ function AssignProfileModal({ tenantId, onClose, onAssigned }: { tenantId: strin
             <div className="flex gap-3 pt-2">
               <AMGButton onClick={handleAssign} disabled={!selectedProfileId || assigning} loading={assigning} className="flex-1 justify-center">
                 Assignar perfil
+              </AMGButton>
+              <AMGButton variant="outline" onClick={onClose}>Cancel·lar</AMGButton>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AddPhaseModal({ tenantId, onClose, onAdded }: { tenantId: string; onClose: () => void; onAdded: () => void }) {
+  const { toast } = useToast();
+  const { data: profiles, isLoading } = useQuery({
+    queryKey: ['vault-profiles'],
+    queryFn: () => listProfiles(),
+  });
+  const [selectedProfileId, setSelectedProfileId] = useState('');
+  const [selectedPhaseIds, setSelectedPhaseIds] = useState<Set<string>>(new Set());
+  const [adding, setAdding] = useState(false);
+
+  const activeProfiles = profiles?.filter(p => p.isActive) ?? [];
+  const selectedProfile = activeProfiles.find(p => p.id === selectedProfileId);
+
+  const togglePhase = (id: string) => setSelectedPhaseIds(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  const handleAdd = async () => {
+    if (selectedPhaseIds.size === 0) { toast('error', 'Selecciona almenys una fase'); return; }
+    setAdding(true);
+    try {
+      await Promise.all(Array.from(selectedPhaseIds).map(phaseId => assignPhaseToTenant(tenantId, phaseId)));
+      toast('success', `${selectedPhaseIds.size} fase${selectedPhaseIds.size > 1 ? 's' : ''} afegida${selectedPhaseIds.size > 1 ? 's' : ''}`);
+      onAdded(); onClose();
+    } catch {
+      toast('error', 'Error afegint fases');
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="amg-card card-clip w-full max-w-md p-6 space-y-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <div className="f-display font-bold text-base">Afegir fases</div>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-8"><span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>
+        ) : activeProfiles.length === 0 ? (
+          <p className="text-sm text-ink-3 text-center py-6">Cap perfil disponible al catàleg</p>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="f-mono text-label uppercase text-ink-2 block mb-2">Perfil</label>
+              <div className="space-y-2">
+                {activeProfiles.map(p => (
+                  <button key={p.id} type="button" onClick={() => { setSelectedProfileId(p.id); setSelectedPhaseIds(new Set()); }}
+                    className={`w-full text-left p-3 border rounded transition text-sm ${
+                      selectedProfileId === p.id ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'
+                    }`}>
+                    <span className="font-semibold">{p.name}</span>
+                    <span className="text-ink-3 ml-2 text-xs">{p.phases?.length ?? 0} fases</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            {selectedProfile && (
+              <div>
+                <label className="f-mono text-label uppercase text-ink-2 block mb-2">Fases</label>
+                <div className="space-y-2">
+                  {selectedProfile.phases.map((ph: CatalogPhaseResponse) => (
+                    <label key={ph.id} className="flex items-center gap-3 p-3 border border-border-base rounded cursor-pointer hover:border-ink-2 transition">
+                      <input type="checkbox" checked={selectedPhaseIds.has(ph.id)} onChange={() => togglePhase(ph.id)} className="accent-[#FF6B00]" />
+                      <div className="flex-1">
+                        <span className="text-sm">{ph.name}</span>
+                        <span className="f-mono text-xs text-ink-3 ml-2">{ph.services.length} serveis</span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex gap-3 pt-2">
+              <AMGButton onClick={handleAdd} disabled={selectedPhaseIds.size === 0 || adding} loading={adding} className="flex-1 justify-center">
+                Afegir fases ({selectedPhaseIds.size})
+              </AMGButton>
+              <AMGButton variant="outline" onClick={onClose}>Cancel·lar</AMGButton>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AddServiceModal({ tenantId, onClose, onAdded }: { tenantId: string; onClose: () => void; onAdded: () => void }) {
+  const { toast } = useToast();
+  const { data: services, isLoading } = useQuery({
+    queryKey: ['catalog-services'],
+    queryFn: () => listCatalogServices(),
+  });
+  const [query, setQuery] = useState('');
+  const [selectedId, setSelectedId] = useState('');
+  const [adding, setAdding] = useState(false);
+
+  const filtered = (services ?? []).filter(s => !query || s.name.toLowerCase().includes(query.toLowerCase()) || s.slug.toLowerCase().includes(query.toLowerCase()));
+
+  const handleAdd = async () => {
+    if (!selectedId) return;
+    setAdding(true);
+    try {
+      await addStandaloneServiceToTenant(tenantId, selectedId);
+      const name = services?.find(s => s.id === selectedId)?.name ?? 'Servei';
+      toast('success', `${name} afegit`);
+      onAdded(); onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error desconegut';
+      toast('error', `Error afegint el servei: ${msg}`);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="amg-card card-clip w-full max-w-md p-6 space-y-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <div className="f-display font-bold text-base">Afegir servei individual</div>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-8"><span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>
+        ) : (
+          <div className="space-y-3">
+            <div className="relative">
+              <I.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+              <input type="text" value={query} onChange={e => setQuery(e.target.value)}
+                placeholder="Cercar servei..."
+                className="w-full pl-8 pr-3 py-1.5 bg-[rgba(255,255,255,0.04)] border border-border-base rounded text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00] placeholder:text-ink-3" />
+            </div>
+            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+              {filtered.map(s => (
+                <button key={s.id} type="button" onClick={() => setSelectedId(s.id)}
+                  className={`w-full text-left p-2.5 border rounded transition ${
+                    selectedId === s.id ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'
+                  }`}>
+                  <div className="text-sm font-semibold">{s.name}</div>
+                  <div className="f-mono text-[10px] text-ink-3 mt-0.5">{s.slug} · {s.type.toLowerCase()} · {s.salePrice.toFixed(2)} €</div>
+                </button>
+              ))}
+              {filtered.length === 0 && <p className="text-sm text-ink-3 text-center py-4">Cap servei trobat</p>}
+            </div>
+            <div className="flex gap-3 pt-2">
+              <AMGButton onClick={handleAdd} disabled={!selectedId || adding} loading={adding} className="flex-1 justify-center">
+                Afegir servei
               </AMGButton>
               <AMGButton variant="outline" onClick={onClose}>Cancel·lar</AMGButton>
             </div>
@@ -1260,6 +1459,370 @@ function NewBudgetModal({ tenantId, setup, onClose, onCreated }: {
   );
 }
 
+function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
+  budget: BudgetResponse;
+  tenantId: string;
+  setup: TenantSetup | null;
+  onClose: () => void;
+  onRefresh: () => void;
+}) {
+  const { toast } = useToast();
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const [sending, setSending] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cloning, setCloning] = useState(false);
+
+  // Edit state — pre-filled from budget
+  const [editProfileId, setEditProfileId] = useState(budget.profileId ?? '');
+  const [editPhaseIds, setEditPhaseIds] = useState<Set<string>>(new Set(budget.phaseIds ?? []));
+  const [editNotes, setEditNotes] = useState(budget.notes ?? '');
+  const [editClientNotes, setEditClientNotes] = useState(budget.clientNotes ?? '');
+  const [editValidUntil, setEditValidUntil] = useState(budget.validUntil ? budget.validUntil.slice(0, 10) : '');
+  const [saving, setSaving] = useState(false);
+
+  const isDraft = budget.status === 'DRAFT';
+  const statusTone = budget.status === 'ACCEPTED' ? 'success'
+    : budget.status === 'REJECTED' ? 'danger'
+    : budget.status === 'SENT' ? 'info'
+    : 'neutral';
+
+  const profiles = setup?.profiles ?? [];
+  const editProfile = profiles.find(p => p.profile.id === editProfileId);
+
+  const toggleEditPhase = (phaseId: string) => {
+    setEditPhaseIds(prev => {
+      const next = new Set(prev);
+      if (next.has(phaseId)) next.delete(phaseId);
+      else next.add(phaseId);
+      return next;
+    });
+  };
+
+  const handleSend = async () => {
+    setSending(true);
+    try {
+      await sendBudget(budget.id);
+      toast('success', 'Pressupost enviat al client');
+      onRefresh();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error desconegut';
+      toast('error', `Error enviant el pressupost: ${msg}`);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!confirm('Segur que vols eliminar aquest pressupost?')) return;
+    setCancelling(true);
+    try {
+      await cancelBudget(budget.id);
+      toast('success', 'Pressupost eliminat');
+      onRefresh();
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error desconegut';
+      toast('error', `Error eliminant el pressupost: ${msg}`);
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleClone = async () => {
+    if (!budget.profileId || !budget.phaseIds?.length) {
+      toast('error', 'No es pot clonar: dades de perfil no disponibles');
+      return;
+    }
+    setCloning(true);
+    try {
+      await createBudget(tenantId, {
+        profileId: budget.profileId,
+        phaseIds: budget.phaseIds,
+        notes: budget.notes ?? undefined,
+        clientNotes: budget.clientNotes ?? undefined,
+      });
+      toast('success', 'Pressupost clonat com a DRAFT');
+      onRefresh();
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error desconegut';
+      toast('error', `Error clonant el pressupost: ${msg}`);
+    } finally {
+      setCloning(false);
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editProfileId) { toast('error', 'Selecciona un perfil'); return; }
+    if (editPhaseIds.size === 0) { toast('error', 'Selecciona almenys una fase'); return; }
+    setSaving(true);
+    try {
+      await updateBudget(budget.id, {
+        profileId: editProfileId,
+        phaseIds: Array.from(editPhaseIds),
+        notes: editNotes || undefined,
+        clientNotes: editClientNotes || undefined,
+        validUntil: editValidUntil || undefined,
+      });
+      toast('success', 'Pressupost actualitzat');
+      onRefresh();
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error desconegut';
+      toast('error', `Error actualitzant el pressupost: ${msg}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePrint = () => {
+    const printContent = document.getElementById('budget-print-area');
+    if (!printContent) return;
+    const win = window.open('', '_blank', 'width=800,height=900');
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head><title>Pressupost ${budget.budgetNumber}</title>
+      <style>
+        body { font-family: sans-serif; color: #111; padding: 32px; max-width: 700px; margin: 0 auto; }
+        h1 { font-size: 22px; margin-bottom: 4px; }
+        .meta { color: #666; font-size: 13px; margin-bottom: 24px; }
+        .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #888; font-weight: 700; margin: 20px 0 8px; }
+        .phase-header { display: flex; justify-content: space-between; background: #f5f5f5; padding: 8px 12px; font-weight: 700; font-size: 14px; }
+        .line { display: flex; justify-content: space-between; padding: 6px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+        .line .prices { display: flex; gap: 24px; color: #444; }
+        .totals { border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-top: 24px; }
+        .total-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+        .total-row.bold { font-weight: 700; font-size: 16px; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 4px; }
+        @media print { body { padding: 0; } }
+      </style></head><body>`);
+    win.document.write(printContent.innerHTML);
+    win.document.write('</body></html>');
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 400);
+  };
+
+  const row = (label: string, value: string, bold = false) => (
+    <div className="flex items-center justify-between py-1.5 border-b border-border-base last:border-0">
+      <span className="text-xs text-ink-3 f-mono">{label}</span>
+      <span className={`text-sm f-mono ${bold ? 'font-bold text-white' : 'text-ink-1'}`}>{value}</span>
+    </div>
+  );
+
+  const inputCls = 'w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-[#FF6B00]';
+  const labelCls = 'f-mono text-[10px] uppercase tracking-wider text-ink-3 block mb-1';
+
+  return (
+    <>
+      {/* hidden print area */}
+      <div id="budget-print-area" style={{ display: 'none' }}>
+        <h1>Pressupost {budget.budgetNumber}</h1>
+        <div className="meta">Creat: {fmtDate(budget.createdAt)} · Vàlid fins: {fmtDate(budget.validUntil)} · Estat: {budget.status}</div>
+        {budget.phases.map((phase, pi) => (
+          <div key={pi}>
+            <div className="section-title">Fase</div>
+            <div className="phase-header"><span>{phase.name}</span><span>{phase.phaseTotal.toFixed(2)} €</span></div>
+            {phase.lines.map((line, li) => (
+              <div key={li} className="line">
+                <span>{line.serviceName}</span>
+                <div className="prices"><span>{line.unitPrice.toFixed(2)} €</span><span>{line.total.toFixed(2)} €</span></div>
+              </div>
+            ))}
+          </div>
+        ))}
+        {budget.addons.length > 0 && (
+          <div>
+            <div className="section-title">Addons</div>
+            {budget.addons.map((a, i) => (
+              <div key={i} className="line"><span>{a.serviceName}</span><span>{a.unitPrice.toFixed(2)} €</span></div>
+            ))}
+          </div>
+        )}
+        <div className="totals">
+          <div className="total-row"><span>Subtotal</span><span>{budget.subtotal.toFixed(2)} €</span></div>
+          {budget.discountTotal > 0 && <div className="total-row"><span>Descompte</span><span>-{budget.discountTotal.toFixed(2)} €</span></div>}
+          <div className="total-row bold"><span>Total</span><span>{budget.total.toFixed(2)} €</span></div>
+        </div>
+      </div>
+
+      <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
+        <div className="amg-card card-clip w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+
+          {/* Header */}
+          <div className="flex items-center justify-between p-5 border-b border-border-base sticky top-0 bg-[var(--surface-card)] z-10">
+            <div className="flex items-center gap-3">
+              <AMGBadge tone={statusTone}>{budget.status}</AMGBadge>
+              <span className="f-mono font-bold text-white">{budget.budgetNumber}</span>
+              {mode === 'edit' && <AMGBadge tone="warning">Editant</AMGBadge>}
+            </div>
+            <div className="flex items-center gap-1">
+              {/* Action toolbar */}
+              {isDraft && mode === 'view' && (
+                <button title="Editar" onClick={() => setMode('edit')}
+                  className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition">
+                  <I.Edit size={15} />
+                </button>
+              )}
+              <button title="Imprimir / PDF" onClick={handlePrint}
+                className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition">
+                <I.Download size={15} />
+              </button>
+              <button title={cloning ? 'Clonant...' : 'Clonar pressupost'} onClick={handleClone} disabled={cloning}
+                className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition disabled:opacity-40">
+                <I.Copy size={15} />
+              </button>
+              {isDraft && mode === 'view' && (
+                <button title={sending ? 'Enviant...' : 'Enviar al client'} onClick={handleSend} disabled={sending}
+                  className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition disabled:opacity-40">
+                  <I.ArrowRight size={15} />
+                </button>
+              )}
+              <button title="Eliminar" onClick={handleCancel} disabled={cancelling}
+                className="p-1.5 rounded text-red-400 hover:text-red-300 hover:bg-[rgba(239,68,68,0.12)] transition disabled:opacity-40">
+                <I.Trash size={15} />
+              </button>
+              <button onClick={mode === 'edit' ? () => setMode('view') : onClose}
+                className="p-1.5 ml-1 rounded text-ink-2 hover:text-ink-0">
+                <I.X size={17} />
+              </button>
+            </div>
+          </div>
+
+          {mode === 'view' ? (
+            <div className="p-5 space-y-5">
+              {/* Meta */}
+              <div className="space-y-0">
+                {row('Creat', fmtDate(budget.createdAt))}
+                {row('Vàlid fins', fmtDate(budget.validUntil))}
+                {budget.sentAt && row('Enviat', fmtDate(budget.sentAt))}
+                {budget.acceptedAt && row('Acceptat', fmtDate(budget.acceptedAt))}
+                {budget.rejectedAt && row('Rebutjat', fmtDate(budget.rejectedAt))}
+                {budget.notes && row('Notes', budget.notes)}
+                {budget.clientNotes && row('Notes client', budget.clientNotes)}
+              </div>
+
+              {/* Fases */}
+              {budget.phases.length > 0 && (
+                <div className="space-y-3">
+                  <div className="f-display font-bold text-xs text-ink-3 uppercase tracking-wider">Fases</div>
+                  {budget.phases.map((phase, pi) => (
+                    <div key={pi} className="rounded border border-border-base overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-2 bg-[rgba(255,255,255,0.04)]">
+                        <span className="f-display font-bold text-sm text-white">{phase.name}</span>
+                        <span className="f-mono text-sm text-white">{phase.phaseTotal.toFixed(2)} €</span>
+                      </div>
+                      <div className="divide-y divide-border-base">
+                        {phase.lines.map((line, li) => (
+                          <div key={li} className="flex items-center justify-between px-4 py-2">
+                            <span className="text-xs text-ink-2">{line.serviceName}</span>
+                            <div className="flex items-center gap-4 text-xs f-mono text-ink-1">
+                              <span>{line.unitPrice.toFixed(2)} €</span>
+                              <span className="text-white">{line.total.toFixed(2)} €</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Addons */}
+              {budget.addons.length > 0 && (
+                <div className="space-y-2">
+                  <div className="f-display font-bold text-xs text-ink-3 uppercase tracking-wider">Addons</div>
+                  <div className="rounded border border-border-base divide-y divide-border-base">
+                    {budget.addons.map((addon, ai) => (
+                      <div key={ai} className="flex items-center justify-between px-4 py-2">
+                        <span className="text-xs text-ink-2">{addon.serviceName}</span>
+                        <span className="text-xs f-mono text-ink-1">{addon.unitPrice.toFixed(2)} €</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Totals */}
+              <div className="rounded border border-border-base p-4 bg-[rgba(255,255,255,0.02)]">
+                {row('Subtotal', `${budget.subtotal.toFixed(2)} €`)}
+                {budget.discountTotal > 0 && row('Descompte', `-${budget.discountTotal.toFixed(2)} €`)}
+                {row('Total', `${budget.total.toFixed(2)} €`, true)}
+              </div>
+            </div>
+          ) : (
+            /* Edit mode */
+            <form onSubmit={handleSave} className="p-5 space-y-4">
+              {/* Profile */}
+              <div>
+                <label className={labelCls}>Perfil</label>
+                {profiles.length === 0 ? (
+                  <p className="text-sm text-ink-3">Cap perfil assignat.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {profiles.map((p) => (
+                      <button key={p.profile.id} type="button"
+                        onClick={() => { setEditProfileId(p.profile.id); setEditPhaseIds(new Set()); }}
+                        className={`w-full text-left p-3 border rounded transition text-sm ${
+                          editProfileId === p.profile.id
+                            ? 'border-[#FF6B00] bg-accent-muted'
+                            : 'border-border-base hover:border-ink-2'
+                        }`}>
+                        <span className="font-semibold">{p.profile.name}</span>
+                        <span className="text-ink-3 ml-2 text-xs">{p.phases.length} fases</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Phases */}
+              {editProfile && (
+                <div>
+                  <label className={labelCls}>Fases a incloure</label>
+                  <div className="space-y-2">
+                    {editProfile.phases.map((ph) => (
+                      <label key={ph.phase.id} className="flex items-center gap-3 p-3 border border-border-base rounded cursor-pointer hover:border-ink-2 transition">
+                        <input type="checkbox" checked={editPhaseIds.has(ph.phase.id)}
+                          onChange={() => toggleEditPhase(ph.phase.id)}
+                          className="accent-[#FF6B00]" />
+                        <span className="text-sm flex-1">{ph.phase.name}</span>
+                        <span className="f-mono text-xs text-ink-3">{ph.services.length} serveis</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className={labelCls}>Notes internes</label>
+                <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={2}
+                  className={`${inputCls} resize-none`} />
+              </div>
+              <div>
+                <label className={labelCls}>Notes per al client</label>
+                <textarea value={editClientNotes} onChange={(e) => setEditClientNotes(e.target.value)} rows={2}
+                  className={`${inputCls} resize-none`} />
+              </div>
+              <div>
+                <label className={labelCls}>Vàlid fins</label>
+                <input type="date" value={editValidUntil} onChange={(e) => setEditValidUntil(e.target.value)}
+                  className={inputCls} />
+              </div>
+
+              <div className="flex gap-3 pt-2 border-t border-border-base">
+                <AMGButton type="submit" disabled={saving} loading={saving} className="flex-1 justify-center">
+                  Desar canvis
+                </AMGButton>
+                <AMGButton type="button" variant="outline" onClick={() => setMode('view')}>Cancel·lar</AMGButton>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
 function DeleteTenantModal({ tenantId, tenantName, onClose, onDeleted }: {
   tenantId: string; tenantName: string;
   onClose: () => void; onDeleted: () => void;
@@ -1341,8 +1904,11 @@ export default function TenantDetailPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [showAssignProfile, setShowAssignProfile] = useState(false);
+  const [showAddPhase, setShowAddPhase] = useState(false);
+  const [showAddService, setShowAddService] = useState(false);
   const [showNewBudget, setShowNewBudget] = useState(false);
   const [showDeleteTenant, setShowDeleteTenant] = useState(false);
+  const [selectedBudget, setSelectedBudget] = useState<BudgetResponse | null>(null);
   const [togglingFree, setTogglingFree] = useState(false);
   const [togglingActive, setTogglingActive] = useState(false);
 
@@ -1564,9 +2130,13 @@ export default function TenantDetailPage() {
 
         {/* Serveis assignats */}
         <div className="amg-card card-clip">
-          <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
+          <div className="p-4 sm:p-5 border-b border-border-base flex flex-wrap items-center justify-between gap-2">
             <AMGSectionTitle eyebrow="Assignació" title="Serveis assignats" />
-            <AMGButton size="sm" icon={I.Plus} onClick={() => setShowAssignProfile(true)}>Assignar perfil</AMGButton>
+            <div className="flex items-center gap-2">
+              <AMGButton size="sm" variant="ghost" icon={I.Layers} onClick={() => setShowAddPhase(true)}>Fase</AMGButton>
+              <AMGButton size="sm" variant="ghost" icon={I.Zap} onClick={() => setShowAddService(true)}>Servei</AMGButton>
+              <AMGButton size="sm" icon={I.Plus} onClick={() => setShowAssignProfile(true)}>Perfil</AMGButton>
+            </div>
           </div>
           {loadingSetup ? (
             <div className="flex justify-center py-8">
@@ -1608,7 +2178,12 @@ export default function TenantDetailPage() {
             ) : (
               <div className="space-y-2">
                 {budgets.map((b) => (
-                  <div key={b.id} className="flex items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.02)] border border-border-base rounded hover:border-ink-2 transition">
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setSelectedBudget(b)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.02)] border border-border-base rounded hover:border-[#FF6B00] hover:bg-[rgba(255,107,0,0.04)] transition cursor-pointer text-left"
+                  >
                     <div className="flex items-center gap-3">
                       <AMGBadge tone={
                         b.status === 'ACCEPTED' ? 'success'
@@ -1623,8 +2198,11 @@ export default function TenantDetailPage() {
                         <span className="f-mono text-xs text-ink-3">Enviat {fmtDate(b.sentAt)}</span>
                       )}
                     </div>
-                    <span className="f-display font-bold text-sm text-white">{b.total.toFixed(2)} €</span>
-                  </div>
+                    <div className="flex items-center gap-3">
+                      <span className="f-display font-bold text-sm text-white">{b.total.toFixed(2)} €</span>
+                      <I.Chevron size={14} className="text-ink-3" />
+                    </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -1651,6 +2229,12 @@ export default function TenantDetailPage() {
       {showAssignProfile && (
         <AssignProfileModal tenantId={id} onClose={() => setShowAssignProfile(false)} onAssigned={invalidateSetup} />
       )}
+      {showAddPhase && (
+        <AddPhaseModal tenantId={id} onClose={() => setShowAddPhase(false)} onAdded={invalidateSetup} />
+      )}
+      {showAddService && (
+        <AddServiceModal tenantId={id} onClose={() => setShowAddService(false)} onAdded={invalidateSetup} />
+      )}
 
       {showNewBudget && (
         <NewBudgetModal
@@ -1658,6 +2242,16 @@ export default function TenantDetailPage() {
           setup={setup ?? null}
           onClose={() => setShowNewBudget(false)}
           onCreated={() => refetchBudgets()}
+        />
+      )}
+
+      {selectedBudget && (
+        <BudgetDetailModal
+          budget={selectedBudget}
+          tenantId={id}
+          setup={setup ?? null}
+          onClose={() => setSelectedBudget(null)}
+          onRefresh={() => { refetchBudgets(); setSelectedBudget(null); }}
         />
       )}
 

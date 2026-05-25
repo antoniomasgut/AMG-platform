@@ -8,11 +8,14 @@ import java.util.UUID;
 public interface BillingService {
     BudgetResponse createBudget(UUID tenantId, CreateBudgetRequest request);
     List<BudgetResponse> listBudgets(UUID tenantId, String status, int page, int size);
+    List<BudgetResponse> listAllBudgets(String status, int page, int size);
     BudgetResponse getBudget(UUID budgetId, boolean includeInternalNotes);
     BudgetResponse updateBudget(UUID budgetId, UpdateBudgetRequest request);
     void cancelBudget(UUID budgetId);
     BudgetSendResponse sendBudget(UUID budgetId);
     AcceptRejectResponse acceptBudget(String token);
     AcceptRejectResponse rejectBudget(String token, String reason);
+    BudgetResponse previewBudget(String token);
+    AcceptRejectResponse acceptBudgetPhases(String token, List<UUID> phaseIds);
     DashboardResponse getDashboard(UUID tenantId);
 }

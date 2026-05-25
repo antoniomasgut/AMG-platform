@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -85,14 +87,14 @@ public class TenantService {
 
     public TenantResponse getTenant(UUID id) {
         var tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Tenant no trobat"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
         return toResponse(tenant);
     }
 
     @Transactional
     public TenantResponse updateTenant(UUID id, @Valid UpdateTenantRequest request) {
         var tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Tenant no trobat"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
 
         if (request.name() != null) tenant.setName(request.name());
         if (request.slug() != null) {
@@ -142,7 +144,7 @@ public class TenantService {
     @Transactional(readOnly = true)
     public DeleteTenantCheckResponse checkDeletion(UUID id) {
         tenantRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Tenant no trobat"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
 
         List<String> warnings = new ArrayList<>();
 
@@ -178,7 +180,7 @@ public class TenantService {
     @Transactional
     public void deleteTenant(UUID id) {
         tenantRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Tenant no trobat"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
 
         // Re-validates before deleting
         var check = checkDeletion(id);
