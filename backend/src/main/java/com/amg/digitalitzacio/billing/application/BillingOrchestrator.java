@@ -210,7 +210,7 @@ public class BillingOrchestrator implements BillingService {
         budget.setSentAt(Instant.now());
         budgetRepository.save(budget);
 
-        var url = "https://portal.amg.cat/accept-budget?token=" + token;
+        var url = "https://amgdl.com/accept-budget?token=" + token;
         return new BudgetSendResponse(budget.getId(), "SENT", budget.getSentAt(), url);
     }
 

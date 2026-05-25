@@ -1489,6 +1489,7 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
   onRefresh: () => void;
 }) {
   const { toast } = useToast();
+  const qc = useQueryClient();
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [sending, setSending] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -1527,7 +1528,8 @@ function BudgetDetailModal({ budget, tenantId, setup, onClose, onRefresh }: {
       const res = await sendBudget(budget.id);
       if (res?.acceptanceUrl) setAcceptanceUrl(res.acceptanceUrl);
       toast('success', 'Pressupost enviat — copia l\'enllaç per compartir-lo');
-      onRefresh();
+      // Refresca la llista sense tancar el modal (l'usuari ha de copiar l'URL)
+      qc.invalidateQueries({ queryKey: ['budgets', tenantId] });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error desconegut';
       toast('error', `Error enviant el pressupost: ${msg}`);
