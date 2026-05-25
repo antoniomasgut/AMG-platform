@@ -164,7 +164,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 
 ## Model de preus (referència per Billing)
 
-Cada fase té un cost de setup únic i una quota mensual. Les fases (F1–F5) **no són acumulatives**: el client pot contractar qualsevol combinació. El mensual total = suma dels tiers en ordre (1a fase = priceF1, 2a = priceF2...) independentment de quines fases específiques. La tarifa d'enginyeria/hora: **50 €/h** (`ENGINEER_HOURLY_RATE`). Veure `specs/serveis-cataleg.md` i `specs/22-sector-pricing.md`.
+Cada fase té un cost de **setup individual** (varia per `businessSize`: AUTONOMO/PETIT/MITJA) i una quota mensual. Les fases (F1–F5) **no són acumulatives**: el client pot contractar qualsevol combinació. El mensual total = suma dels tiers en ordre (1a fase = priceF1, 2a = priceF2...) independentment de quines fases específiques. El setup total = suma de `setupFn[ordinal]` per cada fase seleccionada (F1=`setupPrice`, F2..F5=`setupF2..F5` de `sector_pricing`). La tarifa d'enginyeria/hora: **50 €/h** (`ENGINEER_HOURLY_RATE`). Veure `specs/serveis-cataleg.md` i `specs/22-sector-pricing.md`.
 
 | Servei | Setup |
 |--------|-------|
