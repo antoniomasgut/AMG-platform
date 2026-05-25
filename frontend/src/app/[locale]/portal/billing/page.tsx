@@ -260,14 +260,14 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
             <div className="p-5 space-y-5">
 
               {/* Enllaç d'acceptació */}
-              {acceptanceUrl && (
+              {(budget.acceptanceUrl || acceptanceUrl) && (
                 <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-4 space-y-2">
                   <div className="text-green-400 text-xs font-semibold uppercase tracking-wider">Enllaç per al client</div>
                   <div className="flex items-center gap-2">
-                    <input readOnly value={acceptanceUrl}
+                    <input readOnly value={budget.acceptanceUrl ?? acceptanceUrl ?? ''}
                       className="flex-1 bg-[rgba(255,255,255,0.05)] border border-border-base rounded px-3 py-1.5 text-xs text-ink-1 f-mono truncate focus:outline-none" />
                     <button
-                      onClick={() => { navigator.clipboard.writeText(acceptanceUrl); toast('success', 'Enllaç copiat'); }}
+                      onClick={() => { navigator.clipboard.writeText(budget.acceptanceUrl ?? acceptanceUrl ?? ''); toast('success', 'Enllaç copiat'); }}
                       className="shrink-0 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 text-green-400 text-xs rounded transition">
                       Copiar
                     </button>

@@ -8,7 +8,7 @@ export interface BudgetResponse {
   phases: BudgetPhase[]; addons: BudgetAddon[];
   subtotal: number; discountTotal: number; total: number; monthlyTotal: number;
   sentAt: string | null; acceptedAt: string | null; rejectedAt: string | null;
-  rejectionUrl: string | null; validUntil: string; createdAt: string;
+  rejectionUrl: string | null; acceptanceUrl: string | null; validUntil: string; createdAt: string;
   profileId: string | null; phaseIds: string[]; notes: string | null; clientNotes: string | null;
   tenantId: string | null; tenantName: string | null;
   recommendation: string | null; recommendedPhaseIds: string[];

@@ -409,7 +409,11 @@ public class BillingOrchestrator implements BillingService {
                 phases, addons, budget.getSubtotal(), budget.getDiscountTotal(), budget.getTotal(),
                 monthlyTotal,
                 budget.getSentAt(), budget.getAcceptedAt(), budget.getRejectedAt(),
-                null, budget.getValidUntil(), budget.getCreatedAt(),
+                null,
+                budget.getAcceptanceToken() != null
+                    ? "https://amgdl.com/accept-budget?token=" + budget.getAcceptanceToken()
+                    : null,
+                budget.getValidUntil(), budget.getCreatedAt(),
                 profileId, phaseIds, budget.getNotes(), budget.getClientNotes(),
                 budget.getTenantId(), tenantName,
                 budget.getRecommendation(), recPhaseIds);

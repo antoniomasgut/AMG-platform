@@ -12,7 +12,7 @@ public record BudgetResponse(
     BigDecimal subtotal, BigDecimal discountTotal, BigDecimal total,
     BigDecimal monthlyTotal,
     Instant sentAt, Instant acceptedAt, Instant rejectedAt,
-    String rejectionUrl, LocalDate validUntil, Instant createdAt,
+    String rejectionUrl, String acceptanceUrl, LocalDate validUntil, Instant createdAt,
     UUID profileId, List<UUID> phaseIds, String notes, String clientNotes,
     UUID tenantId, String tenantName,
     String recommendation, List<UUID> recommendedPhaseIds
