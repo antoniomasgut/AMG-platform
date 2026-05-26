@@ -186,6 +186,28 @@ public class SectorPhaseSeeder implements ApplicationRunner {
                 PhaseDepType.OPTIONAL, "2", 49, 12)
         ));
 
+        // ── Agència IA ───────────────────────────────────────────────────
+        repo.saveAll(List.of(
+            phase(BusinessSector.AGENCIA_IA, 1, "Captació i Presentació",
+                "El lead consulta serveis, tarifes i casos d'èxit per WhatsApp → el bot respon i qualifica l'interès",
+                PhaseDepType.BASE, null, 150, 89),
+            phase(BusinessSector.AGENCIA_IA, 2, "Qualificació i Reunió",
+                "El bot recull informació sobre el projecte (sector, objectiu, pressupost) i agenda la primera reunió",
+                PhaseDepType.REQUIRED, "1", 200, 49),
+            phase(BusinessSector.AGENCIA_IA, 3, "Pressupost Automàtic",
+                "L'equip defineix l'abast per Telegram → el bot genera un pressupost preliminar i l'envia per email per aprovació",
+                PhaseDepType.OPTIONAL, "2", 150, 39),
+            phase(BusinessSector.AGENCIA_IA, 4, "Onboarding de Projecte",
+                "En confirmar el projecte el bot coordina el kick-off: envia qüestionari d'alta, recull credencials i assigna equip",
+                PhaseDepType.OPTIONAL, "2", 100, 29),
+            phase(BusinessSector.AGENCIA_IA, 5, "Reporting i Seguiment",
+                "Actualitzacions automàtiques d'estat de projecte per WhatsApp. KPIs mensuals per email. Alertes d'incidències",
+                PhaseDepType.OPTIONAL, "4", 100, 29),
+            phase(BusinessSector.AGENCIA_IA, 6, "Expansió de Compte",
+                "Detecta senyals d'upsell (creixement del client, nous sectors) i genera propostes noves automàticament",
+                PhaseDepType.OPTIONAL, "2", 150, 49)
+        ));
+
         // ── Inmobiliaria ─────────────────────────────────────────────────
         repo.saveAll(List.of(
             phase(BusinessSector.INMOBILIARIA, 1, "Captació de Propietats",

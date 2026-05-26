@@ -315,6 +315,7 @@ export const SECTOR_SIZES: Record<string, string[]> = {
   PERRUQUERIA_CANINA: ['AUTONOMO'],
   RESTAURANTE: ['AUTONOMO', 'PETIT', 'MITJA', 'EMPRESA'],
   INMOBILIARIA: ['AUTONOMO', 'PETIT', 'MITJA', 'EMPRESA'],
+  AGENCIA_IA: ['AUTONOMO', 'PETIT', 'MITJA', 'EMPRESA'],
 };
 
 export const SECTORS = [
@@ -323,7 +324,7 @@ export const SECTORS = [
   'PERRUQUERIA', 'ESTETICA',
   'GESTORIA', 'ACADEMIA',
   'TALLER_MECANIC', 'VETERINARI', 'PERRUQUERIA_CANINA',
-  'RESTAURANTE', 'INMOBILIARIA',
+  'RESTAURANTE', 'INMOBILIARIA', 'AGENCIA_IA',
 ] as const;
 
 export const SIZES = ['AUTONOMO', 'PETIT', 'MITJA', 'EMPRESA'] as const;
@@ -337,6 +338,7 @@ export const SECTOR_LABELS: Record<string, string> = {
   TALLER_MECANIC: 'Taller mecànic', VETERINARI: 'Veterinari',
   PERRUQUERIA_CANINA: 'Perruqueria canina',
   RESTAURANTE: 'Restaurant / Bar', INMOBILIARIA: 'Immobiliària',
+  AGENCIA_IA: 'Agència IA / Digitalització',
 };
 
 export const SIZE_LABELS: Record<string, string> = {
