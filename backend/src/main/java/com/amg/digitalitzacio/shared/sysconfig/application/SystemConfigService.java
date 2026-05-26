@@ -35,7 +35,8 @@ public class SystemConfigService {
         new KnownKey("TWILIO_ACCOUNT_SID",      "Twilio Account SID",         "SID del compte Twilio per a WhatsApp Business", "AGENTS",    false),
         new KnownKey("TWILIO_AUTH_TOKEN",       "Twilio Auth Token",          "Token d'autenticació Twilio", "AGENTS",                        true),
         new KnownKey("TWILIO_WHATSAPP_FROM",    "Twilio WhatsApp From",       "Número WhatsApp sender (format whatsapp:+34...)", "AGENTS",   false),
-        new KnownKey("RESEND_API_KEY",          "Resend API Key",             "Clau Resend per a enviament d'emails via agents", "AGENTS",   true),
+        new KnownKey("BREVO_API_KEY",           "Brevo API Key",              "Clau Brevo EU per a enviament d'emails transaccionals", "AGENTS", true),
+        new KnownKey("BREVO_SENDER_EMAIL",      "Brevo Sender Email",         "Adreça remitent pels emails (per defecte: noreply@amgdl.com)", "AGENTS", false),
         new KnownKey("GOOGLE_PLACES_API_KEY",   "Google Places API Key",      "Clau Google Places per a prospecció de negocis", "PROSPECTING", true),
         new KnownKey("STRIPE_API_KEY",          "Stripe API Key (secret)",    "Clau secreta Stripe per a pagaments", "PAYMENTS",              true),
         new KnownKey("HOLDED_API_KEY",          "Holded API Key",             "Clau API Holded per a facturació FinOps", "FINOPS",             true),
@@ -44,9 +45,7 @@ public class SystemConfigService {
         new KnownKey("GCS_BUCKET_NAME",         "GCS Bucket Name",            "Nom del bucket GCS per a backups", "BACKUP",                   false),
         new KnownKey("N8N_API_URL",             "n8n API URL",                "URL base de la instància n8n", "AUTOMATIONS",                   false),
         new KnownKey("N8N_API_KEY",             "n8n API Key",                "Clau API n8n per a gestió de workflows", "AUTOMATIONS",         true),
-        new KnownKey("WHATSAPP_WEBHOOK_SECRET", "WhatsApp Webhook Secret",     "Token de verificació del webhook de Meta (Spec 27)", "AGENTS",      true),
-        new KnownKey("META_APP_ID",             "Meta App ID",                "ID de la Facebook App per a Embedded Signup", "AGENTS",               false),
-        new KnownKey("META_APP_SECRET",         "Meta App Secret",            "Secret de la Facebook App (Embedded Signup)", "AGENTS",               true)
+        new KnownKey("WHATSAPP_WEBHOOK_SECRET", "WhatsApp Webhook Secret",     "Token de verificació del webhook de WhatsApp (Twilio/Meta)", "AGENTS", true)
     );
 
     /**

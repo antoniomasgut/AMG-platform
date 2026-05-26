@@ -1,23 +1,33 @@
 package com.amg.digitalitzacio.auth.application;
 
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final SystemConfigService systemConfigService;
 
     public void sendPasswordResetEmail(String to, String resetLink) {
-        var message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject("AMG Digitalització — Recuperació de contrasenya");
-        message.setText("""
+        String apiKey = systemConfigService.get("BREVO_API_KEY");
+        if (apiKey == null || apiKey.isBlank()) {
+            log.error("BREVO_API_KEY not configured — password reset email not sent to {}", to);
+            return;
+        }
+        String fromAddress = systemConfigService.get("BREVO_SENDER_EMAIL");
+        if (fromAddress == null || fromAddress.isBlank()) {
+            fromAddress = "noreply@amgdl.com";
+        }
+
+        String text = """
                 Has sol·licitat restablir la teva contrasenya.
 
                 Fes clic en aquest enllaç per restablir-la:
@@ -26,12 +36,31 @@ public class EmailService {
                 Si no has sol·licitat aquest canvi, ignora aquest missatge.
 
                 L'enllaç és vàlid durant 30 minuts.
-                """.formatted(resetLink));
+                """.formatted(resetLink);
+
         try {
-            mailSender.send(message);
-            log.info("Password reset email sent to {}", to);
+            RestClient client = RestClient.builder()
+                    .baseUrl("https://api.brevo.com")
+                    .defaultHeader("api-key", apiKey)
+                    .defaultHeader("Content-Type", "application/json")
+                    .build();
+
+            Map<String, Object> body = Map.of(
+                    "sender", Map.of("email", fromAddress, "name", "AMG Digitalització"),
+                    "to", List.of(Map.of("email", to)),
+                    "subject", "AMG Digitalització — Recuperació de contrasenya",
+                    "textContent", text
+            );
+
+            client.post()
+                    .uri("/v3/smtp/email")
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+
+            log.info("Password reset email sent to {} via Brevo", to);
         } catch (Exception e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage());
+            log.error("Failed to send password reset email to {} via Brevo: {}", to, e.getMessage());
         }
     }
 }

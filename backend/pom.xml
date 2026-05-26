@@ -100,10 +100,10 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Mail -->
+        <!-- Jakarta Mail (per a verificació SMTP al vault) -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-mail</artifactId>
         </dependency>
 
         <!-- MapStruct -->
