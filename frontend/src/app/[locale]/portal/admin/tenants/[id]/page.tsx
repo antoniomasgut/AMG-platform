@@ -1499,11 +1499,13 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
   onCreated: () => void;
 }) {
   const { toast } = useToast();
-  const isNexeLocal = !!tenant?.sector;
 
   // Sector/size state — default to tenant values but editable
   const [budgetSector, setBudgetSector] = useState(tenant?.sector ?? '');
   const [budgetSize, setBudgetSize] = useState(tenant?.businessSize ?? '');
+
+  // El mode NexeLocal s'activa quan l'usuari selecciona un sector (no el del tenant)
+  const isNexeLocal = !!budgetSector;
 
   const { data: sectorPhases, isLoading: loadingPhases } = useQuery({
     queryKey: ['sector-phases', budgetSector],
@@ -1588,31 +1590,31 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
         </div>
 
         <form onSubmit={handleCreate} className="space-y-4">
-          {isNexeLocal ? (
-            /* Mode NexeLocal: F1-F5 phases with sector pricing */
-            <>
-              {/* Sector i mida d'empresa */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>Tipus d&apos;empresa</label>
-                  <select value={budgetSector} onChange={e => { setBudgetSector(e.target.value); setBudgetSize(''); }} className={sel}>
-                    <option value="">Selecciona sector</option>
-                    {(Object.keys(SECTOR_LABELS) as string[]).map(k => (
-                      <option key={k} value={k}>{SECTOR_LABELS[k]}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={lbl}>Nombre de treballadors</label>
-                  <select value={budgetSize} onChange={e => setBudgetSize(e.target.value)} className={sel} disabled={!budgetSector}>
-                    <option value="">Selecciona mida</option>
-                    {(SECTOR_SIZES[budgetSector] ?? []).map(sz => (
-                      <option key={sz} value={sz}>{SIZE_LABELS[sz] ?? sz}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+          {/* Sector i mida — sempre visibles, activen mode NexeLocal quan es seleccionen */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={lbl}>Sector <span className="text-ink-3 normal-case">(opcional — activa preus NexeLocal)</span></label>
+              <select value={budgetSector} onChange={e => { setBudgetSector(e.target.value); setBudgetSize(''); setSelectedPhaseNums(new Set()); }} className={sel}>
+                <option value="">— Sense sector (mode catàleg) —</option>
+                {(Object.keys(SECTOR_LABELS) as string[]).map(k => (
+                  <option key={k} value={k}>{SECTOR_LABELS[k]}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={lbl}>Nombre de treballadors</label>
+              <select value={budgetSize} onChange={e => setBudgetSize(e.target.value)} className={sel} disabled={!budgetSector}>
+                <option value="">Selecciona mida</option>
+                {(SECTOR_SIZES[budgetSector] ?? []).map(sz => (
+                  <option key={sz} value={sz}>{SIZE_LABELS[sz] ?? sz}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
+          {isNexeLocal ? (
+            /* Mode NexeLocal: fases per sector */
+            <>
               <div>
                 <label className={lbl}>Fases</label>
                 {!budgetSector ? (
@@ -2030,29 +2032,30 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
           ) : (
             /* Edit mode — similar al formulari de creació */
             <form onSubmit={handleSave} className="p-5 space-y-4">
+              {/* Sector i mida — sempre visibles, s'envien al backend per recalcular preus */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Sector</label>
+                  <select value={editBudgetSector} onChange={e => { setEditBudgetSector(e.target.value); setEditBudgetSize(''); }} className={inputCls}>
+                    <option value="">Sense sector</option>
+                    {(Object.keys(SECTOR_LABELS) as string[]).map(k => (
+                      <option key={k} value={k}>{SECTOR_LABELS[k]}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Nombre de treballadors</label>
+                  <select value={editBudgetSize} onChange={e => setEditBudgetSize(e.target.value)} className={inputCls} disabled={!editBudgetSector}>
+                    <option value="">Selecciona mida</option>
+                    {(SECTOR_SIZES[editBudgetSector] ?? []).map(sz => (
+                      <option key={sz} value={sz}>{SIZE_LABELS[sz] ?? sz}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               {isNexeLocal ? (
                 <>
-                  {/* Sector i mida d'empresa */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={labelCls}>Tipus d&apos;empresa</label>
-                      <select value={editBudgetSector} onChange={e => { setEditBudgetSector(e.target.value); setEditBudgetSize(''); }} className={inputCls}>
-                        <option value="">Selecciona sector</option>
-                        {(Object.keys(SECTOR_LABELS) as string[]).map(k => (
-                          <option key={k} value={k}>{SECTOR_LABELS[k]}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className={labelCls}>Nombre de treballadors</label>
-                      <select value={editBudgetSize} onChange={e => setEditBudgetSize(e.target.value)} className={inputCls} disabled={!editBudgetSector}>
-                        <option value="">Selecciona mida</option>
-                        {(SECTOR_SIZES[editBudgetSector] ?? []).map(sz => (
-                          <option key={sz} value={sz}>{SIZE_LABELS[sz] ?? sz}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
                   <div>
                     <label className={labelCls}>Fases</label>
                     {editLoadingPhases ? (
