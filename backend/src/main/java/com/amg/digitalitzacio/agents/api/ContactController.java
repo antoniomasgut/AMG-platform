@@ -57,4 +57,15 @@ public class ContactController {
         contactService.renameContact(tenantId, contactId, request.displayName());
         return ResponseEntity.ok().build();
     }
+
+    @PatchMapping("/{tenantId}/{contactId}/profile")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public ResponseEntity<Void> updateProfile(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID contactId,
+            @RequestBody UpdateContactProfileRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        contactService.updateProfile(tenantId, contactId, request.displayName(), request.phone(), request.email());
+        return ResponseEntity.ok().build();
+    }
 }

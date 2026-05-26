@@ -32,19 +32,43 @@ public class ContactService {
 
     @Transactional
     public void findOrCreate(UUID tenantId, ConversationChannel channel, String identifier) {
-        contactIdentifierRepository.findByTenantIdAndChannelAndIdentifier(tenantId, channel, identifier)
-            .orElseGet(() -> {
-                var contact = contactRepository.save(Contact.builder()
-                    .tenantId(tenantId)
-                    .displayName(identifier)
-                    .build());
-                return contactIdentifierRepository.save(ContactIdentifier.builder()
-                    .contactId(contact.getId())
-                    .tenantId(tenantId)
-                    .channel(channel)
-                    .identifier(identifier)
-                    .build());
-            });
+        // Si ja existeix aquest identifier, no cal fer res
+        if (contactIdentifierRepository.findByTenantIdAndChannelAndIdentifier(tenantId, channel, identifier).isPresent()) {
+            return;
+        }
+
+        // Cerca un contact existent pel camp de perfil corresponent al canal
+        Contact contact = findExistingContactByProfile(tenantId, channel, identifier)
+            .orElseGet(() -> contactRepository.save(Contact.builder()
+                .tenantId(tenantId)
+                .displayName(identifier)
+                .build()));
+
+        contactIdentifierRepository.save(ContactIdentifier.builder()
+            .contactId(contact.getId())
+            .tenantId(tenantId)
+            .channel(channel)
+            .identifier(identifier)
+            .build());
+    }
+
+    /** Cerca un contact existent per phone (canals WhatsApp) o email (canal EMAIL). */
+    private java.util.Optional<Contact> findExistingContactByProfile(
+            UUID tenantId, ConversationChannel channel, String identifier) {
+        return switch (channel) {
+            case WHATSAPP, WHATSAPP_META -> {
+                String normalized = normalizePhone(identifier);
+                yield contactRepository.findByTenantIdAndPhone(tenantId, normalized);
+            }
+            case EMAIL -> contactRepository.findByTenantIdAndEmail(tenantId, identifier.toLowerCase());
+            default -> java.util.Optional.empty();
+        };
+    }
+
+    /** Elimina tot el que no sigui dígit i aplica prefix +. */
+    private String normalizePhone(String raw) {
+        String digits = raw.replaceAll("[^0-9+]", "");
+        return digits.isEmpty() ? raw : digits;
     }
 
     @Transactional(readOnly = true)
@@ -96,6 +120,15 @@ public class ContactService {
     public void renameContact(UUID tenantId, UUID contactId, String displayName) {
         var contact = assertContactBelongsToTenant(tenantId, contactId);
         contact.setDisplayName(displayName);
+        contactRepository.save(contact);
+    }
+
+    @Transactional
+    public void updateProfile(UUID tenantId, UUID contactId, String displayName, String phone, String email) {
+        var contact = assertContactBelongsToTenant(tenantId, contactId);
+        if (displayName != null && !displayName.isBlank()) contact.setDisplayName(displayName.trim());
+        if (phone != null) contact.setPhone(phone.isBlank() ? null : normalizePhone(phone.trim()));
+        if (email != null) contact.setEmail(email.isBlank() ? null : email.trim().toLowerCase());
         contactRepository.save(contact);
     }
 
@@ -195,7 +228,7 @@ public class ContactService {
             .toList();
 
         return new ContactSummaryResponse(
-            contact.getId(), contact.getDisplayName(), channelInfos,
-            lastContent, lastRole, lastAt, lastChannel, lastIdentifier, pendingCount);
+            contact.getId(), contact.getDisplayName(), contact.getPhone(), contact.getEmail(),
+            channelInfos, lastContent, lastRole, lastAt, lastChannel, lastIdentifier, pendingCount);
     }
 }

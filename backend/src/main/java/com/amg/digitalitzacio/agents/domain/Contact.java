@@ -24,6 +24,12 @@ public class Contact {
     @Column(name = "display_name")
     private String displayName;
 
+    @Column(name = "phone", length = 30)
+    private String phone;
+
+    @Column(name = "email", length = 255)
+    private String email;
+
     @Column(name = "conversation_summary", columnDefinition = "TEXT")
     private String conversationSummary;
 

@@ -115,6 +115,8 @@ export const testModel = (request: AIModelTestRequest) =>
 export interface ContactSummary {
   contactId: string;
   displayName: string;
+  phone: string | null;
+  email: string | null;
   channels: { channel: string; identifier: string }[];
   lastMessage: string | null;
   lastMessageRole: 'USER' | 'ASSISTANT' | null;
@@ -140,6 +142,16 @@ export const renameContact = (tenantId: string, contactId: string, displayName: 
   apiFetch<void>(`/agents/contacts/${tenantId}/${contactId}/name`, {
     method: 'PATCH',
     body: JSON.stringify({ displayName }),
+  });
+
+export const updateContactProfile = (
+  tenantId: string,
+  contactId: string,
+  data: { displayName?: string; phone?: string; email?: string }
+) =>
+  apiFetch<void>(`/agents/contacts/${tenantId}/${contactId}/profile`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
   });
 
 // --- Channels & Activation (Spec 24) ---

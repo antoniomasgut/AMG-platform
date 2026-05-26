@@ -7,6 +7,8 @@ import java.util.UUID;
 public record ContactSummaryResponse(
     UUID contactId,
     String displayName,
+    String phone,
+    String email,
     List<ChannelInfo> channels,
     String lastMessage,
     String lastMessageRole,

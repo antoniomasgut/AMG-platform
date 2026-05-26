@@ -14,6 +14,7 @@ import {
   approveResponse,
   editAndSend,
   discardResponse,
+  updateContactProfile,
   type ContactSummary,
   type ConversationResponse,
 } from '@/services/agents-conversational';
@@ -201,7 +202,16 @@ function ThreadView({
   const [sending, setSending] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(contact.displayName);
+  const [phoneInput, setPhoneInput] = useState(contact.phone ?? '');
+  const [emailInput, setEmailInput] = useState(contact.email ?? '');
+  const [editingProfile, setEditingProfile] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const profileMutation = useMutation({
+    mutationFn: (data: { phone: string; email: string }) =>
+      updateContactProfile(tenantId, contact.contactId, data),
+    onSuccess: onPendingAction,
+  });
 
   const approveMutation = useMutation({
     mutationFn: (id: number) => approveResponse(tenantId, id),
@@ -222,7 +232,10 @@ function ThreadView({
 
   useEffect(() => {
     setNameInput(contact.displayName);
-  }, [contact.displayName]);
+    setPhoneInput(contact.phone ?? '');
+    setEmailInput(contact.email ?? '');
+    setEditingProfile(false);
+  }, [contact.contactId, contact.displayName, contact.phone, contact.email]);
 
   const handleSend = async () => {
     const text = replyText.trim();
@@ -248,32 +261,85 @@ function ThreadView({
   return (
     <div className="flex flex-col h-full">
       {/* Thread header */}
-      <div className="px-4 py-3 border-b border-border-base flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          {editingName ? (
-            <input
-              autoFocus
-              value={nameInput}
-              onChange={e => setNameInput(e.target.value)}
-              onBlur={() => { setEditingName(false); onRename(nameInput); }}
-              onKeyDown={e => { if (e.key === 'Enter') { setEditingName(false); onRename(nameInput); } }}
-              className="bg-transparent border-b border-accent-light text-sm font-semibold text-ink-0 focus:outline-none"
-            />
-          ) : (
-            <button
-              onClick={() => setEditingName(true)}
-              className="text-sm font-semibold text-ink-0 hover:text-accent-light transition-colors flex items-center gap-1.5"
-            >
-              {contact.displayName}
-              <I.Edit size={11} className="text-ink-3" />
-            </button>
-          )}
-          <div className="flex items-center gap-2 mt-0.5">
-            {contact.channels.map(ch => (
-              <span key={`${ch.channel}:${ch.identifier}`} className="text-[10px] text-ink-3">
-                {channelIcon(ch.channel)} {ch.identifier}
-              </span>
-            ))}
+      <div className="px-4 py-3 border-b border-border-base">
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            {/* Nom editable */}
+            {editingName ? (
+              <input
+                autoFocus
+                value={nameInput}
+                onChange={e => setNameInput(e.target.value)}
+                onBlur={() => { setEditingName(false); onRename(nameInput); }}
+                onKeyDown={e => { if (e.key === 'Enter') { setEditingName(false); onRename(nameInput); } }}
+                className="bg-transparent border-b border-accent-light text-sm font-semibold text-ink-0 focus:outline-none"
+              />
+            ) : (
+              <button
+                onClick={() => setEditingName(true)}
+                className="text-sm font-semibold text-ink-0 hover:text-accent-light transition-colors flex items-center gap-1.5"
+              >
+                {contact.displayName}
+                <I.Edit size={11} className="text-ink-3" />
+              </button>
+            )}
+
+            {/* Canals */}
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              {contact.channels.map(ch => (
+                <span key={`${ch.channel}:${ch.identifier}`} className="text-[10px] text-ink-3">
+                  {channelIcon(ch.channel)} {ch.identifier}
+                </span>
+              ))}
+            </div>
+
+            {/* Perfil: phone + email */}
+            {editingProfile ? (
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                <input
+                  placeholder="Telèfon (+34...)"
+                  value={phoneInput}
+                  onChange={e => setPhoneInput(e.target.value)}
+                  className="bg-[#1a1a2e] border border-border-base rounded px-2 py-1 text-[10px] text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-accent-light w-36"
+                />
+                <input
+                  placeholder="Correu electrònic"
+                  value={emailInput}
+                  onChange={e => setEmailInput(e.target.value)}
+                  className="bg-[#1a1a2e] border border-border-base rounded px-2 py-1 text-[10px] text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-accent-light w-44"
+                />
+                <button
+                  onClick={() => {
+                    profileMutation.mutate({ phone: phoneInput, email: emailInput });
+                    setEditingProfile(false);
+                  }}
+                  className="px-2 py-1 bg-accent-light text-black text-[9px] font-bold rounded hover:bg-orange-400 transition-colors"
+                >
+                  Desar
+                </button>
+                <button
+                  onClick={() => setEditingProfile(false)}
+                  className="text-[9px] text-ink-3 hover:text-ink-1"
+                >
+                  Cancel·lar
+                </button>
+              </div>
+            ) : (
+              <div className="mt-1 flex items-center gap-3">
+                {contact.phone && (
+                  <span className="text-[10px] text-ink-3">📞 {contact.phone}</span>
+                )}
+                {contact.email && (
+                  <span className="text-[10px] text-ink-3">✉ {contact.email}</span>
+                )}
+                <button
+                  onClick={() => setEditingProfile(true)}
+                  className="text-[9px] text-ink-3 hover:text-ink-1 transition-colors"
+                >
+                  {contact.phone || contact.email ? '✎ Editar perfil' : '+ Afegir telèfon / correu'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
