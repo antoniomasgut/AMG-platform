@@ -11,6 +11,9 @@ import {
   renameContact,
   updateAgentMode,
   getAgentStatus,
+  approveResponse,
+  editAndSend,
+  discardResponse,
   type ContactSummary,
   type ConversationResponse,
 } from '@/services/agents-conversational';
@@ -178,23 +181,40 @@ function ContactList({
 // ─── Thread View ──────────────────────────────────────────────────────────────
 
 function ThreadView({
+  tenantId,
   contact,
   messages,
   agentMode,
   onReply,
   onRename,
+  onPendingAction,
 }: {
+  tenantId: string;
   contact: ContactSummary;
   messages: ConversationResponse[];
   agentMode: AgentMode;
   onReply: (text: string) => Promise<void>;
   onRename: (name: string) => void;
+  onPendingAction: () => void;
 }) {
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(contact.displayName);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const approveMutation = useMutation({
+    mutationFn: (id: number) => approveResponse(tenantId, id),
+    onSuccess: onPendingAction,
+  });
+  const editMutation = useMutation({
+    mutationFn: ({ id, content }: { id: number; content: string }) => editAndSend(tenantId, id, content),
+    onSuccess: onPendingAction,
+  });
+  const discardMutation = useMutation({
+    mutationFn: (id: number) => discardResponse(tenantId, id),
+    onSuccess: onPendingAction,
+  });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -264,7 +284,13 @@ function ThreadView({
           <div className="text-center text-ink-3 text-xs py-8">Sense missatges</div>
         )}
         {messages.map(msg => (
-          <MessageBubble key={msg.id} msg={msg} />
+          <MessageBubble
+            key={msg.id}
+            msg={msg}
+            onApprove={msg.pendingApproval ? () => approveMutation.mutate(msg.id) : undefined}
+            onDiscard={msg.pendingApproval ? () => discardMutation.mutate(msg.id) : undefined}
+            onEditSend={msg.pendingApproval ? (content) => editMutation.mutate({ id: msg.id, content }) : undefined}
+          />
         ))}
         <div ref={bottomRef} />
       </div>
@@ -300,26 +326,92 @@ function ThreadView({
   );
 }
 
-function MessageBubble({ msg }: { msg: ConversationResponse }) {
+function MessageBubble({
+  msg,
+  onApprove,
+  onDiscard,
+  onEditSend,
+}: {
+  msg: ConversationResponse;
+  onApprove?: () => void;
+  onDiscard?: () => void;
+  onEditSend?: (content: string) => void;
+}) {
   const isUser = msg.role === 'USER';
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(msg.content);
+
   return (
-    <div className={`flex ${isUser ? 'justify-start' : 'justify-end'}`}>
+    <div className={`flex flex-col ${isUser ? 'items-start' : 'items-end'}`}>
       <div className={`max-w-[75%] rounded-lg px-3 py-2 ${
         isUser
           ? 'bg-[#1a1a2e] text-ink-0'
           : 'bg-accent-muted text-accent-light'
-      } ${msg.pendingApproval ? 'opacity-60 border border-orange-400/30' : ''}`}>
-        <p className="text-xs whitespace-pre-wrap break-words">{msg.content}</p>
+      } ${msg.pendingApproval ? 'opacity-70 border border-orange-400/40' : ''}`}>
+        {editing ? (
+          <textarea
+            value={editText}
+            onChange={e => setEditText(e.target.value)}
+            rows={3}
+            className="w-full bg-[#0d0d1a] border border-orange-400/40 rounded px-2 py-1 text-xs text-ink-0 focus:outline-none focus:border-orange-400 resize-none"
+          />
+        ) : (
+          <p className="text-xs whitespace-pre-wrap break-words">{msg.content}</p>
+        )}
         <div className="flex items-center gap-1.5 mt-1">
           <span className="text-[9px] text-ink-3">{channelIcon(msg.channel as string)}</span>
           <span className="text-[9px] text-ink-3">
             {new Date(msg.createdAt).toLocaleTimeString('ca-ES', { hour: '2-digit', minute: '2-digit' })}
           </span>
-          {msg.pendingApproval && (
+          {msg.pendingApproval && !editing && (
             <span className="text-[9px] text-orange-400">⏳ pendent</span>
           )}
         </div>
       </div>
+
+      {/* Pending action buttons */}
+      {msg.pendingApproval && onApprove && (
+        <div className="flex items-center gap-1.5 mt-1 mr-1">
+          {editing ? (
+            <>
+              <button
+                onClick={() => { onEditSend?.(editText); setEditing(false); }}
+                disabled={!editText.trim()}
+                className="px-2 py-0.5 bg-orange-500 text-black text-[9px] font-bold rounded hover:bg-orange-400 disabled:opacity-40 transition-colors"
+              >
+                Enviar editat
+              </button>
+              <button
+                onClick={() => { setEditing(false); setEditText(msg.content); }}
+                className="px-2 py-0.5 bg-[#1a1a2e] text-ink-3 text-[9px] rounded border border-border-base hover:text-ink-1 transition-colors"
+              >
+                Cancel·lar
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={onApprove}
+                className="px-2 py-0.5 bg-green-600 text-white text-[9px] font-bold rounded hover:bg-green-500 transition-colors"
+              >
+                ✓ Aprovar
+              </button>
+              <button
+                onClick={() => setEditing(true)}
+                className="px-2 py-0.5 bg-[#1a1a2e] text-ink-2 text-[9px] rounded border border-border-base hover:text-ink-0 hover:border-orange-400/50 transition-colors"
+              >
+                ✎ Editar
+              </button>
+              <button
+                onClick={onDiscard}
+                className="px-2 py-0.5 bg-[#1a1a2e] text-red-400 text-[9px] rounded border border-border-base hover:border-red-400/50 transition-colors"
+              >
+                ✕ Descartar
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -467,6 +559,7 @@ export default function InboxPage() {
           <div className="flex-1 min-w-0">
             {selectedContact ? (
               <ThreadView
+                tenantId={tenantId}
                 contact={selectedContact}
                 messages={thread}
                 agentMode={agentMode}
@@ -474,6 +567,10 @@ export default function InboxPage() {
                 onRename={name =>
                   renameMutation.mutate({ contactId: selectedContact.contactId, name })
                 }
+                onPendingAction={() => {
+                  qc.invalidateQueries({ queryKey: ['contact-thread', tenantId, selectedContact.contactId] });
+                  qc.invalidateQueries({ queryKey: ['contacts', tenantId] });
+                }}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full gap-3 text-ink-3">

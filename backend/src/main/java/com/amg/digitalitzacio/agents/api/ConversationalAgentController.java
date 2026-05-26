@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.agents.api;
 
 import com.amg.digitalitzacio.agents.api.dto.*;
+import com.amg.digitalitzacio.agents.application.ContactService;
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
 import com.amg.digitalitzacio.agents.domain.Conversation;
 import com.amg.digitalitzacio.agents.domain.ConversationRepository;
@@ -21,7 +22,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +34,7 @@ import java.util.UUID;
 public class ConversationalAgentController {
 
     private final ConversationRepository conversationRepository;
+    private final ContactService contactService;
     private final TenantChatLinkRepository tenantChatLinkRepository;
     private final TenantAIConfigRepository tenantAIConfigRepository;
     private final AIProviderRouter aiProviderRouter;
@@ -125,13 +126,7 @@ public class ConversationalAgentController {
             var principal = getPrincipal();
             validateTenantAccess(tenantId, principal);
 
-            var conversation = conversationRepository.findById(id)
-                    .filter(c -> c.getTenantId().equals(tenantId) && c.getPendingApproval())
-                    .orElseThrow(() -> new IllegalArgumentException("Conversation not found or not pending"));
-
-            conversation.setPendingApproval(false);
-            conversation.setApprovedAt(Instant.now());
-            conversationRepository.save(conversation);
+            contactService.approveAndSend(tenantId, id, null);
 
             log.info("Approved pending response {} for tenant {}", id, tenantId);
             return ResponseEntity.ok().build();
@@ -152,19 +147,11 @@ public class ConversationalAgentController {
             var principal = getPrincipal();
             validateTenantAccess(tenantId, principal);
 
-            String newContent = request.content();
-            if (newContent == null || newContent.isBlank()) {
+            if (request.content() == null || request.content().isBlank()) {
                 return ResponseEntity.badRequest().build();
             }
 
-            var conversation = conversationRepository.findById(id)
-                    .filter(c -> c.getTenantId().equals(tenantId) && c.getPendingApproval())
-                    .orElseThrow(() -> new IllegalArgumentException("Conversation not found or not pending"));
-
-            conversation.setContent(newContent);
-            conversation.setPendingApproval(false);
-            conversation.setApprovedAt(Instant.now());
-            conversationRepository.save(conversation);
+            contactService.approveAndSend(tenantId, id, request.content());
 
             log.info("Edited and approved pending response {} for tenant {}", id, tenantId);
             return ResponseEntity.ok().build();

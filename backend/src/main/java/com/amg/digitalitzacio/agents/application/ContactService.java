@@ -99,6 +99,25 @@ public class ContactService {
         contactRepository.save(contact);
     }
 
+    /** Aprova un missatge pending i l'envia al client via el canal original. */
+    @Transactional
+    public void approveAndSend(UUID tenantId, Long conversationId, String overrideContent) {
+        var conversation = conversationRepository.findById(conversationId)
+            .filter(c -> c.getTenantId().equals(tenantId) && Boolean.TRUE.equals(c.getPendingApproval()))
+            .orElseThrow(() -> new ResourceNotFoundException("Conversation not found or not pending"));
+
+        if (overrideContent != null && !overrideContent.isBlank()) {
+            conversation.setContent(overrideContent);
+        }
+        conversation.setPendingApproval(false);
+        conversation.setApprovedAt(java.time.Instant.now());
+        conversationRepository.save(conversation);
+
+        var chatLink = tenantChatLinkRepository.findByTenantId(tenantId).orElse(null);
+        sendViaChannel(chatLink, conversation.getChannel(), conversation.getCustomerIdentifier(), conversation.getContent());
+        log.info("Approved and sent conversation {} for tenant {}", conversationId, tenantId);
+    }
+
     private Contact assertContactBelongsToTenant(UUID tenantId, UUID contactId) {
         return contactRepository.findById(contactId)
             .filter(c -> tenantId.equals(c.getTenantId()))
