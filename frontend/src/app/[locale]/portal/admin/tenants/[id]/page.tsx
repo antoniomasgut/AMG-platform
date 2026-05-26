@@ -569,7 +569,7 @@ function ContractSection({ tenant, onRefresh }: { tenant: TenantResponse; onRefr
   return (
     <div className="amg-card card-clip">
       <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
-        <AMGSectionTitle eyebrow="NexeLocal" title="Contracte" />
+        <AMGSectionTitle eyebrow="Grandària" title="Contracte" />
         {!editing ? (
           <AMGButton size="sm" variant="ghost" icon={I.Edit} onClick={() => { setEditSector(tenant.sector ?? ''); setEditSize(tenant.businessSize ?? ''); setEditing(true); }}>
             Editar
@@ -812,7 +812,7 @@ function AgentConfigCard({ tenantId, agentSystemPrompt }: { tenantId: string; ag
     <>
       <div className="amg-card card-clip">
         <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
-          <AMGSectionTitle eyebrow="Mòdul 20" title="Agent IA & Canals" />
+          <AMGSectionTitle eyebrow="Agent IA" title="Agent IA & Canals" />
           {isLocked
             ? <span className="f-mono text-[10px] px-2 py-1 rounded bg-[rgba(57,211,83,0.12)] text-[#39d353] border border-[rgba(57,211,83,0.3)]">● ACTIU</span>
             : <span className="f-mono text-[10px] px-2 py-1 rounded bg-[rgba(255,255,255,0.04)] text-ink-3 border border-border-base">○ ATURAT</span>
@@ -1000,9 +1000,12 @@ const WA_STATUS_LABEL: Record<string, string> = {
   CONNECTED: 'Connectat', PENDING: 'Pendent', ERROR: 'Error', DISCONNECTED: 'Desconnectat',
 };
 
+type WaProvider = 'TWILIO' | 'META';
+
 function WhatsAppMetaCard({ tenantId }: { tenantId: string }) {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const [provider, setProvider] = useState<WaProvider>('TWILIO');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ phoneNumberId: '', accessToken: '', wabaId: '' });
   const [saving, setSaving] = useState(false);
@@ -1070,130 +1073,183 @@ function WhatsAppMetaCard({ tenantId }: { tenantId: string }) {
     }
   };
 
+  const providerTab = (p: WaProvider, label: string) => (
+    <button
+      type="button"
+      onClick={() => { setProvider(p); setShowForm(false); }}
+      className={`px-3 py-1.5 rounded text-xs f-mono transition ${
+        provider === p
+          ? 'bg-[rgba(255,107,0,0.15)] text-accent-light border border-[rgba(255,107,0,0.4)]'
+          : 'text-ink-3 border border-border-base hover:text-ink-1'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div className="amg-card card-clip">
       <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
-        <AMGSectionTitle eyebrow="Spec 27" title="WhatsApp Business API" />
+        <AMGSectionTitle eyebrow="WhatsApp" title="WhatsApp Business" />
         <div className="flex items-center gap-2">
-          {wabaConfig ? (
+          {provider === 'META' && wabaConfig && (
             <AMGBadge tone={WA_STATUS_TONE[wabaConfig.status] ?? 'neutral'}>
               {WA_STATUS_LABEL[wabaConfig.status] ?? wabaConfig.status}
             </AMGBadge>
-          ) : (
-            <span className="f-mono text-[10px] px-2 py-1 rounded bg-[rgba(255,255,255,0.04)] text-ink-3 border border-border-base">○ No configurat</span>
           )}
-          <AMGButton size="sm" variant="ghost" onClick={() => setShowForm(v => !v)}>
-            {wabaConfig ? 'Editar' : 'Configurar'}
-          </AMGButton>
+          {provider === 'META' && (
+            <AMGButton size="sm" variant="ghost" onClick={() => setShowForm(v => !v)}>
+              {wabaConfig ? 'Editar' : 'Configurar'}
+            </AMGButton>
+          )}
         </div>
       </div>
 
       <div className="p-5 space-y-5">
-        {/* Embedded Signup info */}
-        <div className="p-3 bg-[rgba(255,107,0,0.04)] border border-[rgba(255,107,0,0.15)] rounded text-xs text-ink-2 space-y-1">
-          <div className="font-semibold text-accent-light">Embedded Signup (recomanat)</div>
-          <p>Quan la Facebook App estigui aprovada per Meta, el client podrà connectar el seu WABA directament des d&apos;aquí amb un clic. Fins llavors, usa la configuració manual.</p>
+        {/* Selector de proveïdor */}
+        <div className="flex items-center gap-2">
+          <span className="f-mono text-[10px] uppercase text-ink-3 tracking-wider mr-1">Proveïdor:</span>
+          {providerTab('TWILIO', 'Twilio')}
+          {providerTab('META', 'Meta Business Suite')}
         </div>
 
-        {/* Manual config form */}
-        {showForm && (
-          <form onSubmit={handleConnect} className="space-y-3 p-4 border border-border-base rounded bg-[rgba(255,255,255,0.02)]">
-            <div className="f-mono text-label uppercase text-ink-3 text-xs tracking-widest mb-2">Configuració manual</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="f-mono text-xs text-ink-2 block mb-1">Phone Number ID *</label>
-                <input type="text" required value={form.phoneNumberId}
-                  onChange={(e) => setForm(f => ({ ...f, phoneNumberId: e.target.value }))}
-                  placeholder="123456789012345"
-                  className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
-              </div>
-              <div>
-                <label className="f-mono text-xs text-ink-2 block mb-1">WABA ID (opcional)</label>
-                <input type="text" value={form.wabaId}
-                  onChange={(e) => setForm(f => ({ ...f, wabaId: e.target.value }))}
-                  placeholder="987654321098765"
-                  className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="f-mono text-xs text-ink-2 block mb-1">Access Token permanent *</label>
-                <input type="password" required value={form.accessToken}
-                  onChange={(e) => setForm(f => ({ ...f, accessToken: e.target.value }))}
-                  placeholder="EAAxxxxxxxxxx..."
-                  className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
-                <p className="f-mono text-[10px] text-ink-3 mt-1">System User Access Token del Meta Business Manager</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <AMGButton type="submit" size="sm" loading={saving}>Desar</AMGButton>
-              <AMGButton type="button" size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel·lar</AMGButton>
-            </div>
-          </form>
-        )}
-
-        {/* Status details */}
-        {wabaConfig && !showForm && (
+        {/* Twilio — gestionat a nivell de plataforma */}
+        {provider === 'TWILIO' && (
           <div className="space-y-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {wabaConfig.displayPhoneNumber && (
+            <div className="p-4 bg-[rgba(255,255,255,0.02)] border border-border-base rounded text-sm space-y-2">
+              <div className="f-mono text-[10px] uppercase text-ink-3 tracking-wider">Twilio (compte AMG)</div>
+              <p className="text-ink-2 text-xs">Els missatges WhatsApp s&apos;envien via el compte Twilio d&apos;AMG. Tots els tenants comparteixen el mateix número sender configurat a les claus del sistema.</p>
+              <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
-                  <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Número</div>
-                  <div className="text-sm text-ink-1 font-semibold">{wabaConfig.displayPhoneNumber}</div>
+                  <div className="f-mono text-[10px] text-ink-3 uppercase">Account SID</div>
+                  <div className="f-mono text-xs text-ink-1">Configurat a API Keys</div>
                 </div>
-              )}
-              {wabaConfig.businessName && (
                 <div>
-                  <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Negoci</div>
-                  <div className="text-sm text-ink-1">{wabaConfig.businessName}</div>
+                  <div className="f-mono text-[10px] text-ink-3 uppercase">From number</div>
+                  <div className="f-mono text-xs text-ink-1">Configurat a API Keys</div>
                 </div>
-              )}
-              {wabaConfig.phoneNumberId && (
-                <div>
-                  <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Phone Number ID</div>
-                  <div className="f-mono text-xs text-ink-2 truncate">{wabaConfig.phoneNumberId}</div>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {wabaConfig.status === 'PENDING' && (
-                <AMGButton size="sm" icon={I.Zap} onClick={handleVerify} loading={verifying}>
-                  Verificar connexió
-                </AMGButton>
-              )}
-              {wabaConfig.status === 'ERROR' && (
-                <AMGButton size="sm" icon={I.Zap} onClick={handleVerify} loading={verifying}>
-                  Reintentar verificació
-                </AMGButton>
-              )}
-              {wabaConfig.status !== 'DISCONNECTED' && (
-                <AMGButton size="sm" variant="ghost" onClick={handleDisconnect}>
-                  Desconnectar
-                </AMGButton>
-              )}
+              </div>
+              <p className="f-mono text-[10px] text-ink-3">Per canviar les credencials Twilio, ves a <span className="text-accent-light">Sistema → API Keys → Twilio</span></p>
             </div>
 
-            {/* Test message */}
-            {wabaConfig.status === 'CONNECTED' && (
-              <form onSubmit={handleTest} className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <label className="f-mono text-xs text-ink-3 block mb-1">Número de prova (E.164)</label>
-                  <input type="text" value={testPhone}
-                    onChange={(e) => setTestPhone(e.target.value)}
-                    placeholder="+34612345678"
-                    className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
-                </div>
-                <AMGButton type="submit" size="sm" variant="secondary" loading={sendingTest}>
-                  Enviar prova
-                </AMGButton>
-              </form>
-            )}
+            {/* Test message via Twilio */}
+            <form onSubmit={handleTest} className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="f-mono text-xs text-ink-3 block mb-1">Enviar missatge de prova (E.164)</label>
+                <input type="text" value={testPhone}
+                  onChange={(e) => setTestPhone(e.target.value)}
+                  placeholder="+34612345678"
+                  className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+              </div>
+              <AMGButton type="submit" size="sm" variant="secondary" loading={sendingTest}>
+                Enviar prova
+              </AMGButton>
+            </form>
           </div>
         )}
 
-        {!wabaConfig && !showForm && (
-          <div className="text-center py-6">
-            <I.Smartphone size={28} stroke="#64748b" className="mx-auto mb-3" />
-            <p className="text-sm text-ink-2 mb-3">WhatsApp Business no configurat per aquest tenant.</p>
-            <AMGButton size="sm" onClick={() => setShowForm(true)}>Configurar WhatsApp</AMGButton>
+        {/* Meta Business Suite — configuració per tenant */}
+        {provider === 'META' && (
+          <div className="space-y-5">
+            {/* Manual config form */}
+            {showForm && (
+              <form onSubmit={handleConnect} className="space-y-3 p-4 border border-border-base rounded bg-[rgba(255,255,255,0.02)]">
+                <div className="f-mono text-label uppercase text-ink-3 text-xs tracking-widest mb-2">Configuració Meta Cloud API</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="f-mono text-xs text-ink-2 block mb-1">Phone Number ID *</label>
+                    <input type="text" required value={form.phoneNumberId}
+                      onChange={(e) => setForm(f => ({ ...f, phoneNumberId: e.target.value }))}
+                      placeholder="123456789012345"
+                      className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+                  </div>
+                  <div>
+                    <label className="f-mono text-xs text-ink-2 block mb-1">WABA ID (opcional)</label>
+                    <input type="text" value={form.wabaId}
+                      onChange={(e) => setForm(f => ({ ...f, wabaId: e.target.value }))}
+                      placeholder="987654321098765"
+                      className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="f-mono text-xs text-ink-2 block mb-1">Access Token permanent *</label>
+                    <input type="password" required value={form.accessToken}
+                      onChange={(e) => setForm(f => ({ ...f, accessToken: e.target.value }))}
+                      placeholder="EAAxxxxxxxxxx..."
+                      className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+                    <p className="f-mono text-[10px] text-ink-3 mt-1">System User Access Token del Meta Business Manager</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <AMGButton type="submit" size="sm" loading={saving}>Desar</AMGButton>
+                  <AMGButton type="button" size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel·lar</AMGButton>
+                </div>
+              </form>
+            )}
+
+            {/* Status details */}
+            {wabaConfig && !showForm && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {wabaConfig.displayPhoneNumber && (
+                    <div>
+                      <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Número</div>
+                      <div className="text-sm text-ink-1 font-semibold">{wabaConfig.displayPhoneNumber}</div>
+                    </div>
+                  )}
+                  {wabaConfig.businessName && (
+                    <div>
+                      <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Negoci</div>
+                      <div className="text-sm text-ink-1">{wabaConfig.businessName}</div>
+                    </div>
+                  )}
+                  {wabaConfig.phoneNumberId && (
+                    <div>
+                      <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Phone Number ID</div>
+                      <div className="f-mono text-xs text-ink-2 truncate">{wabaConfig.phoneNumberId}</div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {wabaConfig.status === 'PENDING' && (
+                    <AMGButton size="sm" icon={I.Zap} onClick={handleVerify} loading={verifying}>
+                      Verificar connexió
+                    </AMGButton>
+                  )}
+                  {wabaConfig.status === 'ERROR' && (
+                    <AMGButton size="sm" icon={I.Zap} onClick={handleVerify} loading={verifying}>
+                      Reintentar verificació
+                    </AMGButton>
+                  )}
+                  {wabaConfig.status !== 'DISCONNECTED' && (
+                    <AMGButton size="sm" variant="ghost" onClick={handleDisconnect}>
+                      Desconnectar
+                    </AMGButton>
+                  )}
+                </div>
+                {wabaConfig.status === 'CONNECTED' && (
+                  <form onSubmit={handleTest} className="flex gap-2 items-end">
+                    <div className="flex-1">
+                      <label className="f-mono text-xs text-ink-3 block mb-1">Número de prova (E.164)</label>
+                      <input type="text" value={testPhone}
+                        onChange={(e) => setTestPhone(e.target.value)}
+                        placeholder="+34612345678"
+                        className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]" />
+                    </div>
+                    <AMGButton type="submit" size="sm" variant="secondary" loading={sendingTest}>
+                      Enviar prova
+                    </AMGButton>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {!wabaConfig && !showForm && (
+              <div className="text-center py-6">
+                <I.Smartphone size={28} stroke="#64748b" className="mx-auto mb-3" />
+                <p className="text-sm text-ink-2 mb-3">Meta Business Suite no configurat per aquest tenant.</p>
+                <AMGButton size="sm" onClick={() => setShowForm(true)}>Configurar Meta</AMGButton>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1292,7 +1348,7 @@ function GoCardlessCard({ tenantId }: { tenantId: string }) {
   return (
     <div className="amg-card card-clip">
       <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
-        <AMGSectionTitle eyebrow="Spec 09b" title="GoCardless — SEPA Directe" />
+        <AMGSectionTitle eyebrow="Pagament" title="GoCardless — SEPA Directe" />
         <div className="flex items-center gap-2">
           {gcConfig?.isActive
             ? <span className="f-mono text-[10px] px-2 py-1 rounded bg-[rgba(57,211,83,0.12)] text-[#39d353] border border-[rgba(57,211,83,0.3)]">● Configurat</span>
@@ -2391,7 +2447,7 @@ export default function TenantDetailPage() {
         {/* Facturació */}
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base">
-            <AMGSectionTitle eyebrow="Facturació" title="Compte gratuït" />
+            <AMGSectionTitle eyebrow="Compte" title="Compte gratuït" />
           </div>
           <div className="p-5">
             <button
@@ -2429,7 +2485,6 @@ export default function TenantDetailPage() {
             <div className="flex items-center gap-2">
               <AMGButton size="sm" variant="ghost" icon={I.Layers} onClick={() => setShowAddPhase(true)}>Fase</AMGButton>
               <AMGButton size="sm" variant="ghost" icon={I.Zap} onClick={() => setShowAddService(true)}>Servei</AMGButton>
-              <AMGButton size="sm" icon={I.Plus} onClick={() => setShowAssignProfile(true)}>Perfil</AMGButton>
             </div>
           </div>
           {loadingSetup ? (
@@ -2458,7 +2513,7 @@ export default function TenantDetailPage() {
         {/* Pressupostos */}
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
-            <AMGSectionTitle eyebrow="Spec 07" title="Pressupostos" />
+            <AMGSectionTitle eyebrow="Facturació" title="Pressupostos" />
             <AMGButton size="sm" icon={I.Plus} onClick={() => setShowNewBudget(true)}>
               Nou pressupost
             </AMGButton>
