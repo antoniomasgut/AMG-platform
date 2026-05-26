@@ -69,6 +69,8 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 - AES-256 (Jasypt) per a credencials de clients
 - PostgreSQL (schema per tenant), Redis (JWT + rate limiting), MinIO (assets)
 - Build: Maven
+- **Email transaccional**: Brevo EU REST API (`POST https://api.brevo.com/v3/smtp/email`, header `api-key:`). Clau: `BREVO_API_KEY` a `SystemConfigService`. **NO** usar `JavaMailSender` ni Resend.
+- **`jakarta.mail`** (standalone `org.eclipse.angus:angus-mail`) — ONLY per al verificador SMTP del Vault; no és per a email transaccional
 
 ### Frontend
 - Next.js 14 App Router, Tailwind CSS
@@ -79,6 +81,15 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 ### Infra
 - Hetzner VPS, Coolify + Docker, Traefik (SSL via Let's Encrypt)
 - n8n self-hosted, alertes via Telegram Bot
+
+### Stack de comunicació (canals d'agents)
+| Canal | Proveïdor | Clau(s) necessàries |
+|-------|-----------|---------------------|
+| WhatsApp Business | Twilio REST API | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` |
+| WhatsApp Business (Meta Cloud) | Meta Graph API | `whatsappMetaPhoneNumberId` per tenant + `WHATSAPP_WEBHOOK_SECRET` |
+| Email transaccional | Brevo EU | `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` |
+| Notificacions internes | Telegram Bot API | `TELEGRAM_BOT_TOKEN` |
+| Agents IA | Claude API (Anthropic) | `ANTHROPIC_API_KEY` |
 
 ### Models IA
 - **Claude (Sonnet 4.6):** Arquitectura, specs, decisions, seguretat, debugging complex, i tot el que requereixi judici
