@@ -1,7 +1,6 @@
 package com.amg.digitalitzacio.billing.application;
 
-import com.amg.digitalitzacio.auth.domain.SectorPricingRepository;
-import com.amg.digitalitzacio.auth.domain.TenantRepository;
+import com.amg.digitalitzacio.auth.domain.*;
 import com.amg.digitalitzacio.billing.api.dto.*;
 import com.amg.digitalitzacio.billing.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
@@ -42,7 +41,7 @@ public class BillingOrchestrator implements BillingService {
     private final InvoiceService invoiceService;
     private final PaymentService paymentService;
     private final TenantRepository tenantRepository;
-    private final SectorPricingRepository sectorPricingRepository;
+    private final SectorPhaseRepository sectorPhaseRepository;
 
     @Override
     @Transactional
@@ -51,37 +50,35 @@ public class BillingOrchestrator implements BillingService {
         var lines = new ArrayList<BudgetLine>();
 
         if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
-            // Mode NexeLocal: preus des de sector_pricing
-            // Sector/mida del request té prioritat; si no, s'usa el del tenant
-            var pricing = resolvePricing(tenantId, request.sector(), request.businessSize());
-
+            // Mode NexeLocal: preus per fase des de sector_phases (independents, no ordinals)
+            var sector = resolveSector(tenantId, request.sector());
             var sortedPhases = request.phaseNumbers().stream().sorted().toList();
-            // setupFn[i] = setup per la fase en posició ordinal i (F1=setupPrice, F2..F5=setupFn)
-            var setupFn = pricing != null
-                    ? new BigDecimal[]{ pricing.getSetupPrice(),
-                            safe(pricing.getSetupF2()), safe(pricing.getSetupF3()),
-                            safe(pricing.getSetupF4()), safe(pricing.getSetupF5()) }
-                    : new BigDecimal[]{ BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-                                        BigDecimal.ZERO, BigDecimal.ZERO };
-            var priceFn = pricing != null
-                    ? new BigDecimal[]{ pricing.getPriceF1(), pricing.getPriceF2(),
-                                        pricing.getPriceF3(), pricing.getPriceF4(), pricing.getPriceF5() }
-                    : new BigDecimal[]{ BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-                                        BigDecimal.ZERO, BigDecimal.ZERO };
 
             for (int i = 0; i < sortedPhases.size(); i++) {
                 var pn = sortedPhases.get(i);
-                // Cada fase té el seu propi setup (posició ordinal i)
-                var setupLine = (i < setupFn.length && setupFn[i] != null) ? setupFn[i] : BigDecimal.ZERO;
-                // Posició ordinal: 1a fase seleccionada → priceF1, 2a → priceF2, etc.
-                var monthly = (i < priceFn.length && priceFn[i] != null) ? priceFn[i] : BigDecimal.ZERO;
+                var phaseData = sector != null
+                        ? sectorPhaseRepository.findBySectorAndPhaseNumber(sector, pn).orElse(null)
+                        : null;
+                var setupLine = phaseData != null ? phaseData.getSetupPrice() : BigDecimal.ZERO;
+                var monthly = phaseData != null ? phaseData.getMonthlyPrice() : BigDecimal.ZERO;
+                var name = phaseData != null ? "F" + pn + " · " + phaseData.getName()
+                        : PHASE_NAMES.getOrDefault(pn, "Fase " + pn);
                 subtotal = subtotal.add(setupLine);
                 lines.add(BudgetLine.builder()
-                        .phaseNumber(pn)
-                        .serviceName(PHASE_NAMES.getOrDefault(pn, "Fase " + pn))
+                        .phaseNumber(pn).serviceName(name)
                         .unitPrice(setupLine).total(setupLine)
-                        .monthlyPrice(monthly)
-                        .sortOrder(i)
+                        .monthlyPrice(monthly).sortOrder(i)
+                        .build());
+            }
+
+            // Add-on worker tier (si no és AUTONOMO)
+            var tierAddon = resolveWorkerTier(tenantId, request.businessSize());
+            if (tierAddon.setup().compareTo(BigDecimal.ZERO) > 0) {
+                subtotal = subtotal.add(tierAddon.setup());
+                lines.add(BudgetLine.builder()
+                        .serviceName("Add-on equip — " + tierAddon.name().toLowerCase())
+                        .unitPrice(tierAddon.setup()).total(tierAddon.setup())
+                        .monthlyPrice(tierAddon.monthly()).sortOrder(lines.size())
                         .build());
             }
         } else {
@@ -200,32 +197,33 @@ public class BillingOrchestrator implements BillingService {
         var lines = new ArrayList<BudgetLine>();
 
         if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
-            var pricing = resolvePricing(budget.getTenantId(), request.sector(), request.businessSize());
-
+            var sector = resolveSector(budget.getTenantId(), request.sector());
             var sortedPhases = request.phaseNumbers().stream().sorted().toList();
-            var setupFn = pricing != null
-                    ? new BigDecimal[]{ pricing.getSetupPrice(),
-                            safe(pricing.getSetupF2()), safe(pricing.getSetupF3()),
-                            safe(pricing.getSetupF4()), safe(pricing.getSetupF5()) }
-                    : new BigDecimal[]{ BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-                                        BigDecimal.ZERO, BigDecimal.ZERO };
-            var priceFn = pricing != null
-                    ? new BigDecimal[]{ pricing.getPriceF1(), pricing.getPriceF2(),
-                                        pricing.getPriceF3(), pricing.getPriceF4(), pricing.getPriceF5() }
-                    : new BigDecimal[]{ BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-                                        BigDecimal.ZERO, BigDecimal.ZERO };
 
             for (int i = 0; i < sortedPhases.size(); i++) {
                 var pn = sortedPhases.get(i);
-                var setupLine = (i < setupFn.length && setupFn[i] != null) ? setupFn[i] : BigDecimal.ZERO;
-                var monthly = (i < priceFn.length && priceFn[i] != null) ? priceFn[i] : BigDecimal.ZERO;
+                var phaseData = sector != null
+                        ? sectorPhaseRepository.findBySectorAndPhaseNumber(sector, pn).orElse(null)
+                        : null;
+                var setupLine = phaseData != null ? phaseData.getSetupPrice() : BigDecimal.ZERO;
+                var monthly = phaseData != null ? phaseData.getMonthlyPrice() : BigDecimal.ZERO;
+                var name = phaseData != null ? "F" + pn + " · " + phaseData.getName()
+                        : PHASE_NAMES.getOrDefault(pn, "Fase " + pn);
                 subtotal = subtotal.add(setupLine);
                 lines.add(BudgetLine.builder().budgetId(budgetId)
-                        .phaseNumber(pn)
-                        .serviceName(PHASE_NAMES.getOrDefault(pn, "Fase " + pn))
+                        .phaseNumber(pn).serviceName(name)
                         .unitPrice(setupLine).total(setupLine)
-                        .monthlyPrice(monthly)
-                        .sortOrder(i)
+                        .monthlyPrice(monthly).sortOrder(i)
+                        .build());
+            }
+
+            var tierAddon = resolveWorkerTier(budget.getTenantId(), request.businessSize());
+            if (tierAddon.setup().compareTo(BigDecimal.ZERO) > 0) {
+                subtotal = subtotal.add(tierAddon.setup());
+                lines.add(BudgetLine.builder().budgetId(budgetId)
+                        .serviceName("Add-on equip — " + tierAddon.name().toLowerCase())
+                        .unitPrice(tierAddon.setup()).total(tierAddon.setup())
+                        .monthlyPrice(tierAddon.monthly()).sortOrder(lines.size())
                         .build());
             }
         } else {
@@ -427,26 +425,22 @@ public class BillingOrchestrator implements BillingService {
         return String.format("BUD-%d-%04d", year, count);
     }
 
-    // Lookup de sector_pricing: primer usa el sector/mida del request; si no, els del tenant
-    private com.amg.digitalitzacio.auth.domain.SectorPricing resolvePricing(
-            UUID tenantId, String reqSector, String reqBusinessSize) {
-        if (reqSector != null && reqBusinessSize != null) {
-            try {
-                return sectorPricingRepository.findBySectorAndBusinessSize(
-                        com.amg.digitalitzacio.auth.domain.BusinessSector.valueOf(reqSector.toUpperCase()),
-                        com.amg.digitalitzacio.auth.domain.BusinessSize.valueOf(reqBusinessSize.toUpperCase()))
-                        .orElse(null);
-            } catch (IllegalArgumentException ignored) {}
+    private BusinessSector resolveSector(UUID tenantId, String reqSector) {
+        if (reqSector != null) {
+            try { return BusinessSector.valueOf(reqSector.toUpperCase()); }
+            catch (IllegalArgumentException ignored) {}
         }
-        var tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found: " + tenantId));
-        if (tenant.getSector() == null || tenant.getBusinessSize() == null) return null;
-        return sectorPricingRepository.findBySectorAndBusinessSize(
-                tenant.getSector(), tenant.getBusinessSize()).orElse(null);
+        return tenantRepository.findById(tenantId).map(Tenant::getSector).orElse(null);
     }
 
-    private static BigDecimal safe(BigDecimal v) {
-        return v != null ? v : BigDecimal.ZERO;
+    private WorkerTierAddon resolveWorkerTier(UUID tenantId, String reqSize) {
+        if (reqSize != null) {
+            try { return WorkerTierAddon.from(BusinessSize.valueOf(reqSize.toUpperCase())); }
+            catch (IllegalArgumentException ignored) {}
+        }
+        return tenantRepository.findById(tenantId)
+                .map(t -> WorkerTierAddon.from(t.getBusinessSize()))
+                .orElse(WorkerTierAddon.AUTONOMO);
     }
 
     private Budget findBudget(UUID id) {

@@ -13,6 +13,8 @@ import {
   getGoCardlessConfig, getGoCardlessMandate, initiateGoCardlessMandate, cancelGoCardlessMandate,
   listGoCardlessPayments, configureGoCardless,
   SECTOR_LABELS, SIZE_LABELS, SECTOR_SIZES, PHASE_LABELS, PHASE_UPGRADE_PRICE,
+  listSectorPhases,
+  type SectorPhaseResponse,
   type TenantResponse, type TenantSetup, type CatalogService, type CatalogPhaseResponse,
   type CatalogProfileResponse, type SectorPricingResponse, type ChannelsConfig, type AIConfig, type ModelInfo,
   type GoCardlessConfig, type GoCardlessMandate,
@@ -46,6 +48,17 @@ const NEXE_PHASE_NAMES: Record<number, string> = {
   3: 'Pressupostos',
   4: 'Fidelització',
   5: 'Equip',
+};
+
+const WORKER_ADDONS: Record<string, { setup: number; monthly: number }> = {
+  AUTONOMO: { setup: 0, monthly: 0 },
+  PETIT:    { setup: 99, monthly: 20 },
+  MITJA:    { setup: 199, monthly: 35 },
+  EMPRESA:  { setup: 299, monthly: 50 },
+};
+
+const DEP_BADGE: Record<string, string> = {
+  BASE: '🔵', REQUIRED: '🔴', OPTIONAL: '🟡',
 };
 
 function statusBadge(status: string, activeLabel: string, inactiveLabel: string) {
@@ -1430,16 +1443,16 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
   onCreated: () => void;
 }) {
   const { toast } = useToast();
-  const isNexeLocal = !!(tenant?.sector && tenant?.businessSize);
+  const isNexeLocal = !!tenant?.sector;
 
   // Sector/size state — default to tenant values but editable
   const [budgetSector, setBudgetSector] = useState(tenant?.sector ?? '');
   const [budgetSize, setBudgetSize] = useState(tenant?.businessSize ?? '');
 
-  const { data: pricing } = useQuery({
-    queryKey: ['pricing', budgetSector, budgetSize],
-    queryFn: () => lookupSectorPricing(budgetSector, budgetSize),
-    enabled: !!(budgetSector && budgetSize),
+  const { data: sectorPhases, isLoading: loadingPhases } = useQuery({
+    queryKey: ['sector-phases', budgetSector],
+    queryFn: () => listSectorPhases(budgetSector),
+    enabled: !!budgetSector,
   });
 
   // NexeLocal state
@@ -1459,15 +1472,18 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
   const profiles = setup?.profiles ?? [];
   const selectedProfile = profiles.find(p => p.profile.id === selectedProfileId);
 
-  const priceFns = pricing ? [pricing.priceF1, pricing.priceF2, pricing.priceF3, pricing.priceF4, pricing.priceF5] : [];
-  const setupFns = pricing ? [pricing.setupPrice, pricing.setupF2 ?? 0, pricing.setupF3 ?? 0, pricing.setupF4 ?? 0, pricing.setupF5 ?? 0] : [];
+  const phaseMap = new Map((sectorPhases ?? []).map((p: SectorPhaseResponse) => [p.phaseNumber, p]));
   const selectedPhasesArr = Array.from(selectedPhaseNums).sort((a, b) => a - b);
-  const nexeLocalMonthly = selectedPhasesArr.reduce((sum, _pn, i) => sum + (priceFns[i] ?? 0), 0);
-  const nexeLocalSetup = selectedPhasesArr.reduce((sum, _pn, i) => sum + (setupFns[i] ?? 0), 0);
+  const phasesMonthly = selectedPhasesArr.reduce((sum, pn) => sum + (phaseMap.get(pn)?.monthlyPrice ?? 0), 0);
+  const phasesSetup = selectedPhasesArr.reduce((sum, pn) => sum + (phaseMap.get(pn)?.setupPrice ?? 0), 0);
+  const tierAddon = WORKER_ADDONS[budgetSize] ?? { setup: 0, monthly: 0 };
+  const nexeLocalSetup = phasesSetup + tierAddon.setup;
+  const nexeLocalMonthly = phasesMonthly + tierAddon.monthly;
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isNexeLocal) {
+      if (!budgetSector) { toast('error', 'Selecciona el tipus d\'empresa'); return; }
       if (selectedPhaseNums.size === 0) { toast('error', 'Selecciona almenys una fase'); return; }
     } else {
       if (!selectedProfileId) { toast('error', 'Selecciona un perfil'); return; }
@@ -1542,29 +1558,33 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
               </div>
 
               <div>
-                <label className={lbl}>Fases NexeLocal</label>
-                {!(budgetSector && budgetSize) ? (
-                  <p className="text-sm text-ink-3 italic">Selecciona primer el tipus d&apos;empresa i la mida</p>
-                ) : !pricing ? (
-                  <p className="text-sm text-ink-3">Carregant preus…</p>
+                <label className={lbl}>Fases</label>
+                {!budgetSector ? (
+                  <p className="text-sm text-ink-3 italic">Selecciona primer el tipus d&apos;empresa</p>
+                ) : loadingPhases ? (
+                  <p className="text-sm text-ink-3">Carregant fases…</p>
+                ) : !sectorPhases?.length ? (
+                  <p className="text-sm text-ink-3 italic">Cap fase disponible per a aquest sector</p>
                 ) : (
                   <div className="space-y-2">
-                    {[1, 2, 3, 4, 5].map((pn) => {
-                      const ordinal = selectedPhasesArr.filter(x => x < pn).length;
-                      const monthly = priceFns[ordinal] ?? 0;
-                      const setup = setupFns[ordinal] ?? 0;
-                      const checked = selectedPhaseNums.has(pn);
+                    {sectorPhases.map((phase: SectorPhaseResponse) => {
+                      const checked = selectedPhaseNums.has(phase.phaseNumber);
+                      const badge = DEP_BADGE[phase.dependencyType] ?? '';
                       return (
-                        <label key={pn} className={`flex items-center gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
+                        <label key={phase.phaseNumber} className={`flex items-start gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
                           <input type="checkbox" checked={checked}
-                            onChange={() => setSelectedPhaseNums(prev => { const s = new Set(prev); s.has(pn) ? s.delete(pn) : s.add(pn); return s; })}
-                            className="accent-[#FF6B00]" />
+                            onChange={() => setSelectedPhaseNums(prev => { const s = new Set(prev); s.has(phase.phaseNumber) ? s.delete(phase.phaseNumber) : s.add(phase.phaseNumber); return s; })}
+                            className="accent-[#FF6B00] mt-0.5" />
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium">F{pn} · {NEXE_PHASE_NAMES[pn]}</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs leading-none">{badge}</span>
+                              <span className="text-sm font-medium">F{phase.phaseNumber} · {phase.name}</span>
+                            </div>
+                            <div className="text-xs text-ink-3 mt-0.5 line-clamp-2">{phase.description}</div>
                             {checked && (
-                              <div className="text-xs text-ink-3 f-mono flex gap-3">
-                                <span>Setup: {fmt(setup)}</span>
-                                <span>{fmt(monthly)}/mes</span>
+                              <div className="text-xs text-ink-3 f-mono flex gap-3 mt-1">
+                                <span>Setup: {fmt(phase.setupPrice)}</span>
+                                <span>{fmt(phase.monthlyPrice)}/mes</span>
                               </div>
                             )}
                           </div>
@@ -1572,14 +1592,19 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
                       );
                     })}
                     {selectedPhaseNums.size > 0 && (
-                      <div className="mt-2 p-3 rounded bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.2)] grid grid-cols-2 gap-2">
-                        <div>
-                          <div className="text-xs text-ink-3">Setup total</div>
-                          <div className="text-sm font-bold f-mono text-white">{fmt(nexeLocalSetup)}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-ink-3">Mensual</div>
-                          <div className="text-sm font-bold f-mono text-[#FF6B00]">{fmt(nexeLocalMonthly)}/mes</div>
+                      <div className="mt-2 p-3 rounded bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.2)] space-y-1.5">
+                        {tierAddon.setup > 0 && (
+                          <div className="text-xs text-ink-3">Add-on equip ({SIZE_LABELS[budgetSize] ?? budgetSize}): +{fmt(tierAddon.setup)} setup, +{fmt(tierAddon.monthly)}/mes</div>
+                        )}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <div className="text-xs text-ink-3">Setup total</div>
+                            <div className="text-sm font-bold f-mono text-white">{fmt(nexeLocalSetup)}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-ink-3">Mensual</div>
+                            <div className="text-sm font-bold f-mono text-[#FF6B00]">{fmt(nexeLocalMonthly)}/mes</div>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1698,10 +1723,10 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
   const [editBudgetSector, setEditBudgetSector] = useState(budget.sector ?? tenant?.sector ?? '');
   const [editBudgetSize, setEditBudgetSize] = useState(budget.businessSize ?? tenant?.businessSize ?? '');
 
-  const { data: pricing } = useQuery({
-    queryKey: ['pricing', editBudgetSector, editBudgetSize],
-    queryFn: () => lookupSectorPricing(editBudgetSector, editBudgetSize),
-    enabled: !!(editBudgetSector && editBudgetSize),
+  const { data: editSectorPhases, isLoading: editLoadingPhases } = useQuery({
+    queryKey: ['sector-phases', editBudgetSector],
+    queryFn: () => listSectorPhases(editBudgetSector),
+    enabled: !!editBudgetSector,
   });
 
   const isDraft = budget.status === 'DRAFT';
@@ -1713,11 +1738,13 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
   const profiles = setup?.profiles ?? [];
   const editProfile = profiles.find(p => p.profile.id === editProfileId);
 
-  const priceFns = pricing ? [pricing.priceF1, pricing.priceF2, pricing.priceF3, pricing.priceF4, pricing.priceF5] : [];
-  const setupFns = pricing ? [pricing.setupPrice, pricing.setupF2 ?? 0, pricing.setupF3 ?? 0, pricing.setupF4 ?? 0, pricing.setupF5 ?? 0] : [];
+  const editPhaseMap = new Map((editSectorPhases ?? []).map((p: SectorPhaseResponse) => [p.phaseNumber, p]));
   const editPhasesArr = Array.from(editPhaseNums).sort((a, b) => a - b);
-  const editMonthly = editPhasesArr.reduce((sum, _pn, i) => sum + (priceFns[i] ?? 0), 0);
-  const editSetup = editPhasesArr.reduce((sum, _pn, i) => sum + (setupFns[i] ?? 0), 0);
+  const editPhasesMonthly = editPhasesArr.reduce((sum, pn) => sum + (editPhaseMap.get(pn)?.monthlyPrice ?? 0), 0);
+  const editPhasesSetup = editPhasesArr.reduce((sum, pn) => sum + (editPhaseMap.get(pn)?.setupPrice ?? 0), 0);
+  const editTierAddon = WORKER_ADDONS[editBudgetSize] ?? { setup: 0, monthly: 0 };
+  const editSetup = editPhasesSetup + editTierAddon.setup;
+  const editMonthly = editPhasesMonthly + editTierAddon.monthly;
 
   const handleSend = async () => {
     setSending(true);
@@ -1971,37 +1998,48 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
                     </div>
                   </div>
                   <div>
-                    <label className={labelCls}>Fases NexeLocal</label>
-                    <div className="space-y-2">
-                      {[1, 2, 3, 4, 5].map((pn) => {
-                        const ordinal = editPhasesArr.filter(x => x < pn).length;
-                        const monthly = priceFns[ordinal] ?? 0;
-                        const setup = setupFns[ordinal] ?? 0;
-                        const checked = editPhaseNums.has(pn);
-                        return (
-                          <label key={pn} className={`flex items-center gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
-                            <input type="checkbox" checked={checked}
-                              onChange={() => setEditPhaseNums(prev => { const s = new Set(prev); s.has(pn) ? s.delete(pn) : s.add(pn); return s; })}
-                              className="accent-[#FF6B00]" />
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium">F{pn} · {NEXE_PHASE_NAMES[pn]}</div>
-                              {checked && (
-                                <div className="text-xs text-ink-3 f-mono flex gap-3">
-                                  <span>Setup: {fmt(setup)}</span>
-                                  <span>{fmt(monthly)}/mes</span>
+                    <label className={labelCls}>Fases</label>
+                    {editLoadingPhases ? (
+                      <p className="text-sm text-ink-3">Carregant fases…</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {(editSectorPhases ?? []).map((phase: SectorPhaseResponse) => {
+                          const checked = editPhaseNums.has(phase.phaseNumber);
+                          const badge = DEP_BADGE[phase.dependencyType] ?? '';
+                          return (
+                            <label key={phase.phaseNumber} className={`flex items-start gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
+                              <input type="checkbox" checked={checked}
+                                onChange={() => setEditPhaseNums(prev => { const s = new Set(prev); s.has(phase.phaseNumber) ? s.delete(phase.phaseNumber) : s.add(phase.phaseNumber); return s; })}
+                                className="accent-[#FF6B00] mt-0.5" />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs leading-none">{badge}</span>
+                                  <span className="text-sm font-medium">F{phase.phaseNumber} · {phase.name}</span>
                                 </div>
-                              )}
+                                <div className="text-xs text-ink-3 mt-0.5 line-clamp-2">{phase.description}</div>
+                                {checked && (
+                                  <div className="text-xs text-ink-3 f-mono flex gap-3 mt-1">
+                                    <span>Setup: {fmt(phase.setupPrice)}</span>
+                                    <span>{fmt(phase.monthlyPrice)}/mes</span>
+                                  </div>
+                                )}
+                              </div>
+                            </label>
+                          );
+                        })}
+                        {editPhaseNums.size > 0 && (
+                          <div className="p-3 rounded bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.2)] space-y-1.5">
+                            {editTierAddon.setup > 0 && (
+                              <div className="text-xs text-ink-3">Add-on equip ({SIZE_LABELS[editBudgetSize] ?? editBudgetSize}): +{fmt(editTierAddon.setup)} setup, +{fmt(editTierAddon.monthly)}/mes</div>
+                            )}
+                            <div className="grid grid-cols-2 gap-2">
+                              <div><div className="text-xs text-ink-3">Setup total</div><div className="text-sm font-bold f-mono text-white">{fmt(editSetup)}</div></div>
+                              <div><div className="text-xs text-ink-3">Mensual</div><div className="text-sm font-bold f-mono text-[#FF6B00]">{fmt(editMonthly)}/mes</div></div>
                             </div>
-                          </label>
-                        );
-                      })}
-                      {editPhaseNums.size > 0 && pricing && (
-                        <div className="p-3 rounded bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.2)] grid grid-cols-2 gap-2">
-                          <div><div className="text-xs text-ink-3">Setup total</div><div className="text-sm font-bold f-mono text-white">{fmt(editSetup)}</div></div>
-                          <div><div className="text-xs text-ink-3">Mensual</div><div className="text-sm font-bold f-mono text-[#FF6B00]">{fmt(editMonthly)}/mes</div></div>
-                        </div>
-                      )}
-                    </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (

@@ -313,6 +313,8 @@ export const SECTOR_SIZES: Record<string, string[]> = {
   TALLER_MECANIC: ['PETIT', 'MITJA'],
   VETERINARI: ['AUTONOMO', 'PETIT'],
   PERRUQUERIA_CANINA: ['AUTONOMO'],
+  RESTAURANTE: ['AUTONOMO', 'PETIT', 'MITJA', 'EMPRESA'],
+  INMOBILIARIA: ['AUTONOMO', 'PETIT', 'MITJA', 'EMPRESA'],
 };
 
 export const SECTORS = [
@@ -321,9 +323,10 @@ export const SECTORS = [
   'PERRUQUERIA', 'ESTETICA',
   'GESTORIA', 'ACADEMIA',
   'TALLER_MECANIC', 'VETERINARI', 'PERRUQUERIA_CANINA',
+  'RESTAURANTE', 'INMOBILIARIA',
 ] as const;
 
-export const SIZES = ['AUTONOMO', 'PETIT', 'MITJA'] as const;
+export const SIZES = ['AUTONOMO', 'PETIT', 'MITJA', 'EMPRESA'] as const;
 export const PHASES = ['F1', 'F2', 'F3', 'F4', 'F5'] as const;
 
 export const SECTOR_LABELS: Record<string, string> = {
@@ -333,12 +336,14 @@ export const SECTOR_LABELS: Record<string, string> = {
   ESTETICA: 'Estètica', GESTORIA: 'Gestoria', ACADEMIA: 'Acadèmia',
   TALLER_MECANIC: 'Taller mecànic', VETERINARI: 'Veterinari',
   PERRUQUERIA_CANINA: 'Perruqueria canina',
+  RESTAURANTE: 'Restaurant / Bar', INMOBILIARIA: 'Immobiliària',
 };
 
 export const SIZE_LABELS: Record<string, string> = {
   AUTONOMO: 'Autònom (1 persona)',
   PETIT: 'Equip petit (2-3 persones)',
-  MITJA: 'Equip mitjà (3-5+ persones)',
+  MITJA: 'Equip mitjà (4-6 persones)',
+  EMPRESA: 'Empresa (7+ persones)',
 };
 
 export const PHASE_LABELS: Record<string, string> = {
@@ -387,6 +392,23 @@ export const listSectorPricing = () =>
 
 export const lookupSectorPricing = (sector: string, size: string) =>
   apiFetch<SectorPricingResponse>(`/pricing/lookup?sector=${sector}&size=${size}`);
+
+export interface SectorPhaseResponse {
+  sector: string;
+  phaseNumber: number;
+  name: string;
+  description: string;
+  dependencyType: 'BASE' | 'OPTIONAL' | 'REQUIRED';
+  requiredPhases: number[];
+  setupPrice: number;
+  monthlyPrice: number;
+}
+
+export const listSectorPhases = (sector: string) =>
+  apiFetch<SectorPhaseResponse[]>(`/pricing/phases?sector=${sector}`);
+
+export const listWorkerTiers = () =>
+  apiFetch<{ size: string; label: string; setupAddon: number; monthlyAddon: number }[]>('/pricing/worker-tiers');
 
 export const getSectorPromptTemplate = (sector: string) =>
   apiFetch<{ sector: string; template: string }>(`/prompts/sector/${sector}`);
