@@ -11,7 +11,8 @@ export interface UserResponse {
 export interface TenantResponse {
   id: string; name: string; slug: string;
   email: string | null; phone: string | null;
-  address: string | null;
+  address: string | null; nif: string | null; contactPhone: string | null;
+  preferredChannel: string | null;
   sector: string | null; businessSize: string | null; contractedPhases: string[] | null;
   agentSystemPrompt: string | null;
   isActive: boolean; isFree: boolean; createdAt: string;
@@ -38,7 +39,8 @@ export interface CreateTenantRequest {
 }
 
 export interface UpdateTenantRequest {
-  name?: string; email?: string; phone?: string; address?: string;
+  name?: string; slug?: string; email?: string; phone?: string;
+  address?: string; nif?: string; contactPhone?: string;
   isActive?: boolean; isFree?: boolean; agentSystemPrompt?: string;
   sector?: string | null; businessSize?: string | null; contractedPhases?: string[] | null;
 }

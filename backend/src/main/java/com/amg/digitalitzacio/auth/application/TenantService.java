@@ -213,6 +213,6 @@ public class TenantService {
                 tenant.getBusinessSize() != null ? tenant.getBusinessSize().name() : null,
                 fromPhaseString(tenant.getContractedPhases()),
                 tenant.getAgentSystemPrompt(),
-                tenant.getIsActive(), Boolean.TRUE.equals(tenant.getIsFree()), tenant.getCreatedAt());
+                Boolean.TRUE.equals(tenant.getIsActive()), Boolean.TRUE.equals(tenant.getIsFree()), tenant.getCreatedAt());
     }
 }

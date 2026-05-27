@@ -33,10 +33,15 @@ target/
 # Playwright
 /playwright-report/
 /test-results/
+frontend/playwright-report*/
+frontend/test-results/
 
 # Docker / Infra secrets
 infra/traefik/certs/
 .env.prod
+.env.dev
+.env.production
+*/.env.production
 
 # Next.js build
 frontend/.next/

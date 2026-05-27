@@ -2262,6 +2262,35 @@ export default function TenantDetailPage() {
   const [selectedBudget, setSelectedBudget] = useState<BudgetResponse | null>(null);
   const [togglingFree, setTogglingFree] = useState(false);
   const [togglingActive, setTogglingActive] = useState(false);
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [savingInfo, setSavingInfo] = useState(false);
+  const [infoForm, setInfoForm] = useState({ name: '', nif: '', email: '', phone: '', address: '', contactPhone: '' });
+
+  const openEditInfo = (t: TenantResponse) => {
+    setInfoForm({ name: t.name, nif: t.nif ?? '', email: t.email ?? '', phone: t.phone ?? '', address: t.address ?? '', contactPhone: t.contactPhone ?? '' });
+    setEditingInfo(true);
+  };
+
+  const saveInfo = async () => {
+    setSavingInfo(true);
+    try {
+      await updateTenant(id, {
+        name: infoForm.name || undefined,
+        nif: infoForm.nif || undefined,
+        email: infoForm.email || undefined,
+        phone: infoForm.phone || undefined,
+        address: infoForm.address || undefined,
+        contactPhone: infoForm.contactPhone || undefined,
+      });
+      qc.invalidateQueries({ queryKey: ['tenant', id] });
+      toast('success', 'Dades actualitzades');
+      setEditingInfo(false);
+    } catch {
+      toast('error', 'Error desant les dades');
+    } finally {
+      setSavingInfo(false);
+    }
+  };
 
   const toggleActive = async (current: boolean) => {
     setTogglingActive(true);
@@ -2444,6 +2473,63 @@ export default function TenantDetailPage() {
           <div className="card-clip amg-card p-5">
             <span className="f-mono uppercase text-label tracking-widest text-ink-3">Serveis actius</span>
             <div className="f-display font-bold text-2xl text-accent-light mt-2">{serviceCount}</div>
+          </div>
+        </div>
+
+        {/* Dades d'identificació */}
+        <div className="amg-card card-clip">
+          <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
+            <AMGSectionTitle eyebrow="Identificació" title="Dades d'identificació" />
+            {!editingInfo ? (
+              <AMGButton size="sm" variant="ghost" icon={I.Edit} onClick={() => openEditInfo(tenant)}>
+                Editar
+              </AMGButton>
+            ) : (
+              <div className="flex gap-2">
+                <AMGButton size="sm" variant="ghost" onClick={() => setEditingInfo(false)}>Cancel·lar</AMGButton>
+                <AMGButton size="sm" loading={savingInfo} onClick={saveInfo}>Desar</AMGButton>
+              </div>
+            )}
+          </div>
+          <div className="p-5">
+            {editingInfo ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  { key: 'name', label: 'Nom empresa', placeholder: 'Empresa SL' },
+                  { key: 'nif', label: 'NIF / CIF', placeholder: 'B12345678' },
+                  { key: 'email', label: 'Correu electrònic', placeholder: 'contacte@empresa.com' },
+                  { key: 'phone', label: 'Telèfon', placeholder: '+34612345678' },
+                  { key: 'contactPhone', label: 'Telèfon de contacte', placeholder: '+34612345678' },
+                  { key: 'address', label: 'Adreça', placeholder: 'Carrer Exemple, 1' },
+                ].map(({ key, label, placeholder }) => (
+                  <div key={key} className={key === 'address' ? 'sm:col-span-2' : ''}>
+                    <label className="f-mono text-[10px] uppercase tracking-wider text-ink-3 block mb-1.5">{label}</label>
+                    <input
+                      type="text"
+                      value={infoForm[key as keyof typeof infoForm]}
+                      onChange={(e) => setInfoForm(f => ({ ...f, [key]: e.target.value }))}
+                      placeholder={placeholder}
+                      className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00] placeholder:text-ink-3"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  { label: 'NIF / CIF', value: tenant.nif },
+                  { label: 'Correu electrònic', value: tenant.email },
+                  { label: 'Telèfon', value: tenant.phone },
+                  { label: 'Telèfon de contacte', value: tenant.contactPhone },
+                  { label: 'Adreça', value: tenant.address },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <div className="f-mono text-label uppercase text-ink-3 mb-1">{label}</div>
+                    <div className="text-sm text-ink-1">{value || <span className="text-ink-3 italic">—</span>}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

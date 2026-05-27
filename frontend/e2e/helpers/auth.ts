@@ -3,9 +3,9 @@ import { Page } from '@playwright/test';
 export const API_BASE = 'http://localhost:8080';
 
 export const USERS = {
-  superAdmin: { email: 'superadmin@test.com', password: 'admin123' },
-  admin:      { email: 'admin@test.com',       password: 'admin123' },
-  client:     { email: 'client@test.com',      password: 'admin123' },
+  superAdmin: { email: 'superadmin@test.com', password: 'changeme123' },
+  admin:      { email: 'admin@test.com',       password: 'changeme123' },
+  client:     { email: 'client@test.com',      password: 'changeme123' },
 };
 
 export async function loginViaAPI(page: Page, user = USERS.superAdmin): Promise<string> {
