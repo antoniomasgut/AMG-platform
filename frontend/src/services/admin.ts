@@ -517,6 +517,31 @@ export const sendWhatsAppTest = (tenantId: string, toPhone: string) =>
     body: JSON.stringify({ toPhone }),
   });
 
+// ─── Telegram Bot (per tenant) ───────────────────────────────────────────────
+
+export interface TelegramConfig {
+  id: string; tenantId: string;
+  botUsername: string | null;
+  status: 'PENDING' | 'CONNECTED' | 'ERROR' | 'DISCONNECTED';
+  webhookRegistered: boolean;
+  connectedAt: string | null; createdAt: string;
+}
+
+export const getTelegramConfig = (tenantId: string) =>
+  apiFetch<TelegramConfig>(`/telegram/tenants/${tenantId}/config`);
+
+export const connectTelegram = (tenantId: string, botToken: string) =>
+  apiFetch<TelegramConfig>(`/telegram/tenants/${tenantId}/connect`, {
+    method: 'POST',
+    body: JSON.stringify({ botToken }),
+  });
+
+export const verifyTelegram = (tenantId: string) =>
+  apiFetch<TelegramConfig>(`/telegram/tenants/${tenantId}/verify`, { method: 'POST' });
+
+export const disconnectTelegram = (tenantId: string) =>
+  apiFetch<void>(`/telegram/tenants/${tenantId}/config`, { method: 'DELETE' });
+
 // ─── Delete tenant (Spec 14) ──────────────────────────────────────────────────
 
 export interface DeleteTenantCheck {

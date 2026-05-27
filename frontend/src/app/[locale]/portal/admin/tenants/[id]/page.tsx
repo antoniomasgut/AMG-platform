@@ -20,6 +20,8 @@ import {
   type GoCardlessConfig, type GoCardlessMandate,
   type WhatsAppWabaConfig,
   getWhatsAppConfig, connectWhatsApp, verifyWhatsApp, disconnectWhatsApp, sendWhatsAppTest,
+  getTelegramConfig, connectTelegram, verifyTelegram, disconnectTelegram,
+  type TelegramConfig,
   checkTenantDeletion, deleteTenant,
   type DeleteTenantCheck,
   calcMonthly,
@@ -999,6 +1001,163 @@ const WA_STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'neutral
 const WA_STATUS_LABEL: Record<string, string> = {
   CONNECTED: 'Connectat', PENDING: 'Pendent', ERROR: 'Error', DISCONNECTED: 'Desconnectat',
 };
+
+function TelegramBotCard({ tenantId }: { tenantId: string }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [showForm, setShowForm] = useState(false);
+  const [botToken, setBotToken] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+
+  const { data: config, isLoading } = useQuery({
+    queryKey: ['tg-config', tenantId],
+    queryFn: () => getTelegramConfig(tenantId).catch(() => null),
+  });
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['tg-config', tenantId] });
+
+  const handleConnect = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await connectTelegram(tenantId, botToken);
+      toast('success', 'Bot configurat i webhook registrat');
+      setBotToken('');
+      setShowForm(false);
+      invalidate();
+    } catch {
+      toast('error', 'Error configurant el bot — comprova el token');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    setVerifying(true);
+    try {
+      await verifyTelegram(tenantId);
+      toast('success', 'Webhook re-registrat correctament');
+      invalidate();
+    } catch {
+      toast('error', 'Error verificant el bot — comprova que el token és vàlid');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!confirm('Eliminar la configuració del bot? El webhook deixarà de funcionar.')) return;
+    try {
+      await disconnectTelegram(tenantId);
+      toast('success', 'Bot desconnectat');
+      invalidate();
+    } catch {
+      toast('error', 'Error desconnectant el bot');
+    }
+  };
+
+  const statusTone: Record<string, 'success' | 'warning' | 'danger' | 'neutral'> = {
+    CONNECTED: 'success', PENDING: 'warning', ERROR: 'danger', DISCONNECTED: 'neutral',
+  };
+
+  return (
+    <div className="amg-card card-clip">
+      <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
+        <AMGSectionTitle eyebrow="Missatgeria" title="Telegram Bot" />
+        <div className="flex items-center gap-2">
+          {config && (
+            <AMGBadge tone={statusTone[config.status] ?? 'neutral'}>
+              {WA_STATUS_LABEL[config.status] ?? config.status}
+            </AMGBadge>
+          )}
+          <AMGButton size="sm" variant="ghost" onClick={() => setShowForm(v => !v)}>
+            {config ? 'Editar' : 'Configurar'}
+          </AMGButton>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-5">
+        {showForm && (
+          <form onSubmit={handleConnect} className="space-y-3 p-4 border border-border-base rounded bg-[rgba(255,255,255,0.02)]">
+            <div className="f-mono text-label uppercase text-ink-3 text-xs tracking-widest mb-2">
+              Token del bot (de @BotFather)
+            </div>
+            <div>
+              <label className="f-mono text-xs text-ink-2 block mb-1">Bot Token *</label>
+              <input
+                type="password"
+                required
+                value={botToken}
+                onChange={(e) => setBotToken(e.target.value)}
+                placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
+                className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]"
+              />
+              <p className="f-mono text-[10px] text-ink-3 mt-1">
+                Crea el bot amb @BotFather a Telegram i copia el token aquí
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <AMGButton type="submit" size="sm" loading={saving}>Desar i registrar webhook</AMGButton>
+              <AMGButton type="button" size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel·lar</AMGButton>
+            </div>
+          </form>
+        )}
+
+        {!isLoading && config && !showForm && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {config.botUsername && (
+                <div>
+                  <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Bot</div>
+                  <div className="text-sm text-ink-1 font-semibold">@{config.botUsername}</div>
+                </div>
+              )}
+              <div>
+                <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Webhook</div>
+                <div className="text-sm text-ink-1">{config.webhookRegistered ? '✓ Registrat' : '✗ No registrat'}</div>
+              </div>
+              {config.connectedAt && (
+                <div>
+                  <div className="f-mono text-label uppercase text-ink-3 text-[10px]">Connectat el</div>
+                  <div className="text-sm text-ink-1">{fmtDate(config.connectedAt)}</div>
+                </div>
+              )}
+            </div>
+            {config.botUsername && (
+              <div className="f-mono text-[10px] text-ink-3">
+                Enllaç del bot:{' '}
+                <a href={`https://t.me/${config.botUsername}`} target="_blank" rel="noopener noreferrer"
+                  className="text-accent-light hover:text-accent transition">
+                  t.me/{config.botUsername}
+                </a>
+              </div>
+            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              {(config.status === 'ERROR' || !config.webhookRegistered) && (
+                <AMGButton size="sm" icon={I.Zap} onClick={handleVerify} loading={verifying}>
+                  Re-registrar webhook
+                </AMGButton>
+              )}
+              <AMGButton size="sm" variant="ghost" onClick={handleDisconnect}>
+                Desconnectar
+              </AMGButton>
+            </div>
+          </div>
+        )}
+
+        {!isLoading && !config && !showForm && (
+          <div className="text-center py-6">
+            <I.Smartphone size={28} stroke="#64748b" className="mx-auto mb-3" />
+            <p className="text-sm text-ink-2 mb-3">Cap bot de Telegram configurat per aquest tenant.</p>
+            <p className="f-mono text-[10px] text-ink-3 mb-4">Crea un bot amb @BotFather i entra el token aquí. El webhook es registrarà automàticament.</p>
+            <AMGButton size="sm" onClick={() => setShowForm(true)}>Configurar bot</AMGButton>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 type WaProvider = 'TWILIO' | 'META';
 
@@ -2592,6 +2751,9 @@ export default function TenantDetailPage() {
 
         {/* Agent IA & Canals */}
         <AgentConfigCard tenantId={id} agentSystemPrompt={tenant.agentSystemPrompt} />
+
+        {/* Telegram Bot per tenant */}
+        <TelegramBotCard tenantId={id} />
 
         {/* WhatsApp Business API */}
         <WhatsAppMetaCard tenantId={id} />

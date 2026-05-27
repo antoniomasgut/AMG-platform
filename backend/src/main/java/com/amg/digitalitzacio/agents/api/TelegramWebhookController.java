@@ -128,7 +128,7 @@ public class TelegramWebhookController {
     }
 
     @Async
-    private void handleCustomerAsync(UUID tenantId, Long chatId, String text) {
+    public void handleCustomerAsync(UUID tenantId, Long chatId, String text) {
         conversationalAgentService.handleIncoming(tenantId, chatId.toString(), ConversationChannel.TELEGRAM, text);
     }
 

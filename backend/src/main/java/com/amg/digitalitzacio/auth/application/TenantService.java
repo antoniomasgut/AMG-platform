@@ -15,6 +15,7 @@ import com.amg.digitalitzacio.gocardless.domain.GoCardlessConfigRepository;
 import com.amg.digitalitzacio.gocardless.domain.GoCardlessMandateRepository;
 import com.amg.digitalitzacio.vault.domain.TenantProfileRepository;
 import com.amg.digitalitzacio.vault.domain.TenantServiceRepository;
+import com.amg.digitalitzacio.telegram.domain.TenantTelegramConfigRepository;
 import com.amg.digitalitzacio.whatsapp.domain.WhatsAppWabaConfigRepository;
 
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ public class TenantService {
     private final GoCardlessConfigRepository goCardlessConfigRepository;
     private final GoCardlessMandateRepository goCardlessMandateRepository;
     private final WhatsAppWabaConfigRepository whatsAppWabaConfigRepository;
+    private final TenantTelegramConfigRepository tenantTelegramConfigRepository;
 
     @Transactional
     public TenantResponse createTenant(@Valid CreateTenantRequest request) {
@@ -173,6 +175,9 @@ public class TenantService {
         long wabaConfigs = whatsAppWabaConfigRepository.countByTenantId(id);
         if (wabaConfigs > 0) warnings.add("La configuració de WhatsApp Business s'eliminarà");
 
+        long tgConfigs = tenantTelegramConfigRepository.countByTenantId(id);
+        if (tgConfigs > 0) warnings.add("La configuració del bot de Telegram s'eliminarà");
+
         return new DeleteTenantCheckResponse(true, List.of(), warnings);
     }
 
@@ -197,6 +202,7 @@ public class TenantService {
         goCardlessMandateRepository.deleteByTenantId(id);
         goCardlessConfigRepository.deleteByTenantId(id);
         whatsAppWabaConfigRepository.deleteByTenantId(id);
+        tenantTelegramConfigRepository.deleteByTenantId(id);
         tenantRepository.deleteById(id);
     }
 
