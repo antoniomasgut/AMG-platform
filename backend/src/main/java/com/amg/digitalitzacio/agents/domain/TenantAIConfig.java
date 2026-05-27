@@ -25,6 +25,15 @@ public class TenantAIConfig {
     @Column(name = "temperature")
     private Double temperature = 0.7;
 
+    @Column(name = "reasoning_model")
+    private String reasoningModel;
+
+    @Column(name = "monthly_token_budget")
+    private Integer monthlyTokenBudget;
+
+    @Column(name = "budget_alert_threshold")
+    private Integer budgetAlertThreshold = 80;
+
     public static TenantAIConfig defaultFor(UUID tenantId) {
         var c = new TenantAIConfig();
         c.tenantId = tenantId;

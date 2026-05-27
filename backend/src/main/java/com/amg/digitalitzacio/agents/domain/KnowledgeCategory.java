@@ -7,5 +7,9 @@ public enum KnowledgeCategory {
     SERVICE,
     FAQ,
     RESTRICTION,
-    EXTRA
+    EXTRA,
+    BOOKING_RULES,
+    QUOTE_RULES,
+    FOLLOWUP_RULES,
+    TEAM_INFO
 }

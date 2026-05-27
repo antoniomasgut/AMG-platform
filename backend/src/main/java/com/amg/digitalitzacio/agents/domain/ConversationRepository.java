@@ -36,4 +36,6 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     long countByTenantIdAndCustomerIdentifierAndChannelAndPendingApprovalTrue(
         UUID tenantId, String customerIdentifier, ConversationChannel channel);
+
+    long countByTenantIdAndCreatedAtAfter(UUID tenantId, java.time.Instant since);
 }
