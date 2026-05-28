@@ -158,7 +158,7 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
             throttle();
 
             var uri = "/details/json?place_id=" + prospect.getGooglePlaceId()
-                    + "&fields=name,formatted_address,formatted_phone_number,website,rating,user_ratings_total"
+                    + "&fields=formatted_phone_number,website,editorial_summary"
                     + "&key=" + apiKey;
 
             var response = webClient.get()
@@ -181,10 +181,76 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
             if (website != null && !website.isBlank()) {
                 prospect.setWebsite(website);
                 prospect.setHasWebsite(true);
+                // Intentar extreure email de la web del negoci
+                var email = extractEmailFromWebsite(website);
+                if (email != null) prospect.setEmail(email);
             }
+
+            // Descripció editorial (no sempre disponible)
+            var summary = result.path("editorial_summary").path("overview").asText(null);
+            if (summary != null && !summary.isBlank()) {
+                prospect.setDescription(summary);
+            }
+
         } catch (Exception e) {
             log.debug("Failed to enrich details for place {}: {}", prospect.getGooglePlaceId(), e.getMessage());
         }
+    }
+
+    /** Cerca el primer mailto: a la pàgina principal i /contacte de la web del negoci. */
+    private String extractEmailFromWebsite(String websiteUrl) {
+        var emailPattern = java.util.regex.Pattern.compile(
+            "[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}"
+        );
+        // Pàgines de contacte habituals
+        var paths = List.of("", "/contacte", "/contact", "/contacto", "/sobre-nosaltres");
+        var base = websiteUrl.replaceAll("/$", "");
+
+        var httpClient = WebClient.builder()
+            .codecs(c -> c.defaultCodecs().maxInMemorySize(512 * 1024))
+            .build();
+
+        for (var path : paths) {
+            try {
+                var html = httpClient.get()
+                    .uri(base + path)
+                    .header("User-Agent", "Mozilla/5.0")
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(java.time.Duration.ofSeconds(4))
+                    .block();
+
+                if (html == null) continue;
+
+                // Buscar mailto: links primer (més fiable)
+                var mailtoPattern = java.util.regex.Pattern.compile("mailto:([^\"'?\\s>]+)");
+                var m = mailtoPattern.matcher(html);
+                if (m.find()) {
+                    var email = m.group(1).toLowerCase();
+                    if (!isSpamEmail(email)) return email;
+                }
+
+                // Buscar emails en text pla
+                var em = emailPattern.matcher(html);
+                while (em.find()) {
+                    var email = em.group().toLowerCase();
+                    if (!isSpamEmail(email)) return email;
+                }
+            } catch (Exception ignored) {
+                // Timeout o web no accessible — continuar amb el següent path
+            }
+        }
+        return null;
+    }
+
+    private boolean isSpamEmail(String email) {
+        // Filtrar emails genèrics de plataformes, imatges, scripts, etc.
+        return email.contains("sentry") || email.contains("example")
+            || email.contains("@2x") || email.contains(".png") || email.contains(".jpg")
+            || email.contains("noreply") || email.contains("no-reply")
+            || email.contains("wordpress") || email.contains("schema.org")
+            || email.contains("@w3") || email.contains("wixpress")
+            || email.length() > 80;
     }
 
     private void throttle() throws InterruptedException {

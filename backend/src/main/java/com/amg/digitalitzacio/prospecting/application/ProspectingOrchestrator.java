@@ -4,13 +4,17 @@ import com.amg.digitalitzacio.prospecting.api.dto.*;
 import com.amg.digitalitzacio.prospecting.domain.*;
 import com.amg.digitalitzacio.shared.exception.ConflictException;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -20,6 +24,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     private final ProspectRepository prospectRepository;
     private final ProspectScraper scraper;
     private final LeadService leadService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public CampaignResponse createCampaign(CreateCampaignRequest request, UUID createdBy) {
@@ -86,19 +91,38 @@ public class ProspectingOrchestrator implements ProspectingService {
         campaign.setStatus(CampaignStatus.IN_PROGRESS);
         campaignRepository.save(campaign);
 
+        // Parsejar searchParams (JSON) per passar maxResults al scraper
         var params = new HashMap<String, Object>();
+        if (campaign.getSearchParams() != null && !campaign.getSearchParams().isBlank()) {
+            try {
+                params.putAll(objectMapper.readValue(campaign.getSearchParams(),
+                    new TypeReference<Map<String, Object>>() {}));
+            } catch (Exception e) {
+                log.warn("Could not parse searchParams for campaign {}: {}", campaignId, e.getMessage());
+            }
+        }
+
         var prospects = scraper.search(campaign.getSector(), campaign.getLocation(), params, campaignId);
 
         int count = 0;
+        int skipped = 0;
         for (var prospect : prospects) {
-            if (prospect.getGooglePlaceId() != null) {
-                if (prospectRepository.findByGooglePlaceId(prospect.getGooglePlaceId()).isPresent()) {
-                    continue;
-                }
+            // Deduplicació per googlePlaceId (global)
+            if (prospect.getGooglePlaceId() != null
+                    && prospectRepository.existsByGooglePlaceId(prospect.getGooglePlaceId())) {
+                skipped++;
+                continue;
+            }
+            // Deduplicació per telèfon (evita el mateix negoci amb Place ID diferent)
+            if (prospect.getPhone() != null && !prospect.getPhone().isBlank()
+                    && prospectRepository.existsByPhone(prospect.getPhone())) {
+                skipped++;
+                continue;
             }
             prospectRepository.save(prospect);
             count++;
         }
+        log.info("Campaign {}: {} prospects saved, {} duplicates skipped", campaignId, count, skipped);
 
         campaign.setStatus(CampaignStatus.COMPLETED);
         campaign.setTotalFound(count);

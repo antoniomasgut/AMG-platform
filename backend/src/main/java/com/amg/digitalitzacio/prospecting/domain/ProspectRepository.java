@@ -10,6 +10,8 @@ public interface ProspectRepository extends JpaRepository<Prospect, UUID> {
     List<Prospect> findByCampaignId(UUID campaignId);
     List<Prospect> findByCampaignIdAndStatus(UUID campaignId, ProspectStatus status);
     Optional<Prospect> findByGooglePlaceId(String googlePlaceId);
+    boolean existsByGooglePlaceId(String googlePlaceId);
+    boolean existsByPhone(String phone);
     long countByCampaignId(UUID campaignId);
     long countByCampaignIdAndStatus(UUID campaignId, ProspectStatus status);
 }
