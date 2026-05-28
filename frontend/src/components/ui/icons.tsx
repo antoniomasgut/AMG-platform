@@ -60,4 +60,7 @@ export const I = {
   Key: (p: IconProps) => <Icon {...p}><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6M15.5 7.5l2 2L21 6l-2-2"/></Icon>,
   Flow: (p: IconProps) => <Icon {...p}><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="16" y="16" width="5" height="5" rx="1"/><path d="M8 5.5h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H8"/><path d="M18.5 8v4a1 1 0 0 1-1 1h-1"/><path d="M18.5 16V14"/></Icon>,
   Copy: (p: IconProps) => <Icon {...p}><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></Icon>,
+  Heart: (p: IconProps) => <Icon {...p}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></Icon>,
+  AlertTriangle: (p: IconProps) => <Icon {...p}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></Icon>,
+  ChevronLeft: (p: IconProps) => <Icon {...p}><path d="m15 18-6-6 6-6"/></Icon>,
 };

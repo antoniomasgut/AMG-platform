@@ -2,13 +2,16 @@ import { apiFetch } from './api';
 
 export interface Lead {
   id: string;
-  companyName: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone?: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
   source: string;
   stage: string;
-  notes?: string;
+  notes?: string | null;
+  tags?: string | null;
+  lostReason?: string | null;
+  estimatedValue?: number | null;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -22,29 +25,29 @@ export interface LeadStats {
 export interface Activity {
   id: string;
   type: string;
-  notes: string;
-  dueDate?: string;
-  completed: boolean;
+  description: string;
+  dueDate?: string | null;
+  completedAt?: string | null;
   createdAt: string;
 }
 
 export interface CreateLeadRequest {
-  companyName: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone?: string;
+  name: string;
+  email?: string;
+  phone?: string;
   source: string;
   notes?: string;
+  estimatedValue?: number;
 }
 
 export interface CreateActivityRequest {
   type: string;
-  notes: string;
+  description: string;
   dueDate?: string;
 }
 
 export const getLeads = () =>
-  apiFetch<Lead[]>('/leads');
+  apiFetch<{ content: Lead[] }>('/leads?size=200').then(r => r.content);
 
 export const getLead = (id: string) =>
   apiFetch<Lead>(`/leads/${id}`);
@@ -65,7 +68,7 @@ export const changeStage = (id: string, stage: string) =>
   apiFetch<Lead>(`/leads/${id}/stage`, { method: 'PATCH', body: JSON.stringify({ stage }) });
 
 export const getActivities = (leadId: string) =>
-  apiFetch<Activity[]>(`/leads/${leadId}/activities`);
+  apiFetch<{ content: Activity[] }>(`/leads/${leadId}/activities?size=100`).then(r => r.content);
 
 export const createActivity = (leadId: string, data: CreateActivityRequest) =>
   apiFetch<Activity>(`/leads/${leadId}/activities`, { method: 'POST', body: JSON.stringify(data) });

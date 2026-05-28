@@ -5,6 +5,7 @@ import com.amg.digitalitzacio.agents.api.dto.KnowledgeDocumentResponse;
 import com.amg.digitalitzacio.agents.api.dto.KnowledgeEntryRequest;
 import com.amg.digitalitzacio.agents.api.dto.KnowledgeEntryResponse;
 import com.amg.digitalitzacio.agents.domain.*;
+import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class KnowledgeBaseService {
     private final KnowledgeBaseRepository knowledgeBaseRepository;
     private final KnowledgeEntryRepository knowledgeEntryRepository;
     private final KnowledgeDocumentRepository knowledgeDocumentRepository;
+    private final AIProviderRouter aiProviderRouter;
 
     @Transactional
     public KnowledgeBase findOrCreate(UUID tenantId) {
@@ -136,6 +138,22 @@ public class KnowledgeBaseService {
         return sb.toString();
     }
 
+    @Transactional(readOnly = true)
+    public String testResponse(UUID tenantId, String userMessage) {
+        String knowledgeBlock = buildKnowledgeBlock(tenantId);
+        String systemPrompt = """
+                Ets l'assistent virtual d'aquest negoci. Respons en l'idioma en el qual t'escriu el client, de forma concisa i natural.
+
+                REGLES:
+                - Si no saps alguna cosa, pregunta en lloc d'inventar
+                - Confirma les dades abans de qualsevol compromís
+                - En cas d'urgència o queixa greu, indica que contactin directament
+                """ + knowledgeBlock;
+
+        var provider = aiProviderRouter.forModel(null); // usa el model per defecte del sistema
+        return provider.chat(systemPrompt, List.of(), userMessage);
+    }
+
     private void bumpVersion(KnowledgeBase kb) {
         kb.setVersion(kb.getVersion() + 1);
         knowledgeBaseRepository.save(kb);
@@ -148,13 +166,17 @@ public class KnowledgeBaseService {
 
     private String categoryLabel(KnowledgeCategory cat) {
         return switch (cat) {
-            case BEHAVIOR     -> "COMPORTAMENT";
-            case BUSINESS_INFO -> "INFORMACIÓ DEL NEGOCI";
-            case SCHEDULE     -> "HORARIS";
-            case SERVICE      -> "SERVEIS";
-            case FAQ          -> "PREGUNTES FREQÜENTS";
-            case RESTRICTION  -> "RESTRICCIONS";
-            case EXTRA        -> "INFORMACIÓ ADDICIONAL";
+            case BEHAVIOR       -> "COMPORTAMENT";
+            case BUSINESS_INFO  -> "INFORMACIÓ DEL NEGOCI";
+            case SCHEDULE       -> "HORARIS";
+            case SERVICE        -> "SERVEIS";
+            case FAQ            -> "PREGUNTES FREQÜENTS";
+            case RESTRICTION    -> "RESTRICCIONS";
+            case EXTRA          -> "INFORMACIÓ ADDICIONAL";
+            case BOOKING_RULES  -> "REGLES DE CITES";
+            case QUOTE_RULES    -> "REGLES DE PRESSUPOSTOS";
+            case FOLLOWUP_RULES -> "REGLES DE SEGUIMENT";
+            case TEAM_INFO      -> "INFORMACIÓ D'EQUIP";
         };
     }
 }

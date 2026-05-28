@@ -124,6 +124,8 @@ export interface ContactSummary {
   lastChannel: string | null;
   lastIdentifier: string | null;
   pendingCount: number;
+  totalMessageCount: number;
+  hasSummary: boolean;
 }
 
 export const listContacts = (tenantId: string) =>
@@ -195,3 +197,17 @@ export const deactivateAgent = (tenantId: string) =>
 
 export const getActivationInstructions = (tenantId: string) =>
   apiFetch<ActivationInstructions>(`/agents/conversational/${tenantId}/activation-instructions`);
+
+export interface AgentHealthResponse {
+  score: number;
+  status: 'GREEN' | 'YELLOW' | 'RED';
+  checks: Array<{ key: string; label: string; status: 'OK' | 'WARNING' | 'ERROR'; detail: string }>;
+  suggestions: string[];
+  recommendations?: string[];
+}
+
+export const getAgentHealth = (tenantId: string) =>
+  apiFetch<AgentHealthResponse>(`/agents/conversational/${tenantId}/health`);
+
+export const clearContactMemory = (tenantId: string, contactId: string) =>
+  apiFetch<void>(`/agents/contacts/${tenantId}/${contactId}/memory`, { method: 'DELETE' });

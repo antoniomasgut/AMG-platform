@@ -1,0 +1,410 @@
+'use client';
+
+import { useParams, useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { getTenant } from '@/services/admin';
+import { getNexeConfigs, getAgendaMode, getQuoteMode } from '@/services/nexe-configs';
+import { PortalShell } from '@/components/portal/PortalShell';
+import { AMGButton } from '@/components/ui/button';
+import { I } from '@/components/ui/icons';
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const PHASE_CONFIG_KEY: Record<string, string> = {
+  F2: 'AGENDA',
+  F3: 'PRESSUPOSTOS',
+  F4: 'FIDELITZACIO',
+  F5: 'EQUIP',
+};
+
+function isPhaseConfigured(configs: Record<string, string>, phase: string): boolean {
+  const key = PHASE_CONFIG_KEY[phase];
+  if (!key) return false; // F1 no té config key — detecció manual
+  const val = configs[key];
+  if (!val || val === '{}' || val === 'null') return false;
+  try {
+    const obj = JSON.parse(val);
+    return typeof obj === 'object' && Object.keys(obj).length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function isEquipFullyConfigured(configs: Record<string, string>): boolean {
+  const val = configs['EQUIP'];
+  if (!val) return false;
+  try {
+    const obj = JSON.parse(val);
+    return !!(obj?.telegram_group_id);
+  } catch {
+    return false;
+  }
+}
+
+// Retorna títol + descripció sector-específics per cada fase
+function getPhaseInfo(phase: string, sector?: string | null) {
+  const agendaMode = getAgendaMode(sector);
+  const quoteMode  = getQuoteMode(sector);
+
+  switch (phase) {
+    case 'F1':
+      return {
+        label: 'F1',
+        title: 'Presència Web',
+        desc: 'Crea i publica la landing page del negoci amb l\'editor visual.',
+        icon: I.Globe,
+        href: (tenantId: string, locale: string) => `/${locale}/portal/landings`,
+        ctaLabel: 'Anar a Landings',
+      };
+    case 'F2':
+      return {
+        label: 'F2',
+        title: agendaMode === 'inspection' ? 'Visites d\'Inspecció'
+             : agendaMode === 'vehicle'    ? 'Recepció de Vehicles'
+             : agendaMode === 'meeting'    ? 'Sistema de Reunions'
+             : 'Sistema de Cites',
+        desc: agendaMode === 'inspection' ? 'Configura les zones de servei, horaris i flux de visites d\'inspecció.'
+            : agendaMode === 'vehicle'    ? 'Configura la recepció de vehicles, estimació de recollida i preguntes.'
+            : agendaMode === 'meeting'    ? 'Configura les reunions: durada, horaris i confirmació.'
+            : 'Configura el calendari de cites: integració, horaris i preguntes al client.',
+        icon: I.Calendar,
+        href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/agenda`,
+        ctaLabel: 'Configurar Agenda',
+      };
+    case 'F3':
+      return {
+        label: 'F3',
+        title: quoteMode === 'pricelist' ? 'Catàleg de Preus' : 'Pressupostos Autònoms',
+        desc: quoteMode === 'pricelist'
+          ? 'Publica el catàleg de serveis i preus que el bot mostrarà als clients.'
+          : 'Configura les línies de servei, validesa i plantilles de pressupost.',
+        icon: I.Receipt,
+        href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/pressupostos`,
+        ctaLabel: quoteMode === 'pricelist' ? 'Configurar Catàleg' : 'Configurar Pressupostos',
+      };
+    case 'F4':
+      return {
+        label: 'F4',
+        title: 'Fidelització de Clients',
+        desc: 'Activa el seguiment post-servei, sol·licita ressenyes a Google i automatitza el reengagement.',
+        icon: I.Heart,
+        href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/fidelitzacio`,
+        ctaLabel: 'Configurar Fidelització',
+      };
+    case 'F5':
+      return {
+        label: 'F5',
+        title: 'Gestió d\'Equip',
+        desc: 'Configura l\'equip de treball i el grup de Telegram per a notificacions i informes.',
+        icon: I.Users,
+        href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/equip`,
+        ctaLabel: 'Configurar Equip',
+      };
+    default:
+      return null;
+  }
+}
+
+// ── Status chip ────────────────────────────────────────────────────────────────
+
+function StatusChip({ done }: { done: boolean }) {
+  if (done) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 f-mono text-label text-xs bg-success/10 text-success border border-success/20">
+        <I.Check size={10} />
+        Configurat
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 f-mono text-label text-xs bg-warning/10 text-warning border border-warning/20">
+      <I.Clock size={10} />
+      Pendent
+    </span>
+  );
+}
+
+// ── Phase card ─────────────────────────────────────────────────────────────────
+
+function PhaseCard({
+  phase,
+  sector,
+  configured,
+  tenantId,
+  locale,
+}: {
+  phase: string;
+  sector?: string | null;
+  configured: boolean;
+  tenantId: string;
+  locale: string;
+}) {
+  const router = useRouter();
+  const info = getPhaseInfo(phase, sector);
+  if (!info) return null;
+  const Icon = info.icon;
+
+  return (
+    <div className={`amg-card card-clip overflow-hidden transition-all ${configured ? 'opacity-90' : ''}`}>
+      <div className={`h-0.5 ${configured ? 'bg-success' : 'bg-warning'}`} />
+      <div className="p-5">
+        <div className="flex items-start gap-4">
+          {/* Phase badge */}
+          <div className={`w-10 h-10 shrink-0 flex items-center justify-center f-mono font-bold text-sm border-2 transition-colors ${
+            configured ? 'border-success text-success bg-success/10' : 'border-accent text-accent bg-accent/10'
+          }`}>
+            {info.label}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="f-display font-bold text-sm">{info.title}</span>
+              <StatusChip done={configured} />
+            </div>
+            <p className="f-mono text-label text-xs text-ink-2 mb-4">{info.desc}</p>
+
+            <div className="flex items-center gap-2">
+              <Icon size={13} className="text-ink-3" />
+              <AMGButton
+                size="sm"
+                variant={configured ? 'secondary' : 'primary'}
+                onClick={() => router.push(info.href(tenantId, locale))}
+              >
+                {configured ? 'Revisar →' : info.ctaLabel + ' →'}
+              </AMGButton>
+            </div>
+          </div>
+
+          {/* Done indicator */}
+          {configured && (
+            <div className="shrink-0 w-6 h-6 bg-success/20 flex items-center justify-center">
+              <I.Check size={12} stroke="#39d353" />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Bot step ───────────────────────────────────────────────────────────────────
+
+function BotCard({ tenantId, locale }: { tenantId: string; locale: string }) {
+  const router = useRouter();
+  return (
+    <div className="amg-card card-clip overflow-hidden">
+      <div className="h-0.5 bg-accent" />
+      <div className="p-5">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 shrink-0 flex items-center justify-center f-mono font-bold text-sm border-2 border-accent text-accent bg-accent/10">
+            IA
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="f-display font-bold text-sm">Bot IA & Canals</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 f-mono text-label text-xs bg-accent/10 text-accent-light border border-accent/20">
+                Sempre necessari
+              </span>
+            </div>
+            <p className="f-mono text-label text-xs text-ink-2 mb-4">
+              Configura el canal principal del bot (WhatsApp, Telegram), el mode de resposta (AUTO/HYBRID/MANUAL) i la base de coneixement.
+            </p>
+            <div className="flex items-center gap-2">
+              <I.Bot size={13} className="text-ink-3" />
+              <AMGButton size="sm" variant="primary" onClick={() => router.push(`/${locale}/portal/admin/tenants/${tenantId}#section-agent-config`)}>
+                Configurar Agent →
+              </AMGButton>
+              <AMGButton size="sm" variant="secondary" onClick={() => router.push(`/${locale}/portal/agents`)}>
+                Coneixement KB →
+              </AMGButton>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
+
+export default function ActivateWizardPage() {
+  const params  = useParams();
+  const router  = useRouter();
+  const tenantId = params.id as string;
+  const locale  = (params.locale as string) ?? 'ca';
+
+  const { data: tenant, isLoading: loadingTenant } = useQuery({
+    queryKey: ['tenant', tenantId],
+    queryFn: () => getTenant(tenantId),
+    enabled: !!tenantId,
+  });
+
+  const { data: configs = {}, isLoading: loadingConfigs } = useQuery({
+    queryKey: ['nexe-configs', tenantId],
+    queryFn: () => getNexeConfigs(tenantId),
+    enabled: !!tenantId,
+  });
+
+  const loading = loadingTenant || loadingConfigs;
+
+  const phases: string[] = tenant?.contractedPhases ?? [];
+  const sector = tenant?.sector;
+
+  const configuredCount = phases.filter(p =>
+    p === 'F1' ? false /* F1 no auto-detecta */ : isPhaseConfigured(configs, p)
+  ).length + (isEquipFullyConfigured(configs) ? 0 : 0); // just for F5 special check
+
+  // Recompute with F5 special logic
+  const configuredPhases = phases.filter(p => {
+    if (p === 'F1') return false;
+    if (p === 'F5') return isEquipFullyConfigured(configs);
+    return isPhaseConfigured(configs, p);
+  });
+
+  const totalConfigured  = configuredPhases.length;
+  const totalPhases      = phases.length;
+  const pct = totalPhases > 0 ? Math.round((totalConfigured / totalPhases) * 100) : 0;
+
+  const sectorLabel: Record<string, string> = {
+    PINTOR: 'Pintor', ELECTRICISTA: 'Electricista', FONTANER: 'Fontaner',
+    JARDINER: 'Jardiner', NETEJA: 'Neteja', TALLER_MECANIC: 'Taller Mecànic',
+    GESTORIA: 'Gestoria', FISIOTERAPEUTA: 'Fisioterapeuta', PSICOLEG: 'Psicòleg',
+    NUTRICIONISTA: 'Nutricionista', PERRUQUERIA: 'Perruqueria', ESTETICA: 'Estètica',
+    PERRUQUERIA_CANINA: 'Perruqueria Canina', VETERINARI: 'Veterinari',
+    RESTAURANT: 'Restaurant', PASTISSERIA: 'Pastisseria', FARMACIA: 'Farmàcia',
+    OPTICA: 'Òptica', DENTISTA: 'Dentista', CLINICA: 'Clínica',
+  };
+
+  return (
+    <PortalShell breadcrumb="activació">
+      <div className="p-4 sm:p-8 max-w-3xl space-y-6">
+
+        {/* Header */}
+        <div>
+          <button
+            onClick={() => router.push(`/${locale}/portal/admin/tenants/${tenantId}`)}
+            className="flex items-center gap-1 f-mono text-label text-xs text-ink-3 hover:text-ink-1 transition mb-3"
+          >
+            <I.ChevronLeft size={12} /> Tornar al tenant
+          </button>
+          <span className="f-mono text-label uppercase text-accent-light tracking-widest text-xs">
+            / portal / admin / tenants / activació /
+          </span>
+          <div className="f-display font-bold text-xl mt-1">
+            Posar en marxa: {tenant?.name ?? '…'}
+          </div>
+          {tenant && (
+            <p className="f-mono text-label text-xs text-ink-2 mt-1">
+              {sectorLabel[sector ?? ''] ?? sector ?? 'Sector no definit'}
+              {tenant.businessSize && ` · ${tenant.businessSize}`}
+              {' · '}
+              {phases.length} fase{phases.length !== 1 ? 's' : ''} contractada{phases.length !== 1 ? 'es' : ''}
+            </p>
+          )}
+        </div>
+
+        {/* Progress */}
+        {!loading && phases.length > 0 && (
+          <div className="amg-card card-clip p-5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="f-mono text-label text-xs text-ink-2">Progrés de configuració</span>
+              <span className="f-mono text-label text-xs font-semibold text-ink-0">
+                {totalConfigured} / {totalPhases} fases configurades
+              </span>
+            </div>
+            <div className="h-1.5 bg-surface-2 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-accent to-accent-light transition-all duration-700"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            {pct === 100 && (
+              <div className="flex items-center gap-2 mt-3">
+                <I.Check size={13} stroke="#39d353" />
+                <span className="f-mono text-label text-xs text-success">
+                  Totes les fases configurades. Recorda activar el Bot IA!
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* No phases */}
+        {!loading && phases.length === 0 && (
+          <div className="amg-card card-clip p-6 text-center">
+            <I.AlertTriangle size={24} className="mx-auto mb-3 text-ink-3" />
+            <div className="f-display font-bold text-sm mb-1">Sense fases contractades</div>
+            <p className="f-mono text-label text-xs text-ink-2 mb-4">
+              Aquest tenant no té fases NexeLocal actives. Accepta un pressupost primer.
+            </p>
+            <AMGButton size="sm" variant="primary" onClick={() => router.push(`/${locale}/portal/billing`)}>
+              Veure pressupostos →
+            </AMGButton>
+          </div>
+        )}
+
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="amg-card card-clip h-24 animate-pulse bg-surface-1" />
+            ))}
+          </div>
+        )}
+
+        {/* Phase steps */}
+        {!loading && phases.length > 0 && (
+          <div className="space-y-3">
+            <div className="f-mono text-label text-xs text-ink-3 uppercase tracking-widest">Fases contractades</div>
+            {phases.map(phase => (
+              <PhaseCard
+                key={phase}
+                phase={phase}
+                sector={sector}
+                configured={
+                  phase === 'F5'
+                    ? isEquipFullyConfigured(configs)
+                    : isPhaseConfigured(configs, phase)
+                }
+                tenantId={tenantId}
+                locale={locale}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Bot IA — always shown */}
+        {!loading && (
+          <div className="space-y-3">
+            <div className="f-mono text-label text-xs text-ink-3 uppercase tracking-widest">
+              Configuració de l&apos;agent
+            </div>
+            <BotCard tenantId={tenantId} locale={locale} />
+          </div>
+        )}
+
+        {/* Context note */}
+        {!loading && phases.length > 0 && (
+          <div className="amg-card card-clip p-4 border-l-2 border-l-border-base">
+            <div className="f-mono text-label text-xs text-ink-2 space-y-1">
+              <p>
+                <span className="text-ink-0 font-semibold">F1</span> — la detecció és manual: comprova que hi hagi almenys una landing publicada a{' '}
+                <button onClick={() => router.push(`/${locale}/portal/landings`)} className="text-accent hover:underline">
+                  Landings
+                </button>.
+              </p>
+              <p>
+                <span className="text-ink-0 font-semibold">F2–F5</span> — el sistema detecta automàticament si la configuració s'ha desat.
+              </p>
+              <p>
+                Les opcions de cada fase s'adapten al sector{sector ? ` (${sectorLabel[sector] ?? sector})` : ''} i la mida del negoci.
+              </p>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </PortalShell>
+  );
+}

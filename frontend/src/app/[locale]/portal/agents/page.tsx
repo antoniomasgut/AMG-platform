@@ -31,8 +31,10 @@ import {
   addDocument,
   deleteDocument,
   previewPromptBlock,
+  testKnowledgeResponse,
   type KnowledgeBase,
 } from '@/services/knowledge';
+import { listContacts, clearContactMemory } from '@/services/agents-conversational';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
 import { I } from '@/components/ui/icons';
@@ -75,6 +77,9 @@ export default function AgentsPage() {
   const [testResult, setTestResult] = useState<{ model: string; provider: string; response: string } | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
   const [selectedTestModel, setSelectedTestModel] = useState<string>('');
+  const [kbTestMessage, setKbTestMessage] = useState('');
+  const [kbTestResult, setKbTestResult] = useState<string | null>(null);
+  const [kbTestError, setKbTestError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: status } = useQuery({
@@ -209,6 +214,23 @@ export default function AgentsPage() {
     queryKey: ['knowledge', tenantId],
     queryFn: () => getKnowledge(tenantId!),
     enabled: !!tenantId && activeTab === 'coneixement',
+  });
+
+  const { data: contacts = [], isLoading: loadingContacts } = useQuery({
+    queryKey: ['contacts', tenantId],
+    queryFn: () => listContacts(tenantId!),
+    enabled: !!tenantId && activeTab === 'coneixement' && isAdmin,
+  });
+
+  const kbTestMutation = useMutation({
+    mutationFn: () => testKnowledgeResponse(tenantId!, kbTestMessage),
+    onSuccess: (data) => { setKbTestResult(data.response); setKbTestError(null); },
+    onError: (err: Error) => { setKbTestError(err.message); setKbTestResult(null); },
+  });
+
+  const clearMemoryMutation = useMutation({
+    mutationFn: (contactId: string) => clearContactMemory(tenantId!, contactId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contacts', tenantId] }),
   });
 
   const { data: promptPreview } = useQuery({
@@ -754,6 +776,87 @@ export default function AgentsPage() {
                 </div>
               ) : (
                 <p className="text-xs text-ink-3 italic">Sense documents afegits</p>
+              )}
+            </div>
+
+            {/* Test de resposta */}
+            <div className="amg-card card-clip p-5 space-y-4">
+              <div>
+                <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Test de resposta</div>
+                <div className="text-xs text-ink-3 mt-0.5">Prova com respondria el bot amb la configuració actual de la KB</div>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={kbTestMessage}
+                  onChange={e => setKbTestMessage(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && kbTestMessage.trim() && kbTestMutation.mutate()}
+                  placeholder="Escriu un missatge de prova..."
+                  className="flex-1 p-2 bg-bg-1 border border-border-base rounded text-sm focus:outline-none focus:border-accent"
+                />
+                <button
+                  onClick={() => kbTestMutation.mutate()}
+                  disabled={kbTestMutation.isPending || !kbTestMessage.trim()}
+                  className="px-4 py-2 bg-accent text-white rounded text-sm hover:opacity-90 disabled:opacity-50 shrink-0"
+                >
+                  {kbTestMutation.isPending ? '…' : 'Enviar'}
+                </button>
+              </div>
+              {kbTestResult && (
+                <div className="p-3 bg-bg-1 border border-success/30 rounded">
+                  <div className="text-xs text-ink-3 mb-1 uppercase tracking-wider">Resposta del bot</div>
+                  <p className="text-sm text-ink-1 whitespace-pre-wrap">{kbTestResult}</p>
+                </div>
+              )}
+              {kbTestError && (
+                <div className="p-3 bg-danger/5 border border-danger/30 rounded text-xs text-danger">{kbTestError}</div>
+              )}
+            </div>
+
+            {/* Contactes i memòria */}
+            <div className="amg-card card-clip p-5 space-y-4">
+              <div>
+                <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Contactes i memòria</div>
+                <div className="text-xs text-ink-3 mt-0.5">Clients que han parlat amb el bot. Pots esborrar la seva memòria (resum de conversa) sense perdre l'historial.</div>
+              </div>
+              {loadingContacts && <p className="text-xs text-ink-3">Carregant contactes…</p>}
+              {!loadingContacts && contacts.length === 0 && (
+                <p className="text-xs text-ink-3 italic">Sense contactes registrats</p>
+              )}
+              {contacts.length > 0 && (
+                <div className="divide-y divide-border-base">
+                  {contacts.map(c => (
+                    <div key={c.contactId} className="flex items-center gap-3 py-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-ink-1 truncate">{c.displayName}</span>
+                          {c.hasSummary && (
+                            <span className="px-1.5 py-0.5 text-[10px] f-mono border border-accent/30 bg-accent/8 text-accent-light rounded">
+                              Memòria activa
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-ink-3 mt-0.5">
+                          {c.totalMessageCount} missatge{c.totalMessageCount !== 1 ? 's' : ''}
+                          {c.lastChannel && ` · ${c.lastChannel}`}
+                          {c.lastMessageAt && ` · ${new Date(c.lastMessageAt).toLocaleDateString('ca-ES')}`}
+                        </div>
+                      </div>
+                      {c.hasSummary && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Esborrar la memòria de ${c.displayName}? El bot perdrà el resum de converses passades però mantindrà l'historial.`))
+                              clearMemoryMutation.mutate(c.contactId);
+                          }}
+                          disabled={clearMemoryMutation.isPending}
+                          className="text-xs text-ink-3 hover:text-warning border border-border-base hover:border-warning/40 px-2 py-1 rounded transition disabled:opacity-40"
+                        >
+                          Esborrar memòria
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>

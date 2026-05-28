@@ -107,6 +107,7 @@ function StepCard({ step, locale }: { step: StepCard; locale: string }) {
 
 export default function ProcessPage() {
   const { user, isSuperAdmin } = useAuth();
+  const router = useRouter();
   const params = useParams();
   const locale = (params.locale as string) ?? 'ca';
 
@@ -115,7 +116,7 @@ export default function ProcessPage() {
       { queryKey: ['system-config'], queryFn: getSystemConfig, enabled: !!user && isSuperAdmin },
       { queryKey: ['lead-stats'], queryFn: getLeadStats, enabled: !!user },
       { queryKey: ['campaigns'], queryFn: getCampaigns, enabled: !!user && isSuperAdmin },
-      { queryKey: ['tenants-summary'], queryFn: () => listTenants({ page: 0, size: 1 }), enabled: !!user && isSuperAdmin },
+      { queryKey: ['tenants-all'], queryFn: () => listTenants({ page: 0, size: 100, isActive: true }), enabled: !!user && isSuperAdmin },
       { queryKey: ['backup-dashboard'], queryFn: getBackupDashboard, enabled: !!user && isSuperAdmin },
       { queryKey: ['ops-dashboard'], queryFn: getOpsDashboard, enabled: !!user && isSuperAdmin },
       { queryKey: ['infra-status'], queryFn: getInfraStatus, enabled: !!user && isSuperAdmin, refetchInterval: 30000 },
@@ -143,7 +144,9 @@ export default function ProcessPage() {
   const completedCamps = campaigns.filter((c: any) => c.status === 'COMPLETED').length;
   const totalProspects = campaigns.reduce((sum: number, c: any) => sum + (c.prospectsFound ?? 0), 0);
 
-  const tenantsTotal = (tenantsR.data as any)?.totalElements ?? 0;
+  const allTenants = ((tenantsR.data as any)?.content ?? []) as import('@/services/admin').TenantResponse[];
+  const tenantsTotal = (tenantsR.data as any)?.totalElements ?? allTenants.length;
+  const tenantsWithPhases = allTenants.filter(t => t.contractedPhases && t.contractedPhases.length > 0);
 
   const backup = backupR.data as any;
   const lastBackupOk = backup?.lastBackupStatus === 'COMPLETED';
@@ -243,9 +246,9 @@ export default function ProcessPage() {
         { label: 'Pas 1', value: 'Tenant → Pressupostos → Crear per perfil', ok: true },
         { label: 'Pas 2', value: 'Revisar línies i aplicar descomptes', ok: true },
         { label: 'Pas 3', value: 'Enviar → el client rep email amb link', ok: true },
-        { label: 'Pas 4', value: 'Client accepta o rebutja en línia', ok: true },
+        { label: 'Pas 4', value: 'Acceptat → botó "Posar en marxa" al pressupost', ok: true },
       ],
-      note: 'Un cop acceptat, les fases es marquen com a "en implementació" automàticament.',
+      note: 'Un cop acceptat, fes clic a "Posar en marxa" per iniciar el wizard d\'activació de fases.',
       actions: [
         { label: 'Veure pressupostos', href: '/portal/billing', primary: true },
         { label: 'Programes comercials', href: '/portal/billing/programs' },
@@ -254,20 +257,20 @@ export default function ProcessPage() {
     {
       num: 6,
       title: 'Implementació de serveis',
-      desc: 'Configura i llança cada servei: landing, SMTP, automatitzacions, agents.',
+      desc: 'Configura cada fase contractada amb el wizard "Posar en marxa" per tenant.',
       icon: I.Layers,
-      status: loading ? 'loading' : 'ok',
+      status: loading ? 'loading' : tenantsWithPhases.length === 0 ? 'ok' : 'attention',
       items: [
-        { label: 'Pas 1', value: 'Tenant → selecciona servei → Wizard de configuració', ok: true },
-        { label: 'Pas 2', value: 'Introduir credencials (SMTP, WhatsApp, etc.)', ok: true },
-        { label: 'Pas 3', value: 'Editar landing amb el Factory', ok: true },
-        { label: 'Pas 4', value: 'Publicar i verificar a Ops & Health', ok: true },
+        { label: 'Tenants amb fases contractades', value: tenantsWithPhases.length, ok: tenantsWithPhases.length === 0 },
+        { label: 'Wizard F1', value: 'Landing → Factory → publicar', ok: true },
+        { label: 'Wizard F2–F5', value: 'Agenda, Pressupostos, Fidelització, Equip', ok: true },
+        { label: 'Bot IA', value: 'Agents → canals + base de coneixement', ok: true },
       ],
-      note: 'Cada servei té un wizard guiat accessible des de la fitxa del tenant.',
+      note: 'Obre la fitxa de cada tenant → "Posar en marxa" per veure totes les fases i el seu estat.',
       actions: [
-        { label: 'Tenants', href: '/portal/admin/tenants', primary: true },
+        { label: 'Tenants', href: '/portal/admin/tenants', primary: tenantsWithPhases.length > 0 },
         { label: 'Landings', href: '/portal/landings' },
-        { label: 'Automatitzacions', href: '/portal/automations' },
+        { label: 'Agents', href: '/portal/agents' },
       ],
     },
     {
@@ -388,6 +391,48 @@ export default function ProcessPage() {
             <StepCard key={s.num} step={s} locale={locale} />
           ))}
         </div>
+
+        {/* Tenants amb fases contractades */}
+        {isSuperAdmin && tenantsWithPhases.length > 0 && (
+          <div className="amg-card card-clip p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <I.Zap size={14} className="text-accent-light" />
+              <span className="f-display font-bold text-sm">Fases contractades per activar</span>
+              <AMGBadge tone="warning">{tenantsWithPhases.length}</AMGBadge>
+            </div>
+            <p className="f-mono text-label text-xs text-ink-2">
+              Tenants amb fases NexeLocal contractades. Obre el wizard per configurar cada fase.
+            </p>
+            <div className="space-y-2">
+              {tenantsWithPhases.map((t) => (
+                <div key={t.id} className="flex items-center justify-between gap-3 py-2 border-b border-border-base last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="f-display font-semibold text-sm text-ink-0 truncate">{t.name}</span>
+                      {t.sector && (
+                        <span className="f-mono text-[10px] text-ink-3 border border-border-base px-1.5 py-0.5 uppercase tracking-wide">
+                          {t.sector}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      {t.contractedPhases!.map(p => (
+                        <span key={p} className="f-mono text-[10px] text-accent-light border border-accent-muted px-1.5 py-0.5">{p}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <AMGButton
+                    size="sm"
+                    variant="primary"
+                    onClick={() => router.push(`/${locale}/portal/admin/tenants/${t.id}/activate`)}
+                  >
+                    <I.Zap size={11} /> Posar en marxa
+                  </AMGButton>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </PortalShell>
   );

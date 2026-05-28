@@ -314,17 +314,26 @@ public class BillingOrchestrator implements BillingService {
         budgetRepository.save(budget);
 
         var lines = budgetLineRepository.findByBudgetIdOrderBySortOrder(budget.getId());
+
+        // Fases catàleg (UUID): aprova al vault
         var phaseIds = lines.stream()
                 .map(BudgetLine::getPhaseId)
                 .filter(Objects::nonNull)
                 .distinct().toList();
-
         for (var phaseId : phaseIds) {
             try {
                 vaultService.approvePhase(budget.getTenantId(), phaseId);
-            } catch (Exception e) {
-                // Log but continue — phases may already be approved
-            }
+            } catch (Exception ignored) {}
+        }
+
+        // Fases NexeLocal (F1-F5): afegeix a contractedPhases del tenant
+        var nexePhases = lines.stream()
+                .map(BudgetLine::getPhaseNumber)
+                .filter(Objects::nonNull)
+                .map(n -> "F" + n)
+                .distinct().sorted().toList();
+        if (!nexePhases.isEmpty()) {
+            addContractedPhases(budget.getTenantId(), nexePhases);
         }
 
         return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament");
@@ -369,14 +378,20 @@ public class BillingOrchestrator implements BillingService {
         budgetRepository.save(budget);
 
         if (phaseKeys != null && !phaseKeys.isEmpty()) {
+            var nexePhases = new ArrayList<String>();
             for (var key : phaseKeys) {
-                // NexeLocal: claus "F1".."F5"
-                if (key != null && key.matches("F[1-5]")) continue;
-                // Catàleg: UUID → aprova la fase al vault
-                try {
-                    var phaseId = UUID.fromString(key);
-                    vaultService.approvePhase(budget.getTenantId(), phaseId);
-                } catch (Exception ignored) {}
+                if (key == null) continue;
+                if (key.matches("F[1-5]")) {
+                    nexePhases.add(key);
+                } else {
+                    try {
+                        var phaseId = UUID.fromString(key);
+                        vaultService.approvePhase(budget.getTenantId(), phaseId);
+                    } catch (Exception ignored) {}
+                }
+            }
+            if (!nexePhases.isEmpty()) {
+                addContractedPhases(budget.getTenantId(), nexePhases);
             }
         }
         return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament");
@@ -441,6 +456,18 @@ public class BillingOrchestrator implements BillingService {
         return tenantRepository.findById(tenantId)
                 .map(t -> WorkerTierAddon.from(t.getBusinessSize()))
                 .orElse(WorkerTierAddon.AUTONOMO);
+    }
+
+    private void addContractedPhases(UUID tenantId, List<String> newPhases) {
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
+        if (tenant == null) return;
+        var existing = new TreeSet<String>();
+        if (tenant.getContractedPhases() != null && !tenant.getContractedPhases().isBlank()) {
+            existing.addAll(Arrays.asList(tenant.getContractedPhases().split(",")));
+        }
+        existing.addAll(newPhases);
+        tenant.setContractedPhases(String.join(",", existing));
+        tenantRepository.save(tenant);
     }
 
     private Budget findBudget(UUID id) {

@@ -41,8 +41,8 @@ export const getInfraStatus = () =>
   apiFetch<InfraStatus>('/infraops/status');
 
 export const getInfraMetrics = (hours?: number) => {
-  const params = hours ? `?hours=${hours}` : '';
-  return apiFetch<InfraMetric[]>(`/infraops/metrics${params}`);
+  const params = hours ? `?hours=${hours}&size=200` : '?size=200';
+  return apiFetch<{ content: InfraMetric[] }>(`/infraops/metrics${params}`).then(r => r.content);
 };
 
 export const getRecommendations = () =>

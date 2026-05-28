@@ -40,6 +40,7 @@ public class ConversationalAgentController {
     private final AIProviderRouter aiProviderRouter;
     private final TelegramBotClient telegramBotClient;
     private final SystemConfigService systemConfigService;
+    private final com.amg.digitalitzacio.agents.application.AgentHealthService agentHealthService;
 
     @GetMapping("/{tenantId}/conversations")
     public ResponseEntity<List<ConversationResponse>> getConversations(
@@ -452,6 +453,12 @@ public class ConversationalAgentController {
             log.error("Error desactivant bot per al tenant {}", tenantId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @GetMapping("/{tenantId}/health")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<AgentHealthResponse> getAgentHealth(@PathVariable UUID tenantId) {
+        return ResponseEntity.ok(agentHealthService.calculate(tenantId));
     }
 
     private UserPrincipal getPrincipal() {

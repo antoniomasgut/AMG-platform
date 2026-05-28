@@ -21,8 +21,8 @@ export interface PaymentDashboard {
 }
 
 export const getPayments = (tenantId?: string) => {
-  const params = tenantId ? `?tenantId=${tenantId}` : '';
-  return apiFetch<Payment[]>(`/payments${params}`);
+  const params = tenantId ? `?tenantId=${tenantId}&size=200` : '?size=200';
+  return apiFetch<{ content: Payment[] }>(`/payments${params}`).then(r => r.content);
 };
 
 export const getPayment = (id: string) =>

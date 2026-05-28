@@ -147,7 +147,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 13 | i18n + SEO + RGPD | ✅ Completat | specs/13-i18n-seo-rgpd.md |
 | 14 | Admin Frontend (CRUD usuaris/tenants) | ✅ Completat | specs/14-admin-frontend.md |
 | 15 | Demo (tenant demo automàtic) | ✅ Completat | specs/15-demo.md |
-| 16 | Onboarding (guia ràpida post-registre) | ⏳ Esborrany | specs/16-onboarding.md |
+| 16 | Onboarding (guia ràpida post-registre) | ✅ Completat | specs/16-onboarding.md |
 | 17 | Service Setup Wizard (assistent implementació) | ✅ Completat | specs/17-service-setup-wizard.md |
 | 18 | Backup Operacional (còpia seguretat dades a GCS) | ✅ Completat | specs/18-backup-operacional.md |
 | 09b | GoCardless (domiciliació SEPA automàtica) | ✅ Completat | specs/09b-gocardless.md |
@@ -160,6 +160,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 25 | Omnichannel Inbox (converses unificades) | ✅ Completat | specs/25-omnichannel-inbox.md |
 | 26 | RAG Knowledge Base (base de coneixement IA) | 🔨 En curs | specs/26-rag-knowledge-base.md |
 | 27 | WhatsApp Business API (Meta Cloud, per tenant) | ✅ Completat | specs/27-whatsapp-business.md |
+| 28 | NexeLocal Service Configs (config per fase i sector) | ✅ Completat | — |
 
 ---
 
@@ -190,3 +191,23 @@ Cada fase té un cost de **setup individual** (varia per `businessSize`: AUTONOM
 | Bot IA avançat (RAG) | 100€ |
 | SMTP Corporatiu | 25€ |
 | Google Analytics | 25€ |
+
+---
+
+## Notes de producció (taules creades manualment)
+
+Hibernate a producció usa `ddl-auto: validate` — les taules noves **cal crear-les manualment** a la BD de producció (`ssh root@65.108.148.62 'docker exec amg-postgres psql -U amg -d amg -c "..."'`):
+
+| Taula | Creat | SQL resumit |
+|-------|-------|-------------|
+| `whatsapp_waba_configs` | 2026-05-24 | Entitat Mòdul 27 |
+| `sector_phases` | 2026-05-26 | Catàleg de fases per sector (105 files via SQL) |
+| `nexe_service_configs` | 2026-05-28 | `(tenant_id UUID, service_key VARCHAR(30), config_json TEXT, updated_at TIMESTAMPTZ, PK(tenant_id, service_key))` |
+
+**NexeLocal Service Configs** (`nexe_service_configs`):
+- Service keys: `AGENDA`, `PRESSUPOSTOS`, `FIDELITZACIO`, `EQUIP`
+- Endpoint: `GET/PUT /api/v1/nexe/tenants/{tenantId}/configs/{serviceKey}`
+- Frontend: `/portal/admin/tenants/[id]/nexe/[service]` (agenda / pressupostos / fidelitzacio / equip)
+- F2 Agenda: 4 modes per sector (`appointment` / `inspection` / `vehicle` / `meeting`)
+- F3 Pressupostos: 2 modes per sector (`formal` / `pricelist`)
+- F5 Equip: usa grup de Telegram compartit (`telegram_group_id`), no Telegram per-membre

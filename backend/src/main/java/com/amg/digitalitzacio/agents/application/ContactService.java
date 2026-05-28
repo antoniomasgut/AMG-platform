@@ -227,8 +227,24 @@ public class ContactService {
             .map(ci -> new ContactSummaryResponse.ChannelInfo(ci.getChannel().name(), ci.getIdentifier()))
             .toList();
 
+        int totalMessages = contact.getTotalMessageCount() != null ? contact.getTotalMessageCount() : 0;
+        boolean hasSummary = contact.getConversationSummary() != null && !contact.getConversationSummary().isBlank();
+
         return new ContactSummaryResponse(
             contact.getId(), contact.getDisplayName(), contact.getPhone(), contact.getEmail(),
-            channelInfos, lastContent, lastRole, lastAt, lastChannel, lastIdentifier, pendingCount);
+            channelInfos, lastContent, lastRole, lastAt, lastChannel, lastIdentifier, pendingCount,
+            totalMessages, hasSummary);
+    }
+
+    @Transactional
+    public void clearMemory(UUID tenantId, UUID contactId) {
+        contactRepository.findById(contactId).ifPresent(contact -> {
+            if (!contact.getTenantId().equals(tenantId))
+                throw new IllegalArgumentException("Contact does not belong to tenant");
+            contact.setConversationSummary(null);
+            contact.setSummaryUpdatedAt(null);
+            contactRepository.save(contact);
+            log.debug("Cleared memory for contact {} tenant {}", contactId, tenantId);
+        });
     }
 }

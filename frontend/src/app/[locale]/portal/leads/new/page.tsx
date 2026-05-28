@@ -24,20 +24,18 @@ export default function NewLeadPage() {
   const locale = params.locale as string;
 
   const [form, setForm] = useState({
-    companyName: '',
-    contactName: '',
-    contactEmail: '',
-    contactPhone: '',
+    name: '',
+    email: '',
+    phone: '',
     source: 'WEBSITE',
     notes: '',
   });
 
   const { mutate: doCreate, isPending } = useMutation({
     mutationFn: () => createLead({
-      companyName: form.companyName,
-      contactName: form.contactName,
-      contactEmail: form.contactEmail,
-      contactPhone: form.contactPhone || undefined,
+      name: form.name,
+      email: form.email || undefined,
+      phone: form.phone || undefined,
       source: form.source,
       notes: form.notes || undefined,
     }),
@@ -83,10 +81,9 @@ export default function NewLeadPage() {
           className="amg-card card-clip p-6 space-y-4"
           onSubmit={(e) => { e.preventDefault(); doCreate(); }}
         >
-          {field('Empresa', 'companyName', 'text', true)}
-          {field('Nom contacte', 'contactName', 'text', true)}
-          {field('Email contacte', 'contactEmail', 'email', true)}
-          {field('Telèfon contacte', 'contactPhone', 'tel')}
+          {field('Nom / Empresa', 'name', 'text', true)}
+          {field('Email', 'email', 'email')}
+          {field('Telèfon', 'phone', 'tel')}
 
           <div>
             <label className="f-mono text-label uppercase text-ink-2 tracking-widest block mb-1.5">

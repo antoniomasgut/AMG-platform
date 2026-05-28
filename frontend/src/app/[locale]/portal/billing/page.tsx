@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import {
@@ -46,6 +47,9 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const router = useRouter();
+  const params = useParams();
+  const locale = (params.locale as string) ?? 'ca';
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [setup, setSetup] = useState<TenantSetup | null>(null);
   const [loadingSetup, setLoadingSetup] = useState(false);
@@ -333,6 +337,31 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
                   {row('Mensual recurrent', `${(budget.monthlyTotal ?? 0).toFixed(2)} €/mes`, true)}
                 </div>
               </div>
+
+              {/* Botó "Posar en marxa" — només per pressupostos acceptats amb tenant */}
+              {budget.status === 'ACCEPTED' && budget.tenantId && (
+                <div className="rounded border border-success/30 bg-success/5 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <I.Check size={13} stroke="#39d353" />
+                    <span className="f-mono text-label text-xs text-success font-semibold uppercase tracking-wider">
+                      Pressupost acceptat
+                    </span>
+                  </div>
+                  <p className="f-mono text-label text-xs text-ink-2">
+                    El client ha acceptat les fases. Ara cal configurar cada fase per activar els serveis contractats.
+                  </p>
+                  <AMGButton
+                    size="sm"
+                    variant="primary"
+                    onClick={() => {
+                      onClose();
+                      router.push(`/${locale}/portal/admin/tenants/${budget.tenantId}/activate`);
+                    }}
+                  >
+                    Posar en marxa →
+                  </AMGButton>
+                </div>
+              )}
             </div>
           ) : (
             <form onSubmit={handleSave} className="p-5 space-y-4">

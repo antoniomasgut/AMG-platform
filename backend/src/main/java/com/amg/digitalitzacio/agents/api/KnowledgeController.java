@@ -57,4 +57,14 @@ public class KnowledgeController {
     public ResponseEntity<String> previewPromptBlock(@PathVariable UUID tenantId) {
         return ResponseEntity.ok(knowledgeBaseService.buildKnowledgeBlock(tenantId));
     }
+
+    @PostMapping("/{tenantId}/test")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<KnowledgeTestResponse> testResponse(
+            @PathVariable UUID tenantId,
+            @RequestBody KnowledgeTestRequest request) {
+        String response = knowledgeBaseService.testResponse(tenantId, request.message());
+        String preview  = knowledgeBaseService.buildKnowledgeBlock(tenantId);
+        return ResponseEntity.ok(new KnowledgeTestResponse(response, preview));
+    }
 }

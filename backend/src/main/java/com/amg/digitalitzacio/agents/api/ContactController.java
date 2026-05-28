@@ -68,4 +68,13 @@ public class ContactController {
         contactService.updateProfile(tenantId, contactId, request.displayName(), request.phone(), request.email());
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{tenantId}/{contactId}/memory")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<Void> clearMemory(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID contactId) {
+        contactService.clearMemory(tenantId, contactId);
+        return ResponseEntity.noContent().build();
+    }
 }

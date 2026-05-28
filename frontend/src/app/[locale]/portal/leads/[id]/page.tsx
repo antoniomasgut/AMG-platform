@@ -39,7 +39,7 @@ export default function LeadDetailPage() {
   const locale = params.locale as string;
   const id = params.id as string;
 
-  const [newActivity, setNewActivity] = useState({ type: 'CALL', notes: '', dueDate: '' });
+  const [newActivity, setNewActivity] = useState({ type: 'CALL', description: '', dueDate: '' });
   const [showActivityForm, setShowActivityForm] = useState(false);
 
   const { data: lead, isLoading: loadingLead } = useQuery({
@@ -67,12 +67,12 @@ export default function LeadDetailPage() {
   const { mutate: doCreateActivity, isPending: creatingActivity } = useMutation({
     mutationFn: () => createActivity(id, {
       type: newActivity.type,
-      notes: newActivity.notes,
+      description: newActivity.description,
       dueDate: newActivity.dueDate || undefined,
     }),
     onSuccess: () => {
       toast('success', 'Activitat registrada');
-      setNewActivity({ type: 'CALL', notes: '', dueDate: '' });
+      setNewActivity({ type: 'CALL', description: '', dueDate: '' });
       setShowActivityForm(false);
       qc.invalidateQueries({ queryKey: ['lead-activities', id] });
     },
@@ -104,7 +104,7 @@ export default function LeadDetailPage() {
   }
 
   return (
-    <PortalShell breadcrumb={`leads / ${lead.companyName}`}>
+    <PortalShell breadcrumb={`leads / ${lead.name}`}>
       <div className="p-4 sm:p-8 space-y-6 max-w-3xl">
         <div>
           <button
@@ -115,7 +115,7 @@ export default function LeadDetailPage() {
           </button>
           <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / leads /</span>
           <div className="flex items-center gap-3 mt-1">
-            <div className="f-display font-bold text-xl">{lead.companyName}</div>
+            <div className="f-display font-bold text-xl">{lead.name}</div>
             <AMGBadge tone={STAGE_TONE[lead.stage]}>{STAGE_LABEL[lead.stage]}</AMGBadge>
           </div>
         </div>
@@ -125,9 +125,9 @@ export default function LeadDetailPage() {
           <div className="f-mono text-label uppercase text-ink-2 tracking-widest mb-4">Informació del Lead</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { label: 'Contacte', value: lead.contactName },
-              { label: 'Email', value: lead.contactEmail },
-              { label: 'Telèfon', value: lead.contactPhone ?? '—' },
+              { label: 'Nom / Empresa', value: lead.name },
+              { label: 'Email', value: lead.email ?? '—' },
+              { label: 'Telèfon', value: lead.phone ?? '—' },
               { label: 'Origen', value: lead.source },
               { label: 'Creat', value: fmtDate(lead.createdAt) },
               { label: 'Actualitzat', value: fmtDate(lead.updatedAt) },
@@ -202,10 +202,10 @@ export default function LeadDetailPage() {
                 </div>
               </div>
               <div>
-                <label className="f-mono text-label text-ink-3 uppercase tracking-wider block mb-1">Notes</label>
+                <label className="f-mono text-label text-ink-3 uppercase tracking-wider block mb-1">Descripció</label>
                 <textarea
-                  value={newActivity.notes}
-                  onChange={(e) => setNewActivity((a) => ({ ...a, notes: e.target.value }))}
+                  value={newActivity.description}
+                  onChange={(e) => setNewActivity((a) => ({ ...a, description: e.target.value }))}
                   rows={3}
                   className="w-full bg-bg-0 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-none"
                 />
@@ -229,9 +229,9 @@ export default function LeadDetailPage() {
             <div className="divide-y divide-border-base">
               {(activities as Activity[]).map((act) => (
                 <div key={act.id} className="px-4 sm:px-5 py-3 flex items-start gap-3">
-                  <AMGBadge tone={act.completed ? 'success' : 'neutral'}>{act.type}</AMGBadge>
+                  <AMGBadge tone={act.completedAt ? 'success' : 'neutral'}>{act.type}</AMGBadge>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-ink-1">{act.notes}</p>
+                    <p className="text-sm text-ink-1">{act.description}</p>
                     {act.dueDate && (
                       <span className="f-mono text-label text-ink-3">{fmtDate(act.dueDate)}</span>
                     )}

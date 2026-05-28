@@ -15,7 +15,9 @@ public record ContactSummaryResponse(
     Instant lastMessageAt,
     String lastChannel,
     String lastIdentifier,
-    long pendingCount
+    long pendingCount,
+    int totalMessageCount,
+    boolean hasSummary
 ) {
     public record ChannelInfo(String channel, String identifier) {}
 }

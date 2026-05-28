@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/lib/toast-context';
 import {
   getTenant, getTenantSetup, listCatalogServices,
@@ -183,12 +183,70 @@ function ServiceToggle({ tenantId, serviceId, enabled, onToggle }: {
   );
 }
 
-function SetupSection({ setup, tenantId, onRefresh }: { setup: TenantSetup; tenantId: string; onRefresh: () => void }) {
+type NexeServiceItem =
+  | { name: string; action: 'scroll'; sectionId: string }
+  | { name: string; action: 'navigate'; configKey: string };
+
+const NEXE_PHASE_SERVICES: Record<string, NexeServiceItem[]> = {
+  F1: [
+    { name: 'Bot IA & Canals', action: 'scroll', sectionId: 'section-agent-config' },
+    { name: 'Telegram Bot', action: 'scroll', sectionId: 'section-telegram' },
+    { name: 'WhatsApp Business', action: 'scroll', sectionId: 'section-whatsapp' },
+  ],
+  F2: [
+    { name: 'Bot IA & Canals', action: 'scroll', sectionId: 'section-agent-config' },
+    { name: 'Telegram Bot', action: 'scroll', sectionId: 'section-telegram' },
+    { name: 'Gestió de Cites', action: 'navigate', configKey: 'agenda' },
+  ],
+  F3: [
+    { name: 'Bot IA & Canals', action: 'scroll', sectionId: 'section-agent-config' },
+    { name: 'Pressupostos', action: 'scroll', sectionId: 'section-budgets' },
+    { name: 'Config Pressupostos', action: 'navigate', configKey: 'pressupostos' },
+  ],
+  F4: [
+    { name: 'Bot IA & Canals', action: 'scroll', sectionId: 'section-agent-config' },
+    { name: 'WhatsApp Business', action: 'scroll', sectionId: 'section-whatsapp' },
+    { name: 'Fidelització', action: 'navigate', configKey: 'fidelitzacio' },
+  ],
+  F5: [
+    { name: 'Bot IA & Canals', action: 'scroll', sectionId: 'section-agent-config' },
+    { name: "Gestió d'Equip", action: 'navigate', configKey: 'equip' },
+  ],
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  api_key: 'API Key', bot_token: 'Bot Token', telegram_bot_token: 'Token Telegram',
+  phone_number: 'Número telèfon', account_id: 'Account ID', access_token: 'Access Token',
+  phone_number_id: 'Phone Number ID', smtp_host: 'Servidor SMTP', smtp_user: 'Usuari SMTP',
+  smtp_password: 'Contrasenya SMTP', username: 'Usuari', bot_username: 'Usuari bot',
+  waba_id: 'WABA ID', client_id: 'Client ID', client_secret: 'Client Secret',
+  analytics_id: 'Analytics ID', webhook_url: 'Webhook URL',
+};
+
+function getRequiredCredentials(slug: string, serviceType: string): string[] {
+  const wizard = getWizardConfig(slug, serviceType);
+  if (!wizard) return [];
+  return wizard.steps
+    .filter(s => s.type === 'credentials')
+    .flatMap(s => s.fields?.filter(f => f.required) ?? [])
+    .map(f => FIELD_LABELS[f.id] ?? f.id.replace(/_/g, ' '));
+}
+
+function SetupSection({ setup, tenantId, contractedPhases, onRefresh, onRemovePhase }: {
+  setup: TenantSetup;
+  tenantId: string;
+  contractedPhases?: string[] | null;
+  onRefresh: () => void;
+  onRemovePhase?: (phase: string) => void;
+}) {
   const hasProfiles = setup.profiles.length > 0;
   const hasAddons = setup.addons.length > 0;
   const hasStandalone = (setup.standalone?.length ?? 0) > 0;
+  const hasNexePhases = (contractedPhases?.length ?? 0) > 0;
   const { toast } = useToast();
+  const router = useRouter();
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removingPhase, setRemovingPhase] = useState<string | null>(null);
 
   const handleRemove = async (tenantServiceId: string) => {
     setRemovingId(tenantServiceId);
@@ -203,91 +261,209 @@ function SetupSection({ setup, tenantId, onRefresh }: { setup: TenantSetup; tena
     }
   };
 
-  const canRemove = (status: string, isEnabled: boolean) => !isEnabled || status !== 'VERIFIED';
+  const handleRemovePhase = async (phase: string) => {
+    if (!confirm(`Eliminar la fase ${phase} del contracte? Aquesta acció no es pot desfer.`)) return;
+    setRemovingPhase(phase);
+    try {
+      onRemovePhase?.(phase);
+    } finally {
+      setRemovingPhase(null);
+    }
+  };
 
-  if (!hasProfiles && !hasAddons && !hasStandalone) {
+  if (!hasNexePhases && !hasProfiles && !hasAddons && !hasStandalone) {
     return (
       <div className="p-8 text-center">
         <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
         <div className="f-display font-bold text-sm mb-1">Cap servei assignat</div>
-        <p className="f-mono text-xs text-ink-2">Aquest tenant encara no té perfils ni serveis assignats</p>
+        <p className="f-mono text-xs text-ink-2">Aquest tenant encara no té fases ni serveis assignats</p>
       </div>
     );
   }
 
   const ServiceRow = ({ svc }: { svc: TenantSetup['profiles'][0]['phases'][0]['services'][0] }) => {
     const isPending = svc.status === 'PENDING' || svc.status === 'CONFIGURING' || svc.status === 'AWAITING_CLIENT';
+    const wizard = getWizardConfig(svc.service.slug, svc.service.type);
+    const requiredCreds = isPending ? getRequiredCredentials(svc.service.slug, svc.service.type) : [];
     return (
-      <div className={`flex items-center gap-2 pl-2 transition-opacity ${!svc.isEnabled ? 'opacity-40' : ''}`}>
-        <ServiceToggle tenantId={tenantId} serviceId={svc.service.id} enabled={svc.isEnabled} onToggle={onRefresh} />
-        <span className="text-sm text-ink-1">{svc.service.name}</span>
-        <span className="f-mono text-[10px] text-ink-3 uppercase">{svc.service.type}</span>
-        {statusBadge(svc.status, 'Actiu', 'Inactiu')}
-        {isPending && getWizardConfig(svc.service.slug, svc.service.type) && (
-          <a href={`/portal/admin/tenants/${tenantId}/services/${svc.service.id}/setup`}
-            className="ml-auto text-[10px] f-mono uppercase text-accent-light hover:text-accent transition">
-            Configurar
-          </a>
-        )}
-        {canRemove(svc.status, svc.isEnabled) && (
-          <button
-            type="button"
-            onClick={() => handleRemove(svc.tenantServiceId)}
-            disabled={removingId === svc.tenantServiceId}
-            title="Eliminar servei"
-            className="ml-auto text-ink-3 hover:text-red-400 transition disabled:opacity-40"
-          >
-            {removingId === svc.tenantServiceId
-              ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
-              : <I.Trash size={13} />}
-          </button>
+      <div className={`p-3 border border-border-base rounded transition-opacity ${!svc.isEnabled ? 'opacity-40' : ''}`}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <ServiceToggle tenantId={tenantId} serviceId={svc.service.id} enabled={svc.isEnabled} onToggle={onRefresh} />
+          <span className="text-sm font-medium text-ink-1 flex-1 min-w-0 truncate">{svc.service.name}</span>
+          <span className="f-mono text-[10px] text-ink-3 uppercase">{svc.service.type}</span>
+          {statusBadge(svc.status, 'Actiu', 'Inactiu')}
+          <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
+            <a
+              href={`/portal/admin/tenants/${tenantId}/services/${svc.service.id}/setup`}
+              title="Configurar / gestionar"
+              className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] f-mono border transition ${
+                wizard
+                  ? 'border-[rgba(255,107,0,0.5)] text-accent-light hover:bg-[rgba(255,107,0,0.12)]'
+                  : 'border-border-base text-ink-2 hover:border-ink-2 hover:text-ink-1'
+              }`}
+            >
+              <I.Settings size={11} />
+              {isPending ? 'Configurar' : 'Gestionar'}
+            </a>
+            <button
+              type="button"
+              onClick={() => handleRemove(svc.tenantServiceId)}
+              disabled={removingId === svc.tenantServiceId}
+              title="Eliminar servei"
+              className="p-1 rounded text-ink-3 hover:text-red-400 hover:bg-[rgba(239,68,68,0.08)] transition disabled:opacity-40"
+            >
+              {removingId === svc.tenantServiceId
+                ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
+                : <I.Trash size={13} />}
+            </button>
+          </div>
+        </div>
+        {requiredCreds.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5 pl-1">
+            <span className="f-mono text-[10px] text-amber-400 flex items-center gap-1">
+              <I.Key size={9} /> Claus pendents:
+            </span>
+            {requiredCreds.map(c => (
+              <span key={c} className="f-mono text-[10px] px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/8 text-amber-400">
+                {c}
+              </span>
+            ))}
+          </div>
         )}
       </div>
     );
   };
 
   return (
-    <div className="space-y-6 p-5">
-      {setup.profiles.map((p) => (
-        <div key={p.profile.id} className="border border-border-base rounded p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <I.Box size={14} className="text-accent-light" />
-            <span className="f-display font-bold text-sm">{p.profile.name}</span>
+    <div className="space-y-5 p-5">
+
+      {/* Fases NexeLocal contractades */}
+      {hasNexePhases && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="f-mono text-label uppercase tracking-widest text-ink-3 text-[10px]">Fases NexeLocal contractades</div>
+            <button
+              type="button"
+              onClick={() => router.push(`/portal/admin/tenants/${tenantId}/activate`)}
+              className="flex items-center gap-1.5 px-3 py-1 f-mono text-xs font-semibold text-accent-light border border-[rgba(255,107,0,0.5)] bg-[rgba(255,107,0,0.06)] hover:bg-[rgba(255,107,0,0.15)] rounded transition"
+            >
+              <I.Zap size={11} /> Posar en marxa →
+            </button>
           </div>
-          {p.phases.map((ph) => (
-            <div key={ph.phase.id} className="ml-5 border-l-2 border-border-base pl-4 space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {(contractedPhases ?? []).sort().map((phase) => {
+              const phaseNum = parseInt(phase.replace('F', ''));
+              const phaseName = NEXE_PHASE_NAMES[phaseNum] ?? phase;
+              const phaseServices = NEXE_PHASE_SERVICES[phase] ?? [];
+              return (
+                <div key={phase} className="border border-border-base rounded p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="f-mono text-xs font-bold px-2 py-0.5 rounded border border-[rgba(255,107,0,0.4)] bg-[rgba(255,107,0,0.08)] text-accent-light">
+                        {phase}
+                      </span>
+                      <span className="text-sm font-medium text-ink-1">{phaseName}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhase(phase)}
+                      disabled={removingPhase === phase}
+                      title={`Eliminar ${phase}`}
+                      className="p-1 rounded text-ink-3 hover:text-red-400 hover:bg-[rgba(239,68,68,0.08)] transition disabled:opacity-40 flex-shrink-0"
+                    >
+                      {removingPhase === phase
+                        ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
+                        : <I.Trash size={13} />}
+                    </button>
+                  </div>
+                  {phaseServices.length > 0 && (
+                    <div className="space-y-1.5">
+                      {phaseServices.map(svcItem => (
+                        <div key={svcItem.name} className="flex items-center justify-between gap-2 px-2 py-1.5 bg-[rgba(255,255,255,0.02)] border border-border-base rounded">
+                          <span className="f-mono text-[10px] text-ink-2">{svcItem.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (svcItem.action === 'scroll') {
+                                const el = document.getElementById(svcItem.sectionId);
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              } else {
+                                router.push(`/portal/admin/tenants/${tenantId}/nexe/${svcItem.configKey}`);
+                              }
+                            }}
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] f-mono border transition flex-shrink-0 ${
+                              svcItem.action === 'navigate'
+                                ? 'border-[rgba(255,107,0,0.6)] text-accent-light bg-[rgba(255,107,0,0.06)] hover:bg-[rgba(255,107,0,0.15)]'
+                                : 'border-[rgba(255,107,0,0.4)] text-accent-light hover:bg-[rgba(255,107,0,0.1)]'
+                            }`}
+                          >
+                            <I.Settings size={10} />
+                            {svcItem.action === 'navigate' ? 'Configurar' : 'Gestionar'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Serveis de catàleg per perfil */}
+      {hasProfiles && (
+        <div className="space-y-4">
+          {hasNexePhases && <div className="f-mono text-label uppercase tracking-widest text-ink-3 text-[10px]">Serveis del catàleg</div>}
+          {setup.profiles.map((p) => (
+            <div key={p.profile.id} className="border border-border-base rounded p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <span className="f-mono text-label uppercase text-ink-3">{ph.phase.name}</span>
-                {statusBadge(ph.approvalStatus, 'Aprovat', 'Pendent')}
+                <I.Box size={14} className="text-accent-light" />
+                <span className="f-display font-bold text-sm">{p.profile.name}</span>
               </div>
-              {ph.services.map((svc) => (
-                <ServiceRow key={svc.tenantServiceId} svc={svc} />
+              {p.phases.map((ph) => (
+                <div key={ph.phase.id} className="ml-5 border-l-2 border-border-base pl-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="f-mono text-label uppercase text-ink-3">{ph.phase.name}</span>
+                    {statusBadge(ph.approvalStatus, 'Aprovat', 'Pendent')}
+                  </div>
+                  {ph.services.map((svc) => (
+                    <ServiceRow key={svc.tenantServiceId} svc={svc} />
+                  ))}
+                </div>
               ))}
             </div>
           ))}
         </div>
-      ))}
+      )}
+
+      {/* Serveis individuals */}
       {hasStandalone && (
-        <div className="border border-border-base rounded p-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <I.Zap size={14} className="text-accent-light" />
-            <span className="f-display font-bold text-sm">Serveis individuals</span>
+        <div className="space-y-2">
+          {(hasNexePhases || hasProfiles) && <div className="f-mono text-label uppercase tracking-widest text-ink-3 text-[10px]">Serveis individuals</div>}
+          <div className="border border-border-base rounded p-4 space-y-2">
+            <div className="flex items-center gap-2 mb-1">
+              <I.Zap size={14} className="text-accent-light" />
+              <span className="f-display font-bold text-sm">Serveis individuals</span>
+            </div>
+            {setup.standalone!.map((svc) => (
+              <ServiceRow key={svc.tenantServiceId} svc={svc} />
+            ))}
           </div>
-          {setup.standalone!.map((svc) => (
-            <ServiceRow key={svc.tenantServiceId} svc={svc} />
-          ))}
         </div>
       )}
+
+      {/* Add-ons */}
       {hasAddons && (
         <div className="border border-border-base rounded p-4 space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-1">
             <I.Plus size={14} className="text-accent-light" />
             <span className="f-display font-bold text-sm">Add-ons</span>
           </div>
           {setup.addons.map((a) => (
-            <div key={a.service.id} className="flex items-center gap-2 pl-2">
+            <div key={a.service.id} className="flex items-center gap-2 px-3 py-2 border border-border-base rounded">
               <span className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
-              <span className="text-sm text-ink-1">{a.service.name}</span>
+              <span className="text-sm text-ink-1 flex-1">{a.service.name}</span>
               {statusBadge(a.approvalStatus, 'Aprovat', 'No aprovat')}
             </div>
           ))}
@@ -2477,6 +2653,18 @@ export default function TenantDetailPage() {
     }
   };
 
+  const handleRemovePhase = async (phase: string) => {
+    const current = tenant?.contractedPhases ?? [];
+    const updated = current.filter(p => p !== phase);
+    try {
+      await updateTenant(id, { contractedPhases: updated });
+      qc.invalidateQueries({ queryKey: ['tenant', id] });
+      toast('success', `Fase ${phase} eliminada del contracte`);
+    } catch {
+      toast('error', 'Error eliminant la fase');
+    }
+  };
+
   const { data: tenant, isLoading: loadingTenant, error: tenantErr } = useQuery({
     queryKey: ['tenant', id],
     queryFn: () => getTenant(id),
@@ -2740,7 +2928,13 @@ export default function TenantDetailPage() {
               <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
             </div>
           ) : setup ? (
-            <SetupSection setup={setup} tenantId={id} onRefresh={invalidateSetup} />
+            <SetupSection
+              setup={setup}
+              tenantId={id}
+              contractedPhases={tenant?.contractedPhases}
+              onRefresh={invalidateSetup}
+              onRemovePhase={handleRemovePhase}
+            />
           ) : (
             <div className="p-8 text-center">
               <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
@@ -2750,19 +2944,25 @@ export default function TenantDetailPage() {
         </div>
 
         {/* Agent IA & Canals */}
-        <AgentConfigCard tenantId={id} agentSystemPrompt={tenant.agentSystemPrompt} />
+        <div id="section-agent-config">
+          <AgentConfigCard tenantId={id} agentSystemPrompt={tenant.agentSystemPrompt} />
+        </div>
 
         {/* Telegram Bot per tenant */}
-        <TelegramBotCard tenantId={id} />
+        <div id="section-telegram">
+          <TelegramBotCard tenantId={id} />
+        </div>
 
         {/* WhatsApp Business API */}
-        <WhatsAppMetaCard tenantId={id} />
+        <div id="section-whatsapp">
+          <WhatsAppMetaCard tenantId={id} />
+        </div>
 
         {/* GoCardless SEPA */}
         <GoCardlessCard tenantId={id} />
 
         {/* Pressupostos */}
-        <div className="amg-card card-clip">
+        <div id="section-budgets" className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
             <AMGSectionTitle eyebrow="Facturació" title="Pressupostos" />
             <AMGButton size="sm" icon={I.Plus} onClick={() => setShowNewBudget(true)}>

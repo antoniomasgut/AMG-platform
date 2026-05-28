@@ -125,9 +125,9 @@ export default function LeadsPage() {
                         className="amg-card card-clip p-3 cursor-pointer hover:border-accent/40 transition-colors"
                         onClick={() => router.push(`/${locale}/portal/leads/${lead.id}`)}
                       >
-                        <div className="f-display font-bold text-sm text-ink-0 truncate">{lead.companyName}</div>
-                        <div className="f-mono text-label text-ink-2 mt-1 truncate">{lead.contactName}</div>
-                        <div className="f-mono text-label text-ink-3 truncate">{lead.contactEmail}</div>
+                        <div className="f-display font-bold text-sm text-ink-0 truncate">{lead.name}</div>
+                        {lead.email && <div className="f-mono text-label text-ink-2 mt-1 truncate">{lead.email}</div>}
+                        {lead.phone && <div className="f-mono text-label text-ink-3 truncate">{lead.phone}</div>}
                         <div className="mt-2">
                           <AMGBadge tone="neutral">{SOURCE_LABEL[lead.source] ?? lead.source}</AMGBadge>
                         </div>

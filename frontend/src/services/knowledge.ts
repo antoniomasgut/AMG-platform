@@ -64,3 +64,15 @@ export async function previewPromptBlock(tenantId: string): Promise<string> {
   if (!res.ok) throw new Error('Error carregant previsualització');
   return res.text();
 }
+
+export interface KnowledgeTestResponse {
+  response: string;
+  systemPromptPreview: string;
+}
+
+export function testKnowledgeResponse(tenantId: string, message: string): Promise<KnowledgeTestResponse> {
+  return apiFetch(`/agents/knowledge/${tenantId}/test`, {
+    method: 'POST',
+    body: JSON.stringify({ message }),
+  });
+}
