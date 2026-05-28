@@ -7,6 +7,7 @@ import java.util.UUID;
 
 @Service
 @ConditionalOnProperty(name = "app.prospecting.provider", havingValue = "mock", matchIfMissing = true)
+@org.springframework.context.annotation.Primary
 public class MockLeadService implements LeadService {
 
     @Override

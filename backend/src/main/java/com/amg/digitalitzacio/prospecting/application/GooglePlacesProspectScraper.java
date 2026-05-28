@@ -158,7 +158,7 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
             throttle();
 
             var uri = "/details/json?place_id=" + prospect.getGooglePlaceId()
-                    + "&fields=formatted_phone_number,website,editorial_summary"
+                    + "&fields=formatted_phone_number,website,editorial_summary,address_components,formatted_address"
                     + "&key=" + apiKey;
 
             var response = webClient.get()
@@ -177,6 +177,13 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
                 prospect.setPhone(phone);
             }
 
+            // Adreça completa i components estructurats
+            var formattedAddress = result.path("formatted_address").asText(null);
+            if (formattedAddress != null && !formattedAddress.isBlank()) {
+                prospect.setAddress(formattedAddress);
+            }
+            parseAddressComponents(result.path("address_components"), prospect);
+
             var website = result.path("website").asText(null);
             if (website != null && !website.isBlank()) {
                 prospect.setWebsite(website);
@@ -194,6 +201,26 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
 
         } catch (Exception e) {
             log.debug("Failed to enrich details for place {}: {}", prospect.getGooglePlaceId(), e.getMessage());
+        }
+    }
+
+    /** Extreu ciutat i codi postal dels address_components de Google Places. */
+    private void parseAddressComponents(JsonNode components, Prospect prospect) {
+        if (components == null || !components.isArray()) return;
+        for (var comp : components) {
+            var types = comp.path("types");
+            var longName = comp.path("long_name").asText(null);
+            if (longName == null) continue;
+            for (var type : types) {
+                switch (type.asText()) {
+                    case "locality", "administrative_area_level_2" -> {
+                        if (prospect.getCity() == null || prospect.getCity().isBlank()) {
+                            prospect.setCity(longName);
+                        }
+                    }
+                    case "postal_code" -> prospect.setPostalCode(longName);
+                }
+            }
         }
     }
 
