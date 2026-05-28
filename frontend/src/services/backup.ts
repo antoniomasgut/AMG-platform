@@ -24,7 +24,7 @@ export const triggerBackup = (type: string) =>
   apiFetch<BackupTask>('/ops/backups', { method: 'POST', body: JSON.stringify({ type }) });
 
 export const listBackups = () =>
-  apiFetch<BackupTask[]>('/ops/backups');
+  apiFetch<{ content: BackupTask[] }>('/ops/backups').then(r => r.content);
 
 export const getBackupDashboard = () =>
   apiFetch<BackupDashboard>('/ops/backups/dashboard');

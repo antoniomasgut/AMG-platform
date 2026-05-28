@@ -71,7 +71,8 @@ export const startBackup = (type: string, description?: string) =>
 export const listBackups = (type?: string) => {
   const params = new URLSearchParams();
   if (type) params.set('type', type);
-  return apiFetch<BackupResponse[]>(`/ops/backups?${params}`);
+  params.set('size', '100');
+  return apiFetch<{ content: BackupResponse[] }>(`/ops/backups?${params}`).then(r => r.content);
 };
 
 export const getLogs = (serviceName: string, limit = 100) =>
