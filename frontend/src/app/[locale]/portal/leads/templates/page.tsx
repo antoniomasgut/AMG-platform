@@ -190,7 +190,7 @@ export default function TemplatesPage() {
   }, {} as Record<TemplateType, MessageTemplate[]>);
 
   return (
-    <PortalShell breadcrumb="leads">
+    <PortalShell breadcrumb="leads" backHref={`/${locale}/portal/leads`}>
       <div className="p-4 sm:p-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

@@ -3,9 +3,11 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { useRouter } from '@/i18n/navigation';
+import { useParams } from 'next/navigation';
 import { AMGButton } from '@/components/ui/button';
 import { AMGInput } from '@/components/ui/input';
 import { I } from '@/components/ui/icons';
+import { PortalShell } from '@/components/portal/PortalShell';
 import { createUser } from '@/services/userService';
 import { listTenants } from '@/services/tenantService';
 import { getCurrentUser } from '@/services/auth';
@@ -13,6 +15,8 @@ import { getCurrentUser } from '@/services/auth';
 export default function NewUserPage() {
   const t = useTranslations('admin');
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [form, setForm] = useState({ email: '', password: '', name: '', role: 'CLIENT', tenantId: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -54,13 +58,9 @@ export default function NewUserPage() {
     : ['CLIENT'];
 
   return (
+    <PortalShell breadcrumb="admin · usuaris · nou" backHref={`/${locale}/portal/admin/users`}>
     <div className="p-4 sm:p-8 max-w-2xl space-y-6">
-      <div className="flex items-center gap-3">
-        <AMGButton variant="ghost" size="sm" onClick={() => router.back()}>
-          <I.Chevron size={16} className="rotate-180" />
-        </AMGButton>
-        <h1 className="f-display font-black text-lg text-white">{t('users.new')}</h1>
-      </div>
+      <h1 className="f-display font-black text-lg text-white">{t('users.new')}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <AMGInput label={t('users.fields.email' as any)} type="email" value={form.email}
@@ -119,5 +119,6 @@ export default function NewUserPage() {
         </div>
       </form>
     </div>
+    </PortalShell>
   );
 }

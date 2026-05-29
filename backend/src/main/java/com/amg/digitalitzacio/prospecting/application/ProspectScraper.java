@@ -10,7 +10,7 @@ public interface ProspectScraper {
 
     List<Prospect> search(String sector, String location, Map<String, Object> params, UUID campaignId);
 
-    record ProspectEnrichment(String email, String instagram, Boolean hasWebsite, Boolean hasWhatsapp) {}
+    record ProspectEnrichment(String email, String website, String instagram, Boolean hasWebsite, Boolean hasWhatsapp) {}
 
-    ProspectEnrichment enrich(String name, String website);
+    ProspectEnrichment enrich(String name, String website, String email);
 }

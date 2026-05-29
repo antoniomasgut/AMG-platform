@@ -634,7 +634,10 @@ function getServiceMeta(service: string, sector?: string | null) {
 // ─── PAGE ──────────────────────────────────────────────────────
 
 export default function NexeServiceConfigPage() {
-  const { id: tenantId, service } = useParams<{ id: string; service: string }>();
+  const rawParams = useParams<{ id: string; service: string; locale: string }>();
+  const tenantId = rawParams.id;
+  const service = rawParams.service;
+  const locale = rawParams.locale as string;
   const router = useRouter();
 
   const { data: tenant } = useQuery({
@@ -657,7 +660,7 @@ export default function NexeServiceConfigPage() {
   };
 
   return (
-    <PortalShell breadcrumb={`admin · tenants · ${tenant?.name ?? '...'} · nexe · ${meta.title.toLowerCase()}`}>
+    <PortalShell breadcrumb={`admin · tenants · ${tenant?.name ?? '...'} · nexe · ${meta.title.toLowerCase()}`} backHref={`/${locale}/portal/admin/tenants/${tenantId}`}>
       <div className="p-4 sm:p-8">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-start justify-between mb-6">
@@ -680,10 +683,6 @@ export default function NexeServiceConfigPage() {
                 )}
               </div>
             </div>
-            <AMGButton variant="ghost" size="sm"
-              onClick={() => router.push(`/portal/admin/tenants/${tenantId}`)}>
-              ← Tornar
-            </AMGButton>
           </div>
 
           {renderForm()}

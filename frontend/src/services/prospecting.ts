@@ -7,17 +7,34 @@ export interface Campaign {
   location: string;
   source: string;
   status: string;
-  prospectsFound: number;
+  totalFound: number;
+  totalExported: number;
   createdAt: string;
 }
 
 export interface Prospect {
   id: string;
-  businessName: string;
+  campaignId: string;
+  name: string;
+  description?: string;
+  sector?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
   phone?: string;
   email?: string;
-  address?: string;
+  website?: string;
+  instagram?: string;
+  googleRating?: number;
+  googleReviews?: number;
+  googlePlaceId?: string;
+  hasWebsite?: boolean;
+  hasWhatsapp?: boolean;
   status: string;
+  source?: string;
+  notes?: string;
+  leadId?: string;
+  createdAt?: string;
 }
 
 export type ProspectSource = 'GOOGLE_MAPS' | 'INSTAGRAM' | 'PAGINAS_AMARILLAS' | 'MANUAL';
@@ -51,3 +68,15 @@ export const getCampaignProspects = (id: string) =>
 
 export const exportProspect = (id: string) =>
   apiFetch<void>(`/prospecting/prospects/${id}/export`, { method: 'POST' });
+
+export const cloneCampaign = (id: string) =>
+  apiFetch<Campaign>(`/prospecting/campaigns/${id}/clone`, { method: 'POST' });
+
+export const enrichAllProspects = (id: string) =>
+  apiFetch<{ enriched: number }>(`/prospecting/campaigns/${id}/enrich-all`, { method: 'POST' });
+
+export const enrichProspect = (id: string) =>
+  apiFetch<Prospect>(`/prospecting/prospects/${id}/enrich`, { method: 'POST' });
+
+export const exportContactableProspects = (id: string) =>
+  apiFetch<{ exported: number }>(`/prospecting/campaigns/${id}/export-contactable`, { method: 'POST' });

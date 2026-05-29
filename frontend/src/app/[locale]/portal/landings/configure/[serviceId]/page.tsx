@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { PortalShell } from '@/components/portal/PortalShell';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/toast-context';
 import { listTemplates, getTemplate } from '@/services/templates';
@@ -14,7 +15,9 @@ import { I } from '@/components/ui/icons';
 type Step = 'select-template' | 'fill-content' | 'confirm';
 
 function ConfigureLandingForm() {
-  const { serviceId } = useParams<{ serviceId: string }>();
+  const rawParams = useParams<{ serviceId: string; locale: string }>();
+  const serviceId = rawParams.serviceId;
+  const locale = rawParams.locale as string;
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -80,15 +83,18 @@ function ConfigureLandingForm() {
 
   if (!tenantId) {
     return (
-      <div className="p-4 sm:p-8 text-center py-12">
-        <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
-        <div className="f-display font-bold text-sm mb-1">Falta tenantId</div>
-        <p className="f-mono text-xs text-ink-2">Aquesta pàgina requereix un tenantId com a paràmetre</p>
-      </div>
+      <PortalShell breadcrumb="landings / configurar" backHref={`/${locale}/portal/landings`}>
+        <div className="p-4 sm:p-8 text-center py-12">
+          <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
+          <div className="f-display font-bold text-sm mb-1">Falta tenantId</div>
+          <p className="f-mono text-xs text-ink-2">Aquesta pàgina requereix un tenantId com a paràmetre</p>
+        </div>
+      </PortalShell>
     );
   }
 
   return (
+    <PortalShell breadcrumb="landings / configurar" backHref={`/${locale}/portal/landings`}>
     <div className="p-4 sm:p-8 space-y-6">
       {/* Header */}
       <div>
@@ -212,6 +218,7 @@ function ConfigureLandingForm() {
         </div>
       )}
     </div>
+    </PortalShell>
   );
 }
 

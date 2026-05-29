@@ -167,7 +167,7 @@ function superAdminGroups(t: T): NavGroup[] {
 // ─────────────────────────────────────────────────────────────────────────────
 // Shell
 // ─────────────────────────────────────────────────────────────────────────────
-export function PortalShell({ children, breadcrumb }: { children: ReactNode; breadcrumb: string }) {
+export function PortalShell({ children, breadcrumb, backHref }: { children: ReactNode; breadcrumb: string; backHref?: string }) {
   const { user, isSuperAdmin, isAdmin } = useAuth();
   const pathname = usePathname();
   const t = useTranslations('portalNav');
@@ -271,6 +271,15 @@ export function PortalShell({ children, breadcrumb }: { children: ReactNode; bre
           >
             <I.Menu size={20} />
           </button>
+          {backHref && (
+            <a
+              href={backHref}
+              className="flex items-center gap-1 f-mono text-label text-ink-2 hover:text-accent-light transition-colors shrink-0"
+            >
+              <I.ArrowRight size={13} className="rotate-180" />
+              Tornar
+            </a>
+          )}
           <span className="f-mono text-label uppercase text-accent-light tracking-widest text-xs">
             / portal / {breadcrumb} /
           </span>

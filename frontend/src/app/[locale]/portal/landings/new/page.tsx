@@ -1,11 +1,12 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/auth';
 import { createLanding } from '@/services/factory';
 import { TemplateSelector } from '@/components/factory/TemplateSelector';
+import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { I } from '@/components/ui/icons';
 
@@ -16,6 +17,8 @@ function slugify(text: string): string {
 function NewLandingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = useParams();
+  const locale = params.locale as string;
   const [step, setStep] = useState<'template' | 'details'>('template');
   const [templateId, setTemplateId] = useState('');
   const [title, setTitle] = useState('');
@@ -56,18 +59,21 @@ function NewLandingForm() {
 
   if (step === 'template') {
     return (
-      <div className="p-4 sm:p-8 space-y-6">
-        <div>
-          <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / landings / nova /</span>
-          <div className="f-display font-bold text-xl mt-1">Selecciona una plantilla</div>
-          <p className="text-sm text-ink-1 mt-1">Tria una plantilla per començar</p>
+      <PortalShell breadcrumb="landings / nova" backHref={`/${locale}/portal/landings`}>
+        <div className="p-4 sm:p-8 space-y-6">
+          <div>
+            <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / landings / nova /</span>
+            <div className="f-display font-bold text-xl mt-1">Selecciona una plantilla</div>
+            <p className="text-sm text-ink-1 mt-1">Tria una plantilla per començar</p>
+          </div>
+          <TemplateSelector onSelect={handleSelectTemplate} />
         </div>
-        <TemplateSelector onSelect={handleSelectTemplate} />
-      </div>
+      </PortalShell>
     );
   }
 
   return (
+    <PortalShell breadcrumb="landings / nova" backHref={`/${locale}/portal/landings`}>
     <div className="p-4 sm:p-8 max-w-lg space-y-6">
       <div>
         <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / landings / nova /</span>
@@ -115,6 +121,7 @@ function NewLandingForm() {
         )}
       </div>
     </div>
+    </PortalShell>
   );
 }
 

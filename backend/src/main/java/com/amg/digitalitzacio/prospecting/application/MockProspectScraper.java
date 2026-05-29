@@ -43,12 +43,12 @@ public class MockProspectScraper implements ProspectScraper {
     }
 
     @Override
-    public ProspectEnrichment enrich(String name, String website) {
+    public ProspectEnrichment enrich(String name, String website, String email) {
         var domain = website != null
                 ? website.replace("https://", "").replace("http://", "").replace("/", "")
                 : "example.com";
         return new ProspectEnrichment(
-                "contact@" + domain,
+                "contact@" + domain, website,
                 "@" + name.toLowerCase().replace(" ", ""),
                 true, true
         );

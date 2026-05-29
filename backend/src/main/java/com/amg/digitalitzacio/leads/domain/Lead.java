@@ -47,7 +47,7 @@ public class Lead {
     @Column(precision = 12, scale = 2)
     private BigDecimal estimatedValue;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String notes;
 
     @Column(length = 500)

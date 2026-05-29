@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import {
   listContacts,
@@ -525,6 +525,8 @@ function ModeToggle({ tenantId, currentMode }: { tenantId: string; currentMode: 
 export default function InboxPage() {
   const { user, isAdmin, isSuperAdmin } = useAuth();
   const searchParams = useSearchParams();
+  const params = useParams();
+  const locale = params.locale as string;
   const qc = useQueryClient();
 
   const paramTenantId = searchParams.get('tenantId');
@@ -572,7 +574,7 @@ export default function InboxPage() {
 
   if (!tenantId) {
     return (
-      <PortalShell breadcrumb="inbox">
+      <PortalShell breadcrumb="inbox" backHref={`/${locale}/portal/agents`}>
         <div className="flex items-center justify-center h-64 text-ink-3 text-sm">
           No s'ha pogut determinar el tenant.
         </div>
@@ -584,7 +586,7 @@ export default function InboxPage() {
   const totalPending = contacts.reduce((s, c) => s + c.pendingCount, 0);
 
   return (
-    <PortalShell breadcrumb="inbox">
+    <PortalShell breadcrumb="inbox" backHref={`/${locale}/portal/agents`}>
       <div className="flex flex-col h-[calc(100dvh-56px)]">
         {/* Header */}
         <div className="px-4 py-2.5 border-b border-border-base flex items-center justify-between gap-3 shrink-0">

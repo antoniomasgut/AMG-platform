@@ -1,0 +1,14 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+app:
+  cors:
+    allowed-origins: https://amgdl.com,https://www.amgdl.com
+
+logging:
+  level:
+    com.amg: INFO
+    org.springframework.security: WARN

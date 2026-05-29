@@ -64,15 +64,9 @@ export default function NewLeadPage() {
   );
 
   return (
-    <PortalShell breadcrumb="leads / nou">
+    <PortalShell breadcrumb="leads / nou" backHref={`/${locale}/portal/leads`}>
       <div className="p-4 sm:p-8 max-w-xl">
         <div className="mb-6">
-          <button
-            onClick={() => router.push(`/${locale}/portal/leads`)}
-            className="f-mono text-label text-ink-2 hover:text-accent-light flex items-center gap-1 mb-3"
-          >
-            <I.ArrowRight size={12} className="rotate-180" /> Tornar
-          </button>
           <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / leads / nou /</span>
           <div className="f-display font-bold text-xl mt-1">Nou Lead</div>
         </div>

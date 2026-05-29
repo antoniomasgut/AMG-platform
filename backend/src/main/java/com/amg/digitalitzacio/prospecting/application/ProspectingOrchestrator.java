@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.prospecting.application;
 
+import com.amg.digitalitzacio.auth.domain.UserRepository;
 import com.amg.digitalitzacio.prospecting.api.dto.*;
 import com.amg.digitalitzacio.prospecting.domain.*;
 import com.amg.digitalitzacio.shared.exception.ConflictException;
@@ -24,6 +25,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     private final ProspectRepository prospectRepository;
     private final ProspectScraper scraper;
     private final LeadService leadService;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -156,13 +158,70 @@ public class ProspectingOrchestrator implements ProspectingService {
     public ProspectResponse enrichProspect(UUID prospectId) {
         var prospect = prospectRepository.findById(prospectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
-        var enrichment = scraper.enrich(prospect.getName(), prospect.getWebsite());
-        prospect.setEmail(enrichment.email());
-        prospect.setInstagram(enrichment.instagram());
-        prospect.setHasWebsite(enrichment.hasWebsite());
-        prospect.setHasWhatsapp(enrichment.hasWhatsapp());
+        var enrichment = scraper.enrich(prospect.getName(), prospect.getWebsite(), prospect.getEmail());
+        if (enrichment.email() != null && !enrichment.email().isBlank()) prospect.setEmail(enrichment.email());
+        if (enrichment.website() != null && !enrichment.website().isBlank()) {
+            prospect.setWebsite(enrichment.website());
+            prospect.setHasWebsite(true);
+        }
+        if (enrichment.instagram() != null) prospect.setInstagram(enrichment.instagram());
+        if (enrichment.hasWhatsapp() != null) prospect.setHasWhatsapp(enrichment.hasWhatsapp());
         prospect = prospectRepository.save(prospect);
         return toProspectResponse(prospect);
+    }
+
+    @Override
+    public CampaignResponse cloneCampaign(UUID campaignId) {
+        var original = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found: " + campaignId));
+        var clone = ProspectCampaign.builder()
+                .name(original.getName() + " (còpia)")
+                .sector(original.getSector())
+                .location(original.getLocation())
+                .source(original.getSource())
+                .status(CampaignStatus.DRAFT)
+                .searchParams(original.getSearchParams())
+                .notes(original.getNotes())
+                .createdBy(original.getCreatedBy())
+                .build();
+        clone = campaignRepository.save(clone);
+        log.info("Cloned campaign {} → {}", campaignId, clone.getId());
+        return toCampaignResponse(clone);
+    }
+
+    @Override
+    public int enrichAllProspects(UUID campaignId) {
+        var prospects = prospectRepository.findByCampaignId(campaignId).stream()
+                .filter(p -> p.getStatus() != ProspectStatus.EXPORTED)
+                .filter(p -> (p.getWebsite() == null || p.getWebsite().isBlank())
+                          || (p.getEmail() == null || p.getEmail().isBlank()))
+                .toList();
+        int enriched = 0;
+        for (var prospect : prospects) {
+            try {
+                var enrichment = scraper.enrich(prospect.getName(), prospect.getWebsite(), prospect.getEmail());
+                boolean changed = false;
+                if (enrichment.email() != null && !enrichment.email().isBlank()
+                        && (prospect.getEmail() == null || prospect.getEmail().isBlank())) {
+                    prospect.setEmail(enrichment.email());
+                    changed = true;
+                }
+                if (enrichment.website() != null && !enrichment.website().isBlank()
+                        && (prospect.getWebsite() == null || prospect.getWebsite().isBlank())) {
+                    prospect.setWebsite(enrichment.website());
+                    prospect.setHasWebsite(true);
+                    changed = true;
+                }
+                if (changed) {
+                    prospectRepository.save(prospect);
+                    enriched++;
+                }
+            } catch (Exception e) {
+                log.debug("Enrich failed for prospect {}: {}", prospect.getId(), e.getMessage());
+            }
+        }
+        log.info("Enriched {}/{} prospects in campaign {}", enriched, prospects.size(), campaignId);
+        return enriched;
     }
 
     @Override
@@ -172,17 +231,22 @@ public class ProspectingOrchestrator implements ProspectingService {
         if (prospect.getStatus() == ProspectStatus.EXPORTED) {
             throw new ConflictException("Prospect already exported");
         }
+        var campaign = campaignRepository.findById(prospect.getCampaignId())
+                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found"));
+        UUID tenantId = null;
+        if (campaign.getCreatedBy() != null) {
+            tenantId = userRepository.findById(campaign.getCreatedBy())
+                    .map(u -> u.getTenantId()).orElse(null);
+        }
         var leadId = leadService.createLead(
                 prospect.getName(), prospect.getEmail(), prospect.getPhone(),
                 prospect.getWebsite(), prospect.getDescription(),
-                prospect.getSource().name(), null);
+                prospect.getSource().name(), tenantId);
 
         prospect.setLeadId(leadId);
         prospect.setStatus(ProspectStatus.EXPORTED);
         prospectRepository.save(prospect);
 
-        var campaign = campaignRepository.findById(prospect.getCampaignId())
-                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found"));
         campaign.setTotalExported(campaign.getTotalExported() + 1);
         campaignRepository.save(campaign);
 
@@ -200,6 +264,25 @@ public class ProspectingOrchestrator implements ProspectingService {
             } catch (Exception ignored) {
             }
         }
+        return count;
+    }
+
+    @Override
+    public int exportContactableProspects(UUID campaignId) {
+        var prospects = prospectRepository.findByCampaignId(campaignId).stream()
+                .filter(p -> p.getStatus() != ProspectStatus.EXPORTED)
+                .filter(p -> (p.getPhone() != null && !p.getPhone().isBlank())
+                          || (p.getEmail() != null && !p.getEmail().isBlank()))
+                .toList();
+        int count = 0;
+        for (var prospect : prospects) {
+            try {
+                exportProspect(prospect.getId());
+                count++;
+            } catch (Exception ignored) {
+            }
+        }
+        log.info("Exported {} contactable prospects from campaign {}", count, campaignId);
         return count;
     }
 

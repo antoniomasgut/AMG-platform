@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/toast-context';
 import { createTemplate } from '@/services/templates';
@@ -10,6 +10,8 @@ import type { CreateTemplateRequest } from '@/services/templates';
 
 export default function NewTemplatePage() {
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
   const { toast } = useToast();
 
   const { mutate, isPending } = useMutation({
@@ -22,7 +24,7 @@ export default function NewTemplatePage() {
   });
 
   return (
-    <PortalShell breadcrumb="admin · plantilles · nova">
+    <PortalShell breadcrumb="admin · plantilles · nova" backHref={`/${locale}/portal/admin/templates`}>
       <div className="p-4 sm:p-8 max-w-lg space-y-6">
         <div>
           <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / admin / plantilles / nova /</span>

@@ -9,7 +9,10 @@ import { ServiceWizard } from '@/components/wizard/ServiceWizard';
 import { AMGButton } from '@/components/ui/button';
 
 export default function ServiceSetupPage() {
-  const { id: tenantId, serviceId } = useParams<{ id: string; serviceId: string }>();
+  const rawParams = useParams<{ id: string; serviceId: string; locale: string }>();
+  const tenantId = rawParams.id;
+  const serviceId = rawParams.serviceId;
+  const locale = rawParams.locale as string;
   const router = useRouter();
 
   const { data: tenant } = useQuery({
@@ -55,7 +58,7 @@ export default function ServiceSetupPage() {
 
   if (isLoading) {
     return (
-      <PortalShell breadcrumb={`admin · tenants · ${tenant?.name ?? '...'} · configuració`}>
+      <PortalShell breadcrumb={`admin · tenants · ${tenant?.name ?? '...'} · configuració`} backHref={`/${locale}/portal/admin/tenants/${tenantId}`}>
         <div className="p-4 sm:p-8">
           <div className="max-w-2xl mx-auto flex justify-center py-12">
             <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
@@ -67,7 +70,7 @@ export default function ServiceSetupPage() {
 
   if (error || !serviceInfo) {
     return (
-      <PortalShell breadcrumb={`admin · tenants · ${tenant?.name ?? 'error'} · configuració`}>
+      <PortalShell breadcrumb={`admin · tenants · ${tenant?.name ?? 'error'} · configuració`} backHref={`/${locale}/portal/admin/tenants/${tenantId}`}>
         <div className="p-4 sm:p-8">
           <div className="max-w-2xl mx-auto text-center py-12">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ff6666" strokeWidth="1.6" className="mx-auto mb-3">
@@ -86,7 +89,7 @@ export default function ServiceSetupPage() {
   }
 
   return (
-    <PortalShell breadcrumb={`admin · tenants · ${tenant?.name ?? ''} · configurar ${serviceInfo.name}`}>
+    <PortalShell breadcrumb={`admin · tenants · ${tenant?.name ?? ''} · configurar ${serviceInfo.name}`} backHref={`/${locale}/portal/admin/tenants/${tenantId}`}>
       <div className="p-4 sm:p-8">
         <ServiceWizard
           tenantId={tenantId}

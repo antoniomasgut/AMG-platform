@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import {
   getEarlyAdopterStatus,
@@ -19,6 +20,8 @@ import { I } from '@/components/ui/icons';
 
 export default function CommercialProgramsPage() {
   const { user, isSuperAdmin } = useAuth();
+  const params = useParams();
+  const locale = params.locale as string;
   const [tab, setTab] = useState<'early-adopter' | 'annual-contract' | 'referrals'>('early-adopter');
 
   // Early Adopter
@@ -80,7 +83,7 @@ export default function CommercialProgramsPage() {
 
   if (!user || !isSuperAdmin) {
     return (
-      <PortalShell breadcrumb="billing / programes">
+      <PortalShell breadcrumb="billing / programes" backHref={`/${locale}/portal/billing`}>
         <div className="p-4 sm:p-8">
           <div className="p-4 border-l-2 border-l-danger bg-danger/5">
             <span className="f-mono text-label text-danger-light">Accés denegat. Només SUPER_ADMIN.</span>
@@ -95,7 +98,7 @@ export default function CommercialProgramsPage() {
     : 0;
 
   return (
-    <PortalShell breadcrumb="billing / programes">
+    <PortalShell breadcrumb="billing / programes" backHref={`/${locale}/portal/billing`}>
       <div className="p-4 sm:p-8 space-y-6">
         {/* Header */}
         <div>

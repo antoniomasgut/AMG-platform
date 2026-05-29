@@ -142,7 +142,7 @@ export default function ProcessPage() {
   const campaigns = (campR.data as any[] | undefined) ?? [];
   const activeCamps = campaigns.filter((c: any) => c.status === 'RUNNING').length;
   const completedCamps = campaigns.filter((c: any) => c.status === 'COMPLETED').length;
-  const totalProspects = campaigns.reduce((sum: number, c: any) => sum + (c.prospectsFound ?? 0), 0);
+  const totalProspects = campaigns.reduce((sum: number, c: any) => sum + (c.totalFound ?? 0), 0);
 
   const allTenants = ((tenantsR.data as any)?.content ?? []) as import('@/services/admin').TenantResponse[];
   const tenantsTotal = (tenantsR.data as any)?.totalElements ?? allTenants.length;

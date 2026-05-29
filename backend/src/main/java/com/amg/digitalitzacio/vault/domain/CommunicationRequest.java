@@ -19,7 +19,7 @@ public class CommunicationRequest {
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private CommunicationChannel channel;
     @Column(nullable = false, length = 200) private String recipient;
     @Column(length = 200) private String subject;
-    @Column(nullable = false, length = 2000) @Lob private String body;
+    @Column(nullable = false, columnDefinition = "TEXT") private String body;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) private CommunicationStatus status;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 30) private RequestType requestType;
     @Column(name = "field_id") private UUID fieldId;

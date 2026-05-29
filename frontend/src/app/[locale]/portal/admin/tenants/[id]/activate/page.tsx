@@ -277,17 +277,11 @@ export default function ActivateWizardPage() {
   };
 
   return (
-    <PortalShell breadcrumb="activació">
+    <PortalShell breadcrumb="activació" backHref={`/${locale}/portal/admin/tenants/${tenantId}`}>
       <div className="p-4 sm:p-8 max-w-3xl space-y-6">
 
         {/* Header */}
         <div>
-          <button
-            onClick={() => router.push(`/${locale}/portal/admin/tenants/${tenantId}`)}
-            className="flex items-center gap-1 f-mono text-label text-xs text-ink-3 hover:text-ink-1 transition mb-3"
-          >
-            <I.ChevronLeft size={12} /> Tornar al tenant
-          </button>
           <span className="f-mono text-label uppercase text-accent-light tracking-widest text-xs">
             / portal / admin / tenants / activació /
           </span>

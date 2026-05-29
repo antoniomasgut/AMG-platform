@@ -477,32 +477,36 @@ export default function LeadsPage() {
                           <AMGBadge tone="neutral">{SOURCE_LABEL[lead.source] ?? lead.source}</AMGBadge>
                         </div>
                         {lead.phone && (
-                          <div className="mt-2 flex items-center gap-1.5 flex-wrap" onClick={e => e.stopPropagation()}>
+                          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
                             <a
-                              href={(() => { const d = lead.phone.replace(/\D/g, ''); return `https://wa.me/${d.length === 9 ? '34' + d : d}`; })()}
+                              href={(() => { const d = lead.phone!.replace(/\D/g, ''); return `https://wa.me/${d.length === 9 ? '34' + d : d}`; })()}
                               target="_blank"
                               rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
                               className="f-mono text-[9px] border border-border-base text-ink-2 hover:border-success hover:text-success px-1.5 py-0.5 transition-colors"
                             >
                               Provar WA →
                             </a>
                             <button
+                              type="button"
                               className={`f-mono text-[9px] px-1.5 py-0.5 border transition-colors ${
                                 lead.hasWhatsapp
                                   ? 'border-success text-success hover:border-danger hover:text-danger-light'
                                   : 'border-border-base text-ink-3 hover:border-success hover:text-success'
                               }`}
-                              onClick={() => doSetWhatsapp({ id: lead.id, value: !lead.hasWhatsapp })}
+                              onClick={e => { e.stopPropagation(); doSetWhatsapp({ id: lead.id, value: !lead.hasWhatsapp }); }}
                             >
                               {lead.hasWhatsapp ? '✓ WA' : 'Marcar WA'}
                             </button>
                           </div>
                         )}
                         {stage !== 'WON' && stage !== 'LOST' && (
-                          <div className="mt-2 flex gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
+                          <div className="mt-2 flex gap-2 flex-wrap">
                             <button
+                              type="button"
                               className="f-mono text-[9px] uppercase text-accent-light hover:underline"
-                              onClick={() => {
+                              onClick={e => {
+                                e.stopPropagation();
                                 const next = STAGES[STAGES.indexOf(stage) + 1];
                                 doChangeStage({ id: lead.id, stage: next });
                               }}
@@ -510,8 +514,10 @@ export default function LeadsPage() {
                               {stage === 'NEGOTIATION' ? '✓ Guanyar' : 'Avançar →'}
                             </button>
                             <button
+                              type="button"
                               className="f-mono text-[9px] uppercase text-ink-3 hover:text-danger-light hover:underline"
-                              onClick={() => {
+                              onClick={e => {
+                                e.stopPropagation();
                                 const reason = prompt('Motiu de pèrdua:') ?? 'No especificat';
                                 doChangeStage({ id: lead.id, stage: 'LOST', lostReason: reason });
                               }}
@@ -520,8 +526,9 @@ export default function LeadsPage() {
                             </button>
                             {lead.email && (
                               <button
+                                type="button"
                                 className="f-mono text-[9px] uppercase text-ink-3 hover:text-accent-light hover:underline"
-                                onClick={() => setDemoLead(lead)}
+                                onClick={e => { e.stopPropagation(); setDemoLead(lead); }}
                               >
                                 Demo →
                               </button>

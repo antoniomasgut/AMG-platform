@@ -540,7 +540,9 @@ function PhaseCard({ phase, profileId, onUpdated, onDeleted, onAddService }: {
 }
 
 export default function ProfileDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const rawParams = useParams<{ id: string; locale: string }>();
+  const id = rawParams.id;
+  const locale = rawParams.locale as string;
   const qc = useQueryClient();
   const router = useRouter();
 
@@ -564,7 +566,7 @@ export default function ProfileDetailPage() {
 
   if (isLoading) {
     return (
-      <PortalShell breadcrumb="admin · catàleg · carregant">
+      <PortalShell breadcrumb="admin · catàleg · carregant" backHref={`/${locale}/portal/admin/vault`}>
         <div className="flex justify-center py-12">
           <span className="w-4 h-4 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
         </div>
@@ -574,7 +576,7 @@ export default function ProfileDetailPage() {
 
   if (error || !profile) {
     return (
-      <PortalShell breadcrumb="admin · catàleg · error">
+      <PortalShell breadcrumb="admin · catàleg · error" backHref={`/${locale}/portal/admin/vault`}>
         <div className="p-8 text-center">
           <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
           <div className="f-display font-bold text-sm mb-1">Error carregant el perfil</div>
@@ -585,7 +587,7 @@ export default function ProfileDetailPage() {
   }
 
   return (
-    <PortalShell breadcrumb={`admin · catàleg · ${profile.name}`}>
+    <PortalShell breadcrumb={`admin · catàleg · ${profile.name}`} backHref={`/${locale}/portal/admin/vault`}>
       <div className="p-4 sm:p-8 space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">

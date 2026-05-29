@@ -2586,7 +2586,9 @@ function DeleteTenantModal({ tenantId, tenantName, onClose, onDeleted }: {
 }
 
 export default function TenantDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id: string; locale: string }>();
+  const { id } = params;
+  const locale = params.locale as string;
   const qc = useQueryClient();
   const { toast } = useToast();
   const [showAssignProfile, setShowAssignProfile] = useState(false);
@@ -2702,7 +2704,7 @@ export default function TenantDetailPage() {
 
   if (loadingTenant) {
     return (
-      <PortalShell breadcrumb="admin · tenants · carregant">
+      <PortalShell breadcrumb="admin · tenants · carregant" backHref={`/${locale}/portal/admin/tenants`}>
         <div className="p-4 sm:p-8 space-y-6">
           <div className="flex justify-center py-12">
             <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
@@ -2714,7 +2716,7 @@ export default function TenantDetailPage() {
 
   if (tenantErr || !tenant) {
     return (
-      <PortalShell breadcrumb="admin · tenants · error">
+      <PortalShell breadcrumb="admin · tenants · error" backHref={`/${locale}/portal/admin/tenants`}>
         <div className="p-4 sm:p-8 text-center py-12">
           <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
           <div className="f-display font-bold text-sm mb-1">Error carregant el tenant</div>
@@ -2744,7 +2746,7 @@ export default function TenantDetailPage() {
   }
 
   return (
-    <PortalShell breadcrumb={`admin · tenants · ${tenant.name}`}>
+    <PortalShell breadcrumb={`admin · tenants · ${tenant.name}`} backHref={`/${locale}/portal/admin/tenants`}>
       <div className="p-4 sm:p-8 space-y-6">
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-4">

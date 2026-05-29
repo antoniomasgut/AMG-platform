@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -98,5 +99,24 @@ public class ProspectingController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public int exportAll(@PathVariable UUID id) {
         return service.exportAllProspects(id);
+    }
+
+    @PostMapping("/campaigns/{id}/clone")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public CampaignResponse cloneCampaign(@PathVariable UUID id) {
+        return service.cloneCampaign(id);
+    }
+
+    @PostMapping("/campaigns/{id}/enrich-all")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, Integer> enrichAll(@PathVariable UUID id) {
+        return Map.of("enriched", service.enrichAllProspects(id));
+    }
+
+    @PostMapping("/campaigns/{id}/export-contactable")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, Integer> exportContactable(@PathVariable UUID id) {
+        return Map.of("exported", service.exportContactableProspects(id));
     }
 }

@@ -17,4 +17,7 @@ public interface ProspectingService {
     ProspectResponse enrichProspect(UUID prospectId);
     LeadExportResponse exportProspect(UUID prospectId);
     int exportAllProspects(UUID campaignId);
+    int exportContactableProspects(UUID campaignId);
+    CampaignResponse cloneCampaign(UUID campaignId);
+    int enrichAllProspects(UUID campaignId);
 }

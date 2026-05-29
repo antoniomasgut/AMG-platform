@@ -16,7 +16,9 @@ import { I } from '@/components/ui/icons';
 import type { CreateTemplateRequest, TemplateSectionRequest } from '@/services/templates';
 
 export default function EditTemplatePage() {
-  const { id } = useParams<{ id: string }>();
+  const rawParams = useParams<{ id: string; locale: string }>();
+  const id = rawParams.id;
+  const locale = rawParams.locale as string;
   const router = useRouter();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -67,7 +69,7 @@ export default function EditTemplatePage() {
 
   if (isLoading) {
     return (
-      <PortalShell breadcrumb="admin · plantilles · carregant">
+      <PortalShell breadcrumb="admin · plantilles · carregant" backHref={`/${locale}/portal/admin/templates`}>
         <div className="p-4 sm:p-8 space-y-6">
           <div className="flex justify-center py-12">
             <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
@@ -79,7 +81,7 @@ export default function EditTemplatePage() {
 
   if (error || !template) {
     return (
-      <PortalShell breadcrumb="admin · plantilles · error">
+      <PortalShell breadcrumb="admin · plantilles · error" backHref={`/${locale}/portal/admin/templates`}>
         <div className="p-4 sm:p-8 text-center py-12">
           <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
           <div className="f-display font-bold text-sm mb-1">Error carregant la plantilla</div>
@@ -93,7 +95,7 @@ export default function EditTemplatePage() {
   }
 
   return (
-    <PortalShell breadcrumb={`admin · plantilles · ${template.name}`}>
+    <PortalShell breadcrumb={`admin · plantilles · ${template.name}`} backHref={`/${locale}/portal/admin/templates`}>
       <div className="p-4 sm:p-8 space-y-6">
         {/* Header */}
         <div>
