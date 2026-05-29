@@ -72,6 +72,7 @@ export default function AgentsPage() {
   const [showActivationModal, setShowActivationModal] = useState(false);
   const [whatsappPhone, setWhatsappPhone] = useState('');
   const [whatsappMetaId, setWhatsappMetaId] = useState('');
+  const [emailDraft, setEmailDraft] = useState('');
   const [testMessage, setTestMessage] = useState('Hola! Pots presentar-te breument?');
   const [testSystemPrompt, setTestSystemPrompt] = useState('');
   const [testResult, setTestResult] = useState<{ model: string; provider: string; response: string } | null>(null);
@@ -148,7 +149,7 @@ export default function AgentsPage() {
   });
 
   const updateChannelsMutation = useMutation({
-    mutationFn: (data: { whatsappPhoneNumber?: string; whatsappMetaPhoneNumberId?: string }) =>
+    mutationFn: (data: { whatsappPhoneNumber?: string; whatsappMetaPhoneNumberId?: string; emailAddress?: string }) =>
       updateChannels(tenantId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['channels', tenantId] });
@@ -371,17 +372,33 @@ export default function AgentsPage() {
                     <I.Bell size={18} />
                     <span className="text-sm font-medium">Telegram</span>
                   </div>
-                  <AMGBadge tone={channels?.telegramLinked ? 'success' : 'neutral'}>
-                    {channels?.telegramLinked ? 'Vinculat' : 'No vinculat'}
+                  <AMGBadge tone={channels?.telegramLinked ? 'success' : 'warning'}>
+                    {channels?.telegramLinked ? 'Vinculat' : 'Pendent configurar'}
                   </AMGBadge>
                 </div>
                 {channels?.telegramLinked && channels.telegramChatId && (
                   <p className="text-xs text-ink-3 pl-7">Chat ID: {channels.telegramChatId}</p>
                 )}
                 {!channels?.telegramLinked && (
-                  <p className="text-xs text-ink-3 pl-7">
-                    El client ha d&apos;escriure al bot de Telegram de l&apos;empresa per vincular el compte.
-                  </p>
+                  <div className="pl-7 space-y-2">
+                    <p className="text-xs text-ink-2">
+                      Per vincular Telegram, el client ha d&apos;escriure al bot de l&apos;empresa:
+                    </p>
+                    {channels?.telegramBotLink && (
+                      <a
+                        href={channels.telegramBotLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-accent-light hover:underline f-mono border border-accent/30 px-2 py-1 rounded"
+                      >
+                        <I.Bell size={12} />
+                        Obrir bot de Telegram →
+                      </a>
+                    )}
+                    <p className="text-xs text-ink-3">
+                      Un cop el client escrigui al bot, quedarà vinculat automàticament.
+                    </p>
+                  </div>
                 )}
               </div>
 
@@ -430,14 +447,42 @@ export default function AgentsPage() {
               </div>
 
               {/* Email */}
-              <div className="flex items-center justify-between p-4 bg-bg-1 rounded">
-                <div className="flex items-center gap-3">
-                  <I.Mail size={18} />
-                  <span className="text-sm font-medium">Email</span>
+              <div className="p-4 bg-bg-1 rounded space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <I.Mail size={18} />
+                    <span className="text-sm font-medium">Email</span>
+                  </div>
+                  <AMGBadge tone={channels?.emailAddress ? 'success' : 'warning'}>
+                    {channels?.emailAddress ? 'Configurat' : 'Pendent configurar'}
+                  </AMGBadge>
                 </div>
-                <AMGBadge tone={status?.emailConfigured ? 'success' : 'neutral'}>
-                  {status?.emailConfigured ? 'Configurat' : 'Pendent'}
-                </AMGBadge>
+                {channels?.emailAddress && (
+                  <p className="text-xs text-ink-3 pl-7">{channels.emailAddress}</p>
+                )}
+                <div className="pl-7 space-y-2">
+                  <p className="text-xs text-ink-2">
+                    {channels?.emailAddress
+                      ? 'Adreça de correu que l\'agent monitoritza:'
+                      : 'Configura l\'adreça de correu que l\'agent ha de monitoritzar:'}
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={emailDraft}
+                      onChange={(e) => setEmailDraft(e.target.value)}
+                      placeholder={channels?.emailAddress ?? 'agent@empresa.com'}
+                      className="flex-1 p-2 bg-bg-base border border-border-base rounded text-xs f-mono focus:outline-none focus:border-accent"
+                    />
+                    <button
+                      onClick={() => updateChannelsMutation.mutate({ emailAddress: emailDraft })}
+                      disabled={updateChannelsMutation.isPending || !emailDraft.trim()}
+                      className="px-3 py-1.5 bg-accent text-white rounded text-xs hover:opacity-90 disabled:opacity-50 shrink-0"
+                    >
+                      Desar
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 

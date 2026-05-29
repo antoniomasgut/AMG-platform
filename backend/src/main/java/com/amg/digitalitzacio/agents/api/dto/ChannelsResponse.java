@@ -8,6 +8,8 @@ public record ChannelsResponse(
         Boolean isActive,
         Boolean telegramLinked,
         Long telegramChatId,
+        String telegramBotLink,
         String whatsappPhoneNumber,
-        String whatsappMetaPhoneNumberId
+        String whatsappMetaPhoneNumberId,
+        String emailAddress
 ) {}

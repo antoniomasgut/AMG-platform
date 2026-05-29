@@ -241,10 +241,14 @@ public class ConversationalAgentController {
     @GetMapping("/{tenantId}/channels")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<com.amg.digitalitzacio.agents.api.dto.ChannelsResponse> getChannels(@PathVariable UUID tenantId) {
+        String botUsername = systemConfigService.get("TELEGRAM_BOT_USERNAME");
+        if (botUsername == null || botUsername.isBlank()) botUsername = "AMGDL_Bot";
+        String telegramBotLink = "https://t.me/" + botUsername;
+
         var chatLink = tenantChatLinkRepository.findByTenantId(tenantId).orElse(null);
         if (chatLink == null) {
             return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
-                    tenantId, "AUTO", false, false, null, null, null));
+                    tenantId, "AUTO", false, false, null, telegramBotLink, null, null, null));
         }
         return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
                 tenantId,
@@ -252,8 +256,10 @@ public class ConversationalAgentController {
                 chatLink.getIsActive(),
                 chatLink.getTelegramChatId() != null,
                 chatLink.getTelegramChatId(),
+                telegramBotLink,
                 chatLink.getWhatsappPhoneNumber(),
-                chatLink.getWhatsappMetaPhoneNumberId()
+                chatLink.getWhatsappMetaPhoneNumberId(),
+                chatLink.getEmailAddress()
         ));
     }
 
@@ -274,15 +280,23 @@ public class ConversationalAgentController {
             chatLink.setWhatsappPhoneNumber(request.whatsappPhoneNumber().isBlank() ? null : request.whatsappPhoneNumber());
         if (request.whatsappMetaPhoneNumberId() != null)
             chatLink.setWhatsappMetaPhoneNumberId(request.whatsappMetaPhoneNumberId().isBlank() ? null : request.whatsappMetaPhoneNumberId());
+        if (request.emailAddress() != null)
+            chatLink.setEmailAddress(request.emailAddress().isBlank() ? null : request.emailAddress());
         chatLink = tenantChatLinkRepository.save(chatLink);
+
+        String botUsername = systemConfigService.get("TELEGRAM_BOT_USERNAME");
+        if (botUsername == null || botUsername.isBlank()) botUsername = "AMGDL_Bot";
+
         return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
                 tenantId,
                 chatLink.getAgentMode().name(),
                 chatLink.getIsActive(),
                 chatLink.getTelegramChatId() != null,
                 chatLink.getTelegramChatId(),
+                "https://t.me/" + botUsername,
                 chatLink.getWhatsappPhoneNumber(),
-                chatLink.getWhatsappMetaPhoneNumberId()
+                chatLink.getWhatsappMetaPhoneNumberId(),
+                chatLink.getEmailAddress()
         ));
     }
 
@@ -410,6 +424,8 @@ public class ConversationalAgentController {
                 telegramBotClient.sendMessage(chatLink.getTelegramChatId(), msg);
             }
 
+            String activateBotUsername = systemConfigService.get("TELEGRAM_BOT_USERNAME");
+            if (activateBotUsername == null || activateBotUsername.isBlank()) activateBotUsername = "AMGDL_Bot";
             log.info("Bot activat per al tenant {}", tenantId);
             return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
                     tenantId,
@@ -417,8 +433,10 @@ public class ConversationalAgentController {
                     chatLink.getIsActive(),
                     chatLink.getTelegramChatId() != null,
                     chatLink.getTelegramChatId(),
+                    "https://t.me/" + activateBotUsername,
                     chatLink.getWhatsappPhoneNumber(),
-                    chatLink.getWhatsappMetaPhoneNumberId()
+                    chatLink.getWhatsappMetaPhoneNumberId(),
+                    chatLink.getEmailAddress()
             ));
         } catch (Exception e) {
             log.error("Error activant bot per al tenant {}", tenantId, e);
@@ -437,6 +455,8 @@ public class ConversationalAgentController {
             chatLink.setIsActive(false);
             chatLink = tenantChatLinkRepository.save(chatLink);
 
+            String deactivateBotUsername = systemConfigService.get("TELEGRAM_BOT_USERNAME");
+            if (deactivateBotUsername == null || deactivateBotUsername.isBlank()) deactivateBotUsername = "AMGDL_Bot";
             log.info("Bot desactivat per al tenant {}", tenantId);
             return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
                     tenantId,
@@ -444,8 +464,10 @@ public class ConversationalAgentController {
                     chatLink.getIsActive(),
                     chatLink.getTelegramChatId() != null,
                     chatLink.getTelegramChatId(),
+                    "https://t.me/" + deactivateBotUsername,
                     chatLink.getWhatsappPhoneNumber(),
-                    chatLink.getWhatsappMetaPhoneNumberId()
+                    chatLink.getWhatsappMetaPhoneNumberId(),
+                    chatLink.getEmailAddress()
             ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();

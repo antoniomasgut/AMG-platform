@@ -1,9 +1,9 @@
 import { Page } from '@playwright/test';
 
-export const API_BASE = 'http://localhost:8080';
+export const API_BASE = process.env.PLAYWRIGHT_API_BASE || 'http://localhost:8080';
 
 export const USERS = {
-  superAdmin: { email: 'superadmin@test.com', password: 'changeme123' },
+  superAdmin: { email: process.env.PLAYWRIGHT_ADMIN_EMAIL || 'superadmin@test.com', password: process.env.PLAYWRIGHT_ADMIN_PASSWORD || 'changeme123' },
   admin:      { email: 'admin@test.com',       password: 'changeme123' },
   client:     { email: 'client@test.com',      password: 'changeme123' },
 };
