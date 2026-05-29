@@ -58,6 +58,8 @@ public class Lead {
 
     private Instant convertedAt;
 
+    private Boolean hasWhatsapp;
+
     @Column(nullable = false)
     private Boolean isActive = true;
 

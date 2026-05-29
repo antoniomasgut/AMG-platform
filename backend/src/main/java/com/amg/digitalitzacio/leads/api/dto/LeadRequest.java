@@ -16,5 +16,6 @@ public record LeadRequest(
         UUID assignedTo,
         BigDecimal estimatedValue,
         String notes,
-        @Size(max = 500) String tags
+        @Size(max = 500) String tags,
+        Boolean hasWhatsapp
 ) {}

@@ -121,6 +121,10 @@ app:
     server-ip: ${SERVER_IP:65.108.148.62}
     auto-renew-days-before: 30
 
+  demo:
+    tenant-id: ${DEMO_TENANT_ID:}
+    email: demo@amgdl.com
+
   agents:
     telegram:
       bot-token: ${AGENTS_TELEGRAM_BOT_TOKEN:${TELEGRAM_BOT_TOKEN:}}

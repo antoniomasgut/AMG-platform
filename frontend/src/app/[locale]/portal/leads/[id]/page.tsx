@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import {
-  getLead, getActivities, changeStage, createActivity,
+  getLead, getActivities, changeStage, createActivity, setWhatsapp,
   type Activity,
 } from '@/services/leads';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -62,6 +62,15 @@ export default function LeadDetailPage() {
       qc.invalidateQueries({ queryKey: ['leads'] });
     },
     onError: () => toast('error', 'Error actualitzant etapa'),
+  });
+
+  const { mutate: doSetWhatsapp } = useMutation({
+    mutationFn: (value: boolean) => setWhatsapp(id, value),
+    onSuccess: () => {
+      toast('success', 'WhatsApp actualitzat');
+      qc.invalidateQueries({ queryKey: ['lead', id] });
+    },
+    onError: () => toast('error', 'Error actualitzant WhatsApp'),
   });
 
   const { mutate: doCreateActivity, isPending: creatingActivity } = useMutation({
@@ -138,6 +147,34 @@ export default function LeadDetailPage() {
               </div>
             ))}
           </div>
+          {lead.phone && (
+            <div className="mt-4 pt-4 border-t border-border-base">
+              <div className="f-mono text-label text-ink-3 uppercase tracking-wider mb-2">WhatsApp</div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`f-mono text-xs ${lead.hasWhatsapp ? 'text-success' : 'text-ink-3'}`}>
+                  {lead.hasWhatsapp ? '✓ Verificat' : 'No verificat'}
+                </span>
+                <a
+                  href={(() => { const d = lead.phone.replace(/\D/g, ''); return `https://wa.me/${d.length === 9 ? '34' + d : d}`; })()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="f-mono text-xs border border-border-base text-ink-2 hover:border-success hover:text-success px-2 py-1 transition-colors"
+                >
+                  Provar WA →
+                </a>
+                <button
+                  onClick={() => doSetWhatsapp(!lead.hasWhatsapp)}
+                  className={`f-mono text-xs px-2 py-1 border transition-colors ${
+                    lead.hasWhatsapp
+                      ? 'border-success text-success hover:border-danger hover:text-danger-light'
+                      : 'border-border-base text-ink-3 hover:border-success hover:text-success'
+                  }`}
+                >
+                  {lead.hasWhatsapp ? 'Desmarcar WA' : 'Marcar WA'}
+                </button>
+              </div>
+            </div>
+          )}
           {lead.notes && (
             <div className="mt-4 pt-4 border-t border-border-base">
               <div className="f-mono text-label text-ink-3 uppercase tracking-wider mb-1">Notes</div>

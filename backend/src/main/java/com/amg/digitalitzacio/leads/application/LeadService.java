@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.leads.application;
 
+import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.auth.domain.UserRepository;
 import com.amg.digitalitzacio.leads.api.dto.*;
 import com.amg.digitalitzacio.leads.domain.*;
@@ -22,6 +23,7 @@ public class LeadService {
     private final LeadRepository leadRepository;
     private final ActivityRepository activityRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     public LeadResponse createLead(LeadRequest request, UserPrincipal principal) {
         UUID tenantId = principal.tenantId();
@@ -101,6 +103,7 @@ public class LeadService {
         if (request.estimatedValue() != null) lead.setEstimatedValue(request.estimatedValue());
         if (request.notes() != null) lead.setNotes(request.notes());
         if (request.tags() != null) lead.setTags(request.tags());
+        if (request.hasWhatsapp() != null) lead.setHasWhatsapp(request.hasWhatsapp());
 
         lead = leadRepository.save(lead);
         return toLeadResponse(lead);
@@ -192,14 +195,55 @@ public class LeadService {
         return new LeadStatsResponse(total, byStage, bySource, conversionRate);
     }
 
+    public LeadResponse setWhatsapp(UUID id, boolean value, UserPrincipal principal) {
+        Lead lead = findLead(id);
+        verifyAccess(lead, principal);
+        lead.setHasWhatsapp(value);
+        return toLeadResponse(leadRepository.save(lead));
+    }
+
+    public Map<String, Integer> sendOutreach(OutreachRequest request, UserPrincipal principal) {
+        int sent = 0;
+        String url = request.demoUrl() != null ? request.demoUrl() : "";
+        for (UUID leadId : request.leadIds()) {
+            Lead lead = leadRepository.findById(leadId).orElse(null);
+            if (lead == null || lead.getEmail() == null || lead.getEmail().isBlank()) continue;
+            verifyAccess(lead, principal);
+
+            String subject = request.subject().replace("{{nom}}", lead.getName());
+            String body = request.body()
+                    .replace("{{nom}}", lead.getName())
+                    .replace("{{demoUrl}}", url);
+            try {
+                emailService.sendEmail(lead.getEmail(), subject, body);
+                sent++;
+
+                if (lead.getStage() == PipelineStage.NEW) {
+                    lead.setStage(PipelineStage.CONTACTED);
+                    leadRepository.save(lead);
+                }
+
+                Activity activity = new Activity();
+                activity.setLeadId(leadId);
+                activity.setUserId(principal.id());
+                activity.setType(ActivityType.EMAIL);
+                activity.setDescription("Correu de demo enviat: " + subject);
+                activityRepository.save(activity);
+            } catch (Exception e) {
+                // Continua amb el següent lead si un falla
+            }
+        }
+        return Map.of("sent", sent);
+    }
+
     private Lead findLead(UUID id) {
         return leadRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found: " + id));
     }
 
     private void verifyAccess(Lead lead, UserPrincipal principal) {
-        if (!"SUPER_ADMIN".equals(principal.role())
-                && !lead.getTenantId().equals(principal.tenantId())) {
+        if ("SUPER_ADMIN".equals(principal.role())) return;
+        if (lead.getTenantId() == null || !lead.getTenantId().equals(principal.tenantId())) {
             throw new ResourceNotFoundException("Lead not found: " + lead.getId());
         }
     }
@@ -210,7 +254,7 @@ public class LeadService {
                 lead.getSource(), lead.getStage(),
                 getUserRef(lead.getAssignedTo()),
                 lead.getEstimatedValue(), lead.getNotes(), lead.getTags(),
-                lead.getLostReason(), lead.getConvertedAt(),
+                lead.getLostReason(), lead.getConvertedAt(), lead.getHasWhatsapp(),
                 lead.getIsActive(), lead.getCreatedAt(), lead.getUpdatedAt()
         );
     }

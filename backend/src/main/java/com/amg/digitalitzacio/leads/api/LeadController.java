@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -79,6 +80,23 @@ public class LeadController {
                                                      @Valid @RequestBody StageChangeRequest request,
                                                      @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(leadService.changeStage(id, request, principal));
+    }
+
+    @PatchMapping("/{id}/whatsapp")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<LeadResponse> setWhatsapp(
+            @PathVariable UUID id,
+            @RequestParam boolean value,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(leadService.setWhatsapp(id, value, principal));
+    }
+
+    @PostMapping("/outreach")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<Map<String, Integer>> sendOutreach(
+            @RequestBody OutreachRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(leadService.sendOutreach(request, principal));
     }
 
     // --- Activities ---

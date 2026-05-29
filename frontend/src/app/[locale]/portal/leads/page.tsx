@@ -1,9 +1,12 @@
 'use client';
 
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { getLeads, getLeadStats, changeStage, type Lead } from '@/services/leads';
+import { getLeads, getLeadStats, changeStage, sendOutreach, setWhatsapp, type Lead, type OutreachRequest } from '@/services/leads';
+import { createDemoSession, updateDemoSession } from '@/services/demo';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
@@ -26,8 +29,328 @@ const STAGE_TONE: Record<string, 'neutral' | 'info' | 'accent' | 'warning' | 'su
 
 const SOURCE_LABEL: Record<string, string> = {
   WEBSITE: 'Web', REFERRAL: 'Referit', COLD_CALL: 'Cold Call',
-  SOCIAL_MEDIA: 'RRSS', OTHER: 'Altre',
+  SOCIAL_MEDIA: 'RRSS', GOOGLE_MAPS: 'Google Maps', OTHER: 'Altre',
 };
+
+const TEMPLATES: Record<'ca' | 'es', { subject: string; body: string }> = {
+  ca: {
+    subject: '{{nom}} — Hem creat una demo digital per al vostre negoci',
+    body: `Hola,
+
+He vist el negoci {{nom}} i he creat una demo de com podríeu tenir una presència digital professional.
+
+Podeu veure-la aquí: {{demoUrl}}
+
+M'agradaria comentar-vos com podria ajudar al vostre negoci. Esteu disponibles per a una reunió breu presencial o per videoconferència?
+
+Salutacions,
+Antonio
+AMG Digitalització
+Tel: 654 048 164`,
+  },
+  es: {
+    subject: '{{nom}} — Hemos creado una demo digital para su negocio',
+    body: `Hola,
+
+He visto el negocio {{nom}} y he creado una demo de cómo podrían tener una presencia digital profesional.
+
+Pueden verla aquí: {{demoUrl}}
+
+Me gustaría comentarles cómo podría ayudar a su negocio. ¿Están disponibles para una reunión breve presencial o por videoconferencia?
+
+Saludos,
+Antonio
+AMG Digitalització
+Tel: 654 048 164`,
+  },
+};
+
+function DemoModal({
+  lead,
+  onClose,
+  onCreated,
+}: {
+  lead: Lead;
+  onClose: () => void;
+  onCreated: (url: string, token: string) => void;
+}) {
+  const [companyName, setCompanyName] = useState(lead.name);
+  const [agentContext, setAgentContext] = useState(
+    `Ets l'assistent virtual de ${lead.name}. Respon preguntes sobre els nostres serveis, preus i com podem ajudar el negoci a créixer digitalment.`
+  );
+  const [editToken, setEditToken] = useState('');
+  const [url, setUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const create = async () => {
+    if (!lead.email) return;
+    setLoading(true);
+    try {
+      const session = await createDemoSession(lead.email, companyName, agentContext);
+      setUrl(session.url);
+      setEditToken(session.token);
+      navigator.clipboard.writeText(session.url).catch(() => {});
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const save = async () => {
+    if (!editToken) return;
+    setLoading(true);
+    try {
+      await updateDemoSession(editToken, companyName, agentContext);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-bg-0 border border-border-base w-full max-w-lg shadow-2xl">
+          <div className="flex items-center justify-between p-5 border-b border-border-base">
+            <div>
+              <div className="f-display font-bold text-base">Crear demo inbox</div>
+              <div className="f-mono text-[10px] text-ink-3 mt-0.5">{lead.name} · {lead.email}</div>
+            </div>
+            <button onClick={onClose} className="p-1.5 text-ink-3 hover:text-ink-0">
+              <I.X size={16} />
+            </button>
+          </div>
+
+          <div className="p-5 space-y-4">
+            <div>
+              <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">Nom de l&apos;empresa</label>
+              <input
+                type="text"
+                value={companyName}
+                onChange={e => setCompanyName(e.target.value)}
+                className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+              />
+            </div>
+            <div>
+              <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">Context de l&apos;agent IA</label>
+              <textarea
+                value={agentContext}
+                onChange={e => setAgentContext(e.target.value)}
+                rows={4}
+                className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-none"
+              />
+              <div className="f-mono text-[9px] text-ink-3 mt-1">Descriu el negoci i com ha de respondre l&apos;agent.</div>
+            </div>
+
+            {url && (
+              <div className="bg-bg-1 border border-success/30 p-3">
+                <div className="f-mono text-[9px] text-success uppercase tracking-wider mb-1">URL creada — copiada al portapapers</div>
+                <div className="f-mono text-xs text-ink-1 break-all">{url}</div>
+                <button
+                  onClick={() => navigator.clipboard.writeText(url)}
+                  className="f-mono text-[9px] text-accent-light hover:underline mt-1"
+                >
+                  Copiar de nou
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 border-t border-border-base flex items-center justify-end gap-2">
+            <AMGButton variant="ghost" onClick={onClose}>Tancar</AMGButton>
+            {url ? (
+              <AMGButton loading={loading} onClick={save}>Desar canvis</AMGButton>
+            ) : (
+              <AMGButton loading={loading} disabled={!lead.email} onClick={create}>Crear demo</AMGButton>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function OutreachModal({
+  leads,
+  onClose,
+  onSend,
+  sending,
+}: {
+  leads: Lead[];
+  onClose: () => void;
+  onSend: (req: OutreachRequest) => void;
+  sending: boolean;
+}) {
+  const leadsWithEmail = leads.filter(l => l.email && l.isActive && l.stage !== 'WON' && l.stage !== 'LOST');
+  const [selected, setSelected] = useState<Set<string>>(new Set(leadsWithEmail.map(l => l.id)));
+  const [language, setLanguage] = useState<'ca' | 'es'>('ca');
+  const [demoUrl, setDemoUrl] = useState('');
+  const [subject, setSubject] = useState(TEMPLATES.ca.subject);
+  const [body, setBody] = useState(TEMPLATES.ca.body);
+
+  const handleLangChange = (lang: 'ca' | 'es') => {
+    setLanguage(lang);
+    setSubject(TEMPLATES[lang].subject);
+    setBody(TEMPLATES[lang].body);
+  };
+
+  const toggleAll = () => {
+    if (selected.size === leadsWithEmail.length) setSelected(new Set());
+    else setSelected(new Set(leadsWithEmail.map(l => l.id)));
+  };
+
+  const toggle = (id: string) => {
+    const s = new Set(selected);
+    s.has(id) ? s.delete(id) : s.add(id);
+    setSelected(s);
+  };
+
+  // Preview with first selected lead
+  const previewLead = leadsWithEmail.find(l => selected.has(l.id));
+  const preview = previewLead
+    ? { subject: subject.replace('{{nom}}', previewLead.name), body: body.replace(/\{\{nom\}\}/g, previewLead.name).replace(/\{\{demoUrl\}\}/g, demoUrl || '[URL demo]') }
+    : null;
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-bg-0 border border-border-base w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
+          {/* Header */}
+          <div className="flex items-center justify-between p-5 border-b border-border-base shrink-0">
+            <div>
+              <div className="f-display font-bold text-base">Enviar demo per correu</div>
+              <div className="f-mono text-[10px] text-ink-3 mt-0.5">{selected.size} lead{selected.size !== 1 ? 's' : ''} seleccionat{selected.size !== 1 ? 's' : ''}</div>
+            </div>
+            <button onClick={onClose} className="p-1.5 text-ink-3 hover:text-ink-0 transition-colors">
+              <I.X size={16} />
+            </button>
+          </div>
+
+          <div className="flex flex-1 min-h-0">
+            {/* Left: lead list */}
+            <div className="w-56 shrink-0 border-r border-border-base flex flex-col">
+              <div className="p-3 border-b border-border-base flex items-center justify-between">
+                <span className="f-mono text-[10px] uppercase text-ink-3 tracking-widest">Leads</span>
+                <button onClick={toggleAll} className="f-mono text-[9px] text-accent-light hover:underline">
+                  {selected.size === leadsWithEmail.length ? 'Cap' : 'Tots'}
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {leadsWithEmail.length === 0 ? (
+                  <div className="p-4 text-center f-mono text-xs text-ink-3">Cap lead amb email</div>
+                ) : leadsWithEmail.map(lead => (
+                  <label
+                    key={lead.id}
+                    className="flex items-start gap-2.5 px-3 py-2.5 cursor-pointer hover:bg-bg-2 border-b border-[rgba(226,232,240,0.04)]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected.has(lead.id)}
+                      onChange={() => toggle(lead.id)}
+                      className="mt-0.5 shrink-0 accent-accent"
+                    />
+                    <div className="min-w-0">
+                      <div className="f-display font-bold text-xs truncate">{lead.name}</div>
+                      <div className="f-mono text-[9px] text-ink-3 truncate">{lead.email}</div>
+                      <AMGBadge tone={STAGE_TONE[lead.stage] ?? 'neutral'} className="mt-0.5 text-[8px]">
+                        {STAGE_LABEL[lead.stage] ?? lead.stage}
+                      </AMGBadge>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: compose */}
+            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto p-5 space-y-4">
+              {/* Language */}
+              <div className="flex gap-2">
+                {(['ca', 'es'] as const).map(lang => (
+                  <button
+                    key={lang}
+                    onClick={() => handleLangChange(lang)}
+                    className={`px-3 py-1.5 f-mono text-xs uppercase tracking-wider border transition-colors ${
+                      language === lang
+                        ? 'border-accent bg-accent-muted text-accent-light'
+                        : 'border-border-base text-ink-2 hover:border-accent/40'
+                    }`}
+                  >
+                    {lang === 'ca' ? 'Català' : 'Castellà'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Demo URL */}
+              <div>
+                <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">URL de la Demo</label>
+                <input
+                  type="url"
+                  value={demoUrl}
+                  onChange={e => setDemoUrl(e.target.value)}
+                  placeholder="https://demo.amgdl.com/..."
+                  className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+                />
+              </div>
+
+              {/* Subject */}
+              <div>
+                <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">
+                  Assumpte <span className="normal-case text-ink-3">(&#123;&#123;nom&#125;&#125; = nom de l'empresa)</span>
+                </label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={e => setSubject(e.target.value)}
+                  className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+                />
+              </div>
+
+              {/* Body */}
+              <div className="flex-1">
+                <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">
+                  Cos del correu <span className="normal-case text-ink-3">(&#123;&#123;nom&#125;&#125; i &#123;&#123;demoUrl&#125;&#125;)</span>
+                </label>
+                <textarea
+                  value={body}
+                  onChange={e => setBody(e.target.value)}
+                  rows={10}
+                  className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-none"
+                />
+              </div>
+
+              {/* Preview */}
+              {preview && (
+                <div className="border border-border-subtle p-3 bg-bg-1">
+                  <div className="f-mono text-[9px] uppercase text-ink-3 tracking-widest mb-2">Previsualització — {previewLead!.name}</div>
+                  <div className="f-mono text-xs text-accent-light mb-1">{preview.subject}</div>
+                  <pre className="f-mono text-xs text-ink-1 whitespace-pre-wrap leading-relaxed">{preview.body}</pre>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-border-base flex items-center justify-between shrink-0">
+            <span className="f-mono text-xs text-ink-2">
+              Els leads en estat "Nou" passaran a "Contactat" automàticament.
+            </span>
+            <div className="flex gap-2">
+              <AMGButton variant="ghost" onClick={onClose}>Cancel·lar</AMGButton>
+              <AMGButton
+                icon={I.Mail}
+                loading={sending}
+                disabled={selected.size === 0 || !demoUrl.trim()}
+                onClick={() => onSend({ leadIds: Array.from(selected), subject, body, demoUrl, language })}
+              >
+                Enviar a {selected.size} lead{selected.size !== 1 ? 's' : ''}
+              </AMGButton>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
 
 function fmt(n: number) {
   return `${(n * 100).toFixed(1)}%`;
@@ -40,6 +363,9 @@ export default function LeadsPage() {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
+
+  const [showOutreach, setShowOutreach] = useState(false);
+  const [demoLead, setDemoLead] = useState<Lead | null>(null);
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ['leads'],
@@ -54,7 +380,8 @@ export default function LeadsPage() {
   });
 
   const { mutate: doChangeStage } = useMutation({
-    mutationFn: ({ id, stage }: { id: string; stage: string }) => changeStage(id, stage),
+    mutationFn: ({ id, stage, lostReason }: { id: string; stage: string; lostReason?: string }) =>
+      changeStage(id, stage, lostReason),
     onSuccess: () => {
       toast('success', 'Etapa actualitzada');
       qc.invalidateQueries({ queryKey: ['leads'] });
@@ -63,8 +390,26 @@ export default function LeadsPage() {
     onError: () => toast('error', 'Error actualitzant etapa'),
   });
 
+  const { mutate: doSetWhatsapp } = useMutation({
+    mutationFn: ({ id, value }: { id: string; value: boolean }) => setWhatsapp(id, value),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
+    onError: () => toast('error', 'Error actualitzant WhatsApp'),
+  });
+
+
+  const { mutate: doSendOutreach, isPending: sendingOutreach } = useMutation({
+    mutationFn: (req: OutreachRequest) => sendOutreach(req),
+    onSuccess: (data) => {
+      toast('success', `${data.sent} correu${data.sent !== 1 ? 's' : ''} enviat${data.sent !== 1 ? 's' : ''}`);
+      setShowOutreach(false);
+      qc.invalidateQueries({ queryKey: ['leads'] });
+      qc.invalidateQueries({ queryKey: ['leads-stats'] });
+    },
+    onError: () => toast('error', 'Error enviant els correus'),
+  });
+
   const leadsByStage = STAGES.reduce<Record<string, Lead[]>>((acc, stage) => {
-    acc[stage] = leads.filter((l: Lead) => l.stage === stage);
+    acc[stage] = (leads as Lead[]).filter(l => l.stage === stage);
     return acc;
   }, {} as Record<string, Lead[]>);
 
@@ -76,32 +421,25 @@ export default function LeadsPage() {
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / leads /</span>
             <div className="f-display font-bold text-xl mt-1">CRM de Leads</div>
           </div>
-          <AMGButton icon={I.Plus} onClick={() => router.push(`/${locale}/portal/leads/new`)}>
-            Nou Lead
-          </AMGButton>
+          <div className="flex gap-2">
+            <AMGButton variant="secondary" onClick={() => router.push(`/${locale}/portal/leads/templates`)}>
+              Plantilles
+            </AMGButton>
+            <AMGButton variant="secondary" icon={I.Mail} onClick={() => setShowOutreach(true)}>
+              Enviar demo
+            </AMGButton>
+            <AMGButton icon={I.Plus} onClick={() => router.push(`/${locale}/portal/leads/new`)}>
+              Nou Lead
+            </AMGButton>
+          </div>
         </div>
 
         {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <AMGStat label="Total leads" value={String(stats.total)} icon={I.Users} tone="accent" />
-            <AMGStat
-              label="Guanyats"
-              value={String(stats.byStage?.WON ?? 0)}
-              icon={I.Check}
-              tone="success"
-            />
-            <AMGStat
-              label="Perduts"
-              value={String(stats.byStage?.LOST ?? 0)}
-              icon={I.X}
-              tone="danger"
-            />
-            <AMGStat
-              label="Conversió"
-              value={fmt(stats.conversionRate)}
-              icon={I.Trending}
-              tone="info"
-            />
+            <AMGStat label="Guanyats" value={String(stats.byStage?.WON ?? 0)} icon={I.Check} tone="success" />
+            <AMGStat label="Perduts" value={String(stats.byStage?.LOST ?? 0)} icon={I.X} tone="danger" />
+            <AMGStat label="Conversió" value={fmt(stats.conversionRate)} icon={I.Trending} tone="info" />
           </div>
         )}
 
@@ -127,21 +465,65 @@ export default function LeadsPage() {
                       >
                         <div className="f-display font-bold text-sm text-ink-0 truncate">{lead.name}</div>
                         {lead.email && <div className="f-mono text-label text-ink-2 mt-1 truncate">{lead.email}</div>}
-                        {lead.phone && <div className="f-mono text-label text-ink-3 truncate">{lead.phone}</div>}
-                        <div className="mt-2">
+                        {lead.phone && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className="f-mono text-label text-ink-3 truncate">{lead.phone}</span>
+                            {lead.hasWhatsapp === true && (
+                              <span className="text-[10px] text-success font-bold">WA</span>
+                            )}
+                          </div>
+                        )}
+                        <div className="mt-2 flex items-center gap-2 flex-wrap">
                           <AMGBadge tone="neutral">{SOURCE_LABEL[lead.source] ?? lead.source}</AMGBadge>
                         </div>
+                        {lead.phone && (
+                          <div className="mt-2 flex items-center gap-1.5 flex-wrap" onClick={e => e.stopPropagation()}>
+                            <a
+                              href={(() => { const d = lead.phone.replace(/\D/g, ''); return `https://wa.me/${d.length === 9 ? '34' + d : d}`; })()}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="f-mono text-[9px] border border-border-base text-ink-2 hover:border-success hover:text-success px-1.5 py-0.5 transition-colors"
+                            >
+                              Provar WA →
+                            </a>
+                            <button
+                              className={`f-mono text-[9px] px-1.5 py-0.5 border transition-colors ${
+                                lead.hasWhatsapp
+                                  ? 'border-success text-success hover:border-danger hover:text-danger-light'
+                                  : 'border-border-base text-ink-3 hover:border-success hover:text-success'
+                              }`}
+                              onClick={() => doSetWhatsapp({ id: lead.id, value: !lead.hasWhatsapp })}
+                            >
+                              {lead.hasWhatsapp ? '✓ WA' : 'Marcar WA'}
+                            </button>
+                          </div>
+                        )}
                         {stage !== 'WON' && stage !== 'LOST' && (
-                          <div className="mt-2 flex gap-1 flex-wrap">
-                            {stage !== STAGES[STAGES.indexOf(stage) + 1] && STAGES.indexOf(stage) < STAGES.length - 3 && (
+                          <div className="mt-2 flex gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
+                            <button
+                              className="f-mono text-[9px] uppercase text-accent-light hover:underline"
+                              onClick={() => {
+                                const next = STAGES[STAGES.indexOf(stage) + 1];
+                                doChangeStage({ id: lead.id, stage: next });
+                              }}
+                            >
+                              {stage === 'NEGOTIATION' ? '✓ Guanyar' : 'Avançar →'}
+                            </button>
+                            <button
+                              className="f-mono text-[9px] uppercase text-ink-3 hover:text-danger-light hover:underline"
+                              onClick={() => {
+                                const reason = prompt('Motiu de pèrdua:') ?? 'No especificat';
+                                doChangeStage({ id: lead.id, stage: 'LOST', lostReason: reason });
+                              }}
+                            >
+                              Perdut
+                            </button>
+                            {lead.email && (
                               <button
-                                className="f-mono text-[9px] uppercase text-accent-light hover:underline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  doChangeStage({ id: lead.id, stage: STAGES[STAGES.indexOf(stage) + 1] });
-                                }}
+                                className="f-mono text-[9px] uppercase text-ink-3 hover:text-accent-light hover:underline"
+                                onClick={() => setDemoLead(lead)}
                               >
-                                Avançar →
+                                Demo →
                               </button>
                             )}
                           </div>
@@ -160,6 +542,25 @@ export default function LeadsPage() {
           </div>
         )}
       </div>
+
+      {showOutreach && typeof document !== 'undefined' && createPortal(
+        <OutreachModal
+          leads={leads as Lead[]}
+          onClose={() => setShowOutreach(false)}
+          onSend={(req) => doSendOutreach(req)}
+          sending={sendingOutreach}
+        />,
+        document.body
+      )}
+
+      {demoLead && typeof document !== 'undefined' && createPortal(
+        <DemoModal
+          lead={demoLead}
+          onClose={() => setDemoLead(null)}
+          onCreated={() => setDemoLead(null)}
+        />,
+        document.body
+      )}
     </PortalShell>
   );
 }

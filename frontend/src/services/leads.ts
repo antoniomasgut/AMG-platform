@@ -11,6 +11,7 @@ export interface Lead {
   tags?: string | null;
   lostReason?: string | null;
   estimatedValue?: number | null;
+  hasWhatsapp?: boolean | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -64,8 +65,22 @@ export const updateLead = (id: string, data: Partial<CreateLeadRequest>) =>
 export const deleteLead = (id: string) =>
   apiFetch<void>(`/leads/${id}`, { method: 'DELETE' });
 
-export const changeStage = (id: string, stage: string) =>
-  apiFetch<Lead>(`/leads/${id}/stage`, { method: 'PATCH', body: JSON.stringify({ stage }) });
+export const changeStage = (id: string, stage: string, lostReason?: string) =>
+  apiFetch<Lead>(`/leads/${id}/stage`, { method: 'PATCH', body: JSON.stringify({ stage, lostReason }) });
+
+export interface OutreachRequest {
+  leadIds: string[];
+  subject: string;
+  body: string;
+  demoUrl: string;
+  language: 'ca' | 'es';
+}
+
+export const sendOutreach = (data: OutreachRequest) =>
+  apiFetch<{ sent: number }>('/leads/outreach', { method: 'POST', body: JSON.stringify(data) });
+
+export const setWhatsapp = (id: string, value: boolean) =>
+  apiFetch<Lead>(`/leads/${id}/whatsapp?value=${value}`, { method: 'PATCH' });
 
 export const getActivities = (leadId: string) =>
   apiFetch<{ content: Activity[] }>(`/leads/${leadId}/activities?size=100`).then(r => r.content);

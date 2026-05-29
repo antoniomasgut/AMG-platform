@@ -20,6 +20,7 @@ public record LeadResponse(
         String tags,
         String lostReason,
         Instant convertedAt,
+        Boolean hasWhatsapp,
         boolean isActive,
         Instant createdAt,
         Instant updatedAt

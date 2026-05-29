@@ -10,14 +10,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -34,6 +40,9 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
     @Value("${app.prospecting.google.rate-limit-per-second:10}")
     private int rateLimitPerSecond;
 
+    @Value("${GOOGLE_PLACES_API_KEY:}")
+    private String apiKeyFromEnv;
+
     private long lastRequestTime = 0;
 
     public GooglePlacesProspectScraper(SystemConfigService sysConfig) {
@@ -44,28 +53,63 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
 
     @PostConstruct
     void init() {
-        if (!sysConfig.isConfigured("GOOGLE_PLACES_API_KEY")) {
-            log.warn("GooglePlacesProspectScraper: GOOGLE_PLACES_API_KEY no configurada — configura-la a /portal/admin/config");
-        } else {
+        if (!resolvedApiKey().isBlank()) {
             log.info("GooglePlacesProspectScraper inicialitzat (rate limit: {}/s)", rateLimitPerSecond);
+        } else {
+            log.warn("GooglePlacesProspectScraper: GOOGLE_PLACES_API_KEY no configurada — afegeix-la a .env o a /portal/admin/config");
         }
+    }
+
+    private String resolvedApiKey() {
+        if (apiKeyFromEnv != null && !apiKeyFromEnv.isBlank()) return apiKeyFromEnv;
+        var fromDb = sysConfig.get("GOOGLE_PLACES_API_KEY");
+        return fromDb != null ? fromDb : "";
     }
 
     @Override
     public List<Prospect> search(String sector, String location, Map<String, Object> params, UUID campaignId) {
-        String apiKey = sysConfig.get("GOOGLE_PLACES_API_KEY");
-        if (apiKey == null || apiKey.isBlank()) {
+        String apiKey = resolvedApiKey();
+        if (apiKey.isBlank()) {
             throw new MissingApiKeyException("Google Places", "GOOGLE_PLACES_API_KEY");
         }
 
-        var query = sector + " a " + location + ", Mallorca";
         var maxResults = params != null && params.get("maxResults") instanceof Number n
-                ? n.intValue() : 50;
+                ? n.intValue() : 20;
 
-        log.info("Searching Google Places: query='{}', maxResults={}", query, maxResults);
+        // Construir llista de queries: sector principal + keywords addicionals
+        var queries = new java.util.LinkedHashSet<String>();
+        queries.add(sector + " a " + location);
+        if (params != null && params.get("keywords") instanceof java.util.List<?> kws) {
+            for (var kw : kws) {
+                if (kw instanceof String s && !s.isBlank()) {
+                    queries.add(s.trim() + " a " + location);
+                }
+            }
+        }
 
+        log.info("Searching Google Places: queries={}, maxResults={}", queries, maxResults);
+
+        // Cercar per totes les queries i fusionar resultats (deduplicats per placeId)
+        var seen = new java.util.LinkedHashSet<String>();
+        var allProspects = new ArrayList<Prospect>();
+        for (var query : queries) {
+            if (allProspects.size() >= maxResults) break;
+            var partial = searchQuery(query, sector, location, apiKey, maxResults - allProspects.size(), campaignId);
+            for (var p : partial) {
+                if (p.getGooglePlaceId() != null && seen.add(p.getGooglePlaceId())) {
+                    allProspects.add(p);
+                }
+            }
+        }
+        log.info("Google Places total found: {} prospects from {} queries", allProspects.size(), queries.size());
+        return allProspects;
+    }
+
+    private List<Prospect> searchQuery(String query, String sector, String location, String apiKey, int maxResults, UUID campaignId) {
         var prospects = new ArrayList<Prospect>();
         String nextPageToken = null;
+
+        log.info("Searching Google Places: query='{}', maxResults={}", query, maxResults);
 
         try {
             do {
@@ -139,18 +183,56 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
         return prospects;
     }
 
+    private static final Set<String> GENERIC_DOMAINS = Set.of(
+        "gmail.com", "hotmail.com", "yahoo.com", "outlook.com",
+        "icloud.com", "live.com", "msn.com", "yahoo.es", "hotmail.es",
+        "googlemail.com", "me.com"
+    );
+
     @Override
-    public ProspectEnrichment enrich(String name, String website) {
-        if (website == null || website.isBlank()) {
-            return new ProspectEnrichment(null, null, false, false);
+    public ProspectEnrichment enrich(String name, String existingWebsite, String email) {
+        String resolvedWebsite = existingWebsite;
+
+        // Si no té web però té email amb domini propi, prova de trobar la web
+        if ((resolvedWebsite == null || resolvedWebsite.isBlank())
+                && email != null && !email.isBlank()) {
+            resolvedWebsite = findWebsiteFromEmailDomain(email);
         }
-        var domain = website.replace("https://", "").replace("http://", "").split("/")[0];
-        return new ProspectEnrichment(
-                "contact@" + domain,
-                "@" + name.toLowerCase().replaceAll("\\s+", ""),
-                true,
-                false
-        );
+
+        // Si tenim web, intentar extreure email
+        String resolvedEmail = null;
+        if (resolvedWebsite != null && !resolvedWebsite.isBlank()) {
+            resolvedEmail = extractEmailFromWebsite(resolvedWebsite);
+        }
+
+        return new ProspectEnrichment(resolvedEmail, resolvedWebsite, null,
+                resolvedWebsite != null, false);
+    }
+
+    private String findWebsiteFromEmailDomain(String email) {
+        var parts = email.split("@");
+        if (parts.length != 2) return null;
+        var domain = parts[1].toLowerCase().trim();
+        if (GENERIC_DOMAINS.contains(domain)) return null;
+
+        var httpClient = buildScrapingClient();
+
+        for (var candidate : List.of("https://" + domain, "https://www." + domain)) {
+            try {
+                var response = httpClient.get()
+                    .uri(candidate)
+                    .header("User-Agent", "Mozilla/5.0")
+                    .retrieve()
+                    .toBodilessEntity()
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
+                if (response != null && response.getStatusCode().is2xxSuccessful()) {
+                    log.debug("Found website {} from email domain {}", candidate, domain);
+                    return candidate;
+                }
+            } catch (Exception ignored) {}
+        }
+        return null;
     }
 
     private void enrichFromDetails(Prospect prospect, String apiKey) {
@@ -224,48 +306,67 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
         }
     }
 
-    /** Cerca el primer mailto: a la pàgina principal i /contacte de la web del negoci. */
+    /** WebClient per scraping de webs externes — ignora errors SSL de certs mal configurats. */
+    private WebClient buildScrapingClient() {
+        try {
+            var sslContext = SslContextBuilder.forClient()
+                .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                .build();
+            var httpClient = HttpClient.create()
+                .secure(spec -> spec.sslContext(sslContext))
+                .followRedirect(true);
+            return WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .codecs(c -> c.defaultCodecs().maxInMemorySize(512 * 1024))
+                .build();
+        } catch (Exception e) {
+            return WebClient.builder()
+                .codecs(c -> c.defaultCodecs().maxInMemorySize(512 * 1024))
+                .build();
+        }
+    }
+
+    /** Cerca el primer mailto: a la pàgina principal i pàgines de contacte de la web del negoci. */
     private String extractEmailFromWebsite(String websiteUrl) {
         var emailPattern = java.util.regex.Pattern.compile(
             "[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}"
         );
-        // Pàgines de contacte habituals
-        var paths = List.of("", "/contacte", "/contact", "/contacto", "/sobre-nosaltres");
-        var base = websiteUrl.replaceAll("/$", "");
+        var mailtoPattern = java.util.regex.Pattern.compile("mailto:([^\"'?\\s>&]+)");
 
-        var httpClient = WebClient.builder()
-            .codecs(c -> c.defaultCodecs().maxInMemorySize(512 * 1024))
-            .build();
+        var paths = List.of(
+            "", "/contacte", "/contact", "/contacto",
+            "/sobre-nosaltres", "/sobre-nosotros", "/quienes-somos",
+            "/nosotros", "/about", "/qui-som"
+        );
+        var base = websiteUrl.replaceAll("/$", "");
+        var httpClient = buildScrapingClient();
 
         for (var path : paths) {
             try {
                 var html = httpClient.get()
                     .uri(base + path)
-                    .header("User-Agent", "Mozilla/5.0")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
                     .retrieve()
                     .bodyToMono(String.class)
-                    .timeout(java.time.Duration.ofSeconds(4))
+                    .timeout(java.time.Duration.ofSeconds(7))
                     .block();
 
                 if (html == null) continue;
 
-                // Buscar mailto: links primer (més fiable)
-                var mailtoPattern = java.util.regex.Pattern.compile("mailto:([^\"'?\\s>]+)");
+                // 1. Buscar mailto: links (més fiable)
                 var m = mailtoPattern.matcher(html);
-                if (m.find()) {
-                    var email = m.group(1).toLowerCase();
+                while (m.find()) {
+                    var email = m.group(1).toLowerCase().trim();
                     if (!isSpamEmail(email)) return email;
                 }
 
-                // Buscar emails en text pla
+                // 2. Buscar emails en text pla
                 var em = emailPattern.matcher(html);
                 while (em.find()) {
                     var email = em.group().toLowerCase();
                     if (!isSpamEmail(email)) return email;
                 }
-            } catch (Exception ignored) {
-                // Timeout o web no accessible — continuar amb el següent path
-            }
+            } catch (Exception ignored) {}
         }
         return null;
     }
