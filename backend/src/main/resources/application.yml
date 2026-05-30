@@ -31,6 +31,11 @@ spring:
     out-of-order: false
     validate-on-migrate: true
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+
 server:
   port: ${PORT:8080}
 

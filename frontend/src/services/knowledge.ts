@@ -76,3 +76,19 @@ export function testKnowledgeResponse(tenantId: string, message: string): Promis
     body: JSON.stringify({ message }),
   });
 }
+
+export async function uploadDocument(tenantId: string, file: File): Promise<KnowledgeDocument> {
+  const form = new FormData();
+  form.append('file', file);
+  const token = sessionStorage.getItem('access_token') ?? '';
+  const res = await fetch(`/api/v1/agents/knowledge/${tenantId}/documents/upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  if (!res.ok) {
+    const msg = await res.text().catch(() => 'Error pujant el fitxer');
+    throw new Error(msg);
+  }
+  return res.json();
+}

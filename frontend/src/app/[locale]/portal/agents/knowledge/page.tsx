@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
-import { getKnowledge, updateEntries, testKnowledgeResponse, addDocument, deleteDocument } from '@/services/knowledge';
+import { getKnowledge, updateEntries, testKnowledgeResponse, deleteDocument, uploadDocument } from '@/services/knowledge';
+import { getTenant } from '@/services/admin';
+import { getSectorTemplates } from '../sectorKbTemplates';
 import { PortalShell } from '@/components/portal/PortalShell';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -37,11 +39,15 @@ interface WizardState {
   // Step 3 — Serveis + FAQ
   services: ServiceItem[];
   faq: FaqItem[];
+  // Step 3 — Sector rules (auto-filled from sector templates)
+  bookingRules: string;
+  quoteRules: string;
   // Step 4 — Restriccions
   topicsOffLimits: string;
   escalationTriggers: string;
   escalationContact: string;
   disclaimer: string;
+  followupRules: string;
   extra: string;
 }
 
@@ -144,16 +150,27 @@ export default function KnowledgeWizardPage() {
     holidays: '', bookingMethod: '', cancellationPolicy: '',
     services: [{ ...BLANK_SERVICE }],
     faq: [{ ...BLANK_FAQ }],
+    bookingRules: '', quoteRules: '',
     topicsOffLimits: '', escalationTriggers: '', escalationContact: '',
-    disclaimer: '', extra: '',
+    disclaimer: '', followupRules: '', extra: '',
   });
   const [testMessage, setTestMessage] = useState('Hola! Pots presentar-te i explicar-me els vostres serveis principals?');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [uploadError, setUploadError] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const qc = useQueryClient();
 
   const { data: existing } = useQuery({
     queryKey: ['knowledge', tenantId],
     queryFn: () => getKnowledge(tenantId!),
+    enabled: !!tenantId,
+  });
+
+  const { data: tenantData } = useQuery({
+    queryKey: ['tenant', tenantId],
+    queryFn: () => getTenant(tenantId!),
     enabled: !!tenantId,
   });
 
@@ -235,7 +252,29 @@ export default function KnowledgeWizardPage() {
     }
     const extra = cat('EXTRA');
     if (extra) setState(s => ({ ...s, extra }));
+    const bookingRules = cat('BOOKING_RULES');
+    if (bookingRules) setState(s => ({ ...s, bookingRules }));
+    const quoteRules = cat('QUOTE_RULES');
+    if (quoteRules) setState(s => ({ ...s, quoteRules }));
+    const followupRules = cat('FOLLOWUP_RULES');
+    if (followupRules) setState(s => ({ ...s, followupRules }));
   }, [existing]);
+
+  // Auto-fill sector templates when categories are empty (first wizard open)
+  useEffect(() => {
+    if (!existing || !tenantData?.sector) return;
+    const templates = getSectorTemplates(tenantData.sector);
+    const cat = (c: string) => (existing.entriesByCategory[c] ?? []).map(e => e.content).join('\n');
+    if (!cat('BOOKING_RULES') && templates.BOOKING_RULES) {
+      setState(s => s.bookingRules ? s : { ...s, bookingRules: templates.BOOKING_RULES! });
+    }
+    if (!cat('QUOTE_RULES') && templates.QUOTE_RULES) {
+      setState(s => s.quoteRules ? s : { ...s, quoteRules: templates.QUOTE_RULES! });
+    }
+    if (!cat('FOLLOWUP_RULES') && templates.FOLLOWUP_RULES) {
+      setState(s => s.followupRules ? s : { ...s, followupRules: templates.FOLLOWUP_RULES! });
+    }
+  }, [existing, tenantData]);
 
   const kbTestMutation = useMutation({
     mutationFn: () => testKnowledgeResponse(tenantId!, testMessage),
@@ -262,9 +301,12 @@ export default function KnowledgeWizardPage() {
         const faq = serializeFaq(state.faq);
         if (svc) saves.push(updateEntries(tenantId, 'SERVICE', [{ content: svc }]));
         if (faq) saves.push(updateEntries(tenantId, 'FAQ', [{ content: faq }]));
+        if (state.bookingRules) saves.push(updateEntries(tenantId, 'BOOKING_RULES', [{ content: state.bookingRules }]));
+        if (state.quoteRules) saves.push(updateEntries(tenantId, 'QUOTE_RULES', [{ content: state.quoteRules }]));
       } else if (step === 'restriccions') {
         const rest = serializeRestrictions(state);
         if (rest) saves.push(updateEntries(tenantId, 'RESTRICTION', [{ content: rest }]));
+        if (state.followupRules) saves.push(updateEntries(tenantId, 'FOLLOWUP_RULES', [{ content: state.followupRules }]));
         if (state.extra) saves.push(updateEntries(tenantId, 'EXTRA', [{ content: state.extra }]));
       }
       await Promise.all(saves);
@@ -304,6 +346,31 @@ export default function KnowledgeWizardPage() {
   const removeFaq = (i: number) => setState(s => ({ ...s, faq: s.faq.filter((_, j) => j !== i) }));
   const updateFaq = (i: number, key: keyof FaqItem, val: string) =>
     setState(s => { const f = [...s.faq]; f[i] = { ...f[i], [key]: val }; return { ...s, faq: f }; });
+
+  const handleFileUpload = async (file: File) => {
+    if (!tenantId) return;
+    setUploadError('');
+    setUploading(true);
+    try {
+      await uploadDocument(tenantId, file);
+      qc.invalidateQueries({ queryKey: ['knowledge', tenantId] });
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : 'Error pujant el fitxer');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    if (!tenantId) return;
+    try {
+      await deleteDocument(tenantId, docId);
+      qc.invalidateQueries({ queryKey: ['knowledge', tenantId] });
+    } catch {
+      // silently ignore
+    }
+  };
 
   return (
     <PortalShell breadcrumb="Assistent de configuració del Bot IA" backHref="/portal/agents">
@@ -499,6 +566,34 @@ export default function KnowledgeWizardPage() {
               </div>
             </div>
 
+            {/* Booking rules */}
+            <div className="border-t border-border-base pt-5">
+              <div className="mb-2">
+                <span className="text-sm font-semibold text-ink-1">Regles de gestió de cites</span>
+                {tenantData?.sector && state.bookingRules && (
+                  <span className="ml-2 text-xs text-ink-3 f-mono">(pre-carregat per sector {tenantData.sector})</span>
+                )}
+              </div>
+              <p className="text-xs text-ink-3 mb-2">Com ha de recollir dades, gestionar urgències, temps de resposta...</p>
+              <textarea value={state.bookingRules} onChange={upd('bookingRules')} rows={8}
+                placeholder="Ex: Dades a recollir: nom, telèfon, tipus de feina, adreça. Per a urgències avisar immediatament..."
+                className={textareaCls} />
+            </div>
+
+            {/* Quote rules */}
+            <div className="border-t border-border-base pt-5">
+              <div className="mb-2">
+                <span className="text-sm font-semibold text-ink-1">Regles de pressupostos</span>
+                {tenantData?.sector && state.quoteRules && (
+                  <span className="ml-2 text-xs text-ink-3 f-mono">(pre-carregat per sector {tenantData.sector})</span>
+                )}
+              </div>
+              <p className="text-xs text-ink-3 mb-2">Tarifes, fórmules de càlcul, condicions dels pressupostos...</p>
+              <textarea value={state.quoteRules} onChange={upd('quoteRules')} rows={8}
+                placeholder="Ex: Hora d'oficial: 45€/h. Desplaçament inclòs fins 20km. Materials a part..."
+                className={textareaCls} />
+            </div>
+
             {/* FAQ */}
             <div className="border-t border-border-base pt-5">
               <div className="flex items-center justify-between mb-3">
@@ -518,6 +613,37 @@ export default function KnowledgeWizardPage() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Documents */}
+            <div className="border-t border-border-base pt-5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-ink-1">Documents PDF / TXT</span>
+                <span className="text-xs text-ink-3 f-mono">màx. 5 documents · 10 MB</span>
+              </div>
+              <p className="text-xs text-ink-3 mb-3">Cartes de serveis, llistes de preus, fitxes tècniques... El bot llegirà el seu contingut per respondre consultes.</p>
+              {(existing?.documents ?? []).length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {existing!.documents.map(doc => (
+                    <div key={doc.id} className="flex items-center justify-between px-3 py-2 amg-card card-clip text-sm">
+                      <span className="text-ink-1 truncate">{doc.filename}</span>
+                      <button onClick={() => handleDeleteDocument(doc.id)} className="text-xs text-danger hover:opacity-70 ml-3 shrink-0">Eliminar</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(existing?.documents ?? []).length < 5 && (
+                <div>
+                  <input ref={fileInputRef} type="file" accept=".pdf,.txt,application/pdf,text/plain"
+                    onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                    className="hidden" />
+                  <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
+                    className="px-4 py-2 border border-border-base rounded text-sm hover:border-accent hover:text-accent transition disabled:opacity-50">
+                    {uploading ? 'Pujant...' : '+ Pujar PDF o TXT'}
+                  </button>
+                  {uploadError && <p className="mt-2 text-xs text-danger">{uploadError}</p>}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -551,6 +677,17 @@ export default function KnowledgeWizardPage() {
               <label className={labelCls}>Avís legal / Disclaimer (opcional)</label>
               <textarea value={state.disclaimer} onChange={upd('disclaimer')} rows={2}
                 placeholder="Ex: La informació és orientativa. Consulteu sempre el professional."
+                className={textareaCls} />
+            </div>
+            <div className="border-t border-border-base pt-4">
+              <div className="mb-2">
+                <label className={labelCls}>Regles de seguiment postvenda</label>
+                {tenantData?.sector && state.followupRules && (
+                  <span className="text-xs text-ink-3 f-mono">(pre-carregat per sector {tenantData.sector})</span>
+                )}
+              </div>
+              <textarea value={state.followupRules} onChange={upd('followupRules')} rows={6}
+                placeholder="Ex: 3 dies després d'acabar: demanar ressenya Google. Reactivació als 6 mesos sense contacte..."
                 className={textareaCls} />
             </div>
             <div className="border-t border-border-base pt-4">

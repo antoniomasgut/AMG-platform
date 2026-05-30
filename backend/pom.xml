@@ -116,6 +116,13 @@
             <artifactId>angus-mail</artifactId>
         </dependency>
 
+        <!-- Apache PDFBox — extracció de text de PDFs per a la Knowledge Base -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
         <!-- MapStruct -->
         <dependency>
             <groupId>org.mapstruct</groupId>
