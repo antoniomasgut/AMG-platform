@@ -330,6 +330,18 @@ public class ConversationalAgentController {
             config.setMaxTokens(request.maxTokens());
         if (request.temperature() != null)
             config.setTemperature(request.temperature());
+        if (request.reasoningModel() != null)
+            config.setReasoningModel(request.reasoningModel().isBlank() ? null : request.reasoningModel());
+        if (request.monthlyTokenBudget() != null)
+            config.setMonthlyTokenBudget(request.monthlyTokenBudget());
+        if (request.budgetAlertThreshold() != null)
+            config.setBudgetAlertThreshold(request.budgetAlertThreshold());
+        if (request.senderEmail() != null)
+            config.setSenderEmail(request.senderEmail().isBlank() ? null : request.senderEmail());
+        if (request.senderName() != null)
+            config.setSenderName(request.senderName().isBlank() ? null : request.senderName());
+        if (request.replyToEmail() != null)
+            config.setReplyToEmail(request.replyToEmail().isBlank() ? null : request.replyToEmail());
         return ResponseEntity.ok(tenantAIConfigRepository.save(config));
     }
 

@@ -37,6 +37,7 @@ public class Landing {
     @Column(length = 200) private String domainOwnerEmail;
     @Column(length = 30) private String domainOwnerPhone;
     @Builder.Default @Column(name = "is_active", nullable = false) private Boolean isActive = true;
+    @Builder.Default @Column(name = "view_count", nullable = false) private Long viewCount = 0L;
     @CreatedDate @Column(updatable = false) private Instant createdAt;
     @LastModifiedDate private Instant updatedAt;
 }

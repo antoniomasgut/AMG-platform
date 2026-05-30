@@ -10,5 +10,10 @@ public enum BlockType {
     TESTIMONIALS,
     CTA,
     FOOTER,
-    MAP
+    MAP,
+    OPENING_HOURS,
+    PRICING,
+    TEAM,
+    VIDEO,
+    REVIEWS
 }

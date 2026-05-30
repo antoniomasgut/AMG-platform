@@ -3,11 +3,30 @@
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/auth';
-import { listLandings } from '@/services/factory';
+import { listLandings, getLandingStats } from '@/services/factory';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { I } from '@/components/ui/icons';
 import { PortalShell } from '@/components/portal/PortalShell';
+
+function LandingStats({ tenantId, landingId }: { tenantId: string; landingId: string }) {
+  const { data } = useQuery({
+    queryKey: ['landing-stats', landingId],
+    queryFn: () => getLandingStats(tenantId, landingId),
+    staleTime: 30_000,
+  });
+  if (!data) return null;
+  return (
+    <div className="flex gap-3 mt-2">
+      <span className="f-mono text-[10px] text-ink-2 flex items-center gap-1">
+        <I.Eye size={11} stroke="currentColor" /> {data.viewCount} visites
+      </span>
+      <span className="f-mono text-[10px] text-ink-2 flex items-center gap-1">
+        <I.Mail size={11} stroke="currentColor" /> {data.contactCount} contactes
+      </span>
+    </div>
+  );
+}
 
 export default function LandingsPage() {
   const router = useRouter();
@@ -64,6 +83,9 @@ export default function LandingsPage() {
                 </AMGBadge>
               </div>
               <div className="f-mono text-caption text-ink-3 mb-1">/{l.slug}</div>
+              {l.status === 'PUBLISHED' && (
+                <LandingStats tenantId={user.tenantId!} landingId={l.id} />
+              )}
               <div className="flex gap-2 mt-4">
                 <AMGButton
                   size="sm"

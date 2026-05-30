@@ -27,6 +27,7 @@ import {
   calcMonthly,
 } from '@/services/admin';
 import { createBudget, listBudgets, sendBudget, cancelBudget, updateBudget, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
+import { SECTOR_CONTEXTS, getSectorContext } from '@/services/sector-contexts';
 import { listLandings } from '@/services/factory';
 import { getWizardConfig } from '@/config/service-wizards';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -932,7 +933,7 @@ function ActivationModal({ channels, agentSystemPrompt, onConfirm, onClose, conf
   );
 }
 
-function AgentConfigCard({ tenantId, agentSystemPrompt }: { tenantId: string; agentSystemPrompt: string | null }) {
+function AgentConfigCard({ tenantId, agentSystemPrompt, sector }: { tenantId: string; agentSystemPrompt: string | null; sector?: string | null }) {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [saving, setSaving] = useState<string | null>(null);
@@ -1125,9 +1126,28 @@ function AgentConfigCard({ tenantId, agentSystemPrompt }: { tenantId: string; ag
 
           {/* Prompt del sistema — bloquejat quan actiu */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="f-mono text-label uppercase tracking-widest text-ink-3">Prompt del sistema</div>
-              {saving === 'prompt' && <span className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" />}
+              <div className="flex items-center gap-2">
+                {saving === 'prompt' && <span className="w-3.5 h-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin" />}
+                {!isLocked && (
+                  <select
+                    className="bg-[rgba(255,255,255,0.04)] border border-border-base text-ink-2 text-[10px] f-mono px-2 py-1 focus:outline-none focus:border-accent"
+                    defaultValue=""
+                    onChange={e => {
+                      if (!e.target.value) return;
+                      const ctx = getSectorContext(e.target.value);
+                      if (ctx) setPromptDraft(ctx.systemPrompt.replace('{NOM_NEGOCI}', 'el negoci'));
+                      e.target.value = '';
+                    }}
+                  >
+                    <option value="">↓ Carregar plantilla de sector</option>
+                    {Object.entries(SECTOR_CONTEXTS).map(([key, ctx]) => (
+                      <option key={key} value={key}>{ctx.label}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
             </div>
             <textarea
               readOnly={isLocked}
@@ -2947,7 +2967,7 @@ export default function TenantDetailPage() {
 
         {/* Agent IA & Canals */}
         <div id="section-agent-config">
-          <AgentConfigCard tenantId={id} agentSystemPrompt={tenant.agentSystemPrompt} />
+          <AgentConfigCard tenantId={id} agentSystemPrompt={tenant.agentSystemPrompt} sector={tenant.sector} />
         </div>
 
         {/* Telegram Bot per tenant */}

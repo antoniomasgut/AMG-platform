@@ -6,7 +6,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/toast-context';
 import { listTemplates, getTemplate } from '@/services/templates';
-import { createLandingFromTemplate } from '@/services/factory';
+import { createLandingFromTemplate, TEMPLATE_STYLES } from '@/services/factory';
 import { apiFetch } from '@/services/api';
 import { SectionContentFillerList } from '@/components/factory/SectionContentFiller';
 import { AMGButton } from '@/components/ui/button';
@@ -25,6 +25,7 @@ function ConfigureLandingForm() {
 
   const [step, setStep] = useState<Step>('select-template');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [selectedTemplateSlug, setSelectedTemplateSlug] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [filledSections, setFilledSections] = useState<Record<string, Record<string, unknown>>>({});
@@ -45,12 +46,14 @@ function ConfigureLandingForm() {
       if (!tenantId) throw new Error('Falta tenantId');
       if (!selectedTemplateId) throw new Error('Falta plantilla');
 
+      const templateStyles = selectedTemplateSlug ? TEMPLATE_STYLES[selectedTemplateSlug] : undefined;
       const landing = await createLandingFromTemplate(tenantId, {
         title,
         slug,
         serviceId,
         templateId: selectedTemplateId,
         filledSections,
+        styles: templateStyles as Record<string, unknown> | undefined,
       });
 
       // Mark service as VERIFIED after landing creation
@@ -70,8 +73,9 @@ function ConfigureLandingForm() {
     },
   });
 
-  const handleSelectTemplate = (templateId: string) => {
+  const handleSelectTemplate = (templateId: string, templateSlug: string) => {
     setSelectedTemplateId(templateId);
+    setSelectedTemplateSlug(templateSlug);
     setStep('fill-content');
   };
 
@@ -124,7 +128,7 @@ function ConfigureLandingForm() {
               {templates.map((tpl) => (
                 <button
                   key={tpl.id}
-                  onClick={() => handleSelectTemplate(tpl.id)}
+                  onClick={() => handleSelectTemplate(tpl.id, tpl.slug)}
                   className="amg-card card-clip p-5 text-left hover:ring-1 hover:ring-[#FF6B00] transition group"
                 >
                   <div className="f-display font-bold text-sm mb-1 text-ink-0 group-hover:text-accent-light transition">

@@ -150,6 +150,11 @@ export interface AIConfig {
   preferredModel: string;
   maxTokens: number;
   temperature: number;
+  reasoningModel?: string | null;
+  monthlyTokenBudget?: number | null;
+  budgetAlertThreshold?: number;
+  senderEmail?: string | null;
+  senderName?: string | null;
 }
 
 export interface ModelInfo {

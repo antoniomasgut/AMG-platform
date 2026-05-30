@@ -191,7 +191,7 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
             className="w-full max-w-4xl max-h-screen overflow-auto m-8"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-white shadow-2xl" style={{ fontFamily: styles.fontFamily }}>
+            <div className="bg-white shadow-2xl" style={{ fontFamily: styles.fontBody || styles.fontHeading }}>
               {content.blocks.map((block) => (
                 <BlockRenderer key={block.id} block={block} styles={styles} preview />
               ))}

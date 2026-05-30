@@ -57,9 +57,11 @@ public class ConversationalAgentService {
             var context = conversationService.loadCustomerContext(tenantId, customerIdentifier, channel);
             String systemPrompt = promptBuilder.build(tenantId, context);
 
-            String model = tenantAIConfigRepository.findById(tenantId)
-                    .map(TenantAIConfig::getPreferredModel)
-                    .orElse(aiProviderRouter.defaultModel());
+            var aiConfig = tenantAIConfigRepository.findById(tenantId)
+                    .orElse(TenantAIConfig.defaultFor(tenantId));
+            String model = aiConfig.getPreferredModel() != null
+                    ? aiConfig.getPreferredModel()
+                    : aiProviderRouter.defaultModel();
 
             var chatHistory = context.recentMessages().stream()
                     .map(c -> new ChatMessage(c.getRole().name(), c.getContent()))
@@ -78,7 +80,8 @@ public class ConversationalAgentService {
                     String senderId = channel == ConversationChannel.WHATSAPP_META
                             ? chatLink.getWhatsappMetaPhoneNumberId()
                             : chatLink.getWhatsappPhoneNumber();
-                    sendViaChannel(senderId, customerIdentifier, channel, assistantResponse);
+                    sendViaChannel(senderId, customerIdentifier, channel, assistantResponse,
+                            aiConfig.getSenderEmail(), aiConfig.getSenderName(), aiConfig.getReplyToEmail());
                     conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.ASSISTANT, assistantResponse, false);
                     break;
                 case HYBRID:
@@ -98,12 +101,17 @@ public class ConversationalAgentService {
     }
 
     private void sendViaChannel(String fromNumber, String customerIdentifier, ConversationChannel channel, String text) {
+        sendViaChannel(fromNumber, customerIdentifier, channel, text, null, null, null);
+    }
+
+    private void sendViaChannel(String fromNumber, String customerIdentifier, ConversationChannel channel, String text,
+                                String senderEmail, String senderName, String replyToEmail) {
         try {
             switch (channel) {
                 case WHATSAPP      -> whatsAppChannel.sendMessage(fromNumber != null ? fromNumber : "", customerIdentifier, text);
                 case WHATSAPP_META -> whatsAppMetaChannel.sendMessage(fromNumber != null ? fromNumber : "", customerIdentifier, text);
                 case TELEGRAM      -> telegramBotClient.sendMessage(Long.parseLong(customerIdentifier), text);
-                case EMAIL         -> emailChannel.sendMessage(customerIdentifier, "Response from Agent", text);
+                case EMAIL         -> emailChannel.sendMessage(customerIdentifier, "Resposta del teu agent", text, senderEmail, senderName, replyToEmail);
                 default            -> log.warn("Unsupported channel: {}", channel);
             }
         } catch (Exception e) {

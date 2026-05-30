@@ -4,9 +4,10 @@ import { create } from 'zustand';
 import type { Block, PageContent, PageStyles, LandingDetail } from '@/services/factory';
 
 const DEFAULT_STYLES: PageStyles = {
-  fontFamily: 'Inter, sans-serif',
+  fontHeading: 'Montserrat, sans-serif',
+  fontBody: 'Open Sans, sans-serif',
   primaryColor: '#FF6B00',
-  secondaryColor: '#1e293b',
+  accentColor: '#1e293b',
   bgColor: '#ffffff',
   textColor: '#1e293b',
   borderRadius: '8px',

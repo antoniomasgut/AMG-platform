@@ -2,12 +2,15 @@ package com.amg.digitalitzacio.agents.api;
 
 import com.amg.digitalitzacio.agents.api.dto.*;
 import com.amg.digitalitzacio.agents.application.KnowledgeBaseService;
+import com.amg.digitalitzacio.agents.application.PromptBuilder;
 import com.amg.digitalitzacio.agents.domain.KnowledgeCategory;
+import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -16,6 +19,8 @@ import java.util.UUID;
 public class KnowledgeController {
 
     private final KnowledgeBaseService knowledgeBaseService;
+    private final PromptBuilder promptBuilder;
+    private final AIProviderRouter aiProviderRouter;
 
     @GetMapping("/{tenantId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
@@ -55,7 +60,7 @@ public class KnowledgeController {
     @GetMapping("/{tenantId}/preview")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<String> previewPromptBlock(@PathVariable UUID tenantId) {
-        return ResponseEntity.ok(knowledgeBaseService.buildKnowledgeBlock(tenantId));
+        return ResponseEntity.ok(promptBuilder.build(tenantId, null));
     }
 
     @PostMapping("/{tenantId}/test")
@@ -63,8 +68,8 @@ public class KnowledgeController {
     public ResponseEntity<KnowledgeTestResponse> testResponse(
             @PathVariable UUID tenantId,
             @RequestBody KnowledgeTestRequest request) {
-        String response = knowledgeBaseService.testResponse(tenantId, request.message());
-        String preview  = knowledgeBaseService.buildKnowledgeBlock(tenantId);
-        return ResponseEntity.ok(new KnowledgeTestResponse(response, preview));
+        String systemPrompt = promptBuilder.build(tenantId, null);
+        String response = aiProviderRouter.forModel(null).chat(systemPrompt, List.of(), request.message());
+        return ResponseEntity.ok(new KnowledgeTestResponse(response, systemPrompt));
     }
 }

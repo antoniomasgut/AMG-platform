@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.engine.application;
 
 import com.amg.digitalitzacio.engine.api.dto.*;
+import com.amg.digitalitzacio.engine.api.dto.LandingStatsResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,4 +24,5 @@ public interface EngineService {
     String renderLanding(String slug, String host);
     String renderSitemap(String slug);
     ContactResponse submitContact(String slug, ContactRequest request);
+    LandingStatsResponse getLandingStats(UUID tenantId, UUID landingId);
 }

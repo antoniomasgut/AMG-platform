@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import {
@@ -73,6 +74,9 @@ export default function AgentsPage() {
   const [whatsappPhone, setWhatsappPhone] = useState('');
   const [whatsappMetaId, setWhatsappMetaId] = useState('');
   const [emailDraft, setEmailDraft] = useState('');
+  const [senderEmailDraft, setSenderEmailDraft] = useState('');
+  const [senderNameDraft, setSenderNameDraft] = useState('');
+  const [replyToDraft, setReplyToDraft] = useState('');
   const [testMessage, setTestMessage] = useState('Hola! Pots presentar-te breument?');
   const [testSystemPrompt, setTestSystemPrompt] = useState('');
   const [testResult, setTestResult] = useState<{ model: string; provider: string; response: string } | null>(null);
@@ -162,6 +166,16 @@ export default function AgentsPage() {
     mutationFn: (model: string) => updateAIConfig(tenantId!, { preferredModel: model }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ai-config', tenantId] });
+    },
+  });
+
+  const updateSenderMutation = useMutation({
+    mutationFn: (data: { senderEmail?: string; senderName?: string; replyToEmail?: string }) =>
+      updateAIConfig(tenantId!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-config', tenantId] });
+      setSenderEmailDraft('');
+      setSenderNameDraft('');
     },
   });
 
@@ -416,8 +430,70 @@ export default function AgentsPage() {
                 {channels?.whatsappPhoneNumber && (
                   <p className="text-xs text-ink-3 pl-7">Telèfon: {channels.whatsappPhoneNumber}</p>
                 )}
+
+                {/* Guia WhatsApp */}
+                <div className="border border-border-base rounded p-3 space-y-3 bg-bg-base text-xs">
+                  <p className="font-semibold text-ink-1">Com funciona WhatsApp per al bot — 3 casos</p>
+
+                  <div className="space-y-3">
+                    {/* Cas 1 */}
+                    <div className="rounded border border-border-base p-2.5 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span>📱</span>
+                        <p className="font-semibold text-ink-1">Cas 1 — El negoci ja té WhatsApp (normal o Business app)</p>
+                      </div>
+                      <p className="text-ink-3">Ex: el negoci usa WhatsApp Business app al mòbil per respondre manualment</p>
+                      <div className="space-y-1 text-ink-2">
+                        <p className="font-medium text-ink-1">Per què NO usar el número actual:</p>
+                        <p>Connectar el número actual a l&apos;API <strong>desconnecta l&apos;app per sempre</strong> en aquell número — perdràs l&apos;historial de xats, els grups i l&apos;accés des del mòbil. A més, si tens el número a targetes, flyers, Google Business o Instagram, hauràs de canviar-ho tot.</p>
+                        <p className="font-medium text-ink-1 pt-1">La solució: número nou dedicat al bot</p>
+                        <p>Pensa-ho com el telèfon de l&apos;oficina: el teu mòbil personal segueix sent el teu, i el bot atén des d&apos;un número dedicat. Els nous clients contacten al bot; tu continues amb els clients antics des del teu número habitual.</p>
+                        <p className="font-medium text-ink-1 pt-1">Com fer-ho:</p>
+                        <p>① Aconsegueix un número nou (SIM de prepagament ~5€, o número virtual ~1€/mes).</p>
+                        <p>② Posa el nou número al Google Business, web i xarxes socials com a &quot;Xat amb el bot&quot;.</p>
+                        <p>③ Contacta&apos;ns i t&apos;ajudem a connectar-lo. El número antic continua funcionant al mòbil.</p>
+                      </div>
+                    </div>
+
+                    {/* Cas 2 */}
+                    <div className="rounded border border-border-base p-2.5 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span>🏢</span>
+                        <p className="font-semibold text-ink-1">Cas 2 — El negoci ja té WhatsApp Business API</p>
+                      </div>
+                      <p className="text-ink-3">Ex: ja usa una plataforma de missatgeria professional (Twilio, 360dialog, etc.)</p>
+                      <div className="space-y-1 text-ink-2">
+                        <p>① Omple els camps de sota amb el <em>Telèfon</em> i el <em>Phone Number ID</em> de Meta.</p>
+                        <p>② Contacta&apos;ns per configurar el webhook a la teva compte de Meta Business.</p>
+                        <p>③ El bot ja pot enviar i rebre missatges pel teu número existent.</p>
+                      </div>
+                    </div>
+
+                    {/* Cas 3 */}
+                    <div className="rounded border border-border-base p-2.5 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span>✅</span>
+                        <p className="font-semibold text-ink-1">Cas 3 — Sense WhatsApp Business (partir de zero)</p>
+                      </div>
+                      <p className="text-ink-3">El negoci no té WhatsApp Business API i vol activar-lo</p>
+                      <div className="space-y-1 text-ink-2">
+                        <p>① Aconsegueix un número nou dedicat al bot:</p>
+                        <div className="ml-3 space-y-0.5 text-ink-3">
+                          <p>· SIM de prepagament (Simyo, Lebara) — ~5€ + ~5€/mes</p>
+                          <p>· Número virtual Twilio — ~1€/mes, sense SIM física</p>
+                        </div>
+                        <p>② Contacta&apos;ns. Creem el compte Meta Business, verifiquem el número i connectem el bot.</p>
+                        <p>③ Els clients veuran el bot com un número de WhatsApp del negoci.</p>
+                      </div>
+                    </div>
+
+                    <p className="text-ink-3 pt-1">⚠️ El client no necessita WhatsApp Business — qualsevol client amb WhatsApp normal pot escriure al bot.</p>
+                  </div>
+                </div>
+
                 {!channels?.isActive && !channels?.whatsappPhoneNumber && (
                   <div className="pl-7 space-y-2">
+                    <p className="text-xs text-ink-2 font-medium">Un cop tinguis el número llest (cas 2 o 3):</p>
                     <input
                       type="text"
                       value={whatsappPhone}
@@ -460,27 +536,149 @@ export default function AgentsPage() {
                 {channels?.emailAddress && (
                   <p className="text-xs text-ink-3 pl-7">{channels.emailAddress}</p>
                 )}
-                <div className="pl-7 space-y-2">
-                  <p className="text-xs text-ink-2">
-                    {channels?.emailAddress
-                      ? 'Adreça de correu que l\'agent monitoritza:'
-                      : 'Configura l\'adreça de correu que l\'agent ha de monitoritzar:'}
-                  </p>
-                  <div className="flex gap-2">
-                    <input
-                      type="email"
-                      value={emailDraft}
-                      onChange={(e) => setEmailDraft(e.target.value)}
-                      placeholder={channels?.emailAddress ?? 'agent@empresa.com'}
-                      className="flex-1 p-2 bg-bg-base border border-border-base rounded text-xs f-mono focus:outline-none focus:border-accent"
-                    />
-                    <button
-                      onClick={() => updateChannelsMutation.mutate({ emailAddress: emailDraft })}
-                      disabled={updateChannelsMutation.isPending || !emailDraft.trim()}
-                      className="px-3 py-1.5 bg-accent text-white rounded text-xs hover:opacity-90 disabled:opacity-50 shrink-0"
-                    >
-                      Desar
-                    </button>
+                <div className="pl-7 space-y-3">
+                  <div className="space-y-2">
+                    <p className="text-xs text-ink-2">
+                      {channels?.emailAddress
+                        ? 'Adreça de correu que l\'agent monitoritza (entrada):'
+                        : 'Configura l\'adreça de correu que l\'agent ha de monitoritzar:'}
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        value={emailDraft}
+                        onChange={(e) => setEmailDraft(e.target.value)}
+                        placeholder={channels?.emailAddress ?? 'agent@empresa.com'}
+                        className="flex-1 p-2 bg-bg-base border border-border-base rounded text-xs f-mono focus:outline-none focus:border-accent"
+                      />
+                      <button
+                        onClick={() => updateChannelsMutation.mutate({ emailAddress: emailDraft })}
+                        disabled={updateChannelsMutation.isPending || !emailDraft.trim()}
+                        className="px-3 py-1.5 bg-accent text-white rounded text-xs hover:opacity-90 disabled:opacity-50 shrink-0"
+                      >
+                        Desar
+                      </button>
+                    </div>
+                  </div>
+                  {/* Guia de configuració de correu */}
+                  <div className="border border-border-base rounded p-3 space-y-3 bg-bg-base">
+                    <p className="text-xs font-semibold text-ink-1">Com configurar l&apos;email del bot (enviar + rebre)</p>
+                    <div className="space-y-3 text-xs">
+
+                      {/* Cas 1: Gmail */}
+                      <div className="rounded border border-border-base p-2.5 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span>📧</span>
+                          <p className="font-semibold text-ink-1">Cas 1 — Tens Gmail o correu personal</p>
+                        </div>
+                        <p className="text-ink-3 f-mono">joan.plomer@gmail.com</p>
+                        <div className="space-y-1 text-ink-2">
+                          <p className="font-medium text-ink-1">Per rebre:</p>
+                          <p>① A la secció <em>Adreça que monitoritza el bot</em> (dalt), posa <span className="f-mono">plomeria@inbound.amgdl.com</span> (et la creem nosaltres).</p>
+                          <p>② Contacta&apos;ns per activar l&apos;adreça inbound. El bot ja rebrà els emails dels clients.</p>
+                          <p className="font-medium text-ink-1 pt-1">Per enviar:</p>
+                          <p>③ Deixa <em>Remitent</em> buit (surt de noreply@amgdl.com).</p>
+                          <p>④ Omple <em>Respostes a</em> amb <span className="f-mono">joan.plomer@gmail.com</span>. Quan el client respongui, t&apos;arribarà al Gmail.</p>
+                        </div>
+                      </div>
+
+                      {/* Cas 2: Domini propi */}
+                      <div className="rounded border border-border-base p-2.5 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span>🌐</span>
+                          <p className="font-semibold text-ink-1">Cas 2 — Tens domini propi</p>
+                        </div>
+                        <p className="text-ink-3 f-mono">info@plomeria-joan.com</p>
+                        <div className="space-y-1 text-ink-2">
+                          <p className="font-medium text-ink-1">Per rebre:</p>
+                          <p>① Contacta&apos;ns. Afegim un registre MX al teu domini apuntant a Brevo (5 minuts).</p>
+                          <p>② A la secció <em>Adreça que monitoritza el bot</em>, posa <span className="f-mono">bot@plomeria-joan.com</span> (o la que vulguis).</p>
+                          <p className="font-medium text-ink-1 pt-1">Per enviar:</p>
+                          <p>③ Contacta&apos;ns per verificar el domini a Brevo (SPF + DKIM, 5 minuts més).</p>
+                          <p>④ Omple <em>Remitent</em>: nom <span className="f-mono">Plomeria Joan</span> · email <span className="f-mono">info@plomeria-joan.com</span>.</p>
+                          <p>⑤ Els emails surten directament amb el teu domini. El client no veu cap menció a AMG.</p>
+                        </div>
+                      </div>
+
+                      {/* Cas 3: Sense correu */}
+                      <div className="rounded border border-border-base p-2.5 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span>✅</span>
+                          <p className="font-semibold text-ink-1">Cas 3 — Sense correu (configuració mínima)</p>
+                        </div>
+                        <p className="text-ink-3">No tens correu de negoci o no vols configurar-ho ara.</p>
+                        <div className="space-y-1 text-ink-2">
+                          <p>① Deixa tots els camps buits.</p>
+                          <p>② El bot pot rebre emails si contacta&apos;ns per assignar-te una adreça <span className="f-mono">@inbound.amgdl.com</span>.</p>
+                          <p>③ Les respostes surten de <span className="f-mono">noreply@amgdl.com</span> automàticament.</p>
+                          <p>④ Funciona perfectament per als clients. Pots personalitzar-ho quan vulguis.</p>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Remitent (From) — requereix verificació Brevo */}
+                  <div className="space-y-2 border-t border-border-base pt-2">
+                    <p className="text-xs font-medium text-ink-1">
+                      Remitent (opcional — requereix verificació Brevo)
+                      {aiConfig?.senderEmail && (
+                        <span className="ml-2 text-success">{aiConfig.senderEmail}</span>
+                      )}
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={senderNameDraft}
+                        onChange={(e) => setSenderNameDraft(e.target.value)}
+                        placeholder={aiConfig?.senderName ?? 'Nom del negoci'}
+                        className="w-36 p-2 bg-bg-base border border-border-base rounded text-xs focus:outline-none focus:border-accent"
+                      />
+                      <input
+                        type="email"
+                        value={senderEmailDraft}
+                        onChange={(e) => setSenderEmailDraft(e.target.value)}
+                        placeholder={aiConfig?.senderEmail ?? 'info@negoci.com'}
+                        className="flex-1 p-2 bg-bg-base border border-border-base rounded text-xs f-mono focus:outline-none focus:border-accent"
+                      />
+                      <button
+                        onClick={() => updateSenderMutation.mutate({
+                          senderEmail: senderEmailDraft || undefined,
+                          senderName: senderNameDraft || undefined,
+                        })}
+                        disabled={updateSenderMutation.isPending || (!senderEmailDraft.trim() && !senderNameDraft.trim())}
+                        className="px-3 py-1.5 bg-accent text-white rounded text-xs hover:opacity-90 disabled:opacity-50 shrink-0"
+                      >
+                        Desar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Reply-To — funciona amb qualsevol correu */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-ink-1">
+                      Respostes a (recomanat — funciona amb qualsevol correu)
+                      {aiConfig?.replyToEmail && (
+                        <span className="ml-2 text-success">{aiConfig.replyToEmail}</span>
+                      )}
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        value={replyToDraft}
+                        onChange={(e) => setReplyToDraft(e.target.value)}
+                        placeholder={aiConfig?.replyToEmail ?? 'negoci@gmail.com'}
+                        className="flex-1 p-2 bg-bg-base border border-border-base rounded text-xs f-mono focus:outline-none focus:border-accent"
+                      />
+                      <button
+                        onClick={() => updateSenderMutation.mutate({ replyToEmail: replyToDraft })}
+                        disabled={updateSenderMutation.isPending || !replyToDraft.trim()}
+                        className="px-3 py-1.5 bg-accent text-white rounded text-xs hover:opacity-90 disabled:opacity-50 shrink-0"
+                      >
+                        Desar
+                      </button>
+                    </div>
+                    <p className="text-xs text-ink-3">Quan el client faci &quot;Respondre&quot; al correu del bot, el missatge arribarà a aquesta adreça.</p>
                   </div>
                 </div>
               </div>
@@ -662,17 +860,25 @@ export default function AgentsPage() {
         {activeTab === 'coneixement' && isAdmin && (
           <div className="space-y-6">
 
-            {/* Preview toggle */}
-            <div className="flex items-center justify-between">
+            {/* Header row */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm text-ink-2">
                 Gestiona la informació que l&apos;agent coneix del negoci. Cada línia és una entrada independent.
               </p>
-              <button
-                onClick={() => setShowPreview(!showPreview)}
-                className="px-3 py-1.5 border border-border-base rounded text-xs f-mono text-ink-2 hover:text-accent hover:border-accent transition"
-              >
-                {showPreview ? 'Ocultar' : 'Previsualitzar'} prompt
-              </button>
+              <div className="flex gap-2">
+                <Link
+                  href="/portal/agents/knowledge"
+                  className="px-3 py-1.5 bg-accent text-black rounded text-xs f-mono font-bold hover:opacity-90"
+                >
+                  ✦ Assistent de configuració
+                </Link>
+                <button
+                  onClick={() => setShowPreview(!showPreview)}
+                  className="px-3 py-1.5 border border-border-base rounded text-xs f-mono text-ink-2 hover:text-accent hover:border-accent transition"
+                >
+                  {showPreview ? 'Ocultar' : 'Previsualitzar'} prompt
+                </button>
+              </div>
             </div>
 
             {showPreview && (

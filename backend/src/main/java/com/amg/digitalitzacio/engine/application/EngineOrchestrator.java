@@ -2,6 +2,10 @@ package com.amg.digitalitzacio.engine.application;
 
 import com.amg.digitalitzacio.engine.api.dto.*;
 import com.amg.digitalitzacio.engine.domain.*;
+import com.amg.digitalitzacio.leads.domain.Lead;
+import com.amg.digitalitzacio.leads.domain.LeadRepository;
+import com.amg.digitalitzacio.leads.domain.LeadSource;
+import com.amg.digitalitzacio.leads.domain.PipelineStage;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.vault.domain.CatalogServiceRepository;
 import com.amg.digitalitzacio.vault.domain.ServiceType;
@@ -24,6 +28,7 @@ public class EngineOrchestrator implements EngineService {
     private final LandingRepository landingRepository;
     private final LandingVersionRepository landingVersionRepository;
     private final ContactLeadRepository contactLeadRepository;
+    private final LeadRepository leadRepository;
     private final CatalogServiceRepository catalogServiceRepository;
     private final TenantServiceRepository tenantServiceRepository;
     private final LandingTemplateRepository landingTemplateRepository;
@@ -293,7 +298,10 @@ public class EngineOrchestrator implements EngineService {
         var version = landingVersionRepository.findById(landing.getPublishedVersionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Published version not found"));
 
-        // Simple HTML rendering — will be replaced by proper SSR in future
+        // Increment view count
+        landing.setViewCount(landing.getViewCount() + 1);
+        landingRepository.save(landing);
+
         return buildHtmlPage(landing, version);
     }
 
@@ -311,6 +319,17 @@ public class EngineOrchestrator implements EngineService {
                "  <url><loc>https://" + (landing.getCustomDomain() != null ? landing.getCustomDomain() : slug + ".amg.cat") +
                "</loc></url>\n" +
                "</urlset>";
+    }
+
+    // --- Stats ---
+
+    @Override
+    public LandingStatsResponse getLandingStats(UUID tenantId, UUID landingId) {
+        var landing = landingRepository.findById(landingId)
+                .filter(l -> l.getTenantId().equals(tenantId))
+                .orElseThrow(() -> new ResourceNotFoundException("Landing not found: " + landingId));
+        long contacts = contactLeadRepository.countByLandingId(landingId);
+        return new LandingStatsResponse(landing.getViewCount(), contacts);
     }
 
     // --- Contact ---
@@ -334,7 +353,7 @@ public class EngineOrchestrator implements EngineService {
         metadata.put("consent", true);
         metadata.put("consentAt", Instant.now().toString());
 
-        var lead = ContactLead.builder()
+        var contactLead = ContactLead.builder()
                 .landingId(landing.getId())
                 .name(request.name())
                 .email(request.email())
@@ -342,7 +361,24 @@ public class EngineOrchestrator implements EngineService {
                 .message(request.message())
                 .metadata(toJson(metadata))
                 .build();
-        contactLeadRepository.save(lead);
+        contactLeadRepository.save(contactLead);
+
+        // Auto-crear lead al CRM si no existeix ja un amb el mateix email per aquest tenant
+        if (request.email() != null && !request.email().isBlank()) {
+            boolean exists = leadRepository.existsByTenantIdAndEmail(landing.getTenantId(), request.email());
+            if (!exists) {
+                Lead crmLead = new Lead();
+                crmLead.setTenantId(landing.getTenantId());
+                crmLead.setName(request.name() != null ? request.name() : request.email());
+                crmLead.setEmail(request.email());
+                crmLead.setPhone(request.phone());
+                crmLead.setSource(LeadSource.LANDING_FORM);
+                crmLead.setStage(PipelineStage.NEW);
+                crmLead.setNotes("Formulari de contacte: " + landing.getTitle()
+                        + (request.message() != null ? "\n\n" + request.message() : ""));
+                leadRepository.save(crmLead);
+            }
+        }
 
         return new ContactResponse("Missatge rebut correctament");
     }
@@ -375,6 +411,7 @@ public class EngineOrchestrator implements EngineService {
                 .versionNumber(1)
                 .status(VersionStatus.DRAFT)
                 .content(content)
+                .styles(request.styles() != null ? toJson(request.styles()) : null)
                 .build();
         landingVersionRepository.save(version);
 
@@ -561,10 +598,45 @@ public class EngineOrchestrator implements EngineService {
         var content = fromJson(version.getContent());
         var styles = fromJson(version.getStyles());
 
-        var fontFamily = styles != null ? styles.getOrDefault("fontFamily", "'Inter', sans-serif") : "'Inter', sans-serif";
+        // Suport font dual (fontHeading + fontBody) amb fallback a fontFamily
+        var fontHeading = styles != null
+                ? styles.getOrDefault("fontHeading", styles.getOrDefault("fontFamily", "Montserrat, sans-serif"))
+                : "Montserrat, sans-serif";
+        var fontBody = styles != null
+                ? styles.getOrDefault("fontBody", styles.getOrDefault("fontFamily", "'Open Sans', sans-serif"))
+                : "'Open Sans', sans-serif";
         var primaryColor = styles != null ? styles.getOrDefault("primaryColor", "#1a365d") : "#1a365d";
+        var accentColor = styles != null
+                ? styles.getOrDefault("accentColor", styles.getOrDefault("secondaryColor", "#f6ad55"))
+                : "#f6ad55";
         var bgColor = styles != null ? styles.getOrDefault("bgColor", "#ffffff") : "#ffffff";
         var textColor = styles != null ? styles.getOrDefault("textColor", "#1a202c") : "#1a202c";
+
+        // Google Fonts — construir link per les dues fonts
+        var headingName = fontHeading.toString().split(",")[0].trim().replace("'", "");
+        var bodyName = fontBody.toString().split(",")[0].trim().replace("'", "");
+        var fontsParam = headingName.equals(bodyName)
+                ? headingName.replace(" ", "+") + ":wght@400;600;700"
+                : headingName.replace(" ", "+") + ":wght@400;600;700|" + bodyName.replace(" ", "+") + ":wght@400;600";
+        var googleFontsLink = "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">" +
+                "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>" +
+                "<link href=\"https://fonts.googleapis.com/css2?family=" + fontsParam + "&display=swap\" rel=\"stylesheet\">";
+
+        var publicUrl = buildPublicUrl(landing);
+        var sv = new StyleVars(
+                primaryColor.toString(), accentColor.toString(),
+                bgColor.toString(), textColor.toString(),
+                fontHeading.toString(), fontBody.toString()
+        );
+
+        // Dades de contacte ràpid i analytics (opcionals)
+        var waRaw       = styles != null ? styles.getOrDefault("whatsappNumber", "") : "";
+        var phone       = styles != null ? styles.getOrDefault("phone", "")           : "";
+        var address     = styles != null ? styles.getOrDefault("address", "")         : "";
+        var bizType     = styles != null ? styles.getOrDefault("businessType", "LocalBusiness") : "LocalBusiness";
+        var gaId        = styles != null ? styles.getOrDefault("gaId", "")            : "";
+        var customCss   = styles != null ? styles.getOrDefault("customCss", "")       : "";
+        var waNumber    = waRaw.toString().replaceAll("[^0-9+]", "");
 
         var blocksHtml = new StringBuilder();
         var blocks = content != null ? content.get("blocks") : null;
@@ -573,18 +645,19 @@ public class EngineOrchestrator implements EngineService {
                 if (block instanceof Map) {
                     @SuppressWarnings("unchecked")
                     var blockMap = (Map<String, Object>) block;
-                    blocksHtml.append(renderBlock(blockMap));
+                    blocksHtml.append(renderBlock(blockMap, sv));
                 }
             }
         }
 
-        var publicUrl = buildPublicUrl(landing);
+        var schemaJson = buildSchemaOrg(landing.getTitle(), publicUrl, phone.toString(), address.toString(), bizType.toString());
+        var waButton   = buildWhatsAppButton(waNumber);
+        var gaScript   = buildGa4Script(gaId.toString());
 
         return "<!DOCTYPE html><html lang=\"ca\"><head>" +
                "<meta charset=\"UTF-8\">" +
                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
                (landing.getMetaDescription() != null ? "<meta name=\"description\" content=\"" + escapeHtml(landing.getMetaDescription()) + "\">" : "") +
-               // OG tags per SEO i xarxes socials
                "<meta property=\"og:title\" content=\"" + escapeHtml(landing.getTitle()) + "\">" +
                (landing.getMetaDescription() != null ? "<meta property=\"og:description\" content=\"" + escapeHtml(landing.getMetaDescription()) + "\">" : "") +
                (landing.getOgImageUrl() != null ? "<meta property=\"og:image\" content=\"" + escapeHtml(landing.getOgImageUrl()) + "\">" : "") +
@@ -592,30 +665,99 @@ public class EngineOrchestrator implements EngineService {
                "<meta property=\"og:type\" content=\"website\">" +
                "<link rel=\"canonical\" href=\"" + escapeHtml(publicUrl) + "\">" +
                "<title>" + escapeHtml(landing.getTitle()) + "</title>" +
+               googleFontsLink +
+               gaScript +
+               schemaJson +
                "<style>" +
-               "* { margin: 0; padding: 0; box-sizing: border-box; }" +
-               "body { font-family: " + fontFamily + "; background: " + bgColor + "; color: " + textColor + "; }" +
-               ".container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }" +
-               ".btn { display: inline-block; padding: 12px 24px; background: " + primaryColor + "; color: #fff; " +
-               "text-decoration: none; border-radius: 8px; font-weight: 600; }" +
-               // Footer legal automàtic
-               ".legal-footer { background: #f7fafc; border-top: 1px solid #e2e8f0; padding: 20px; text-align: center; font-size: 14px; color: #718096; }" +
-               ".legal-footer a { color: " + primaryColor + "; text-decoration: underline; }" +
+               buildGlobalCss(sv) +
+               buildWhatsAppCss() +
+               (customCss.toString().isBlank() ? "" : customCss.toString()) +
                "</style>" +
                "</head><body>" +
-               blocksHtml.toString() +
-               // RGPD/LSSI: footer automàtic amb enllaços legals
-               "<footer class=\"legal-footer\">" +
-               "<div class=\"container\">" +
+               blocksHtml +
+               "<footer class=\"legal-footer\"><div class=\"w\">" +
                "<p>&copy; " + java.time.Year.now() + " " + escapeHtml(landing.getTitle()) + ". Tots els drets reservats.</p>" +
                "<p><a href=\"/legal/avis-legal\">Avís legal</a> &middot; " +
                "<a href=\"/legal/politica-de-privacitat\">Política de privacitat</a> &middot; " +
                "<a href=\"/legal/politica-de-cookies\">Política de cookies</a></p>" +
                "</div></footer>" +
+               waButton +
+               buildScrollAnimScript() +
                "</body></html>";
     }
 
-    private String renderBlock(Map<String, Object> block) {
+    private record StyleVars(String primary, String accent, String bg, String text, String fontH, String fontB) {}
+
+    private String buildSchemaOrg(String name, String url, String phone, String address, String type) {
+        if (phone.isBlank() && address.isBlank()) return "";
+        var sb = new StringBuilder();
+        sb.append("<script type=\"application/ld+json\">{")
+          .append("\"@context\":\"https://schema.org\",")
+          .append("\"@type\":\"").append(escapeHtml(type)).append("\",")
+          .append("\"name\":\"").append(escapeHtml(name)).append("\",")
+          .append("\"url\":\"").append(escapeHtml(url)).append("\"");
+        if (!phone.isBlank())   sb.append(",\"telephone\":\"").append(escapeHtml(phone)).append("\"");
+        if (!address.isBlank()) sb.append(",\"address\":{\"@type\":\"PostalAddress\",\"streetAddress\":\"").append(escapeHtml(address)).append("\",\"addressCountry\":\"ES\"}");
+        sb.append("}</script>");
+        return sb.toString();
+    }
+
+    private String buildWhatsAppButton(String waNumber) {
+        if (waNumber.isBlank()) return "";
+        return "<a href=\"https://wa.me/" + escapeHtml(waNumber) + "\" target=\"_blank\" rel=\"noopener\" class=\"wa-btn\" aria-label=\"Contacta per WhatsApp\">" +
+               "<svg width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"#fff\">" +
+               "<path d=\"M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z\"/>" +
+               "<path d=\"M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.117 1.528 5.845L0 24l6.336-1.508A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.804 9.804 0 01-5.003-1.368l-.358-.213-3.722.885.916-3.618-.234-.372A9.807 9.807 0 012.182 12C2.182 6.562 6.562 2.182 12 2.182S21.818 6.562 21.818 12 17.438 21.818 12 21.818z\"/>" +
+               "</svg></a>";
+    }
+
+    private String buildGa4Script(String gaId) {
+        if (gaId == null || gaId.isBlank() || !gaId.startsWith("G-")) return "";
+        return "<script async src=\"https://www.googletagmanager.com/gtag/js?id=" + escapeHtml(gaId) + "\"></script>" +
+               "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}" +
+               "gtag('js',new Date());gtag('config','" + escapeHtml(gaId) + "');</script>";
+    }
+
+    private String buildWhatsAppCss() {
+        return ".wa-btn{position:fixed;bottom:24px;right:24px;z-index:999;background:#25d366;width:56px;height:56px;" +
+               "border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,.4);" +
+               "text-decoration:none;transition:transform .2s,box-shadow .2s}" +
+               ".wa-btn:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(37,211,102,.6)}" +
+               "@media(max-width:640px){.wa-btn{bottom:16px;right:16px;width:52px;height:52px}}";
+    }
+
+    private String buildGlobalCss(StyleVars s) {
+        return ":root{--p:" + s.primary() + ";--a:" + s.accent() + ";--bg:" + s.bg() + ";--tx:" + s.text() + "}" +
+               "*{margin:0;padding:0;box-sizing:border-box}" +
+               "body{font-family:" + s.fontB() + ";background:var(--bg);color:var(--tx);line-height:1.6}" +
+               "h1,h2,h3,h4{font-family:" + s.fontH() + ";line-height:1.2}" +
+               "img{max-width:100%;display:block}" +
+               ".w{max-width:1100px;margin:0 auto;padding:0 20px}" +
+               ".sec{padding:80px 0}" +
+               ".sec-title{font-size:clamp(1.5rem,3vw,2rem);font-weight:700;text-align:center;margin-bottom:48px;color:var(--tx)}" +
+               ".btn{display:inline-block;padding:14px 36px;background:var(--p);color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:1rem;transition:opacity .2s}" +
+               ".btn:hover{opacity:.85}" +
+               ".btn-inv{background:#fff;color:var(--p)}" +
+               ".card{background:#fff;border-radius:8px;padding:28px 24px;box-shadow:0 2px 12px rgba(0,0,0,.08)}" +
+               ".grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}" +
+               ".grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}" +
+               ".legal-footer{background:#f8fafc;border-top:1px solid #e2e8f0;padding:24px;text-align:center;font-size:14px;color:#718096}" +
+               ".legal-footer a{color:var(--p);text-decoration:underline}" +
+               "input,textarea{width:100%;padding:12px 16px;border:1px solid #d1d5db;border-radius:8px;font-family:" + s.fontB() + ";font-size:.95rem;margin-bottom:12px;outline:none}" +
+               "input:focus,textarea:focus{border-color:var(--p)}" +
+               "@media(max-width:640px){.sec{padding:56px 0}.sec-title{margin-bottom:32px}}" +
+               "[data-anim]{opacity:0;transform:translateY(32px);transition:opacity .6s ease,transform .6s ease}" +
+               "[data-anim].visible{opacity:1;transform:none}";
+    }
+
+    private String buildScrollAnimScript() {
+        return "<script>(function(){var io=new IntersectionObserver(function(e){" +
+               "e.forEach(function(x){if(x.isIntersecting){x.target.classList.add('visible');" +
+               "io.unobserve(x.target)}})},{threshold:0.12});" +
+               "document.querySelectorAll('[data-anim]').forEach(function(el){io.observe(el)})})();</script>";
+    }
+
+    private String renderBlock(Map<String, Object> block, StyleVars s) {
         var type = String.valueOf(block.getOrDefault("type", ""));
         var rawProps = block.getOrDefault("props", Map.of());
         Map<String, Object> props;
@@ -627,107 +769,345 @@ public class EngineOrchestrator implements EngineService {
             props = Map.of();
         }
         return switch (type) {
-            case "hero" -> renderHero(props);
-            case "text" -> renderText(props);
-            case "services" -> renderServices(props);
-            case "contact-form" -> renderContactForm(props);
-            case "faq" -> renderFaq(props);
-            case "cta" -> renderCta(props);
-            default -> "<div class=\"container\"><p>Unknown block: " + type + "</p></div>";
+            case "hero"          -> renderHero(props, s);
+            case "text"          -> renderText(props, s);
+            case "services"      -> renderServices(props, s);
+            case "contact-form"  -> renderContactForm(props, s);
+            case "faq"           -> renderFaq(props, s);
+            case "cta"           -> renderCta(props, s);
+            case "testimonials"  -> renderTestimonials(props, s);
+            case "footer"        -> renderFooterBlock(props, s);
+            case "opening-hours" -> renderOpeningHours(props, s);
+            case "pricing"       -> renderPricing(props, s);
+            case "team"          -> renderTeam(props, s);
+            case "video"         -> renderVideo(props, s);
+            case "reviews"       -> renderReviews(props, s);
+            default              -> "";
         };
     }
 
-    private String renderHero(Map<String, Object> props) {
-        var title = props.getOrDefault("title", "");
-        var subtitle = props.getOrDefault("subtitle", "");
-        var ctaText = props.getOrDefault("ctaText", "");
-        var ctaUrl = props.getOrDefault("ctaUrl", "#");
-        var bgImage = props.getOrDefault("bgImageUrl", "");
+    private String renderHero(Map<String, Object> props, StyleVars s) {
+        var title    = str(props, "title", "");
+        var subtitle = str(props, "subtitle", "");
+        var ctaText  = str(props, "ctaText", "");
+        var ctaUrl   = str(props, "ctaLink", str(props, "ctaUrl", "#contact"));
+        var bgImage  = str(props, "bgImage", str(props, "bgImageUrl", ""));
 
-        var bgStyle = !bgImage.toString().isBlank()
-                ? "style=\"background: url('" + escapeHtml(bgImage.toString()) + "') center/cover;\""
-                : "style=\"background: #1a365d; color: #fff;\"";
+        var bgCss = bgImage.isBlank()
+                ? "background:linear-gradient(135deg," + s.accent() + " 0%," + s.primary() + " 100%)"
+                : "background:linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)),url('" + escapeHtml(bgImage) + "') center/cover";
 
-        return "<section " + bgStyle + ">" +
-               "<div class=\"container\" style=\"padding: 100px 20px; text-align: center;\">" +
-               "<h1 style=\"font-size: 48px; margin-bottom: 16px;\">" + escapeHtml(title.toString()) + "</h1>" +
-               "<p style=\"font-size: 20px; margin-bottom: 32px;\">" + escapeHtml(subtitle.toString()) + "</p>" +
-               (!ctaText.toString().isBlank() ? "<a href=\"" + escapeHtml(ctaUrl.toString()) + "\" class=\"btn\">" + escapeHtml(ctaText.toString()) + "</a>" : "") +
+        return "<section style=\"" + bgCss + ";color:#fff\">" +
+               "<div class=\"w\" style=\"padding:100px 20px;text-align:center\">" +
+               "<h1 style=\"font-size:clamp(2rem,5vw,3.5rem);font-weight:800;margin-bottom:20px\">" + escapeHtml(title) + "</h1>" +
+               "<p style=\"font-size:clamp(1rem,2.5vw,1.25rem);opacity:.9;max-width:600px;margin:0 auto 36px\">" + escapeHtml(subtitle) + "</p>" +
+               (ctaText.isBlank() ? "" : "<a href=\"" + escapeHtml(ctaUrl) + "\" class=\"btn btn-inv\">" + escapeHtml(ctaText) + "</a>") +
                "</div></section>";
     }
 
-    private String renderText(Map<String, Object> props) {
-        var title = props.getOrDefault("title", "");
-        var body = props.getOrDefault("body", "");
-        return "<section class=\"container\" style=\"padding: 60px 20px;\">" +
-               "<h2>" + escapeHtml(title.toString()) + "</h2>" +
-               "<p>" + escapeHtml(body.toString()) + "</p>" +
-               "</section>";
+    private String renderText(Map<String, Object> props, StyleVars s) {
+        var title = str(props, "title", "");
+        var body  = str(props, "body", "");
+        return "<section class=\"sec\" style=\"background:" + s.bg() + "\">" +
+               "<div class=\"w\" style=\"max-width:760px\" data-anim>" +
+               "<h2 style=\"font-size:2rem;font-weight:700;margin-bottom:20px;color:" + s.text() + "\">" + escapeHtml(title) + "</h2>" +
+               "<div style=\"opacity:.8;line-height:1.8;font-size:1.05rem\">" + sanitizeBody(body) + "</div>" +
+               "</div></section>";
     }
 
     @SuppressWarnings("unchecked")
-    private String renderServices(Map<String, Object> props) {
-        var title = String.valueOf(props.getOrDefault("title", ""));
+    private String renderServices(Map<String, Object> props, StyleVars s) {
+        var title = str(props, "title", "Serveis");
         var items = props.getOrDefault("items", List.of());
-        var html = new StringBuilder();
-        html.append("<section class=\"container\" style=\"padding: 60px 20px;\">");
-        html.append("<h2 style=\"text-align: center; margin-bottom: 40px;\">").append(escapeHtml(title)).append("</h2>");
-        html.append("<div style=\"display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;\">");
-        if (items instanceof List<?> itemList) {
-            for (var item : itemList) {
-                if (item instanceof Map) {
-                    var itemMap = (Map<String, Object>) item;
-                    html.append("<div style=\"padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px;\">");
-                    html.append("<h3>").append(escapeHtml(String.valueOf(itemMap.getOrDefault("title", "")))).append("</h3>");
-                    html.append("<p>").append(escapeHtml(String.valueOf(itemMap.getOrDefault("description", "")))).append("</p>");
-                    html.append("</div>");
+        var html  = new StringBuilder();
+        html.append("<section class=\"sec\" style=\"background:").append(s.bg()).append("\">")
+            .append("<div class=\"w\"><h2 class=\"sec-title\">").append(escapeHtml(title)).append("</h2>")
+            .append("<div class=\"grid-3\">");
+        if (items instanceof List<?> list) {
+            for (var item : list) {
+                if (item instanceof Map m) {
+                    var im = (Map<String, Object>) m;
+                    var name = str(im, "title", str(im, "name", ""));
+                    var desc = str(im, "description", str(im, "desc", ""));
+                    html.append("<div class=\"card\" data-anim style=\"border-top:4px solid ").append(s.primary()).append("\">")
+                        .append("<h3 style=\"font-weight:700;margin-bottom:10px;color:").append(s.text()).append("\">").append(escapeHtml(name)).append("</h3>")
+                        .append("<p style=\"opacity:.65;font-size:.95rem;line-height:1.6\">").append(escapeHtml(desc)).append("</p>")
+                        .append("</div>");
                 }
             }
+        }
+        html.append("</div></div></section>");
+        return html.toString();
+    }
+
+    private String renderContactForm(Map<String, Object> props, StyleVars s) {
+        var title = str(props, "title", "Contacte");
+        return "<section class=\"sec\" id=\"contact\" style=\"background:" + s.accent() + "10\">" +
+               "<div class=\"w\" style=\"max-width:560px\">" +
+               "<h2 class=\"sec-title\" data-anim>" + escapeHtml(title) + "</h2>" +
+               "<form action=\"#\" method=\"POST\" onsubmit=\"return false\" style=\"background:#fff;padding:32px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08)\">" +
+               "<input name=\"nom\" placeholder=\"Nom i cognoms\" type=\"text\">" +
+               "<input name=\"email\" placeholder=\"Correu electrònic\" type=\"email\">" +
+               "<input name=\"telefon\" placeholder=\"Telèfon\" type=\"tel\">" +
+               "<textarea name=\"missatge\" placeholder=\"El vostre missatge\" rows=\"4\" style=\"resize:vertical\"></textarea>" +
+               "<button type=\"submit\" style=\"width:100%;padding:14px;background:" + s.primary() + ";color:#fff;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer\">Enviar missatge</button>" +
+               "</form></div></section>";
+    }
+
+    @SuppressWarnings("unchecked")
+    private String renderFaq(Map<String, Object> props, StyleVars s) {
+        var title = str(props, "title", "Preguntes freqüents");
+        var items = props.getOrDefault("items", List.of());
+        var html  = new StringBuilder();
+        html.append("<section class=\"sec\" style=\"background:").append(s.bg()).append("\">")
+            .append("<div class=\"w\" style=\"max-width:760px\"><h2 class=\"sec-title\">").append(escapeHtml(title)).append("</h2>")
+            .append("<div style=\"display:flex;flex-direction:column;gap:12px\">");
+        if (items instanceof List<?> list) {
+            for (var item : list) {
+                if (item instanceof Map m) {
+                    var im = (Map<String, Object>) m;
+                    var q  = str(im, "question", str(im, "q", ""));
+                    var a  = str(im, "answer",   str(im, "a", ""));
+                    html.append("<div class=\"card\" data-anim style=\"border-left:4px solid ").append(s.primary()).append("\">")
+                        .append("<h3 style=\"font-weight:700;margin-bottom:8px;font-size:1rem\">").append(escapeHtml(q)).append("</h3>")
+                        .append("<p style=\"opacity:.65;font-size:.95rem;line-height:1.6\">").append(escapeHtml(a)).append("</p>")
+                        .append("</div>");
+                }
+            }
+        }
+        html.append("</div></div></section>");
+        return html.toString();
+    }
+
+    private String renderCta(Map<String, Object> props, StyleVars s) {
+        var title   = str(props, "title", str(props, "text", ""));
+        var btnText = str(props, "ctaText", str(props, "buttonText", "Contacta"));
+        var btnUrl  = str(props, "ctaLink", str(props, "buttonUrl", "#contact"));
+        return "<section style=\"background:linear-gradient(135deg," + s.primary() + " 0%," + s.accent() + " 100%);text-align:center;padding:80px 20px\">" +
+               "<div class=\"w\" data-anim>" +
+               "<h2 style=\"font-size:clamp(1.5rem,4vw,2.5rem);font-weight:800;color:#fff;margin-bottom:28px\">" + escapeHtml(title) + "</h2>" +
+               "<a href=\"" + escapeHtml(btnUrl) + "\" class=\"btn btn-inv\">" + escapeHtml(btnText) + "</a>" +
+               "</div></section>";
+    }
+
+    @SuppressWarnings("unchecked")
+    private String renderTestimonials(Map<String, Object> props, StyleVars s) {
+        var title = str(props, "title", "Testimonis");
+        var items = props.getOrDefault("items", List.of());
+        var html  = new StringBuilder();
+        html.append("<section class=\"sec\" style=\"background:").append(s.accent()).append("10\">")
+            .append("<div class=\"w\"><h2 class=\"sec-title\">").append(escapeHtml(title)).append("</h2>")
+            .append("<div class=\"grid-3\">");
+        if (items instanceof List<?> list) {
+            for (var item : list) {
+                if (item instanceof Map m) {
+                    var im     = (Map<String, Object>) m;
+                    var name   = str(im, "name", "");
+                    var text   = str(im, "text", "");
+                    var rating = im.getOrDefault("rating", 5);
+                    var stars  = "★".repeat(rating instanceof Number n ? n.intValue() : 5);
+                    html.append("<div class=\"card\" data-anim>")
+                        .append("<div style=\"color:#f59e0b;margin-bottom:12px\">").append(stars).append("</div>")
+                        .append("<p style=\"opacity:.75;font-size:.95rem;line-height:1.7;font-style:italic;margin-bottom:16px\">&ldquo;").append(escapeHtml(text)).append("&rdquo;</p>")
+                        .append("<p style=\"font-weight:700;font-size:.9rem;color:").append(s.primary()).append("\">").append(escapeHtml(name)).append("</p>")
+                        .append("</div>");
+                }
+            }
+        }
+        html.append("</div></div></section>");
+        return html.toString();
+    }
+
+    private String renderFooterBlock(Map<String, Object> props, StyleVars s) {
+        var copyright = str(props, "copyright", "© " + java.time.Year.now());
+        return "<footer style=\"background:" + s.accent() + ";color:#fff;padding:40px 20px;text-align:center\">" +
+               "<p style=\"opacity:.7;font-size:.9rem\">" + escapeHtml(copyright) + "</p>" +
+               "</footer>";
+    }
+
+    @SuppressWarnings("unchecked")
+    private String renderOpeningHours(Map<String, Object> props, StyleVars s) {
+        var title = str(props, "title", "Horaris d'atenció");
+        var items = props.getOrDefault("hours", List.of());
+        var todayDow = java.time.LocalDate.now().getDayOfWeek().getValue(); // 1=Mon..7=Sun
+        // Map frontend day-index (0=Dilluns) to Java DayOfWeek (Mon=1..Sun=7)
+        var html = new StringBuilder();
+        html.append("<section class=\"sec\" style=\"background:").append(s.bg()).append("\">")
+            .append("<div class=\"w\" style=\"max-width:560px\">")
+            .append("<h2 class=\"sec-title\">").append(escapeHtml(title)).append("</h2>")
+            .append("<div style=\"border-radius:8px;overflow:hidden;border:1px solid ").append(s.accent()).append("20\">");
+        if (items instanceof List<?> list) {
+            int idx = 0;
+            for (var item : list) {
+                if (item instanceof Map m) {
+                    var im = (Map<String, Object>) m;
+                    var day = str(im, "day", "");
+                    var open = str(im, "open", "");
+                    var close = str(im, "close", "");
+                    var closed = Boolean.TRUE.equals(im.get("closed"));
+                    // Determine if today (idx 0=Mon..6=Sun maps to DayOfWeek 1..7)
+                    var isToday = (idx + 1) == todayDow || (idx == 6 && todayDow == 7);
+                    var bg = isToday ? s.primary() + "12" : (idx % 2 == 0 ? "#fff" : s.accent() + "05");
+                    var border = isToday ? "border-left:4px solid " + s.primary() + ";" : "border-left:4px solid transparent;";
+                    html.append("<div style=\"display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:").append(bg).append(";").append(border).append("\">")
+                        .append("<span style=\"font-weight:").append(isToday ? "700" : "400").append(";color:").append(isToday ? s.primary() : s.text()).append(";font-size:.95rem\">").append(escapeHtml(day)).append("</span>")
+                        .append("<span style=\"color:").append(closed ? "#94a3b8" : s.text()).append(";font-size:.9rem;font-weight:").append(isToday ? "600" : "400").append("\">")
+                        .append(closed ? "Tancat" : escapeHtml(open) + " – " + escapeHtml(close))
+                        .append("</span></div>");
+                    idx++;
+                }
+            }
+        }
+        html.append("</div></div></section>");
+        return html.toString();
+    }
+
+    private String str(Map<String, Object> m, String key, String def) {
+        var v = m.get(key);
+        return v != null ? v.toString() : def;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String renderPricing(Map<String, Object> props, StyleVars s) {
+        var title = str(props, "title", "Tarifes");
+        var items = props.getOrDefault("items", List.of());
+        var html  = new StringBuilder();
+        html.append("<section class=\"sec\" style=\"background:").append(s.bg()).append("\">")
+            .append("<div class=\"w\"><h2 class=\"sec-title\" data-anim>").append(escapeHtml(title)).append("</h2>")
+            .append("<div class=\"grid-3\">");
+        if (items instanceof List<?> list) {
+            for (var item : list) {
+                if (item instanceof Map m) {
+                    var im          = (Map<String, Object>) m;
+                    var name        = str(im, "name", "");
+                    var desc        = str(im, "description", str(im, "desc", ""));
+                    var price       = str(im, "price", "0");
+                    var period      = str(im, "period", "mes");
+                    var highlighted = Boolean.TRUE.equals(im.get("highlighted"));
+                    var features    = im.getOrDefault("features", List.of());
+                    var bg          = highlighted ? s.primary() : "#fff";
+                    var fg          = highlighted ? "#fff" : s.text();
+                    html.append("<div class=\"card\" data-anim style=\"background:").append(bg)
+                        .append(";color:").append(fg)
+                        .append(highlighted ? ";box-shadow:0 8px 32px " + s.primary() + "55" : "")
+                        .append("\">");
+                    if (highlighted) html.append("<p style=\"text-align:center;background:").append(s.accent()).append(";color:#fff;font-size:.75rem;font-weight:700;padding:4px 14px;border-radius:99px;margin-bottom:16px\">Recomanat</p>");
+                    html.append("<h3 style=\"font-weight:700;font-size:1.2rem;margin-bottom:8px\">").append(escapeHtml(name)).append("</h3>")
+                        .append("<p style=\"opacity:.65;font-size:.85rem;margin-bottom:16px\">").append(escapeHtml(desc)).append("</p>")
+                        .append("<p style=\"font-size:2.2rem;font-weight:800;margin-bottom:20px\">").append(escapeHtml(price))
+                        .append("<span style=\"font-size:.9rem;font-weight:400;opacity:.6\">€/").append(escapeHtml(period)).append("</span></p>")
+                        .append("<ul style=\"list-style:none;padding:0;display:flex;flex-direction:column;gap:8px\">");
+                    if (features instanceof List<?> flist) {
+                        for (var f : flist) {
+                            html.append("<li style=\"font-size:.9rem\">✓ ").append(escapeHtml(f.toString())).append("</li>");
+                        }
+                    }
+                    html.append("</ul></div>");
+                }
+            }
+        }
+        html.append("</div></div></section>");
+        return html.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private String renderTeam(Map<String, Object> props, StyleVars s) {
+        var title = str(props, "title", "L'equip");
+        var items = props.getOrDefault("items", List.of());
+        var html  = new StringBuilder();
+        html.append("<section class=\"sec\" style=\"background:").append(s.bg()).append("\">")
+            .append("<div class=\"w\"><h2 class=\"sec-title\" data-anim>").append(escapeHtml(title)).append("</h2>")
+            .append("<div class=\"grid-3\">");
+        if (items instanceof List<?> list) {
+            for (var item : list) {
+                if (item instanceof Map m) {
+                    var im    = (Map<String, Object>) m;
+                    var name  = str(im, "name", "");
+                    var role  = str(im, "role", "");
+                    var bio   = str(im, "bio", "");
+                    var photo = str(im, "photo", "");
+                    html.append("<div class=\"card\" data-anim style=\"text-align:center\">")
+                        .append(photo.isBlank()
+                            ? "<div style=\"width:72px;height:72px;border-radius:50%;background:" + s.primary() + "22;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem\">👤</div>"
+                            : "<img src=\"" + escapeHtml(photo) + "\" alt=\"\" style=\"width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 16px\">")
+                        .append("<h3 style=\"font-weight:700;margin-bottom:4px\">").append(escapeHtml(name)).append("</h3>")
+                        .append("<p style=\"color:").append(s.primary()).append(";font-size:.85rem;font-weight:600;margin-bottom:10px\">").append(escapeHtml(role)).append("</p>")
+                        .append("<p style=\"opacity:.6;font-size:.85rem;line-height:1.6\">").append(escapeHtml(bio)).append("</p>")
+                        .append("</div>");
+                }
+            }
+        }
+        html.append("</div></div></section>");
+        return html.toString();
+    }
+
+    private String renderVideo(Map<String, Object> props, StyleVars s) {
+        var title    = str(props, "title", "");
+        var videoUrl = str(props, "videoUrl", "");
+        var caption  = str(props, "caption", "");
+        if (videoUrl.isBlank()) return "";
+        var embedUrl = videoUrl.replace("watch?v=", "embed/").replace("youtu.be/", "www.youtube.com/embed/");
+        if (embedUrl.contains("&")) embedUrl = embedUrl.substring(0, embedUrl.indexOf("&"));
+        var html = new StringBuilder();
+        html.append("<section class=\"sec\" style=\"background:").append(s.bg()).append("\">")
+            .append("<div class=\"w\" style=\"max-width:900px\">")
+            .append(title.isBlank() ? "" : "<h2 class=\"sec-title\" data-anim>" + escapeHtml(title) + "</h2>")
+            .append("<div data-anim style=\"border-radius:8px;overflow:hidden;aspect-ratio:16/9\">")
+            .append("<iframe src=\"").append(escapeHtml(embedUrl))
+            .append("\" style=\"width:100%;height:100%;border:0\" allowfullscreen loading=\"lazy\"></iframe>")
+            .append("</div>")
+            .append(caption.isBlank() ? "" : "<p style=\"text-align:center;opacity:.6;margin-top:12px;font-size:.9rem\">" + escapeHtml(caption) + "</p>")
+            .append("</div></section>");
+        return html.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private String renderReviews(Map<String, Object> props, StyleVars s) {
+        var title   = str(props, "title", "Ressenyes");
+        var gmUrl   = str(props, "googleMapsUrl", "");
+        var items   = props.getOrDefault("items", List.of());
+        var html    = new StringBuilder();
+        html.append("<section class=\"sec\" style=\"background:").append(s.accent()).append("10\">")
+            .append("<div class=\"w\"><h2 class=\"sec-title\" data-anim>").append(escapeHtml(title)).append("</h2>")
+            .append("<div class=\"grid-3\">");
+        if (items instanceof List<?> list) {
+            for (var item : list) {
+                if (item instanceof Map m) {
+                    var im     = (Map<String, Object>) m;
+                    var name   = str(im, "name", "");
+                    var text   = str(im, "text", "");
+                    var date   = str(im, "date", "");
+                    var rating = im.getOrDefault("rating", 5);
+                    var stars  = "★".repeat(rating instanceof Number n ? Math.min(n.intValue(), 5) : 5);
+                    html.append("<div class=\"card\" data-anim>")
+                        .append("<div style=\"color:#f59e0b;margin-bottom:10px\">").append(stars).append("</div>")
+                        .append("<p style=\"opacity:.75;font-size:.9rem;line-height:1.7;font-style:italic;margin-bottom:16px\">&ldquo;").append(escapeHtml(text)).append("&rdquo;</p>")
+                        .append("<div style=\"display:flex;justify-content:space-between;align-items:center\">")
+                        .append("<span style=\"font-weight:700;font-size:.85rem;color:").append(s.primary()).append("\">").append(escapeHtml(name)).append("</span>")
+                        .append("<span style=\"opacity:.4;font-size:.75rem\">").append(escapeHtml(date)).append("</span>")
+                        .append("</div></div>");
+                }
+            }
+        }
+        html.append("</div>");
+        if (!gmUrl.isBlank()) {
+            html.append("<div style=\"text-align:center;margin-top:28px\">")
+                .append("<a href=\"").append(escapeHtml(gmUrl)).append("\" target=\"_blank\" rel=\"noopener noreferrer\"")
+                .append(" style=\"display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid ").append(s.primary())
+                .append(";color:").append(s.primary()).append(";border-radius:99px;padding:10px 24px;font-weight:600;font-size:.9rem;text-decoration:none\">")
+                .append("G Veure totes les ressenyes a Google</a>")
+                .append("</div>");
         }
         html.append("</div></section>");
         return html.toString();
     }
 
-    private String renderContactForm(Map<String, Object> props) {
-        var title = props.getOrDefault("title", "");
-        return "<section class=\"container\" style=\"padding: 60px 20px;\">" +
-               "<h2 style=\"text-align: center; margin-bottom: 24px;\">" + escapeHtml(title.toString()) + "</h2>" +
-               "<div style=\"max-width: 500px; margin: 0 auto;\">" +
-               "<p style=\"text-align: center; color: #718096;\">Formulari de contacte disponible al frontend</p>" +
-               "</div></section>";
-    }
-
-    @SuppressWarnings("unchecked")
-    private String renderFaq(Map<String, Object> props) {
-        var title = String.valueOf(props.getOrDefault("title", ""));
-        var items = props.getOrDefault("items", List.of());
-        var html = new StringBuilder();
-        html.append("<section class=\"container\" style=\"padding: 60px 20px;\">");
-        html.append("<h2 style=\"text-align: center; margin-bottom: 40px;\">").append(escapeHtml(title)).append("</h2>");
-        if (items instanceof List<?> itemList) {
-            for (var item : itemList) {
-                if (item instanceof Map) {
-                    var itemMap = (Map<String, Object>) item;
-                    html.append("<div style=\"margin-bottom: 16px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px;\">");
-                    html.append("<h3>").append(escapeHtml(String.valueOf(itemMap.getOrDefault("question", "")))).append("</h3>");
-                    html.append("<p>").append(escapeHtml(String.valueOf(itemMap.getOrDefault("answer", "")))).append("</p>");
-                    html.append("</div>");
-                }
-            }
-        }
-        html.append("</div></section>");
-        return html.toString();
-    }
-
-    private String renderCta(Map<String, Object> props) {
-        var text = props.getOrDefault("text", "");
-        var buttonText = props.getOrDefault("buttonText", "");
-        var buttonUrl = props.getOrDefault("buttonUrl", "#");
-        return "<section style=\"background: #1a365d; color: #fff; text-align: center; padding: 60px 20px;\">" +
-               "<div class=\"container\">" +
-               "<h2>" + escapeHtml(text.toString()) + "</h2>" +
-               (!buttonText.toString().isBlank() ? "<a href=\"" + escapeHtml(buttonUrl.toString()) + "\" class=\"btn\" style=\"margin-top: 24px;\">" + escapeHtml(buttonText.toString()) + "</a>" : "") +
-               "</div></section>";
+    private String sanitizeBody(String html) {
+        if (html == null || html.isBlank()) return "";
+        // Permet tags de format bàsic; elimina scripts
+        return html.replaceAll("(?i)<script[^>]*>.*?</script>", "")
+                   .replaceAll("(?i)<iframe[^>]*>.*?</iframe>", "")
+                   .replaceAll("(?i) on\\w+=\"[^\"]*\"", "");
     }
 
     private String escapeHtml(String input) {

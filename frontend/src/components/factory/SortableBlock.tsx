@@ -12,9 +12,10 @@ interface Props {
   isSelected: boolean;
   onSelect: (id: string) => void;
   onRemove: (id: string) => void;
+  onUpdateProps: (blockId: string, props: Partial<Record<string, unknown>>) => void;
 }
 
-export const SortableBlock: FC<Props> = ({ block, styles, isSelected, onSelect, onRemove }) => {
+export const SortableBlock: FC<Props> = ({ block, styles, isSelected, onSelect, onRemove, onUpdateProps }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
 
   const style = {
@@ -42,6 +43,7 @@ export const SortableBlock: FC<Props> = ({ block, styles, isSelected, onSelect, 
         isSelected={isSelected}
         onSelect={onSelect}
         onRemove={onRemove}
+        onUpdateProps={(props) => onUpdateProps(block.id, props)}
       />
     </div>
   );

@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.engine.api;
 
 import com.amg.digitalitzacio.engine.api.dto.*;
 import com.amg.digitalitzacio.engine.application.EngineService;
+import com.amg.digitalitzacio.engine.application.LandingGeneratorService;
 import com.amg.digitalitzacio.engine.application.TemplateService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class EngineController {
 
     private final EngineService engineService;
     private final TemplateService templateService;
+    private final LandingGeneratorService landingGeneratorService;
 
     // --- Landings ---
 
@@ -147,6 +149,20 @@ public class EngineController {
     @ResponseStatus(HttpStatus.CREATED)
     public ContactResponse submitContact(@PathVariable String slug, @RequestBody ContactRequest request) {
         return engineService.submitContact(slug, request);
+    }
+
+    @PostMapping("/generate-block")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CLIENT')")
+    public GenerateBlockResponse generateBlock(@RequestBody GenerateBlockRequest request) {
+        return landingGeneratorService.generate(request);
+    }
+
+    @GetMapping("/tenants/{tenantId}/landings/{landingId}/stats")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CLIENT')")
+    public LandingStatsResponse getLandingStats(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID landingId) {
+        return engineService.getLandingStats(tenantId, landingId);
     }
 
     // --- Templates ---

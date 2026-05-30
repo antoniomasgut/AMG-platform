@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { getLeads, getLeadStats, changeStage, sendOutreach, setWhatsapp, type Lead, type OutreachRequest } from '@/services/leads';
 import { createDemoSession, updateDemoSession } from '@/services/demo';
+import { SECTOR_CONTEXTS, getSectorContext } from '@/services/sector-contexts';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
@@ -65,6 +66,9 @@ Tel: 654 048 164`,
   },
 };
 
+const DEFAULT_DEMO_CONTEXT = (name: string) =>
+  `Ets l'assistent virtual de ${name}. Respon preguntes sobre els nostres serveis, preus i com podem ajudar el negoci a créixer digitalment.`;
+
 function DemoModal({
   lead,
   onClose,
@@ -75,12 +79,26 @@ function DemoModal({
   onCreated: (url: string, token: string) => void;
 }) {
   const [companyName, setCompanyName] = useState(lead.name);
-  const [agentContext, setAgentContext] = useState(
-    `Ets l'assistent virtual de ${lead.name}. Respon preguntes sobre els nostres serveis, preus i com podem ajudar el negoci a créixer digitalment.`
-  );
+  const [sector, setSector] = useState('');
+  const [contextEdited, setContextEdited] = useState(false);
+  const [agentContext, setAgentContext] = useState(DEFAULT_DEMO_CONTEXT(lead.name));
   const [editToken, setEditToken] = useState('');
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleSectorChange = (s: string) => {
+    setSector(s);
+    if (!contextEdited) {
+      const ctx = getSectorContext(s);
+      setAgentContext(ctx ? ctx.demoContext.replace('{NOM_NEGOCI}', companyName) : DEFAULT_DEMO_CONTEXT(companyName));
+    }
+  };
+
+  const restoreTemplate = () => {
+    const ctx = getSectorContext(sector);
+    setAgentContext(ctx ? ctx.demoContext.replace('{NOM_NEGOCI}', companyName) : DEFAULT_DEMO_CONTEXT(companyName));
+    setContextEdited(false);
+  };
 
   const create = async () => {
     if (!lead.email) return;
@@ -109,8 +127,8 @@ function DemoModal({
     <>
       <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-bg-0 border border-border-base w-full max-w-lg shadow-2xl">
-          <div className="flex items-center justify-between p-5 border-b border-border-base">
+        <div className="bg-bg-0 border border-border-base w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+          <div className="flex items-center justify-between p-5 border-b border-border-base shrink-0">
             <div>
               <div className="f-display font-bold text-base">Crear demo inbox</div>
               <div className="f-mono text-[10px] text-ink-3 mt-0.5">{lead.name} · {lead.email}</div>
@@ -120,25 +138,53 @@ function DemoModal({
             </button>
           </div>
 
-          <div className="p-5 space-y-4">
-            <div>
-              <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">Nom de l&apos;empresa</label>
-              <input
-                type="text"
-                value={companyName}
-                onChange={e => setCompanyName(e.target.value)}
-                className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
-              />
+          <div className="p-5 space-y-4 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">Nom de l&apos;empresa</label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={e => setCompanyName(e.target.value)}
+                  className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+                />
+              </div>
+              <div>
+                <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">Sector</label>
+                <select
+                  value={sector}
+                  onChange={e => handleSectorChange(e.target.value)}
+                  className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+                >
+                  <option value="">— Selecciona sector —</option>
+                  {Object.entries(SECTOR_CONTEXTS).map(([key, ctx]) => (
+                    <option key={key} value={key}>{ctx.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
+
             <div>
-              <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">Context de l&apos;agent IA</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider">Context de l&apos;agent IA</label>
+                <div className="flex items-center gap-2">
+                  {contextEdited && sector && (
+                    <button onClick={restoreTemplate} className="f-mono text-[9px] text-accent-light hover:underline">
+                      Restaurar plantilla
+                    </button>
+                  )}
+                  {contextEdited && <span className="f-mono text-[9px] text-warning">· personalitzat</span>}
+                </div>
+              </div>
               <textarea
                 value={agentContext}
-                onChange={e => setAgentContext(e.target.value)}
-                rows={4}
+                onChange={e => { setAgentContext(e.target.value); setContextEdited(true); }}
+                rows={6}
                 className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-none"
               />
-              <div className="f-mono text-[9px] text-ink-3 mt-1">Descriu el negoci i com ha de respondre l&apos;agent.</div>
+              <div className="f-mono text-[9px] text-ink-3 mt-1">
+                {sector ? 'Plantilla carregada del sector. Pots personalitzar-la.' : 'Selecciona un sector per carregar una plantilla automàticament.'}
+              </div>
             </div>
 
             {url && (
@@ -155,7 +201,7 @@ function DemoModal({
             )}
           </div>
 
-          <div className="p-4 border-t border-border-base flex items-center justify-end gap-2">
+          <div className="p-4 border-t border-border-base flex items-center justify-end gap-2 shrink-0">
             <AMGButton variant="ghost" onClick={onClose}>Tancar</AMGButton>
             {url ? (
               <AMGButton loading={loading} onClick={save}>Desar canvis</AMGButton>

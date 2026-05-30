@@ -34,6 +34,15 @@ public class TenantAIConfig {
     @Column(name = "budget_alert_threshold")
     private Integer budgetAlertThreshold = 80;
 
+    @Column(name = "sender_email", length = 150)
+    private String senderEmail;
+
+    @Column(name = "sender_name", length = 100)
+    private String senderName;
+
+    @Column(name = "reply_to_email", length = 150)
+    private String replyToEmail;
+
     public static TenantAIConfig defaultFor(UUID tenantId) {
         var c = new TenantAIConfig();
         c.tenantId = tenantId;

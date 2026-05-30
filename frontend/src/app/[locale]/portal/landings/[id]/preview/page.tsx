@@ -35,16 +35,17 @@ export default function PreviewLandingPage() {
   const draftVersion = landing?.versions.find((v) => v.status === 'DRAFT');
   const version = publishedVersion || draftVersion;
   const styles = version?.styles || {
-    fontFamily: 'Inter, sans-serif',
+    fontHeading: 'Montserrat, sans-serif',
+    fontBody: 'Inter, sans-serif',
     primaryColor: '#FF6B00',
-    secondaryColor: '#1e293b',
+    accentColor: '#1e293b',
     bgColor: '#ffffff',
     textColor: '#1e293b',
     borderRadius: '8px',
   };
 
   return (
-    <div className="min-h-dvh bg-white" style={{ fontFamily: styles.fontFamily }}>
+    <div className="min-h-dvh bg-white" style={{ fontFamily: styles.fontBody ?? styles.fontHeading }}>
       {version?.content.blocks.map((block) => (
         <BlockRenderer key={block.id} block={block} styles={styles} preview />
       ))}

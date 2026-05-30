@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface ContactLeadRepository extends JpaRepository<ContactLead, UUID> {
     Page<ContactLead> findByLandingId(UUID landingId, Pageable pageable);
     List<ContactLead> findByLandingId(UUID landingId);
+    long countByLandingId(UUID landingId);
 }

@@ -9,5 +9,6 @@ public record CreateLandingFromTemplateRequest(
     String metaDescription,
     UUID serviceId,
     UUID templateId,
-    Map<String, Map<String, Object>> filledSections
+    Map<String, Map<String, Object>> filledSections,
+    Map<String, Object> styles
 ) {}

@@ -69,6 +69,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/agents/whatsapp-meta/webhook").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/agents/whatsapp-meta/webhook").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/agents/email/webhook/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/agents/email/inbound").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/whatsapp/webhook").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/whatsapp/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/ops/health").permitAll()

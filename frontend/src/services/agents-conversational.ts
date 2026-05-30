@@ -71,12 +71,24 @@ export interface TenantAIConfig {
   preferredModel: string;
   maxTokens: number;
   temperature: number;
+  reasoningModel?: string | null;
+  monthlyTokenBudget?: number | null;
+  budgetAlertThreshold?: number;
+  senderEmail?: string | null;
+  senderName?: string | null;
+  replyToEmail?: string | null;
 }
 
 export interface AIConfigRequest {
   preferredModel?: string;
   maxTokens?: number;
   temperature?: number;
+  reasoningModel?: string;
+  monthlyTokenBudget?: number;
+  budgetAlertThreshold?: number;
+  senderEmail?: string;
+  senderName?: string;
+  replyToEmail?: string;
 }
 
 export interface AIModelTestRequest {

@@ -20,6 +20,7 @@ function setTokens(access: string, refresh: string) {
 function clearTokens() {
   sessionStorage.removeItem('access_token');
   sessionStorage.removeItem('refresh_token');
+  sessionStorage.removeItem('user');
 }
 
 let isRefreshing = false;

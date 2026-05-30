@@ -32,6 +32,8 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
 
     List<Lead> findByTenantId(UUID tenantId);
 
+    boolean existsByTenantIdAndEmail(UUID tenantId, String email);
+
     // Counts
     long countByTenantId(UUID tenantId);
 

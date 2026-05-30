@@ -24,18 +24,22 @@ public class TemplateSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (templateRepository.count() > 0) {
-            log.debug("Templates already seeded (count={}), skipping", templateRepository.count());
-            return;
-        }
+        seedIfAbsent("restaurant",    this::seedRestaurant);
+        seedIfAbsent("profesional",   this::seedProfesional);
+        seedIfAbsent("comercio",      this::seedComercio);
+        seedIfAbsent("evento",        this::seedEvento);
+        seedIfAbsent("basica",        this::seedBasica);
+        seedIfAbsent("serveis",       this::seedServeis);
+        seedIfAbsent("salut",         this::seedSalut);
+        seedIfAbsent("taller",        this::seedTaller);
+        seedIfAbsent("immobiliaria",  this::seedImmobiliaria);
+    }
 
-        log.info("Seeding 5 landing templates...");
-        seedRestaurant();
-        seedProfesional();
-        seedComercio();
-        seedEvento();
-        seedBasica();
-        log.info("Templates seeded successfully");
+    private void seedIfAbsent(String slug, Runnable seeder) {
+        if (templateRepository.findBySlug(slug).isEmpty()) {
+            log.info("Seeding template: {}", slug);
+            seeder.run();
+        }
     }
 
     private void addSections(LandingTemplate template, List<SectionDef> sections) {
@@ -78,6 +82,29 @@ public class TemplateSeeder implements CommandLineRunner {
 
     private record SectionDef(String blockType, Map<String, Object> propsSchema, Map<String, Object> defaultProps) {}
 
+    private List<Map<String, Object>> hours(String monFri, String sat, String sun) {
+        String[] mfParts = monFri.split("-");
+        String[] satParts = sat.isEmpty() ? new String[]{} : sat.split("-");
+        String[] sunParts = sun.isEmpty() ? new String[]{} : sun.split("-");
+        List<String[]> days = List.of(
+                new String[]{"Dilluns", mfParts[0], mfParts[1]},
+                new String[]{"Dimarts", mfParts[0], mfParts[1]},
+                new String[]{"Dimecres", mfParts[0], mfParts[1]},
+                new String[]{"Dijous", mfParts[0], mfParts[1]},
+                new String[]{"Divendres", mfParts[0], mfParts[1]},
+                new String[]{"Dissabte", sat.isEmpty() ? "" : satParts[0], sat.isEmpty() ? "" : satParts[1]},
+                new String[]{"Diumenge", sun.isEmpty() ? "" : sunParts[0], sun.isEmpty() ? "" : sunParts[1]}
+        );
+        return days.stream().map(d -> {
+            var m = new LinkedHashMap<String, Object>();
+            m.put("day", d[0]);
+            m.put("open", d[1]);
+            m.put("close", d[2]);
+            m.put("closed", d[1].isEmpty());
+            return (Map<String, Object>) m;
+        }).toList();
+    }
+
     // --- Restaurant ---
 
     private void seedRestaurant() {
@@ -95,6 +122,8 @@ public class TemplateSeeder implements CommandLineRunner {
                         props("title", "Galeria", "images", List.of())),
                 new SectionDef("TESTIMONIALS", schema("title", "text", "items", "array"),
                         props("title", "Què diuen els clients", "items", List.of(Map.of("name", "Client", "text", "Testimoni", "rating", 5)))),
+                new SectionDef("OPENING_HOURS", schema("title", "text", "hours", "array"),
+                        props("title", "Horaris", "hours", hours("13:00-16:00", "13:00-16:00", "13:00-16:00"))),
                 new SectionDef("CONTACT_FORM", schema("title", "text", "email", "text", "phone", "text"),
                         props("title", "Contacta amb nosaltres", "email", "", "phone", "")),
                 new SectionDef("FOOTER", schema("copyright", "text"),
@@ -137,6 +166,8 @@ public class TemplateSeeder implements CommandLineRunner {
                         props("title", "Galeria", "images", List.of())),
                 new SectionDef("CONTACT_FORM", schema("title", "text", "email", "text", "phone", "text"),
                         props("title", "Contacta amb nosaltres", "email", "", "phone", "")),
+                new SectionDef("OPENING_HOURS", schema("title", "text", "hours", "array"),
+                        props("title", "Horaris d'atenció", "hours", hours("09:30-20:30", "10:00-20:00", ""))),
                 new SectionDef("MAP", schema("address", "text", "lat", "text", "lng", "text"),
                         props("address", "Carrer, Ciutat", "lat", 39.5696, "lng", 2.6502)),
                 new SectionDef("FOOTER", schema("copyright", "text"),
@@ -175,6 +206,132 @@ public class TemplateSeeder implements CommandLineRunner {
                         props("title", "Sobre nosaltres", "body", "<p>Text de contingut</p>")),
                 new SectionDef("CONTACT_FORM", schema("title", "text", "email", "text", "phone", "text"),
                         props("title", "Contacta amb nosaltres", "email", "", "phone", ""))
+        ));
+    }
+
+    // --- Serveis artesans (pintor, electricista, fontaner, jardiner, neteja) ---
+
+    private void seedServeis() {
+        var t = templateRepository.save(LandingTemplate.builder()
+                .name("Serveis").slug("serveis")
+                .description("Artesans i serveis a domicili").build());
+        addSections(t, List.of(
+                new SectionDef("HERO", schema("title", "text", "subtitle", "text", "ctaText", "text", "ctaLink", "url", "bgImage", "image"),
+                        props("title", "Professionals de confiança", "subtitle", "Servei ràpid i de qualitat a casa teva", "ctaText", "Demana pressupost", "ctaLink", "#contact", "bgImage", "")),
+                new SectionDef("SERVICES", schema("title", "text", "items", "array"),
+                        props("title", "Els nostres serveis", "items", List.of(
+                                Map.of("title", "Servei 1", "description", "Descripció del servei"),
+                                Map.of("title", "Servei 2", "description", "Descripció del servei"),
+                                Map.of("title", "Servei 3", "description", "Descripció del servei")
+                        ))),
+                new SectionDef("TEXT", schema("title", "text", "body", "richtext"),
+                        props("title", "Per què elegirnos?", "body", "<p>Anys d'experiència al sector. Garantia en tots els treballs. Pressupost sense compromís.</p>")),
+                new SectionDef("TESTIMONIALS", schema("title", "text", "items", "array"),
+                        props("title", "Què diuen els clients", "items", List.of(Map.of("name", "Client", "text", "Molt content amb el servei, ràpid i professional.", "rating", 5)))),
+                new SectionDef("FAQ", schema("title", "text", "items", "array"),
+                        props("title", "Preguntes freqüents", "items", List.of(
+                                Map.of("question", "En quina zona treballeu?", "answer", "Cobrim tota la zona i voltants. Contacta per confirmar disponibilitat."),
+                                Map.of("question", "Donau pressupost gratuït?", "answer", "Sí, el pressupost és gratuït i sense compromís.")
+                        ))),
+                new SectionDef("CONTACT_FORM", schema("title", "text", "email", "text", "phone", "text"),
+                        props("title", "Demana pressupost gratuït", "email", "", "phone", "")),
+                new SectionDef("FOOTER", schema("copyright", "text"),
+                        props("copyright", "© 2026 Tots els drets reservats"))
+        ));
+    }
+
+    // --- Salut i bellesa (fisio, psicòleg, nutricionista, perruqueria, estètica) --- (NEW)
+
+    private void seedSalut() {
+        var t = templateRepository.save(LandingTemplate.builder()
+                .name("Salut i Bellesa").slug("salut")
+                .description("Professionals de la salut i bellesa").build());
+        addSections(t, List.of(
+                new SectionDef("HERO", schema("title", "text", "subtitle", "text", "ctaText", "text", "ctaLink", "url", "bgImage", "image"),
+                        props("title", "Cuida el teu benestar", "subtitle", "Professionals especialitzats al teu servei", "ctaText", "Reserva cita", "ctaLink", "#contact", "bgImage", "")),
+                new SectionDef("SERVICES", schema("title", "text", "items", "array"),
+                        props("title", "Els nostres tractaments", "items", List.of(
+                                Map.of("title", "Tractament 1", "description", "Descripció del tractament"),
+                                Map.of("title", "Tractament 2", "description", "Descripció del tractament"),
+                                Map.of("title", "Tractament 3", "description", "Descripció del tractament")
+                        ))),
+                new SectionDef("TEXT", schema("title", "text", "body", "richtext"),
+                        props("title", "La nostra filosofia", "body", "<p>Apostem per un enfocament personalitzat i holístic. Cada persona és única i mereix una atenció adaptada a les seves necessitats.</p>")),
+                new SectionDef("TESTIMONIALS", schema("title", "text", "items", "array"),
+                        props("title", "Experiències dels nostres clients", "items", List.of(Map.of("name", "Client", "text", "Una atenció excel·lent. Em sento molt millor.", "rating", 5)))),
+                new SectionDef("FAQ", schema("title", "text", "items", "array"),
+                        props("title", "Preguntes freqüents", "items", List.of(
+                                Map.of("question", "Cal demanar cita prèvia?", "answer", "Sí, recomanem demanar cita per garantir l'atenció personalitzada."),
+                                Map.of("question", "Acceptau assegurances?", "answer", "Poseu-vos en contacte amb nosaltres per consultar la compatibilitat amb la vostra assegurança.")
+                        ))),
+                new SectionDef("OPENING_HOURS", schema("title", "text", "hours", "array"),
+                        props("title", "Horaris d'atenció", "hours", hours("09:00-19:00", "10:00-14:00", ""))),
+                new SectionDef("CONTACT_FORM", schema("title", "text", "email", "text", "phone", "text"),
+                        props("title", "Reserva la teva cita", "email", "", "phone", "")),
+                new SectionDef("FOOTER", schema("copyright", "text"),
+                        props("copyright", "© 2026 Tots els drets reservats"))
+        ));
+    }
+
+    // --- Taller mecànic ---
+
+    private void seedTaller() {
+        var t = templateRepository.save(LandingTemplate.builder()
+                .name("Taller Mecànic").slug("taller")
+                .description("Tallers i serveis d'automoció").build());
+        addSections(t, List.of(
+                new SectionDef("HERO", schema("title", "text", "subtitle", "text", "ctaText", "text", "ctaLink", "url", "bgImage", "image"),
+                        props("title", "El teu taller de confiança", "subtitle", "Reparació i manteniment professional del teu vehicle", "ctaText", "Demana cita", "ctaLink", "#contact", "bgImage", "")),
+                new SectionDef("SERVICES", schema("title", "text", "items", "array"),
+                        props("title", "Els nostres serveis", "items", List.of(
+                                Map.of("title", "Revisió ITV", "description", "Preparació i revisió completa per a la ITV"),
+                                Map.of("title", "Canvi d'oli i filtres", "description", "Manteniment preventiu del motor"),
+                                Map.of("title", "Pneumàtics", "description", "Venda, muntatge i equilibrat de pneumàtics"),
+                                Map.of("title", "Frenada i suspensió", "description", "Revisió i reparació del sistema de frenada")
+                        ))),
+                new SectionDef("TEXT", schema("title", "text", "body", "richtext"),
+                        props("title", "Per què confiar en nosaltres?", "body", "<p>Taller autoritzat amb més de X anys d'experiència. Mecànics certificats. Pressupost transparent sense sorpreses.</p>")),
+                new SectionDef("TESTIMONIALS", schema("title", "text", "items", "array"),
+                        props("title", "Clients satisfets", "items", List.of(Map.of("name", "Client", "text", "Molt professionals i honests amb el pressupost. Hi tornaré.", "rating", 5)))),
+                new SectionDef("OPENING_HOURS", schema("title", "text", "hours", "array"),
+                        props("title", "Horaris del taller", "hours", hours("08:00-18:00", "09:00-13:00", ""))),
+                new SectionDef("CONTACT_FORM", schema("title", "text", "email", "text", "phone", "text"),
+                        props("title", "Demana cita o consulta", "email", "", "phone", "")),
+                new SectionDef("MAP", schema("address", "text", "lat", "text", "lng", "text"),
+                        props("address", "Carrer, Ciutat", "lat", 39.5696, "lng", 2.6502)),
+                new SectionDef("FOOTER", schema("copyright", "text"),
+                        props("copyright", "© 2026 Tots els drets reservats"))
+        ));
+    }
+
+    // --- Immobiliària ---
+
+    private void seedImmobiliaria() {
+        var t = templateRepository.save(LandingTemplate.builder()
+                .name("Immobiliària").slug("immobiliaria")
+                .description("Agències immobiliàries i gestors de propietats").build());
+        addSections(t, List.of(
+                new SectionDef("HERO", schema("title", "text", "subtitle", "text", "ctaText", "text", "ctaLink", "url", "bgImage", "image"),
+                        props("title", "Troba la teva propietat ideal", "subtitle", "Experts en el mercat immobiliari local", "ctaText", "Consulta gratuïta", "ctaLink", "#contact", "bgImage", "")),
+                new SectionDef("SERVICES", schema("title", "text", "items", "array"),
+                        props("title", "Els nostres serveis", "items", List.of(
+                                Map.of("title", "Compra", "description", "T'acompanyem en tot el procés de compra de la teva nova llar"),
+                                Map.of("title", "Venda", "description", "Valorem i comercialitzem la teva propietat al millor preu"),
+                                Map.of("title", "Lloguer", "description", "Gestió integral de lloguers per a propietaris i llogataris")
+                        ))),
+                new SectionDef("TEXT", schema("title", "text", "body", "richtext"),
+                        props("title", "La nostra experiència al teu servei", "body", "<p>Anys d'experiència al mercat local. Coneixem cada racó de la zona. La nostra missió és trobar la propietat perfecta per a cada client.</p>")),
+                new SectionDef("TESTIMONIALS", schema("title", "text", "items", "array"),
+                        props("title", "Clients que confien en nosaltres", "items", List.of(Map.of("name", "Client", "text", "Ens va ajudar a trobar la casa dels nostres somnis. Molt professional.", "rating", 5)))),
+                new SectionDef("FAQ", schema("title", "text", "items", "array"),
+                        props("title", "Preguntes freqüents", "items", List.of(
+                                Map.of("question", "Quina és la vostra comissió?", "answer", "Poseu-vos en contacte amb nosaltres per conèixer les nostres tarifes, adaptades a cada operació."),
+                                Map.of("question", "Quant tarda en vendre's una propietat?", "answer", "Depèn del tipus de propietat i el mercat actual. Us informarem en la consulta inicial.")
+                        ))),
+                new SectionDef("CONTACT_FORM", schema("title", "text", "email", "text", "phone", "text"),
+                        props("title", "Consulta gratuïta sense compromís", "email", "", "phone", "")),
+                new SectionDef("FOOTER", schema("copyright", "text"),
+                        props("copyright", "© 2026 Tots els drets reservats"))
         ));
     }
 }
