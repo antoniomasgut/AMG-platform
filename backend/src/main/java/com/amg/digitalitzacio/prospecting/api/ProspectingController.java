@@ -119,4 +119,26 @@ public class ProspectingController {
     public Map<String, Integer> exportContactable(@PathVariable UUID id) {
         return Map.of("exported", service.exportContactableProspects(id));
     }
+
+    @PostMapping("/campaigns/{id}/score")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public List<ProspectResponse> scoreProspects(@PathVariable UUID id) {
+        return service.scoreProspects(id);
+    }
+
+    @PostMapping("/campaigns/{id}/qualify-top")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, Integer> qualifyTop(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "10") int topN) {
+        return Map.of("qualified", service.qualifyTop(id, topN));
+    }
+
+    @PostMapping("/campaigns/{id}/qualify-min-score")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, Integer> qualifyByMinScore(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "5") int minScore) {
+        return Map.of("qualified", service.qualifyByMinScore(id, minScore));
+    }
 }

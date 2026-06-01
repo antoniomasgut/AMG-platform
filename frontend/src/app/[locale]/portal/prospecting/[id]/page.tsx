@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import {
   getCampaign, getCampaignProspects, exportProspect, enrichAllProspects, enrichProspect,
-  exportContactableProspects,
+  exportContactableProspects, scoreProspects, qualifyByMinScore,
   type Campaign, type Prospect,
 } from '@/services/prospecting';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -206,6 +206,7 @@ export default function CampaignDetailPage() {
   const id = params.id as string;
 
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
+  const [minScoreFilter, setMinScoreFilter] = useState<number>(5);
 
   const { data: campaign, isLoading: loadingCampaign } = useQuery({
     queryKey: ['campaign', id],
@@ -258,6 +259,24 @@ export default function CampaignDetailPage() {
       qc.invalidateQueries({ queryKey: ['campaign', id] });
     },
     onError: () => toast('error', 'Error exportant els prospects'),
+  });
+
+  const { mutate: doScore, isPending: scoring } = useMutation({
+    mutationFn: () => scoreProspects(id),
+    onSuccess: () => {
+      toast('success', 'Prospects puntuats');
+      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
+    },
+    onError: () => toast('error', 'Error puntant els prospects'),
+  });
+
+  const { mutate: doQualify, isPending: qualifying } = useMutation({
+    mutationFn: () => qualifyByMinScore(id, minScoreFilter),
+    onSuccess: (data) => {
+      toast('success', `${data.qualified} prospect${data.qualified !== 1 ? 's' : ''} qualificat${data.qualified !== 1 ? 's' : ''} (telèfon obtingut)`);
+      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
+    },
+    onError: () => toast('error', 'Error obtenint els detalls'),
   });
 
   if (!user || !isAdmin) return null;
@@ -326,7 +345,43 @@ export default function CampaignDetailPage() {
               <span className="ml-2 text-ink-3 normal-case">({prospectList.length})</span>
             </div>
             {prospectList.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <AMGButton
+                  size="sm"
+                  variant="secondary"
+                  icon={I.Sparkles}
+                  loading={scoring}
+                  onClick={() => doScore()}
+                >
+                  Puntuar
+                </AMGButton>
+                {prospectList.some(p => p.score != null) && (
+                  <div className="flex items-center gap-1">
+                    <select
+                      value={minScoreFilter}
+                      onChange={e => setMinScoreFilter(Number(e.target.value))}
+                      className="f-mono text-[11px] bg-bg-1 border border-border-base rounded px-2 py-1 text-ink-1"
+                    >
+                      {[3, 4, 5, 6, 7, 8].map(v => (
+                        <option key={v} value={v}>≥ {v} pts</option>
+                      ))}
+                    </select>
+                    <AMGButton
+                      size="sm"
+                      variant="secondary"
+                      icon={I.Phone}
+                      loading={qualifying}
+                      onClick={() => {
+                        const count = prospectList.filter(p => (p.score ?? 0) >= minScoreFilter && !p.phone).length;
+                        if (confirm(`Obtenir telèfon i web per ${count} prospect${count !== 1 ? 's' : ''} (puntuació ≥ ${minScoreFilter})?`)) {
+                          doQualify();
+                        }
+                      }}
+                    >
+                      Obtenir detalls
+                    </AMGButton>
+                  </div>
+                )}
                 <AMGButton
                   size="sm"
                   variant="secondary"
@@ -369,7 +424,7 @@ export default function CampaignDetailPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border-base">
-                  {['', 'Empresa', 'Telèfon', 'Estat', ''].map((h, i) => (
+                  {['', 'Empresa', 'Telèfon', 'Punts', 'Estat', ''].map((h, i) => (
                     <th key={i} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal first:px-4 first:w-6">
                       {h}
                     </th>
@@ -377,47 +432,58 @@ export default function CampaignDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {prospectList.map((p) => {
-                  const hasContact = !!(p.phone || p.email);
-                  return (
-                    <tr
-                      key={p.id}
-                      className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)] transition-colors"
-                    >
-                      <td className="pl-4 pr-0 py-2.5 w-6">
-                        <span
-                          title={hasContact ? 'Té dades de contacte' : 'Sense telèfon ni email'}
-                          className={`inline-block w-2 h-2 rounded-full ${hasContact ? 'bg-success' : 'bg-ink-3'}`}
-                        />
-                      </td>
-                      <td className="px-4 sm:px-5 py-2.5">
-                        <div className="f-display font-bold text-sm">{p.name}</div>
-                        {p.city && <div className="f-mono text-[10px] text-ink-3 mt-0.5">{p.city}</div>}
-                      </td>
-                      <td className="px-4 sm:px-5 py-2.5 f-mono text-xs text-ink-1">
-                        {p.phone ?? (p.email
-                          ? <span className="text-ink-2">{p.email}</span>
-                          : <span className="text-ink-3">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 sm:px-5 py-2.5">
-                        <AMGBadge tone={PROSPECT_STATUS_TONE[p.status] ?? 'neutral'}>
-                          {PROSPECT_STATUS_LABEL[p.status] ?? p.status}
-                        </AMGBadge>
-                      </td>
-                      <td className="px-4 sm:px-5 py-2.5 text-right">
-                        <AMGButton
-                          size="sm"
-                          variant="ghost"
-                          icon={I.Eye}
-                          onClick={() => setSelectedProspect(p)}
-                        >
-                          Veure
-                        </AMGButton>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {[...prospectList]
+                  .sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
+                  .map((p) => {
+                    const hasContact = !!(p.phone || p.email);
+                    const scored = p.score != null;
+                    const scoreColor = scored
+                      ? p.score! >= 8 ? 'text-success' : p.score! >= 5 ? 'text-accent-light' : 'text-ink-2'
+                      : 'text-ink-3';
+                    return (
+                      <tr
+                        key={p.id}
+                        className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+                      >
+                        <td className="pl-4 pr-0 py-2.5 w-6">
+                          <span
+                            title={hasContact ? 'Té dades de contacte' : 'Sense telèfon ni email'}
+                            className={`inline-block w-2 h-2 rounded-full ${hasContact ? 'bg-success' : 'bg-ink-3'}`}
+                          />
+                        </td>
+                        <td className="px-4 sm:px-5 py-2.5">
+                          <div className="f-display font-bold text-sm">{p.name}</div>
+                          {p.city && <div className="f-mono text-[10px] text-ink-3 mt-0.5">{p.city}</div>}
+                        </td>
+                        <td className="px-4 sm:px-5 py-2.5 f-mono text-xs text-ink-1">
+                          {p.phone ?? (p.email
+                            ? <span className="text-ink-2">{p.email}</span>
+                            : <span className="text-ink-3">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 sm:px-5 py-2.5">
+                          <span className={`f-mono text-xs font-bold ${scoreColor}`}>
+                            {scored ? p.score : '—'}
+                          </span>
+                        </td>
+                        <td className="px-4 sm:px-5 py-2.5">
+                          <AMGBadge tone={PROSPECT_STATUS_TONE[p.status] ?? 'neutral'}>
+                            {PROSPECT_STATUS_LABEL[p.status] ?? p.status}
+                          </AMGBadge>
+                        </td>
+                        <td className="px-4 sm:px-5 py-2.5 text-right">
+                          <AMGButton
+                            size="sm"
+                            variant="ghost"
+                            icon={I.Eye}
+                            onClick={() => setSelectedProspect(p)}
+                          >
+                            Veure
+                          </AMGButton>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           )}

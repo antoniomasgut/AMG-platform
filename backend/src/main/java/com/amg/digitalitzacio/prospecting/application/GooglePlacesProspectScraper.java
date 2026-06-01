@@ -163,13 +163,11 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
                             .source(ProspectSource.GOOGLE_MAPS)
                             .build();
 
-                    // Enriquir amb Place Details per obtenir telèfon i web
-                    enrichFromDetails(prospect, apiKey);
-
                     prospects.add(prospect);
                 }
 
                 nextPageToken = response.path("next_page_token").asText(null);
+
                 if (nextPageToken != null) {
                     Thread.sleep(100); // Google requereix un petit delay abans d'usar el token
                 }
@@ -235,74 +233,48 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
         return null;
     }
 
-    private void enrichFromDetails(Prospect prospect, String apiKey) {
+    @Override
+    public PlaceDetails fetchDetails(String googlePlaceId) {
+        String apiKey = resolvedApiKey();
+        if (apiKey.isBlank() || googlePlaceId == null) return new PlaceDetails(null, null, null, null, null);
         try {
             throttle();
-
-            var uri = "/details/json?place_id=" + prospect.getGooglePlaceId()
-                    + "&fields=formatted_phone_number,website,editorial_summary,address_components,formatted_address"
+            var uri = "/details/json?place_id=" + googlePlaceId
+                    + "&fields=formatted_phone_number,website,editorial_summary,address_components"
                     + "&key=" + apiKey;
-
-            var response = webClient.get()
-                    .uri(uri)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
-
-            if (response == null) return;
-
+            var response = webClient.get().uri(uri).retrieve().bodyToMono(JsonNode.class).block();
+            if (response == null) return new PlaceDetails(null, null, null, null, null);
             var result = response.path("result");
-            if (result.isMissingNode()) return;
+            if (result.isMissingNode()) return new PlaceDetails(null, null, null, null, null);
 
             var phone = result.path("formatted_phone_number").asText(null);
-            if (phone != null && !phone.isBlank()) {
-                prospect.setPhone(phone);
-            }
-
-            // Adreça completa i components estructurats
-            var formattedAddress = result.path("formatted_address").asText(null);
-            if (formattedAddress != null && !formattedAddress.isBlank()) {
-                prospect.setAddress(formattedAddress);
-            }
-            parseAddressComponents(result.path("address_components"), prospect);
-
             var website = result.path("website").asText(null);
-            if (website != null && !website.isBlank()) {
-                prospect.setWebsite(website);
-                prospect.setHasWebsite(true);
-                // Intentar extreure email de la web del negoci
-                var email = extractEmailFromWebsite(website);
-                if (email != null) prospect.setEmail(email);
-            }
+            var description = result.path("editorial_summary").path("overview").asText(null);
+            String city = null, postalCode = null;
 
-            // Descripció editorial (no sempre disponible)
-            var summary = result.path("editorial_summary").path("overview").asText(null);
-            if (summary != null && !summary.isBlank()) {
-                prospect.setDescription(summary);
-            }
-
-        } catch (Exception e) {
-            log.debug("Failed to enrich details for place {}: {}", prospect.getGooglePlaceId(), e.getMessage());
-        }
-    }
-
-    /** Extreu ciutat i codi postal dels address_components de Google Places. */
-    private void parseAddressComponents(JsonNode components, Prospect prospect) {
-        if (components == null || !components.isArray()) return;
-        for (var comp : components) {
-            var types = comp.path("types");
-            var longName = comp.path("long_name").asText(null);
-            if (longName == null) continue;
-            for (var type : types) {
-                switch (type.asText()) {
-                    case "locality", "administrative_area_level_2" -> {
-                        if (prospect.getCity() == null || prospect.getCity().isBlank()) {
-                            prospect.setCity(longName);
+            var components = result.path("address_components");
+            if (components.isArray()) {
+                for (var comp : components) {
+                    var longName = comp.path("long_name").asText(null);
+                    if (longName == null) continue;
+                    for (var type : comp.path("types")) {
+                        switch (type.asText()) {
+                            case "locality", "administrative_area_level_2" -> { if (city == null) city = longName; }
+                            case "postal_code" -> postalCode = longName;
                         }
                     }
-                    case "postal_code" -> prospect.setPostalCode(longName);
                 }
             }
+
+            return new PlaceDetails(
+                phone != null && !phone.isBlank() ? phone : null,
+                website != null && !website.isBlank() ? website : null,
+                city, postalCode,
+                description != null && !description.isBlank() ? description : null
+            );
+        } catch (Exception e) {
+            log.debug("fetchDetails failed for {}: {}", googlePlaceId, e.getMessage());
+            return new PlaceDetails(null, null, null, null, null);
         }
     }
 

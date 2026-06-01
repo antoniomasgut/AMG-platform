@@ -83,6 +83,8 @@ public class Prospect {
     @Column(length = 500)
     private String notes;
 
+    private Integer score;
+
     @CreatedDate @Column(updatable = false)
     private Instant createdAt;
 

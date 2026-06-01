@@ -11,5 +11,5 @@ public record ProspectResponse(
         BigDecimal googleRating, Integer googleReviews, String googlePlaceId,
         Boolean hasWebsite, Boolean hasInstagram, Boolean hasWhatsapp,
         String status, String source, String externalId, UUID leadId,
-        String notes, Instant createdAt, Instant updatedAt
+        String notes, Instant createdAt, Instant updatedAt, Integer score
 ) {}

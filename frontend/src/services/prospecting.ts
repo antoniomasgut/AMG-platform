@@ -35,6 +35,7 @@ export interface Prospect {
   notes?: string;
   leadId?: string;
   createdAt?: string;
+  score?: number | null;
 }
 
 export type ProspectSource = 'GOOGLE_MAPS' | 'INSTAGRAM' | 'PAGINAS_AMARILLAS' | 'MANUAL';
@@ -80,3 +81,12 @@ export const enrichProspect = (id: string) =>
 
 export const exportContactableProspects = (id: string) =>
   apiFetch<{ exported: number }>(`/prospecting/campaigns/${id}/export-contactable`, { method: 'POST' });
+
+export const scoreProspects = (id: string) =>
+  apiFetch<Prospect[]>(`/prospecting/campaigns/${id}/score`, { method: 'POST' });
+
+export const qualifyTop = (id: string, topN = 10) =>
+  apiFetch<{ qualified: number }>(`/prospecting/campaigns/${id}/qualify-top?topN=${topN}`, { method: 'POST' });
+
+export const qualifyByMinScore = (id: string, minScore: number) =>
+  apiFetch<{ qualified: number }>(`/prospecting/campaigns/${id}/qualify-min-score?minScore=${minScore}`, { method: 'POST' });

@@ -158,6 +158,13 @@ public class ProspectingOrchestrator implements ProspectingService {
     public ProspectResponse enrichProspect(UUID prospectId) {
         var prospect = prospectRepository.findById(prospectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
+
+        // Fase 2: obtenir telèfon i web via Place Details si no tenim telèfon
+        if ((prospect.getPhone() == null || prospect.getPhone().isBlank()) && prospect.getGooglePlaceId() != null) {
+            applyDetails(prospect, scraper.fetchDetails(prospect.getGooglePlaceId()));
+        }
+
+        // Enriquiment web: extreure email, Instagram
         var enrichment = scraper.enrich(prospect.getName(), prospect.getWebsite(), prospect.getEmail());
         if (enrichment.email() != null && !enrichment.email().isBlank()) prospect.setEmail(enrichment.email());
         if (enrichment.website() != null && !enrichment.website().isBlank()) {
@@ -166,8 +173,104 @@ public class ProspectingOrchestrator implements ProspectingService {
         }
         if (enrichment.instagram() != null) prospect.setInstagram(enrichment.instagram());
         if (enrichment.hasWhatsapp() != null) prospect.setHasWhatsapp(enrichment.hasWhatsapp());
+
+        prospect.setScore(calculateScore(prospect));
         prospect = prospectRepository.save(prospect);
         return toProspectResponse(prospect);
+    }
+
+    @Override
+    public List<ProspectResponse> scoreProspects(UUID campaignId) {
+        var prospects = prospectRepository.findByCampaignId(campaignId);
+        for (var p : prospects) {
+            p.setScore(calculateScore(p));
+        }
+        prospectRepository.saveAll(prospects);
+        log.info("Scored {} prospects in campaign {}", prospects.size(), campaignId);
+        return prospects.stream()
+                .sorted(java.util.Comparator.comparingInt(p -> -(p.getScore() != null ? p.getScore() : 0)))
+                .map(this::toProspectResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public int qualifyTop(UUID campaignId, int topN) {
+        var candidates = prospectRepository.findByCampaignId(campaignId).stream()
+                .filter(p -> p.getGooglePlaceId() != null)
+                .filter(p -> p.getPhone() == null || p.getPhone().isBlank())
+                .sorted(java.util.Comparator.comparingInt(p -> -(p.getScore() != null ? p.getScore() : 0)))
+                .limit(topN)
+                .toList();
+
+        int qualified = 0;
+        for (var prospect : candidates) {
+            try {
+                var details = scraper.fetchDetails(prospect.getGooglePlaceId());
+                applyDetails(prospect, details);
+                prospect.setScore(calculateScore(prospect));
+                prospectRepository.save(prospect);
+                qualified++;
+            } catch (Exception e) {
+                log.debug("qualifyTop failed for prospect {}: {}", prospect.getId(), e.getMessage());
+            }
+        }
+        log.info("QualifyTop {}/{} prospects in campaign {}", qualified, candidates.size(), campaignId);
+        return qualified;
+    }
+
+    @Override
+    public int qualifyByMinScore(UUID campaignId, int minScore) {
+        var candidates = prospectRepository.findByCampaignId(campaignId).stream()
+                .filter(p -> p.getScore() != null && p.getScore() >= minScore)
+                .filter(p -> p.getGooglePlaceId() != null)
+                .filter(p -> p.getPhone() == null || p.getPhone().isBlank())
+                .toList();
+
+        int qualified = 0;
+        for (var prospect : candidates) {
+            try {
+                var details = scraper.fetchDetails(prospect.getGooglePlaceId());
+                applyDetails(prospect, details);
+                prospect.setScore(calculateScore(prospect));
+                prospectRepository.save(prospect);
+                qualified++;
+            } catch (Exception e) {
+                log.debug("qualifyByMinScore failed for prospect {}: {}", prospect.getId(), e.getMessage());
+            }
+        }
+        log.info("QualifyByMinScore(>={}) {}/{} prospects in campaign {}", minScore, qualified, candidates.size(), campaignId);
+        return qualified;
+    }
+
+    private void applyDetails(Prospect prospect, ProspectScraper.PlaceDetails details) {
+        if (details.phone() != null) prospect.setPhone(details.phone());
+        if (details.website() != null) { prospect.setWebsite(details.website()); prospect.setHasWebsite(true); }
+        if (details.city() != null && (prospect.getCity() == null || prospect.getCity().isBlank())) prospect.setCity(details.city());
+        if (details.postalCode() != null) prospect.setPostalCode(details.postalCode());
+        if (details.description() != null && (prospect.getDescription() == null || prospect.getDescription().isBlank())) prospect.setDescription(details.description());
+    }
+
+    private int calculateScore(Prospect p) {
+        int score = 0;
+        // Rating: sweet spot 3.5-4.2 (té marge de millora, seguidor actiu)
+        if (p.getGoogleRating() != null) {
+            double r = p.getGoogleRating().doubleValue();
+            if (r < 3.5)       score += 3;
+            else if (r < 4.2)  score += 4;
+            else if (r < 4.6)  score += 2;
+            else               score += 1;
+        }
+        // Ressenyes: menys = negoci petit/nou = més fàcil d'arribar
+        if (p.getGoogleReviews() != null) {
+            int rev = p.getGoogleReviews();
+            if (rev < 10)       score += 4;
+            else if (rev < 30)  score += 3;
+            else if (rev < 100) score += 2;
+            else if (rev < 300) score += 1;
+        }
+        // Sense web = target ideal AMG (només comptable si ja hem obtingut els detalls)
+        if (p.getPhone() != null && !Boolean.TRUE.equals(p.getHasWebsite())) score += 5;
+        return score;
     }
 
     @Override
@@ -298,6 +401,6 @@ public class ProspectingOrchestrator implements ProspectingService {
                 p.getWebsite(), p.getInstagram(), p.getGoogleRating(), p.getGoogleReviews(),
                 p.getGooglePlaceId(), p.getHasWebsite(), p.getHasInstagram(), p.getHasWhatsapp(),
                 p.getStatus().name(), p.getSource().name(), p.getExternalId(), p.getLeadId(),
-                p.getNotes(), p.getCreatedAt(), p.getUpdatedAt());
+                p.getNotes(), p.getCreatedAt(), p.getUpdatedAt(), p.getScore());
     }
 }

@@ -13,4 +13,8 @@ public interface ProspectScraper {
     record ProspectEnrichment(String email, String website, String instagram, Boolean hasWebsite, Boolean hasWhatsapp) {}
 
     ProspectEnrichment enrich(String name, String website, String email);
+
+    record PlaceDetails(String phone, String website, String city, String postalCode, String description) {}
+
+    PlaceDetails fetchDetails(String googlePlaceId);
 }

@@ -20,4 +20,7 @@ public interface ProspectingService {
     int exportContactableProspects(UUID campaignId);
     CampaignResponse cloneCampaign(UUID campaignId);
     int enrichAllProspects(UUID campaignId);
+    List<ProspectResponse> scoreProspects(UUID campaignId);
+    int qualifyTop(UUID campaignId, int topN);
+    int qualifyByMinScore(UUID campaignId, int minScore);
 }

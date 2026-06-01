@@ -53,4 +53,14 @@ public class MockProspectScraper implements ProspectScraper {
                 true, true
         );
     }
+
+    @Override
+    public PlaceDetails fetchDetails(String googlePlaceId) {
+        return switch (googlePlaceId) {
+            case "place-1" -> new PlaceDetails("+34 971 123 456", "https://canpedro.com", "Palma", "07001", null);
+            case "place-2" -> new PlaceDetails("+34 971 234 567", null, "Inca", "07300", null);
+            case "place-3" -> new PlaceDetails("+34 971 345 678", "https://pizzanapoli.es", "Palma", "07002", null);
+            default -> new PlaceDetails(null, null, null, null, null);
+        };
+    }
 }
