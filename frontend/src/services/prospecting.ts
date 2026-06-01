@@ -36,6 +36,7 @@ export interface Prospect {
   leadId?: string;
   createdAt?: string;
   score?: number | null;
+  reviews?: string[];
 }
 
 export type ProspectSource = 'GOOGLE_MAPS' | 'INSTAGRAM' | 'PAGINAS_AMARILLAS' | 'MANUAL';

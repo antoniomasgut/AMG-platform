@@ -149,6 +149,22 @@ function ProspectDrawer({
             </section>
           )}
 
+          {/* Opinions */}
+          {prospect.reviews && prospect.reviews.length > 0 && (
+            <section>
+              <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">
+                Opinions recents ({prospect.reviews.length})
+              </div>
+              <div className="space-y-2">
+                {prospect.reviews.map((review, i) => (
+                  <blockquote key={i} className="border-l-2 border-border-base pl-3 py-0.5">
+                    <p className="f-mono text-[11px] text-ink-1 leading-relaxed italic">{review}</p>
+                  </blockquote>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Notes */}
           {prospect.notes && (
             <section>

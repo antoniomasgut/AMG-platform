@@ -14,7 +14,7 @@ public interface ProspectScraper {
 
     ProspectEnrichment enrich(String name, String website, String email);
 
-    record PlaceDetails(String phone, String website, String city, String postalCode, String description) {}
+    record PlaceDetails(String phone, String website, String city, String postalCode, String description, java.util.List<String> reviews) {}
 
     PlaceDetails fetchDetails(String googlePlaceId);
 }

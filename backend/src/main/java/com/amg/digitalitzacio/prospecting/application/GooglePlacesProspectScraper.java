@@ -236,16 +236,16 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
     @Override
     public PlaceDetails fetchDetails(String googlePlaceId) {
         String apiKey = resolvedApiKey();
-        if (apiKey.isBlank() || googlePlaceId == null) return new PlaceDetails(null, null, null, null, null);
+        if (apiKey.isBlank() || googlePlaceId == null) return new PlaceDetails(null, null, null, null, null, List.of());
         try {
             throttle();
             var uri = "/details/json?place_id=" + googlePlaceId
-                    + "&fields=formatted_phone_number,website,editorial_summary,address_components"
+                    + "&fields=formatted_phone_number,website,editorial_summary,address_components,reviews"
                     + "&key=" + apiKey;
             var response = webClient.get().uri(uri).retrieve().bodyToMono(JsonNode.class).block();
-            if (response == null) return new PlaceDetails(null, null, null, null, null);
+            if (response == null) return new PlaceDetails(null, null, null, null, null, List.of());
             var result = response.path("result");
-            if (result.isMissingNode()) return new PlaceDetails(null, null, null, null, null);
+            if (result.isMissingNode()) return new PlaceDetails(null, null, null, null, null, List.of());
 
             var phone = result.path("formatted_phone_number").asText(null);
             var website = result.path("website").asText(null);
@@ -266,15 +266,27 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
                 }
             }
 
+            var reviews = new ArrayList<String>();
+            var reviewsNode = result.path("reviews");
+            if (reviewsNode.isArray()) {
+                for (var r : reviewsNode) {
+                    var text = r.path("text").asText(null);
+                    if (text != null && !text.isBlank()) {
+                        reviews.add(text.length() > 280 ? text.substring(0, 280) + "…" : text);
+                    }
+                }
+            }
+
             return new PlaceDetails(
                 phone != null && !phone.isBlank() ? phone : null,
                 website != null && !website.isBlank() ? website : null,
                 city, postalCode,
-                description != null && !description.isBlank() ? description : null
+                description != null && !description.isBlank() ? description : null,
+                reviews
             );
         } catch (Exception e) {
             log.debug("fetchDetails failed for {}: {}", googlePlaceId, e.getMessage());
-            return new PlaceDetails(null, null, null, null, null);
+            return new PlaceDetails(null, null, null, null, null, List.of());
         }
     }
 

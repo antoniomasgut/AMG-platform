@@ -85,6 +85,9 @@ public class Prospect {
 
     private Integer score;
 
+    @Column(columnDefinition = "TEXT")
+    private String reviewsJson;
+
     @CreatedDate @Column(updatable = false)
     private Instant createdAt;
 

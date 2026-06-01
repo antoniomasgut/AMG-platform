@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.prospecting.api.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record ProspectResponse(
@@ -11,5 +12,6 @@ public record ProspectResponse(
         BigDecimal googleRating, Integer googleReviews, String googlePlaceId,
         Boolean hasWebsite, Boolean hasInstagram, Boolean hasWhatsapp,
         String status, String source, String externalId, UUID leadId,
-        String notes, Instant createdAt, Instant updatedAt, Integer score
+        String notes, Instant createdAt, Instant updatedAt, Integer score,
+        List<String> reviews
 ) {}

@@ -248,6 +248,10 @@ public class ProspectingOrchestrator implements ProspectingService {
         if (details.city() != null && (prospect.getCity() == null || prospect.getCity().isBlank())) prospect.setCity(details.city());
         if (details.postalCode() != null) prospect.setPostalCode(details.postalCode());
         if (details.description() != null && (prospect.getDescription() == null || prospect.getDescription().isBlank())) prospect.setDescription(details.description());
+        if (!details.reviews().isEmpty()) {
+            try { prospect.setReviewsJson(objectMapper.writeValueAsString(details.reviews())); }
+            catch (Exception ignored) {}
+        }
     }
 
     private int calculateScore(Prospect p) {
@@ -396,11 +400,16 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     private ProspectResponse toProspectResponse(Prospect p) {
+        List<String> reviews = List.of();
+        if (p.getReviewsJson() != null) {
+            try { reviews = objectMapper.readValue(p.getReviewsJson(), new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {}); }
+            catch (Exception ignored) {}
+        }
         return new ProspectResponse(p.getId(), p.getCampaignId(), p.getName(), p.getDescription(),
                 p.getSector(), p.getAddress(), p.getCity(), p.getPostalCode(), p.getPhone(), p.getEmail(),
                 p.getWebsite(), p.getInstagram(), p.getGoogleRating(), p.getGoogleReviews(),
                 p.getGooglePlaceId(), p.getHasWebsite(), p.getHasInstagram(), p.getHasWhatsapp(),
                 p.getStatus().name(), p.getSource().name(), p.getExternalId(), p.getLeadId(),
-                p.getNotes(), p.getCreatedAt(), p.getUpdatedAt(), p.getScore());
+                p.getNotes(), p.getCreatedAt(), p.getUpdatedAt(), p.getScore(), reviews);
     }
 }

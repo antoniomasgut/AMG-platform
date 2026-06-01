@@ -57,10 +57,13 @@ public class MockProspectScraper implements ProspectScraper {
     @Override
     public PlaceDetails fetchDetails(String googlePlaceId) {
         return switch (googlePlaceId) {
-            case "place-1" -> new PlaceDetails("+34 971 123 456", "https://canpedro.com", "Palma", "07001", null);
-            case "place-2" -> new PlaceDetails("+34 971 234 567", null, "Inca", "07300", null);
-            case "place-3" -> new PlaceDetails("+34 971 345 678", "https://pizzanapoli.es", "Palma", "07002", null);
-            default -> new PlaceDetails(null, null, null, null, null);
+            case "place-1" -> new PlaceDetails("+34 971 123 456", "https://canpedro.com", "Palma", "07001", null,
+                List.of("Excel·lent menjar mallorquí, molt recomanable!", "El millor restaurant de la zona, sempre hi tornem."));
+            case "place-2" -> new PlaceDetails("+34 971 234 567", null, "Inca", "07300", null,
+                List.of("Bon lloc per esmorzar, preus molt econòmics.", "Atenció al client correcta però local una mica vell."));
+            case "place-3" -> new PlaceDetails("+34 971 345 678", "https://pizzanapoli.es", "Palma", "07002", null,
+                List.of("La millor pizza de Palma sense dubte.", "Molt bona relació qualitat-preu, tornarem aviat."));
+            default -> new PlaceDetails(null, null, null, null, null, List.of());
         };
     }
 }
