@@ -8,6 +8,7 @@ import {
   createTemplate,
   updateTemplate,
   deleteTemplate,
+  SECTORS,
   type MessageTemplate,
   type TemplateType,
   type TemplateRequest,
@@ -44,12 +45,13 @@ interface TemplateFormProps {
 function TemplateForm({ initial, onSave, onCancel, saving }: TemplateFormProps) {
   const [name, setName] = useState(initial?.name ?? '');
   const [type, setType] = useState<TemplateType>(initial?.type ?? 'WHATSAPP');
+  const [sector, setSector] = useState(initial?.sector ?? '');
   const [subject, setSubject] = useState(initial?.subject ?? '');
   const [body, setBody] = useState(initial?.body ?? '');
 
   const submit = () => {
     if (!name.trim() || !body.trim()) return;
-    onSave({ name: name.trim(), type, subject: subject.trim() || undefined, body: body.trim() });
+    onSave({ name: name.trim(), type, sector: sector || undefined, subject: subject.trim() || undefined, body: body.trim() });
   };
 
   return (
@@ -95,6 +97,23 @@ function TemplateForm({ initial, onSave, onCancel, saving }: TemplateFormProps) 
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Sector */}
+          <div>
+            <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">
+              Sector <span className="normal-case text-ink-3">(opcional — deixa buit per a plantilles generals)</span>
+            </label>
+            <select
+              value={sector}
+              onChange={e => setSector(e.target.value)}
+              className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+            >
+              <option value="">— General (tots els sectors) —</option>
+              {SECTORS.map(s => (
+                <option key={s.key} value={s.key}>{s.label}</option>
+              ))}
+            </select>
           </div>
 
           {/* Subject (email only) */}
@@ -244,7 +263,14 @@ export default function TemplatesPage() {
                         className="bg-bg-1 border border-border-base p-4 flex items-start justify-between gap-4 hover:border-accent/40 transition-colors"
                       >
                         <div className="min-w-0 flex-1">
-                          <div className="f-display font-bold text-sm">{tpl.name}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="f-display font-bold text-sm">{tpl.name}</div>
+                            {tpl.sector && (
+                              <span className="f-mono text-[9px] px-1.5 py-0.5 border border-border-base text-ink-3">
+                                {SECTORS.find(s => s.key === tpl.sector)?.label ?? tpl.sector}
+                              </span>
+                            )}
+                          </div>
                           {tpl.subject && (
                             <div className="f-mono text-xs text-ink-2 mt-0.5">Assumpte: {tpl.subject}</div>
                           )}

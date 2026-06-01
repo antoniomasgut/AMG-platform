@@ -82,6 +82,12 @@ export const sendOutreach = (data: OutreachRequest) =>
 export const setWhatsapp = (id: string, value: boolean) =>
   apiFetch<Lead>(`/leads/${id}/whatsapp?value=${value}`, { method: 'PATCH' });
 
+export const sendTemplate = (data: { templateId: string; leadIds: string[]; channel: string }) =>
+  apiFetch<{ sent: number; failed: number }>('/leads/send-template', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
 export const getActivities = (leadId: string) =>
   apiFetch<{ content: Activity[] }>(`/leads/${leadId}/activities?size=100`).then(r => r.content);
 

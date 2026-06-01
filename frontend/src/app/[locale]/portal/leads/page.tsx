@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { getLeads, getLeadStats, changeStage, sendOutreach, setWhatsapp, type Lead, type OutreachRequest } from '@/services/leads';
+import { getLeads, getLeadStats, changeStage, sendOutreach, sendTemplate, setWhatsapp, type Lead, type OutreachRequest } from '@/services/leads';
+import { listTemplates, SECTORS, type MessageTemplate } from '@/services/message-templates';
 import { createDemoSession, updateDemoSession } from '@/services/demo';
 import { SECTOR_CONTEXTS, getSectorContext } from '@/services/sector-contexts';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -68,6 +69,261 @@ Tel: 654 048 164`,
 
 const DEFAULT_DEMO_CONTEXT = (name: string) =>
   `Ets l'assistent virtual de ${name}. Respon preguntes sobre els nostres serveis, preus i com podem ajudar el negoci a créixer digitalment.`;
+
+function substitute(text: string, lead: Lead) {
+  return text
+    .replace(/\{\{nom\}\}/g, lead.name)
+    .replace(/\{\{email\}\}/g, lead.email ?? '')
+    .replace(/\{\{telefon\}\}/g, lead.phone ?? '');
+}
+
+function TemplateSendModal({
+  leads,
+  templates,
+  onClose,
+  onSend,
+  sending,
+}: {
+  leads: Lead[];
+  templates: MessageTemplate[];
+  onClose: () => void;
+  onSend: (templateId: string, leadIds: string[], channel: string) => void;
+  sending: boolean;
+}) {
+  const [sector, setSector] = useState<string>('');
+  const [channel, setChannel] = useState<'WHATSAPP' | 'EMAIL'>('WHATSAPP');
+  const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+  const [previewIdx, setPreviewIdx] = useState(0);
+
+  const filteredTemplates = templates.filter(t => {
+    if (t.type !== channel) return false;
+    if (!sector) return true;
+    return !t.sector || t.sector === sector;
+  });
+
+  const eligibleLeads = leads.filter(l =>
+    l.isActive && l.stage !== 'WON' && l.stage !== 'LOST' &&
+    (channel === 'WHATSAPP' ? !!l.phone : !!l.email)
+  );
+
+  const selectedList = eligibleLeads.filter(l => selectedLeads.has(l.id));
+  const previewLead = selectedList[previewIdx] ?? selectedList[0];
+
+  const toggleLead = (id: string) => {
+    const s = new Set(selectedLeads);
+    s.has(id) ? s.delete(id) : s.add(id);
+    setSelectedLeads(s);
+    setPreviewIdx(0);
+  };
+  const toggleAll = () => {
+    if (selectedLeads.size === eligibleLeads.length) setSelectedLeads(new Set());
+    else setSelectedLeads(new Set(eligibleLeads.map(l => l.id)));
+    setPreviewIdx(0);
+  };
+
+  const previewBody = selectedTemplate && previewLead ? substitute(selectedTemplate.body, previewLead) : null;
+  const previewSubject = selectedTemplate?.subject && previewLead ? substitute(selectedTemplate.subject, previewLead) : null;
+
+  const canSend = selectedTemplate && selectedLeads.size > 0;
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-bg-0 border border-border-base w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl">
+
+          {/* Header */}
+          <div className="flex items-center justify-between p-5 border-b border-border-base shrink-0">
+            <div>
+              <div className="f-display font-bold text-base">Enviar plantilla</div>
+              <div className="f-mono text-[10px] text-ink-3 mt-0.5">
+                {selectedLeads.size} lead{selectedLeads.size !== 1 ? 's' : ''} seleccionat{selectedLeads.size !== 1 ? 's' : ''}
+              </div>
+            </div>
+            <button onClick={onClose} className="p-1.5 text-ink-3 hover:text-ink-0">
+              <I.X size={16} />
+            </button>
+          </div>
+
+          <div className="flex flex-1 min-h-0">
+
+            {/* Col 1: Sector + canal + plantilla */}
+            <div className="w-64 shrink-0 border-r border-border-base flex flex-col overflow-y-auto">
+              {/* Canal */}
+              <div className="p-3 border-b border-border-base">
+                <div className="f-mono text-[10px] uppercase text-ink-3 tracking-widest mb-2">Canal</div>
+                <div className="flex gap-1">
+                  {(['WHATSAPP', 'EMAIL'] as const).map(ch => (
+                    <button key={ch} onClick={() => { setChannel(ch); setSelectedTemplate(null); }}
+                      className={`flex-1 f-mono text-[11px] py-1.5 border transition-colors ${channel === ch ? 'border-accent bg-accent-muted text-accent-light' : 'border-border-base text-ink-3 hover:border-accent/40'}`}>
+                      {ch === 'WHATSAPP' ? '📱 WA' : '✉️ Email'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sector */}
+              <div className="p-3 border-b border-border-base">
+                <div className="f-mono text-[10px] uppercase text-ink-3 tracking-widest mb-2">Sector</div>
+                <div className="space-y-0.5">
+                  <button onClick={() => setSector('')}
+                    className={`w-full text-left f-mono text-xs px-2 py-1.5 rounded transition-colors ${!sector ? 'bg-accent-muted text-accent-light' : 'text-ink-2 hover:bg-bg-2'}`}>
+                    Tots els sectors
+                  </button>
+                  {SECTORS.map(s => (
+                    <button key={s.key} onClick={() => setSector(s.key)}
+                      className={`w-full text-left f-mono text-xs px-2 py-1.5 rounded transition-colors ${sector === s.key ? 'bg-accent-muted text-accent-light' : 'text-ink-2 hover:bg-bg-2'}`}>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Plantilles filtrades */}
+              <div className="p-3 flex-1">
+                <div className="f-mono text-[10px] uppercase text-ink-3 tracking-widest mb-2">
+                  Plantilles <span className="text-ink-3 normal-case">({filteredTemplates.length})</span>
+                </div>
+                {filteredTemplates.length === 0 ? (
+                  <p className="f-mono text-[11px] text-ink-3 italic">Cap plantilla per a aquest filtre.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {filteredTemplates.map(t => (
+                      <button key={t.id} onClick={() => setSelectedTemplate(t)}
+                        className={`w-full text-left px-2 py-2 border transition-colors ${selectedTemplate?.id === t.id ? 'border-accent bg-accent-muted' : 'border-border-base hover:border-accent/40'}`}>
+                        <div className="f-display font-bold text-xs text-ink-0">{t.name}</div>
+                        {t.sector && <div className="f-mono text-[9px] text-ink-3 mt-0.5">{t.sector}</div>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Col 2: Leads */}
+            <div className="w-52 shrink-0 border-r border-border-base flex flex-col">
+              <div className="p-3 border-b border-border-base flex items-center justify-between">
+                <span className="f-mono text-[10px] uppercase text-ink-3 tracking-widest">Leads</span>
+                <button onClick={toggleAll} className="f-mono text-[9px] text-accent-light hover:underline">
+                  {selectedLeads.size === eligibleLeads.length ? 'Cap' : 'Tots'}
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {eligibleLeads.length === 0 ? (
+                  <div className="p-4 text-center f-mono text-xs text-ink-3">
+                    Cap lead amb {channel === 'WHATSAPP' ? 'telèfon' : 'email'}
+                  </div>
+                ) : eligibleLeads.map(lead => (
+                  <label key={lead.id}
+                    className="flex items-start gap-2 px-3 py-2 cursor-pointer hover:bg-bg-2 border-b border-[rgba(226,232,240,0.04)]">
+                    <input type="checkbox" checked={selectedLeads.has(lead.id)}
+                      onChange={() => toggleLead(lead.id)}
+                      className="mt-0.5 shrink-0 accent-accent" />
+                    <div className="min-w-0">
+                      <div className="f-display font-bold text-xs truncate">{lead.name}</div>
+                      <div className="f-mono text-[9px] text-ink-3 truncate">
+                        {channel === 'WHATSAPP' ? lead.phone : lead.email}
+                      </div>
+                      <AMGBadge tone={STAGE_TONE[lead.stage] ?? 'neutral'} className="mt-0.5 text-[8px]">
+                        {STAGE_LABEL[lead.stage] ?? lead.stage}
+                      </AMGBadge>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Col 3: Preview */}
+            <div className="flex-1 flex flex-col min-w-0 p-5 overflow-y-auto">
+              {!selectedTemplate ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="f-mono text-sm text-ink-3">← Selecciona una plantilla</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="f-mono text-[10px] uppercase text-ink-3 tracking-widest">
+                      Previsualització {previewLead ? `— ${previewLead.name}` : ''}
+                    </div>
+                    {selectedList.length > 1 && (
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setPreviewIdx(i => Math.max(0, i - 1))}
+                          disabled={previewIdx === 0}
+                          className="p-1 text-ink-3 hover:text-ink-0 disabled:opacity-30">
+                          <I.ChevronLeft size={14} />
+                        </button>
+                        <span className="f-mono text-[10px] text-ink-3">{previewIdx + 1}/{selectedList.length}</span>
+                        <button onClick={() => setPreviewIdx(i => Math.min(selectedList.length - 1, i + 1))}
+                          disabled={previewIdx === selectedList.length - 1}
+                          className="p-1 text-ink-3 hover:text-ink-0 disabled:opacity-30">
+                          <I.Chevron size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {!previewLead ? (
+                    <p className="f-mono text-xs text-ink-3 italic">Selecciona algun lead per veure el preview.</p>
+                  ) : channel === 'WHATSAPP' ? (
+                    /* Preview WA */
+                    <div className="bg-[#0a1929] rounded-lg p-4 flex-1 min-h-[200px]">
+                      <div className="flex justify-end">
+                        <div className="bg-[#005c4b] text-white rounded-lg rounded-tr-sm px-3 py-2 max-w-[85%]">
+                          <pre className="f-mono text-[12px] whitespace-pre-wrap leading-relaxed">{previewBody}</pre>
+                          <div className="f-mono text-[9px] text-white/50 text-right mt-1">ara ✓✓</div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Preview Email */
+                    <div className="border border-border-base rounded overflow-hidden flex-1">
+                      <div className="bg-bg-1 px-4 py-3 border-b border-border-base space-y-1">
+                        <div className="flex gap-2">
+                          <span className="f-mono text-[10px] text-ink-3 w-16">De:</span>
+                          <span className="f-mono text-[10px] text-ink-1">hola@amgdl.com</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="f-mono text-[10px] text-ink-3 w-16">Per a:</span>
+                          <span className="f-mono text-[10px] text-ink-1">{previewLead.email}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="f-mono text-[10px] text-ink-3 w-16">Assumpte:</span>
+                          <span className="f-mono text-[10px] text-accent-light font-bold">{previewSubject}</span>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <pre className="f-mono text-xs text-ink-1 whitespace-pre-wrap leading-relaxed">{previewBody}</pre>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-border-base flex items-center justify-between shrink-0">
+            <span className="f-mono text-xs text-ink-2">
+              Els leads en estat &quot;Nou&quot; passaran a &quot;Contactat&quot; automàticament.
+            </span>
+            <div className="flex gap-2">
+              <AMGButton variant="ghost" onClick={onClose}>Cancel·lar</AMGButton>
+              <AMGButton
+                icon={channel === 'WHATSAPP' ? I.Smartphone : I.Mail}
+                loading={sending}
+                disabled={!canSend}
+                onClick={() => onSend(selectedTemplate!.id, Array.from(selectedLeads), channel)}
+              >
+                Enviar a {selectedLeads.size} lead{selectedLeads.size !== 1 ? 's' : ''}
+              </AMGButton>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
 
 function DemoModal({
   lead,
@@ -411,11 +667,18 @@ export default function LeadsPage() {
   const locale = params.locale as string;
 
   const [showOutreach, setShowOutreach] = useState(false);
+  const [showTemplateSend, setShowTemplateSend] = useState(false);
   const [demoLead, setDemoLead] = useState<Lead | null>(null);
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ['leads'],
     queryFn: getLeads,
+    enabled: !!user,
+  });
+
+  const { data: templates = [] } = useQuery({
+    queryKey: ['templates'],
+    queryFn: listTemplates,
     enabled: !!user,
   });
 
@@ -454,6 +717,18 @@ export default function LeadsPage() {
     onError: () => toast('error', 'Error enviant els correus'),
   });
 
+  const { mutate: doSendTemplate, isPending: sendingTemplate } = useMutation({
+    mutationFn: ({ templateId, leadIds, channel }: { templateId: string; leadIds: string[]; channel: string }) =>
+      sendTemplate({ templateId, leadIds, channel }),
+    onSuccess: (data) => {
+      toast('success', `${data.sent} missatge${data.sent !== 1 ? 's' : ''} enviat${data.sent !== 1 ? 's' : ''}${data.failed ? ` · ${data.failed} error${data.failed !== 1 ? 's' : ''}` : ''}`);
+      setShowTemplateSend(false);
+      qc.invalidateQueries({ queryKey: ['leads'] });
+      qc.invalidateQueries({ queryKey: ['leads-stats'] });
+    },
+    onError: () => toast('error', 'Error enviant la plantilla'),
+  });
+
   const leadsByStage = STAGES.reduce<Record<string, Lead[]>>((acc, stage) => {
     acc[stage] = (leads as Lead[]).filter(l => l.stage === stage);
     return acc;
@@ -473,6 +748,9 @@ export default function LeadsPage() {
             </AMGButton>
             <AMGButton variant="secondary" icon={I.Mail} onClick={() => setShowOutreach(true)}>
               Enviar demo
+            </AMGButton>
+            <AMGButton variant="secondary" icon={I.Smartphone} onClick={() => setShowTemplateSend(true)}>
+              Enviar plantilla
             </AMGButton>
             <AMGButton icon={I.Plus} onClick={() => router.push(`/${locale}/portal/leads/new`)}>
               Nou Lead
@@ -611,6 +889,17 @@ export default function LeadsPage() {
           lead={demoLead}
           onClose={() => setDemoLead(null)}
           onCreated={() => setDemoLead(null)}
+        />,
+        document.body
+      )}
+
+      {showTemplateSend && typeof document !== 'undefined' && createPortal(
+        <TemplateSendModal
+          leads={leads as Lead[]}
+          templates={templates}
+          onClose={() => setShowTemplateSend(false)}
+          onSend={(templateId, leadIds, channel) => doSendTemplate({ templateId, leadIds, channel })}
+          sending={sendingTemplate}
         />,
         document.body
       )}

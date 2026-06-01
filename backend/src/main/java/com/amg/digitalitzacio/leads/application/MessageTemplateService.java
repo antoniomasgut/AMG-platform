@@ -17,7 +17,7 @@ import java.util.UUID;
 public class MessageTemplateService {
 
     // DTO d'entrada per a crear i actualitzar plantilles
-    public record TemplateRequest(String name, String type, String subject, String body) {}
+    public record TemplateRequest(String name, String type, String sector, String subject, String body) {}
 
     private final MessageTemplateRepository templateRepository;
 
@@ -32,6 +32,7 @@ public class MessageTemplateService {
                 .tenantId(principal.tenantId())
                 .name(request.name())
                 .type(request.type())
+                .sector(request.sector())
                 .subject(request.subject())
                 .body(request.body())
                 .build();
@@ -48,6 +49,7 @@ public class MessageTemplateService {
 
         if (request.name() != null)    template.setName(request.name());
         if (request.type() != null)    template.setType(request.type());
+        if (request.sector() != null)  template.setSector(request.sector());
         if (request.subject() != null) template.setSubject(request.subject());
         if (request.body() != null)    template.setBody(request.body());
 

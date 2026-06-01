@@ -33,6 +33,10 @@ public class MessageTemplate {
     @Column(nullable = false, length = 20)
     private String type;
 
+    // Sector objectiu: restaurant, comerc, serveis, turisme, salut... null = general
+    @Column(length = 50)
+    private String sector;
+
     // Només per a tipus EMAIL; pot ser null
     @Column(length = 200)
     private String subject;

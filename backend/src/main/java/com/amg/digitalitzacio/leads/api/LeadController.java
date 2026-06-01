@@ -125,6 +125,14 @@ public class LeadController {
         return ResponseEntity.ok(leadService.sendOutreach(request, principal));
     }
 
+    @PostMapping("/send-template")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<Map<String, Integer>> sendTemplate(
+            @RequestBody SendTemplateRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(leadService.sendTemplate(request, principal));
+    }
+
     // --- Activities ---
 
     @GetMapping("/{leadId}/activities")

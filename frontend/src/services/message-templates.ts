@@ -6,6 +6,7 @@ export interface MessageTemplate {
   id: string;
   name: string;
   type: TemplateType;
+  sector: string | null;
   subject: string | null;
   body: string;
   createdAt: string;
@@ -15,9 +16,21 @@ export interface MessageTemplate {
 export interface TemplateRequest {
   name: string;
   type: TemplateType;
+  sector?: string;
   subject?: string;
   body: string;
 }
+
+export const SECTORS = [
+  { key: 'restaurant', label: 'Restaurants / Bars' },
+  { key: 'comerc', label: 'Comerç local' },
+  { key: 'serveis', label: 'Serveis professionals' },
+  { key: 'turisme', label: 'Turisme / Allotjament' },
+  { key: 'salut', label: 'Salut / Bellesa' },
+  { key: 'construccio', label: 'Construcció / Reforma' },
+  { key: 'automoció', label: 'Automoció' },
+  { key: 'educacio', label: 'Educació / Formació' },
+] as const;
 
 export const listTemplates = () =>
   apiFetch<MessageTemplate[]>('/leads/templates');

@@ -1,12 +1,15 @@
 package com.amg.digitalitzacio.leads.application;
 
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.auth.domain.UserRepository;
 import com.amg.digitalitzacio.leads.api.dto.*;
 import com.amg.digitalitzacio.leads.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,12 +21,16 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class LeadService {
 
     private final LeadRepository leadRepository;
     private final ActivityRepository activityRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final MessageTemplateRepository messageTemplateRepository;
+    private final WhatsAppChannel whatsAppChannel;
+    private final SystemConfigService sysConfig;
 
     public LeadResponse createLead(LeadRequest request, UserPrincipal principal) {
         UUID tenantId = principal.tenantId();
@@ -285,6 +292,73 @@ public class LeadService {
             }
         }
         return Map.of("sent", sent);
+    }
+
+    public Map<String, Integer> sendTemplate(SendTemplateRequest request, UserPrincipal principal) {
+        var template = messageTemplateRepository.findById(request.templateId())
+                .orElseThrow(() -> new ResourceNotFoundException("Template not found: " + request.templateId()));
+
+        boolean isWhatsapp = "WHATSAPP".equalsIgnoreCase(request.channel())
+                || "WHATSAPP".equalsIgnoreCase(template.getType());
+        String fromWa = sysConfig.get("TWILIO_WHATSAPP_FROM");
+
+        int sent = 0, failed = 0;
+        for (UUID leadId : request.leadIds()) {
+            Lead lead = leadRepository.findById(leadId).orElse(null);
+            if (lead == null) { failed++; continue; }
+            verifyAccess(lead, principal);
+
+            String body    = substitute(template.getBody(), lead);
+            String subject = template.getSubject() != null ? substitute(template.getSubject(), lead) : template.getName();
+
+            try {
+                if (isWhatsapp) {
+                    if (lead.getPhone() == null || lead.getPhone().isBlank()) { failed++; continue; }
+                    whatsAppChannel.sendMessage(
+                        fromWa != null ? fromWa : "",
+                        normalizePhone(lead.getPhone()),
+                        body
+                    );
+                    logActivity(leadId, principal.id(), ActivityType.WHATSAPP,
+                            "WhatsApp enviat [" + template.getName() + "]: " + body.substring(0, Math.min(80, body.length())));
+                } else {
+                    if (lead.getEmail() == null || lead.getEmail().isBlank()) { failed++; continue; }
+                    emailService.sendEmail(lead.getEmail(), subject, body);
+                    logActivity(leadId, principal.id(), ActivityType.EMAIL,
+                            "Email enviat [" + template.getName() + "]: " + subject);
+                }
+                if (lead.getStage() == PipelineStage.NEW) {
+                    lead.setStage(PipelineStage.CONTACTED);
+                    leadRepository.save(lead);
+                }
+                sent++;
+            } catch (Exception e) {
+                log.warn("sendTemplate failed for lead {}: {}", leadId, e.getMessage());
+                failed++;
+            }
+        }
+        return Map.of("sent", sent, "failed", failed);
+    }
+
+    private String substitute(String text, Lead lead) {
+        return text
+                .replace("{{nom}}", lead.getName() != null ? lead.getName() : "")
+                .replace("{{email}}", lead.getEmail() != null ? lead.getEmail() : "")
+                .replace("{{telefon}}", lead.getPhone() != null ? lead.getPhone() : "");
+    }
+
+    private String normalizePhone(String phone) {
+        String digits = phone.replaceAll("\\D", "");
+        return digits.length() == 9 ? "+34" + digits : "+" + digits;
+    }
+
+    private void logActivity(UUID leadId, UUID userId, ActivityType type, String description) {
+        Activity activity = new Activity();
+        activity.setLeadId(leadId);
+        activity.setUserId(userId);
+        activity.setType(type);
+        activity.setDescription(description);
+        activityRepository.save(activity);
     }
 
     private Lead findLead(UUID id) {
