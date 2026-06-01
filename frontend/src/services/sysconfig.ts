@@ -21,3 +21,13 @@ export const setSystemConfig = (key: string, value: string) =>
 
 export const deleteSystemConfig = (key: string) =>
   apiFetch<void>(`/admin/system-config/${key}`, { method: 'DELETE' });
+
+export const testSystemConfig = (key: string) =>
+  apiFetch<{ ok: boolean; message: string }>(`/admin/system-config/${key}/test`, { method: 'POST' });
+
+export const TESTABLE_KEYS = new Set([
+  'BREVO_API_KEY',
+  'ANTHROPIC_API_KEY',
+  'TELEGRAM_BOT_TOKEN',
+  'GOOGLE_PLACES_API_KEY',
+]);

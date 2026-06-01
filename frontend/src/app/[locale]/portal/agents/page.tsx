@@ -35,7 +35,7 @@ import {
   testKnowledgeResponse,
   type KnowledgeBase,
 } from '@/services/knowledge';
-import { listContacts, clearContactMemory } from '@/services/agents-conversational';
+import { listContacts, clearContactMemory, testTenantEmail } from '@/services/agents-conversational';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
 import { I } from '@/components/ui/icons';
@@ -75,6 +75,8 @@ export default function AgentsPage() {
   const [whatsappMetaId, setWhatsappMetaId] = useState('');
   const [emailDraft, setEmailDraft] = useState('');
   const [senderEmailDraft, setSenderEmailDraft] = useState('');
+  const [emailTestResult, setEmailTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [emailTesting, setEmailTesting] = useState(false);
   const [senderNameDraft, setSenderNameDraft] = useState('');
   const [replyToDraft, setReplyToDraft] = useState('');
   const [testMessage, setTestMessage] = useState('Hola! Pots presentar-te breument?');
@@ -679,6 +681,36 @@ export default function AgentsPage() {
                       </button>
                     </div>
                     <p className="text-xs text-ink-3">Quan el client faci &quot;Respondre&quot; al correu del bot, el missatge arribarà a aquesta adreça.</p>
+                  </div>
+
+                  {/* Test email */}
+                  <div className="border-t border-border-base pt-3">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <button
+                        onClick={async () => {
+                          setEmailTesting(true);
+                          setEmailTestResult(null);
+                          try {
+                            const res = await testTenantEmail(tenantId!);
+                            setEmailTestResult(res);
+                          } catch {
+                            setEmailTestResult({ ok: false, message: 'Error connectant amb el servidor.' });
+                          } finally {
+                            setEmailTesting(false);
+                          }
+                        }}
+                        disabled={emailTesting}
+                        className="px-3 py-1.5 border border-border-base rounded text-xs hover:border-accent hover:text-accent transition disabled:opacity-50"
+                      >
+                        {emailTesting ? 'Enviant...' : '✉ Provar configuració d\'email'}
+                      </button>
+                      <span className="text-xs text-ink-3">T'enviarem un email de prova al teu correu per verificar que funciona.</span>
+                    </div>
+                    {emailTestResult && (
+                      <div className={`mt-2 p-2 rounded text-xs f-mono ${emailTestResult.ok ? 'bg-success/10 text-success border border-success/30' : 'bg-danger/10 text-danger border border-danger/30'}`}>
+                        {emailTestResult.ok ? '✓ ' : '✗ '}{emailTestResult.message}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

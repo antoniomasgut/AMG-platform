@@ -225,3 +225,6 @@ export const getAgentHealth = (tenantId: string) =>
 
 export const clearContactMemory = (tenantId: string, contactId: string) =>
   apiFetch<void>(`/agents/contacts/${tenantId}/${contactId}/memory`, { method: 'DELETE' });
+
+export const testTenantEmail = (tenantId: string) =>
+  apiFetch<{ ok: boolean; message: string }>(`/agents/conversational/${tenantId}/email/test`, { method: 'POST' });

@@ -3,7 +3,9 @@ package com.amg.digitalitzacio.agents.api;
 import com.amg.digitalitzacio.agents.api.dto.*;
 import com.amg.digitalitzacio.agents.application.ContactService;
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
+import com.amg.digitalitzacio.agents.application.channel.EmailChannel;
 import com.amg.digitalitzacio.agents.domain.Conversation;
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.agents.domain.ConversationRepository;
 import com.amg.digitalitzacio.agents.domain.ConversationRole;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
@@ -41,6 +43,8 @@ public class ConversationalAgentController {
     private final TelegramBotClient telegramBotClient;
     private final SystemConfigService systemConfigService;
     private final com.amg.digitalitzacio.agents.application.AgentHealthService agentHealthService;
+    private final EmailChannel emailChannel;
+    private final TenantRepository tenantRepository;
 
     @GetMapping("/{tenantId}/conversations")
     public ResponseEntity<List<ConversationResponse>> getConversations(
@@ -493,6 +497,42 @@ public class ConversationalAgentController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<AgentHealthResponse> getAgentHealth(@PathVariable UUID tenantId) {
         return ResponseEntity.ok(agentHealthService.calculate(tenantId));
+    }
+
+    @PostMapping("/{tenantId}/email/test")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<Map<String, Object>> testEmail(@PathVariable UUID tenantId) {
+        var principal = getPrincipal();
+        String recipientEmail = principal.email();
+
+        var aiConfig = tenantAIConfigRepository.findByTenantId(tenantId).orElse(null);
+        String senderEmail = aiConfig != null && aiConfig.getSenderEmail() != null ? aiConfig.getSenderEmail() : null;
+        String senderName  = aiConfig != null && aiConfig.getSenderName()  != null ? aiConfig.getSenderName()  : "AMG Bot";
+        String replyTo     = aiConfig != null && aiConfig.getReplyToEmail() != null ? aiConfig.getReplyToEmail() : null;
+
+        try {
+            emailChannel.sendMessage(
+                recipientEmail,
+                "Prova de configuració d'email — AMG",
+                "Hola!\n\nEls emails del bot s'envien correctament.\n\nRemitent configurat: " +
+                (senderEmail != null ? senderEmail : "noreply@amgdl.com (per defecte)") +
+                "\nRespostes a: " + (replyTo != null ? replyTo : "no configurat") +
+                "\n\nPer respondre a aquest email pots comprovar que arriba a l'adreça correcta.\n\nAMG Digitalització",
+                senderEmail, senderName, replyTo
+            );
+            return ResponseEntity.ok(Map.of(
+                "ok", true,
+                "message", "Email de prova enviat a " + recipientEmail + ". Comprova la safata d'entrada. " +
+                           "Fes clic a 'Respondre' per verificar que el Reply-To és correcte."
+            ));
+        } catch (Exception e) {
+            log.error("Email test failed for tenant {}: {}", tenantId, e.getMessage());
+            return ResponseEntity.ok(Map.of(
+                "ok", false,
+                "message", "Error enviant l'email: " + e.getMessage() +
+                           ". Comprova que BREVO_API_KEY està configurada a Admin → API Keys del Sistema."
+            ));
+        }
     }
 
     private UserPrincipal getPrincipal() {

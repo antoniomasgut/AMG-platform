@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { getSystemConfig, setSystemConfig, deleteSystemConfig, type ConfigStatus } from '@/services/sysconfig';
+import { getSystemConfig, setSystemConfig, deleteSystemConfig, testSystemConfig, TESTABLE_KEYS, type ConfigStatus } from '@/services/sysconfig';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
@@ -38,6 +38,21 @@ function KeyRow({ item, onSave, onDelete }: {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState('');
   const [show, setShow] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await testSystemConfig(item.key);
+      setTestResult(res);
+    } catch {
+      setTestResult({ ok: false, message: 'Error connectant amb el servidor.' });
+    } finally {
+      setTesting(false);
+    }
+  };
 
   return (
     <div className={`px-4 sm:px-5 py-4 border-b border-border-base last:border-0 ${!item.configured ? 'bg-danger/[0.03]' : ''}`}>
@@ -52,7 +67,12 @@ function KeyRow({ item, onSave, onDelete }: {
           <p className="f-mono text-label text-ink-3 text-xs mt-0.5 opacity-60">{item.key}</p>
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+          {item.configured && TESTABLE_KEYS.has(item.key) && (
+            <AMGButton size="sm" variant="secondary" onClick={handleTest} disabled={testing}>
+              {testing ? '…' : 'Provar'}
+            </AMGButton>
+          )}
           {!item.configured && (
             <AMGButton size="sm" icon={I.Plus} onClick={() => setEditing(true)}>
               Configurar
@@ -76,6 +96,12 @@ function KeyRow({ item, onSave, onDelete }: {
           )}
         </div>
       </div>
+
+      {testResult && (
+        <div className={`mt-3 p-3 rounded text-xs f-mono ${testResult.ok ? 'bg-success/10 text-success border border-success/30' : 'bg-danger/10 text-danger border border-danger/30'}`}>
+          {testResult.ok ? '✓ ' : '✗ '}{testResult.message}
+        </div>
+      )}
 
       {editing && (
         <div className="mt-3 flex gap-2 items-start">

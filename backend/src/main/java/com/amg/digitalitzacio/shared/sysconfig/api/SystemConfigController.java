@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.shared.sysconfig.api;
 
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService.ConfigStatus;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigTestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +18,7 @@ import java.util.Map;
 public class SystemConfigController {
 
     private final SystemConfigService service;
+    private final SystemConfigTestService testService;
 
     @GetMapping
     public List<ConfigStatus> list() {
@@ -48,5 +50,11 @@ public class SystemConfigController {
     public ResponseEntity<Void> delete(@PathVariable String key) {
         service.delete(key);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{key}/test")
+    public ResponseEntity<Map<String, Object>> test(@PathVariable String key) {
+        var result = testService.test(key);
+        return ResponseEntity.ok(Map.of("ok", result.ok(), "message", result.message()));
     }
 }
