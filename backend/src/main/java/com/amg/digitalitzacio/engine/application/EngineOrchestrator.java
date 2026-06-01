@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,9 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class EngineOrchestrator implements EngineService {
+
+    @Value("${app.landing.base-domain:webs.amgdl.com}")
+    private String landingBaseDomain;
 
     private final LandingRepository landingRepository;
     private final LandingVersionRepository landingVersionRepository;
@@ -316,7 +320,7 @@ public class EngineOrchestrator implements EngineService {
 
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n" +
-               "  <url><loc>https://" + (landing.getCustomDomain() != null ? landing.getCustomDomain() : slug + ".amg.cat") +
+               "  <url><loc>https://" + (landing.getCustomDomain() != null ? landing.getCustomDomain() : slug + "." + landingBaseDomain) +
                "</loc></url>\n" +
                "</urlset>";
     }
@@ -510,7 +514,7 @@ public class EngineOrchestrator implements EngineService {
         if (landing.getCustomDomain() != null && landing.getDomainStatus() == DomainStatus.VERIFIED) {
             return "https://" + landing.getCustomDomain();
         }
-        return "https://" + landing.getSlug() + ".amg.cat";
+        return "https://" + landing.getSlug() + "." + landingBaseDomain;
     }
 
     private DomainConfigResponse toDomainConfigResponse(Landing landing) {
@@ -518,7 +522,7 @@ public class EngineOrchestrator implements EngineService {
                 landing.getCustomDomain(),
                 landing.getManagedDomain(),
                 landing.getDomainStatus().name(),
-                "Afegeix un registre CNAME de " + landing.getCustomDomain() + " a landings.amg.cat",
+                "Afegeix un registre CNAME de " + landing.getCustomDomain() + " a " + landingBaseDomain,
                 landing.getDomainRegistrar(),
                 landing.getDomainRenewalDate(),
                 landing.getDomainRenewalPrice()

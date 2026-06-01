@@ -57,6 +57,9 @@ app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
 
+  landing:
+    base-domain: ${LANDING_BASE_DOMAIN:webs.amgdl.com}
+
   storage:
     path: ${STORAGE_PATH:/data/assets}
     max-file-size: 5242880
