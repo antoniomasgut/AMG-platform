@@ -210,7 +210,7 @@ public class ProfileManagementService implements ProfileService {
     @Override
     @Transactional(readOnly = true)
     public List<ProfileResponse.ServiceResponse> listServices() {
-        return catalogServiceRepository.findAll().stream()
+        return catalogServiceRepository.findByPhaseIdIsNullOrderByNameAsc().stream()
                 .map(s -> {
                     var fields = credentialFieldRepository.findByServiceIdOrderBySortOrder(s.getId());
                     return toServiceResponse(s, fields);
