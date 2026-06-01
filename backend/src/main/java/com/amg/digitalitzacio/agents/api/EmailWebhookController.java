@@ -22,19 +22,22 @@ public class EmailWebhookController {
     private final TenantChatLinkRepository chatLinkRepository;
 
     /**
-     * Webhook genèric — Brevo envia tots els emails entrants aquí.
-     * Enruta al tenant correcte basant-se en l'adreça de destí (camp To).
-     * Configurar a Brevo: Inbound Parsing → webhook = https://api.amgdl.com/api/v1/agents/email/inbound
+     * Webhook genèric — Mailgun envia tots els emails entrants aquí (multipart form).
+     * Enruta al tenant correcte basant-se en l'adreça de destí (camp recipient/To).
+     * Configurar a Mailgun: Routes → catch-all *@inbound.amgdl.com → forward webhook
+     * URL: https://api.amgdl.com/api/v1/agents/email/inbound
      */
     @PostMapping("/inbound")
-    public ResponseEntity<String> handleInbound(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<String> handleInbound(@RequestParam Map<String, String> params) {
         try {
-            String toRaw   = firstNonNull(payload, "To", "to");
-            String fromRaw = firstNonNull(payload, "From", "from");
-            String text    = firstNonNull(payload, "Text", "text", "TextBody");
+            // Mailgun: recipient (just email), sender (just email), body-plain
+            // Fallback: To/From/Text per compatibilitat amb altres proveïdors
+            String toRaw   = firstNonNullParam(params, "recipient", "To", "to");
+            String fromRaw = firstNonNullParam(params, "sender", "From", "from");
+            String text    = firstNonNullParam(params, "body-plain", "Text", "text", "TextBody");
 
             if (toRaw == null || fromRaw == null || text == null) {
-                log.warn("Inbound email missing To/From/Text: {}", payload.keySet());
+                log.warn("Inbound email missing recipient/From/body-plain: keys={}", params.keySet());
                 return ResponseEntity.ok("OK");
             }
 
@@ -55,19 +58,18 @@ public class EmailWebhookController {
 
     /**
      * Webhook per tenant específic (URL directa amb tenantId).
-     * Útil per a tenants amb domini propi que configuren el seu propi inbound a Brevo.
      * URL: https://api.amgdl.com/api/v1/agents/email/webhook/{tenantId}
      */
     @PostMapping("/webhook/{tenantId}")
     public ResponseEntity<String> handleWebhook(
             @PathVariable UUID tenantId,
-            @RequestBody Map<String, Object> payload) {
+            @RequestParam Map<String, String> params) {
         try {
-            String fromRaw = firstNonNull(payload, "From", "from");
-            String text    = firstNonNull(payload, "Text", "text", "TextBody");
+            String fromRaw = firstNonNullParam(params, "sender", "From", "from");
+            String text    = firstNonNullParam(params, "body-plain", "Text", "text", "TextBody");
 
             if (fromRaw == null || text == null) {
-                log.warn("Missing From or Text in email webhook for tenant {}", tenantId);
+                log.warn("Missing sender/body-plain in email webhook for tenant {}", tenantId);
                 return ResponseEntity.ok("OK");
             }
 
@@ -94,10 +96,10 @@ public class EmailWebhookController {
         return raw.trim().toLowerCase();
     }
 
-    private String firstNonNull(Map<String, Object> payload, String... keys) {
+    private String firstNonNullParam(Map<String, String> params, String... keys) {
         for (String key : keys) {
-            Object val = payload.get(key);
-            if (val != null && !val.toString().isBlank()) return val.toString();
+            String val = params.get(key);
+            if (val != null && !val.isBlank()) return val;
         }
         return null;
     }
