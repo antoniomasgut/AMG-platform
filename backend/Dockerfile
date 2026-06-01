@@ -23,6 +23,6 @@ USER amg
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget -qO- http://localhost:8080/api/v1/ops/health >/dev/null 2>&1 || exit 1
+  CMD wget -qO- http://127.0.0.1:8080/api/v1/ops/health >/dev/null 2>&1 || exit 1
 
 ENTRYPOINT ["java", "-Djava.net.preferIPv4Stack=true", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
