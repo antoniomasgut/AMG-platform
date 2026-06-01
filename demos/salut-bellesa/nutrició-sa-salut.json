@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "title": "Centre Nutrició Sa Salut — Dietista i Nutricionista a Inca",
+    "slug": "nutrició-sa-salut",
+    "metaDescription": "Consulta de nutrició i dietètica a Inca, Mallorca. Pèrdua de pes, nutrició esportiva, nutrició clínica i seguiment online. Primera visita + pla nutricional 90 €.",
+    "sector": "NUTRICIONISTA"
+  },
+  "styles": {
+    "fontFamily": "'Inter', sans-serif",
+    "primaryColor": "#33691e",
+    "secondaryColor": "#dcedc8",
+    "bgColor": "#f9fdf5",
+    "textColor": "#1a202c",
+    "borderRadius": "10px"
+  },
+  "content": {
+    "blocks": [
+      {
+        "id": "blk_hero",
+        "type": "hero",
+        "props": {
+          "title": "Menja millor, viu millor",
+          "subtitle": "Consulta de nutrició personalitzada a Inca. Plans nutricionals adaptats als teus objectius, el teu estil de vida i les teves preferències. Sense dietes miraculoses.",
+          "ctaText": "Reserva la primera consulta",
+          "ctaUrl": "#contacte",
+          "bgImageUrl": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200&q=80"
+        }
+      },
+      {
+        "id": "blk_about",
+        "type": "text",
+        "props": {
+          "title": "Nutrició basada en evidència científica",
+          "body": "A Centre Nutrició Sa Salut treballem amb un enfocament pràctic i realista. No existeixen dietes màgiques ni solucions ràpides: existeix una alimentació equilibrada adaptada a cada persona.\n\nEl nostre equip de dietistes-nutricionistes col·legiats (Col·legi Oficial de Dietistes-Nutricionistes de les Illes Balears) combina la millor evidència científica amb un tracte proper i motivador.\n\nOferirem sessions presencials a Inca i seguiment online per a tota Mallorca.",
+          "textAlign": "left"
+        }
+      },
+      {
+        "id": "blk_serveis",
+        "type": "services",
+        "props": {
+          "title": "Programes nutricionals",
+          "items": [
+            {
+              "icon": "trending-down",
+              "title": "Pèrdua de Pes",
+              "description": "Plans sostenibles i personalitzats sense passar fam. Aprendrás a menjar de forma saludable per a tota la vida, no només per a una temporada."
+            },
+            {
+              "icon": "zap",
+              "title": "Nutrició Esportiva",
+              "description": "Optimitza el teu rendiment esportiu amb una alimentació adequada. Periodització nutricional, estratègies pre/post entrenament i suplementació basada en evidència."
+            },
+            {
+              "icon": "heart",
+              "title": "Nutrició Clínica",
+              "description": "Tractament nutricional de patologies: diabetis tipus 2, síndrome metabòlica, malalties cardiovasculars, al·lèrgies i intoleràncies, síndrome de budell irritable i celiaquia."
+            },
+            {
+              "icon": "monitor",
+              "title": "Seguiment Online",
+              "description": "100 % del seguiment es pot fer online: videoconsultes, plans per WhatsApp i app de seguiment. Ideal si tens poc temps o no pots desplaçar-te."
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_preus",
+        "type": "services",
+        "props": {
+          "title": "Com funciona i quant costa",
+          "items": [
+            {
+              "icon": "tag",
+              "title": "Primera visita + pla nutricional",
+              "description": "90 € — inclou anamnesi completa, valoració antropomètrica, anàlisi dels hàbits alimentaris i pla nutricional personalitzat"
+            },
+            {
+              "icon": "tag",
+              "title": "Visita de seguiment mensual",
+              "description": "45 € / mes — inclou revisió del pla, ajustos i suport continu per WhatsApp"
+            },
+            {
+              "icon": "tag",
+              "title": "Programa intensiu 3 mesos",
+              "description": "200 € (estalvia 70 €) — primera visita + 3 mesos de seguiment setmanal. El més popular per a pèrdua de pes."
+            },
+            {
+              "icon": "tag",
+              "title": "Seguiment online",
+              "description": "Mateixos preus que la modalitat presencial. Videoconsulta + app de registre d'alimentació inclosa."
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_testimonials",
+        "type": "testimonials",
+        "props": {
+          "title": "Resultats reals de pacients reals",
+          "items": [
+            {
+              "name": "Joana T.",
+              "text": "Vaig perdre 14 kg en 5 mesos sense passar gana. El que m'ha canviat la vida no és només el pes, sinó aprendre a menjar bé per sempre. El millor que he fet per a la meva salut.",
+              "avatarUrl": ""
+            },
+            {
+              "name": "Miquel S.",
+              "text": "Corredor de marató. Gràcies a la nutrició esportiva personalitzada vaig millorar el meu temps en 18 minuts. Increïble la diferència que fa menjar bé en el rendiment.",
+              "avatarUrl": ""
+            },
+            {
+              "name": "Rosa M.",
+              "text": "Tenia diabetis tipus 2 i gràcies al pla nutricional he aconseguit reduir la medicació. El seguiment és molt proper i motivador. Totalment recomanable.",
+              "avatarUrl": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_faq",
+        "type": "faq",
+        "props": {
+          "title": "Preguntes freqüents",
+          "items": [
+            {
+              "question": "Quina diferència hi ha entre dietista i nutricionista?",
+              "answer": "A Espanya, el títol oficial és Dietista-Nutricionista (Grau Universitari). El nostre equip està format per professionals col·legiats al CODINIB, la qual cosa garanteix formació reglada i actualitzada."
+            },
+            {
+              "question": "Hauré de deixar de menjar el que m'agrada?",
+              "answer": "No. El nostre enfocament és flexible i realista. Adaptem el pla als teus gustos, al teu estil de vida i a les teves circumstàncies. Un pla que no puguis seguir no serveix de res."
+            },
+            {
+              "question": "Funciona el seguiment online igual que el presencial?",
+              "answer": "Sí. Els resultats dels nostres pacients online són equivalents als presencials. Usem videoconsulta per a les visites i una app per al registre diari. Rebràs el mateix suport i atenció."
+            },
+            {
+              "question": "Quan podré veure resultats?",
+              "answer": "Depèn dels teus objectius. Per a pèrdua de pes, la majoria de pacients noten canvis en les primeres 3-4 setmanes. Per a patologies clíniques, els resultats varien, però solen apreciar-se entre 1 i 3 mesos."
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_cta",
+        "type": "cta",
+        "props": {
+          "text": "Comença avui el canvi que sempre has volgut fer. Primera visita + pla nutricional complet per 90 €.",
+          "buttonText": "Reserva la teva primera consulta",
+          "buttonUrl": "#contacte"
+        }
+      },
+      {
+        "id": "blk_contact",
+        "type": "contact-form",
+        "props": {
+          "title": "Reserva la teva consulta",
+          "email": "consulta@sasalut.com",
+          "phone": "+34 971 456 789",
+          "address": "Carrer Major, 28 · Inca, Mallorca"
+        }
+      },
+      {
+        "id": "blk_footer",
+        "type": "footer",
+        "props": {
+          "companyName": "Centre Nutrició Sa Salut",
+          "email": "consulta@sasalut.com",
+          "phone": "+34 971 456 789",
+          "socialLinks": {
+            "instagram": "https://instagram.com/sasalutnuatricio",
+            "facebook": "https://facebook.com/sasalutnuatricio"
+          }
+        }
+      }
+    ]
+  }
+}

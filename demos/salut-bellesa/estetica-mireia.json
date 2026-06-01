@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "title": "Estètica Mireia — Centre de Bellesa a Palma",
+    "slug": "estetica-mireia",
+    "metaDescription": "Centre d'estètica i bellesa a Palma de Mallorca. Depilació làser, tractaments facials, drenatge limfàtic i manicura. Resultats visibles des de la primera sessió.",
+    "sector": "ESTETICA"
+  },
+  "styles": {
+    "fontFamily": "'Inter', sans-serif",
+    "primaryColor": "#c2185b",
+    "secondaryColor": "#f8bbd0",
+    "bgColor": "#fff8f9",
+    "textColor": "#1a202c",
+    "borderRadius": "12px"
+  },
+  "content": {
+    "blocks": [
+      {
+        "id": "blk_hero",
+        "type": "hero",
+        "props": {
+          "title": "La teva bellesa, la nostra passió",
+          "subtitle": "Centre d'estètica avançada al cor de Palma. Depilació làser, tractaments facials i corporals amb tecnologia de darrera generació.",
+          "ctaText": "Reserva la teva cita",
+          "ctaUrl": "#contacte",
+          "bgImageUrl": "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1200&q=80"
+        }
+      },
+      {
+        "id": "blk_serveis",
+        "type": "services",
+        "props": {
+          "title": "Els nostres tractaments",
+          "items": [
+            {
+              "icon": "star",
+              "title": "Depilació Làser",
+              "description": "Tecnologia IPL d'última generació. Resultats permanents en 6-8 sessions. Totes les zones del cos. Apta per a tots els fototips."
+            },
+            {
+              "icon": "heart",
+              "title": "Tractaments Facials",
+              "description": "Hidratació profunda, antiedad, reducció de taques i pigmentació, i neteja facial professional. Resultats visibles des de la primera sessió."
+            },
+            {
+              "icon": "droplet",
+              "title": "Drenatge Limfàtic",
+              "description": "Massatge terapèutic manual que activa la circulació limfàtica, redueix la retenció de líquids i millora l'aspecte de la pell."
+            },
+            {
+              "icon": "sparkles",
+              "title": "Manicura i Pedicura",
+              "description": "Semipermanent, gel, acrílica i tractaments de cura de les ungles. Inclou massatge de mans i peus amb productes premium."
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_about",
+        "type": "text",
+        "props": {
+          "title": "15 anys cuidant la teva bellesa",
+          "body": "A Estètica Mireia creiem que sentir-te bé per dins es reflecteix per fora. Des de 2009, el nostre equip de professionals titulades t'acompanya en cada tractament amb la màxima atenció personalitzada.\n\nUsem únicament productes dermocosmétics d'alta qualitat i equipament homologat. Cada tractament comença amb una consulta gratuïta per valorar el teu cas i recomanar el millor protocol.",
+          "textAlign": "left"
+        }
+      },
+      {
+        "id": "blk_preus",
+        "type": "services",
+        "props": {
+          "title": "Tarifes orientatives",
+          "items": [
+            {
+              "icon": "tag",
+              "title": "Depilació làser — Cames senceres",
+              "description": "80 € / sessió · Pack 6 sessions: 420 € (estalvia 60 €)"
+            },
+            {
+              "icon": "tag",
+              "title": "Facial antiedad",
+              "description": "65 € / sessió · Pack 4 sessions: 240 € (estalvia 20 €)"
+            },
+            {
+              "icon": "tag",
+              "title": "Drenatge limfàtic",
+              "description": "55 € / sessió · Pack 10 sessions: 480 € (estalvia 70 €)"
+            },
+            {
+              "icon": "tag",
+              "title": "Manicura semipermanent",
+              "description": "35 € · Pedicura semipermanent: 40 €"
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_testimonials",
+        "type": "testimonials",
+        "props": {
+          "title": "El que diuen les nostres clientes",
+          "items": [
+            {
+              "name": "Maria C.",
+              "text": "Fa tres anys que faig la depilació làser aquí i el resultat és increïble. El tracte és molt professional i et sents com a casa. Totalment recomanable!",
+              "avatarUrl": ""
+            },
+            {
+              "name": "Laura P.",
+              "text": "El facial antiedad ha canviat la meva pell completament. Després de 4 sessions la meva pell està hidratada, lluminosa i sense taques. Mireia és una professional excel·lent.",
+              "avatarUrl": ""
+            },
+            {
+              "name": "Antònia M.",
+              "text": "El drenatge limfàtic manual que fan aquí és dels millors que he provat. Noto la diferència immediatament, les cames em pesen menys i em sento molt millor.",
+              "avatarUrl": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_faq",
+        "type": "faq",
+        "props": {
+          "title": "Preguntes freqüents",
+          "items": [
+            {
+              "question": "Quantes sessions de làser necessito?",
+              "answer": "Normalment entre 6 i 8 sessions per a una eliminació permanent del cabell. El nombre exacte depèn de la zona, el fototiph de pell i el color del pèl. Et farem una valoració gratuïta prèvia."
+            },
+            {
+              "question": "El làser fa mal?",
+              "answer": "Les tecnologies IPL actuals són molt còmodes. Pots notar una sensació de calor lleu. Usem sistemes de refredament integrats per minimitzar qualsevol molèstia."
+            },
+            {
+              "question": "Quan puc veure resultats en els tractaments facials?",
+              "answer": "En molts tractaments els resultats s'aprecien des de la primera sessió. Per a protocols d'antiedad o despigmentació recomanem un mínim de 4 sessions per a resultats òptims."
+            },
+            {
+              "question": "Podeu atendre en cap de setmana?",
+              "answer": "Sí, obrim dissabtes de 9h a 14h. Tambéé tenim cites entre setmana fins a les 20h. Reserva a través del WhatsApp o trucant al nostre telèfon."
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_cta",
+        "type": "cta",
+        "props": {
+          "text": "Primera consulta gratuïta i sense compromís. Analitzem el teu cas i et recomanem el millor tractament.",
+          "buttonText": "Reserva la teva consulta gratuïta",
+          "buttonUrl": "#contacte"
+        }
+      },
+      {
+        "id": "blk_contact",
+        "type": "contact-form",
+        "props": {
+          "title": "Contacta amb nosaltres",
+          "email": "info@esteticamireia.com",
+          "phone": "+34 971 234 567",
+          "address": "Carrer dels Oms, 42 · Palma de Mallorca"
+        }
+      },
+      {
+        "id": "blk_footer",
+        "type": "footer",
+        "props": {
+          "companyName": "Estètica Mireia",
+          "email": "info@esteticamireia.com",
+          "phone": "+34 971 234 567",
+          "socialLinks": {
+            "instagram": "https://instagram.com/esteticamireia",
+            "facebook": "https://facebook.com/esteticamireia"
+          }
+        }
+      }
+    ]
+  }
+}

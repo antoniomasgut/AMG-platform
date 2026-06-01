@@ -1,0 +1,188 @@
+{
+  "meta": {
+    "title": "Clínica Fisio Llevant — Fisioteràpia a Manacor",
+    "slug": "fisio-llevant",
+    "metaDescription": "Clínica de fisioteràpia i rehabilitació a Manacor. Fisio esportiu, rehabilitació postquirúrgica, pilates clínic i drenatge limfàtic. Primera visita 60 €.",
+    "sector": "FISIOTERAPEUTA"
+  },
+  "styles": {
+    "fontFamily": "'Inter', sans-serif",
+    "primaryColor": "#00695c",
+    "secondaryColor": "#e0f2f1",
+    "bgColor": "#f9fdfc",
+    "textColor": "#1a202c",
+    "borderRadius": "8px"
+  },
+  "content": {
+    "blocks": [
+      {
+        "id": "blk_hero",
+        "type": "hero",
+        "props": {
+          "title": "Recupera el teu moviment",
+          "subtitle": "Clínica de fisioteràpia i rehabilitació a Manacor. Tractaments personalitzats per a lesions esportives, dolor crònic i recuperació postquirúrgica.",
+          "ctaText": "Demana cita ara",
+          "ctaUrl": "#contacte",
+          "bgImageUrl": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&q=80"
+        }
+      },
+      {
+        "id": "blk_serveis",
+        "type": "services",
+        "props": {
+          "title": "Els nostres serveis",
+          "items": [
+            {
+              "icon": "activity",
+              "title": "Fisioteràpia General",
+              "description": "Tractament del dolor muscular i articular, contractures, cervicàlgies, lumbàlgies i lesions del sistema musculoesquelètic per a totes les edats."
+            },
+            {
+              "icon": "zap",
+              "title": "Fisioterapia Esportiva",
+              "description": "Especialitzats en lesions esportives: esquinços, tendinitis, ruptures musculars, síndrome del corredor. Recuperació ràpida per tornar a l'esport."
+            },
+            {
+              "icon": "heart",
+              "title": "Pilates Clínic",
+              "description": "Pilates terapèutic supervisat per fisioterapeuta. Ideal per a dolor lumbar crònic, herniacions discals, rehabilitació postpart i millora postural."
+            },
+            {
+              "icon": "droplet",
+              "title": "Drenatge Limfàtic",
+              "description": "Tècnica manual Vodder per a edemes, post-cirurgia, limfedema, síndrome de cames pesades i recuperació oncològica."
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_about",
+        "type": "text",
+        "props": {
+          "title": "Un equip de professionals al teu servei",
+          "body": "A Fisio Llevant comptem amb un equip de fisioterapeutes col·legiats amb formació especialitzada en fisioteràpia esportiva, osteopatia i teràpia manual avançada.\n\nLa nostra clínica disposa d'equipament de diagnosi i tractament de darrera generació: ultrasonoteràpia, electroteràpia, teràpia làser, ondas de choc i sala de pilates completament equipada.\n\nTreballem amb les principals mútues i assegurances mèdiques: Sanitas, Adeslas, Asisa, DKV i SegurCaixa.",
+          "textAlign": "left"
+        }
+      },
+      {
+        "id": "blk_preus",
+        "type": "services",
+        "props": {
+          "title": "Tarifes",
+          "items": [
+            {
+              "icon": "tag",
+              "title": "Primera visita + valoració",
+              "description": "60 € — inclou anamnesi completa, exploració física i primera sessió de tractament"
+            },
+            {
+              "icon": "tag",
+              "title": "Sessió de seguiment",
+              "description": "45 € / sessió · Bono 10 sessions: 380 € (estalvia 70 €)"
+            },
+            {
+              "icon": "tag",
+              "title": "Pilates clínic",
+              "description": "Sessió individual: 50 € · Grup reduït (màx. 4 persones): 25 €/persona"
+            },
+            {
+              "icon": "tag",
+              "title": "Mútues i assegurances",
+              "description": "Acceptem Sanitas, Adeslas, Asisa, DKV i SegurCaixa. Consulta cobertura sense compromís."
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_testimonials",
+        "type": "testimonials",
+        "props": {
+          "title": "Experiències dels nostres pacients",
+          "items": [
+            {
+              "name": "Tomàs R.",
+              "text": "Vaig patir una ruptura de lligaments al genoll jugant a futbol. Amb el tractament de Fisio Llevant vaig tornar a jugar en 3 mesos. Professionals de primer nivell.",
+              "avatarUrl": ""
+            },
+            {
+              "name": "Catalina F.",
+              "text": "Duia anys amb dolors lumbars crònics. Après del tractament i les classes de pilates clínic, el dolor ha desaparegut pràcticament del tot. Molt recomanable.",
+              "avatarUrl": ""
+            },
+            {
+              "name": "Pere A.",
+              "text": "El drenatge limfàtic post-operatori ha sigut clau en la meva recuperació. El tracte és excel·lent i els resultats parlen per si sols.",
+              "avatarUrl": ""
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_faq",
+        "type": "faq",
+        "props": {
+          "title": "Preguntes freqüents",
+          "items": [
+            {
+              "question": "Necessito derivació mèdica per venir?",
+              "answer": "No, no necessites derivació. Pots venir directament sense recepta mèdica. Si tens proves diagnòstiques (radiografies, ressonàncies) porta-les a la primera visita."
+            },
+            {
+              "question": "Quantes sessions necessitaré?",
+              "answer": "Depèn de cada cas. En la primera visita el fisioterapeuta valorarà la teva lesió i et donarà un pla de tractament orientatiu. Les lesions agudes solen resoldre's en 6-10 sessions; les cròniques poden requerir més."
+            },
+            {
+              "question": "La meva mútua cobreix les sessions?",
+              "answer": "Treballem amb les principals mútues privades. Contacta'ns i et confirmem si la teva assegurança té cobertura a la nostra clínica."
+            },
+            {
+              "question": "Teniu aparcament?",
+              "answer": "Sí, disposem d'aparcament gratuït per als pacients a l'edifici. I estem molt ben comunicats amb transport públic des del centre de Manacor."
+            }
+          ]
+        }
+      },
+      {
+        "id": "blk_cta",
+        "type": "cta",
+        "props": {
+          "text": "No deixis que el dolor t'aturi. Primera visita amb valoració completa per 60 €.",
+          "buttonText": "Demana cita",
+          "buttonUrl": "#contacte"
+        }
+      },
+      {
+        "id": "blk_contact",
+        "type": "contact-form",
+        "props": {
+          "title": "Reserva la teva cita",
+          "email": "cita@fisiollevano.com",
+          "phone": "+34 971 345 678",
+          "address": "Avinguda del Parc, 18 · Manacor"
+        }
+      },
+      {
+        "id": "blk_map",
+        "type": "map",
+        "props": {
+          "address": "Avinguda del Parc, 18, Manacor, Mallorca",
+          "lat": 39.5696,
+          "lng": 3.2111
+        }
+      },
+      {
+        "id": "blk_footer",
+        "type": "footer",
+        "props": {
+          "companyName": "Clínica Fisio Llevant",
+          "email": "cita@fisiollevano.com",
+          "phone": "+34 971 345 678",
+          "socialLinks": {
+            "instagram": "https://instagram.com/fisiollevano",
+            "facebook": "https://facebook.com/fisiollevano"
+          }
+        }
+      }
+    ]
+  }
+}
