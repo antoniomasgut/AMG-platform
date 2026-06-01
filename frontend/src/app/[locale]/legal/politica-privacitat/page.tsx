@@ -11,6 +11,10 @@ export default async function PoliticaPrivacitatPage() {
     { key: 'legalBasis' },
     { key: 'rights' },
     { key: 'security' },
+    { key: 'subprocessors' },
+    { key: 'internationalTransfers' },
+    { key: 'retention' },
+    { key: 'automatedProcessing' },
   ];
 
   return (

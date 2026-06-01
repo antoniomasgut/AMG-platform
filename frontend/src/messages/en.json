@@ -328,6 +328,22 @@
         "security": {
           "title": "6. Security measures",
           "content": "We apply appropriate technical and organisational security measures to protect personal data, including AES-256 encryption for sensitive data and role-based access control."
+        },
+        "subprocessors": {
+          "title": "7. Sub-processors",
+          "content": "To provide services, AMG Digitalitzacions uses the following sub-processors: Brevo SAS (transactional email, EU-based); Twilio Inc. (WhatsApp and SMS messaging, US-based); Anthropic PBC (text processing for AI agents, US-based); GoCardless Ltd (SEPA direct debit, UK-based); Hetzner Online GmbH (servers and hosting, Germany-based). Each provider has signed appropriate contractual guarantees."
+        },
+        "internationalTransfers": {
+          "title": "8. International transfers",
+          "content": "Some providers (Twilio, Anthropic) are based in the United States. These transfers are carried out with the appropriate safeguards under Art. 46 GDPR, specifically Standard Contractual Clauses (SCCs) approved by the European Commission. Data processed by AI agents (Anthropic) is limited to the conversation content necessary to generate responses and is not used to train models."
+        },
+        "retention": {
+          "title": "9. Retention periods",
+          "content": "Contact data (CRM leads) is retained while an active commercial relationship exists and up to 3 years from the last contact. Billing data is retained for 7 years as required by tax law. Agent conversation logs are retained for 12 months. Upon exercising the right to erasure, personal identifying data is anonymised within a maximum of 30 days."
+        },
+        "automatedProcessing": {
+          "title": "10. Automated processing and AI agents",
+          "content": "The platform includes AI agents that can automatically respond to WhatsApp, Telegram or email messages on behalf of the tenant. These automated responses only occur when the end customer has initiated the conversation. No automated decisions with significant legal effects are made. You may request that your queries be handled by a human by emailing hola@amgdl.com."
         }
       },
       "backToHome": "← Back to home",

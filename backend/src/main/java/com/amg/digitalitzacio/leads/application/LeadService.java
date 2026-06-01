@@ -195,6 +195,57 @@ public class LeadService {
         return new LeadStatsResponse(total, byStage, bySource, conversionRate);
     }
 
+    // --- RGPD: dret d'esborrat (Art. 17) ---
+
+    public void purgeLeadPersonalData(UUID id, UserPrincipal principal) {
+        String role = principal.role();
+        if (!"SUPER_ADMIN".equals(role) && !"ADMIN".equals(role)) {
+            throw new IllegalArgumentException("Only SUPER_ADMIN or ADMIN can purge leads");
+        }
+        Lead lead = findLead(id);
+        verifyAccess(lead, principal);
+
+        // Pseudoanonimitza les dades personals; conserva el registre per traçabilitat
+        lead.setName("[Dades esborrades - RGPD]");
+        lead.setEmail(null);
+        lead.setPhone(null);
+        lead.setNotes(null);
+        lead.setTags(null);
+        lead.setIsActive(false);
+        leadRepository.save(lead);
+
+        // Elimina activitats (poden contenir dades personals en la descripció)
+        activityRepository.deleteByLeadId(id);
+    }
+
+    public void purgeAllTenantLeadPersonalData(UserPrincipal principal) {
+        if (!"SUPER_ADMIN".equals(principal.role()) && !"ADMIN".equals(principal.role())) {
+            throw new IllegalArgumentException("Only SUPER_ADMIN or ADMIN can bulk purge leads");
+        }
+        UUID tenantId = principal.tenantId();
+        List<Lead> leads = leadRepository.findByTenantId(tenantId);
+        for (Lead lead : leads) {
+            lead.setName("[Dades esborrades - RGPD]");
+            lead.setEmail(null);
+            lead.setPhone(null);
+            lead.setNotes(null);
+            lead.setTags(null);
+            lead.setIsActive(false);
+            activityRepository.deleteByLeadId(lead.getId());
+        }
+        leadRepository.saveAll(leads);
+    }
+
+    // --- RGPD: portabilitat de dades (Art. 20) ---
+
+    public List<LeadResponse> exportLeadsForPortability(UserPrincipal principal) {
+        UUID tenantId = principal.tenantId();
+        return leadRepository.findByTenantId(tenantId)
+                .stream()
+                .map(this::toLeadResponse)
+                .toList();
+    }
+
     public LeadResponse setWhatsapp(UUID id, boolean value, UserPrincipal principal) {
         Lead lead = findLead(id);
         verifyAccess(lead, principal);

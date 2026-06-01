@@ -203,6 +203,7 @@ Hibernate a producció usa `ddl-auto: validate` — les taules noves **cal crear
 | `whatsapp_waba_configs` | 2026-05-24 | Entitat Mòdul 27 |
 | `sector_phases` | 2026-05-26 | Catàleg de fases per sector (105 files via SQL) |
 | `nexe_service_configs` | 2026-05-28 | `(tenant_id UUID, service_key VARCHAR(30), config_json TEXT, updated_at TIMESTAMPTZ, PK(tenant_id, service_key))` |
+| `websites` | Pendent | `(id UUID PK, tenant_id UUID, type VARCHAR(20), status VARCHAR(20), domain VARCHAR(255), container_name VARCHAR(100), storage_bytes BIGINT, review_notes TEXT, reviewed_by UUID, reviewed_at TIMESTAMPTZ, deployed_at TIMESTAMPTZ, created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ)` |
 
 **NexeLocal Service Configs** (`nexe_service_configs`):
 - Service keys: `AGENDA`, `PRESSUPOSTOS`, `FIDELITZACIO`, `EQUIP`

@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -89,6 +90,31 @@ public class LeadController {
             @RequestParam boolean value,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(leadService.setWhatsapp(id, value, principal));
+    }
+
+    // --- RGPD: dret d'esborrat (Art. 17) ---
+
+    @DeleteMapping("/{id}/purge")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<Void> purgeLeadPersonalData(@PathVariable UUID id,
+                                                       @AuthenticationPrincipal UserPrincipal principal) {
+        leadService.purgeLeadPersonalData(id, principal);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/purge-all")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<Void> purgeAllTenantLeads(@AuthenticationPrincipal UserPrincipal principal) {
+        leadService.purgeAllTenantLeadPersonalData(principal);
+        return ResponseEntity.noContent().build();
+    }
+
+    // --- RGPD: portabilitat de dades (Art. 20) ---
+
+    @GetMapping("/export")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<LeadResponse>> exportLeads(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(leadService.exportLeadsForPortability(principal));
     }
 
     @PostMapping("/outreach")

@@ -4,6 +4,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.Instant;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +35,12 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
     List<Lead> findByTenantId(UUID tenantId);
 
     boolean existsByTenantIdAndEmail(UUID tenantId, String email);
+
+    void deleteByTenantId(UUID tenantId);
+
+    List<Lead> findByUpdatedAtBeforeAndIsActive(Instant cutoff, Boolean isActive);
+
+    List<Lead> findByUpdatedAtBefore(Instant cutoff);
 
     // Counts
     long countByTenantId(UUID tenantId);

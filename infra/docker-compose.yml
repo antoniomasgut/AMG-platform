@@ -108,6 +108,10 @@ services:
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-900000}
       JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS:-604800000}
       JASYPT_ENCRYPTOR_PASSWORD: ${JASYPT_ENCRYPTOR_PASSWORD}
+      HOSTING_DATA_PATH: /data/websites
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - websites_data:/data/websites
     depends_on:
       postgres:
         condition: service_healthy
@@ -187,6 +191,7 @@ volumes:
   netdata_config:
   netdata_lib:
   netdata_cache:
+  websites_data:
 
 networks:
   amg_net:

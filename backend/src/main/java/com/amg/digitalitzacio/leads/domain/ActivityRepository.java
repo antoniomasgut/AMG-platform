@@ -12,4 +12,6 @@ public interface ActivityRepository extends JpaRepository<Activity, UUID> {
     Page<Activity> findByLeadIdOrderByCreatedAtDesc(UUID leadId, Pageable pageable);
 
     List<Activity> findByLeadIdOrderByCreatedAtDesc(UUID leadId);
+
+    void deleteByLeadId(UUID leadId);
 }

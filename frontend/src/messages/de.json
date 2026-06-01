@@ -328,6 +328,22 @@
         "security": {
           "title": "6. Sicherheitsmaßnahmen",
           "content": "Wir wenden geeignete technische und organisatorische Sicherheitsmaßnahmen an, einschließlich AES-256-Verschlüsselung für sensible Daten."
+        },
+        "subprocessors": {
+          "title": "7. Unterauftragsverarbeiter",
+          "content": "Zur Erbringung der Dienstleistungen nutzt AMG Digitalitzacions folgende Unterauftragsverarbeiter: Brevo SAS (transaktionale E-Mails, EU-Sitz); Twilio Inc. (WhatsApp- und SMS-Nachrichten, US-Sitz); Anthropic PBC (Textverarbeitung für KI-Agenten, US-Sitz); GoCardless Ltd (SEPA-Lastschrift, UK-Sitz); Hetzner Online GmbH (Server und Hosting, Deutschland). Jeder Anbieter hat geeignete Vertragsgarantien unterzeichnet."
+        },
+        "internationalTransfers": {
+          "title": "8. Internationale Übermittlungen",
+          "content": "Einige Anbieter (Twilio, Anthropic) sind in den USA ansässig. Diese Übermittlungen erfolgen mit geeigneten Garantien gemäß Art. 46 DSGVO, konkret durch von der Europäischen Kommission genehmigte Standardvertragsklauseln (SCC). Von KI-Agenten (Anthropic) verarbeitete Daten beschränken sich auf den zur Antwortgenerierung erforderlichen Gesprächsinhalt und werden nicht zum Trainieren von Modellen verwendet."
+        },
+        "retention": {
+          "title": "9. Speicherfristen",
+          "content": "Kontaktdaten (CRM-Leads) werden gespeichert, solange eine aktive Geschäftsbeziehung besteht, und bis zu 3 Jahre nach dem letzten Kontakt. Abrechnungsdaten werden 7 Jahre gemäß Steuerrecht aufbewahrt. Gesprächsprotokolle der Agenten werden 12 Monate gespeichert. Bei Ausübung des Löschrechts werden personenbezogene Daten innerhalb von maximal 30 Tagen anonymisiert."
+        },
+        "automatedProcessing": {
+          "title": "10. Automatisierte Verarbeitung und KI-Agenten",
+          "content": "Die Plattform umfasst KI-Agenten, die automatisch auf WhatsApp-, Telegram- oder E-Mail-Nachrichten im Namen des Mandanten antworten können. Diese automatisierten Antworten erfolgen nur, wenn der Endkunde das Gespräch initiiert hat. Es werden keine automatisierten Entscheidungen mit erheblichen rechtlichen Auswirkungen getroffen. Sie können beantragen, dass Ihre Anfragen von einem Menschen bearbeitet werden, indem Sie eine E-Mail an hola@amgdl.com senden."
         }
       },
       "backToHome": "← Zurück zur Startseite",

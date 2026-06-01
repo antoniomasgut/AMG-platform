@@ -328,6 +328,22 @@
         "security": {
           "title": "6. Medidas de seguridad",
           "content": "Se aplican medidas de seguridad técnicas y organizativas adecuadas para proteger los datos personales, incluyendo cifrado AES-256 para datos sensibles y acceso restringido por roles."
+        },
+        "subprocessors": {
+          "title": "7. Subencargados del tratamiento",
+          "content": "Para prestar los servicios, AMG Digitalitzacions utiliza los siguientes proveedores externos (subencargados): Brevo SAS (envío de emails transaccionales, sede en la UE); Twilio Inc. (mensajería WhatsApp y SMS, sede en EE.UU.); Anthropic PBC (procesamiento de texto para agentes de inteligencia artificial, sede en EE.UU.); GoCardless Ltd (domiciliación SEPA, sede en Reino Unido); Hetzner Online GmbH (servidores y alojamiento, sede en Alemania). Cada proveedor ha firmado las garantías contractuales adecuadas."
+        },
+        "internationalTransfers": {
+          "title": "8. Transferencias internacionales",
+          "content": "Algunos proveedores (Twilio, Anthropic) están ubicados en Estados Unidos. Estas transferencias se realizan con las garantías adecuadas previstas en el Art. 46 RGPD, concretamente mediante Cláusulas Contractuales Tipo (CCT) aprobadas por la Comisión Europea. Los datos procesados por los agentes IA (Anthropic) se limitan al contenido de las conversaciones necesario para generar respuestas y no se utilizan para entrenar modelos."
+        },
+        "retention": {
+          "title": "9. Plazos de conservación",
+          "content": "Los datos de contacto (leads del CRM) se conservan mientras exista una relación comercial activa y hasta 3 años desde el último contacto. Los datos de facturación se conservan 7 años por obligación fiscal. Las conversaciones de los agentes se conservan 12 meses. Al ejercer el derecho de supresión, los datos personales identificativos se anonimizan en un plazo máximo de 30 días."
+        },
+        "automatedProcessing": {
+          "title": "10. Tratamiento automatizado y agentes IA",
+          "content": "La plataforma incorpora agentes de inteligencia artificial que pueden responder automáticamente a mensajes de WhatsApp, Telegram o email en nombre del tenant. Estas respuestas automatizadas se producen únicamente cuando el cliente final ha iniciado la conversación. No se toman decisiones automatizadas con efectos jurídicos significativos. Puede solicitar que sus consultas sean atendidas por una persona enviando un email a hola@amgdl.com."
         }
       },
       "backToHome": "← Volver al inicio",

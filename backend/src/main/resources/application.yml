@@ -150,3 +150,6 @@ app:
       brevo-api-key: ${BREVO_API_KEY:}
       brevo-from-address: ${BREVO_FROM_ADDRESS:noreply@amgdl.com}
 
+
+  hosting:
+    data-path: ${HOSTING_DATA_PATH:/data/websites}

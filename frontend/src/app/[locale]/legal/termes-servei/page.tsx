@@ -82,6 +82,22 @@ export default function TernesServeiPage() {
             <h2 className="f-display font-black text-xl text-ink-0 mb-3">10. Modificació dels termes</h2>
             <p>AMG Digitalitzacions es reserva el dret de modificar els presents Termes amb un preavís de 30 dies. L'ús continuat del servei un cop transcorregut aquest termini implica l'acceptació de les noves condicions.</p>
           </section>
+
+          <section>
+            <h2 className="f-display font-black text-xl text-ink-0 mb-3">11. Tractament de dades personals — Acord d'Encarregat (Art. 28 RGPD)</h2>
+            <p className="mb-3">En la mesura en què el client (tenant) introdueixi dades personals de tercers (clients finals, leads, contactes) a la plataforma, AMG Digitalitzacions actua com a <strong>encarregat del tractament</strong> i el client actua com a <strong>responsable del tractament</strong> d'acord amb el Reglament (UE) 2016/679 (RGPD).</p>
+            <p className="mb-3">AMG Digitalitzacions es compromet a:</p>
+            <ul className="list-disc pl-5 space-y-2 mb-3">
+              <li>Tractar les dades personals únicament seguint les instruccions documentades del responsable i per a les finalitats descrites al servei contractat.</li>
+              <li>Garantir que les persones autoritzades a tractar les dades s'hagin compromès a la confidencialitat.</li>
+              <li>Aplicar les mesures de seguretat tècniques i organitzatives adequades (xifratge AES-256, control d'accés per rols, còpies de seguretat diàries).</li>
+              <li>No subcontractar cap nou subencàrregat sense informar prèviament el responsable, qui podrà oposar-s'hi.</li>
+              <li>Assistir el responsable en l'atenció de sol·licituds d'exercici de drets (accés, rectificació, supressió, portabilitat).</li>
+              <li>Notificar qualsevol violació de seguretat que afecti les dades del responsable en un termini màxim de 72 hores des que en tingui coneixement.</li>
+              <li>Retornar o destruir totes les dades personals un cop finalitzada la prestació del servei, a elecció del responsable.</li>
+            </ul>
+            <p>El client (responsable) és el qui determina la finalitat i els mitjans del tractament de les dades dels seus clients finals i n'assumeix la responsabilitat legal. Es compromet a recollir les dades amb una base legal vàlida i a informar els afectats d'acord amb els Arts. 13 i 14 del RGPD.</p>
+          </section>
         </div>
 
         <div className="mt-12 pt-8 border-t border-border-subtle flex flex-wrap gap-4 f-mono text-label text-ink-3">
