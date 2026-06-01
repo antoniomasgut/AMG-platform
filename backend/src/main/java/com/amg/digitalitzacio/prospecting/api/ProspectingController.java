@@ -141,4 +141,10 @@ public class ProspectingController {
             @RequestParam(defaultValue = "5") int minScore) {
         return Map.of("qualified", service.qualifyByMinScore(id, minScore));
     }
+
+    @PostMapping("/campaigns/{id}/export-qualified")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, Integer> exportQualified(@PathVariable UUID id) {
+        return Map.of("exported", service.exportQualifiedProspects(id));
+    }
 }

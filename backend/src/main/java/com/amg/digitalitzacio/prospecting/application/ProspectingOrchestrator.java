@@ -375,6 +375,17 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     @Override
+    public int exportQualifiedProspects(UUID campaignId) {
+        var prospects = prospectRepository.findByCampaignIdAndStatus(campaignId, ProspectStatus.QUALIFIED);
+        int count = 0;
+        for (var prospect : prospects) {
+            try { exportProspect(prospect.getId()); count++; } catch (Exception ignored) {}
+        }
+        log.info("Exported {} qualified prospects from campaign {}", count, campaignId);
+        return count;
+    }
+
+    @Override
     public int exportContactableProspects(UUID campaignId) {
         var prospects = prospectRepository.findByCampaignId(campaignId).stream()
                 .filter(p -> p.getStatus() != ProspectStatus.EXPORTED)

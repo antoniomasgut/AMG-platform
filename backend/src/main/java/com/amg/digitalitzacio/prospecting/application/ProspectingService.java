@@ -23,4 +23,5 @@ public interface ProspectingService {
     List<ProspectResponse> scoreProspects(UUID campaignId);
     int qualifyTop(UUID campaignId, int topN);
     int qualifyByMinScore(UUID campaignId, int minScore);
+    int exportQualifiedProspects(UUID campaignId);
 }

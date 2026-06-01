@@ -83,6 +83,15 @@ export const enrichProspect = (id: string) =>
 export const exportContactableProspects = (id: string) =>
   apiFetch<{ exported: number }>(`/prospecting/campaigns/${id}/export-contactable`, { method: 'POST' });
 
+export const updateProspect = (id: string, status: string) =>
+  apiFetch<Prospect>(`/prospecting/prospects/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
+  });
+
+export const exportQualifiedProspects = (id: string) =>
+  apiFetch<{ exported: number }>(`/prospecting/campaigns/${id}/export-qualified`, { method: 'POST' });
+
 export const scoreProspects = (id: string) =>
   apiFetch<Prospect[]>(`/prospecting/campaigns/${id}/score`, { method: 'POST' });
 

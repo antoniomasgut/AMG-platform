@@ -8,6 +8,7 @@ import { useToast } from '@/lib/toast-context';
 import {
   getCampaign, getCampaignProspects, exportProspect, enrichAllProspects, enrichProspect,
   exportContactableProspects, scoreProspects, qualifyByMinScore,
+  updateProspect, exportQualifiedProspects,
   type Campaign, type Prospect,
 } from '@/services/prospecting';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -19,12 +20,15 @@ import { useRouter, useParams } from 'next/navigation';
 const PROSPECT_STATUS_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 'warning'> = {
   NEW: 'neutral',
   FOUND: 'neutral',
+  QUALIFIED: 'success',
   EXPORTED: 'success',
-  REJECTED: 'danger',
+  DISCARDED: 'danger',
+  CONTACTED: 'info',
 };
 
 const PROSPECT_STATUS_LABEL: Record<string, string> = {
-  NEW: 'Nou', FOUND: 'Trobat', EXPORTED: 'Exportat', REJECTED: 'Rebutjat',
+  NEW: 'Nou', FOUND: 'Trobat', QUALIFIED: 'Qualificat',
+  EXPORTED: 'Exportat', DISCARDED: 'Descartat', CONTACTED: 'Contactat',
 };
 
 const CAMPAIGN_STATUS_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 'warning' | 'accent'> = {
@@ -53,15 +57,21 @@ function ProspectDrawer({
   onClose,
   onExport,
   onEnrich,
+  onQualify,
+  onDiscard,
   exporting,
   enriching,
+  updatingStatus,
 }: {
   prospect: Prospect;
   onClose: () => void;
   onExport: (id: string) => void;
   onEnrich: (id: string) => void;
+  onQualify: (id: string) => void;
+  onDiscard: (id: string) => void;
   exporting: boolean;
   enriching: boolean;
+  updatingStatus: boolean;
 }) {
   return (
     <>
@@ -176,7 +186,7 @@ function ProspectDrawer({
 
         {/* Actions */}
         <div className="p-4 border-t border-border-base flex flex-col gap-2">
-          {prospect.status !== 'EXPORTED' && (
+          {prospect.status === 'QUALIFIED' && (
             <AMGButton
               icon={I.ArrowRight}
               loading={exporting}
@@ -184,6 +194,38 @@ function ProspectDrawer({
               className="w-full justify-center"
             >
               Exportar a Lead
+            </AMGButton>
+          )}
+          {prospect.status !== 'EXPORTED' && prospect.status !== 'QUALIFIED' && prospect.status !== 'DISCARDED' && (
+            <div className="flex gap-2">
+              <AMGButton
+                icon={I.Check}
+                loading={updatingStatus}
+                onClick={() => onQualify(prospect.id)}
+                className="flex-1 justify-center bg-success/10 border-success/30 text-success hover:bg-success/20"
+              >
+                Qualificar
+              </AMGButton>
+              <AMGButton
+                variant="secondary"
+                icon={I.X}
+                loading={updatingStatus}
+                onClick={() => onDiscard(prospect.id)}
+                className="flex-1 justify-center text-danger hover:bg-danger/10"
+              >
+                Descartar
+              </AMGButton>
+            </div>
+          )}
+          {prospect.status === 'DISCARDED' && (
+            <AMGButton
+              variant="secondary"
+              icon={I.Refresh}
+              loading={updatingStatus}
+              onClick={() => onQualify(prospect.id)}
+              className="w-full justify-center"
+            >
+              Recuperar
             </AMGButton>
           )}
           <AMGButton
@@ -223,6 +265,7 @@ export default function CampaignDetailPage() {
 
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
   const [minScoreFilter, setMinScoreFilter] = useState<number>(5);
+  const [showDiscarded, setShowDiscarded] = useState(false);
 
   const { data: campaign, isLoading: loadingCampaign } = useQuery({
     queryKey: ['campaign', id],
@@ -293,6 +336,26 @@ export default function CampaignDetailPage() {
       qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
     },
     onError: () => toast('error', 'Error obtenint els detalls'),
+  });
+
+  const { mutate: doUpdateStatus, isPending: updatingStatus } = useMutation({
+    mutationFn: ({ prospectId, status }: { prospectId: string; status: string }) =>
+      updateProspect(prospectId, status),
+    onSuccess: (updated) => {
+      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
+      setSelectedProspect(updated as Prospect);
+    },
+    onError: () => toast('error', 'Error actualitzant el prospect'),
+  });
+
+  const { mutate: doExportQualified, isPending: exportingQualified } = useMutation({
+    mutationFn: () => exportQualifiedProspects(id),
+    onSuccess: (data) => {
+      toast('success', `${data.exported} prospect${data.exported !== 1 ? 's' : ''} exportat${data.exported !== 1 ? 's' : ''} a Leads`);
+      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
+      qc.invalidateQueries({ queryKey: ['campaign', id] });
+    },
+    onError: () => toast('error', 'Error exportant els prospects qualificats'),
   });
 
   if (!user || !isAdmin) return null;
@@ -407,20 +470,28 @@ export default function CampaignDetailPage() {
                 >
                   Enriquir tots
                 </AMGButton>
-                {prospectList.some(p => p.status !== 'EXPORTED' && (p.phone || p.email)) && (
+                {prospectList.some(p => p.status === 'QUALIFIED') && (
                   <AMGButton
                     size="sm"
                     icon={I.ArrowRight}
-                    loading={exportingContactable}
+                    loading={exportingQualified}
                     onClick={() => {
-                      const count = prospectList.filter(p => p.status !== 'EXPORTED' && (p.phone || p.email)).length;
-                      if (confirm(`Exportar ${count} prospect${count !== 1 ? 's' : ''} amb contacte a Leads?`)) {
-                        doExportContactable();
+                      const count = prospectList.filter(p => p.status === 'QUALIFIED').length;
+                      if (confirm(`Exportar ${count} prospect${count !== 1 ? 's' : ''} qualificat${count !== 1 ? 's' : ''} a Leads?`)) {
+                        doExportQualified();
                       }
                     }}
                   >
-                    Exportar verds
+                    Exportar qualificats
                   </AMGButton>
+                )}
+                {prospectList.some(p => p.status === 'DISCARDED') && (
+                  <button
+                    onClick={() => setShowDiscarded(v => !v)}
+                    className={`f-mono text-[11px] px-2 py-1 rounded border transition-colors ${showDiscarded ? 'border-border-base text-ink-1 bg-bg-1' : 'border-transparent text-ink-3 hover:text-ink-2'}`}
+                  >
+                    {showDiscarded ? 'Ocultar descartats' : 'Veure descartats'}
+                  </button>
                 )}
               </div>
             )}
@@ -449,17 +520,29 @@ export default function CampaignDetailPage() {
               </thead>
               <tbody>
                 {[...prospectList]
-                  .sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
+                  .filter(p => showDiscarded || p.status !== 'DISCARDED')
+                  .sort((a, b) => {
+                    // QUALIFIED primer, DISCARDED al final
+                    const order = (s: string) => s === 'QUALIFIED' ? 0 : s === 'DISCARDED' ? 2 : 1;
+                    const od = order(a.status) - order(b.status);
+                    if (od !== 0) return od;
+                    return (b.score ?? -1) - (a.score ?? -1);
+                  })
                   .map((p) => {
                     const hasContact = !!(p.phone || p.email);
                     const scored = p.score != null;
                     const scoreColor = scored
                       ? p.score! >= 8 ? 'text-success' : p.score! >= 5 ? 'text-accent-light' : 'text-ink-2'
                       : 'text-ink-3';
+                    const rowClass = p.status === 'QUALIFIED'
+                      ? 'border-b border-success/10 bg-success/[0.03] hover:bg-success/[0.06]'
+                      : p.status === 'DISCARDED'
+                      ? 'border-b border-[rgba(226,232,240,0.04)] opacity-40 hover:opacity-60'
+                      : 'border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)]';
                     return (
                       <tr
                         key={p.id}
-                        className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+                        className={`transition-colors ${rowClass}`}
                       >
                         <td className="pl-4 pr-0 py-2.5 w-6">
                           <span
@@ -513,8 +596,11 @@ export default function CampaignDetailPage() {
         onClose={() => setSelectedProspect(null)}
         onExport={(pid) => doExport(pid)}
         onEnrich={(pid) => doEnrich(pid)}
+        onQualify={(pid) => doUpdateStatus({ prospectId: pid, status: 'QUALIFIED' })}
+        onDiscard={(pid) => doUpdateStatus({ prospectId: pid, status: 'DISCARDED' })}
         exporting={exporting && exportingId === selectedProspect.id}
         enriching={enriching && enrichingId === selectedProspect.id}
+        updatingStatus={updatingStatus}
       />,
       document.body
     )}
