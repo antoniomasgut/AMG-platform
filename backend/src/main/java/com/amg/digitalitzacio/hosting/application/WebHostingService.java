@@ -46,6 +46,7 @@ public class WebHostingService {
     public WebSiteResponse requestContainerSite(UUID tenantId, MultipartFile compose,
                                                   MultipartFile envExample, String domain,
                                                   String description, UserPrincipal principal) {
+        verifyTenantIdAccess(tenantId, principal);
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found: " + tenantId));
 
@@ -85,6 +86,7 @@ public class WebHostingService {
     }
 
     public WebSiteResponse requestStaticSite(UUID tenantId, MultipartFile zip, String domain, UserPrincipal principal) {
+        verifyTenantIdAccess(tenantId, principal);
         if (zip.getSize() > MAX_ZIP_BYTES) {
             throw new IllegalArgumentException("El ZIP supera el límit de 50 MB");
         }
@@ -292,6 +294,13 @@ public class WebHostingService {
         if ("SUPER_ADMIN".equals(principal.role())) return;
         if (!site.getTenantId().equals(principal.tenantId())) {
             throw new ResourceNotFoundException("Site not found: " + site.getId());
+        }
+    }
+
+    private void verifyTenantIdAccess(UUID tenantId, UserPrincipal principal) {
+        if ("SUPER_ADMIN".equals(principal.role())) return;
+        if (!tenantId.equals(principal.tenantId())) {
+            throw new ResourceNotFoundException("Tenant not found: " + tenantId);
         }
     }
 

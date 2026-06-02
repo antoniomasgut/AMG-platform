@@ -80,6 +80,11 @@ public class PromptBuilder {
             sb.append(buildFidelitzacioBlock(fidelitzacioJson));
         }
 
+        String equipJson = configs.get("EQUIP");
+        if (equipJson != null) {
+            sb.append(buildEquipBlock(equipJson));
+        }
+
         return sb.toString();
     }
 
@@ -152,6 +157,44 @@ public class PromptBuilder {
             return sb.toString();
         } catch (Exception e) {
             log.debug("Could not parse FIDELITZACIO config: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    private String buildEquipBlock(String json) {
+        try {
+            Map<String, Object> c = objectMapper.readValue(json, new TypeReference<>() {});
+            var sb = new StringBuilder("\nEQUIP:\n");
+
+            Object members = c.get("members");
+            if (members instanceof java.util.List<?> list && !list.isEmpty()) {
+                sb.append("- Membres de l'equip:\n");
+                list.forEach(m -> {
+                    if (m instanceof Map<?, ?> member) {
+                        String name = member.get("name") != null ? member.get("name").toString() : "";
+                        String role = member.get("role") != null ? member.get("role").toString() : "";
+                        if (!name.isBlank()) {
+                            sb.append("  • ").append(name);
+                            if (!role.isBlank()) sb.append(" (").append(role).append(")");
+                            sb.append("\n");
+                        }
+                    }
+                });
+            }
+
+            String groupName = str(c, "telegram_group_name", "");
+            if (!groupName.isBlank()) {
+                sb.append("- Grup de treball intern: ").append(groupName).append("\n");
+            }
+
+            Object dailyEnabled = c.get("daily_report_enabled");
+            if (Boolean.TRUE.equals(dailyEnabled)) {
+                sb.append("- Informe diari enviat a les ").append(str(c, "daily_report_time", "18:00")).append("\n");
+            }
+
+            return sb.toString();
+        } catch (Exception e) {
+            log.debug("Could not parse EQUIP config: {}", e.getMessage());
             return "";
         }
     }

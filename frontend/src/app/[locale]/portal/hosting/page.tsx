@@ -245,6 +245,20 @@ export default function HostingPage() {
         {isLoading && (
           <p className="text-data text-ink-3">Carregant…</p>
         )}
+
+        {/* Pro hosting CTA */}
+        <section className="border border-border-subtle rounded p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <p className="f-mono text-label uppercase tracking-widest text-accent-light mb-1">Allotjament Pro</p>
+            <p className="text-data text-ink-2">Tens una aplicació web amb Docker? Pujar un <code className="bg-bg-3 px-1 rounded text-ink-2">docker-compose.yml</code> i et desplegarem en un contenidor dedicat.</p>
+          </div>
+          <a
+            href="/portal/hosting/pro"
+            className="f-mono text-xs uppercase text-accent-light border border-accent/30 hover:border-accent px-4 h-9 flex items-center shrink-0 transition-colors"
+          >
+            Veure Import Pro →
+          </a>
+        </section>
       </div>
     </PortalShell>
   );

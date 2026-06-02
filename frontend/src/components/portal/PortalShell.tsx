@@ -29,6 +29,7 @@ function clientGroups(t: T): NavGroup[] {
       label: t('groups.myServices'),
       items: [
         { label: t('items.myWebs'), icon: I.Globe, href: '/portal/landings' },
+        { label: t('items.hosting'), icon: I.Server, href: '/portal/hosting' },
         { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
         { label: t('items.agentAI'), icon: I.Bot, href: '/portal/agents' },
         { label: t('items.inbox'), icon: I.Mail, href: '/portal/agents/inbox' },

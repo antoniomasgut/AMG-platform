@@ -26,8 +26,12 @@ public class WebHostingController {
     private final WebHostingService webHostingService;
 
     @GetMapping("/tenants/{tenantId}/sites")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public ResponseEntity<List<WebSiteResponse>> listSites(@PathVariable UUID tenantId) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<WebSiteResponse>> listSites(@PathVariable UUID tenantId,
+                                                            @AuthenticationPrincipal UserPrincipal principal) {
+        if (!"SUPER_ADMIN".equals(principal.role()) && !tenantId.equals(principal.tenantId())) {
+            return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(webHostingService.listSitesByTenant(tenantId));
     }
 
@@ -40,7 +44,7 @@ public class WebHostingController {
     }
 
     @PostMapping(value = "/tenants/{tenantId}/sites/static", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<WebSiteResponse> requestStaticSite(
             @PathVariable UUID tenantId,
             @RequestParam("file") MultipartFile file,
@@ -51,7 +55,7 @@ public class WebHostingController {
     }
 
     @PostMapping(value = "/tenants/{tenantId}/sites/container", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<WebSiteResponse> requestContainerSite(
             @PathVariable UUID tenantId,
             @RequestParam("compose") MultipartFile compose,
@@ -75,7 +79,7 @@ public class WebHostingController {
     }
 
     @PutMapping(value = "/tenants/{tenantId}/sites/{siteId}/static", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<WebSiteResponse> updateStaticSite(
             @PathVariable UUID tenantId,
             @PathVariable UUID siteId,
@@ -85,7 +89,7 @@ public class WebHostingController {
     }
 
     @GetMapping("/tenants/{tenantId}/sites/{siteId}/export")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Resource> exportSite(@PathVariable UUID tenantId,
                                                 @PathVariable UUID siteId,
                                                 @AuthenticationPrincipal UserPrincipal principal) {
