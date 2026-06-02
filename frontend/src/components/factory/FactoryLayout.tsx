@@ -7,6 +7,7 @@ import { createVersion, updateVersion, publishLanding } from '@/services/factory
 import { BlockCatalog } from './BlockCatalog';
 import { BlockProperties } from './BlockProperties';
 import { PageStylesPanel } from './PageStylesPanel';
+import { ChatContextPanel } from './ChatContextPanel';
 import { FactoryCanvas } from './FactoryCanvas';
 import { PreviewToolbar } from './PreviewToolbar';
 import { BlockRenderer } from './BlockRenderer';
@@ -14,7 +15,7 @@ import { VersionHistory } from './VersionHistory';
 import { I } from '@/components/ui/icons';
 import type { BlockType } from '@/services/factory';
 
-type SidebarTab = 'blocks' | 'properties' | 'styles' | 'versions';
+type SidebarTab = 'blocks' | 'properties' | 'styles' | 'chat' | 'versions';
 
 interface Props {
   landingId: string;
@@ -93,17 +94,19 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
   }, [addBlock]);
 
   const sidebarContent: Record<SidebarTab, JSX.Element> = {
-    blocks: <BlockCatalog onAddBlock={handleAddBlock} />,
+    blocks:     <BlockCatalog onAddBlock={handleAddBlock} />,
     properties: <BlockProperties />,
-    styles: <PageStylesPanel />,
-    versions: <VersionHistory />,
+    styles:     <PageStylesPanel />,
+    chat:       <ChatContextPanel landingId={landingId} />,
+    versions:   <VersionHistory />,
   };
 
   const tabs: Array<{ key: SidebarTab; label: string }> = [
-    { key: 'blocks', label: 'Blocs' },
+    { key: 'blocks',     label: 'Blocs' },
     { key: 'properties', label: 'Props' },
-    { key: 'styles', label: 'Estils' },
-    { key: 'versions', label: 'Vers.' },
+    { key: 'styles',     label: 'Estils' },
+    { key: 'chat',       label: 'Chat' },
+    { key: 'versions',   label: 'Vers.' },
   ];
 
   return (

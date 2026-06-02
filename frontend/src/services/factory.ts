@@ -202,6 +202,37 @@ export async function unpublishLanding(landingId: string): Promise<void> {
   return apiFetch<void>(`/engine/landings/${landingId}/unpublish`, { method: 'POST' });
 }
 
+// --- Chat context ---
+
+export interface ChatContext {
+  landingId: string;
+  businessName: string;
+  sector: string | null;
+  systemPrompt: string;
+  profanityAction: string;
+  updatedAt: string;
+}
+
+export async function getChatContext(landingId: string): Promise<ChatContext> {
+  return apiFetch<ChatContext>(`/engine/landings/${landingId}/chat`);
+}
+
+export async function saveChatContext(landingId: string, data: {
+  businessName: string;
+  sector?: string;
+  systemPrompt: string;
+  profanityAction?: string;
+}): Promise<ChatContext> {
+  return apiFetch<ChatContext>(`/engine/landings/${landingId}/chat`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteChatContext(landingId: string): Promise<void> {
+  return apiFetch<void>(`/engine/landings/${landingId}/chat`, { method: 'DELETE' });
+}
+
 // --- Block templates ---
 
 export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; defaultProps: Record<string, unknown> }> = {
