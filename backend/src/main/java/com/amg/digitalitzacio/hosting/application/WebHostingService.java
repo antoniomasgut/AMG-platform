@@ -203,6 +203,11 @@ public class WebHostingService {
                 .stream().map(this::toResponse).toList();
     }
 
+    public List<WebSiteResponse> listAllSites() {
+        return webSiteRepository.findAllByOrderByCreatedAtDesc()
+                .stream().map(this::toResponse).toList();
+    }
+
     // --- Privats ---
 
     private void deploySite(WebSite site) {

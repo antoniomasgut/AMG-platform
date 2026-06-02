@@ -59,6 +59,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
                         .requestMatchers(HttpMethod.GET, "/sitemap.xml").permitAll()
                         .requestMatchers(HttpMethod.POST, "/contact").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/contact").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/assets/*/file").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/assets/*/thumbnail").permitAll()
                         .requestMatchers("/api/v1/automations/webhook/**").permitAll()

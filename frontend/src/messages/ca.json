@@ -163,7 +163,16 @@
   "cta": {
     "title": "LLEST PER DIGITALITZAR EL TEU NEGOCI?",
     "subtitle": "En menys de 48 hores el teu negoci pot estar funcionant amb automatitzacions que et faran estalviar hores cada setmana.",
-    "button": "DEMANA UNA DEMO GRATUÏTA"
+    "button": "DEMANA UNA DEMO GRATUÏTA",
+    "buttonSecondary": "ACCEDIR AL PORTAL",
+    "formTitle": "O envia'ns un missatge",
+    "formName": "El teu nom",
+    "formEmail": "El teu email",
+    "formMessage": "En què et podem ajudar?",
+    "formSubmit": "ENVIAR MISSATGE",
+    "formSuccess": "Missatge enviat!",
+    "formSuccessDesc": "Et respondrem en menys de 24 hores.",
+    "formError": "Error en enviar. Prova-ho per WhatsApp."
   },
   "footer": {
     "description": "Automatització digital per a pimes de Mallorca. Webs, bots IA, CRM i molt més.",
@@ -496,6 +505,7 @@
       "programs": "Programes",
       "catalog": "Catàleg",
       "templates": "Plantilles",
+      "hosting": "Web Hosting",
       "backup": "Còpies de seguretat",
       "infraOps": "Infraestructura",
       "apiKeys": "Claus API"

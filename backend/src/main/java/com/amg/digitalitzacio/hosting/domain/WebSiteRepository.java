@@ -10,6 +10,7 @@ public interface WebSiteRepository extends JpaRepository<WebSite, UUID> {
     List<WebSite> findByTenantId(UUID tenantId);
 
     List<WebSite> findByStatus(WebsiteStatus status);
+    List<WebSite> findAllByOrderByCreatedAtDesc();
 
     boolean existsByTenantIdAndDomain(UUID tenantId, String domain);
 }

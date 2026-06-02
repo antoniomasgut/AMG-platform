@@ -14,6 +14,7 @@ import { listTenants } from '@/services/admin';
 import { getBackupDashboard } from '@/services/backup';
 import { getOpsDashboard } from '@/services/ops';
 import { getInfraStatus } from '@/services/infraops';
+import { getGlobalChannelUsageStats } from '@/services/agents-conversational';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -120,12 +121,13 @@ export default function ProcessPage() {
       { queryKey: ['backup-dashboard'], queryFn: getBackupDashboard, enabled: !!user && isSuperAdmin },
       { queryKey: ['ops-dashboard'], queryFn: getOpsDashboard, enabled: !!user && isSuperAdmin },
       { queryKey: ['infra-status'], queryFn: getInfraStatus, enabled: !!user && isSuperAdmin, refetchInterval: 30000 },
+      { queryKey: ['global-channel-stats'], queryFn: () => getGlobalChannelUsageStats(), enabled: !!user && isSuperAdmin, staleTime: 5 * 60 * 1000 },
     ],
   });
 
   if (!user) return null;
 
-  const [cfgR, leadsR, campR, tenantsR, backupR, opsR, infraR] = results;
+  const [cfgR, leadsR, campR, tenantsR, backupR, opsR, infraR, channelR] = results;
   const loading = results.some((r) => r.isLoading);
 
   // ── derived data ──────────────────────────────────────────────────────────
@@ -161,6 +163,19 @@ export default function ProcessPage() {
 
   const infra = infraR.data as any;
   const infraOk = infra?.overallStatus === 'OK';
+
+  const channelStats = channelR?.data as any;
+  const totalMessages = channelStats
+    ? (channelStats.whatsappMessages ?? 0) + (channelStats.whatsappMetaMessages ?? 0) +
+      (channelStats.telegramMessages ?? 0) + (channelStats.emailMessages ?? 0) +
+      (channelStats.chatMessages ?? 0)
+    : 0;
+  const activeChannels = channelStats
+    ? [channelStats.whatsappMessages > 0 || channelStats.whatsappMetaMessages > 0 ? 'WhatsApp' : null,
+       channelStats.telegramMessages > 0 ? 'Telegram' : null,
+       channelStats.emailMessages > 0 ? 'Email' : null,
+       channelStats.chatMessages > 0 ? 'Chat' : null].filter(Boolean)
+    : [];
 
   // ── step definitions ──────────────────────────────────────────────────────
   const steps: StepCard[] = [
@@ -278,16 +293,18 @@ export default function ProcessPage() {
       title: 'Agents & Automatitzacions',
       desc: 'Activa els agents de comunicació IA i les automatitzacions n8n.',
       icon: I.Bot,
-      status: loading ? 'loading' : 'ok',
+      status: loading ? 'loading' : totalMessages === 0 ? 'attention' : 'ok',
       items: [
-        { label: 'Mode agent', value: 'AUTO / HYBRID / MANUAL', ok: true },
-        { label: 'Canals disponibles', value: 'Telegram, WhatsApp, Email', ok: true },
-        { label: 'n8n workflows', value: 'Assignar des de catàleg', ok: true },
+        { label: 'Missatges (30 dies)', value: totalMessages, ok: totalMessages > 0 },
+        { label: 'Canals actius', value: activeChannels.length > 0 ? activeChannels.join(', ') : 'Cap', ok: activeChannels.length > 0 },
+        { label: 'Tokens IA (30 dies)', value: channelStats ? (channelStats.aiTokens ?? 0).toLocaleString('ca-ES') : '—', ok: true },
+        { label: 'Mode', value: 'AUTO / HYBRID / MANUAL per tenant', ok: true },
       ],
-      note: 'Mode HYBRID: el bot suggereix respostes per aprovar. AUTO: respon sol. MANUAL: solo notificació.',
+      note: totalMessages === 0 ? 'Cap activitat als canals en els últims 30 dies. Activa els agents als tenants.' : undefined,
       actions: [
         { label: 'Agents', href: '/portal/agents', primary: true },
         { label: 'Automatitzacions', href: '/portal/automations' },
+        { label: 'Converses', href: '/portal/agents/inbox' },
       ],
     },
     {

@@ -107,6 +107,12 @@ public class WebHostingController {
 
     // --- Admin endpoints ---
 
+    @GetMapping("/admin/sites")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<List<WebSiteResponse>> listAllSites() {
+        return ResponseEntity.ok(webHostingService.listAllSites());
+    }
+
     @GetMapping("/admin/sites/pending")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<List<WebSiteResponse>> listPendingSites() {

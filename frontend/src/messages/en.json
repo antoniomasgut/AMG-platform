@@ -163,7 +163,16 @@
   "cta": {
     "title": "READY TO DIGITALISE YOUR BUSINESS?",
     "subtitle": "In less than 48 hours your business can be running automations that will save you hours every week.",
-    "button": "BOOK A FREE DEMO"
+    "button": "BOOK A FREE DEMO",
+    "buttonSecondary": "ACCESS PORTAL",
+    "formTitle": "Or send us a message",
+    "formName": "Your name",
+    "formEmail": "Your email",
+    "formMessage": "How can we help you?",
+    "formSubmit": "SEND MESSAGE",
+    "formSuccess": "Message sent!",
+    "formSuccessDesc": "We'll get back to you within 24 hours.",
+    "formError": "Failed to send. Try via WhatsApp."
   },
   "footer": {
     "description": "Digital automation for small businesses in Mallorca. Websites, AI bots, CRM and more.",
@@ -496,6 +505,7 @@
       "programs": "Programs",
       "catalog": "Catalog",
       "templates": "Templates",
+      "hosting": "Web Hosting",
       "backup": "Backups",
       "infraOps": "Infrastructure",
       "apiKeys": "API Keys"

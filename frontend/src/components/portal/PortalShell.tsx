@@ -156,6 +156,7 @@ function superAdminGroups(t: T): NavGroup[] {
       items: [
         { label: t('items.catalog'), icon: I.Box, href: '/portal/admin/vault' },
         { label: t('items.templates'), icon: I.Layers, href: '/portal/admin/templates' },
+        { label: t('items.hosting'), icon: I.Globe, href: '/portal/admin/hosting' },
         { label: t('items.backup'), icon: I.Database, href: '/portal/admin/backup' },
         { label: t('items.infraOps'), icon: I.Server, href: '/portal/admin/infraops' },
         { label: t('items.apiKeys'), icon: I.Key, href: '/portal/admin/config' },

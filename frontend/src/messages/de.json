@@ -163,7 +163,16 @@
   "cta": {
     "title": "BEREIT FÜR DIE DIGITALISIERUNG IHRES UNTERNEHMENS?",
     "subtitle": "In weniger als 48 Stunden kann Ihr Unternehmen mit Automatisierungen laufen, die Ihnen jede Menge Zeit sparen.",
-    "button": "KOSTENLOSE DEMO VEREINBAREN"
+    "button": "KOSTENLOSE DEMO VEREINBAREN",
+    "buttonSecondary": "PORTAL ZUGREIFEN",
+    "formTitle": "Oder schreib uns eine Nachricht",
+    "formName": "Ihr Name",
+    "formEmail": "Ihre E-Mail",
+    "formMessage": "Wie können wir Ihnen helfen?",
+    "formSubmit": "NACHRICHT SENDEN",
+    "formSuccess": "Nachricht gesendet!",
+    "formSuccessDesc": "Wir antworten innerhalb von 24 Stunden.",
+    "formError": "Fehler beim Senden. Versuchen Sie es über WhatsApp."
   },
   "footer": {
     "description": "Digitale Automatisierung für KMU auf Mallorca. Websites, KI-Bots, CRM und mehr.",
@@ -496,6 +505,7 @@
       "programs": "Programme",
       "catalog": "Katalog",
       "templates": "Vorlagen",
+      "hosting": "Web Hosting",
       "backup": "Backups",
       "infraOps": "Infrastruktur",
       "apiKeys": "API-Schlüssel"

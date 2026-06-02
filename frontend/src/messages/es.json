@@ -163,7 +163,16 @@
   "cta": {
     "title": "¿LISTO PARA DIGITALIZAR TU NEGOCIO?",
     "subtitle": "En menos de 48 horas tu negocio puede estar funcionando con automatizaciones que te harán ahorrar horas cada semana.",
-    "button": "PIDE UNA DEMO GRATUITA"
+    "button": "PIDE UNA DEMO GRATUITA",
+    "buttonSecondary": "ACCEDER AL PORTAL",
+    "formTitle": "O envíanos un mensaje",
+    "formName": "Tu nombre",
+    "formEmail": "Tu email",
+    "formMessage": "¿En qué podemos ayudarte?",
+    "formSubmit": "ENVIAR MENSAJE",
+    "formSuccess": "¡Mensaje enviado!",
+    "formSuccessDesc": "Te responderemos en menos de 24 horas.",
+    "formError": "Error al enviar. Prueba por WhatsApp."
   },
   "footer": {
     "description": "Automatización digital para pymes de Mallorca. Webs, bots IA, CRM y mucho más.",
@@ -496,6 +505,7 @@
       "programs": "Programas",
       "catalog": "Catálogo",
       "templates": "Plantillas",
+      "hosting": "Web Hosting",
       "backup": "Copias de seguridad",
       "infraOps": "Infraestructura",
       "apiKeys": "Claves API"

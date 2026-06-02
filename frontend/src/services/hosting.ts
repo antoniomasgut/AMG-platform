@@ -80,6 +80,10 @@ export async function requestContainerSite(
   });
 }
 
+export async function listAllAdminSites(): Promise<WebSiteResponse[]> {
+  return apiFetch<WebSiteResponse[]>('/hosting/admin/sites');
+}
+
 export async function listPendingSites(): Promise<WebSiteResponse[]> {
   return apiFetch<WebSiteResponse[]>('/hosting/admin/sites/pending');
 }
