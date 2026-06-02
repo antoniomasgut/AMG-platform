@@ -11,7 +11,9 @@
     "secondaryColor": "#f8bbd0",
     "bgColor": "#fff8f9",
     "textColor": "#1a202c",
-    "borderRadius": "12px"
+    "borderRadius": "12px",
+    "chatEnabled": true,
+    "chatBusinessName": "Estètica Mireia"
   },
   "content": {
     "blocks": [
@@ -23,7 +25,8 @@
           "subtitle": "Centre d'estètica avançada al cor de Palma. Depilació làser, tractaments facials i corporals amb tecnologia de darrera generació.",
           "ctaText": "Reserva la teva cita",
           "ctaUrl": "#contacte",
-          "bgImageUrl": "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1200&q=80"
+          "bgImageUrl": "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1200&q=80",
+          "ctaAction": "chat"
         }
       },
       {
@@ -149,6 +152,16 @@
           "text": "Primera consulta gratuïta i sense compromís. Analitzem el teu cas i et recomanem el millor tractament.",
           "buttonText": "Reserva la teva consulta gratuïta",
           "buttonUrl": "#contacte"
+        }
+      },
+      {
+        "id": "blk_chat_cta",
+        "type": "chat-cta",
+        "props": {
+          "title": "Reserva la teva cita ara",
+          "subtitle": "Xateja amb el nostre assistent i et responem en menys d'1 minut",
+          "buttonText": "Parla amb nosaltres",
+          "accentColor": "#c2185b"
         }
       },
       {

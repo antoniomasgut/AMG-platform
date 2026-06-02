@@ -132,19 +132,22 @@ Envia un missatge i obté la resposta de l'agent.
 ```java
 // Construeix el context complet de la conversa i crida Claude
 private String callClaude(ChatSession session, String userMessage) {
-    // 1. System prompt = sectorContext de la landing
-    // 2. Historial de missatges anteriors (màx. últims 10)
+    // 1. System prompt = LandingChatContext.systemPrompt per la landing
+    // 2. Historial de missatges anteriors (màx. últims 10 parells)
     // 3. Nou missatge de l'usuari
-    // → Crida a AnthropicClient.chat(messages)
+    // → Crida directa a Anthropic REST API
     // → Retorna resposta com a String
 }
 ```
 
-**Model:** `claude-haiku-4-5` (ràpid i barat per a converses de xat).
+**Model:** `claude-haiku-4-5-20251001` (ràpid i barat per a converses de xat).
 **Tokens màxims resposta:** 300 (respostes curtes, estil WhatsApp).
-**Context del sector:** llegit de `LandingVersion.styles["chatContext"]` o,
-si no existeix, del `systemPrompt` de `SECTOR_CONTEXTS` (frontend) → el backend
-necessita la seva pròpia taula/config de contextos per sector.
+**Context de l'empresa:** llegit de la taula `landing_chat_contexts` (una fila per landing).
+Si no existeix, el backend genera un context genèric basat en el títol de la landing.
+
+**Detecció de profanitat:** si el missatge de l'usuari conté paraules malsonants (llista
+interna CA/ES/EN), la sessió s'elimina de Redis i es retorna `terminated: true` amb
+un missatge d'avís. El widget tanca el panell automàticament als 3 segons.
 
 ---
 
@@ -192,16 +195,33 @@ CSS inline, cap dependència externa.
 
 ## 9. Configuració per landing
 
-Al `styles` de la `LandingVersion`:
+### 9a. Styles de `LandingVersion` (activen el widget)
 
 | Camp | Tipus | Descripció |
 |------|-------|------------|
 | `chatEnabled` | boolean | Activa el widget flotant globalment |
-| `chatContext` | string | System prompt del bot per a aquesta landing específica |
 | `chatBusinessName` | string | Nom que apareix a la capçalera del widget |
-| `chatAvatarUrl` | string | Avatar del bot (URL) |
 
-Si `chatContext` és buit, el backend usa un context genèric basat en el títol de la landing.
+### 9b. Taula `landing_chat_contexts` (context del bot)
+
+```sql
+CREATE TABLE landing_chat_contexts (
+    landing_id       UUID PRIMARY KEY REFERENCES landings(id) ON DELETE CASCADE,
+    business_name    VARCHAR(200) NOT NULL,
+    sector           VARCHAR(50),
+    system_prompt    TEXT NOT NULL,
+    profanity_action VARCHAR(20) NOT NULL DEFAULT 'CLOSE',
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+Endpoints de gestió (autenticats):
+- `GET    /api/v1/engine/landings/{id}/chat` — llegir context
+- `PUT    /api/v1/engine/landings/{id}/chat` — crear/actualitzar context
+- `DELETE /api/v1/engine/landings/{id}/chat` — eliminar context
+
+Si no existeix fila, el backend usa un context genèric basat en el títol de la landing.
 
 ---
 
@@ -237,22 +257,25 @@ Afegir `ctaAction` a les props del bloc `hero`:
 | 5 | 20 missatges enviats | Error amigable: "Conversa completada. Contacta'ns per telèfon." |
 | 6 | Rate limit IP superat | HTTP 429, missatge amigable |
 | 7 | Landing sense `chatEnabled` | Cap widget visible |
+| 8 | Visitant envia paraula malsonant | Sessió tancada, missatge d'avís, widget es tanca als 3s |
 
 ---
 
 ## 13. Modificacions necessàries a landings existents
 
-Les 3 demos de Salut/Bellesa cal actualitzar-les:
+Les 3 demos de Salut/Bellesa s'han actualitzat als JSONs de demo:
 
-**estetica-mireia:** canviar `ctaUrl: "#contacte"` → `ctaAction: "chat"` al bloc `hero`.
-Afegir bloc `chat-cta` just abans del `contact-form`. Afegir a `styles`:
-```json
-"chatEnabled": true,
-"chatContext": "[system prompt ESTETICA adaptat a Mireia]",
-"chatBusinessName": "Estètica Mireia"
-```
+**estetica-mireia:** `ctaAction: "chat"` al bloc `hero`, bloc `chat-cta` afegit,
+`chatEnabled: true` + `chatBusinessName: "Estètica Mireia"` als `styles`.
 
 **fisio-llevant** i **nutricio-sa-salut**: mateixa transformació.
+
+Després del desplegament cal crear el chat context via API:
+```
+PUT /api/v1/engine/landings/{id}/chat
+{ "businessName": "Estètica Mireia", "sector": "ESTETICA",
+  "systemPrompt": "..." }
+```
 
 ---
 

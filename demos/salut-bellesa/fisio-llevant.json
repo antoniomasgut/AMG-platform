@@ -11,7 +11,9 @@
     "secondaryColor": "#e0f2f1",
     "bgColor": "#f9fdfc",
     "textColor": "#1a202c",
-    "borderRadius": "8px"
+    "borderRadius": "8px",
+    "chatEnabled": true,
+    "chatBusinessName": "Fisio Llevant"
   },
   "content": {
     "blocks": [
@@ -21,9 +23,10 @@
         "props": {
           "title": "Recupera el teu moviment",
           "subtitle": "Clínica de fisioteràpia i rehabilitació a Manacor. Tractaments personalitzats per a lesions esportives, dolor crònic i recuperació postquirúrgica.",
-          "ctaText": "Demana cita ara",
+          "ctaText": "Demana cita",
           "ctaUrl": "#contacte",
-          "bgImageUrl": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&q=80"
+          "bgImageUrl": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&q=80",
+          "ctaAction": "chat"
         }
       },
       {
@@ -149,6 +152,16 @@
           "text": "No deixis que el dolor t'aturi. Primera visita amb valoració completa per 60 €.",
           "buttonText": "Demana cita",
           "buttonUrl": "#contacte"
+        }
+      },
+      {
+        "id": "blk_chat_cta",
+        "type": "chat-cta",
+        "props": {
+          "title": "Demana la teva cita sense esperes",
+          "subtitle": "El nostre assistent et trobarà el millor horari disponible",
+          "buttonText": "Xateja amb nosaltres",
+          "accentColor": "#00695c"
         }
       },
       {

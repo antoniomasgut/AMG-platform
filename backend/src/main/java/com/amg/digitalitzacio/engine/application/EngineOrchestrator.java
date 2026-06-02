@@ -637,29 +637,34 @@ public class EngineOrchestrator implements EngineService {
         );
 
         // Dades de contacte ràpid i analytics (opcionals)
-        var waRaw       = styles != null ? styles.getOrDefault("whatsappNumber", "") : "";
-        var phone       = styles != null ? styles.getOrDefault("phone", "")           : "";
-        var address     = styles != null ? styles.getOrDefault("address", "")         : "";
-        var bizType     = styles != null ? styles.getOrDefault("businessType", "LocalBusiness") : "LocalBusiness";
-        var gaId        = styles != null ? styles.getOrDefault("gaId", "")            : "";
-        var customCss   = styles != null ? styles.getOrDefault("customCss", "")       : "";
-        var waNumber    = waRaw.toString().replaceAll("[^0-9+]", "");
+        var waRaw        = styles != null ? styles.getOrDefault("whatsappNumber", "") : "";
+        var phone        = styles != null ? styles.getOrDefault("phone", "")           : "";
+        var address      = styles != null ? styles.getOrDefault("address", "")         : "";
+        var bizType      = styles != null ? styles.getOrDefault("businessType", "LocalBusiness") : "LocalBusiness";
+        var gaId         = styles != null ? styles.getOrDefault("gaId", "")            : "";
+        var customCss    = styles != null ? styles.getOrDefault("customCss", "")       : "";
+        var waNumber     = waRaw.toString().replaceAll("[^0-9+]", "");
+        var chatEnabled  = styles != null && Boolean.TRUE.equals(styles.get("chatEnabled"));
+        var chatBizName  = styles != null ? styles.getOrDefault("chatBusinessName", landing.getTitle()).toString() : landing.getTitle();
 
         var blocksHtml = new StringBuilder();
         var blocks = content != null ? content.get("blocks") : null;
+        boolean hasChatCta = false;
         if (blocks instanceof List<?> blockList) {
             for (var block : blockList) {
                 if (block instanceof Map) {
                     @SuppressWarnings("unchecked")
                     var blockMap = (Map<String, Object>) block;
+                    if ("chat-cta".equals(blockMap.get("type"))) hasChatCta = true;
                     blocksHtml.append(renderBlock(blockMap, sv));
                 }
             }
         }
 
-        var schemaJson = buildSchemaOrg(landing.getTitle(), publicUrl, phone.toString(), address.toString(), bizType.toString());
-        var waButton   = buildWhatsAppButton(waNumber);
-        var gaScript   = buildGa4Script(gaId.toString());
+        var schemaJson   = buildSchemaOrg(landing.getTitle(), publicUrl, phone.toString(), address.toString(), bizType.toString());
+        var waButton     = buildWhatsAppButton(waNumber);
+        var gaScript     = buildGa4Script(gaId.toString());
+        var chatWidget   = (chatEnabled || hasChatCta) ? buildChatWidget(landing.getSlug(), sv.primary(), chatBizName) : "";
 
         return "<!DOCTYPE html><html lang=\"ca\"><head>" +
                "<meta charset=\"UTF-8\">" +
@@ -689,6 +694,7 @@ public class EngineOrchestrator implements EngineService {
                "<a href=\"/legal/politica-de-cookies\">Política de cookies</a></p>" +
                "</div></footer>" +
                waButton +
+               chatWidget +
                buildScrollAnimScript() +
                "</body></html>";
     }
@@ -782,6 +788,7 @@ public class EngineOrchestrator implements EngineService {
             case "contact-form"  -> renderContactForm(props, s);
             case "faq"           -> renderFaq(props, s);
             case "cta"           -> renderCta(props, s);
+            case "chat-cta"      -> renderChatCta(props, s);
             case "testimonials"  -> renderTestimonials(props, s);
             case "footer"        -> renderFooterBlock(props, s);
             case "opening-hours" -> renderOpeningHours(props, s);
@@ -794,22 +801,146 @@ public class EngineOrchestrator implements EngineService {
     }
 
     private String renderHero(Map<String, Object> props, StyleVars s) {
-        var title    = str(props, "title", "");
-        var subtitle = str(props, "subtitle", "");
-        var ctaText  = str(props, "ctaText", "");
-        var ctaUrl   = str(props, "ctaLink", str(props, "ctaUrl", "#contact"));
-        var bgImage  = str(props, "bgImage", str(props, "bgImageUrl", ""));
+        var title     = str(props, "title", "");
+        var subtitle  = str(props, "subtitle", "");
+        var ctaText   = str(props, "ctaText", "");
+        var ctaUrl    = str(props, "ctaLink", str(props, "ctaUrl", "#contact"));
+        var ctaAction = str(props, "ctaAction", "link");
+        var bgImage   = str(props, "bgImage", str(props, "bgImageUrl", ""));
 
         var bgCss = bgImage.isBlank()
                 ? "background:linear-gradient(135deg," + s.accent() + " 0%," + s.primary() + " 100%)"
                 : "background:linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)),url('" + escapeHtml(bgImage) + "') center/cover";
 
+        String ctaHtml = "";
+        if (!ctaText.isBlank()) {
+            ctaHtml = "chat".equals(ctaAction)
+                ? "<button class=\"btn btn-inv\" onclick=\"openChatWidget()\">" + escapeHtml(ctaText) + "</button>"
+                : "<a href=\"" + escapeHtml(ctaUrl) + "\" class=\"btn btn-inv\">" + escapeHtml(ctaText) + "</a>";
+        }
+
         return "<section style=\"" + bgCss + ";color:#fff\">" +
                "<div class=\"w\" style=\"padding:100px 20px;text-align:center\">" +
                "<h1 style=\"font-size:clamp(2rem,5vw,3.5rem);font-weight:800;margin-bottom:20px\">" + escapeHtml(title) + "</h1>" +
                "<p style=\"font-size:clamp(1rem,2.5vw,1.25rem);opacity:.9;max-width:600px;margin:0 auto 36px\">" + escapeHtml(subtitle) + "</p>" +
-               (ctaText.isBlank() ? "" : "<a href=\"" + escapeHtml(ctaUrl) + "\" class=\"btn btn-inv\">" + escapeHtml(ctaText) + "</a>") +
+               ctaHtml +
                "</div></section>";
+    }
+
+    private String renderChatCta(Map<String, Object> props, StyleVars s) {
+        var title       = str(props, "title", "Reserva la teva cita");
+        var subtitle    = str(props, "subtitle", "Respon en menys d'1 minut");
+        var buttonText  = str(props, "buttonText", "Xateja amb nosaltres");
+        var accentColor = str(props, "accentColor", s.primary());
+        return "<section class=\"sec\" style=\"background:" + s.bg() + "\">" +
+               "<div class=\"w\" style=\"text-align:center\" data-anim>" +
+               "<h2 class=\"sec-title\">" + escapeHtml(title) + "</h2>" +
+               "<p style=\"opacity:.7;margin-bottom:32px\">" + escapeHtml(subtitle) + "</p>" +
+               "<button onclick=\"openChatWidget()\" style=\"" +
+               "background:" + escapeHtml(accentColor) + ";color:#fff;border:none;cursor:pointer;" +
+               "padding:16px 40px;border-radius:8px;font-size:1.1rem;font-weight:700;" +
+               "box-shadow:0 4px 20px rgba(0,0,0,.15);transition:opacity .2s\" " +
+               "onmouseover=\"this.style.opacity='.85'\" onmouseout=\"this.style.opacity='1'\">" +
+               escapeHtml(buttonText) + "</button>" +
+               "</div></section>";
+    }
+
+    private String buildChatWidget(String landingSlug, String primaryColor, String businessName) {
+        return "<div id=\"amg-chat-widget\">" +
+               "<button id=\"amg-chat-btn\" onclick=\"toggleChatPanel()\" " +
+               "style=\"position:fixed;bottom:24px;right:24px;z-index:1000;width:60px;height:60px;" +
+               "border-radius:50%;background:" + escapeHtml(primaryColor) + ";border:none;cursor:pointer;" +
+               "box-shadow:0 4px 20px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;" +
+               "transition:transform .2s\" " +
+               "onmouseover=\"this.style.transform='scale(1.1)'\" onmouseout=\"this.style.transform='scale(1)'\">" +
+               "<svg width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"#fff\">" +
+               "<path d=\"M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z\"/></svg>" +
+               "</button>" +
+               "<div id=\"amg-chat-panel\" style=\"display:none;position:fixed;bottom:96px;right:24px;" +
+               "width:340px;height:75vh;max-height:560px;z-index:1000;border-radius:16px;" +
+               "box-shadow:0 8px 40px rgba(0,0,0,.2);background:#fff;display:none;" +
+               "flex-direction:column;overflow:hidden\">" +
+               "<div style=\"background:" + escapeHtml(primaryColor) + ";padding:16px 20px;color:#fff;display:flex;align-items:center;gap:12px\">" +
+               "<div style=\"width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center\">" +
+               "<svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"#fff\"><path d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z\"/></svg></div>" +
+               "<div><div style=\"font-weight:700;font-size:.95rem\">" + escapeHtml(businessName) + "</div>" +
+               "<div style=\"font-size:.75rem;opacity:.85\">&#x25cf; En l&iacute;nia</div></div>" +
+               "<button onclick=\"closeChatPanel()\" style=\"margin-left:auto;background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;line-height:1\">&times;</button>" +
+               "</div>" +
+               "<div id=\"amg-chat-messages\" style=\"flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px\"></div>" +
+               "<div style=\"padding:12px 16px;border-top:1px solid #f0f0f0;display:flex;gap:8px\">" +
+               "<input id=\"amg-chat-input\" type=\"text\" placeholder=\"Escriu el teu missatge...\" maxlength=\"500\" " +
+               "style=\"flex:1;border:1px solid #e0e0e0;border-radius:20px;padding:10px 16px;font-size:.9rem;outline:none\" " +
+               "onkeydown=\"if(event.key==='Enter')sendChatMessage()\" />" +
+               "<button onclick=\"sendChatMessage()\" " +
+               "style=\"background:" + escapeHtml(primaryColor) + ";border:none;border-radius:50%;width:40px;height:40px;" +
+               "cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0\">" +
+               "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"#fff\"><path d=\"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z\"/></svg>" +
+               "</button></div></div></div>" +
+               buildChatScript(landingSlug);
+    }
+
+    private String buildChatScript(String landingSlug) {
+        return "<script>(function(){" +
+               "var SLUG='" + escapeJs(landingSlug) + "';" +
+               "var BASE='/api/v1/chat';" +
+               "var sessionId=localStorage.getItem('amg_chat_sid_'+SLUG);" +
+               "var panel=null,msgs=null,input=null,opened=false;" +
+               "function init(){panel=document.getElementById('amg-chat-panel');" +
+               "msgs=document.getElementById('amg-chat-messages');" +
+               "input=document.getElementById('amg-chat-input');}" +
+               "window.toggleChatPanel=function(){init();" +
+               "if(!opened){panel.style.display='flex';opened=true;" +
+               "if(!sessionId)startSession();}else{panel.style.display='none';opened=false;}};" +
+               "window.openChatWidget=function(){init();" +
+               "panel.style.display='flex';opened=true;" +
+               "if(!sessionId)startSession();};" +
+               "window.closeChatPanel=function(){init();" +
+               "panel.style.display='none';opened=false;};" +
+               "function startSession(){" +
+               "addMsg('assistant','...',true);" +
+               "fetch(BASE+'/sessions',{method:'POST',headers:{'Content-Type':'application/json'}," +
+               "body:JSON.stringify({landingSlug:SLUG})})" +
+               ".then(function(r){return r.json();})" +
+               ".then(function(d){" +
+               "removeTyping();" +
+               "if(d.sessionId){sessionId=d.sessionId;" +
+               "localStorage.setItem('amg_chat_sid_'+SLUG,sessionId);" +
+               "addMsg('assistant',d.greeting||'Hola! En què puc ajudar-te?');}})" +
+               ".catch(function(){removeTyping();addMsg('assistant','Ho sent, en aquest moment no puc respondre.');});}" +
+               "window.sendChatMessage=function(){init();" +
+               "var txt=input.value.trim();if(!txt||!sessionId)return;" +
+               "input.value='';addMsg('user',txt);" +
+               "addMsg('assistant','...',true);" +
+               "fetch(BASE+'/sessions/'+sessionId+'/messages',{method:'POST',headers:{'Content-Type':'application/json'}," +
+               "body:JSON.stringify({message:txt})})" +
+               ".then(function(r){return r.json();})" +
+               ".then(function(d){removeTyping();" +
+               "if(d.terminated){addMsg('assistant',d.reply);input.disabled=true;" +
+               "setTimeout(function(){closeChatPanel();localStorage.removeItem('amg_chat_sid_'+SLUG);sessionId=null;},3000);" +
+               "}else{addMsg('assistant',d.reply);}})" +
+               ".catch(function(){removeTyping();addMsg('assistant','Error en enviar el missatge.');});};" +
+               "function addMsg(role,text,isTyping){" +
+               "var d=document.createElement('div');" +
+               "d.style.cssText='max-width:80%;padding:10px 14px;border-radius:16px;font-size:.88rem;line-height:1.5;word-break:break-word;';" +
+               "if(role==='user'){d.style.cssText+=';background:" + escapeJs(buildChatUserBubbleColor()) + ";" +
+               "color:#fff;align-self:flex-end;border-bottom-right-radius:4px';" +
+               "}else{d.style.cssText+=';background:#f3f4f6;color:#1a1a1a;align-self:flex-start;border-bottom-left-radius:4px';}" +
+               "if(isTyping)d.setAttribute('id','amg-typing');" +
+               "d.textContent=text;" +
+               "msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}" +
+               "function removeTyping(){var t=document.getElementById('amg-typing');if(t)t.remove();}" +
+               "})();</script>";
+    }
+
+    private String buildChatUserBubbleColor() {
+        // Retorna un color lleugerament més fosc per als missatges de l'usuari
+        return "#374151";
+    }
+
+    private String escapeJs(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "");
     }
 
     private String renderText(Map<String, Object> props, StyleVars s) {

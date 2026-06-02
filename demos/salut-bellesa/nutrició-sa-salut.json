@@ -11,7 +11,9 @@
     "secondaryColor": "#dcedc8",
     "bgColor": "#f9fdf5",
     "textColor": "#1a202c",
-    "borderRadius": "10px"
+    "borderRadius": "10px",
+    "chatEnabled": true,
+    "chatBusinessName": "Nutrició Sa Salut"
   },
   "content": {
     "blocks": [
@@ -21,9 +23,10 @@
         "props": {
           "title": "Menja millor, viu millor",
           "subtitle": "Consulta de nutrició personalitzada a Inca. Plans nutricionals adaptats als teus objectius, el teu estil de vida i les teves preferències. Sense dietes miraculoses.",
-          "ctaText": "Reserva la primera consulta",
+          "ctaText": "Consulta gratuïta",
           "ctaUrl": "#contacte",
-          "bgImageUrl": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200&q=80"
+          "bgImageUrl": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200&q=80",
+          "ctaAction": "chat"
         }
       },
       {
@@ -149,6 +152,16 @@
           "text": "Comença avui el canvi que sempre has volgut fer. Primera visita + pla nutricional complet per 90 €.",
           "buttonText": "Reserva la teva primera consulta",
           "buttonUrl": "#contacte"
+        }
+      },
+      {
+        "id": "blk_chat_cta",
+        "type": "chat-cta",
+        "props": {
+          "title": "Primera consulta gratuïta",
+          "subtitle": "Parla amb la nostra nutricionista i descobreix el teu pla personalitzat",
+          "buttonText": "Vull la meva consulta gratuïta",
+          "accentColor": "#33691e"
         }
       },
       {

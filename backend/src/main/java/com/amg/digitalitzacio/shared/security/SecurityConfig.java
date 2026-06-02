@@ -75,6 +75,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/agents/email/inbound").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/whatsapp/webhook").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/whatsapp/webhook").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/chat/sessions").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/chat/sessions/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/ops/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/demo/inbox/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/demo/inbox/**").permitAll()
