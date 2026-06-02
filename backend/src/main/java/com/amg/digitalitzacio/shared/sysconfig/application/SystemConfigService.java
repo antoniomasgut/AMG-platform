@@ -46,6 +46,7 @@ public class SystemConfigService {
         new KnownKey("N8N_API_URL",             "n8n API URL",                "URL base de la instància n8n", "AUTOMATIONS",                   false),
         new KnownKey("N8N_API_KEY",             "n8n API Key",                "Clau API n8n per a gestió de workflows", "AUTOMATIONS",         true),
         new KnownKey("WHATSAPP_WEBHOOK_SECRET", "WhatsApp Webhook Secret",     "Token de verificació del webhook de WhatsApp (Twilio/Meta)", "AGENTS", true),
+        new KnownKey("EMAIL_INBOUND_DOMAIN",   "Domini inbound d'email", "Subdomini Cloudflare per rebre emails del bot (per defecte: inbound.amgdl.com). Només informatiu — canviar-lo aquí no modifica el DNS.", "EMAIL_INBOUND", false),
         new KnownKey("GOOGLE_CALENDAR_SA_JSON", "Google Calendar Service Account JSON", "JSON del Service Account de Google per crear i compartir calendaris (F2 Agenda)", "CALENDAR", true),
         new KnownKey("GOOGLE_OAUTH_CLIENT_ID",  "Google OAuth Client ID",               "Client ID de Google Cloud per al flux OAuth (connexió compte propi del client)", "CALENDAR", false),
         new KnownKey("GOOGLE_OAUTH_CLIENT_SECRET", "Google OAuth Client Secret",         "Client Secret de Google Cloud per al flux OAuth del client", "CALENDAR", true)

@@ -1,0 +1,8 @@
+name = "amg-email-worker"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# El Worker ha de tenir activat el binding d'email
+# Cloudflare Dashboard → Workers & Pages → amg-email-worker → Settings → Email
+[triggers]
+crons = []

@@ -567,53 +567,32 @@ export default function AgentsPage() {
                     <p className="text-xs font-semibold text-ink-1">Com configurar l&apos;email del bot (enviar + rebre)</p>
                     <div className="space-y-3 text-xs">
 
-                      {/* Cas 1: Gmail */}
+                      {/* Rebre — via inbound.amgdl.com */}
                       <div className="rounded border border-border-base p-2.5 space-y-1.5">
                         <div className="flex items-center gap-2">
-                          <span>📧</span>
-                          <p className="font-semibold text-ink-1">Cas 1 — Tens Gmail o correu personal</p>
+                          <span>📥</span>
+                          <p className="font-semibold text-ink-1">Per rebre — adreça inbound</p>
                         </div>
-                        <p className="text-ink-3 f-mono">joan.plomer@gmail.com</p>
                         <div className="space-y-1 text-ink-2">
-                          <p className="font-medium text-ink-1">Per rebre:</p>
-                          <p>① A la secció <em>Adreça que monitoritza el bot</em> (dalt), posa <span className="f-mono">plomeria@inbound.amgdl.com</span> (et la creem nosaltres).</p>
-                          <p>② Contacta&apos;ns per activar l&apos;adreça inbound. El bot ja rebrà els emails dels clients.</p>
-                          <p className="font-medium text-ink-1 pt-1">Per enviar:</p>
-                          <p>③ Deixa <em>Remitent</em> buit (surt de noreply@amgdl.com).</p>
-                          <p>④ Omple <em>Respostes a</em> amb <span className="f-mono">joan.plomer@gmail.com</span>. Quan el client respongui, t&apos;arribarà al Gmail.</p>
+                          <p>① Al camp d&apos;adreça de dalt, escriu qualsevol adreça que acabi en <span className="f-mono text-accent-light">@inbound.amgdl.com</span>.</p>
+                          <p className="pl-3 text-ink-3">Ex: <span className="f-mono">plomeria@inbound.amgdl.com</span> · <span className="f-mono">clinica-marti@inbound.amgdl.com</span></p>
+                          <p>② Desa. El bot rebrà i respondrà automàticament els emails enviats a aquesta adreça.</p>
+                          <p className="text-ink-3 italic">El domini inbound.amgdl.com és gestionat per AMG via Cloudflare — no cal cap configuració extra per al client.</p>
                         </div>
                       </div>
 
-                      {/* Cas 2: Domini propi */}
+                      {/* Enviar — Brevo */}
                       <div className="rounded border border-border-base p-2.5 space-y-1.5">
                         <div className="flex items-center gap-2">
-                          <span>🌐</span>
-                          <p className="font-semibold text-ink-1">Cas 2 — Tens domini propi</p>
+                          <span>📤</span>
+                          <p className="font-semibold text-ink-1">Per enviar — remitent personalitzat (opcional)</p>
                         </div>
-                        <p className="text-ink-3 f-mono">info@plomeria-joan.com</p>
                         <div className="space-y-1 text-ink-2">
-                          <p className="font-medium text-ink-1">Per rebre:</p>
-                          <p>① Contacta&apos;ns. Afegim un registre MX al teu domini apuntant a Brevo (5 minuts).</p>
-                          <p>② A la secció <em>Adreça que monitoritza el bot</em>, posa <span className="f-mono">bot@plomeria-joan.com</span> (o la que vulguis).</p>
-                          <p className="font-medium text-ink-1 pt-1">Per enviar:</p>
-                          <p>③ Contacta&apos;ns per verificar el domini a Brevo (SPF + DKIM, 5 minuts més).</p>
-                          <p>④ Omple <em>Remitent</em>: nom <span className="f-mono">Plomeria Joan</span> · email <span className="f-mono">info@plomeria-joan.com</span>.</p>
-                          <p>⑤ Els emails surten directament amb el teu domini. El client no veu cap menció a AMG.</p>
-                        </div>
-                      </div>
-
-                      {/* Cas 3: Sense correu */}
-                      <div className="rounded border border-border-base p-2.5 space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <span>✅</span>
-                          <p className="font-semibold text-ink-1">Cas 3 — Sense correu (configuració mínima)</p>
-                        </div>
-                        <p className="text-ink-3">No tens correu de negoci o no vols configurar-ho ara.</p>
-                        <div className="space-y-1 text-ink-2">
-                          <p>① Deixa tots els camps buits.</p>
-                          <p>② El bot pot rebre emails si contacta&apos;ns per assignar-te una adreça <span className="f-mono">@inbound.amgdl.com</span>.</p>
-                          <p>③ Les respostes surten de <span className="f-mono">noreply@amgdl.com</span> automàticament.</p>
-                          <p>④ Funciona perfectament per als clients. Pots personalitzar-ho quan vulguis.</p>
+                          <p className="font-medium text-ink-1">Opció A — Sense configuració (per defecte)</p>
+                          <p className="pl-3">Les respostes surten de <span className="f-mono">noreply@amgdl.com</span>. El camp <em>Respostes a</em> pot apuntar al correu del negoci.</p>
+                          <p className="font-medium text-ink-1 pt-1">Opció B — Domini propi verificat a Brevo</p>
+                          <p className="pl-3">① Verifica el domini a Brevo (SPF + DKIM). Llavors omple el camp <em>Remitent</em> amb <span className="f-mono">nom@tudomini.com</span>.</p>
+                          <p className="pl-3">② Les respostes dels clients arriben directament al teu correu (camp <em>Respostes a</em>).</p>
                         </div>
                       </div>
 

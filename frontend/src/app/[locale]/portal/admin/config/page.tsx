@@ -19,11 +19,25 @@ const CATEGORY_LABEL: Record<string, string> = {
   BACKUP: 'Backup',
   AUTOMATIONS: 'Automatitzacions',
   CALENDAR: 'Calendari',
+  EMAIL_INBOUND: 'Email Inbound',
 };
 
 type HelpStep = { n: number; text: React.ReactNode };
 
 const CATEGORY_HELP: Record<string, { title: string; steps: HelpStep[] }[]> = {
+  EMAIL_INBOUND: [
+    {
+      title: 'Configuració del Cloudflare Email Worker (una sola vegada)',
+      steps: [
+        { n: 1, text: <>Ves a <strong>dash.cloudflare.com → amgdl.com → Email → Email Routing</strong> i assegura&apos;t que Email Routing està activat.</> },
+        { n: 2, text: <>Ves a <strong>DNS</strong> i afegeix els registres MX per al subdomini <code className="bg-surface-overlay px-1 rounded text-[10px]">inbound.amgdl.com</code>:<br/><code className="bg-surface-overlay px-1 rounded text-[10px] block mt-1">inbound  MX  10  route1.mx.cloudflare.net</code><code className="bg-surface-overlay px-1 rounded text-[10px] block mt-0.5">inbound  MX  20  route2.mx.cloudflare.net</code><code className="bg-surface-overlay px-1 rounded text-[10px] block mt-0.5">inbound  MX  50  route3.mx.cloudflare.net</code></> },
+        { n: 3, text: <>Ves a <strong>Workers & Pages → Crear aplicació → Worker</strong>. Anomena&apos;l <code className="bg-surface-overlay px-1 rounded text-[10px]">amg-email-worker</code>. Enganxa el contingut del fitxer <code className="bg-surface-overlay px-1 rounded text-[10px]">infra/cloudflare-email-worker/worker.js</code> del repositori.</> },
+        { n: 4, text: <>Torna a <strong>Email → Email Routing → Routes</strong>. Crea una nova regla: <em>Catch-all</em> <code className="bg-surface-overlay px-1 rounded text-[10px]">*@inbound.amgdl.com</code> → acció <strong>Send to a Worker</strong> → selecciona <code className="bg-surface-overlay px-1 rounded text-[10px]">amg-email-worker</code>.</> },
+        { n: 5, text: <>Prova enviant un email a <code className="bg-surface-overlay px-1 rounded text-[10px]">test@inbound.amgdl.com</code> i comprova els logs del Worker a <strong>Workers → amg-email-worker → Logs</strong>. Ha d&apos;aparèixer "Email enrutat".</> },
+        { n: 6, text: <>Ja funciona. A partir d&apos;ara, cada tenant pot posar qualsevol adreça <code className="bg-surface-overlay px-1 rounded text-[10px]">@inbound.amgdl.com</code> a la seva configuració d&apos;agents sense cap tràmit addicional.</> },
+      ],
+    },
+  ],
   CALENDAR: [
     {
       title: 'Fase 1 — AMG crea i gestiona el calendari (GOOGLE_CALENDAR_SA_JSON)',
