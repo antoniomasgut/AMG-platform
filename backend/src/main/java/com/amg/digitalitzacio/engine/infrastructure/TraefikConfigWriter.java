@@ -1,9 +1,13 @@
 package com.amg.digitalitzacio.engine.infrastructure;
 
 import com.amg.digitalitzacio.engine.domain.Landing;
+import com.amg.digitalitzacio.engine.domain.LandingRepository;
 import com.amg.digitalitzacio.engine.domain.LandingStatus;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -20,6 +24,7 @@ import java.util.List;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class TraefikConfigWriter {
 
     @Value("${app.traefik.dynamic-config-dir:}")
@@ -27,6 +32,13 @@ public class TraefikConfigWriter {
 
     @Value("${app.landing.base-domain:webs.amgdl.com}")
     private String landingBaseDomain;
+
+    private final LandingRepository landingRepository;
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onStartup() {
+        regenerate(landingRepository.findAll());
+    }
 
     public void regenerate(List<Landing> allLandings) {
         if (configDir == null || configDir.isBlank()) return;
