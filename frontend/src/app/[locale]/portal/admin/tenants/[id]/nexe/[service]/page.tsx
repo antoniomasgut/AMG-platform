@@ -2,10 +2,12 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getTenant } from '@/services/admin';
+import { useToast } from '@/lib/toast-context';
 import {
   getNexeConfig, saveNexeConfig,
+  provisionCalendar, getCalendarOAuthUrl,
   AgendaConfig, AgendaMode, getAgendaMode, getAgendaDefaults,
   PressupostosConfig, QuoteMode, getQuoteMode, getPressupostosDefaults, ServiceItem,
   FidelitzacioConfig, DEFAULT_FIDELITZACIO,
@@ -142,8 +144,11 @@ const AGENDA_MODE_LABELS: Record<AgendaMode, { title: string; slotLabel: string;
 
 function AgendaForm({ tenantId, sector }: { tenantId: string; sector?: string | null }) {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const mode = getAgendaMode(sector);
   const labels = AGENDA_MODE_LABELS[mode];
+  const [provisioning, setProvisioning] = React.useState(false);
+  const [oauthLoading, setOauthLoading] = React.useState(false);
 
   const { data: raw } = useQuery({
     queryKey: ['nexe-config', tenantId, 'AGENDA'],
@@ -177,27 +182,118 @@ function AgendaForm({ tenantId, sector }: { tenantId: string; sector?: string | 
           <Field label="Sistema de gestió">
             <select className={sel} value={cfg.calendar_type}
               onChange={e => setCfg(c => ({ ...c, calendar_type: e.target.value as AgendaConfig['calendar_type'] }))}>
-              <option value="manual">Manual (el bot gestiona les cites)</option>
-              <option value="google">Google Calendar</option>
+              <option value="manual">Manual (el bot gestiona les cites sense calendari extern)</option>
+              <option value="google">Google Calendar — AMG crea el calendari (recomanat)</option>
+              <option value="google_oauth">Google Calendar — Client connecta el seu compte Google</option>
               <option value="calendly">Calendly</option>
             </select>
           </Field>
+
           {cfg.calendar_type === 'google' && (
-            <>
-              {/* Instruccions Service Account */}
-              <div className="bg-[rgba(255,107,0,0.04)] border border-[rgba(255,107,0,0.2)] rounded p-4 mb-4 space-y-2">
-                <p className="f-mono text-xs font-semibold text-accent-light uppercase tracking-wide">Configuració prèvia (una sola vegada)</p>
-                <Step n={1}>A Google Cloud Console, crea un projecte, activa l'API de Google Calendar i crea un <strong>Service Account</strong>. Descarrega el fitxer JSON de la clau.</Step>
-                <Step n={2}>A <strong>Portal AMG → Admin → Configuració del sistema → Calendari</strong>, puja el JSON del Service Account al camp <code className="bg-surface-base px-1 rounded text-[10px]">GOOGLE_CALENDAR_SA_JSON</code>.</Step>
-                <Step n={3}>Copia l'adreça de correu del Service Account (visible al JSON: <code className="bg-surface-base px-1 rounded text-[10px]">client_email</code>) i <strong>comparteix el calendari del client</strong> amb aquesta adreça (permís: <em>Fer canvis als événements</em>).</Step>
-                <Step n={4}>A Google Calendar → Configuració del calendari → "Integrar el calendari" → copia l'<strong>ID del calendari</strong> (acaba en <code className="bg-surface-base px-1 rounded text-[10px]">@group.calendar.google.com</code> o és un correu Gmail).</Step>
-              </div>
-              <Field label="ID del calendari Google" hint="Ex: empresa@gmail.com  o  abc123@group.calendar.google.com">
-                <input className={inp} placeholder="exemple@group.calendar.google.com"
-                  value={cfg.google_calendar_id}
-                  onChange={e => setCfg(c => ({ ...c, google_calendar_id: e.target.value }))} />
-              </Field>
-            </>
+            <div className="space-y-4">
+              {cfg.google_calendar_id ? (
+                <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded">
+                  <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="f-mono text-xs text-green-400">Calendari configurat</p>
+                    <p className="f-mono text-[10px] text-ink-3 truncate">{cfg.google_calendar_id}</p>
+                  </div>
+                  <AMGButton type="button" variant="ghost" size="sm"
+                    onClick={() => setCfg(c => ({ ...c, google_calendar_id: '' }))}>
+                    Canviar
+                  </AMGButton>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-[rgba(255,107,0,0.04)] border border-[rgba(255,107,0,0.2)] rounded p-4 space-y-2">
+                    <p className="f-mono text-xs font-semibold text-accent-light uppercase tracking-wide">
+                      Opció A — AMG crea el calendari automàticament
+                    </p>
+                    <p className="f-mono text-xs text-ink-2">
+                      Crea un Google Calendar "Cites — {'{nom del tenant}'}" i el comparteix amb l'email del tenant.
+                      Requereix que <code className="bg-surface-base px-1 rounded text-[10px]">GOOGLE_CALENDAR_SA_JSON</code> estigui configurat a{' '}
+                      <a href="/portal/admin/config" className="text-accent-light underline">Configuració del sistema</a>.
+                    </p>
+                    <AMGButton type="button" variant="secondary" size="sm"
+                      loading={provisioning}
+                      onClick={async () => {
+                        setProvisioning(true);
+                        try {
+                          const r = await provisionCalendar(tenantId);
+                          setCfg(c => ({ ...c, google_calendar_id: r.calendarId, calendar_type: 'google' }));
+                          toast('success', r.message);
+                          qc.invalidateQueries({ queryKey: ['nexe-config', tenantId, 'AGENDA'] });
+                        } catch (e: unknown) {
+                          toast('error', e instanceof Error ? e.message : 'Error desconegut');
+                        } finally {
+                          setProvisioning(false);
+                        }
+                      }}>
+                      Crear calendari AMG
+                    </AMGButton>
+                  </div>
+                  <div className="text-center f-mono text-xs text-ink-3">— o bé —</div>
+                  <Field label="Opció B — ID del calendari existent"
+                    hint="Si el client ja té un calendari i ha compartit accés amb el Service Account d'AMG">
+                    <input className={inp} placeholder="exemple@group.calendar.google.com"
+                      value={cfg.google_calendar_id}
+                      onChange={e => setCfg(c => ({ ...c, google_calendar_id: e.target.value }))} />
+                  </Field>
+                </div>
+              )}
+            </div>
+          )}
+
+          {cfg.calendar_type === 'google_oauth' && (
+            <div className="space-y-3">
+              {cfg.google_refresh_token ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded">
+                    <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="f-mono text-xs text-green-400">Google Calendar connectat (OAuth)</p>
+                      <p className="f-mono text-[10px] text-ink-3">
+                        Calendari: {cfg.google_calendar_id || 'primary'}
+                      </p>
+                    </div>
+                    <AMGButton type="button" variant="ghost" size="sm"
+                      onClick={() => setCfg(c => ({ ...c, google_refresh_token: undefined, google_calendar_id: '' }))}>
+                      Desconnectar
+                    </AMGButton>
+                  </div>
+                  <Field label="ID del calendari (opcional)" hint='Deixa "primary" per usar el calendari principal del compte'>
+                    <input className={inp} placeholder="primary"
+                      value={cfg.google_calendar_id || 'primary'}
+                      onChange={e => setCfg(c => ({ ...c, google_calendar_id: e.target.value }))} />
+                  </Field>
+                </div>
+              ) : (
+                <div className="bg-[rgba(255,107,0,0.04)] border border-[rgba(255,107,0,0.2)] rounded p-4 space-y-3">
+                  <p className="f-mono text-xs font-semibold text-accent-light uppercase tracking-wide">
+                    Connecta el compte Google del client
+                  </p>
+                  <p className="f-mono text-xs text-ink-2">
+                    El client authoritza AMG a crear events al seu propi Google Calendar.
+                    Requereix <code className="bg-surface-base px-1 rounded text-[10px]">GOOGLE_OAUTH_CLIENT_ID</code> i <code className="bg-surface-base px-1 rounded text-[10px]">GOOGLE_OAUTH_CLIENT_SECRET</code> configurats.
+                  </p>
+                  <AMGButton type="button" variant="secondary" size="sm"
+                    loading={oauthLoading}
+                    onClick={async () => {
+                      setOauthLoading(true);
+                      try {
+                        const { url } = await getCalendarOAuthUrl(tenantId);
+                        window.open(url, '_blank', 'width=600,height=700');
+                      } catch (e: unknown) {
+                        toast('error', e instanceof Error ? e.message : 'Error obtenint URL OAuth');
+                      } finally {
+                        setOauthLoading(false);
+                      }
+                    }}>
+                    Connecta Google Calendar →
+                  </AMGButton>
+                </div>
+              )}
+            </div>
           )}
         </SectionCard>
       )}

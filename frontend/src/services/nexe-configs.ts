@@ -13,6 +13,14 @@ export const saveNexeConfig = (tenantId: string, serviceKey: string, config: obj
     body: JSON.stringify(config),
   });
 
+export const provisionCalendar = (tenantId: string) =>
+  apiFetch<{ calendarId: string; message: string }>(`/nexe/tenants/${tenantId}/calendar/provision`, {
+    method: 'POST',
+  });
+
+export const getCalendarOAuthUrl = (tenantId: string) =>
+  apiFetch<{ url: string }>(`/nexe/tenants/${tenantId}/calendar/oauth-url`);
+
 // ── Sector groups ──────────────────────────────────────────────
 
 export type AgendaMode = 'appointment' | 'inspection' | 'vehicle' | 'meeting';
@@ -49,8 +57,9 @@ export interface ClientQuestion {
 }
 
 export interface AgendaConfig {
-  calendar_type: 'google' | 'calendly' | 'manual';
+  calendar_type: 'google' | 'google_oauth' | 'calendly' | 'manual';
   google_calendar_id: string;
+  google_refresh_token?: string;
   slot_duration_minutes: number;
   buffer_minutes: number;
   max_days_advance: number;

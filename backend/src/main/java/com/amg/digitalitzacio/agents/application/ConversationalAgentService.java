@@ -164,7 +164,8 @@ public class ConversationalAgentService {
             if (agendaJson == null) return cleaned;
 
             Map<String, Object> agenda = objectMapper.readValue(agendaJson, new TypeReference<>() {});
-            if (!"google".equals(agenda.get("calendar_type"))) return cleaned;
+            String calType = String.valueOf(agenda.get("calendar_type"));
+            if (!"google".equals(calType) && !"google_oauth".equals(calType)) return cleaned;
             String calId = (String) agenda.get("google_calendar_id");
             if (calId == null || calId.isBlank()) return cleaned;
 
@@ -178,7 +179,12 @@ public class ConversationalAgentService {
             String name  = booking.get("name") instanceof String s ? s : "Client";
             String notes = booking.get("notes") instanceof String s ? s : "";
 
-            googleCalendarService.createEvent(calId, "Cita: " + name, start, duration, notes);
+            if ("google_oauth".equals(calType)) {
+                String refreshToken = (String) agenda.get("google_refresh_token");
+                googleCalendarService.createEventOAuth(refreshToken, calId, "Cita: " + name, start, duration, notes);
+            } else {
+                googleCalendarService.createEvent(calId, "Cita: " + name, start, duration, notes);
+            }
         } catch (Exception e) {
             log.warn("Could not process booking tag: {}", e.getMessage());
         }
