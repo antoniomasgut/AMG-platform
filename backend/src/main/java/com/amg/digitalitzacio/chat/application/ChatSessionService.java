@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.chat.application;
 
+import com.amg.digitalitzacio.agents.application.ChannelUsageService;
 import com.amg.digitalitzacio.chat.domain.ChatSession;
 import com.amg.digitalitzacio.chat.domain.LandingChatContext;
 import com.amg.digitalitzacio.chat.domain.LandingChatContextRepository;
@@ -56,6 +57,7 @@ public class ChatSessionService {
     private final LandingRepository landingRepository;
     private final SystemConfigService sysConfig;
     private final RestClient.Builder restClientBuilder;
+    private final ChannelUsageService channelUsageService;
 
     @Value("${app.landing.base-domain:webs.amgdl.com}")
     private String landingBaseDomain;
@@ -132,6 +134,12 @@ public class ChatSessionService {
         trimHistory(session);
         saveSession(session);
         incrementRateCounter(RATE_MSG_KEY + ip, 3600);
+
+        // Registra l'ús del canal de xat (best-effort, no bloca la resposta)
+        try {
+            landingRepository.findById(UUID.fromString(session.getLandingId()))
+                    .ifPresent(l -> channelUsageService.record(l.getTenantId(), ChannelUsageService.CHAT));
+        } catch (Exception ignored) {}
 
         return new SendMessageResult(sessionId, reply, false);
     }

@@ -17,6 +17,7 @@ import { getLeadStats, type LeadStats } from '@/services/leads';
 import { getOpsDashboard, type OpsDashboard } from '@/services/ops';
 import { getInfraStatus, type InfraStatus } from '@/services/infraops';
 import { getPaymentDashboard, type PaymentDashboard } from '@/services/payments';
+import { getGlobalChannelUsageStats, type ChannelUsageStats } from '@/services/agents-conversational';
 import { OnboardingGuide } from '@/components/portal/OnboardingGuide';
 
 function formatDate(iso: string | null): string {
@@ -82,10 +83,11 @@ interface AdminData {
   ops: OpsDashboard | null;
   infra: InfraStatus | null;
   payments: PaymentDashboard | null;
+  channelStats: ChannelUsageStats | null;
 }
 
 function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; loading: boolean; isSuperAdmin: boolean }) {
-  const { leads, ops, infra, totalTenants, payments } = data;
+  const { leads, ops, infra, totalTenants, payments, channelStats } = data;
 
   const sysOk = ops ? ops.currentStatus.up === ops.currentStatus.services && ops.openIncidents === 0 : null;
   const infraTone = infra
@@ -224,6 +226,39 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
           </div>
         )}
       </div>
+
+      {/* Activitat de canals — últims 30 dies (SUPER_ADMIN only) */}
+      {isSuperAdmin && (
+        <div className="amg-card card-clip p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">Últims 30 dies</div>
+              <div className="f-display font-bold text-sm mt-0.5">Activitat de canals</div>
+            </div>
+            <a href="/portal/admin/tenants" className="f-mono text-[10px] uppercase text-accent-light hover:underline">Per tenant →</a>
+          </div>
+          {channelStats ? (
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {[
+                { label: 'WA Twilio', value: channelStats.whatsappMessages,     icon: '📱' },
+                { label: 'WA Meta',   value: channelStats.whatsappMetaMessages,  icon: '💚' },
+                { label: 'Telegram',  value: channelStats.telegramMessages,      icon: '✈️' },
+                { label: 'Email',     value: channelStats.emailMessages,         icon: '✉️' },
+                { label: 'Xat web',   value: channelStats.chatMessages,          icon: '💬' },
+                { label: 'Tokens IA', value: channelStats.aiTokens.toLocaleString('ca-ES'), icon: '🤖' },
+              ].map(({ label, value, icon }) => (
+                <div key={label} className="bg-[#0d0d1a] border border-border-base rounded p-2.5 text-center">
+                  <div className="text-sm mb-1">{icon}</div>
+                  <div className="f-mono text-base font-bold text-ink-0">{value}</div>
+                  <div className="f-mono text-[8px] uppercase tracking-wider text-ink-3 mt-0.5">{label}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-4 text-center f-mono text-[10px] uppercase text-ink-3">Sense dades</div>
+          )}
+        </div>
+      )}
 
       {/* Accions ràpides */}
       <div className="amg-card card-clip p-4 sm:p-5">
@@ -496,7 +531,7 @@ export default function PortalPage() {
 
   // Admin data
   const [adminData, setAdminData] = useState<AdminData>({
-    totalTenants: 0, leads: null, ops: null, infra: null, payments: null,
+    totalTenants: 0, leads: null, ops: null, infra: null, payments: null, channelStats: null,
   });
 
   // Client data
@@ -518,12 +553,13 @@ export default function PortalPage() {
     setLoading(true);
     try {
       if (isStaff) {
-        const [tenants, leads, ops, infra, payments] = await Promise.all([
+        const [tenants, leads, ops, infra, payments, channelStats] = await Promise.all([
           listTenants({ size: 1 }).catch(() => ({ totalElements: 0 })),
           getLeadStats().catch(() => null),
           getOpsDashboard().catch(() => null),
           isSuperAdmin ? getInfraStatus().catch(() => null) : Promise.resolve(null),
           !isSuperAdmin ? getPaymentDashboard().catch(() => null) : Promise.resolve(null),
+          isSuperAdmin ? getGlobalChannelUsageStats().catch(() => null) : Promise.resolve(null),
         ]);
         setAdminData({
           totalTenants: (tenants as { totalElements: number }).totalElements,
@@ -531,6 +567,7 @@ export default function PortalPage() {
           ops,
           infra,
           payments,
+          channelStats,
         });
       } else {
         const tid = user.tenantId;

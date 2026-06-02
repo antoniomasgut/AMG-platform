@@ -4,17 +4,16 @@ interface OnboardingStepProps {
   num: number;
   title: string;
   description: string;
+  cta: string;
   href: string;
   done: boolean;
   indeterminate?: boolean;
 }
 
-export function OnboardingStep({ num, title, description, href, done, indeterminate }: OnboardingStepProps) {
-  const stateLabel = done ? 'completat' : indeterminate ? 'no disponible' : 'pendent';
-
+export function OnboardingStep({ num, title, description, cta, href, done, indeterminate }: OnboardingStepProps) {
   const content = (
     <div
-      aria-label={`Pas ${num}: ${title} — ${stateLabel}`}
+      aria-label={`${num}. ${title}`}
       className={`amg-card card-clip p-5 flex flex-col gap-3 transition-all duration-500 ${
         done
           ? 'border-emerald-500/60 bg-emerald-900/10'
@@ -50,10 +49,7 @@ export function OnboardingStep({ num, title, description, href, done, indetermin
       </div>
       <p className="text-data text-ink-2">{description}</p>
       {!done && !indeterminate && (
-        <span className="f-mono text-label uppercase text-accent-light mt-auto">COMENÇA →</span>
-      )}
-      {indeterminate && (
-        <span className="f-mono text-label uppercase text-slate-400 mt-auto">NO DISPONIBLE</span>
+        <span className="f-mono text-label uppercase text-accent-light mt-auto">{cta} →</span>
       )}
     </div>
   );

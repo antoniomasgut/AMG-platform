@@ -228,3 +228,32 @@ export const clearContactMemory = (tenantId: string, contactId: string) =>
 
 export const testTenantEmail = (tenantId: string) =>
   apiFetch<{ ok: boolean; message: string }>(`/agents/conversational/${tenantId}/email/test`, { method: 'POST' });
+
+// --- Usage Stats ---
+
+export interface ChannelUsageStats {
+  whatsappMessages: number;
+  whatsappMetaMessages: number;
+  telegramMessages: number;
+  emailMessages: number;
+  chatMessages: number;
+  aiTokens: number;
+  from: string;
+  to: string;
+}
+
+export const getChannelUsageStats = (tenantId: string, from?: string, to?: string) => {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  const qs = params.toString();
+  return apiFetch<ChannelUsageStats>(`/agents/${tenantId}/usage-stats${qs ? `?${qs}` : ''}`);
+};
+
+export const getGlobalChannelUsageStats = (from?: string, to?: string) => {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  const qs = params.toString();
+  return apiFetch<ChannelUsageStats>(`/agents/usage-stats/global${qs ? `?${qs}` : ''}`);
+};

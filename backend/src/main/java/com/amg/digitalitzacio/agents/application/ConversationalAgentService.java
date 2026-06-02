@@ -33,6 +33,7 @@ public class ConversationalAgentService {
     private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final EmailChannel emailChannel;
     private final AIProviderRouter aiProviderRouter;
+    private final ChannelUsageService channelUsageService;
 
     public void handleIncoming(UUID tenantId, String customerIdentifier, ConversationChannel channel, String text) {
         try {
@@ -82,6 +83,7 @@ public class ConversationalAgentService {
                             : chatLink.getWhatsappPhoneNumber();
                     sendViaChannel(senderId, customerIdentifier, channel, assistantResponse,
                             aiConfig.getSenderEmail(), aiConfig.getSenderName(), aiConfig.getReplyToEmail());
+                    channelUsageService.record(tenantId, channel.name());
                     conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.ASSISTANT, assistantResponse, false);
                     break;
                 case HYBRID:

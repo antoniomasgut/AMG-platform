@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/lib/toast-context';
@@ -27,6 +27,7 @@ import {
   calcMonthly,
 } from '@/services/admin';
 import { createBudget, listBudgets, sendBudget, cancelBudget, updateBudget, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
+import { getChannelUsageStats, type ChannelUsageStats } from '@/services/agents-conversational';
 import { SECTOR_CONTEXTS, getSectorContext } from '@/services/sector-contexts';
 import { listLandings } from '@/services/factory';
 import { getWizardConfig } from '@/config/service-wizards';
@@ -63,6 +64,62 @@ const WORKER_ADDONS: Record<string, { setup: number; monthly: number }> = {
 const DEP_BADGE: Record<string, string> = {
   BASE: '🔵', REQUIRED: '🔴', OPTIONAL: '🟡',
 };
+
+type SectionStatus = 'active' | 'warning' | 'inactive' | 'neutral';
+
+function CollapsibleSection({
+  sectionId, eyebrow, title, status, warning,
+  collapsed, onToggle, children,
+}: {
+  sectionId?: string;
+  eyebrow?: string;
+  title: string;
+  status: SectionStatus;
+  warning?: string;
+  collapsed: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  const dotCls = {
+    active:   'bg-[#39d353]',
+    warning:  'bg-amber-400',
+    inactive: 'bg-[rgba(255,255,255,0.2)]',
+    neutral:  'bg-[rgba(255,255,255,0.15)]',
+  }[status];
+
+  const labelText = status === 'active' ? 'Actiu'
+    : status === 'warning' ? 'Pendent'
+    : status === 'inactive' ? 'Inactiu'
+    : null;
+
+  const labelCls = status === 'active' ? 'text-[#39d353]'
+    : status === 'warning' ? 'text-amber-400'
+    : 'text-ink-3';
+
+  return (
+    <div id={sectionId}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 mb-2 group"
+      >
+        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotCls}`} />
+        {eyebrow && (
+          <span className="f-mono text-[9px] uppercase tracking-wider text-ink-3 shrink-0">{eyebrow}</span>
+        )}
+        <span className="f-mono text-xs font-semibold text-ink-1 group-hover:text-white transition shrink-0">{title}</span>
+        {warning && <span className="f-mono text-[9px] text-amber-400 shrink-0">⚠ {warning}</span>}
+        <span className="flex-1 h-px bg-border-base mx-1" />
+        {labelText && <span className={`f-mono text-[9px] shrink-0 ${labelCls}`}>{labelText}</span>}
+        <I.Chevron
+          size={13}
+          className={`text-ink-3 transition-transform shrink-0 ${collapsed ? '' : 'rotate-90'}`}
+        />
+      </button>
+      {!collapsed && <div>{children}</div>}
+    </div>
+  );
+}
 
 function statusBadge(status: string, activeLabel: string, inactiveLabel: string) {
   return status === 'APPROVED' || status === 'ACTIVE' || status === 'COMPLETED'
@@ -2715,6 +2772,42 @@ export default function TenantDetailPage() {
     enabled: !!tenant,
   });
 
+  // Status queries — reuse React Query cache from sub-components, no extra network calls
+  const { data: agentChannels } = useQuery({
+    queryKey: ['agent-channels', id],
+    queryFn: () => getAgentChannels(id),
+    enabled: !!tenant,
+    retry: false,
+  });
+  const { data: tgConfig } = useQuery({
+    queryKey: ['tg-config', id],
+    queryFn: () => getTelegramConfig(id),
+    enabled: !!tenant,
+    retry: false,
+  });
+  const { data: waConfig } = useQuery({
+    queryKey: ['wa-config', id],
+    queryFn: () => getWhatsAppConfig(id),
+    enabled: !!tenant,
+    retry: false,
+  });
+  const { data: gcConfig } = useQuery({
+    queryKey: ['gc-config', id],
+    queryFn: () => getGoCardlessConfig(id),
+    enabled: !!tenant,
+    retry: false,
+  });
+  const { data: usageStats } = useQuery({
+    queryKey: ['channel-usage-stats', id],
+    queryFn: () => getChannelUsageStats(id),
+    enabled: !!tenant,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const [secCollapsed, setSecCollapsed] = useState<Record<string, boolean>>({});
+  const toggleSec = (key: string) => setSecCollapsed(p => ({ ...p, [key]: !p[key] }));
+
   const invalidateTenant = () => qc.invalidateQueries({ queryKey: ['tenant', id] });
 
   const invalidateSetup = () => {
@@ -2751,6 +2844,19 @@ export default function TenantDetailPage() {
   const profileCount = setup?.profiles.length ?? 0;
   const serviceCount = setup?.profiles.reduce((acc, p) =>
     acc + p.phases.reduce((a, ph) => a + ph.services.length, 0), 0) ?? 0;
+
+  // Section status derivation
+  const secStatus = {
+    info:      (tenant?.email ? 'active' : 'warning') as SectionStatus,
+    billing:   'neutral' as SectionStatus,
+    contract:  ((tenant?.contractedPhases?.length ?? 0) > 0 ? 'active' : tenant?.sector ? 'warning' : 'neutral') as SectionStatus,
+    services:  ((setup?.profiles?.length ?? 0) > 0 || (setup?.standalone?.length ?? 0) > 0 ? 'active' : 'neutral') as SectionStatus,
+    agent:     (agentChannels?.isActive ? 'active' : agentChannels ? 'inactive' : 'neutral') as SectionStatus,
+    telegram:  (tgConfig?.status === 'CONNECTED' ? 'active' : tgConfig ? 'warning' : 'neutral') as SectionStatus,
+    whatsapp:  (waConfig?.status === 'CONNECTED' ? 'active' : waConfig ? 'warning' : 'neutral') as SectionStatus,
+    gocardless:(gcConfig?.isActive ? 'active' : 'neutral') as SectionStatus,
+    budgets:   ((budgets?.length ?? 0) > 0 ? 'active' : 'neutral') as SectionStatus,
+  };
 
   // Find services pending configuration that have a wizard defined
   const pendingServices: Array<{ serviceId: string; serviceName: string; serviceType: string; slug: string }> = [];
@@ -2846,6 +2952,12 @@ export default function TenantDetailPage() {
         </div>
 
         {/* Dades d'identificació */}
+        <CollapsibleSection
+          eyebrow="Identificació" title="Dades d'identificació"
+          status={secStatus.info}
+          warning={!tenant.email ? 'Falta email' : undefined}
+          collapsed={!!secCollapsed['info']} onToggle={() => toggleSec('info')}
+        >
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
             <AMGSectionTitle eyebrow="Identificació" title="Dades d'identificació" />
@@ -2901,8 +3013,14 @@ export default function TenantDetailPage() {
             )}
           </div>
         </div>
+        </CollapsibleSection>
 
         {/* Facturació */}
+        <CollapsibleSection
+          eyebrow="Compte" title="Compte gratuït"
+          status={secStatus.billing}
+          collapsed={!!secCollapsed['billing']} onToggle={() => toggleSec('billing')}
+        >
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base">
             <AMGSectionTitle eyebrow="Compte" title="Compte gratuït" />
@@ -2932,11 +3050,24 @@ export default function TenantDetailPage() {
             </button>
           </div>
         </div>
+        </CollapsibleSection>
 
         {/* Contracte NexeLocal */}
-        <ContractSection tenant={tenant} onRefresh={invalidateTenant} />
+        <CollapsibleSection
+          eyebrow="Grandària" title="Contracte NexeLocal"
+          status={secStatus.contract}
+          warning={(tenant.contractedPhases?.length ?? 0) === 0 && tenant.sector ? 'Sense fases' : undefined}
+          collapsed={!!secCollapsed['contract']} onToggle={() => toggleSec('contract')}
+        >
+          <ContractSection tenant={tenant} onRefresh={invalidateTenant} />
+        </CollapsibleSection>
 
         {/* Serveis assignats */}
+        <CollapsibleSection
+          eyebrow="Assignació" title="Serveis assignats"
+          status={secStatus.services}
+          collapsed={!!secCollapsed['services']} onToggle={() => toggleSec('services')}
+        >
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base flex flex-wrap items-center justify-between gap-2">
             <AMGSectionTitle eyebrow="Assignació" title="Serveis assignats" />
@@ -2964,27 +3095,55 @@ export default function TenantDetailPage() {
             </div>
           )}
         </div>
+        </CollapsibleSection>
 
         {/* Agent IA & Canals */}
-        <div id="section-agent-config">
+        <CollapsibleSection
+          sectionId="section-agent-config"
+          eyebrow="IA" title="Agent & Canals"
+          status={secStatus.agent}
+          collapsed={!!secCollapsed['agent']} onToggle={() => toggleSec('agent')}
+        >
           <AgentConfigCard tenantId={id} agentSystemPrompt={tenant.agentSystemPrompt} sector={tenant.sector} />
-        </div>
+        </CollapsibleSection>
 
         {/* Telegram Bot per tenant */}
-        <div id="section-telegram">
+        <CollapsibleSection
+          sectionId="section-telegram"
+          eyebrow="Canal" title="Telegram Bot"
+          status={secStatus.telegram}
+          collapsed={!!secCollapsed['telegram']} onToggle={() => toggleSec('telegram')}
+        >
           <TelegramBotCard tenantId={id} />
-        </div>
+        </CollapsibleSection>
 
         {/* WhatsApp Business API */}
-        <div id="section-whatsapp">
+        <CollapsibleSection
+          sectionId="section-whatsapp"
+          eyebrow="Canal" title="WhatsApp Business"
+          status={secStatus.whatsapp}
+          collapsed={!!secCollapsed['whatsapp']} onToggle={() => toggleSec('whatsapp')}
+        >
           <WhatsAppMetaCard tenantId={id} />
-        </div>
+        </CollapsibleSection>
 
         {/* GoCardless SEPA */}
-        <GoCardlessCard tenantId={id} />
+        <CollapsibleSection
+          eyebrow="Pagament" title="GoCardless SEPA"
+          status={secStatus.gocardless}
+          collapsed={!!secCollapsed['gocardless']} onToggle={() => toggleSec('gocardless')}
+        >
+          <GoCardlessCard tenantId={id} />
+        </CollapsibleSection>
 
         {/* Pressupostos */}
-        <div id="section-budgets" className="amg-card card-clip">
+        <CollapsibleSection
+          sectionId="section-budgets"
+          eyebrow="Facturació" title="Pressupostos"
+          status={secStatus.budgets}
+          collapsed={!!secCollapsed['budgets']} onToggle={() => toggleSec('budgets')}
+        >
+        <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
             <AMGSectionTitle eyebrow="Facturació" title="Pressupostos" />
             <AMGButton size="sm" icon={I.Plus} onClick={() => setShowNewBudget(true)}>
@@ -3030,8 +3189,46 @@ export default function TenantDetailPage() {
             )}
           </div>
         </div>
+        </CollapsibleSection>
+
+        {/* Ús de canals */}
+        <CollapsibleSection
+          eyebrow="Últims 30 dies" title="Activitat de canals"
+          status={usageStats && (usageStats.whatsappMessages + usageStats.whatsappMetaMessages + usageStats.telegramMessages + usageStats.emailMessages + usageStats.chatMessages) > 0 ? 'active' : 'neutral'}
+          collapsed={!!secCollapsed['usage']} onToggle={() => toggleSec('usage')}
+        >
+          <div className="amg-card card-clip p-4 sm:p-5">
+            {usageStats ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { label: 'WhatsApp (Twilio)', value: usageStats.whatsappMessages, icon: '📱' },
+                  { label: 'WhatsApp Meta',     value: usageStats.whatsappMetaMessages, icon: '💚' },
+                  { label: 'Telegram',          value: usageStats.telegramMessages, icon: '✈️' },
+                  { label: 'Email',             value: usageStats.emailMessages, icon: '✉️' },
+                  { label: 'Xat web',           value: usageStats.chatMessages, icon: '💬' },
+                  { label: 'Tokens IA',         value: usageStats.aiTokens.toLocaleString('ca-ES'), icon: '🤖' },
+                ].map(({ label, value, icon }) => (
+                  <div key={label} className="bg-[#0d0d1a] border border-border-base rounded p-3">
+                    <div className="text-base mb-1">{icon}</div>
+                    <div className="f-mono text-lg font-bold text-ink-0">{value}</div>
+                    <div className="f-mono text-[9px] uppercase tracking-wider text-ink-3 mt-0.5">{label}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex justify-center py-6">
+                <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+          </div>
+        </CollapsibleSection>
 
         {/* Catàleg de serveis */}
+        <CollapsibleSection
+          eyebrow="Catàleg" title="Serveis disponibles"
+          status="neutral"
+          collapsed={!!secCollapsed['catalog']} onToggle={() => toggleSec('catalog')}
+        >
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base">
             <AMGSectionTitle eyebrow="Catàleg" title="Serveis disponibles" />
@@ -3046,6 +3243,7 @@ export default function TenantDetailPage() {
             )}
           </div>
         </div>
+        </CollapsibleSection>
       </div>
 
       {showAssignProfile && (

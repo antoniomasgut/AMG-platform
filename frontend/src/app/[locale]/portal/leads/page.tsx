@@ -669,6 +669,9 @@ export default function LeadsPage() {
   const [showOutreach, setShowOutreach] = useState(false);
   const [showTemplateSend, setShowTemplateSend] = useState(false);
   const [demoLead, setDemoLead] = useState<Lead | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [stageFilter, setStageFilter] = useState<string>('ALL');
+  const [sourceFilter, setSourceFilter] = useState<string>('ALL');
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ['leads'],
@@ -729,8 +732,22 @@ export default function LeadsPage() {
     onError: () => toast('error', 'Error enviant la plantilla'),
   });
 
+  const filteredLeads = (leads as Lead[]).filter(l => {
+    if (stageFilter !== 'ALL' && l.stage !== stageFilter) return false;
+    if (sourceFilter !== 'ALL' && l.source !== sourceFilter) return false;
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      return (
+        l.name.toLowerCase().includes(q) ||
+        (l.email ?? '').toLowerCase().includes(q) ||
+        (l.phone ?? '').includes(q)
+      );
+    }
+    return true;
+  });
+
   const leadsByStage = STAGES.reduce<Record<string, Lead[]>>((acc, stage) => {
-    acc[stage] = (leads as Lead[]).filter(l => l.stage === stage);
+    acc[stage] = filteredLeads.filter(l => l.stage === stage);
     return acc;
   }, {} as Record<string, Lead[]>);
 
@@ -766,6 +783,46 @@ export default function LeadsPage() {
             <AMGStat label="Conversió" value={fmt(stats.conversionRate)} icon={I.Trending} tone="info" />
           </div>
         )}
+
+        {/* Toolbar filtre */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[180px] max-w-xs">
+            <I.Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none" />
+            <input
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Cercar leads..."
+              className="w-full bg-bg-1 border border-border-base rounded pl-7 pr-3 py-1.5 text-xs text-ink-0 placeholder:text-ink-4 focus:outline-none focus:border-accent"
+            />
+          </div>
+          <select
+            value={stageFilter}
+            onChange={e => setStageFilter(e.target.value)}
+            className="bg-bg-1 border border-border-base rounded px-2 py-1.5 text-xs text-ink-1 focus:outline-none focus:border-accent"
+          >
+            <option value="ALL">Totes les etapes</option>
+            {STAGES.map(s => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}
+          </select>
+          <select
+            value={sourceFilter}
+            onChange={e => setSourceFilter(e.target.value)}
+            className="bg-bg-1 border border-border-base rounded px-2 py-1.5 text-xs text-ink-1 focus:outline-none focus:border-accent"
+          >
+            <option value="ALL">Totes les fonts</option>
+            {Object.entries(SOURCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+          {(searchTerm || stageFilter !== 'ALL' || sourceFilter !== 'ALL') && (
+            <button
+              onClick={() => { setSearchTerm(''); setStageFilter('ALL'); setSourceFilter('ALL'); }}
+              className="f-mono text-[10px] text-ink-3 hover:text-ink-1 transition underline"
+            >
+              Netejar filtres
+            </button>
+          )}
+          <span className="f-mono text-[10px] text-ink-3 ml-auto">
+            {filteredLeads.length} / {leads.length} leads
+          </span>
+        </div>
 
         {isLoading ? (
           <div className="flex justify-center py-12">

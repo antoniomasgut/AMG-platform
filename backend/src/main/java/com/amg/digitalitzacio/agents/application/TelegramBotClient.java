@@ -18,6 +18,7 @@ public class TelegramBotClient {
 
     private final SystemConfigService sysConfig;
     private final TenantTelegramService tenantTelegramService;
+    private final ChannelUsageService channelUsageService;
 
     /** Envia missatge usant el bot global de la plataforma */
     public boolean sendMessage(Long chatId, String text) {
@@ -34,7 +35,9 @@ public class TelegramBotClient {
             log.warn("Cap bot Telegram configurat per tenant {} ni globalment — missatge no enviat", tenantId);
             return false;
         }
-        return sendWithToken(chatId, text, token);
+        boolean sent = sendWithToken(chatId, text, token);
+        if (sent) channelUsageService.record(tenantId, ChannelUsageService.TELEGRAM);
+        return sent;
     }
 
     private boolean sendWithToken(Long chatId, String text, String token) {

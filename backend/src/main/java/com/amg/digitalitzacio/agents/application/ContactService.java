@@ -29,6 +29,7 @@ public class ContactService {
     private final WhatsAppChannel whatsAppChannel;
     private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final EmailChannel emailChannel;
+    private final ChannelUsageService channelUsageService;
 
     @Transactional
     public void findOrCreate(UUID tenantId, ConversationChannel channel, String identifier) {
@@ -111,6 +112,7 @@ public class ContactService {
 
         var chatLink = tenantChatLinkRepository.findByTenantId(tenantId).orElse(null);
         sendViaChannel(chatLink, lastUsed.getChannel(), lastUsed.getIdentifier(), text);
+        channelUsageService.record(tenantId, lastUsed.getChannel().name());
 
         conversationService.save(tenantId, lastUsed.getIdentifier(), lastUsed.getChannel(),
             ConversationRole.ASSISTANT, text, false);
@@ -148,6 +150,7 @@ public class ContactService {
 
         var chatLink = tenantChatLinkRepository.findByTenantId(tenantId).orElse(null);
         sendViaChannel(chatLink, conversation.getChannel(), conversation.getCustomerIdentifier(), conversation.getContent());
+        channelUsageService.record(tenantId, conversation.getChannel().name());
         log.info("Approved and sent conversation {} for tenant {}", conversationId, tenantId);
     }
 
