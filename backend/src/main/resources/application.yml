@@ -60,6 +60,9 @@ app:
   landing:
     base-domain: ${LANDING_BASE_DOMAIN:webs.amgdl.com}
 
+  traefik:
+    dynamic-config-dir: ${TRAEFIK_DYNAMIC_DIR:}
+
   storage:
     path: ${STORAGE_PATH:/data/assets}
     max-file-size: 5242880

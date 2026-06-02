@@ -38,6 +38,7 @@ public class EngineOrchestrator implements EngineService {
     private final LandingTemplateRepository landingTemplateRepository;
     private final TemplateSectionRepository templateSectionRepository;
     private final ObjectMapper objectMapper;
+    private final com.amg.digitalitzacio.engine.infrastructure.TraefikConfigWriter traefikConfigWriter;
 
     // --- Landings ---
 
@@ -186,6 +187,7 @@ public class EngineOrchestrator implements EngineService {
         landingRepository.save(landing);
 
         var publicUrl = buildPublicUrl(landing);
+        traefikConfigWriter.regenerate(landingRepository.findAll());
         return new PublishResponse(draft.getVersionNumber(), "PUBLISHED", publicUrl, draft.getPublishedAt());
     }
 
@@ -198,6 +200,7 @@ public class EngineOrchestrator implements EngineService {
         landing.setPublishedVersionId(null);
         landing.setStatus(LandingStatus.DRAFT);
         landingRepository.save(landing);
+        traefikConfigWriter.regenerate(landingRepository.findAll());
     }
 
     // --- Domain ---
