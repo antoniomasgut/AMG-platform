@@ -18,6 +18,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   FINOPS: 'FinOps',
   BACKUP: 'Backup',
   AUTOMATIONS: 'Automatitzacions',
+  CALENDAR: 'Calendari',
 };
 
 function StatusBadge({ status }: { status: ConfigStatus }) {

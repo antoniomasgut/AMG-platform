@@ -45,7 +45,8 @@ public class SystemConfigService {
         new KnownKey("GCS_BUCKET_NAME",         "GCS Bucket Name",            "Nom del bucket GCS per a backups", "BACKUP",                   false),
         new KnownKey("N8N_API_URL",             "n8n API URL",                "URL base de la instància n8n", "AUTOMATIONS",                   false),
         new KnownKey("N8N_API_KEY",             "n8n API Key",                "Clau API n8n per a gestió de workflows", "AUTOMATIONS",         true),
-        new KnownKey("WHATSAPP_WEBHOOK_SECRET", "WhatsApp Webhook Secret",     "Token de verificació del webhook de WhatsApp (Twilio/Meta)", "AGENTS", true)
+        new KnownKey("WHATSAPP_WEBHOOK_SECRET", "WhatsApp Webhook Secret",     "Token de verificació del webhook de WhatsApp (Twilio/Meta)", "AGENTS", true),
+        new KnownKey("GOOGLE_CALENDAR_SA_JSON", "Google Calendar Service Account JSON", "JSON del Service Account de Google per crear events al calendari dels clients (F2 Agenda)", "CALENDAR", true)
     );
 
     /**

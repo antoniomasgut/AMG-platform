@@ -107,6 +107,15 @@ public class PromptBuilder {
             if (!confTpl.isBlank()) {
                 sb.append("- Plantilla de confirmació: ").append(confTpl).append("\n");
             }
+            // Instrucció per a la integració amb Google Calendar
+            String calType = str(c, "calendar_type", "manual");
+            String calId   = str(c, "google_calendar_id", "");
+            if ("google".equals(calType) && !calId.isBlank()) {
+                sb.append("- Integració Google Calendar activa. Quan confirmes una cita amb data i hora específiques,");
+                sb.append(" afegeix EXACTAMENT al final del teu missatge (invisible per l'usuari, el sistema ho elimina):\n");
+                sb.append("[CONFIRMA_CITA:{\"date\":\"YYYY-MM-DD\",\"time\":\"HH:MM\",\"duration\":60,\"name\":\"NOM_CLIENT\",\"notes\":\"NOTES\"}]\n");
+                sb.append("Usa format 24h per a l'hora i ISO 8601 per a la data. No inventis la data si el client no l'ha dit.\n");
+            }
             return sb.toString();
         } catch (Exception e) {
             log.debug("Could not parse AGENDA config: {}", e.getMessage());

@@ -184,15 +184,18 @@ function AgendaForm({ tenantId, sector }: { tenantId: string; sector?: string | 
           </Field>
           {cfg.calendar_type === 'google' && (
             <>
-              <Field label="Google Calendar ID">
-                <input className={inp} placeholder="example@group.calendar.google.com"
+              {/* Instruccions Service Account */}
+              <div className="bg-[rgba(255,107,0,0.04)] border border-[rgba(255,107,0,0.2)] rounded p-4 mb-4 space-y-2">
+                <p className="f-mono text-xs font-semibold text-accent-light uppercase tracking-wide">Configuració prèvia (una sola vegada)</p>
+                <Step n={1}>A Google Cloud Console, crea un projecte, activa l'API de Google Calendar i crea un <strong>Service Account</strong>. Descarrega el fitxer JSON de la clau.</Step>
+                <Step n={2}>A <strong>Portal AMG → Admin → Configuració del sistema → Calendari</strong>, puja el JSON del Service Account al camp <code className="bg-surface-base px-1 rounded text-[10px]">GOOGLE_CALENDAR_SA_JSON</code>.</Step>
+                <Step n={3}>Copia l'adreça de correu del Service Account (visible al JSON: <code className="bg-surface-base px-1 rounded text-[10px]">client_email</code>) i <strong>comparteix el calendari del client</strong> amb aquesta adreça (permís: <em>Fer canvis als événements</em>).</Step>
+                <Step n={4}>A Google Calendar → Configuració del calendari → "Integrar el calendari" → copia l'<strong>ID del calendari</strong> (acaba en <code className="bg-surface-base px-1 rounded text-[10px]">@group.calendar.google.com</code> o és un correu Gmail).</Step>
+              </div>
+              <Field label="ID del calendari Google" hint="Ex: empresa@gmail.com  o  abc123@group.calendar.google.com">
+                <input className={inp} placeholder="exemple@group.calendar.google.com"
                   value={cfg.google_calendar_id}
                   onChange={e => setCfg(c => ({ ...c, google_calendar_id: e.target.value }))} />
-              </Field>
-              <Field label="Google API Key">
-                <input className={inp} type="password" placeholder="AIza..."
-                  value={cfg.google_api_key}
-                  onChange={e => setCfg(c => ({ ...c, google_api_key: e.target.value }))} />
               </Field>
             </>
           )}

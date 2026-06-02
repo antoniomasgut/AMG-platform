@@ -51,7 +51,6 @@ export interface ClientQuestion {
 export interface AgendaConfig {
   calendar_type: 'google' | 'calendly' | 'manual';
   google_calendar_id: string;
-  google_api_key: string;
   slot_duration_minutes: number;
   buffer_minutes: number;
   max_days_advance: number;
@@ -80,7 +79,6 @@ function q(question: string, required = false): ClientQuestion {
 const BASE_AGENDA: Omit<AgendaConfig, 'slot_duration_minutes' | 'buffer_minutes' | 'client_questions' | 'confirmation_template'> = {
   calendar_type: 'manual',
   google_calendar_id: '',
-  google_api_key: '',
   max_days_advance: 30,
   min_notice_hours: 2,
   working_hours: BASE_WORKING_HOURS,

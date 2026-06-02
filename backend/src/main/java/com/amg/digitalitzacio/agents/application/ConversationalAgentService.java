@@ -10,12 +10,19 @@ import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.amg.digitalitzacio.shared.ai.ChatMessage;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -34,6 +41,12 @@ public class ConversationalAgentService {
     private final EmailChannel emailChannel;
     private final AIProviderRouter aiProviderRouter;
     private final ChannelUsageService channelUsageService;
+    private final NexeServiceConfigService nexeServiceConfigService;
+    private final GoogleCalendarService googleCalendarService;
+    private final ObjectMapper objectMapper;
+
+    private static final Pattern BOOKING_TAG = Pattern.compile(
+            "\\[CONFIRMA_CITA:(\\{.*?\\})]", Pattern.DOTALL);
 
     public void handleIncoming(UUID tenantId, String customerIdentifier, ConversationChannel channel, String text) {
         try {
@@ -76,19 +89,22 @@ public class ConversationalAgentService {
                 return;
             }
 
+            // Extreu el tag de booking si existeix i crea l'event al Google Calendar
+            String cleanedResponse = processBookingTag(assistantResponse, tenantId);
+
             switch (chatLink.getAgentMode()) {
                 case AUTO:
                     String senderId = channel == ConversationChannel.WHATSAPP_META
                             ? chatLink.getWhatsappMetaPhoneNumberId()
                             : chatLink.getWhatsappPhoneNumber();
-                    sendViaChannel(senderId, customerIdentifier, channel, assistantResponse,
+                    sendViaChannel(senderId, customerIdentifier, channel, cleanedResponse,
                             aiConfig.getSenderEmail(), aiConfig.getSenderName(), aiConfig.getReplyToEmail());
                     channelUsageService.record(tenantId, channel.name());
-                    conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.ASSISTANT, assistantResponse, false);
+                    conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.ASSISTANT, cleanedResponse, false);
                     break;
                 case HYBRID:
-                    conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.ASSISTANT, assistantResponse, true);
-                    notifyTenantViaInternalTelegram(chatLink.getTelegramChatId(), customerIdentifier, text, assistantResponse);
+                    conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.ASSISTANT, cleanedResponse, true);
+                    notifyTenantViaInternalTelegram(chatLink.getTelegramChatId(), customerIdentifier, text, cleanedResponse);
                     break;
                 case MANUAL:
                     notifyTenantViaInternalTelegram(chatLink.getTelegramChatId(), customerIdentifier, text, null);
@@ -131,5 +147,41 @@ public class ConversationalAgentService {
         } catch (Exception e) {
             log.error("Error notifying tenant via Telegram: {}", e.getMessage());
         }
+    }
+
+    /** Extreu el tag [CONFIRMA_CITA:{...}] de la resposta, crea l'event al Calendar i retorna el text net. */
+    private String processBookingTag(String response, UUID tenantId) {
+        Matcher m = BOOKING_TAG.matcher(response);
+        if (!m.find()) return response;
+
+        String cleaned = BOOKING_TAG.matcher(response).replaceAll("").strip();
+
+        try {
+            String json = m.group(1);
+            Map<String, Object> booking = objectMapper.readValue(json, new TypeReference<>() {});
+
+            String agendaJson = nexeServiceConfigService.getAllAsMap(tenantId).get("AGENDA");
+            if (agendaJson == null) return cleaned;
+
+            Map<String, Object> agenda = objectMapper.readValue(agendaJson, new TypeReference<>() {});
+            if (!"google".equals(agenda.get("calendar_type"))) return cleaned;
+            String calId = (String) agenda.get("google_calendar_id");
+            if (calId == null || calId.isBlank()) return cleaned;
+
+            String date = (String) booking.get("date");
+            String time = (String) booking.get("time");
+            if (date == null || time == null) return cleaned;
+
+            LocalDateTime start = LocalDateTime.parse(date + "T" + time,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+            int duration = booking.get("duration") instanceof Number n ? n.intValue() : 60;
+            String name  = booking.get("name") instanceof String s ? s : "Client";
+            String notes = booking.get("notes") instanceof String s ? s : "";
+
+            googleCalendarService.createEvent(calId, "Cita: " + name, start, duration, notes);
+        } catch (Exception e) {
+            log.warn("Could not process booking tag: {}", e.getMessage());
+        }
+        return cleaned;
     }
 }
