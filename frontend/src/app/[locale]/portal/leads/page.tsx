@@ -281,7 +281,7 @@ function TemplateSendModal({
                       <div className="bg-bg-1 px-4 py-3 border-b border-border-base space-y-1">
                         <div className="flex gap-2">
                           <span className="f-mono text-[10px] text-ink-3 w-16">De:</span>
-                          <span className="f-mono text-[10px] text-ink-1">hola@amgdl.com</span>
+                          <span className="f-mono text-[10px] text-ink-1">info@amgdl.com</span>
                         </div>
                         <div className="flex gap-2">
                           <span className="f-mono text-[10px] text-ink-3 w-16">Per a:</span>

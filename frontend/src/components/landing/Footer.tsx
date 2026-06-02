@@ -66,7 +66,7 @@ export function Footer() {
           <div>
             <h4 className="text-white font-bold text-sm mb-4">{t('contacte')}</h4>
             <ul className="space-y-2 text-sm text-ink-2 mb-4">
-              <li>hola@amgdl.com</li>
+              <li>info@amgdl.com</li>
               <li>Mallorca, Illes Balears</li>
             </ul>
             <LocaleSwitcher />

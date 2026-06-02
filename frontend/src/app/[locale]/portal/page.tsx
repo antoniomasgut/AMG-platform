@@ -509,7 +509,7 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
           <div className="f-display font-bold text-sm">{t('client.help.title')}</div>
           <p className="text-ui text-ink-1 mt-1 text-sm">{t('client.help.subtitle')}</p>
         </div>
-        <a href="mailto:hola@amgdl.com">
+        <a href="mailto:info@amgdl.com">
           <AMGButton size="sm" icon={I.Mail}>{t('client.help.contact')}</AMGButton>
         </a>
       </div>

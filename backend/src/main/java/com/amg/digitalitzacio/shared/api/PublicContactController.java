@@ -36,7 +36,7 @@ public class PublicContactController {
                 """.formatted(req.name().strip(), req.email().strip(), req.message().strip());
 
         try {
-            emailService.sendEmail("hola@amgdl.com", "Consulta web: " + req.name().strip(), text);
+            emailService.sendEmail("info@amgdl.com", "Consulta web: " + req.name().strip(), text);
         } catch (Exception e) {
             log.warn("Contact form email failed (non-fatal): {}", e.getMessage());
         }

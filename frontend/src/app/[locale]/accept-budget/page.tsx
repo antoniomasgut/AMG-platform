@@ -449,7 +449,7 @@ function AcceptBudgetContent() {
         <footer className="border-t border-gray-100 pt-6 pb-10 text-center space-y-3">
           <AMGLogo className="h-6 w-auto mx-auto opacity-50" />
           <p className="text-gray-400 text-xs">
-            AMG Digitalitzacions · <a href="mailto:hola@amgdl.com" className="hover:text-gray-600">hola@amgdl.com</a>
+            AMG Digitalitzacions · <a href="mailto:info@amgdl.com" className="hover:text-gray-600">info@amgdl.com</a>
           </p>
           <p className="text-gray-300 text-xs">
             Ref. {budget.budgetNumber} · Creat el {fmtDate(budget.createdAt)}

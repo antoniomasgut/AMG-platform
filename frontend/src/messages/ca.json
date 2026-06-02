@@ -297,7 +297,7 @@
       "sections": {
         "ownership": {
           "title": "1. Dades del titular",
-          "content": "AMG Digitalitzacions és una marca comercial de Antonio Más Gutiérrez, amb NIF 12345678A i domicili a Mallorca, Illes Balears. Aquest web és operat per Antonio Más Gutiérrez. Per a qualsevol consulta, pots contactar a través del correu electrònic hola@amgdl.com."
+          "content": "AMG Digitalitzacions és una marca comercial de Antonio Más Gutiérrez, amb NIF 12345678A i domicili a Mallorca, Illes Balears. Aquest web és operat per Antonio Más Gutiérrez. Per a qualsevol consulta, pots contactar a través del correu electrònic info@amgdl.com."
         },
         "purpose": {
           "title": "2. Finalitat del web",
@@ -332,7 +332,7 @@
         },
         "rights": {
           "title": "5. Drets de l'interessat",
-          "content": "L'usuari pot exercir els drets d'accés, rectificació, supressió, limitació, portabilitat i oposició enviant un email a hola@amgdl.com."
+          "content": "L'usuari pot exercir els drets d'accés, rectificació, supressió, limitació, portabilitat i oposició enviant un email a info@amgdl.com."
         },
         "security": {
           "title": "6. Mesures de seguretat",
@@ -352,7 +352,7 @@
         },
         "automatedProcessing": {
           "title": "10. Tractament automatitzat i agents IA",
-          "content": "La plataforma incorpora agents d'intel·ligència artificial que poden respondre automàticament a missatges de WhatsApp, Telegram o email en nom del tenant. Aquestes respostes automatitzades es produeixen únicament quan el client final ha iniciat la conversa. No es prenen decisions automatitzades amb efectes jurídics significatius. Pots sol·licitar que les teves consultes siguin ateses per una persona enviant un email a hola@amgdl.com."
+          "content": "La plataforma incorpora agents d'intel·ligència artificial que poden respondre automàticament a missatges de WhatsApp, Telegram o email en nom del tenant. Aquestes respostes automatitzades es produeixen únicament quan el client final ha iniciat la conversa. No es prenen decisions automatitzades amb efectes jurídics significatius. Pots sol·licitar que les teves consultes siguin ateses per una persona enviant un email a info@amgdl.com."
         }
       },
       "backToHome": "← Tornar a l'inici",

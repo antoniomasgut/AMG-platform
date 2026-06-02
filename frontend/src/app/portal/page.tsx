@@ -405,7 +405,7 @@ export default function PortalPage() {
               { label: 'Avís Legal', href: '/legal/avis-legal' },
               { label: 'Privacitat', href: '/legal/privacitat' },
               { label: 'Cookies', href: '/legal/cookies' },
-              { label: 'Suport', href: 'mailto:hola@amgdl.com' },
+              { label: 'Suport', href: 'mailto:info@amgdl.com' },
             ].map(({ label, href }) => (
               <a
                 key={label}

@@ -297,7 +297,7 @@
       "sections": {
         "ownership": {
           "title": "1. Datos del titular",
-          "content": "AMG Digitalitzacions es una marca comercial de Antonio Más Gutiérrez, con NIF 12345678A y domicilio en Mallorca, Islas Baleares. Para cualquier consulta, puedes contactar a través del correo electrónico hola@amgdl.com."
+          "content": "AMG Digitalitzacions es una marca comercial de Antonio Más Gutiérrez, con NIF 12345678A y domicilio en Mallorca, Islas Baleares. Para cualquier consulta, puedes contactar a través del correo electrónico info@amgdl.com."
         },
         "purpose": {
           "title": "2. Finalidad del web",
@@ -332,7 +332,7 @@
         },
         "rights": {
           "title": "5. Derechos del interesado",
-          "content": "El usuario puede ejercer los derechos de acceso, rectificación, supresión, limitación, portabilidad y oposición enviando un email a hola@amgdl.com."
+          "content": "El usuario puede ejercer los derechos de acceso, rectificación, supresión, limitación, portabilidad y oposición enviando un email a info@amgdl.com."
         },
         "security": {
           "title": "6. Medidas de seguridad",
@@ -352,7 +352,7 @@
         },
         "automatedProcessing": {
           "title": "10. Tratamiento automatizado y agentes IA",
-          "content": "La plataforma incorpora agentes de inteligencia artificial que pueden responder automáticamente a mensajes de WhatsApp, Telegram o email en nombre del tenant. Estas respuestas automatizadas se producen únicamente cuando el cliente final ha iniciado la conversación. No se toman decisiones automatizadas con efectos jurídicos significativos. Puede solicitar que sus consultas sean atendidas por una persona enviando un email a hola@amgdl.com."
+          "content": "La plataforma incorpora agentes de inteligencia artificial que pueden responder automáticamente a mensajes de WhatsApp, Telegram o email en nombre del tenant. Estas respuestas automatizadas se producen únicamente cuando el cliente final ha iniciado la conversación. No se toman decisiones automatizadas con efectos jurídicos significativos. Puede solicitar que sus consultas sean atendidas por una persona enviando un email a info@amgdl.com."
         }
       },
       "backToHome": "← Volver al inicio",

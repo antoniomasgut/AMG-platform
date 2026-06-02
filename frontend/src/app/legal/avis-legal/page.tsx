@@ -23,7 +23,7 @@ export default function AvisLegalPage() {
               <li><strong className="text-ink-0">Titular:</strong> Antonio Mas Gutiérrez</li>
               <li><strong className="text-ink-0">NIF:</strong> 182237442B</li>
               <li><strong className="text-ink-0">Domicili:</strong> Carrer Joan Capó, núm. 7, 1r esquerra, 07200 Felanitx, Illes Balears</li>
-              <li><strong className="text-ink-0">Correu electrònic:</strong> hola@amgdl.com</li>
+              <li><strong className="text-ink-0">Correu electrònic:</strong> info@amgdl.com</li>
             </ul>
           </div>
 

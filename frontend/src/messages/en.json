@@ -297,7 +297,7 @@
       "sections": {
         "ownership": {
           "title": "1. Owner details",
-          "content": "AMG Digitalitzacions is a trademark of Antonio Más Gutiérrez, with tax ID 12345678A and registered address in Mallorca, Balearic Islands. For any enquiries, contact us at hola@amgdl.com."
+          "content": "AMG Digitalitzacions is a trademark of Antonio Más Gutiérrez, with tax ID 12345678A and registered address in Mallorca, Balearic Islands. For any enquiries, contact us at info@amgdl.com."
         },
         "purpose": {
           "title": "2. Website purpose",
@@ -332,7 +332,7 @@
         },
         "rights": {
           "title": "5. Data subject rights",
-          "content": "Users may exercise their rights of access, rectification, deletion, restriction, portability and objection by emailing hola@amgdl.com."
+          "content": "Users may exercise their rights of access, rectification, deletion, restriction, portability and objection by emailing info@amgdl.com."
         },
         "security": {
           "title": "6. Security measures",
@@ -352,7 +352,7 @@
         },
         "automatedProcessing": {
           "title": "10. Automated processing and AI agents",
-          "content": "The platform includes AI agents that can automatically respond to WhatsApp, Telegram or email messages on behalf of the tenant. These automated responses only occur when the end customer has initiated the conversation. No automated decisions with significant legal effects are made. You may request that your queries be handled by a human by emailing hola@amgdl.com."
+          "content": "The platform includes AI agents that can automatically respond to WhatsApp, Telegram or email messages on behalf of the tenant. These automated responses only occur when the end customer has initiated the conversation. No automated decisions with significant legal effects are made. You may request that your queries be handled by a human by emailing info@amgdl.com."
         }
       },
       "backToHome": "← Back to home",
