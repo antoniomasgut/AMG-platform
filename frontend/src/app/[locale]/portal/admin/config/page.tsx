@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
@@ -20,6 +20,69 @@ const CATEGORY_LABEL: Record<string, string> = {
   AUTOMATIONS: 'Automatitzacions',
   CALENDAR: 'Calendari',
 };
+
+type HelpStep = { n: number; text: React.ReactNode };
+
+const CATEGORY_HELP: Record<string, { title: string; steps: HelpStep[] }[]> = {
+  CALENDAR: [
+    {
+      title: 'Fase 1 — AMG crea i gestiona el calendari (GOOGLE_CALENDAR_SA_JSON)',
+      steps: [
+        { n: 1, text: <>Ves a <a href="https://console.cloud.google.com" target="_blank" rel="noreferrer" className="text-accent-light underline">console.cloud.google.com</a> → crea un projecte (ex: <code className="bg-surface-overlay px-1 rounded text-[10px]">amg-calendar</code>).</> },
+        { n: 2, text: <>Activa l'API: <strong>APIs i serveis → Biblioteca → cerca "Google Calendar API" → Activa</strong>.</> },
+        { n: 3, text: <>Crea el Service Account: <strong>IAM i administrador → Comptes de servei → Crea</strong>. El nom pot ser <code className="bg-surface-overlay px-1 rounded text-[10px]">amg-calendar-bot</code>. No cal assignar cap rol.</> },
+        { n: 4, text: <>Dins del Service Account creat: <strong>Claus → Afegir clau → Crear nova clau → JSON → Crea</strong>. Es descarregarà un fitxer <code className="bg-surface-overlay px-1 rounded text-[10px]">.json</code>.</> },
+        { n: 5, text: <>Obre el fitxer JSON, copia tot el contingut i enganxa'l al camp <strong>GOOGLE_CALENDAR_SA_JSON</strong> d'aquí a baix.</> },
+        { n: 6, text: <>Des d'ara, al formulari <strong>F2 Agenda</strong> de cada tenant podràs clicar <em>"Crear calendari AMG"</em> i es crearà i compartirà automàticament.</> },
+      ],
+    },
+    {
+      title: 'Fase 2 — Client connecta el seu propi Google (GOOGLE_OAUTH_CLIENT_ID + SECRET) — Opcional',
+      steps: [
+        { n: 1, text: <>Al mateix projecte de Google Cloud: <strong>APIs i serveis → Credencials → Crear credencials → ID de client OAuth 2.0</strong>.</> },
+        { n: 2, text: <>Tipus d'aplicació: <strong>Aplicació web</strong>. Afegeix als <em>URI de redireccionament autoritzats</em>: <code className="bg-surface-overlay px-1 rounded text-[10px] break-all">https://api.amgdl.com/api/v1/nexe/calendar/oauth-callback</code></> },
+        { n: 3, text: <>Copia el <strong>Client ID</strong> → camp GOOGLE_OAUTH_CLIENT_ID, i el <strong>Client Secret</strong> → camp GOOGLE_OAUTH_CLIENT_SECRET.</> },
+        { n: 4, text: <>Al formulari F2 Agenda del tenant, selecciona <em>"Google Calendar — Client connecta el seu compte"</em> i clica <em>"Connecta Google Calendar →"</em>.</> },
+      ],
+    },
+  ],
+};
+
+function CategoryHelp({ category }: { category: string }) {
+  const [open, setOpen] = useState(false);
+  const sections = CATEGORY_HELP[category];
+  if (!sections) return null;
+  return (
+    <div className="border-b border-border-base">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-2 px-4 sm:px-5 py-2.5 text-left hover:bg-accent/5 transition-colors"
+      >
+        <I.AlertCircle size={13} className="text-accent-light flex-shrink-0" />
+        <span className="f-mono text-xs text-accent-light">Com configurar — instruccions pas a pas</span>
+        <I.ChevDown size={13} className={`ml-auto text-ink-3 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="px-4 sm:px-5 pb-5 space-y-6 bg-[rgba(255,107,0,0.03)]">
+          {sections.map((section, si) => (
+            <div key={si} className="space-y-3">
+              <p className="f-mono text-xs font-semibold text-accent-light uppercase tracking-wide pt-3">{section.title}</p>
+              <div className="space-y-2">
+                {section.steps.map(step => (
+                  <div key={step.n} className="flex gap-3">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent-subtle border border-[rgba(255,107,0,0.4)] text-accent-light f-mono text-[10px] font-bold flex items-center justify-center mt-0.5">{step.n}</span>
+                    <span className="f-mono text-xs text-ink-1 leading-relaxed">{step.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function StatusBadge({ status }: { status: ConfigStatus }) {
   if (status.configured && status.source === 'ENV') {
@@ -222,6 +285,7 @@ export default function SystemConfigPage() {
                 </AMGBadge>
               </div>
               <div>
+                <CategoryHelp category={category} />
                 {items.map((item) => (
                   <KeyRow
                     key={item.key}
