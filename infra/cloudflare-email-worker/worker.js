@@ -12,6 +12,10 @@
  */
 
 export default {
+  async fetch(request, env, ctx) {
+    return new Response('AMG Email Worker OK', { status: 200 });
+  },
+
   async email(message, env, ctx) {
     try {
       const rawEmail = await streamToText(message.raw);
