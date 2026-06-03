@@ -33,7 +33,7 @@ public class Lead {
     @Column(length = 150)
     private String email;
 
-    @Column(length = 20)
+    @Column(length = 30)
     private String phone;
 
     @Enumerated(EnumType.STRING)
