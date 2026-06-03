@@ -1,5 +1,7 @@
 package com.amg.digitalitzacio.engine.application;
 
+import com.amg.digitalitzacio.auth.application.EmailService;
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.engine.api.dto.*;
 import com.amg.digitalitzacio.engine.domain.*;
 import com.amg.digitalitzacio.leads.domain.Lead;
@@ -14,6 +16,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EngineOrchestrator implements EngineService {
@@ -37,6 +41,8 @@ public class EngineOrchestrator implements EngineService {
     private final TenantServiceRepository tenantServiceRepository;
     private final LandingTemplateRepository landingTemplateRepository;
     private final TemplateSectionRepository templateSectionRepository;
+    private final TenantRepository tenantRepository;
+    private final EmailService emailService;
     private final ObjectMapper objectMapper;
     private final com.amg.digitalitzacio.engine.infrastructure.TraefikConfigWriter traefikConfigWriter;
 
@@ -372,10 +378,10 @@ public class EngineOrchestrator implements EngineService {
                 .build();
         contactLeadRepository.save(contactLead);
 
-        // Auto-crear lead al CRM si no existeix ja un amb el mateix email per aquest tenant
+        // Auto-crear lead al CRM si no existeix; si existeix, actualitzar lastContactAt
         if (request.email() != null && !request.email().isBlank()) {
-            boolean exists = leadRepository.existsByTenantIdAndEmail(landing.getTenantId(), request.email());
-            if (!exists) {
+            var existing = leadRepository.findFirstByTenantIdAndEmail(landing.getTenantId(), request.email());
+            if (existing.isEmpty()) {
                 Lead crmLead = new Lead();
                 crmLead.setTenantId(landing.getTenantId());
                 crmLead.setName(request.name() != null ? request.name() : request.email());
@@ -383,13 +389,49 @@ public class EngineOrchestrator implements EngineService {
                 crmLead.setPhone(request.phone());
                 crmLead.setSource(LeadSource.LANDING_FORM);
                 crmLead.setStage(PipelineStage.NEW);
+                crmLead.setLastContactAt(Instant.now());
                 crmLead.setNotes("Formulari de contacte: " + landing.getTitle()
                         + (request.message() != null ? "\n\n" + request.message() : ""));
                 leadRepository.save(crmLead);
+            } else {
+                existing.get().setLastContactAt(Instant.now());
+                leadRepository.save(existing.get());
             }
         }
 
+        // Notificació per email al tenant
+        notifyTenantContactForm(landing.getTenantId(), landing.getTitle(), request);
+
         return new ContactResponse("Missatge rebut correctament");
+    }
+
+    private void notifyTenantContactForm(java.util.UUID tenantId, String landingTitle, ContactRequest request) {
+        try {
+            var tenant = tenantRepository.findById(tenantId).orElse(null);
+            if (tenant == null || tenant.getEmail() == null || tenant.getEmail().isBlank()) return;
+
+            String body = """
+                    Nou contacte des de la landing "%s":
+
+                    Nom: %s
+                    Email: %s
+                    Telèfon: %s
+                    Missatge: %s
+
+                    ---
+                    Pots veure aquest contacte al portal: https://amgdl.com/portal/leads
+                    """.formatted(
+                    landingTitle,
+                    request.name() != null ? request.name() : "—",
+                    request.email(),
+                    request.phone() != null ? request.phone() : "—",
+                    request.message() != null ? request.message() : "—"
+            );
+
+            emailService.sendEmail(tenant.getEmail(), "Nou contacte: " + landingTitle, body);
+        } catch (Exception e) {
+            log.warn("Could not send contact form notification: {}", e.getMessage());
+        }
     }
 
     // --- Template-based landing creation ---
