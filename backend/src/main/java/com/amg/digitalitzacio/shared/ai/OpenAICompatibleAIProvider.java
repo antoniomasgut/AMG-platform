@@ -2,8 +2,10 @@ package com.amg.digitalitzacio.shared.ai;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +31,10 @@ public class OpenAICompatibleAIProvider implements AIProvider {
         this.apiKey = apiKey;
         this.model = model;
         this.provider = provider;
-        this.restClient = builder.baseUrl(baseUrl).build();
+        var factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(10));
+        factory.setReadTimeout(Duration.ofSeconds(60));
+        this.restClient = builder.requestFactory(factory).baseUrl(baseUrl).build();
         this.objectMapper = objectMapper;
     }
 

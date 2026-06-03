@@ -5,6 +5,8 @@ import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,9 @@ public class EmailWebhookController {
 
     private final ConversationalAgentService conversationalAgentService;
     private final TenantChatLinkRepository chatLinkRepository;
+
+    @Lazy @Autowired
+    private EmailWebhookController self;
 
     /**
      * Webhook genèric — Mailgun envia tots els emails entrants aquí (multipart form).
@@ -45,7 +50,7 @@ public class EmailWebhookController {
             String fromEmail = extractEmail(fromRaw);
 
             chatLinkRepository.findByEmailAddressIgnoreCase(toEmail).ifPresentOrElse(
-                link -> handleAsync(link.getTenantId(), fromEmail, text),
+                link -> self.handleAsync(link.getTenantId(), fromEmail, text),
                 () -> log.warn("No tenant found for inbound email address: {}", toEmail)
             );
 

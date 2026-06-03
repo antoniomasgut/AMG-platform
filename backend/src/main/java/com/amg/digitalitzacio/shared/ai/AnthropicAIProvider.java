@@ -2,8 +2,10 @@ package com.amg.digitalitzacio.shared.ai;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +23,10 @@ public class AnthropicAIProvider implements AIProvider {
     public AnthropicAIProvider(String apiKey, String model, RestClient.Builder builder, ObjectMapper objectMapper) {
         this.apiKey = apiKey;
         this.model = model;
-        this.restClient = builder.baseUrl(BASE_URL).build();
+        var factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(10));
+        factory.setReadTimeout(Duration.ofSeconds(60));
+        this.restClient = builder.requestFactory(factory).baseUrl(BASE_URL).build();
         this.objectMapper = objectMapper;
     }
 
