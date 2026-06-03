@@ -7,7 +7,7 @@ import { apiFetch } from './api';
 export type BlockType =
   | 'hero' | 'text' | 'services' | 'gallery' | 'contact-form'
   | 'faq' | 'testimonials' | 'cta' | 'footer' | 'map' | 'opening-hours'
-  | 'pricing' | 'team' | 'video' | 'reviews';
+  | 'pricing' | 'team' | 'video' | 'reviews' | 'chat-cta';
 
 export interface Block {
   id: string;
@@ -339,6 +339,16 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
         { name: 'Maria G.', rating: 5, text: 'Excel·lent servei, molt professionals!', date: '2026-01-15' },
         { name: 'Joan P.',  rating: 5, text: 'Molt contents amb el resultat final.', date: '2026-02-03' },
       ],
+    },
+  },
+  'chat-cta': {
+    label: 'Chat CTA',
+    icon: '💬',
+    defaultProps: {
+      title: 'Reserva la teva cita ara',
+      subtitle: 'Xateja amb el nostre assistent i respon en menys d\'1 minut',
+      buttonText: 'Parla amb nosaltres',
+      accentColor: '',
     },
   },
 };

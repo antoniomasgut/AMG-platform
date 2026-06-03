@@ -66,29 +66,29 @@ public class PromptBuilder {
         var sb = new StringBuilder("\n\n--- CONFIGURACIÓ DE SERVEIS ---\n");
 
         String agendaJson = configs.get("AGENDA");
-        if (agendaJson != null) {
+        if (isEnabled(agendaJson)) {
             sb.append(buildAgendaBlock(agendaJson));
         }
 
         String pressupostosJson = configs.get("PRESSUPOSTOS");
-        if (pressupostosJson != null) {
+        if (isEnabled(pressupostosJson)) {
             sb.append(buildPressupostosBlock(pressupostosJson));
         }
 
         String fidelitzacioJson = configs.get("FIDELITZACIO");
-        if (fidelitzacioJson != null) {
+        if (isEnabled(fidelitzacioJson)) {
             sb.append(buildFidelitzacioBlock(fidelitzacioJson));
         }
 
         String equipJson = configs.get("EQUIP");
-        if (equipJson != null) {
+        if (isEnabled(equipJson)) {
             sb.append(buildEquipBlock(equipJson));
         }
 
         return sb.toString();
     }
 
-    private String buildAgendaBlock(String json) {
+    public String buildAgendaBlock(String json) {
         try {
             Map<String, Object> c = objectMapper.readValue(json, new TypeReference<>() {});
             var sb = new StringBuilder("\nCITES / AGENDA:\n");
@@ -205,6 +205,16 @@ public class PromptBuilder {
         } catch (Exception e) {
             log.debug("Could not parse EQUIP config: {}", e.getMessage());
             return "";
+        }
+    }
+
+    private boolean isEnabled(String json) {
+        if (json == null) return false;
+        try {
+            Map<String, Object> c = objectMapper.readValue(json, new TypeReference<>() {});
+            return Boolean.TRUE.equals(c.get("enabled"));
+        } catch (Exception e) {
+            return false;
         }
     }
 

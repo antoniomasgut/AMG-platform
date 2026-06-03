@@ -6,6 +6,7 @@ public record CreateLandingRequest(
     String title,
     String slug,
     String metaDescription,
+    String landingType,
     UUID serviceId,
     UUID templateId
 ) {}

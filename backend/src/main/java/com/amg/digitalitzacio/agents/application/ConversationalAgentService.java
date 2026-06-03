@@ -8,6 +8,7 @@ import com.amg.digitalitzacio.agents.domain.ConversationRole;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.amg.digitalitzacio.shared.ai.ChatMessage;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -35,6 +37,7 @@ public class ConversationalAgentService {
     private final PromptBuilder promptBuilder;
     private final TenantChatLinkRepository tenantChatLinkRepository;
     private final TenantAIConfigRepository tenantAIConfigRepository;
+    private final LeadRepository leadRepository;
     private final TelegramBotClient telegramBotClient;
     private final WhatsAppChannel whatsAppChannel;
     private final WhatsAppMetaChannel whatsAppMetaChannel;
@@ -65,6 +68,7 @@ public class ConversationalAgentService {
             }
 
             contactService.findOrCreate(tenantId, channel, customerIdentifier);
+            touchLeadContactAt(tenantId, channel, customerIdentifier);
 
             conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.USER, text, false);
 
@@ -147,6 +151,19 @@ public class ConversationalAgentService {
         } catch (Exception e) {
             log.error("Error notifying tenant via Telegram: {}", e.getMessage());
         }
+    }
+
+    private void touchLeadContactAt(UUID tenantId, ConversationChannel channel, String identifier) {
+        try {
+            var opt = switch (channel) {
+                case EMAIL -> leadRepository.findFirstByTenantIdAndEmail(tenantId, identifier);
+                default    -> leadRepository.findFirstByTenantIdAndPhone(tenantId, identifier);
+            };
+            opt.ifPresent(lead -> {
+                lead.setLastContactAt(Instant.now());
+                leadRepository.save(lead);
+            });
+        } catch (Exception ignored) {}
     }
 
     /** Extreu el tag [CONFIRMA_CITA:{...}] de la resposta, crea l'event al Calendar i retorna el text net. */

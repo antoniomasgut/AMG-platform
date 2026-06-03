@@ -1,11 +1,18 @@
 package com.amg.digitalitzacio.chat.application;
 
 import com.amg.digitalitzacio.agents.application.ChannelUsageService;
+import com.amg.digitalitzacio.agents.application.GoogleCalendarService;
+import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
+import com.amg.digitalitzacio.agents.application.PromptBuilder;
 import com.amg.digitalitzacio.chat.domain.ChatSession;
 import com.amg.digitalitzacio.chat.domain.LandingChatContext;
 import com.amg.digitalitzacio.chat.domain.LandingChatContextRepository;
 import com.amg.digitalitzacio.engine.domain.LandingRepository;
+import com.amg.digitalitzacio.leads.domain.Lead;
+import com.amg.digitalitzacio.leads.domain.LeadRepository;
+import com.amg.digitalitzacio.leads.domain.LeadSource;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +24,16 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -42,6 +53,7 @@ public class ChatSessionService {
     private static final int    MAX_INPUT_CHARS      = 500;
     private static final String ANTHROPIC_BASE       = "https://api.anthropic.com";
     private static final String ANTHROPIC_VERSION    = "2023-06-01";
+    private static final Pattern BOOKING_TAG         = Pattern.compile("\\[CONFIRMA_CITA:(\\{.*?\\})]", Pattern.DOTALL);
 
     // Paraules malsonants — CA/ES/EN més comunes
     private static final Set<String> PROFANITY = Set.of(
@@ -55,6 +67,10 @@ public class ChatSessionService {
     private final ObjectMapper objectMapper;
     private final LandingChatContextRepository chatContextRepository;
     private final LandingRepository landingRepository;
+    private final LeadRepository leadRepository;
+    private final NexeServiceConfigService nexeConfigService;
+    private final PromptBuilder promptBuilder;
+    private final GoogleCalendarService googleCalendarService;
     private final SystemConfigService sysConfig;
     private final RestClient.Builder restClientBuilder;
     private final ChannelUsageService channelUsageService;
@@ -65,7 +81,7 @@ public class ChatSessionService {
     public record CreateSessionResult(String sessionId, String greeting) {}
     public record SendMessageResult(String sessionId, String reply, boolean terminated) {}
 
-    public CreateSessionResult createSession(String landingSlug, String ip) {
+    public CreateSessionResult createSession(String landingSlug, String contactName, String contactPhone, String ip) {
         checkSessionRateLimit(ip);
 
         var landing = landingRepository.findBySlug(landingSlug)
@@ -74,21 +90,131 @@ public class ChatSessionService {
         var ctx = chatContextRepository.findById(landing.getId())
                 .orElseGet(() -> buildGenericContext(landing.getId(), landing.getTitle()));
 
+        var tenantId  = landing.getTenantId();
         var sessionId = UUID.randomUUID().toString();
-        var greeting  = generateGreeting(ctx);
+
+        // Comprova si l'agenda està activada per a aquest tenant
+        boolean agendaEnabled = isAgendaEnabledForTenant(tenantId);
+        String systemPrompt   = ctx.getSystemPrompt();
+        if (agendaEnabled) {
+            var agendaJson = nexeConfigService.get(tenantId, "AGENDA")
+                    .map(c -> c.getConfigJson()).orElse(null);
+            if (agendaJson != null) systemPrompt += promptBuilder.buildAgendaBlock(agendaJson);
+        }
+
+        var greeting = generateGreetingWithPrompt(ctx, systemPrompt);
 
         var session = ChatSession.builder()
                 .id(sessionId)
                 .landingSlug(landingSlug)
                 .landingId(landing.getId().toString())
+                .tenantId(tenantId.toString())
+                .contactName(contactName)
+                .contactPhone(contactPhone)
+                .agendaEnabled(agendaEnabled)
                 .messageCount(0)
                 .build();
+
+        // Crea o reutilitza Lead si s'ha proporcionat informació de contacte
+        if (contactName != null && !contactName.isBlank() &&
+            contactPhone != null && !contactPhone.isBlank()) {
+            try {
+                var lead = findOrCreateChatLead(landing.getTenantId(), contactName.strip(), contactPhone.strip());
+                session.setLeadId(lead.getId().toString());
+            } catch (Exception e) {
+                log.warn("Could not create lead for chat session: {}", e.getMessage());
+            }
+        }
 
         session.getMessages().add(new ChatSession.ChatMessage("assistant", greeting));
         saveSession(session);
         incrementRateCounter(RATE_SESS_KEY + ip, 3600);
 
         return new CreateSessionResult(sessionId, greeting);
+    }
+
+    private boolean isAgendaEnabledForTenant(UUID tenantId) {
+        return nexeConfigService.get(tenantId, "AGENDA").map(cfg -> {
+            try {
+                Map<String, Object> c = objectMapper.readValue(cfg.getConfigJson(), new TypeReference<>() {});
+                Object enabled = c.get("enabled");
+                return Boolean.TRUE.equals(enabled);
+            } catch (Exception e) { return false; }
+        }).orElse(false);
+    }
+
+    private String generateGreetingWithPrompt(LandingChatContext ctx, String systemPrompt) {
+        String fallback = "Hola! Sóc l'assistent virtual de " + ctx.getBusinessName() + ". En què puc ajudar-te?";
+        try {
+            String apiKey = sysConfig.get("ANTHROPIC_API_KEY");
+            if (apiKey == null || apiKey.isBlank()) return fallback;
+            var result = callAnthropicApi(apiKey,
+                systemPrompt + "\n\nGenera un missatge de benvinguda breu i amigable en català (màx. 2 frases). Presenta't pel nom del negoci i ofereix ajuda.",
+                List.of(), "Hola");
+            return (result != null && !result.isBlank()) ? result : fallback;
+        } catch (Exception e) {
+            log.warn("Could not generate greeting: {}", e.getMessage());
+            return fallback;
+        }
+    }
+
+    private String processBookingTag(String response, UUID tenantId, String leadId) {
+        Matcher m = BOOKING_TAG.matcher(response);
+        if (!m.find()) return response;
+        String cleaned = BOOKING_TAG.matcher(response).replaceAll("").strip();
+        try {
+            Map<String, Object> booking = objectMapper.readValue(m.group(1), new TypeReference<>() {});
+            var agendaCfg = nexeConfigService.get(tenantId, "AGENDA").orElse(null);
+            if (agendaCfg == null) return cleaned;
+            Map<String, Object> agenda = objectMapper.readValue(agendaCfg.getConfigJson(), new TypeReference<>() {});
+            String calType = String.valueOf(agenda.getOrDefault("calendar_type", ""));
+            if (!"google".equals(calType) && !"google_oauth".equals(calType)) return cleaned;
+            String calId = (String) agenda.get("google_calendar_id");
+            if (calId == null || calId.isBlank()) return cleaned;
+            String date = (String) booking.get("date");
+            String time = (String) booking.get("time");
+            if (date == null || time == null) return cleaned;
+            LocalDateTime start = LocalDateTime.parse(date + "T" + time,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+            int duration = booking.get("duration") instanceof Number n ? n.intValue() : 60;
+            String name  = booking.get("name") instanceof String s ? s : "Client";
+            String notes = booking.get("notes") instanceof String s ? s : "";
+            if ("google_oauth".equals(calType)) {
+                googleCalendarService.createEventOAuth((String) agenda.get("google_refresh_token"), calId,
+                        "Visita: " + name, start, duration, notes);
+            } else {
+                googleCalendarService.createEvent(calId, "Visita: " + name, start, duration, notes);
+            }
+            // Actualitza lastServiceAt del lead quan es confirma una cita
+            if (leadId != null) {
+                try {
+                    leadRepository.findById(UUID.fromString(leadId)).ifPresent(lead -> {
+                        lead.setLastServiceAt(Instant.now());
+                        leadRepository.save(lead);
+                    });
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception e) {
+            log.warn("Could not process booking tag: {}", e.getMessage());
+        }
+        return cleaned;
+    }
+
+    private Lead findOrCreateChatLead(UUID tenantId, String name, String phone) {
+        return leadRepository.findFirstByTenantIdAndPhone(tenantId, phone)
+                .map(lead -> {
+                    lead.setLastContactAt(Instant.now());
+                    return leadRepository.save(lead);
+                })
+                .orElseGet(() -> {
+                    var lead = new Lead();
+                    lead.setTenantId(tenantId);
+                    lead.setName(name);
+                    lead.setPhone(phone);
+                    lead.setSource(LeadSource.CHAT_WIDGET);
+                    lead.setLastContactAt(Instant.now());
+                    return leadRepository.save(lead);
+                });
     }
 
     public SendMessageResult sendMessage(String sessionId, String userMessage, String ip) {
@@ -119,12 +245,37 @@ public class ChatSessionService {
         }
 
         var ctx = loadContext(session.getLandingId());
-        String systemPrompt = ctx != null ? ctx.getSystemPrompt() : buildGenericSystemPrompt(session.getLandingSlug());
+        String basePrompt   = ctx != null ? ctx.getSystemPrompt() : buildGenericSystemPrompt(session.getLandingSlug());
+        String systemPrompt = basePrompt;
+        if (session.isAgendaEnabled() && session.getTenantId() != null) {
+            var agendaJson = nexeConfigService.get(UUID.fromString(session.getTenantId()), "AGENDA")
+                    .map(c -> c.getConfigJson()).orElse(null);
+            if (agendaJson != null) systemPrompt += promptBuilder.buildAgendaBlock(agendaJson);
+        }
 
         var history = buildHistory(session);
         String reply = callClaude(systemPrompt, history, userMessage);
         if (reply == null || reply.isBlank()) {
             reply = "Ho sent, en aquest moment no puc respondre. Torna-ho a provar en uns instants.";
+        }
+
+        // Processa tag de reserva si l'agenda és activa
+        if (session.isAgendaEnabled() && session.getTenantId() != null) {
+            try {
+                reply = processBookingTag(reply, UUID.fromString(session.getTenantId()), session.getLeadId());
+            } catch (Exception e) {
+                log.warn("Error processing booking tag in chat: {}", e.getMessage());
+            }
+        }
+
+        // Actualitza lastContactAt del lead (best-effort)
+        if (session.getLeadId() != null) {
+            try {
+                leadRepository.findById(UUID.fromString(session.getLeadId())).ifPresent(lead -> {
+                    lead.setLastContactAt(Instant.now());
+                    leadRepository.save(lead);
+                });
+            } catch (Exception ignored) {}
         }
 
         session.getMessages().add(new ChatSession.ChatMessage("user", userMessage));
@@ -146,21 +297,6 @@ public class ChatSessionService {
 
     // --- Claude ---
 
-    private String generateGreeting(LandingChatContext ctx) {
-        String fallback = "Hola! Sóc l'assistent virtual de " + ctx.getBusinessName() + ". En què puc ajudar-te?";
-        try {
-            String apiKey = sysConfig.get("ANTHROPIC_API_KEY");
-            if (apiKey == null || apiKey.isBlank()) return fallback;
-            var result = callAnthropicApi(apiKey,
-                ctx.getSystemPrompt() + "\n\nGenera un missatge de benvinguda breu i amigable en català (màx. 2 frases). Presenta't pel nom del negoci i ofereix ajuda.",
-                List.of(),
-                "Hola");
-            return (result != null && !result.isBlank()) ? result : fallback;
-        } catch (Exception e) {
-            log.warn("Could not generate greeting: {}", e.getMessage());
-            return fallback;
-        }
-    }
 
     private String callClaude(String systemPrompt, List<Map<String, String>> history, String userMessage) {
         try {

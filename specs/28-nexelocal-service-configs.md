@@ -1,7 +1,7 @@
 # Spec 28 — NexeLocal Service Configs
 
-**Versió**: 1.0  
-**Estat**: Completat ✅  
+**Versió**: 1.1  
+**Estat**: Completat ✅ (v1.1: camp `enabled` afegit a tots els serveis)  
 **Mòdul**: 28  
 **Depèn de**: Mòdul 22 (Sector Pricing), Mòdul 20 (Agents IA)
 
@@ -205,7 +205,35 @@ Camps:
 
 ---
 
-## 5. Integració amb el bot (PromptBuilder)
+## 5. Camp `enabled` — control d'activació per fase
+
+Tots els serveis (AGENDA, PRESSUPOSTOS, FIDELITZACIO, EQUIP) tenen el camp `enabled: boolean` al JSON de configuració. **Per defecte és `false`** — un servei pot estar configurat però no actiu.
+
+| Valor | Comportament |
+|-------|-------------|
+| `enabled: true` | El bloc s'injecta al system prompt del bot en tots els canals |
+| `enabled: false` o absent | El bloc **no s'injecta** — el bot no gestiona aquesta funcionalitat |
+
+Això permet:
+- Configurar un servei (F3, F4...) sense activar-lo fins que el client no hagi contractat la fase
+- Desactivar temporalment sense perdre la configuració
+- Proves en sandbox abans d'activar en producció
+
+**Exemple AGENDA inactiu** (configurat però no activat):
+```json
+{ "enabled": false, "mode": "inspection", "slotMinutes": 60 }
+```
+
+**Exemple AGENDA actiu**:
+```json
+{ "enabled": true, "mode": "inspection", "slotMinutes": 60, "calendar_type": "google", "google_calendar_id": "..." }
+```
+
+> Veure Spec 31 per al model complet de funcionalitats per fase de l'agent conversacional.
+
+---
+
+## 6. Integració amb el bot (PromptBuilder)
 
 `PromptBuilder.buildNexeBlock()` llegeix les configs de tots 4 serveis i afegeix instruccions contextuals al system prompt del bot:
 
@@ -216,7 +244,7 @@ Camps:
 
 ---
 
-## 6. Frontend
+## 7. Frontend
 
 ### Ruta
 `/portal/admin/tenants/[id]/nexe/[service]`
@@ -231,7 +259,7 @@ Cada servei té el seu formulari adaptat per sector (detectat automàticament de
 
 ---
 
-## 7. Defaults per sector
+## 8. Defaults per sector
 
 El frontend omple automàticament els valors per defecte quan s'obre el formulari per primera vegada, basant-se en el sector del tenant. Implementat a `nexe-configs.ts`:
 
@@ -241,7 +269,7 @@ El frontend omple automàticament els valors per defecte quan s'obre el formular
 
 ---
 
-## 8. Notes d'implementació
+## 9. Notes d'implementació
 
 - La taula `nexe_service_configs` s'ha de crear manualment a producció (Hibernate `ddl-auto: validate` no la crea)
 - SQL de creació: `CREATE TABLE nexe_service_configs (tenant_id UUID, service_key VARCHAR(30), config_json TEXT, updated_at TIMESTAMPTZ DEFAULT NOW(), PRIMARY KEY (tenant_id, service_key))`

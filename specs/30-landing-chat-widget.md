@@ -1,8 +1,8 @@
 # Mòdul 30: Landing Chat Widget — Bot IA incrustat a les landing pages
 
-> **Versió:** 1.0
-> **Data:** 2026-06-02
-> **Dependències:** Mòdul 04 (Engine), Mòdul 20 (Agents IA)
+> **Versió:** 1.1
+> **Data:** 2026-06-03
+> **Dependències:** Mòdul 04 (Engine), Mòdul 20 (Agents IA), Spec 28 (NexeLocal Service Configs), Spec 31 (Agent Feature Toggles)
 
 ---
 
@@ -14,8 +14,13 @@ puguin iniciar una conversa amb el bot del negoci sense sortir de la pàgina.
 Quan el visitant polsa "Reserva la teva cita" (o qualsevol CTA configurat com a
 `action: chat`), s'obre un panell lateral de xat que connecta amb l'agent IA del sector.
 
-**Cas d'ús principal:** demos de venda — el prospect veu la landing i immediatament
-pot provar el bot que tindria al seu negoci.
+**Canal web de F1:** el xat widget és el canal d'entrada natiu de la landing. Requereix:
+- **Landing Pro activa** — el chat widget NO està disponible a la Micro-landing
+- **F1 contractada** — fase d'automació conversacional
+
+Les funcionalitats addicionals (cites, pressupostos, fidelització, equip) s'activen
+progressivament segons les fases F2-F5 contractades, igual que per WhatsApp i Email
+(veure Spec 31). El domini és un tercer servei opcional, independent de tots dos.
 
 ---
 
@@ -28,12 +33,14 @@ pot provar el bot que tindria al seu negoci.
 - Historial de missatges dins la sessió (localStorage)
 - Bloc nou de tipus `chat-cta` per al Factory
 - Modificació del bloc `hero` per suportar `ctaAction: "chat"`
+- **Pre-chat form:** nom + telèfon obligatoris abans d'iniciar la conversa
+- **Creació automàtica de Lead** (deduplicat per telèfon) en primera contacte
+- **Integració de fases NexeLocal:** F2 (AGENDA), F3 (PRESSUPOSTOS), F4 (FIDELITZACIO), F5 (EQUIP) actives si `enabled: true` a `nexe_service_configs`
 
 ### Exclòs
-- Persistència de converses a la BD (sessions efímeres, RAM/Redis)
+- Persistència de converses a la BD (sessions efímeres, Redis)
 - Integració amb Omnichannel Inbox (Mòdul 25) — futur
-- Identificació del visitant (no demana email/nom per iniciar)
-- Notificació al propietari quan hi ha una conversa activa — futur
+- Notificació al propietari en temps real quan hi ha una conversa activa — futur
 
 ---
 
@@ -63,7 +70,13 @@ Sessions guardades a **Redis** amb TTL de 2h. Clau: `chat:session:{uuid}`.
 {
   "id": "uuid",
   "landingSlug": "estetica-mireia",
-  "sectorContext": "Ets l'assistent virtual d'Estètica Mireia...",
+  "landingId": "uuid",
+  "tenantId": "uuid",
+  "contactName": "Maria García",
+  "contactPhone": "654123456",
+  "leadId": "uuid",
+  "agendaEnabled": true,
+  "messageCount": 3,
   "messages": [
     { "role": "user", "content": "Hola, teniu hora per dimarts?" },
     { "role": "assistant", "content": "Hola! Sí, tenim disponibilitat..." }
@@ -73,7 +86,11 @@ Sessions guardades a **Redis** amb TTL de 2h. Clau: `chat:session:{uuid}`.
 }
 ```
 
-TTL Redis: **2 hores** des de `lastActivityAt`.
+- `tenantId` — UUID del tenant propietari de la landing
+- `contactName` / `contactPhone` — recollits al pre-chat form
+- `leadId` — UUID del Lead creat (o existent) a la BD
+- `agendaEnabled` — cache del flag `AGENDA.enabled` per evitar consultes repetides a BD
+- TTL Redis: **2 hores** des de `lastActivityAt`
 
 ---
 
@@ -82,12 +99,14 @@ TTL Redis: **2 hores** des de `lastActivityAt`.
 Prefix: `/api/v1/chat` — **tots els endpoints són públics (sense JWT)**
 
 ### `POST /api/v1/chat/sessions`
-Crea una nova sessió de chat.
+Crea una nova sessió de chat. Requereix nom i telèfon (recollits al pre-chat form).
 
 **Request:**
 ```json
 {
-  "landingSlug": "estetica-mireia"
+  "landingSlug": "estetica-mireia",
+  "contactName": "Maria García",
+  "contactPhone": "654123456"
 }
 ```
 
@@ -95,11 +114,13 @@ Crea una nova sessió de chat.
 ```json
 {
   "sessionId": "uuid",
-  "greeting": "Hola! Sóc l'assistent virtual d'Estètica Mireia. En què puc ajudar-te?"
+  "greeting": "Hola Maria! Sóc l'assistent virtual d'Estètica Mireia. En què puc ajudar-te?"
 }
 ```
 
-El `greeting` és el primer missatge de l'agent generat automàticament.
+- El `greeting` és el primer missatge de l'agent generat automàticament
+- Si el telèfon ja existeix com a Lead del tenant, s'associa a la sessió sense crear duplicat
+- Si és un contacte nou, es crea un Lead amb `source: CHAT_WIDGET`
 
 **Rate limiting:** màx. 10 sessions per IP per hora.
 
@@ -129,21 +150,32 @@ Envia un missatge i obté la resposta de l'agent.
 
 ## 6. Servei IA (ChatSessionService)
 
-```java
-// Construeix el context complet de la conversa i crida Claude
-private String callClaude(ChatSession session, String userMessage) {
-    // 1. System prompt = LandingChatContext.systemPrompt per la landing
-    // 2. Historial de missatges anteriors (màx. últims 10 parells)
-    // 3. Nou missatge de l'usuari
-    // → Crida directa a Anthropic REST API
-    // → Retorna resposta com a String
-}
-```
-
 **Model:** `claude-haiku-4-5-20251001` (ràpid i barat per a converses de xat).
 **Tokens màxims resposta:** 300 (respostes curtes, estil WhatsApp).
-**Context de l'empresa:** llegit de la taula `landing_chat_contexts` (una fila per landing).
-Si no existeix, el backend genera un context genèric basat en el títol de la landing.
+
+### Construcció del system prompt
+
+L'ordre d'assemblatge segueix el mateix patró que `PromptBuilder` (Spec 31):
+
+```
+[1] System prompt base del tenant (TenantChatLink.agentSystemPrompt)
+[2] Bloc AGENDA    (si AGENDA.enabled = true a nexe_service_configs)
+[3] Bloc PRESSUPOSTOS (si PRESSUPOSTOS.enabled = true)
+[4] Bloc FIDELITZACIO (si FIDELITZACIO.enabled = true)
+[5] Bloc EQUIP     (si EQUIP.enabled = true)
+```
+
+El flag `agendaEnabled` es comprova una sola vegada en crear la sessió i es
+guarda a `ChatSession` per evitar consultes repetides a BD per cada missatge.
+
+### Integració Google Calendar (F2)
+
+Quan `agendaEnabled = true`, el bot pot emetre el tag especial:
+```
+[CONFIRMA_CITA:{"date":"YYYY-MM-DD","time":"HH:MM","duration":60,"name":"NOM","notes":"..."}]
+```
+`ChatSessionService.processBookingTag()` detecta el tag, crea l'event al Google Calendar
+del tenant i elimina el tag de la resposta visible al client.
 
 **Detecció de profanitat:** si el missatge de l'usuari conté paraules malsonants (llista
 interna CA/ES/EN), la sessió s'elimina de Redis i es retorna `terminated: true` amb
@@ -240,9 +272,9 @@ Afegir `ctaAction` a les props del bloc `hero`:
 
 - Tots els endpoints `/api/v1/chat/**` sense JWT però amb **rate limiting** per IP (Redis)
 - Missatges sanititzats (màx. 500 chars per missatge d'entrada)
-- El `sectorContext` no s'exposa mai al client — és server-side
-- Sessions no vinculades a usuaris ni tenants (privacitat)
+- El system prompt i les configs del tenant no s'exposen mai al client — és server-side
 - El `sessionId` és un UUID aleatori no predictible
+- Nom i telèfon del pre-chat form validats: mínim 2 caràcters (nom), format telèfon bàsic
 
 ---
 

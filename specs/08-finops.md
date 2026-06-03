@@ -10,8 +10,8 @@
 
 - Crear **factures de setup a Holded** automàticament quan un pressupost és acceptat (Mòdul 07 Billing)
 - Crear **factures mensuals recurrents** automàticament a final de mes per a tots els tenants actius
-- Gestionar **mandats SEPA** per a la domiciliació bancària de les quotes mensuals
-- Generar el **fitxer SEPA XML (pain.008)** per pujar al banc i executar el càrrec mensual
+- Gestionar **mandats SEPA** per a la domiciliació bancària de les quotes mensuals (mode `SEPA_MANUAL`)
+- Generar el **fitxer SEPA XML (pain.008)** per pujar al banc (mode `SEPA_MANUAL` — substituït per GoCardless si el tenant usa el Mòdul 09b)
 - Enviar factures al sistema **Verifactu** de l'AEAT (obligatori per a autònoms/empreses a Espanya)
 - Sincronitzar estats de cobrament entre Holded i la plataforma
 - Gestionar **clients (contactes)** a Holded automàticament
@@ -27,8 +27,8 @@
 - **Sincronització de contactes**: Quan es crea un tenant/client a la plataforma, es crea automàticament a Holded
 - **Factures de setup**: Quan un pressupost (Budget) passa a `ACCEPTED`, es genera la factura a Holded
 - **Factures mensuals recurrents**: Job programat a final de mes — genera una factura per tenant amb tots els serveis actius (càlcul pro-rata primer mes via Mòdul 07 Billing)
-- **Mandats SEPA**: Registre d'IBAN i mandat per tenant per a domiciliació bancària
-- **Fitxer SEPA XML (pain.008)**: Generació del fitxer per pujar al banc i executar els càrrecs mensuals
+- **Mandats SEPA** (mode `SEPA_MANUAL`): Registre d'IBAN i mandat per tenant per a domiciliació bancària manual
+- **Fitxer SEPA XML (pain.008)** (mode `SEPA_MANUAL`): Generació del fitxer per pujar manualment al banc. Si el tenant usa GoCardless (Mòdul 09b), el `MonthlyBillingJob` usa l'API de GoCardless en lloc del pain.008 — els dos modes s'exclouen mútuament per tenant.
 - **Enviament a Verifactu**: Holded ja envia automàticament a Verifactu (tots els plans ho inclouen)
 - **Estat de cobrament**: Consultar estat de factures a Holded (pagada, pendent, vençuda)
 - **Dashboard FinOps**: Resum de facturació mensual, impagats, ingressos pendents
@@ -39,7 +39,7 @@
 
 - Gestió de nòmines / RRHH (Holded ho té però no ho integrem)
 - Inventari (Holded ho té com a gemma apart, +25 €/mes)
-- Pagaments recurrents amb Stripe (la quota mensual és via SEPA, no Stripe)
+- Pagaments recurrents amb Stripe (la quota mensual és via SEPA_MANUAL o GoCardless, o transferència manual — no via Stripe)
 - Conciliació bancària automàtica (Holded ho fa, però no ho exposem)
 
 ### 2.3 Actors

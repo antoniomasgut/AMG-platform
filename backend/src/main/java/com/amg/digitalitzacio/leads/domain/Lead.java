@@ -58,6 +58,10 @@ public class Lead {
 
     private Instant convertedAt;
 
+    private Instant lastContactAt;
+
+    private Instant lastServiceAt;
+
     private Boolean hasWhatsapp;
 
     @Column(nullable = false)

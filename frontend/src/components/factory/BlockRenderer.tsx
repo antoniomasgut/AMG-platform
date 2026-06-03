@@ -503,6 +503,26 @@ export const BlockRenderer: FC<Props> = ({
         );
       }
 
+      case 'chat-cta':
+        return (
+          <section style={{ background: bg, textAlign: 'center', padding: '80px 24px', fontFamily: fontB }} onClick={handleClick}>
+            {removeBtn}
+            <div style={{ maxWidth: 700, margin: '0 auto' }}>
+              <ET
+                tag="h2" value={s(p.title, 'Reserva la teva cita')} editable={editable} onSave={upd('title')}
+                style={{ fontFamily: fontH, fontSize: 'clamp(1.5rem,3vw,2rem)', fontWeight: 700, marginBottom: 16 }}
+              />
+              <ET
+                tag="p" value={s(p.subtitle, 'Respon en menys d\'1 minut')} editable={editable} onSave={upd('subtitle')}
+                style={{ opacity: 0.7, marginBottom: 32 }}
+              />
+              <button style={{ background: (p.accentColor as string) || primary, color: '#fff', border: 'none', cursor: 'pointer', padding: '16px 40px', borderRadius: radius, fontSize: '1.1rem', fontWeight: 700 }}>
+                {s(p.buttonText, 'Xateja amb nosaltres')}
+              </button>
+            </div>
+          </section>
+        );
+
       default:
         return <div style={{ padding: 16, color: '#94a3b8' }}>Bloc desconegut: {block.type}</div>;
     }

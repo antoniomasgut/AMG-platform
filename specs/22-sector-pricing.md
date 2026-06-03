@@ -10,11 +10,15 @@ NexeLocal és el model de preus basat en sector professional i mida d'empresa. E
 
 | Fase | Nom | Contingut |
 |------|-----|-----------|
-| F1 | Comunicació 24/7 | WhatsApp/Telegram/Email automatitzat, web bàsica |
-| F2 | Gestió de cites | Agenda digital, recordatoris automàtics, cancel·lacions |
-| F3 | Pressupostos | Generació PDF, seguiment d'ofertes, acceptació digital |
-| F4 | Fidelització | Seguiment postvenda, reactivació de clients, sol·licitud de resenyes |
-| F5 | Equip | Coordinació d'empleats, partes diaris, comunicació interna |
+| F1 | Comunicació 24/7 | Agent IA per WhatsApp/Email/Xat, creació automàtica de Leads, FAQ i info del negoci |
+| F2 | Gestió de cites | Booking per xat/WA/email, Google Calendar, recordatoris automàtics |
+| F3 | Pressupostos | Llistat de preus (pricelist) o generació de pressupost formal per l'agent |
+| F4 | Fidelització | Sol·licitud de ressenyes Google, seguiment postvenda, reactivació clients |
+| F5 | Equip | Notificacions grup Telegram intern, escalada humana, informes diaris |
+
+> **Landing i domini:** serveis independents de les fases, amb setup i mensual propis.
+> El chat widget (canal web de F1) requereix **Landing Pro** — no disponible a Micro-landing.
+> Veure model de preus a `CLAUDE.md`.
 
 Les fases **no són acumulatives**: F1+F3 és vàlid sense F2. El mensual total = suma de `priceF{n}` per cada fase contractada, usant els tiers en ordre (1a fase = priceF1, 2a fase = priceF2...).
 

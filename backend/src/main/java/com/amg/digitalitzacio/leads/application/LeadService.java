@@ -379,7 +379,8 @@ public class LeadService {
                 lead.getSource(), lead.getStage(),
                 getUserRef(lead.getAssignedTo()),
                 lead.getEstimatedValue(), lead.getNotes(), lead.getTags(),
-                lead.getLostReason(), lead.getConvertedAt(), lead.getHasWhatsapp(),
+                lead.getLostReason(), lead.getConvertedAt(),
+                lead.getLastContactAt(), lead.getLastServiceAt(), lead.getHasWhatsapp(),
                 lead.getIsActive(), lead.getCreatedAt(), lead.getUpdatedAt()
         );
     }

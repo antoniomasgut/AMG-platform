@@ -97,17 +97,22 @@ interface EditorState {
 
 ```typescript
 type BlockType =
-  | 'hero'
-  | 'text'
-  | 'services'
-  | 'gallery'
-  | 'contact-form'
-  | 'faq'
-  | 'testimonials'
-  | 'cta'
-  | 'footer'
-  | 'map';
+  | 'hero' | 'text' | 'services' | 'gallery' | 'contact-form'
+  | 'faq' | 'testimonials' | 'cta' | 'footer' | 'map'
+  | 'opening-hours' | 'pricing' | 'team' | 'video' | 'reviews'
+  | 'chat-cta' | 'whatsapp-cta';
 
+/**
+ * Disponibilitat per tipus de landing:
+ * MICRO: hero, text, services, gallery, faq, cta, testimonials, map, footer, contact-form
+ * PRO:   tots els anteriors + opening-hours, pricing, team, video, reviews, whatsapp-cta, chat-cta
+ *
+ * whatsapp-cta (PRO):
+ *   - Sense F1: wa.me/{whatsappPersonal} → WhatsApp personal del negoci, resposta manual
+ *   - Amb F1:   wa.me/{whatsappBusinessApi} → WhatsApp Business API (Mòdul 27), agent IA + Inbox (Mòdul 25)
+ *
+ * chat-cta (PRO + F1): chat widget IA incrustat a la landing (Spec 30)
+ */
 interface Block {
   id: string;
   type: BlockType;

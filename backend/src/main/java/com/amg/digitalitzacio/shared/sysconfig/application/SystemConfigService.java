@@ -32,6 +32,7 @@ public class SystemConfigService {
         new KnownKey("OLLAMA_BASE_URL",         "Ollama Base URL",            "URL de la instància Ollama (per defecte: http://localhost:11434)", "AGENTS", false),
         new KnownKey("TELEGRAM_BOT_TOKEN",      "Telegram Bot Token",         "Token del bot Telegram per a agents i notificacions", "AGENTS", true),
         new KnownKey("TELEGRAM_CHAT_ID",        "Telegram Chat ID (InfraOps)","ID del chat on enviar alertes d'infraestructura", "INFRAOPS", false),
+        new KnownKey("PLATFORM_TENANT_ID",      "Platform Tenant ID",         "UUID del tenant AMG per a leads del formulari web (opcional)", "GENERAL", false),
         new KnownKey("TWILIO_ACCOUNT_SID",      "Twilio Account SID",         "SID del compte Twilio per a WhatsApp Business", "AGENTS",    false),
         new KnownKey("TWILIO_AUTH_TOKEN",       "Twilio Auth Token",          "Token d'autenticació Twilio", "AGENTS",                        true),
         new KnownKey("TWILIO_WHATSAPP_FROM",    "Twilio WhatsApp From",       "Número WhatsApp sender (format whatsapp:+34...)", "AGENTS",   false),

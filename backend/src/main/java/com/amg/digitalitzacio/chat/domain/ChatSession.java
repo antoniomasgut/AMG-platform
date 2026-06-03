@@ -12,6 +12,11 @@ public class ChatSession {
     private String id;
     private String landingSlug;
     private String landingId;
+    private String tenantId;
+    private String contactName;
+    private String contactPhone;
+    private String leadId;
+    private boolean agendaEnabled;
     private int messageCount;
     @Builder.Default
     private List<ChatMessage> messages = new ArrayList<>();

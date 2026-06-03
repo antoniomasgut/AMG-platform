@@ -59,6 +59,13 @@
 
 ### 3.1 Enums
 
+#### LandingType
+
+| Valor | Setup | Mensual | Funcionalitats |
+|-------|-------|---------|----------------|
+| `MICRO` | 30€ | 9€/mes | Blocs bàsics + formulari de contacte (email) |
+| `PRO` | 80€ | 15€/mes | Tots els blocs + formulari + botó WhatsApp + chat widget IA (requereix F1) |
+
 #### DomainStatus
 
 | Valor | Descripció |
@@ -81,6 +88,7 @@ Defineix una landing page d'un tenant.
 | id | UUID | @Id @GeneratedValue | |
 | tenantId | UUID | @Column(nullable=false) | FK a Tenant |
 | serviceId | UUID | @Column(nullable=false) | FK a CatalogService (el servei LANDING associat) |
+| landingType | Enum(STRING) | @Enumerated @Column(nullable=false) | `MICRO` o `PRO` |
 | title | String(200) | @Column(nullable=false) | Títol de la landing |
 | slug | String(100) | @Column(nullable=false) | URL-friendly (ex: "restaurant-can-pedro") |
 | metaDescription | String(300) | @Column | Meta description per SEO |

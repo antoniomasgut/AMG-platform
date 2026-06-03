@@ -36,6 +36,7 @@ public class Landing {
     @Column(length = 150) private String domainOwnerName;
     @Column(length = 200) private String domainOwnerEmail;
     @Column(length = 30) private String domainOwnerPhone;
+    @Enumerated(EnumType.STRING) @Builder.Default @Column(name = "landing_type", nullable = false, length = 10) private LandingType landingType = LandingType.MICRO;
     @Builder.Default @Column(name = "is_active", nullable = false) private Boolean isActive = true;
     @Builder.Default @Column(name = "view_count", nullable = false) private Long viewCount = 0L;
     @CreatedDate @Column(updatable = false) private Instant createdAt;

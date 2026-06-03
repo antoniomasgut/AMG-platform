@@ -1,7 +1,7 @@
 # Mòdul 03: Leads CRM
 
-> **Versió:** 1.0
-> **Data:** 2026-05-13
+> **Versió:** 1.1
+> **Data:** 2026-06-03
 > **Dependències:** Mòdul 01 (Auth) — tots els endpoints requereixen JWT + RBAC
 
 ---
@@ -12,6 +12,12 @@
 - Registrar activitats sobre cada lead (trucades, emails, reunions, notes, tasques)
 - Proporcionar estadístiques del pipeline per rol (SUPER_ADMIN global, ADMIN/CLIENT per tenant)
 - Suportar soft-delete i canvi d'etapa amb traçabilitat
+
+**Model Lead = Client:** no existeix una entitat "Client" separada. Quan un lead arriba a
+l'etapa `WON`, es considera client convertit. La F4 (Fidelització) treballa sobre leads
+amb `convertedAt != null`. Un contacte que torna a escriure (via xat, WA o email) es
+localitza pel telèfon (`findFirstByTenantIdAndPhone`) i es reutilitza el mateix registre —
+mai es crea un duplicat.
 
 ---
 
@@ -59,21 +65,33 @@
 | name | String(150) | @Column(nullable=false) | Nom del contacte |
 | email | String(150) | @Column | Email |
 | phone | String(20) | @Column | Telèfon |
-| source | Enum(STRING) | @Enumerated | `WHATSAPP`, `WEB`, `REFERRAL`, `MANUAL`, `OTHER` |
+| source | Enum(STRING) | @Enumerated | `WHATSAPP`, `WEB`, `LANDING_FORM`, `CHAT_WIDGET`, `EMAIL`, `REFERRAL`, `MANUAL`, `OTHER` |
 | stage | Enum(STRING) | @Enumerated | `NEW` (per defecte) |
 | assignedTo | UUID | @Column | FK lògica a User (responsable) |
 | estimatedValue | BigDecimal(12,2) | @Column(precision=12, scale=2) | Valor estimat |
 | notes | TEXT | @Lob | Notes internes |
 | tags | String(500) | @Column(length=500) | Etiquetes separades per coma |
 | lostReason | String(255) | @Column | Obligatori si stage=LOST |
-| convertedAt | Instant | @Column | Quan es va marcar com WON |
+| convertedAt | Instant | @Column | Quan es va marcar com WON (= data de conversió a client) |
+| lastContactAt | Instant | @Column | Última vegada que el contacte va escriure (qualsevol canal) |
+| lastServiceAt | Instant | @Column | Última data de servei confirmat (F2: quan es crea cita) |
 | isActive | Boolean | @Column(nullable=false) | Per soft-delete, default true |
 | createdAt | Instant | @CreatedDate | |
 | updatedAt | Instant | @LastModifiedDate | |
 
 **PipelineStage enum:** `NEW`, `CONTACTED`, `QUALIFIED`, `PROPOSAL`, `NEGOTIATION`, `WON`, `LOST`
 
-**LeadSource enum:** `WHATSAPP`, `WEB`, `REFERRAL`, `MANUAL`, `OTHER`
+| Etapa | Significat pràctic |
+|-------|-------------------|
+| NEW | Contacte acabat d'entrar (via xat, WA, email, formulari) |
+| CONTACTED | S'ha respost o iniciat conversa |
+| QUALIFIED | Ha mostrat interès real, es coneix la necessitat |
+| PROPOSAL | Se li ha enviat pressupost o proposta |
+| NEGOTIATION | En procés de tancament |
+| WON | **Client convertit** — `convertedAt` establert |
+| LOST | No ha prosperat — `lostReason` obligatori |
+
+**LeadSource enum:** `WHATSAPP`, `WEB`, `LANDING_FORM`, `CHAT_WIDGET`, `EMAIL`, `REFERRAL`, `MANUAL`, `OTHER`
 
 #### Activity
 
@@ -90,7 +108,28 @@
 
 **ActivityType enum:** `CALL`, `EMAIL`, `MEETING`, `NOTE`, `TASK`
 
-### 3.2 Canvis d'etapa automàtics
+### 3.2 Cicle de vida Lead → Client
+
+```
+Contacte entra (xat/WA/email/formulari)
+        ↓
+findFirstByTenantIdAndPhone  ←── Si existeix, reutilitza el registre
+        ↓ (no existeix)
+Lead creat (stage=NEW, source=CHAT_WIDGET|WHATSAPP|...)
+        ↓
+Conversa / seguiment manual
+        ↓
+stage=WON → convertedAt=now() ← és "client" a partir d'aquí
+        ↓
+lastContactAt s'actualitza cada vegada que torna a escriure
+lastServiceAt s'actualitza quan F2 confirma una cita
+        ↓
+F4 (Fidelització): filtra per convertedAt != null
+  → follow-up si lastServiceAt > N dies
+  → reenganchament si lastContactAt > M mesos
+```
+
+### 3.3 Canvis d'etapa automàtics
 
 - En canviar a **WON**: es registra `convertedAt = now()`, es crea Activity "Lead guanyat"
 - En canviar a **LOST**: es requereix `lostReason`, es crea Activity "Lead perdut: {motiu}"

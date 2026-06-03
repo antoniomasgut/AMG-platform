@@ -127,9 +127,12 @@ Defineix un servei concret dins d'una fase. Ex: "WhatsApp Business", "Landing Pr
 
 **Notes:**
 - `phaseId` pot ser NULL si el servei és add-on (no pertany a cap fase concreta)
-- `type=LANDING` indica que cal crear una landing (mòdul 04)
+- `type=LANDING` indica que cal crear una landing (mòdul 04). Hi ha **dos serveis de landing** al catàleg, diferenciats per `slug`:
+  - `landing-micro` → `salePrice=30€`, `monthlyPrice=9€` — blocs bàsics + formulari de contacte
+  - `landing-pro` → `salePrice=80€`, `monthlyPrice=15€` — tots els blocs + botó WhatsApp + chat widget IA
 - `type=AUTOMATION` indica que cal configurar un flux n8n (mòdul 10)
 - `type=CREDENTIALS` és un servei que només necessita credencials
+- **Tots els serveis poden tenir `salePrice > 0` (setup, cobrat una sola vegada) i `monthlyPrice > 0` (quota mensual recurrent).** Un servei pot tenir setup sense mensual (ex: configuració puntual) o mensual sense setup (ex: manteniment).
 - `monthlyPrice` és el preu publicat per a clients NOUS. Els clients existents tenen el preu congèlat a `TenantService.monthlyPriceLocked` (veure més avall)
 - Canviar `monthlyPrice` o `salePrice` al catàleg **no afecta** clients que ja tenen el servei assignat
 
@@ -159,13 +162,13 @@ Quan s'assigna un perfil a un tenant, es crea un registre.
 | tenantId | UUID | @Column(nullable=false) | Tenant |
 | profileId | UUID | @Column(nullable=false) | Perfil assignat |
 | currentPhaseId | UUID | @Column(nullable=true) | Fase actual (NULL = tot completat) |
-| phaseStatus | Enum | @Enumerated(STRING) @Column(nullable=false) | Estat de la fase actual: `BUDGETING`, `BUDGET_ACCEPTED`, `CONFIGURING`, `AWAITING_CLIENT`, `READY_FOR_DELIVERY`, `COMPLETED`, `FUTURE_EXPANSION` |
+| phaseStatus | Enum | @Enumerated(STRING) @Column(nullable=false) | Estat de la fase actual: `BUDGET_PENDING`, `BUDGET_ACCEPTED`, `CONFIGURING`, `AWAITING_CLIENT`, `READY_FOR_DELIVERY`, `COMPLETED`, `FUTURE_EXPANSION` |
 | startedAt | Instant | @CreatedDate | |
 | completedAt | Instant | @Column(nullable=true) | Quan es completen totes les fases |
 
 **Restricció única:** `(tenantId, profileId)`
 
-- `BUDGETING` — Fase identificada i pendent de pressupostar (estat inicial)
+- `BUDGET_PENDING` — Fase identificada i pendent de pressupostar (estat inicial)
 - `BUDGET_ACCEPTED` — Pressupost acceptat pel client, pendent d'iniciar configuració
 - `CONFIGURING` — S'estan configurant els serveis de la fase actual
 - `AWAITING_CLIENT` — Configuració pausada, esperant dades del client
@@ -179,10 +182,12 @@ Cada servei (del perfil o add-on) té un registre per tenant amb seguiment del s
 
 **Enums:**
 
-`ServiceConfigStatus`: `BUDGET_PENDING`, `ACCEPTED`, `CONFIGURING`, `AWAITING_CLIENT`, `READY_FOR_DELIVERY`, `IMPLEMENTATION_ACCEPTED`
+`ServiceConfigStatus`: `BUDGET_PENDING`, `BUDGET_ACCEPTED`, `CONFIGURING`, `AWAITING_CLIENT`, `READY_FOR_DELIVERY`, `IMPLEMENTATION_ACCEPTED`
+
+> **Alineació amb `phaseStatus`:** els estats inicials i de transició usen els mateixos noms en fase i servei: `BUDGET_PENDING` (identificat, no pressupostat) → `BUDGET_ACCEPTED` (pressupost acceptat) → `CONFIGURING` → ... La diferència: les fases acaben en `COMPLETED` (totes les implementacions OK), els serveis en `IMPLEMENTATION_ACCEPTED` (el servei concret és acceptat pel client).
 
 - `BUDGET_PENDING` — Servei identificat, pendent de pressupostar (acabat de crear/assignar)
-- `ACCEPTED` — Pressupost acceptat pel client, pendent d'iniciar configuració
+- `BUDGET_ACCEPTED` — Pressupost acceptat pel client, pendent d'iniciar configuració
 - `CONFIGURING` — S'està configurant el servei (credencials, landings, etc.)
 - `AWAITING_CLIENT` — En espera de resposta del client (s'ha enviat sol·licitud)
 - `READY_FOR_DELIVERY` — Totes les credencials/configuracions requerides estan completes, llest per entregar
@@ -194,7 +199,7 @@ Cada servei (del perfil o add-on) té un registre per tenant amb seguiment del s
 | tenantId | UUID | @Column(nullable=false) | Tenant |
 | serviceId | UUID | @Column(nullable=false) | FK a CatalogService |
 | phaseId | UUID | @Column(nullable=true) | Fase a la qual pertany (null si add-on) |
-| configStatus | Enum | @Enumerated(STRING) @Column(nullable=false) | Estat del servei: `BUDGET_PENDING`, `ACCEPTED`, `CONFIGURING`, `AWAITING_CLIENT`, `READY_FOR_DELIVERY`, `IMPLEMENTATION_ACCEPTED` |
+| configStatus | Enum | @Enumerated(STRING) @Column(nullable=false) | Estat del servei: `BUDGET_PENDING`, `BUDGET_ACCEPTED`, `CONFIGURING`, `AWAITING_CLIENT`, `READY_FOR_DELIVERY`, `IMPLEMENTATION_ACCEPTED` |
 | **setupPriceLocked** | BigDecimal(10,2) | @Column(nullable=false) | **Preu de setup congèlat en el moment de l'assignació (snapshot de `CatalogService.salePrice`)** |
 | **monthlyPriceLocked** | BigDecimal(10,2) | @Column(nullable=false) | **Preu mensual congèlat en el moment de l'assignació (snapshot de `CatalogService.monthlyPrice`)** |
 | **activatedAt** | Instant | @Column | **Quan el servei ha passat a `IMPLEMENTATION_ACCEPTED`. S'usa per calcular la pro-rata del primer mes** |
@@ -213,12 +218,12 @@ CONFIGURED ─── client verifica ─────────→ VERIFIED
 
 **Restricció única:** `(tenantId, serviceId)`
 
-**Regla de preus congèlats:** Quan es crea un `TenantService` (en assignar un perfil o afegir un add-on), els camps `setupPriceLocked` i `monthlyPriceLocked` es copien dels valors actuals del `CatalogService`. Qualsevol canvi posterior al catàleg no afecta aquest registre.
+**Regla de preus congèlats:** Quan es crea un `TenantService` (en assignar un perfil o afegir un add-on, estat `BUDGET_PENDING`), els camps `setupPriceLocked` i `monthlyPriceLocked` es copien dels valors actuals del `CatalogService`. **Els preus queden fixats en el moment de l'assignació, no en el moment d'acceptació del pressupost.** El pressupost generat (Mòdul 07) llegeix sempre `setupPriceLocked` i `monthlyPriceLocked`, mai els preus actuals del catàleg. Qualsevol canvi posterior al catàleg no afecta aquest registre.
 
 **Comportament per transició d'estat:**
 
-- `BUDGET_PENDING` → `ACCEPTED`: Quan el client accepta el pressupost que inclou aquest servei
-- `ACCEPTED` → `CONFIGURING`: Quan l'ADMIN inicia la configuració del servei
+- `BUDGET_PENDING` → `BUDGET_ACCEPTED`: Quan el client accepta el pressupost que inclou aquest servei
+- `BUDGET_ACCEPTED` → `CONFIGURING`: Quan l'ADMIN inicia manualment la configuració del servei (acció explícita al portal — no és automàtica)
 - `CONFIGURING` → `AWAITING_CLIENT`: Quan ADMIN prem "Sol·licitar al client" i s'envia el missatge
 - `AWAITING_CLIENT` → `CONFIGURING`: Quan el client respon amb les dades necessàries (ADMIN les introdueix o arriben per webhook)
 - `CONFIGURING` → `READY_FOR_DELIVERY`: Quan la configuració està completa (credencials posades, landing creada, etc.)
@@ -310,7 +315,7 @@ ServiceProfile
               └── CredentialField (camps del formulari)
 
 TenantProfile → ServiceProfile (assignació) → currentPhaseId → phaseStatus
-TenantService → CatalogService (per tenant) → configStatus (BUDGET_PENDING → ACCEPTED → CONFIGURING → AWAITING_CLIENT → READY_FOR_DELIVERY → IMPLEMENTATION_ACCEPTED)
+TenantService → CatalogService (per tenant) → configStatus (BUDGET_PENDING → BUDGET_ACCEPTED → CONFIGURING → AWAITING_CLIENT → READY_FOR_DELIVERY → IMPLEMENTATION_ACCEPTED)
 TenantCredential → CredentialField (valor xifrat per tenant)
 CommunicationRequest → TenantService (sol·licitud al client) → canal preferit
 ```
@@ -455,7 +460,7 @@ Cada fase (o servei independent) es visualitza com una targeta al dashboard del 
 | Estat | Color | Descripció |
 |-------|-------|-----------|
 | BUDGET_PENDING / Pendent pressupostar | Gris | Fase/servei identificat, no pressupostat |
-| ACCEPTED / Acceptat | Blau | Pressupost acceptat, pendent d'implementar |
+| BUDGET_ACCEPTED / Acceptat | Blau | Pressupost acceptat, pendent que l'ADMIN iniciï la implementació |
 | CONFIGURING / Implementant-se | Taronja | Configuració en curs |
 | AWAITING_CLIENT / Esperant client | Groc | Pausat, esperant dada del client |
 | READY_FOR_DELIVERY / Llest per entregar | Verd clar | Configurat, pendent de confirmació del client |
@@ -467,12 +472,14 @@ Cada fase (o servei independent) es visualitza com una targeta al dashboard del 
 La configuració dels serveis és un procés guiat que alterna accions internes (ADMIN/SUPER_ADMIN) amb sol·licituds al client. El flux complet per a cada fase és:
 
 ```
-Pressupost acceptat → Fase 1 en marxa
+Pressupost acceptat → Fase 1: BUDGET_ACCEPTED (espera acció ADMIN)
+  │
+  │  [ADMIN inicia implementació manualment al portal]
   │
   ▼
 Fase 1: CONFIGURING
   │
-  ├── Servei A (CREDENTIALS) → ACCEPTED
+  ├── Servei A (CREDENTIALS) → BUDGET_ACCEPTED
   │     ├── ADMIN inicia configuració → CONFIGURING
   │     ├── ADMIN estableix credencials internament
   │     │     └── → READY_FOR_DELIVERY
@@ -486,7 +493,7 @@ Fase 1: CONFIGURING
   │           │     └── → CONFIGURING (es repren la configuració)
   │           └── (Si no respon en 7 dies → EXPIRED, reenviar)
   │
-  ├── Servei B (LANDING) → ACCEPTED
+  ├── Servei B (LANDING) → BUDGET_ACCEPTED
   │     └── ADMIN crea landing al Engine →
   │           └── → READY_FOR_DELIVERY
   │
@@ -524,11 +531,18 @@ Fase 1: CONFIGURING
 
 **Regles de negoci:**
 - Quan un servei passa a `AWAITING_CLIENT`, la configuració de la fase es **pausa** (no s'avança al següent servei)
-- El `CommunicationRequest` té expiració de **7 dies**. Si expira, es pot reenviar
+- El `CommunicationRequest` té expiració de **7 dies**. Si expira, l'ADMIN pot reenviar **manualment** des del portal. El reintent automàtic (job programat) és **pendent d'implementar** (veure secció de pendents)
 - Quan el client respon, el sistema intenta **processar automàticament**:
-  - Si és una API Key → es xifra i es guarda a `TenantCredential`
-  - Si és una confirmació → es canvia l'estat corresponent
-- Si el processament automàtic no és possible, queda en estat `RESPONDED` pendent d'acció de l'ADMIN
+
+| Tipus de sol·licitud | Resposta del client | Processament automàtic |
+|---------------------|--------------------|-----------------------|
+| `REQUEST_CREDENTIAL` | Envia valor per xat/formulari | Xifra i guarda a `TenantCredential` → servei torna a `CONFIGURING` |
+| `REQUEST_CONFIRMATION` | Prem botó "Confirma" | Servei passa a `IMPLEMENTATION_ACCEPTED` |
+| `REQUEST_PERMISSION` | Prem botó "Autoritzo" | Actualitza flag de permís → servei torna a `CONFIGURING` |
+| `REQUEST_INFO` | Escriu resposta de text | Guarda a `responseData` → queda `RESPONDED`, **ADMIN ha d'actuar manualment** |
+
+- Si el processament automàtic falla (format inesperat, error de xifrat), el `CommunicationRequest` queda en estat `RESPONDED` pendent d'acció de l'ADMIN
+- L'ADMIN pot sempre saltar-se el flux guiat i configurar manualment les credencials directament
 - En completar una fase, s'envia notificació automàtica al client i es posa en `AWAITING_CONFIRMATION`
 - L'ADMIN pot saltar-se el flux guiat i configurar manualment (establir credencials directament)
 
@@ -963,6 +977,7 @@ Mateix flux que aprovar fase: factura + cobrament + implementació.
 | POST | /api/v1/vault/tenants/{tId}/profiles/{pId} | Assignar perfil | SUPER_ADMIN, ADMIN |
 | DELETE | /api/v1/vault/tenants/{tId}/profiles/{pId} | Desassignar perfil | SUPER_ADMIN, ADMIN |
 | GET | /api/v1/vault/tenants/{tId}/setup | Estat configuració | SUPER_ADMIN, ADMIN, CLIENT (propi) |
+| GET | /api/v1/vault/tenants/{tId}/services/{sId}/fields | Llistar camps i credencials | SUPER_ADMIN, ADMIN (valors en clar), CLIENT (valors emmascarats `***abc`) |
 | PUT | /api/v1/vault/tenants/{tId}/services/{sId}/fields/{fId} | Establir credencial | SUPER_ADMIN, ADMIN |
 | POST | /api/v1/vault/tenants/{tId}/services/{sId}/verify | Verificar servei | SUPER_ADMIN, ADMIN |
 | POST | /api/v1/vault/tenants/{tId}/services/{sId}/request | Sol·licitar info al client | SUPER_ADMIN, ADMIN |
@@ -1005,8 +1020,8 @@ Mateix flux que aprovar fase: factura + cobrament + implementació.
 | 2 | Assignar perfil a tenant | 201, currentPhase = primera fase, configStatus=BUDGET_PENDING |
 | 3 | Enviar dades d'intake | 200, recomanació de fases basada en les dades |
 | 4 | Seleccionar fases a pressupostar + generar pressupost | 201, fases seleccionades = BUDGET_PENDING, no seleccionades = FUTURE_EXPANSION |
-| 5 | Client accepta pressupost → serveis passen a ACCEPTED | Webhook/token → configStatus=ACCEPTED |
-| 6 | Iniciar configuració d'un servei ACCEPTED | configStatus = CONFIGURING |
+| 5 | Client accepta pressupost → serveis passen a BUDGET_ACCEPTED | Webhook/token → configStatus=BUDGET_ACCEPTED |
+| 6 | ADMIN inicia configuració d'un servei BUDGET_ACCEPTED | configStatus = CONFIGURING |
 | 7 | Configurar tots els camps d'un servei | `configStatus` = `READY_FOR_DELIVERY` |
 | 8 | Sol·licitar informació al client | 200, CommunicationRequest creat, servei AWAITING_CLIENT |
 | 9 | Client respon amb API Key via webhook | 200, credencial guardada xifrada, servei CONFIGURING (es repren) |
@@ -1162,5 +1177,5 @@ La implementació nova implementa `VaultServiceV2`. Els consumidors antics segue
 - [ ] **Targetes de fase/servei**: Implementar les targetes visuals al frontend amb codi de colors per estat
 - [ ] Verificador de connexió: implementar només per SMTP en primera versió
 - [ ] Definir plantilles de missatges per a cada tipus de sol·licitud (REQUEST_CREDENTIAL, REQUEST_PERMISSION, REQUEST_CONFIRMATION, REQUEST_INFO)
-- [ ] Implementar reintent automàtic per CommunicationRequest expirat (al cap de 7 dies, reenviar)
+- [ ] **[PENDENT]** Implementar reintent automàtic per `CommunicationRequest` expirat: job programat que detecta requests en estat `EXPIRED` i els reenvía automàticament (màx. 3 intents)
 - [ ] Dashboard ADMIN: vista de "Configuracions pendents de client" amb totes les sol·licituds AWAITING_CLIENT

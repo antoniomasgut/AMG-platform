@@ -1,40 +1,42 @@
-# Mòdul 09: Payments — Cobraments amb Stripe
+# Mòdul 09: Payments — Mètodes de Pagament
 
-> **Versió:** 1.0
-> **Data:** 2026-05-13
+> **Versió:** 1.1
+> **Data:** 2026-06-03
 > **Dependències:** Mòdul 01 (Auth), Mòdul 07 (Billing), Mòdul 08 (FinOps)
 
 ---
 
-## 1. Objectius
+## 1. Model de pagament
 
-- Crear **Checkout Sessions de Stripe** perquè els clients puguin pagar els **pressupostos de setup** acceptats (pagament únic)
-- Gestionar el cicle de vida del pagament: pendent → completat → fallit → reemborsat
-- Sincronitzar estats de pagament entre Stripe i la plataforma via **webhooks**
-- Crear la factura a Holded (Mòdul 08) automàticament quan el pagament es completa
-- La integració ha de ser **mockejable** per desenvolupament sense compte Stripe
+La plataforma suporta **tres mètodes de pagament**, cap d'ells obligatori. El SUPER_ADMIN tria quin(s) activar per tenant o globalment:
 
-> **Àmbit clar:** Stripe gestiona **únicament** els pagaments de setup (un sol cop per pressupost). Les **quotes mensuals recurrents** es cobren via **domiciliació SEPA** (Mòdul 08 FinOps), NO via Stripe. Això evita comissions de Stripe (~0.40€) en transaccions petites de 10€/mes.
+| Mètode | Implementació | Quan usar |
+|--------|--------------|-----------|
+| **Stripe** (targeta) | Checkout Session → webhook | Setup i/o mensual via targeta |
+| **SEPA / GoCardless** | Mandat de domiciliació | Mensuals recurrents petits (evita comissió Stripe) |
+| **Transferència manual** | Sense integració automàtica | Clients que prefereixen banc |
+
+**La factura de setup** es genera en acceptar el pressupost (Mòdul 07), **independentment del mètode de pagament**. El pagament és un pas posterior.
+
+**La factura mensual** es genera al final de mes via FinOps (Mòdul 08), un cop el servei té vist i plau del client.
 
 ---
 
 ## 2. Abast
 
-### 2.1 Funcionalitats incloses
+### 2.1 Funcionalitats incloses (Stripe)
 
 - **StripeClient** (Interface + Mock + Real): Abstracció per cridar l'API de Stripe
-- **Checkout Session**: Generar enllaç de pagament per a un pressupost acceptat
+- **Checkout Session**: Generar enllaç de pagament per a una factura de setup o mensual
 - **Webhook Stripe**: Rebre notificacions de pagament completat i fallit
-- **Integració amb Billing**: Quan Budget passa a ACCEPTED, es crea el checkout
-- **Integració amb FinOps**: Quan Stripe confirma el pagament, es crea la factura a Holded
 - **Reemborsaments**: Anul·lar pagament des de la plataforma (cancel·la a Stripe + Holded)
 - **Dashboard de pagaments**: Resum de pagaments per tenant (completats, pendents, fallits)
 
 ### 2.2 Funcionalitats excloses
 
 - Targetes guardades / customers reutilitzables (es podria afegir després)
-- **Subscripcions recurrents via Stripe** — les quotes mensuals van per SEPA (Mòdul 08), NO per Stripe
-- Més d'un intent de pagament per pressupost
+- Subscripcions automàtiques recurrents via Stripe (les mensuals es gestionen per Mòdul 08)
+- Més d'un intent de pagament per factura
 - Cancel·lació del checkout per part del client (Stripe ho gestiona)
 
 ### 2.3 Actors

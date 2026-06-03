@@ -1,5 +1,5 @@
 package com.amg.digitalitzacio.leads.domain;
 
 public enum LeadSource {
-    WHATSAPP, WEB, REFERRAL, MANUAL, LANDING_FORM, OTHER
+    WHATSAPP, WEB, LANDING_FORM, CHAT_WIDGET, EMAIL, REFERRAL, MANUAL, OTHER
 }

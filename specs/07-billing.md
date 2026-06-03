@@ -22,7 +22,7 @@
 
 - Creació de pressupostos a partir d'un perfil de servei + fases seleccionades + add-ons
 - Les fases NO seleccionades per pressupostar es marquen com a `FUTURE_EXPANSION` (ampliació futura)
-- En acceptar el pressupost, les fases/serveis seleccionats passen a `ACCEPTED` / `BUDGET_ACCEPTED` al Vault
+- En acceptar el pressupost, les fases i serveis seleccionats passen a `BUDGET_ACCEPTED` al Vault (fase i servei usen el mateix nom d'estat)
 - Càlcul de subtotal, descomptes i total
 - CRUD de descomptes (percentatge o fix) amb dates de validesa
 - Aplicació de descomptes al pressupost
@@ -65,9 +65,10 @@
 | profileId | UUID | @Column | FK lògica a ServiceProfile |
 | version | Integer | @Column | Incrementa en cada actualització |
 | status | Enum(STRING) | @Enumerated @Builder.Default | `DRAFT` |
-| subtotal | BigDecimal(10,2) | @Column(nullable=false) | Suma de serveis |
-| discountTotal | BigDecimal(10,2) | @Column(nullable=false) | Suma descomptes aplicats |
-| total | BigDecimal(10,2) | @Column(nullable=false) | subtotal - discountTotal |
+| subtotal | BigDecimal(10,2) | @Column(nullable=false) | Suma setup de tots els serveis |
+| discountTotal | BigDecimal(10,2) | @Column(nullable=false) | Suma descomptes aplicats al setup |
+| total | BigDecimal(10,2) | @Column(nullable=false) | subtotal - discountTotal (total setup a pagar) |
+| monthlyEstimate | BigDecimal(10,2) | @Column | Suma de `BudgetLine.monthlyTotal` — informatiu per al client |
 | validUntil | LocalDate | @Column | Per defecte 30 dies des de creació |
 | notes | TEXT | @Column(columnDefinition="TEXT") | Notes internes |
 | clientNotes | TEXT | @Column(columnDefinition="TEXT") | Visibles per al client |
@@ -93,9 +94,13 @@
 | serviceId | UUID | @Column(nullable=false) | FK lògica a CatalogService |
 | serviceName | String(100) | @Column | Denormalitzat del catàleg |
 | quantity | Integer | @Builder.Default | 1 |
-| unitPrice | BigDecimal(10,2) | @Column(nullable=false) | Preu en creació (snapshot) |
-| total | BigDecimal(10,2) | @Column(nullable=false) | quantity * unitPrice |
+| unitPrice | BigDecimal(10,2) | @Column(nullable=false) | Preu de setup en creació (snapshot de `salePrice`) |
+| unitMonthlyPrice | BigDecimal(10,2) | @Column | Preu mensual en creació (snapshot de `monthlyPrice`, 0 si no té mensual) |
+| total | BigDecimal(10,2) | @Column(nullable=false) | quantity * unitPrice (setup) |
+| monthlyTotal | BigDecimal(10,2) | @Column | quantity * unitMonthlyPrice (informatiu, no vinculant) |
 | sortOrder | Integer | @Column | Per ordenació visual |
+
+El pressupost mostra al client **dues columnes de preu**: setup (únic) i mensual (recurrent estimat). El `monthlyTotal` és informatiu — no és un compromís de preu mensual fix, però orienta el client sobre el cost recurrent.
 
 #### Discount (Descompte)
 
@@ -120,24 +125,42 @@
 
 **DiscountAppliesTo enum:** `BUDGET`, `PHASE`, `SERVICE`
 
-### 3.3 Facturació mensual recurrent
+### 3.3 Cicle de vida de la facturació
 
-La facturació mensual s'origina al Mòdul 08 (FinOps) via un job programat. El Billing aporta la lògica de càlcul:
+#### Factura de setup (única)
 
-**Font de dades:** `TenantService.monthlyPriceLocked` per a cada servei en estat `IMPLEMENTATION_ACCEPTED`.
+La factura de setup es genera en el moment que el client **accepta el pressupost** (budget → ACCEPTED).
+
+```
+Client accepta pressupost
+        ↓
+Setup invoice generada (Mòdul 08 FinOps → Holded)
+        ↓
+Mètode de pagament escollit (Stripe / SEPA / transferència manual)
+```
+
+#### Factura mensual recurrent
+
+La factura mensual es genera al **final de mes** via job programat (Mòdul 08 FinOps), però únicament per serveis que compleixen **dues condicions**:
+1. `TenantService.configStatus = IMPLEMENTATION_ACCEPTED` — implementació completada
+2. **Vist i plau del client** — el client ha confirmat que el servei funciona correctament
+
+Si el client no ha donat el vist i plau, el servei no es factura fins que ho faci (o fins que l'ADMIN marqui el servei com a `IMPLEMENTATION_ACCEPTED` amb aprovació implícita).
+
+**Font de dades:** `TenantService.monthlyPriceLocked` per a cada servei facturable.
 
 **Pro-rata del primer mes:**
 ```
 import = monthlyPriceLocked × (dies_restants_al_mes / dies_totals_al_mes)
 ```
-- Dies restants = dies des d'`activatedAt` fins a final de mes (inclòs)
+- Dies restants = dies des del vist i plau fins a final de mes (inclòs)
 - A partir del segon mes: import complet
 
-**Exemple:** Client activa Landing Pro el 16 de maig (monthlyPriceLocked = 10€)
-- Primera factura (31 de maig): 10 € × 16/31 = **5.16 €**
-- A partir de juny: **10 €/mes**
+**Exemple:** Client dona vist i plau a Landing Pro el 16 de maig (monthlyPriceLocked = 15€)
+- Primera factura (31 de maig): 15 € × 16/31 = **7.74 €**
+- A partir de juny: **15 €/mes**
 
-**Agrupació per tenant:** Una sola factura mensual per tenant amb totes les línies de servei. No una factura per servei.
+**Agrupació per tenant:** Una sola factura mensual per tenant amb totes les línies de servei.
 
 **Format de la factura mensual a Holded:**
 ```
@@ -250,10 +273,10 @@ Canvia l'estat a ACCEPTED, invalida el token.
 
 **Efectes al Vault:**
 - Totes les `TenantProfile.phaseStatus` de les fases pressupostades → `BUDGET_ACCEPTED`
-- Tots els `TenantService.configStatus` dels serveis pressupostats → `ACCEPTED`
+- Tots els `TenantService.configStatus` dels serveis pressupostats → `BUDGET_ACCEPTED`
 - Les fases `FUTURE_EXPANSION` no es modifiquen
-- La primera fase amb `BUDGET_ACCEPTED` passa a `CONFIGURING` (s'inicia la implementació)
-- El primer servei de la fase passa a `CONFIGURING`
+
+> **La transició a `CONFIGURING` NO és automàtica.** L'ADMIN ha d'iniciar manualment la implementació des del portal del Vault un cop acceptat el pressupost. Això permet planificar l'inici de la feina sense que comenci immediatament.
 
 Response 200: `{ "status": "ACCEPTED", "message": "Pressupost acceptat correctament" }`
 
@@ -417,7 +440,18 @@ Configuració global del programa early adopter (una sola fila a la BD).
 - 30% de descompte sobre la quota mensual, de per vida (`isLifetime = true`)
 - Compromís mínim de 6 mesos (`commitmentMonths = 6`)
 - Disponible per als primers N clients (`EarlyAdopterProgram.maxSlots`)
-- En aplicar: `usedSlots++`, es creen dos `Discount` automàticament (setup + mensual)
+- En aplicar: `usedSlots++`, es creen **dos `Discount`** automàticament:
+
+| Camp | Descompte setup | Descompte mensual |
+|------|----------------|------------------|
+| `program` | `EARLY_ADOPTER` | `EARLY_ADOPTER` |
+| `appliesToSetup` | `true` | `false` |
+| `appliesToMonthly` | `false` | **`true`** ← sobreescriu el default |
+| `isLifetime` | `false` | **`true`** |
+| `value` | `100` (% — gratuït) | `30` (% de descompte) |
+| `commitmentMonths` | `6` | `6` |
+
+> El default `appliesToMonthly=false` de l'entitat `Discount` és correcte per als descomptes manuals. El programa Early Adopter crea el segon registre amb `appliesToMonthly=true` explícitament — no és una excepció al model, és una instància configurada diferent.
 
 #### Contracte Anual
 - Setup gratuït (100% descompte sobre setup)
@@ -523,5 +557,5 @@ Accessible només per SUPER_ADMIN. Tres pestanyes:
 - [ ] `rejectionUrl` a BudgetResponse sempre és null
 - [ ] `recentPhases` a DashboardResponse sempre és buit
 - [ ] **[NOU]** Implementar lògica de càlcul de pro-rata mensual (secció 3.3) — consumit pel job de FinOps
-- [ ] **[NOU]** `BudgetLine.unitPrice` conté el `salePrice` (setup); afegir `monthlyPrice` a la línia per mostrar el cost recurrent al pressupost
-- [ ] **[NOU]** El pressupost hauria de mostrar el **total de setup** i el **total mensual recurrent estimat** com a informació addicional (no és vinculant, però orienta el client)
+- [ ] **[NOU]** Implementar `vist i plau` del client: endpoint per confirmar que el servei implementat funciona correctament (prerequisit per a la primera factura mensual)
+- [ ] **[NOU]** `Budget.monthlyEstimate` i `BudgetLine.unitMonthlyPrice` — afegir als DTOs i al PDF del pressupost

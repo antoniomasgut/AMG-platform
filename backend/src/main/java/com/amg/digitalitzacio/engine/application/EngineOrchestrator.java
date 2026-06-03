@@ -57,6 +57,7 @@ public class EngineOrchestrator implements EngineService {
                 .serviceId(request.serviceId() != null ? request.serviceId() : findLandingServiceId(tenantId))
                 .title(request.title())
                 .slug(request.slug())
+                .landingType(parseLandingType(request.landingType()))
                 .metaDescription(request.metaDescription())
                 .templateId(request.templateId())
                 .status(LandingStatus.DRAFT)
@@ -106,6 +107,7 @@ public class EngineOrchestrator implements EngineService {
             landing.setSlug(request.slug());
         }
         if (request.metaDescription() != null) landing.setMetaDescription(request.metaDescription());
+        if (request.landingType() != null) landing.setLandingType(parseLandingType(request.landingType()));
 
         landing = landingRepository.save(landing);
         return toLandingResponse(landing);
@@ -560,6 +562,7 @@ public class EngineOrchestrator implements EngineService {
                 landing.getTitle(),
                 landing.getSlug(),
                 landing.getStatus().name(),
+                landing.getLandingType() != null ? landing.getLandingType().name() : "MICRO",
                 buildPublicUrl(landing),
                 landing.getCustomDomain(),
                 landing.getDomainVerified(),
@@ -846,10 +849,11 @@ public class EngineOrchestrator implements EngineService {
     }
 
     private String buildChatWidget(String landingSlug, String primaryColor, String businessName) {
+        String pc = escapeHtml(primaryColor);
         return "<div id=\"amg-chat-widget\">" +
                "<button id=\"amg-chat-btn\" onclick=\"toggleChatPanel()\" " +
                "style=\"position:fixed;bottom:24px;right:24px;z-index:1000;width:60px;height:60px;" +
-               "border-radius:50%;background:" + escapeHtml(primaryColor) + ";border:none;cursor:pointer;" +
+               "border-radius:50%;background:" + pc + ";border:none;cursor:pointer;" +
                "box-shadow:0 4px 20px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;" +
                "transition:transform .2s\" " +
                "onmouseover=\"this.style.transform='scale(1.1)'\" onmouseout=\"this.style.transform='scale(1)'\">" +
@@ -858,22 +862,38 @@ public class EngineOrchestrator implements EngineService {
                "</button>" +
                "<div id=\"amg-chat-panel\" style=\"display:none;position:fixed;bottom:96px;right:24px;" +
                "width:340px;height:75vh;max-height:560px;z-index:1000;border-radius:16px;" +
-               "box-shadow:0 8px 40px rgba(0,0,0,.2);background:#fff;display:none;" +
+               "box-shadow:0 8px 40px rgba(0,0,0,.2);background:#fff;" +
                "flex-direction:column;overflow:hidden\">" +
-               "<div style=\"background:" + escapeHtml(primaryColor) + ";padding:16px 20px;color:#fff;display:flex;align-items:center;gap:12px\">" +
+               // Capçalera
+               "<div style=\"background:" + pc + ";padding:16px 20px;color:#fff;display:flex;align-items:center;gap:12px;flex-shrink:0\">" +
                "<div style=\"width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center\">" +
                "<svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"#fff\"><path d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z\"/></svg></div>" +
                "<div><div style=\"font-weight:700;font-size:.95rem\">" + escapeHtml(businessName) + "</div>" +
                "<div style=\"font-size:.75rem;opacity:.85\">&#x25cf; En l&iacute;nia</div></div>" +
                "<button onclick=\"closeChatPanel()\" style=\"margin-left:auto;background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;line-height:1\">&times;</button>" +
                "</div>" +
-               "<div id=\"amg-chat-messages\" style=\"flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px\"></div>" +
-               "<div style=\"padding:12px 16px;border-top:1px solid #f0f0f0;display:flex;gap:8px\">" +
+               // Formulari pre-xat
+               "<div id=\"amg-prechat\" style=\"flex:1;display:flex;flex-direction:column;justify-content:center;padding:24px 20px;gap:12px\">" +
+               "<p style=\"margin:0 0 4px;font-size:.9rem;font-weight:600;color:#1a1a1a\">Abans de començar...</p>" +
+               "<p style=\"margin:0 0 12px;font-size:.82rem;color:#6b7280\">Deixa'ns el teu nom i telèfon perquè puguem contactar-te si cal.</p>" +
+               "<input id=\"amg-pc-name\" type=\"text\" placeholder=\"El teu nom *\" maxlength=\"100\" " +
+               "style=\"border:1px solid #e0e0e0;border-radius:8px;padding:10px 14px;font-size:.88rem;outline:none;width:100%;box-sizing:border-box\" />" +
+               "<input id=\"amg-pc-phone\" type=\"tel\" placeholder=\"Telèfon *\" maxlength=\"20\" " +
+               "style=\"border:1px solid #e0e0e0;border-radius:8px;padding:10px 14px;font-size:.88rem;outline:none;width:100%;box-sizing:border-box\" " +
+               "onkeydown=\"if(event.key==='Enter')submitPreChat()\" />" +
+               "<div id=\"amg-pc-err\" style=\"color:#e53e3e;font-size:.8rem;display:none\">Omple els camps obligatoris.</div>" +
+               "<button onclick=\"submitPreChat()\" " +
+               "style=\"background:" + pc + ";color:#fff;border:none;border-radius:8px;padding:12px;font-size:.9rem;" +
+               "font-weight:600;cursor:pointer;width:100%\">Iniciar xat &rarr;</button>" +
+               "</div>" +
+               // Àrea de missatges (oculta fins que comença la sessió)
+               "<div id=\"amg-chat-messages\" style=\"flex:1;overflow-y:auto;padding:16px;display:none;flex-direction:column;gap:10px\"></div>" +
+               "<div id=\"amg-chat-footer\" style=\"display:none;padding:12px 16px;border-top:1px solid #f0f0f0;gap:8px\">" +
                "<input id=\"amg-chat-input\" type=\"text\" placeholder=\"Escriu el teu missatge...\" maxlength=\"500\" " +
                "style=\"flex:1;border:1px solid #e0e0e0;border-radius:20px;padding:10px 16px;font-size:.9rem;outline:none\" " +
                "onkeydown=\"if(event.key==='Enter')sendChatMessage()\" />" +
                "<button onclick=\"sendChatMessage()\" " +
-               "style=\"background:" + escapeHtml(primaryColor) + ";border:none;border-radius:50%;width:40px;height:40px;" +
+               "style=\"background:" + pc + ";border:none;border-radius:50%;width:40px;height:40px;" +
                "cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0\">" +
                "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"#fff\"><path d=\"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z\"/></svg>" +
                "</button></div></div></div>" +
@@ -885,22 +905,37 @@ public class EngineOrchestrator implements EngineService {
                "var SLUG='" + escapeJs(landingSlug) + "';" +
                "var BASE='/api/v1/chat';" +
                "var sessionId=localStorage.getItem('amg_chat_sid_'+SLUG);" +
-               "var panel=null,msgs=null,input=null,opened=false;" +
-               "function init(){panel=document.getElementById('amg-chat-panel');" +
+               "var panel=null,msgs=null,input=null,footer=null,prechat=null,opened=false;" +
+               "function init(){" +
+               "panel=document.getElementById('amg-chat-panel');" +
                "msgs=document.getElementById('amg-chat-messages');" +
-               "input=document.getElementById('amg-chat-input');}" +
+               "input=document.getElementById('amg-chat-input');" +
+               "footer=document.getElementById('amg-chat-footer');" +
+               "prechat=document.getElementById('amg-prechat');}" +
+               "function showChat(){" +
+               "prechat.style.display='none';" +
+               "msgs.style.display='flex';" +
+               "footer.style.display='flex';}" +
                "window.toggleChatPanel=function(){init();" +
                "if(!opened){panel.style.display='flex';opened=true;" +
-               "if(!sessionId)startSession();}else{panel.style.display='none';opened=false;}};" +
+               "if(sessionId)showChat();}else{panel.style.display='none';opened=false;}};" +
                "window.openChatWidget=function(){init();" +
                "panel.style.display='flex';opened=true;" +
-               "if(!sessionId)startSession();};" +
+               "if(sessionId)showChat();};" +
                "window.closeChatPanel=function(){init();" +
                "panel.style.display='none';opened=false;};" +
-               "function startSession(){" +
+               "window.submitPreChat=function(){init();" +
+               "var name=document.getElementById('amg-pc-name').value.trim();" +
+               "var phone=document.getElementById('amg-pc-phone').value.trim();" +
+               "var err=document.getElementById('amg-pc-err');" +
+               "if(!name||!phone){err.style.display='block';return;}" +
+               "err.style.display='none';" +
+               "showChat();" +
+               "startSession(name,phone);};" +
+               "function startSession(name,phone){" +
                "addMsg('assistant','...',true);" +
                "fetch(BASE+'/sessions',{method:'POST',headers:{'Content-Type':'application/json'}," +
-               "body:JSON.stringify({landingSlug:SLUG})})" +
+               "body:JSON.stringify({landingSlug:SLUG,contactName:name||null,contactPhone:phone||null})})" +
                ".then(function(r){return r.json();})" +
                ".then(function(d){" +
                "removeTyping();" +
@@ -920,7 +955,7 @@ public class EngineOrchestrator implements EngineService {
                "setTimeout(function(){closeChatPanel();localStorage.removeItem('amg_chat_sid_'+SLUG);sessionId=null;},3000);" +
                "}else{addMsg('assistant',d.reply);}})" +
                ".catch(function(){removeTyping();addMsg('assistant','Error en enviar el missatge.');});};" +
-               "function addMsg(role,text,isTyping){" +
+               "function addMsg(role,text,isTyping){init();" +
                "var d=document.createElement('div');" +
                "d.style.cssText='max-width:80%;padding:10px 14px;border-radius:16px;font-size:.88rem;line-height:1.5;word-break:break-word;';" +
                "if(role==='user'){d.style.cssText+=';background:" + escapeJs(buildChatUserBubbleColor()) + ";" +
@@ -1256,5 +1291,11 @@ public class EngineOrchestrator implements EngineService {
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&#39;");
+    }
+
+    private LandingType parseLandingType(String value) {
+        if (value == null) return LandingType.MICRO;
+        try { return LandingType.valueOf(value.toUpperCase()); }
+        catch (IllegalArgumentException e) { return LandingType.MICRO; }
     }
 }

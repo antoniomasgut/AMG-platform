@@ -9,6 +9,7 @@ public record LandingResponse(
     String title,
     String slug,
     String status,
+    String landingType,
     String publicUrl,
     String customDomain,
     Boolean domainVerified,

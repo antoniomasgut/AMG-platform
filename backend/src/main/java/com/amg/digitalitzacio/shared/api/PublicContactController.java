@@ -1,10 +1,17 @@
 package com.amg.digitalitzacio.shared.api;
 
+import com.amg.digitalitzacio.agents.application.TelegramBotClient;
 import com.amg.digitalitzacio.auth.application.EmailService;
+import com.amg.digitalitzacio.leads.domain.Lead;
+import com.amg.digitalitzacio.leads.domain.LeadRepository;
+import com.amg.digitalitzacio.leads.domain.LeadSource;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/contact")
@@ -13,6 +20,9 @@ import org.springframework.web.bind.annotation.*;
 public class PublicContactController {
 
     private final EmailService emailService;
+    private final LeadRepository leadRepository;
+    private final SystemConfigService sysConfig;
+    private final TelegramBotClient telegramBotClient;
 
     public record ContactRequest(String name, String email, String message) {}
     public record ContactResponse(boolean ok) {}
@@ -25,21 +35,58 @@ public class PublicContactController {
             return ResponseEntity.badRequest().body(new ContactResponse(false));
         }
 
-        String text = """
-                Nova consulta des de amgdl.com
+        String name    = req.name().strip();
+        String email   = req.email().strip().toLowerCase();
+        String message = req.message().strip();
 
-                Nom: %s
-                Email: %s
-
-                Missatge:
-                %s
-                """.formatted(req.name().strip(), req.email().strip(), req.message().strip());
-
+        // Crea Lead si hi ha PLATFORM_TENANT_ID configurat
         try {
-            emailService.sendEmail("info@amgdl.com", "Consulta web: " + req.name().strip(), text);
+            String platformTenantIdStr = sysConfig.get("PLATFORM_TENANT_ID");
+            if (platformTenantIdStr != null && !platformTenantIdStr.isBlank()) {
+                UUID platformTenantId = UUID.fromString(platformTenantIdStr);
+                if (!leadRepository.existsByTenantIdAndEmail(platformTenantId, email)) {
+                    var lead = new Lead();
+                    lead.setTenantId(platformTenantId);
+                    lead.setName(name);
+                    lead.setEmail(email);
+                    lead.setSource(LeadSource.WEB);
+                    lead.setNotes("Missatge web: " + message);
+                    leadRepository.save(lead);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not create lead from web form (non-fatal): {}", e.getMessage());
+        }
+
+        // Notificació Telegram
+        try {
+            String chatIdStr = sysConfig.get("TELEGRAM_CHAT_ID");
+            if (chatIdStr != null && !chatIdStr.isBlank()) {
+                Long chatId = Long.parseLong(chatIdStr.trim());
+                String tgText = "📩 <b>Nova consulta web</b>\n\n" +
+                        "<b>Nom:</b> " + escapeHtml(name) + "\n" +
+                        "<b>Email:</b> " + escapeHtml(email) + "\n\n" +
+                        escapeHtml(message);
+                telegramBotClient.sendMessage(chatId, tgText);
+            }
+        } catch (Exception e) {
+            log.warn("Telegram notification failed (non-fatal): {}", e.getMessage());
+        }
+
+        // Email de còpia (no crític)
+        try {
+            String text = "Nova consulta des de amgdl.com\n\nNom: %s\nEmail: %s\n\nMissatge:\n%s"
+                    .formatted(name, email, message);
+            emailService.sendEmail("info@amgdl.com", "Consulta web: " + name, text);
         } catch (Exception e) {
             log.warn("Contact form email failed (non-fatal): {}", e.getMessage());
         }
+
         return ResponseEntity.ok(new ContactResponse(true));
+    }
+
+    private String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 }

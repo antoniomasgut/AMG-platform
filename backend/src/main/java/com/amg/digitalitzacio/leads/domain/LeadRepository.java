@@ -36,6 +36,10 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
 
     boolean existsByTenantIdAndEmail(UUID tenantId, String email);
 
+    java.util.Optional<Lead> findFirstByTenantIdAndPhone(UUID tenantId, String phone);
+
+    java.util.Optional<Lead> findFirstByTenantIdAndEmail(UUID tenantId, String email);
+
     void deleteByTenantId(UUID tenantId);
 
     List<Lead> findByUpdatedAtBeforeAndIsActive(Instant cutoff, Boolean isActive);

@@ -178,12 +178,19 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 
 Cada fase té un cost de **setup individual** (varia per `businessSize`: AUTONOMO/PETIT/MITJA) i una quota mensual. Les fases (F1–F5) **no són acumulatives**: el client pot contractar qualsevol combinació. El mensual total = suma dels tiers en ordre (1a fase = priceF1, 2a = priceF2...) independentment de quines fases específiques. El setup total = suma de `setupFn[ordinal]` per cada fase seleccionada (F1=`setupPrice`, F2..F5=`setupF2..F5` de `sector_pricing`). La tarifa d'enginyeria/hora: **50 €/h** (`ENGINEER_HOURLY_RATE`). Veure `specs/serveis-cataleg.md` i `specs/22-sector-pricing.md`.
 
+**Landings i dominis (serveis independents de les fases):**
+
+| Servei | Setup | Mensual |
+|--------|-------|---------|
+| Micro-landing | 30€ | 9€/mes | Blocs bàsics + formulari de contacte (email) |
+| Landing Pro | 80€ | 15€/mes | Tots els blocs + formulari + botó WhatsApp + chat widget IA (requereix F1) |
+| Domini autogestionat | 30€ | — (client gestiona renovació) |
+| Domini gestionat | 60€ (inclou 1r any) | 15€/any (renovació) |
+
+**Serveis addicionals (setup únic):**
+
 | Servei | Setup |
 |--------|-------|
-| Micro-landing | 30€ |
-| Landing Pro | 80€ |
-| Domini autogestionat | 30€ |
-| Domini gestionat (inclou 1r any) | 60€ |
 | WhatsApp Business API | 50€ |
 | Automatització bàsica (n8n) | 20€ |
 | Automatització avançada (n8n) | 60€ |
