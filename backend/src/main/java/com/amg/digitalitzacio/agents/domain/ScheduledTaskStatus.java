@@ -1,5 +1,5 @@
 package com.amg.digitalitzacio.agents.domain;
 
 public enum ScheduledTaskStatus {
-    PENDING, EXECUTED, FAILED
+    PENDING, EXECUTED, FAILED, CANCELLED
 }

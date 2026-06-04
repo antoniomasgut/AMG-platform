@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.agents.api;
 
+import com.amg.digitalitzacio.agents.application.AbsenceRescheduleService;
 import com.amg.digitalitzacio.agents.application.AgentRegistry;
 import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
 import com.amg.digitalitzacio.agents.application.TeamGrowthService;
@@ -25,6 +26,7 @@ public class TelegramWebhookController {
     private final AgentRegistry agentRegistry;
     private final ConversationalAgentService conversationalAgentService;
     private final TeamGrowthService teamGrowthService;
+    private final AbsenceRescheduleService absenceRescheduleService;
 
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody Map<String, Object> payload) {
@@ -88,6 +90,13 @@ public class TelegramWebhookController {
                 // Detecció de creixement d'equip (upsell F5 si 2a+ persona)
                 if (fromUserId != null) {
                     teamGrowthService.recordAndCheck(tenantId, fromUserId, firstName, chatId);
+                }
+
+                // Comanda d'absència: /absencia [data]
+                if (text.toLowerCase().startsWith("/absencia")) {
+                    var reply = absenceRescheduleService.handleAbsenceCommand(
+                            tenantId, text, chatId, fromUserId);
+                    return ResponseEntity.ok(okTgReply(chatId, reply));
                 }
 
                 // Try to route to an agent
