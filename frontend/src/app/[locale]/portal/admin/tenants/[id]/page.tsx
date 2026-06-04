@@ -2910,6 +2910,13 @@ export default function TenantDetailPage() {
             </AMGButton>
             <AMGButton
               size="sm"
+              icon={I.Search}
+              onClick={() => router.push(`/${locale}/portal/admin/tenants/${id}/diagnostic`)}
+            >
+              Diagnòstic →
+            </AMGButton>
+            <AMGButton
+              size="sm"
               variant="secondary"
               icon={I.Receipt}
               onClick={() => setShowNewBudget(true)}
