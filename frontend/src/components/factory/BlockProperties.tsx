@@ -88,28 +88,40 @@ export const BlockProperties: FC = () => {
 
     // Image URL field with picker button
     if (key === 'bgImage' || key === 'ogImage') {
+      const imgVal = String(value || '');
       return (
         <div key={key} className="mb-3">
-          <label className="f-mono text-label uppercase text-ink-3 block mb-1">Imatge de fons</label>
-          <div className="flex gap-1">
-            <input
-              value={String(value || '')}
-              onChange={(e) => handleChange(key, e.target.value)}
-              placeholder="URL o puja..."
-              className="flex-1 bg-[#0d0d1a] border border-border-medium rounded p-2 text-xs text-ink-0 min-w-0"
-            />
+          <label className="f-mono text-label uppercase text-ink-3 block mb-1">
+            {key === 'ogImage' ? 'Imatge OG' : 'Imatge de fons'}
+          </label>
+          {imgVal ? (
+            <div className="rounded overflow-hidden bg-[#0d0d1a] border border-border-base relative group">
+              <div className="aspect-video w-full">
+                <img src={imgVal} alt="" className="w-full h-full object-cover" />
+              </div>
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                <button
+                  onClick={() => setImgPickerFor(key)}
+                  className="px-3 py-1.5 bg-[#FF6B00] text-black text-xs font-bold rounded f-mono hover:bg-[#FF9A3C]"
+                >
+                  Canviar
+                </button>
+                <button
+                  onClick={() => handleChange(key, '')}
+                  className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded f-mono hover:bg-red-500"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ) : (
             <button
               onClick={() => setImgPickerFor(key)}
-              className="px-2 py-1 bg-[#FF6B00] text-black text-xs rounded hover:bg-[#FF9A3C] shrink-0 f-mono"
-              title="Seleccionar imatge"
+              className="w-full aspect-video flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border-base rounded text-ink-3 hover:border-[#FF6B00] hover:text-accent-light transition bg-[#0d0d1a]"
             >
-              📷
+              <I.Image size={22} />
+              <span className="f-mono text-[10px] uppercase tracking-wider">Afegir imatge</span>
             </button>
-          </div>
-          {!!value && (
-            <div className="mt-1 h-16 rounded overflow-hidden bg-[#0d0d1a]">
-              <img src={String(value)} alt="" className="w-full h-full object-cover" />
-            </div>
           )}
         </div>
       );
