@@ -4,6 +4,7 @@ import { useState, useEffect, type FC } from 'react';
 import { useEditorStore } from '@/store/editor';
 import { BLOCK_TEMPLATES, generateBlock, listAIModels, type AIModelInfo } from '@/services/factory';
 import { ImagePicker } from './ImagePicker';
+import { I } from '@/components/ui/icons';
 
 export const BlockProperties: FC = () => {
   const selectedBlockId = useEditorStore((s) => s.selectedBlockId);
@@ -259,14 +260,15 @@ export const BlockProperties: FC = () => {
         </div>
         <button
           onClick={() => setShowJson((v) => !v)}
-          title="Veure configuració JSON"
-          className={`f-mono text-[9px] uppercase px-2 py-1 rounded border transition ${
+          title="Veure configuració del bloc"
+          className={`flex items-center gap-1 px-2 py-1 rounded text-xs f-mono transition ${
             showJson
-              ? 'border-[#FF6B00] text-[#FF6B00] bg-[rgba(255,107,0,0.1)]'
-              : 'border-border-base text-ink-3 hover:text-ink-1 hover:border-border-medium'
+              ? 'bg-[rgba(255,107,0,0.15)] text-[#FF9A3C]'
+              : 'text-ink-2 hover:text-ink-0 hover:bg-[rgba(255,255,255,0.05)]'
           }`}
         >
-          {'{ }'}
+          <I.Eye size={12} />
+          <span>Config</span>
         </button>
       </div>
 
