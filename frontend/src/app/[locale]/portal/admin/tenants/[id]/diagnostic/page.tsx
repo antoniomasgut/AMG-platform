@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getTenant, getTenantSetup, SECTOR_LABELS, SIZE_LABELS, SECTORS, SIZES, type TenantSetup } from '@/services/admin';
 import { createBudget, listDiscounts, type DiscountResponse } from '@/services/billing';
+import { calculatePrice, getSectorCategoryLabel, F_PHASE_MONTHLY, SIZE_FACTORS } from '@/services/pricing';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { I } from '@/components/ui/icons';
@@ -277,6 +278,12 @@ export default function DiagnosticPage() {
     try {
       const validUntil = new Date();
       validUntil.setDate(validUntil.getDate() + parseInt(validDays || '30'));
+      const pricingNote = (sector && size && selectedPhaseNums.size > 0)
+        ? (() => {
+            const p = calculatePrice(Array.from(selectedPhaseNums).sort(), sector, size);
+            return `Estimació NexeLocal: ${p.monthlyTotal}€/mes (setup ${p.setupTotal}€) · ${getSectorCategoryLabel(sector)} ×${p.sectorFactor} · ${size} ×${p.sizeFactor}`;
+          })()
+        : '';
       await createBudget(tenantId, {
         profileId: selectedProfileId,
         phaseIds: Array.from(selectedPhaseIds),
@@ -285,7 +292,7 @@ export default function DiagnosticPage() {
         recommendation: sectorData.message,
         recommendedPhaseIds: Array.from(selectedPhaseIds),
         phaseNumbers: Array.from(selectedPhaseNums),
-        notes: notes || undefined,
+        notes: [notes, pricingNote].filter(Boolean).join('\n') || undefined,
         clientNotes: clientNotes || undefined,
         discountIds: selectedDiscountId ? [selectedDiscountId] : undefined,
         validUntil: validUntil.toISOString().slice(0, 10),
@@ -463,6 +470,40 @@ export default function DiagnosticPage() {
               </div>
             </div>
 
+            {/* Estimació de preus */}
+            {selectedPhaseNums.size > 0 && sector && size && (() => {
+              const pricing = calculatePrice(Array.from(selectedPhaseNums).sort(), sector, size);
+              return (
+                <div className="bg-[rgba(255,107,0,0.04)] border border-[rgba(255,107,0,0.15)] rounded-md p-4">
+                  <div className="f-mono text-[10px] uppercase tracking-widest text-accent-light mb-3">
+                    Estimació de preus · {getSectorCategoryLabel(sector)} · ×{pricing.sectorFactor} · {SIZE_FACTORS[size] ? `×${SIZE_FACTORS[size]}` : ''}
+                  </div>
+                  <div className="space-y-1 mb-3">
+                    {Array.from(selectedPhaseNums).sort().map(num => (
+                      <div key={num} className="flex justify-between text-xs text-ink-2">
+                        <span>F{num} — {['Captació + Agent IA', 'Agenda i cites', 'Pressupostos + Cobraments', 'Fidelització', 'Equip + Documentació'][num - 1]}</span>
+                        <span className="f-mono">{F_PHASE_MONTHLY[num]}€</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between text-xs text-ink-3 pt-1 border-t border-border-base">
+                      <span>Base ({pricing.baseTotal}€) × {pricing.sectorFactor} sector × {pricing.sizeFactor} mida</span>
+                      <span className="f-mono">= {pricing.monthlyTotal}€/mes</span>
+                    </div>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className="f-mono text-[10px] text-ink-3 uppercase tracking-wider">Setup estimat</div>
+                      <div className="text-xl font-bold text-ink-0 f-mono">{pricing.setupTotal}€</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="f-mono text-[10px] text-ink-3 uppercase tracking-wider">Mensual</div>
+                      <div className="text-2xl font-bold text-accent-light f-mono">{pricing.monthlyTotal}€<span className="text-sm font-normal text-ink-3">/mes</span></div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="flex gap-3">
               <AMGButton variant="outline" onClick={() => setStep(0)} icon={I.ArrowRight} className="[&_svg]:rotate-180">
                 Enrere
@@ -543,11 +584,28 @@ export default function DiagnosticPage() {
                         );
                       })}
                     </div>
-                    <div className="px-4 py-3 border-t border-border-base bg-[rgba(255,255,255,0.02)]">
-                      <span className="f-mono text-xs text-ink-3">
-                        {selectedPhaseIds.size} fase{selectedPhaseIds.size !== 1 ? 's' : ''} seleccionada{selectedPhaseIds.size !== 1 ? 's' : ''} · Els preus es calculen al crear el pressupost
-                      </span>
-                    </div>
+                    {sector && size && selectedPhaseNums.size > 0 && (() => {
+                      const pricing = calculatePrice(Array.from(selectedPhaseNums).sort(), sector, size);
+                      return (
+                        <div className="px-4 py-3 border-t border-border-base bg-[rgba(255,107,0,0.03)]">
+                          <div className="flex items-center justify-between">
+                            <span className="f-mono text-[10px] text-ink-3 uppercase tracking-wider">
+                              {selectedPhaseIds.size} fase{selectedPhaseIds.size !== 1 ? 's' : ''} · estimació fórmula
+                            </span>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <div className="f-mono text-[9px] text-ink-3 uppercase">Setup</div>
+                                <div className="f-mono text-sm font-semibold text-ink-1">{pricing.setupTotal}€</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="f-mono text-[9px] text-ink-3 uppercase">Mensual</div>
+                                <div className="f-mono text-sm font-semibold text-accent-light">{pricing.monthlyTotal}€/mes</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 
