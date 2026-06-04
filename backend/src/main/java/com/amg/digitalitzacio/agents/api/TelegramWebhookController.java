@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.agents.api;
 
 import com.amg.digitalitzacio.agents.application.AgentRegistry;
 import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
+import com.amg.digitalitzacio.agents.application.TeamGrowthService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class TelegramWebhookController {
     private final TenantChatLinkRepository chatLinkRepository;
     private final AgentRegistry agentRegistry;
     private final ConversationalAgentService conversationalAgentService;
+    private final TeamGrowthService teamGrowthService;
 
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody Map<String, Object> payload) {
@@ -36,9 +38,12 @@ public class TelegramWebhookController {
                     ? ((Number) chat.get("id")).longValue()
                     : null;
             var text = message.get("text") instanceof String t ? t.trim() : "";
-            var firstName = message.get("from") instanceof Map<?, ?> from
-                    ? (String) from.get("first_name")
-                    : "Usuari";
+            Long fromUserId = null;
+            String firstName = "Usuari";
+            if (message.get("from") instanceof Map<?, ?> from) {
+                firstName = from.get("first_name") instanceof String fn ? fn : "Usuari";
+                fromUserId = from.get("id") instanceof Number uid ? uid.longValue() : null;
+            }
 
             if (chatId == null) {
                 return ResponseEntity.ok("ok");
@@ -79,6 +84,11 @@ public class TelegramWebhookController {
             if (chatLinkOpt.isPresent() && chatLinkOpt.get().getIsActive()) {
                 var link = chatLinkOpt.get();
                 var tenantId = link.getTenantId();
+
+                // Detecció de creixement d'equip (upsell F5 si 2a+ persona)
+                if (fromUserId != null) {
+                    teamGrowthService.recordAndCheck(tenantId, fromUserId, firstName, chatId);
+                }
 
                 // Try to route to an agent
                 boolean handled = false;
