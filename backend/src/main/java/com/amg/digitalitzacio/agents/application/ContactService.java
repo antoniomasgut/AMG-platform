@@ -31,14 +31,13 @@ public class ContactService {
     private final EmailChannel emailChannel;
     private final ChannelUsageService channelUsageService;
 
+    /** Retorna true si el contacte és nou (creat per primera vegada en aquest canal). */
     @Transactional
-    public void findOrCreate(UUID tenantId, ConversationChannel channel, String identifier) {
-        // Si ja existeix aquest identifier, no cal fer res
+    public boolean findOrCreate(UUID tenantId, ConversationChannel channel, String identifier) {
         if (contactIdentifierRepository.findByTenantIdAndChannelAndIdentifier(tenantId, channel, identifier).isPresent()) {
-            return;
+            return false;
         }
 
-        // Cerca un contact existent pel camp de perfil corresponent al canal
         Contact contact = findExistingContactByProfile(tenantId, channel, identifier)
             .orElseGet(() -> contactRepository.save(Contact.builder()
                 .tenantId(tenantId)
@@ -51,6 +50,7 @@ public class ContactService {
             .channel(channel)
             .identifier(identifier)
             .build());
+        return true;
     }
 
     /** Cerca un contact existent per phone (canals WhatsApp) o email (canal EMAIL). */
@@ -189,6 +189,7 @@ public class ContactService {
                     whatsAppMetaChannel.sendMessage(phoneNumberId != null ? phoneNumberId : "", identifier, text);
                 }
                 case EMAIL -> emailChannel.sendMessage(identifier, "Resposta de l'equip", text);
+                case WIDGET -> log.info("[Widget] Resposta ja mostrada al navegador, no cal reenviar ({})", identifier);
                 default -> log.warn("Unsupported channel for manual reply: {}", channel);
             }
         } catch (Exception e) {

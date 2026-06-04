@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.Instant;
 import java.util.List;
@@ -43,9 +44,13 @@ public class WebHostingService {
     @Value("${app.hosting.data-path:/data/websites}")
     private String dataPath;
 
+    @Value("${app.api.base-url:https://api.amgdl.com}")
+    private String apiBaseUrl;
+
     public WebSiteResponse requestContainerSite(UUID tenantId, MultipartFile compose,
                                                   MultipartFile envExample, String domain,
-                                                  String description, UserPrincipal principal) {
+                                                  String description, String upstreamContainer,
+                                                  Integer upstreamPort, UserPrincipal principal) {
         verifyTenantIdAccess(tenantId, principal);
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found: " + tenantId));
@@ -67,6 +72,8 @@ public class WebHostingService {
         site.setStatus(WebsiteStatus.PENDING_REVIEW);
         site.setDomain(domain);
         site.setContainerName("site-" + tenant.getSlug() + "-pro");
+        site.setUpstreamContainer(upstreamContainer);
+        site.setUpstreamPort(upstreamPort != null ? upstreamPort : 80);
         site.setClientNotes(description);
         site.setStorageBytes(compose.getSize());
 
@@ -182,8 +189,14 @@ public class WebHostingService {
         }
         WebSite site = findSite(siteId);
 
-        if (site.getStatus() == WebsiteStatus.ACTIVE && dockerService.containerExists(site.getContainerName())) {
-            dockerService.stopAndRemoveContainer(site.getContainerName());
+        if (site.getStatus() == WebsiteStatus.ACTIVE) {
+            if (dockerService.containerExists(site.getContainerName())) {
+                dockerService.stopAndRemoveContainer(site.getContainerName());
+            }
+            String proxyName = site.getContainerName() + "-proxy";
+            if (dockerService.containerExists(proxyName)) {
+                dockerService.stopAndRemoveContainer(proxyName);
+            }
         }
 
         webSiteRepository.delete(site);
@@ -216,21 +229,66 @@ public class WebHostingService {
         site.setStatus(WebsiteStatus.DEPLOYING);
         webSiteRepository.save(site);
 
-        Path htmlDir = Path.of(dataPath, site.getTenantId().toString(), "html");
-
         try {
-            if (dockerService.containerExists(site.getContainerName())) {
-                dockerService.stopAndRemoveContainer(site.getContainerName());
+            if (site.getType() == WebsiteType.CONTAINER) {
+                deployContainerSite(site);
+            } else {
+                deployStaticSite(site);
             }
-            dockerService.createStaticContainer(site.getContainerName(), site.getDomain(), htmlDir);
             site.setStatus(WebsiteStatus.ACTIVE);
             site.setDeployedAt(Instant.now());
         } catch (Exception e) {
             site.setStatus(WebsiteStatus.APPROVED);
             log.error("[Hosting] Error desplegant site {}: {}", site.getId(), e.getMessage());
-            throw e;
+            throw e instanceof RuntimeException re ? re : new RuntimeException(e);
         } finally {
             webSiteRepository.save(site);
+        }
+    }
+
+    private void deployStaticSite(WebSite site) {
+        Path htmlDir = Path.of(dataPath, site.getTenantId().toString(), "html");
+        if (dockerService.containerExists(site.getContainerName())) {
+            dockerService.stopAndRemoveContainer(site.getContainerName());
+        }
+        injectWidgetScript(htmlDir, site.getId());
+        dockerService.createStaticContainer(site.getContainerName(), site.getDomain(), htmlDir);
+    }
+
+    private void deployContainerSite(WebSite site) throws java.io.IOException {
+        String upstream = site.getUpstreamContainer();
+        int port = site.getUpstreamPort() != null ? site.getUpstreamPort() : 80;
+        if (upstream == null || upstream.isBlank()) {
+            throw new IllegalArgumentException(
+                "upstreamContainer no definit per site " + site.getId() + " — no es pot crear el proxy");
+        }
+        String proxyName = site.getContainerName() + "-proxy";
+        if (dockerService.containerExists(proxyName)) {
+            dockerService.stopAndRemoveContainer(proxyName);
+        }
+        Path confDir = Path.of(dataPath, site.getTenantId().toString(), "proxy");
+        String widgetUrl = apiBaseUrl + "/api/v1/widget/" + site.getId() + "/loader";
+        dockerService.createNginxProxyContainer(proxyName, site.getDomain(), confDir, upstream, port, widgetUrl);
+        log.info("[Hosting] Proxy creat per site {} → {}:{}", site.getId(), upstream, port);
+    }
+
+    private void injectWidgetScript(Path htmlDir, java.util.UUID siteId) {
+        String scriptTag = "\n<script src=\"" + apiBaseUrl + "/api/v1/widget/" + siteId + "/loader\" defer></script>";
+        try (var stream = Files.walk(htmlDir)) {
+            stream.filter(p -> p.toString().toLowerCase().endsWith(".html")).forEach(htmlFile -> {
+                try {
+                    String content = Files.readString(htmlFile, StandardCharsets.UTF_8);
+                    if (content.contains(scriptTag)) return;
+                    String injected = content.replaceAll("(?i)</body>", scriptTag + "\n</body>");
+                    if (!injected.equals(content)) {
+                        Files.writeString(htmlFile, injected, StandardCharsets.UTF_8);
+                    }
+                } catch (IOException e) {
+                    log.warn("[Hosting] Could not inject widget script into {}: {}", htmlFile, e.getMessage());
+                }
+            });
+        } catch (IOException e) {
+            log.warn("[Hosting] Could not walk html dir for widget injection: {}", e.getMessage());
         }
     }
 
@@ -304,10 +362,35 @@ public class WebHostingService {
         }
     }
 
+    public WebSiteResponse requestExternalSite(UUID tenantId, String domain,
+                                                String contactEmail, String contactRedirectUrl,
+                                                UserPrincipal principal) {
+        verifyTenantIdAccess(tenantId, principal);
+
+        if (contactEmail == null || contactEmail.isBlank()) {
+            Tenant tenant = tenantRepository.findById(tenantId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Tenant not found: " + tenantId));
+            contactEmail = tenant.getEmail();
+        }
+
+        WebSite site = new WebSite();
+        site.setTenantId(tenantId);
+        site.setType(WebsiteType.EXTERNAL);
+        site.setStatus(WebsiteStatus.ACTIVE);
+        site.setDomain(domain);
+        site.setContactEmail(contactEmail);
+        site.setContactRedirectUrl(contactRedirectUrl);
+        site.setDeployedAt(Instant.now());
+
+        return toResponse(webSiteRepository.save(site));
+    }
+
     private WebSiteResponse toResponse(WebSite site) {
         return new WebSiteResponse(
                 site.getId(), site.getTenantId(), site.getType(), site.getStatus(),
-                site.getDomain(), site.getContainerName(), site.getStorageBytes(),
+                site.getDomain(), site.getContainerName(),
+                site.getUpstreamContainer(), site.getUpstreamPort(),
+                site.getStorageBytes(), site.getContactEmail(), site.getContactRedirectUrl(),
                 site.getClientNotes(), site.getReviewNotes(),
                 site.getReviewedAt(), site.getDeployedAt(), site.getCreatedAt()
         );

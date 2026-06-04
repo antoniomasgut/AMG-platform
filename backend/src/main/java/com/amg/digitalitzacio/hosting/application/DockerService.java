@@ -4,8 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -37,6 +40,60 @@ public class DockerService {
         );
 
         runDockerCommand(cmd, "createStaticContainer[" + containerName + "]");
+    }
+
+    public void createNginxProxyContainer(String proxyName, String domain, Path confDir,
+                                           String upstreamContainer, int upstreamPort,
+                                           String widgetScriptUrl) throws IOException {
+        String routerName = domain.replace(".", "-").replace("_", "-");
+        String nginxConf = buildNginxProxyConf(upstreamContainer, upstreamPort, widgetScriptUrl);
+        Path confFile = confDir.resolve("nginx-proxy.conf");
+        Files.createDirectories(confDir);
+        Files.writeString(confFile, nginxConf, StandardCharsets.UTF_8);
+
+        List<String> cmd = List.of(
+                "docker", "run", "-d",
+                "--name", proxyName,
+                "--network", NETWORK,
+                "--memory", MEMORY_LIMIT,
+                "--restart", "unless-stopped",
+                "-v", confFile.toAbsolutePath() + ":/etc/nginx/conf.d/default.conf:ro",
+                "--label", "traefik.enable=true",
+                "--label", "traefik.http.routers." + routerName + ".rule=Host(`" + domain + "`)",
+                "--label", "traefik.http.routers." + routerName + ".tls=true",
+                "--label", "traefik.http.routers." + routerName + ".tls.certresolver=letsencrypt",
+                "--label", "traefik.http.services." + routerName + ".loadbalancer.server.port=80",
+                "--label", "amg.type=container-site-proxy",
+                NGINX_IMAGE
+        );
+
+        runDockerCommand(cmd, "createNginxProxyContainer[" + proxyName + "]");
+    }
+
+    private String buildNginxProxyConf(String upstream, int port, String widgetScriptUrl) {
+        return """
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://%s:%d;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        # Desactivar compressió upstream perquè sub_filter funcioni
+        proxy_set_header Accept-Encoding "";
+
+        sub_filter '</body>' '<script src="%s" defer></script></body>';
+        sub_filter_once on;
+    }
+}
+""".formatted(upstream, port, widgetScriptUrl);
     }
 
     public void stopAndRemoveContainer(String containerName) {

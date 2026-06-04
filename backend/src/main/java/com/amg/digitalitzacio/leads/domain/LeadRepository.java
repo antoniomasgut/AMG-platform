@@ -49,6 +49,10 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
     // Counts
     long countByTenantId(UUID tenantId);
 
+    long countByTenantIdAndCreatedAtAfter(UUID tenantId, Instant since);
+
+    long countByTenantIdAndCreatedAtAfterAndCreatedAtBefore(UUID tenantId, Instant after, Instant before);
+
     long countByTenantIdAndStage(UUID tenantId, PipelineStage stage);
 
     long countByTenantIdAndSource(UUID tenantId, LeadSource source);

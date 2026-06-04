@@ -40,7 +40,18 @@ public class WebSite {
     @Column(length = 100)
     private String containerName;
 
+    @Column(length = 100)
+    private String upstreamContainer;
+
+    private Integer upstreamPort;
+
     private Long storageBytes;
+
+    @Column(length = 255)
+    private String contactEmail;
+
+    @Column(length = 500)
+    private String contactRedirectUrl;
 
     @Column(columnDefinition = "TEXT")
     private String clientNotes;

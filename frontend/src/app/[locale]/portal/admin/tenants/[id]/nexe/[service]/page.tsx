@@ -136,7 +136,7 @@ function QuestionsBuilder({ questions, onChange }: {
 // ─── AGENDA FORM ───────────────────────────────────────────────
 
 const AGENDA_MODE_LABELS: Record<AgendaMode, { title: string; slotLabel: string; confirmLabel: string; zoneLabel?: string }> = {
-  appointment: { title: 'Gestió de cites', slotLabel: 'Durada de la cita', confirmLabel: 'Missatge de confirmació de cita' },
+  appointment: { title: 'Cites / Visites', slotLabel: 'Durada de la cita', confirmLabel: 'Missatge de confirmació de cita' },
   inspection:  { title: 'Visites d\'inspecció', slotLabel: 'Durada de la visita', confirmLabel: 'Missatge de confirmació de visita', zoneLabel: 'Zona de servei (municipis o km de radi)' },
   vehicle:     { title: 'Recepció de vehicles', slotLabel: 'Franja de deixada', confirmLabel: 'Missatge de confirmació de deixada' },
   meeting:     { title: 'Reunions amb clients', slotLabel: 'Durada de la reunió', confirmLabel: 'Missatge de confirmació de reunió' },
@@ -484,6 +484,27 @@ function PressupostosForm({ tenantId, sector }: { tenantId: string; sector?: str
         </AMGButton>
       </SectionCard>
 
+      <SectionCard title="Seguiment de pressupostos no contestats">
+        <Field label="">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={cfg.quote_followup_enabled}
+              onChange={e => setCfg(c => ({ ...c, quote_followup_enabled: e.target.checked }))} />
+            <span className="text-sm text-ink-1">Activar seguiment automàtic de pressupostos</span>
+          </label>
+        </Field>
+        {cfg.quote_followup_enabled && (<>
+          <Field label="Dies sense resposta per enviar el recordatori">
+            <input className={inp} type="number" min={1} max={14} value={cfg.quote_followup_days}
+              onChange={e => setCfg(c => ({ ...c, quote_followup_days: +e.target.value }))} />
+          </Field>
+          <Field label="Missatge de seguiment" hint="Variable: {{nom}}">
+            <textarea className={`${inp} h-24 resize-none`}
+              value={cfg.quote_followup_message}
+              onChange={e => setCfg(c => ({ ...c, quote_followup_message: e.target.value }))} />
+          </Field>
+        </>)}
+      </SectionCard>
+
       <SaveRow isPending={mut.isPending} isSuccess={mut.isSuccess} isError={mut.isError} />
     </form>
   );
@@ -692,6 +713,22 @@ function EquipForm({ tenantId }: { tenantId: string }) {
         )}
       </SectionCard>
 
+      <SectionCard title="Alertes de leads sense resposta">
+        <Field label="">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={cfg.unresponded_alert_enabled}
+              onChange={e => setCfg(c => ({ ...c, unresponded_alert_enabled: e.target.checked }))} />
+            <span className="text-sm text-ink-1">Avisar al grup Telegram quan un lead no rep resposta</span>
+          </label>
+        </Field>
+        {cfg.unresponded_alert_enabled && (
+          <Field label="Hores sense resposta per activar l'alerta">
+            <input className={inp} type="number" min={1} max={24} value={cfg.unresponded_hours_threshold}
+              onChange={e => setCfg(c => ({ ...c, unresponded_hours_threshold: +e.target.value }))} />
+          </Field>
+        )}
+      </SectionCard>
+
       <SaveRow isPending={mut.isPending} isSuccess={mut.isSuccess} isError={mut.isError} />
     </form>
   );
@@ -722,7 +759,7 @@ function getServiceMeta(service: string, sector?: string | null) {
       };
     }
     case 'fidelitzacio':
-      return { title: 'Fidelització', phase: 'F4', description: 'Seguiment post-servei, sol·licitud de ressenyes i reenganchament.' };
+      return { title: 'Seguiment', phase: 'F4', description: 'Seguiment post-servei, sol·licitud de ressenyes i reactivació de clients.' };
     case 'equip':
       return { title: "Gestió d'Equip", phase: 'F5', description: "Membres, rols, canals de contacte i informe diari." };
     default:

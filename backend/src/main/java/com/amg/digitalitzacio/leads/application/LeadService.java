@@ -6,6 +6,8 @@ import com.amg.digitalitzacio.auth.domain.UserRepository;
 import com.amg.digitalitzacio.leads.api.dto.*;
 import com.amg.digitalitzacio.leads.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
+import com.amg.digitalitzacio.shared.notification.NotificationEvent;
+import com.amg.digitalitzacio.shared.notification.TenantNotificationService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class LeadService {
     private final MessageTemplateRepository messageTemplateRepository;
     private final WhatsAppChannel whatsAppChannel;
     private final SystemConfigService sysConfig;
+    private final TenantNotificationService notificationService;
 
     public LeadResponse createLead(LeadRequest request, UserPrincipal principal) {
         UUID tenantId = principal.tenantId();
@@ -51,6 +54,14 @@ public class LeadService {
         lead.setTags(request.tags());
 
         lead = leadRepository.save(lead);
+
+        String contact = request.email() != null ? request.email()
+                : request.phone() != null ? request.phone() : "—";
+        notificationService.notify(tenantId, NotificationEvent.LEAD_CREATED, Map.of(
+                "nom",     request.name() != null ? request.name() : "—",
+                "contact", contact,
+                "stage",   "Nou"));
+
         return toLeadResponse(lead);
     }
 

@@ -1,7 +1,5 @@
 package com.amg.digitalitzacio.engine.application;
 
-import com.amg.digitalitzacio.auth.application.EmailService;
-import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.engine.api.dto.*;
 import com.amg.digitalitzacio.engine.domain.*;
 import com.amg.digitalitzacio.leads.domain.Lead;
@@ -9,6 +7,8 @@ import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.leads.domain.LeadSource;
 import com.amg.digitalitzacio.leads.domain.PipelineStage;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
+import com.amg.digitalitzacio.shared.notification.NotificationEvent;
+import com.amg.digitalitzacio.shared.notification.TenantNotificationService;
 import com.amg.digitalitzacio.vault.domain.CatalogServiceRepository;
 import com.amg.digitalitzacio.vault.domain.ServiceType;
 import com.amg.digitalitzacio.vault.domain.TenantServiceRepository;
@@ -41,8 +41,7 @@ public class EngineOrchestrator implements EngineService {
     private final TenantServiceRepository tenantServiceRepository;
     private final LandingTemplateRepository landingTemplateRepository;
     private final TemplateSectionRepository templateSectionRepository;
-    private final TenantRepository tenantRepository;
-    private final EmailService emailService;
+    private final TenantNotificationService notificationService;
     private final ObjectMapper objectMapper;
     private final com.amg.digitalitzacio.engine.infrastructure.TraefikConfigWriter traefikConfigWriter;
 
@@ -399,39 +398,14 @@ public class EngineOrchestrator implements EngineService {
             }
         }
 
-        // Notificació per email al tenant
-        notifyTenantContactForm(landing.getTenantId(), landing.getTitle(), request);
+        notificationService.notify(landing.getTenantId(), NotificationEvent.CONTACT_FORM, Map.of(
+                "landing_title", landing.getTitle(),
+                "nom",     request.name()    != null ? request.name()    : "—",
+                "email",   request.email()   != null ? request.email()   : "—",
+                "phone",   request.phone()   != null ? request.phone()   : "—",
+                "message", request.message() != null ? request.message() : "—"));
 
         return new ContactResponse("Missatge rebut correctament");
-    }
-
-    private void notifyTenantContactForm(java.util.UUID tenantId, String landingTitle, ContactRequest request) {
-        try {
-            var tenant = tenantRepository.findById(tenantId).orElse(null);
-            if (tenant == null || tenant.getEmail() == null || tenant.getEmail().isBlank()) return;
-
-            String body = """
-                    Nou contacte des de la landing "%s":
-
-                    Nom: %s
-                    Email: %s
-                    Telèfon: %s
-                    Missatge: %s
-
-                    ---
-                    Pots veure aquest contacte al portal: https://amgdl.com/portal/leads
-                    """.formatted(
-                    landingTitle,
-                    request.name() != null ? request.name() : "—",
-                    request.email(),
-                    request.phone() != null ? request.phone() : "—",
-                    request.message() != null ? request.message() : "—"
-            );
-
-            emailService.sendEmail(tenant.getEmail(), "Nou contacte: " + landingTitle, body);
-        } catch (Exception e) {
-            log.warn("Could not send contact form notification: {}", e.getMessage());
-        }
     }
 
     // --- Template-based landing creation ---

@@ -103,24 +103,24 @@ public class AgentHealthService {
         // 4. Cobertura per fases actives (25 pts)
         var phaseMissing = new ArrayList<String>();
         if (activePhases.contains("F2") && !filledCategories.contains(KnowledgeCategory.BOOKING_RULES)) {
-            phaseMissing.add("Gestió de cites");
+            phaseMissing.add("Agenda");
         }
         if (activePhases.contains("F3") && !filledCategories.contains(KnowledgeCategory.QUOTE_RULES)) {
             phaseMissing.add("Pressupostos");
         }
         if (activePhases.contains("F4") && !filledCategories.contains(KnowledgeCategory.FOLLOWUP_RULES)) {
-            phaseMissing.add("Fidelització");
+            phaseMissing.add("Seguiment");
         }
         if (activePhases.contains("F5") && !filledCategories.contains(KnowledgeCategory.TEAM_INFO)) {
-            phaseMissing.add("Equip");
+            phaseMissing.add("Alertes & Equip");
         }
 
         var phaseNames = new java.util.LinkedHashMap<String, String>();
-        phaseNames.put("F1", "Comunicació 24/7");
-        phaseNames.put("F2", "Gestió de cites");
+        phaseNames.put("F1", "Captació");
+        phaseNames.put("F2", "Agenda");
         phaseNames.put("F3", "Pressupostos");
-        phaseNames.put("F4", "Fidelització");
-        phaseNames.put("F5", "Equip");
+        phaseNames.put("F4", "Seguiment");
+        phaseNames.put("F5", "Alertes & Equip");
         var activePhaseNames = activePhases.stream()
                 .map(f -> phaseNames.getOrDefault(f, f))
                 .collect(java.util.stream.Collectors.joining(", "));
@@ -189,13 +189,13 @@ public class AgentHealthService {
         boolean f1Complete = f1Points == 3 && agentActive && recentConversations > 0;
         if (f1Complete) {
             if (!activePhases.contains("F2")) {
-                recommendations.add("La fase Gestió de cites (F2) permetria a l'agent gestionar reserves automàticament, estalviant temps al teu equip");
+                recommendations.add("La fase Agenda (F2) permetria a l'agent gestionar reserves automàticament, estalviant temps al teu equip");
             }
             if (activePhases.contains("F2") && !activePhases.contains("F3")) {
                 recommendations.add("La fase Pressupostos (F3) automatitzaria el càlcul d'ofertes, convertint més consultes en clients");
             }
             if (activePhases.contains("F3") && !activePhases.contains("F4")) {
-                recommendations.add("La fase Fidelització (F4) faria seguiment automàtic de clients existents per generar repetició de negoci");
+                recommendations.add("La fase Seguiment (F4) faria seguiment automàtic de clients existents per generar repetició de negoci");
             }
         }
 

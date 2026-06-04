@@ -79,6 +79,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/whatsapp/webhook").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/chat/sessions").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/chat/sessions/**").permitAll()
+                        .requestMatchers("/api/v1/widget/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/ops/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/demo/inbox/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/demo/inbox/**").permitAll()
@@ -102,6 +103,14 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        // Widget endpoints: cross-origin des de webs de clients (qualsevol domini)
+        var widgetConfig = new CorsConfiguration();
+        widgetConfig.setAllowedOriginPatterns(List.of("*"));
+        widgetConfig.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        widgetConfig.setAllowedHeaders(List.of("Content-Type", "X-Forwarded-For"));
+        widgetConfig.setAllowCredentials(false);
+        widgetConfig.setMaxAge(3600L);
+
         var config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
@@ -110,6 +119,7 @@ public class SecurityConfig {
         config.setMaxAge(3600L);
 
         var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/v1/widget/**", widgetConfig);
         source.registerCorsConfiguration("/**", config);
         return source;
     }

@@ -10,11 +10,11 @@ NexeLocal és el model de preus basat en sector professional i mida d'empresa. E
 
 | Fase | Nom | Contingut |
 |------|-----|-----------|
-| F1 | Comunicació 24/7 | Agent IA per WhatsApp/Email/Xat, creació automàtica de Leads, FAQ i info del negoci |
-| F2 | Gestió de cites | Booking per xat/WA/email, Google Calendar, recordatoris automàtics |
+| F1 | Captació | Agent IA per WhatsApp/Email/Xat, creació automàtica de Leads, FAQ i info del negoci |
+| F2 | Agenda | Booking per xat/WA/email, Google Calendar, recordatoris automàtics |
 | F3 | Pressupostos | Llistat de preus (pricelist) o generació de pressupost formal per l'agent |
-| F4 | Fidelització | Sol·licitud de ressenyes Google, seguiment postvenda, reactivació clients |
-| F5 | Equip | Notificacions grup Telegram intern, escalada humana, informes diaris |
+| F4 | Seguiment | Sol·licitud de ressenyes Google, seguiment postvenda, reactivació clients |
+| F5 | Alertes & Equip | Notificacions grup Telegram intern, escalada humana, informes diaris |
 
 > **Landing i domini:** serveis independents de les fases, amb setup i mensual propis.
 > El chat widget (canal web de F1) requereix **Landing Pro** — no disponible a Micro-landing.

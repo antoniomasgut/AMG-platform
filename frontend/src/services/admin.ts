@@ -356,11 +356,11 @@ export const SIZE_LABELS: Record<string, string> = {
 };
 
 export const PHASE_LABELS: Record<string, string> = {
-  F1: 'F1 — Comunicació 24/7',
-  F2: 'F2 — Gestió de cites',
+  F1: 'F1 — Captació',
+  F2: 'F2 — Agenda',
   F3: 'F3 — Pressupostos',
-  F4: 'F4 — Fidelització',
-  F5: 'F5 — Equip',
+  F4: 'F4 — Seguiment',
+  F5: 'F5 — Alertes & Equip',
 };
 
 export interface SectorPricingResponse {

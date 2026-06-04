@@ -47,11 +47,11 @@ function fmt(n: number) {
 }
 
 const NEXE_PHASE_NAMES: Record<number, string> = {
-  1: 'Comunicació 24/7',
-  2: 'Gestió de cites',
+  1: 'Captació',
+  2: 'Agenda',
   3: 'Pressupostos',
-  4: 'Fidelització',
-  5: 'Equip',
+  4: 'Seguiment',
+  5: 'Alertes & Equip',
 };
 
 const WORKER_ADDONS: Record<string, { setup: number; monthly: number }> = {
@@ -264,7 +264,7 @@ const NEXE_PHASE_SERVICES: Record<string, NexeServiceItem[]> = {
   F4: [
     { name: 'Bot IA & Canals', action: 'scroll', sectionId: 'section-agent-config' },
     { name: 'WhatsApp Business', action: 'scroll', sectionId: 'section-whatsapp' },
-    { name: 'Fidelització', action: 'navigate', configKey: 'fidelitzacio' },
+    { name: 'Seguiment', action: 'navigate', configKey: 'fidelitzacio' },
   ],
   F5: [
     { name: 'Bot IA & Canals', action: 'scroll', sectionId: 'section-agent-config' },
@@ -2666,6 +2666,7 @@ export default function TenantDetailPage() {
   const params = useParams<{ id: string; locale: string }>();
   const { id } = params;
   const locale = params.locale as string;
+  const router = useRouter();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [showAssignProfile, setShowAssignProfile] = useState(false);
@@ -2925,6 +2926,37 @@ export default function TenantDetailPage() {
                 Configurar {svc.serviceName}
               </AMGButton>
             ))}
+            <AMGButton
+              size="sm"
+              icon={I.Sparkles}
+              onClick={() => router.push(`/${locale}/portal/admin/tenants/${id}/wizard`)}
+            >
+              Setup Wizard
+            </AMGButton>
+            <AMGButton
+              size="sm"
+              variant="ghost"
+              icon={I.Bell}
+              onClick={() => router.push(`/${locale}/portal/admin/tenants/${id}/notifications`)}
+            >
+              Notificacions
+            </AMGButton>
+            <AMGButton
+              size="sm"
+              variant="ghost"
+              icon={I.BarChart}
+              onClick={() => router.push(`/${locale}/portal/analytics`)}
+            >
+              Analítica
+            </AMGButton>
+            <AMGButton
+              size="sm"
+              variant="ghost"
+              icon={I.FileText}
+              onClick={() => router.push(`/${locale}/portal/admin/tenants/${id}/visits`)}
+            >
+              Visites
+            </AMGButton>
             <button
               type="button"
               onClick={() => setShowDeleteTenant(true)}

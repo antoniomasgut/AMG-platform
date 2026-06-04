@@ -26,11 +26,11 @@ import java.util.*;
 public class BillingOrchestrator implements BillingService {
 
     private static final Map<Integer, String> PHASE_NAMES = Map.of(
-        1, "F1 · Comunicació base",
-        2, "F2 · Gestió de cites",
+        1, "F1 · Captació",
+        2, "F2 · Agenda",
         3, "F3 · Pressupostos",
-        4, "F4 · Fidelització",
-        5, "F5 · Equip"
+        4, "F4 · Seguiment",
+        5, "F5 · Alertes & Equip"
     );
 
     private final BudgetRepository budgetRepository;

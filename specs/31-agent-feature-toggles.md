@@ -63,7 +63,7 @@ Mode `formal`:
 
 **Sense F3 activa:** el bot respon "per a preus i pressupostos, contacta'ns directament".
 
-### F4 — Fidelització (`FIDELITZACIO.enabled: true`)
+### F4 — Seguiment (`FIDELITZACIO.enabled: true`)
 
 - Quan el bot detecta un client satisfet (expressió positiva al final d'una conversa), suggereix deixar una ressenya a Google amb l'URL configurat
 - El sistema pot enviar missatges de seguiment post-servei (fora de l'scope del bot conversacional — gestionat per agents programats del Mòdul 20)

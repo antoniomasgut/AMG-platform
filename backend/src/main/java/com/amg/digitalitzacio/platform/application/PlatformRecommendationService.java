@@ -178,8 +178,8 @@ public class PlatformRecommendationService {
             if (!activePhases.contains("F2")) {
                 recs.add(new PlatformRecommendation(
                         "PHASE_F2",
-                        "Oferir F2: Gestió de cites",
-                        "F1 actiu amb activitat. Candidat a F2. Permet gestionar reserves automàticament. Ingressos addicionals: ~20€/mes (autònom) – 45€/mes (mitjana empresa).",
+                        "Oferir F2: Agenda",
+                        "F1 actiu amb activitat. Candidat a F2 (Agenda). Permet gestionar reserves automàticament. Ingressos addicionals: ~20€/mes (autònom) – 45€/mes (mitjana empresa).",
                         "HIGH",
                         "UPGRADE_OFFER"
                 ));
@@ -187,8 +187,8 @@ public class PlatformRecommendationService {
             if (activePhases.contains("F2") && !activePhases.contains("F3")) {
                 recs.add(new PlatformRecommendation(
                         "PHASE_F3",
-                        "Oferir F3: Pressupostos automàtics",
-                        "Té F2 actiu. F3 automatitzaria el càlcul de pressupostos. Ingressos addicionals: ~20€/mes.",
+                        "Oferir F3: Pressupostos",
+                        "Té F2 (Agenda) actiu. F3 (Pressupostos) automatitzaria el càlcul d'ofertes. Ingressos addicionals: ~20€/mes.",
                         "MEDIUM",
                         "UPGRADE_OFFER"
                 ));

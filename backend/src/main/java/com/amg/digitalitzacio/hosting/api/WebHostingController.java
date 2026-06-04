@@ -43,6 +43,18 @@ public class WebHostingController {
         return ResponseEntity.ok(webHostingService.getSite(siteId, principal));
     }
 
+    @PostMapping("/tenants/{tenantId}/sites/external")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<WebSiteResponse> requestExternalSite(
+            @PathVariable UUID tenantId,
+            @RequestParam("domain") String domain,
+            @RequestParam(value = "contactEmail", required = false) String contactEmail,
+            @RequestParam(value = "contactRedirectUrl", required = false) String contactRedirectUrl,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(webHostingService.requestExternalSite(tenantId, domain, contactEmail, contactRedirectUrl, principal));
+    }
+
     @PostMapping(value = "/tenants/{tenantId}/sites/static", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<WebSiteResponse> requestStaticSite(
@@ -62,9 +74,13 @@ public class WebHostingController {
             @RequestParam(value = "envExample", required = false) MultipartFile envExample,
             @RequestParam("domain") String domain,
             @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "upstreamContainer", required = false) String upstreamContainer,
+            @RequestParam(value = "upstreamPort", required = false) Integer upstreamPort,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(webHostingService.requestContainerSite(tenantId, compose, envExample, domain, description, principal));
+                .body(webHostingService.requestContainerSite(
+                        tenantId, compose, envExample, domain, description,
+                        upstreamContainer, upstreamPort, principal));
     }
 
     @GetMapping("/admin/sites/{siteId}/compose")

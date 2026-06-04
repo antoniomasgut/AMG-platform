@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/lib/auth-context';
+import { useTenantFeatures } from '@/lib/tenant-features';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { I } from '@/components/ui/icons';
@@ -10,14 +11,17 @@ import type { ReactNode } from 'react';
 
 const LOCALES = ['ca', 'es', 'en', 'de'];
 
-type NavItem = { label: string; icon: (p: { size?: number }) => ReactNode; href: string };
+type NavItem = { label: string; icon: (p: { size?: number }) => ReactNode; href: string; locked?: boolean };
 type NavGroup = { label: string; items: NavItem[] };
 type T = ReturnType<typeof useTranslations<'portalNav'>>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CLIENT: veu els seus serveis i el seu compte
 // ─────────────────────────────────────────────────────────────────────────────
-function clientGroups(t: T): NavGroup[] {
+function clientGroups(t: T, features: { canAccessAnalytics: boolean; canAccessDocuments: boolean; isLoading: boolean }): NavGroup[] {
+  const analyticsLocked  = !features.isLoading && !features.canAccessAnalytics;
+  const documentsLocked  = !features.isLoading && !features.canAccessDocuments;
+
   return [
     {
       label: t('groups.summary'),
@@ -40,6 +44,8 @@ function clientGroups(t: T): NavGroup[] {
       label: t('groups.clientsLeads'),
       items: [
         { label: t('items.leadsCRM'), icon: I.Users, href: '/portal/leads' },
+        { label: 'Analítica',  icon: I.Trending,  href: '/portal/analytics', locked: analyticsLocked },
+        { label: 'Documents',  icon: I.FileText,  href: '/portal/documents', locked: documentsLocked },
       ],
     },
     {
@@ -70,6 +76,8 @@ function adminGroups(t: T): NavGroup[] {
       items: [
         { label: t('items.prospecting'), icon: I.Search, href: '/portal/prospecting' },
         { label: t('items.leadsCRM'), icon: I.Users, href: '/portal/leads' },
+        { label: 'Analítica',           icon: I.Trending, href: '/portal/analytics' },
+        { label: 'Documents',           icon: I.FileText, href: '/portal/documents' },
       ],
     },
     {
@@ -117,6 +125,8 @@ function superAdminGroups(t: T): NavGroup[] {
       items: [
         { label: t('items.prospecting'), icon: I.Search, href: '/portal/prospecting' },
         { label: t('items.leadsCRM'), icon: I.Users, href: '/portal/leads' },
+        { label: 'Analítica',           icon: I.Trending, href: '/portal/analytics' },
+        { label: 'Documents',           icon: I.FileText, href: '/portal/documents' },
       ],
     },
     {
@@ -171,6 +181,7 @@ function superAdminGroups(t: T): NavGroup[] {
 // ─────────────────────────────────────────────────────────────────────────────
 export function PortalShell({ children, breadcrumb, backHref }: { children: ReactNode; breadcrumb: string; backHref?: string }) {
   const { user, isSuperAdmin, isAdmin } = useAuth();
+  const features = useTenantFeatures();
   const pathname = usePathname();
   const t = useTranslations('portalNav');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -184,7 +195,7 @@ export function PortalShell({ children, breadcrumb, backHref }: { children: Reac
   const isActive = (href: string) =>
     href === '/portal' ? normalized === '/portal' : normalized.startsWith(href);
 
-  const groups = isSuperAdmin ? superAdminGroups(t) : isAdmin ? adminGroups(t) : clientGroups(t);
+  const groups = isSuperAdmin ? superAdminGroups(t) : isAdmin ? adminGroups(t) : clientGroups(t, features);
 
   const NavContent = () => (
     <>
@@ -200,7 +211,7 @@ export function PortalShell({ children, breadcrumb, backHref }: { children: Reac
             <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 px-4 pt-3 pb-1">
               {group.label}
             </div>
-            {group.items.map(({ label, icon: Icon, href }) => {
+            {group.items.map(({ label, icon: Icon, href, locked }) => {
               const active = isActive(href);
               return (
                 <a
@@ -210,12 +221,15 @@ export function PortalShell({ children, breadcrumb, backHref }: { children: Reac
                   className={`relative flex items-center gap-3 px-4 h-9 f-mono text-xs uppercase tracking-wider transition-colors ${
                     active
                       ? 'bg-accent-muted text-accent-light'
+                      : locked
+                      ? 'text-ink-3 hover:text-ink-2 hover:bg-[rgba(255,255,255,0.02)]'
                       : 'text-ink-1 hover:text-ink-0 hover:bg-[rgba(255,255,255,0.03)]'
                   }`}
                 >
-                  {active && <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#FF6B00]" />}
+                  {active && !locked && <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#FF6B00]" />}
                   <Icon size={13} />
-                  {label}
+                  <span className="flex-1">{label}</span>
+                  {locked && <I.Lock size={10} className="shrink-0" />}
                 </a>
               );
             })}

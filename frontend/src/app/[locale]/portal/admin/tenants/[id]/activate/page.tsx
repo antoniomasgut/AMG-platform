@@ -50,8 +50,8 @@ function getPhaseInfo(phase: string, sector?: string | null) {
     case 'F1':
       return {
         label: 'F1',
-        title: 'Presència Web',
-        desc: 'Crea i publica la landing page del negoci amb l\'editor visual.',
+        title: 'Captació',
+        desc: 'Captura leads des de la web, WhatsApp i email. L\'agent classifica i crea fitxes automàticament.',
         icon: I.Globe,
         href: (tenantId: string, locale: string) => `/${locale}/portal/landings`,
         ctaLabel: 'Anar a Landings',
@@ -59,14 +59,14 @@ function getPhaseInfo(phase: string, sector?: string | null) {
     case 'F2':
       return {
         label: 'F2',
-        title: agendaMode === 'inspection' ? 'Visites d\'Inspecció'
-             : agendaMode === 'vehicle'    ? 'Recepció de Vehicles'
-             : agendaMode === 'meeting'    ? 'Sistema de Reunions'
-             : 'Sistema de Cites',
-        desc: agendaMode === 'inspection' ? 'Configura les zones de servei, horaris i flux de visites d\'inspecció.'
-            : agendaMode === 'vehicle'    ? 'Configura la recepció de vehicles, estimació de recollida i preguntes.'
-            : agendaMode === 'meeting'    ? 'Configura les reunions: durada, horaris i confirmació.'
-            : 'Configura el calendari de cites: integració, horaris i preguntes al client.',
+        title: agendaMode === 'inspection' ? 'Agenda — Visites'
+             : agendaMode === 'vehicle'    ? 'Agenda — Vehicles'
+             : agendaMode === 'meeting'    ? 'Agenda — Reunions'
+             : 'Agenda',
+        desc: agendaMode === 'inspection' ? 'Confirma visites, envia recordatoris i gestiona absències automàticament.'
+            : agendaMode === 'vehicle'    ? 'Recepciona vehicles, estima recollida i elimina trucades innecessàries.'
+            : agendaMode === 'meeting'    ? 'Confirma reunions, envia recordatoris i redueix no-shows.'
+            : 'Confirma cites, envia recordatoris automàtics i redueix cites perdudes.',
         icon: I.Calendar,
         href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/agenda`,
         ctaLabel: 'Configurar Agenda',
@@ -74,10 +74,10 @@ function getPhaseInfo(phase: string, sector?: string | null) {
     case 'F3':
       return {
         label: 'F3',
-        title: quoteMode === 'pricelist' ? 'Catàleg de Preus' : 'Pressupostos Autònoms',
+        title: quoteMode === 'pricelist' ? 'Pressupostos — Catàleg' : 'Pressupostos',
         desc: quoteMode === 'pricelist'
-          ? 'Publica el catàleg de serveis i preus que el bot mostrarà als clients.'
-          : 'Configura les línies de servei, validesa i plantilles de pressupost.',
+          ? 'Publica el catàleg de serveis i preus que l\'agent mostrarà als clients.'
+          : 'L\'agent genera pressupostos i fa seguiment dels que queden sense resposta.',
         icon: I.Receipt,
         href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/pressupostos`,
         ctaLabel: quoteMode === 'pricelist' ? 'Configurar Catàleg' : 'Configurar Pressupostos',
@@ -85,20 +85,20 @@ function getPhaseInfo(phase: string, sector?: string | null) {
     case 'F4':
       return {
         label: 'F4',
-        title: 'Fidelització de Clients',
-        desc: 'Activa el seguiment post-servei, sol·licita ressenyes a Google i automatitza el reengagement.',
+        title: 'Seguiment',
+        desc: 'Cap client oblidat: recordatoris automàtics, sol·licitud de ressenyes i reactivació de clients inactius.',
         icon: I.Heart,
         href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/fidelitzacio`,
-        ctaLabel: 'Configurar Fidelització',
+        ctaLabel: 'Configurar Seguiment',
       };
     case 'F5':
       return {
         label: 'F5',
-        title: 'Gestió d\'Equip',
-        desc: 'Configura l\'equip de treball i el grup de Telegram per a notificacions i informes.',
+        title: 'Alertes & Equip',
+        desc: 'Alertes proactives al grup de Telegram: leads sense resposta, cites pendents i informe diari.',
         icon: I.Users,
         href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/equip`,
-        ctaLabel: 'Configurar Equip',
+        ctaLabel: 'Configurar Alertes',
       };
     default:
       return null;
@@ -383,13 +383,13 @@ export default function ActivateWizardPage() {
           <div className="amg-card card-clip p-4 border-l-2 border-l-border-base">
             <div className="f-mono text-label text-xs text-ink-2 space-y-1">
               <p>
-                <span className="text-ink-0 font-semibold">F1</span> — la detecció és manual: comprova que hi hagi almenys una landing publicada a{' '}
+                <span className="text-ink-0 font-semibold">Captació (F1)</span> — la detecció és manual: comprova que hi hagi almenys una landing publicada a{' '}
                 <button onClick={() => router.push(`/${locale}/portal/landings`)} className="text-accent hover:underline">
                   Landings
                 </button>.
               </p>
               <p>
-                <span className="text-ink-0 font-semibold">F2–F5</span> — el sistema detecta automàticament si la configuració s'ha desat.
+                <span className="text-ink-0 font-semibold">Agenda–Alertes (F2–F5)</span> — el sistema detecta automàticament si la configuració s'ha desat.
               </p>
               <p>
                 Les opcions de cada fase s'adapten al sector{sector ? ` (${sectorLabel[sector] ?? sector})` : ''} i la mida del negoci.

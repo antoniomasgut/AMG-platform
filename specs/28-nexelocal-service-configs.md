@@ -13,10 +13,10 @@ Cada fase NexeLocal (F2–F5) té paràmetres de configuració específics per s
 
 | Fase | Servei | Clau |
 |------|--------|------|
-| F2 | Gestió de cites / visites | `AGENDA` |
+| F2 | Agenda (cites / visites) | `AGENDA` |
 | F3 | Pressupostos i preus | `PRESSUPOSTOS` |
-| F4 | Fidelització de clients | `FIDELITZACIO` |
-| F5 | Gestió d'equip intern | `EQUIP` |
+| F4 | Seguiment de clients | `FIDELITZACIO` |
+| F5 | Alertes & Equip intern | `EQUIP` |
 
 ---
 

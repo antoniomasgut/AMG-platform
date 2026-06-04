@@ -14,7 +14,7 @@
 - Suportar soft-delete i canvi d'etapa amb traçabilitat
 
 **Model Lead = Client:** no existeix una entitat "Client" separada. Quan un lead arriba a
-l'etapa `WON`, es considera client convertit. La F4 (Fidelització) treballa sobre leads
+l'etapa `WON`, es considera client convertit. La F4 (Seguiment) treballa sobre leads
 amb `convertedAt != null`. Un contacte que torna a escriure (via xat, WA o email) es
 localitza pel telèfon (`findFirstByTenantIdAndPhone`) i es reutilitza el mateix registre —
 mai es crea un duplicat.
@@ -124,7 +124,7 @@ stage=WON → convertedAt=now() ← és "client" a partir d'aquí
 lastContactAt s'actualitza cada vegada que torna a escriure
 lastServiceAt s'actualitza quan F2 confirma una cita
         ↓
-F4 (Fidelització): filtra per convertedAt != null
+F4 (Seguiment): filtra per convertedAt != null
   → follow-up si lastServiceAt > N dies
   → reenganchament si lastContactAt > M mesos
 ```

@@ -209,6 +209,9 @@ export interface PressupostosConfig {
   quote_header: string;
   quote_footer: string;
   services_catalog: ServiceItem[];
+  quote_followup_enabled: boolean;
+  quote_followup_days: number;
+  quote_followup_message: string;
 }
 
 export const DEFAULT_PRESSUPOSTOS: PressupostosConfig = {
@@ -216,6 +219,9 @@ export const DEFAULT_PRESSUPOSTOS: PressupostosConfig = {
   quote_header: '',
   quote_footer: 'Gràcies per confiar en nosaltres.',
   services_catalog: [],
+  quote_followup_enabled: false,
+  quote_followup_days: 3,
+  quote_followup_message: "Hola {{nom}}! Et volem recordar que fa uns dies et vam enviar informació sobre el nostre servei. Estem aquí si tens alguna pregunta. 😊",
 };
 
 function svc(name: string, price: number, unit: string, description = '', duration?: string): ServiceItem {
@@ -360,7 +366,7 @@ export function getPressupostosDefaults(sector?: string | null): PressupostosCon
   return { ...DEFAULT_PRESSUPOSTOS, ...overrides };
 }
 
-// ── Fidelització (F4) ──────────────────────────────────────────
+// ── Seguiment / F4 (service key intern: FIDELITZACIO) ─────────
 
 export interface FidelitzacioConfig {
   google_reviews_url: string;
@@ -388,12 +394,14 @@ export interface TeamMember {
 }
 
 export interface EquipConfig {
-  telegram_group_id: string;   // chat_id del grup (número negatiu, ex: -1001234567890)
-  telegram_group_name: string; // nom de referència
+  telegram_group_id: string;
+  telegram_group_name: string;
   members: TeamMember[];
   daily_report_enabled: boolean;
   daily_report_time: string;
   report_template: string;
+  unresponded_alert_enabled: boolean;
+  unresponded_hours_threshold: number;
 }
 
 export const DEFAULT_EQUIP: EquipConfig = {
@@ -403,4 +411,6 @@ export const DEFAULT_EQUIP: EquipConfig = {
   daily_report_enabled: false,
   daily_report_time: '18:00',
   report_template: 'Resum del dia {{data}}:\n- Cites: {{num_cites}}\n- Nous contactes: {{nous_contactes}}',
+  unresponded_alert_enabled: false,
+  unresponded_hours_threshold: 4,
 };

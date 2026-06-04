@@ -161,6 +161,10 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 26 | RAG Knowledge Base (base de coneixement IA) | 🔨 En curs | specs/26-rag-knowledge-base.md |
 | 27 | WhatsApp Business API (Meta Cloud, per tenant) | ✅ Completat | specs/27-whatsapp-business.md |
 | 28 | NexeLocal Service Configs (config per fase i sector) | ✅ Completat | — |
+| 29 | Web Hosting & Import (Bàsic + Pro) | ✅ Completat | specs/29-web-hosting-import.md |
+| 30 | Landing Chat Widget | ✅ Completat | specs/30-landing-chat-widget.md |
+| 31 | Agent Feature Toggles | ✅ Completat | specs/31-agent-feature-toggles.md |
+| 32 | Tenant Notifications (Telegram + Email) | ✅ Completat | specs/32-tenant-notifications.md |
 
 ---
 
@@ -218,4 +222,5 @@ Hibernate a producció usa `ddl-auto: validate` — les taules noves **cal crear
 - Frontend: `/portal/admin/tenants/[id]/nexe/[service]` (agenda / pressupostos / fidelitzacio / equip)
 - F2 Agenda: 4 modes per sector (`appointment` / `inspection` / `vehicle` / `meeting`)
 - F3 Pressupostos: 2 modes per sector (`formal` / `pricelist`)
-- F5 Equip: usa grup de Telegram compartit (`telegram_group_id`), no Telegram per-membre
+- F4 Seguiment: `FIDELITZACIO` (service key intern sense canvi)
+- F5 Alertes & Equip: usa grup de Telegram compartit (`telegram_group_id`), no Telegram per-membre

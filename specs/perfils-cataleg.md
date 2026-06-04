@@ -44,7 +44,7 @@ Cada servei està definit amb nom, slug, tipus, cost i preu de venda orientatiu.
 | F2: Landing | Landing Pro (80€) + Galeria fotos (20€) | 100€ |
 | F3: Agenda online | Agenda online (40€) + Recordatori 24h (20€) | 60€ |
 | F4: CRM i seguiment | CRM + Pipeline (50€) + Reenganxament (25€) | 75€ |
-| F5: Fidelització | Ressenya Google (15€) | 15€ |
+| F5: Seguiment | Ressenya Google (15€) | 15€ |
 
 **Total pla:** 330€  
 **Add-ons:** Landing extra (60€), Qüestionari salut (15€), Historial mèdic (15€), Xat web (15€)
@@ -63,7 +63,7 @@ Cada servei està definit amb nom, slug, tipus, cost i preu de venda orientatiu.
 | F2: Landing | Landing Pro (80€) + Galeria fotos (20€) | 100€ |
 | F3: Pressupost | Calculadora pressupost (35€) | 35€ |
 | F4: CRM i seguiment | CRM + Pipeline (50€) + Reenganxament (25€) | 75€ |
-| F5: Fidelització | Ressenya Google (15€) | 15€ |
+| F5: Seguiment | Ressenya Google (15€) | 15€ |
 
 **Total pla:** 305€  
 **Add-ons:** Landing extra (60€), Xat web (15€), Agenda online (40€)
@@ -82,7 +82,7 @@ Cada servei està definit amb nom, slug, tipus, cost i preu de venda orientatiu.
 | F2: Landing | Landing Pro (80€) | 80€ |
 | F3: Cobraments | Cobrament targeta (20€) | 20€ |
 | F4: CRM i retenció | CRM + Pipeline (50€) + Recordatori renovació (20€) + Reenganxament (25€) | 95€ |
-| F5: Fidelització | Ressenya Google (15€) | 15€ |
+| F5: Seguiment | Ressenya Google (15€) | 15€ |
 
 **Total pla:** 290€  
 **Add-ons:** Landing extra (60€), Agenda online (40€), Xat web (15€)
@@ -100,7 +100,7 @@ Cada servei està definit amb nom, slug, tipus, cost i preu de venda orientatiu.
 | F1: Configuració bàsica | WhatsApp Business (50€) + SMTP (30€) | 80€ |
 | F2: Landing | Landing Pro (80€) + Galeria fotos (20€) | 100€ |
 | F3: Captació | Formulari leads (10€) + Xat web (15€) | 25€ |
-| F4: Fidelització | Ressenya Google (15€) + Reenganxament (25€) | 40€ |
+| F4: Seguiment | Ressenya Google (15€) + Reenganxament (25€) | 40€ |
 
 **Total pla:** 245€  
 **Add-ons:** Landing extra (60€), CRM + Pipeline (50€), Agenda online (40€)
@@ -117,7 +117,7 @@ Cada servei està definit amb nom, slug, tipus, cost i preu de venda orientatiu.
 | F2: Landing | Landing Pro (80€) | 80€ |
 | F3: CRM clients | CRM (50€) + Pipeline (inclòs) | 50€ |
 | F4: Cobraments + Factures | Cobrament (20€) + Facturació (40€) | 60€ |
-| F5: Fidelització | Reenganxament (25€) + Ressenya (15€) | 40€ |
+| F5: Seguiment | Reenganxament (25€) + Ressenya (15€) | 40€ |
 
 **Total:** 310€
 
@@ -141,7 +141,7 @@ Cada servei està definit amb nom, slug, tipus, cost i preu de venda orientatiu.
 | F2: Landing | Landing Pro (80€) | 80€ |
 | F3: Reserva visites | Agenda online (40€) + Recordatori (20€) | 60€ |
 | F4: CRM + Historial | CRM (50€) + Historial vehicles (15€, per crear) | 65€ |
-| F5: Fidelització | Reenganxament (25€) + Ressenya (15€) | 40€ |
+| F5: Seguiment | Reenganxament (25€) + Ressenya (15€) | 40€ |
 
 **Total:** 325€
 

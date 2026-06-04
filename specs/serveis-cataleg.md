@@ -123,11 +123,11 @@ Les fases **no són acumulatives** — el client pot contractar qualsevol combin
 
 | Fase | Serveis del catàleg inclosos | Setup client | Mensual base (autònom) |
 |------|------------------------------|-------------|------------------------|
-| **F1** Comunicació 24/7 | `whatsapp-business` + `bot-ia-basic` | des de 150€ | **59€/mes** (priceF1) |
-| **F2** Gestió de cites | `automatitzacio-basica` (agenda + recordatoris) | — | **+20€/mes** (priceF2) |
+| **F1** Captació | `whatsapp-business` + `bot-ia-basic` | des de 150€ | **59€/mes** (priceF1) |
+| **F2** Agenda | `automatitzacio-basica` (agenda + recordatoris) | — | **+20€/mes** (priceF2) |
 | **F3** Pressupostos | `automatitzacio-avancada` (PDFs + seguiment) | — | **+20€/mes** (priceF3) |
-| **F4** Fidelització | `google-analytics` + addon postvenda | — | **+30€/mes** (priceF4) |
-| **F5** Equip | gestió d'equip (pendent) | — | **+20€/mes** (priceF5) |
+| **F4** Seguiment | `google-analytics` + addon postvenda | — | **+30€/mes** (priceF4) |
+| **F5** Alertes & Equip | gestió d'equip (pendent) | — | **+20€/mes** (priceF5) |
 
 **Exemples de combinacions (autònom base):**
 - F1 → 59€/mes

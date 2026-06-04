@@ -277,8 +277,8 @@ export default function ProcessPage() {
       status: loading ? 'loading' : tenantsWithPhases.length === 0 ? 'ok' : 'attention',
       items: [
         { label: 'Tenants amb fases contractades', value: tenantsWithPhases.length, ok: tenantsWithPhases.length === 0 },
-        { label: 'Wizard F1', value: 'Landing → Factory → publicar', ok: true },
-        { label: 'Wizard F2–F5', value: 'Agenda, Pressupostos, Fidelització, Equip', ok: true },
+        { label: 'Wizard Captació (F1)', value: 'Landing → Factory → publicar', ok: true },
+        { label: 'Wizard F2–F5', value: 'Agenda, Pressupostos, Seguiment, Alertes & Equip', ok: true },
         { label: 'Bot IA', value: 'Agents → canals + base de coneixement', ok: true },
       ],
       note: 'Obre la fitxa de cada tenant → "Posar en marxa" per veure totes les fases i el seu estat.',
