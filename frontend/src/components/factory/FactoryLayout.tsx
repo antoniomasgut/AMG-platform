@@ -42,8 +42,15 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
   const markSaving = useEditorStore((s) => s.markSaving);
   const addBlock = useEditorStore((s) => s.addBlock);
 
+  const selectedBlockId = useEditorStore((s) => s.selectedBlockId);
+
   const isDirtyRef = useRef(isDirty);
   useEffect(() => { isDirtyRef.current = isDirty; }, [isDirty]);
+
+  // Auto-switch to Props tab when a block is selected in the canvas
+  useEffect(() => {
+    if (selectedBlockId) setSidebarTab('properties');
+  }, [selectedBlockId]);
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {

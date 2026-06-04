@@ -12,6 +12,7 @@ export const BlockProperties: FC = () => {
   const landing = useEditorStore((s) => s.landing);
   const styles = useEditorStore((s) => s.styles);
   const [imgPickerFor, setImgPickerFor] = useState<string | null>(null);
+  const [showJson, setShowJson] = useState(false);
 
   // IA generation state
   const [aiOpen, setAiOpen] = useState(false);
@@ -252,9 +253,32 @@ export const BlockProperties: FC = () => {
 
   return (
     <div className="p-3">
-      <div className="f-mono text-label uppercase tracking-widest text-accent-light mb-3">
-        {tpl?.label || block.type}
+      <div className="flex items-center justify-between mb-3">
+        <div className="f-mono text-label uppercase tracking-widest text-accent-light">
+          {tpl?.label || block.type}
+        </div>
+        <button
+          onClick={() => setShowJson((v) => !v)}
+          title="Veure configuració JSON"
+          className={`f-mono text-[9px] uppercase px-2 py-1 rounded border transition ${
+            showJson
+              ? 'border-[#FF6B00] text-[#FF6B00] bg-[rgba(255,107,0,0.1)]'
+              : 'border-border-base text-ink-3 hover:text-ink-1 hover:border-border-medium'
+          }`}
+        >
+          {'{ }'}
+        </button>
       </div>
+
+      {showJson && (
+        <div className="mb-4">
+          <div className="f-mono text-[9px] uppercase text-ink-3 mb-1 tracking-widest">Configuració actual</div>
+          <pre className="bg-[#07070f] border border-border-base rounded p-3 text-[10px] text-green-300 overflow-auto max-h-64 leading-relaxed whitespace-pre-wrap break-all">
+            {JSON.stringify(block.props, null, 2)}
+          </pre>
+        </div>
+      )}
+
 
       {/* Panel IA */}
       {canGenerate && (
