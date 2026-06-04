@@ -41,7 +41,7 @@ public class BillingOrchestrator implements BillingService {
     private final InvoiceService invoiceService;
     private final PaymentService paymentService;
     private final TenantRepository tenantRepository;
-    private final SectorPhaseRepository sectorPhaseRepository;
+    private final NexePricingFormula pricingFormula;
 
     @Override
     @Transactional
@@ -50,35 +50,20 @@ public class BillingOrchestrator implements BillingService {
         var lines = new ArrayList<BudgetLine>();
 
         if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
-            // Mode NexeLocal: preus per fase des de sector_phases (independents, no ordinals)
+            // Mode NexeLocal: fórmula Σfases × factor_sector × factor_mida
             var sector = resolveSector(tenantId, request.sector());
+            var size   = resolveSize(tenantId, request.businessSize());
             var sortedPhases = request.phaseNumbers().stream().sorted().toList();
 
             for (int i = 0; i < sortedPhases.size(); i++) {
-                var pn = sortedPhases.get(i);
-                var phaseData = sector != null
-                        ? sectorPhaseRepository.findBySectorAndPhaseNumber(sector, pn).orElse(null)
-                        : null;
-                var setupLine = phaseData != null ? phaseData.getSetupPrice() : BigDecimal.ZERO;
-                var monthly = phaseData != null ? phaseData.getMonthlyPrice() : BigDecimal.ZERO;
-                var name = phaseData != null ? "F" + pn + " · " + phaseData.getName()
-                        : PHASE_NAMES.getOrDefault(pn, "Fase " + pn);
-                subtotal = subtotal.add(setupLine);
+                var pn    = sortedPhases.get(i);
+                var setup = pricingFormula.setupPerPhase(pn, sector, size);
+                var monthly = pricingFormula.monthlyPerPhase(pn, sector, size);
+                subtotal = subtotal.add(setup);
                 lines.add(BudgetLine.builder()
-                        .phaseNumber(pn).serviceName(name)
-                        .unitPrice(setupLine).total(setupLine)
+                        .phaseNumber(pn).serviceName(pricingFormula.phaseLabel(pn))
+                        .unitPrice(setup).total(setup)
                         .monthlyPrice(monthly).sortOrder(i)
-                        .build());
-            }
-
-            // Add-on worker tier (si no és AUTONOMO)
-            var tierAddon = resolveWorkerTier(tenantId, request.businessSize());
-            if (tierAddon.setup().compareTo(BigDecimal.ZERO) > 0) {
-                subtotal = subtotal.add(tierAddon.setup());
-                lines.add(BudgetLine.builder()
-                        .serviceName("Add-on equip — " + tierAddon.name().toLowerCase())
-                        .unitPrice(tierAddon.setup()).total(tierAddon.setup())
-                        .monthlyPrice(tierAddon.monthly()).sortOrder(lines.size())
                         .build());
             }
         } else {
@@ -198,32 +183,18 @@ public class BillingOrchestrator implements BillingService {
 
         if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
             var sector = resolveSector(budget.getTenantId(), request.sector());
+            var size   = resolveSize(budget.getTenantId(), request.businessSize());
             var sortedPhases = request.phaseNumbers().stream().sorted().toList();
 
             for (int i = 0; i < sortedPhases.size(); i++) {
-                var pn = sortedPhases.get(i);
-                var phaseData = sector != null
-                        ? sectorPhaseRepository.findBySectorAndPhaseNumber(sector, pn).orElse(null)
-                        : null;
-                var setupLine = phaseData != null ? phaseData.getSetupPrice() : BigDecimal.ZERO;
-                var monthly = phaseData != null ? phaseData.getMonthlyPrice() : BigDecimal.ZERO;
-                var name = phaseData != null ? "F" + pn + " · " + phaseData.getName()
-                        : PHASE_NAMES.getOrDefault(pn, "Fase " + pn);
-                subtotal = subtotal.add(setupLine);
+                var pn    = sortedPhases.get(i);
+                var setup = pricingFormula.setupPerPhase(pn, sector, size);
+                var monthly = pricingFormula.monthlyPerPhase(pn, sector, size);
+                subtotal = subtotal.add(setup);
                 lines.add(BudgetLine.builder().budgetId(budgetId)
-                        .phaseNumber(pn).serviceName(name)
-                        .unitPrice(setupLine).total(setupLine)
+                        .phaseNumber(pn).serviceName(pricingFormula.phaseLabel(pn))
+                        .unitPrice(setup).total(setup)
                         .monthlyPrice(monthly).sortOrder(i)
-                        .build());
-            }
-
-            var tierAddon = resolveWorkerTier(budget.getTenantId(), request.businessSize());
-            if (tierAddon.setup().compareTo(BigDecimal.ZERO) > 0) {
-                subtotal = subtotal.add(tierAddon.setup());
-                lines.add(BudgetLine.builder().budgetId(budgetId)
-                        .serviceName("Add-on equip — " + tierAddon.name().toLowerCase())
-                        .unitPrice(tierAddon.setup()).total(tierAddon.setup())
-                        .monthlyPrice(tierAddon.monthly()).sortOrder(lines.size())
                         .build());
             }
         } else {
@@ -448,14 +419,12 @@ public class BillingOrchestrator implements BillingService {
         return tenantRepository.findById(tenantId).map(Tenant::getSector).orElse(null);
     }
 
-    private WorkerTierAddon resolveWorkerTier(UUID tenantId, String reqSize) {
+    private BusinessSize resolveSize(UUID tenantId, String reqSize) {
         if (reqSize != null) {
-            try { return WorkerTierAddon.from(BusinessSize.valueOf(reqSize.toUpperCase())); }
+            try { return BusinessSize.valueOf(reqSize.toUpperCase()); }
             catch (IllegalArgumentException ignored) {}
         }
-        return tenantRepository.findById(tenantId)
-                .map(t -> WorkerTierAddon.from(t.getBusinessSize()))
-                .orElse(WorkerTierAddon.AUTONOMO);
+        return tenantRepository.findById(tenantId).map(Tenant::getBusinessSize).orElse(null);
     }
 
     private void addContractedPhases(UUID tenantId, List<String> newPhases) {

@@ -1,5 +1,6 @@
-// ── NexeLocal Formula Pricing Model ───────────────────────────────────────────
-// Monthly = Σ(phase base costs) × sector_factor × size_factor
+// ── NexeLocal Formula Pricing (font de veritat) ───────────────────────────────
+// Mensual = Σ(costos base per fase) × factor_sector × factor_mida
+// Setup per fase = mensual × 2
 
 export interface PricingBreakdown {
   phaseSubtotals: Record<number, number>;

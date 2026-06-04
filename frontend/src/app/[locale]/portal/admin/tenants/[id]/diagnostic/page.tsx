@@ -281,7 +281,7 @@ export default function DiagnosticPage() {
       const pricingNote = (sector && size && selectedPhaseNums.size > 0)
         ? (() => {
             const p = calculatePrice(Array.from(selectedPhaseNums).sort(), sector, size);
-            return `Estimació NexeLocal: ${p.monthlyTotal}€/mes (setup ${p.setupTotal}€) · ${getSectorCategoryLabel(sector)} ×${p.sectorFactor} · ${size} ×${p.sizeFactor}`;
+            return `NexeLocal: ${p.monthlyTotal}€/mes (setup ${p.setupTotal}€) · ${getSectorCategoryLabel(sector)} ×${p.sectorFactor} · ${size} ×${p.sizeFactor}`;
           })()
         : '';
       await createBudget(tenantId, {
@@ -470,13 +470,13 @@ export default function DiagnosticPage() {
               </div>
             </div>
 
-            {/* Estimació de preus */}
+            {/* Preus NexeLocal */}
             {selectedPhaseNums.size > 0 && sector && size && (() => {
               const pricing = calculatePrice(Array.from(selectedPhaseNums).sort(), sector, size);
               return (
                 <div className="bg-[rgba(255,107,0,0.04)] border border-[rgba(255,107,0,0.15)] rounded-md p-4">
                   <div className="f-mono text-[10px] uppercase tracking-widest text-accent-light mb-3">
-                    Estimació de preus · {getSectorCategoryLabel(sector)} · ×{pricing.sectorFactor} · {SIZE_FACTORS[size] ? `×${SIZE_FACTORS[size]}` : ''}
+                    Preus NexeLocal · {getSectorCategoryLabel(sector)} · ×{pricing.sectorFactor} · {SIZE_FACTORS[size] ? `×${SIZE_FACTORS[size]}` : ''}
                   </div>
                   <div className="space-y-1 mb-3">
                     {Array.from(selectedPhaseNums).sort().map(num => (
@@ -590,7 +590,7 @@ export default function DiagnosticPage() {
                         <div className="px-4 py-3 border-t border-border-base bg-[rgba(255,107,0,0.03)]">
                           <div className="flex items-center justify-between">
                             <span className="f-mono text-[10px] text-ink-3 uppercase tracking-wider">
-                              {selectedPhaseIds.size} fase{selectedPhaseIds.size !== 1 ? 's' : ''} · estimació fórmula
+                              {selectedPhaseIds.size} fase{selectedPhaseIds.size !== 1 ? 's' : ''} · preu NexeLocal
                             </span>
                             <div className="flex items-center gap-4">
                               <div className="text-right">
