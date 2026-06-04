@@ -21,6 +21,13 @@ interface SectorData {
   message: string;
 }
 
+const SIZE_HINTS: Record<string, string> = {
+  AUTONOMO: 'Tu sol, o amb ajudants que no gestionen clients',
+  PETIT:    'Tu + 1-2 persones que parlen amb clients o fan pressupostos',
+  MITJA:    '3-5 persones actives en la gestió del negoci',
+  EMPRESA:  '6 o més persones implicades en decisions',
+};
+
 const PHASE_LABELS: Record<number, string> = {
   1: 'F1 — Captació i agent IA',
   2: 'F2 — Agenda i cites',
@@ -345,6 +352,7 @@ export default function DiagnosticPage() {
               {/* Grandària */}
               <div>
                 <label className={labelCls}>Grandària del negoci</label>
+                <p className="text-xs text-ink-3 mb-2">Compta només les persones que parlen amb clients, fan pressupostos o prenen decisions.</p>
                 <div className="grid grid-cols-2 gap-2">
                   {SIZES.map(s => (
                     <button key={s} type="button"
@@ -356,6 +364,7 @@ export default function DiagnosticPage() {
                       }`}
                     >
                       <div className="text-xs font-semibold">{SIZE_LABELS[s]}</div>
+                      <div className="text-[10px] text-ink-3 mt-0.5">{SIZE_HINTS[s]}</div>
                     </button>
                   ))}
                 </div>
