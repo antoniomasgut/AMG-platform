@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.leads.api;
 
 import com.amg.digitalitzacio.leads.api.dto.*;
 import com.amg.digitalitzacio.leads.application.ActivityService;
+import com.amg.digitalitzacio.leads.application.ConvertLeadService;
 import com.amg.digitalitzacio.leads.application.LeadService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import jakarta.validation.Valid;
@@ -25,6 +26,7 @@ public class LeadController {
 
     private final LeadService leadService;
     private final ActivityService activityService;
+    private final ConvertLeadService convertLeadService;
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
@@ -65,6 +67,14 @@ public class LeadController {
                                                     @Valid @RequestBody LeadRequest request,
                                                     @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(leadService.updateLead(id, request, principal));
+    }
+
+    @PostMapping("/{id}/analyze-notes")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<AnalyzeNotesResponse> analyzeNotes(@PathVariable UUID id,
+                                                             @Valid @RequestBody AnalyzeNotesRequest request,
+                                                             @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(leadService.analyzeNotes(id, request, principal));
     }
 
     @DeleteMapping("/{id}")
@@ -158,5 +168,13 @@ public class LeadController {
                                                               @PathVariable UUID activityId,
                                                               @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(activityService.completeActivity(leadId, activityId, principal));
+    }
+
+    @PostMapping("/{leadId}/convert")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<ConvertLeadResult> convertToClient(
+            @PathVariable UUID leadId,
+            @RequestBody ConvertLeadRequest req) {
+        return ResponseEntity.ok(convertLeadService.convert(leadId, req));
     }
 }

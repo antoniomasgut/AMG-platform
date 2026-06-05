@@ -53,10 +53,24 @@ public class Lead {
     @Column(length = 500)
     private String tags;
 
+    @Column(name = "utm_source", length = 100)
+    private String utmSource;
+
+    @Column(name = "utm_medium", length = 100)
+    private String utmMedium;
+
+    @Column(name = "utm_campaign", length = 150)
+    private String utmCampaign;
+
+    @Column(name = "meta_lead_id", length = 50)
+    private String metaLeadId;
+
     @Column(length = 255)
     private String lostReason;
 
     private Instant convertedAt;
+
+    private UUID convertedTenantId;
 
     private Instant lastContactAt;
 

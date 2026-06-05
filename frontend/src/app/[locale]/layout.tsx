@@ -4,7 +4,9 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
-import { CookieConsentBanner } from '@/components/CookieConsentBanner';
+import dynamic from 'next/dynamic';
+
+const CookieConsentBanner = dynamic(() => import('@/components/CookieConsentBanner').then(m => m.CookieConsentBanner), { ssr: false });
 
 type Props = {
   children: React.ReactNode;

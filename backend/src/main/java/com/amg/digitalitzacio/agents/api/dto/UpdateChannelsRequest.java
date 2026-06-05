@@ -5,5 +5,6 @@ public record UpdateChannelsRequest(
         Boolean isActive,
         String whatsappPhoneNumber,
         String whatsappMetaPhoneNumberId,
-        String emailAddress
+        String emailAddress,
+        String metaPageId
 ) {}

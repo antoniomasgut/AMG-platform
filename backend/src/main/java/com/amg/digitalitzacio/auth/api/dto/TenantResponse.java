@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.auth.api.dto;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record TenantResponse(
@@ -16,8 +17,12 @@ public record TenantResponse(
         String sector,
         String businessSize,
         java.util.List<String> contractedPhases,
+        java.util.List<String> activePhases,
         String agentSystemPrompt,
         boolean isActive,
         boolean isFree,
+        LocalDate billingStartDate,
+        Instant implementationDeliveredAt,
+        Instant onboardingCompletedAt,
         Instant createdAt
 ) {}

@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.leads.domain;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.Instant;
 
@@ -35,6 +36,7 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
     List<Lead> findByTenantId(UUID tenantId);
 
     boolean existsByTenantIdAndEmail(UUID tenantId, String email);
+    boolean existsByTenantIdAndMetaLeadId(UUID tenantId, String metaLeadId);
 
     java.util.Optional<Lead> findFirstByTenantIdAndPhone(UUID tenantId, String phone);
 
@@ -60,4 +62,7 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
     long countByStage(PipelineStage stage);
 
     long countBySource(LeadSource source);
+
+    @Query("SELECT l.utmCampaign, COUNT(l) FROM Lead l WHERE l.tenantId = :tenantId AND l.utmCampaign IS NOT NULL GROUP BY l.utmCampaign")
+    List<Object[]> countByUtmCampaign(UUID tenantId);
 }

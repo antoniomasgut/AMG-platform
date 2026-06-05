@@ -5,5 +5,8 @@ public record ContactRequest(
     String email,
     String phone,
     String message,
-    Boolean consent
+    Boolean consent,
+    String utmSource,
+    String utmMedium,
+    String utmCampaign
 ) {}

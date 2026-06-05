@@ -21,7 +21,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -191,22 +193,92 @@ public class GoogleCalendarService {
     private void createEventWithToken(String accessToken, String calendarId,
                                        String title, LocalDateTime start,
                                        int durationMinutes, String description) throws Exception {
+        createEventWithTokenReturningLink(accessToken, calendarId, title, start, durationMinutes, description, false);
+    }
+
+    /** Crea un event amb Google Meet i retorna el link de Meet (null si falla). */
+    public String createEventWithMeet(String calendarId, String title,
+                                       LocalDateTime start, int durationMinutes,
+                                       String description, String attendeeEmail) {
+        if (calendarId == null || calendarId.isBlank()) return null;
+        try {
+            String accessToken = getSaAccessToken();
+            return createEventWithTokenReturningLink(accessToken, calendarId, title, start, durationMinutes, description, true);
+        } catch (Exception e) {
+            log.error("Failed to create Meet event for calendarId={}", calendarId, e);
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private String createEventWithTokenReturningLink(String accessToken, String calendarId,
+                                                      String title, LocalDateTime start,
+                                                      int durationMinutes, String description,
+                                                      boolean withMeet) throws Exception {
         LocalDateTime end = start.plusMinutes(durationMinutes);
-        String eventJson = buildEventJson(title, start, end, description);
+        String eventJson = withMeet
+                ? buildEventJsonWithMeet(title, start, end, description)
+                : buildEventJson(title, start, end, description);
         String encodedId = URLEncoder.encode(calendarId, StandardCharsets.UTF_8);
+        String url = CALENDAR_API + "/calendars/" + encodedId + "/events"
+                + (withMeet ? "?conferenceDataVersion=1" : "");
 
         var req = HttpRequest.newBuilder()
-                .uri(URI.create(CALENDAR_API + "/calendars/" + encodedId + "/events"))
+                .uri(URI.create(url))
                 .header("Authorization", "Bearer " + accessToken)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(eventJson))
                 .build();
         var res = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
         if (res.statusCode() >= 200 && res.statusCode() < 300) {
-            log.info("Google Calendar event created: calendarId={}, title={}", calendarId, title);
+            log.info("Google Calendar event created: calendarId={}, title={}, meet={}", calendarId, title, withMeet);
+            if (withMeet) {
+                Map<String, Object> body = objectMapper.readValue(res.body(), new TypeReference<>() {});
+                var confData = (Map<String, Object>) body.get("conferenceData");
+                if (confData != null) {
+                    var entries = (List<Map<String, Object>>) confData.get("entryPoints");
+                    if (entries != null) {
+                        return entries.stream()
+                                .filter(e -> "video".equals(e.get("entryPointType")))
+                                .map(e -> (String) e.get("uri"))
+                                .findFirst().orElse(null);
+                    }
+                }
+            }
         } else {
             log.error("Google Calendar API error {}: {}", res.statusCode(), res.body());
         }
+        return null;
+    }
+
+    /** Consulta els períodes ocupats via Freebusy API. */
+    @SuppressWarnings("unchecked")
+    public List<Instant[]> getFreeBusySlots(String calendarId, Instant from, Instant to) throws Exception {
+        String accessToken = getSaAccessToken();
+        String body = objectMapper.writeValueAsString(Map.of(
+                "timeMin", from.toString(),
+                "timeMax", to.toString(),
+                "items", List.of(Map.of("id", calendarId))
+        ));
+        var req = HttpRequest.newBuilder()
+                .uri(URI.create(CALENDAR_API + "/freeBusy"))
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        var res = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+        if (res.statusCode() < 200 || res.statusCode() >= 300) return List.of();
+
+        Map<String, Object> resp = objectMapper.readValue(res.body(), new TypeReference<>() {});
+        var calendars = (Map<String, Map<String, Object>>) resp.get("calendars");
+        if (calendars == null || !calendars.containsKey(calendarId)) return List.of();
+        var busyList = (List<Map<String, String>>) calendars.get(calendarId).get("busy");
+        if (busyList == null) return List.of();
+
+        return busyList.stream().map(b -> new Instant[]{
+                Instant.parse(b.get("start")),
+                Instant.parse(b.get("end"))
+        }).toList();
     }
 
     // ── SA token ─────────────────────────────────────────────────
@@ -276,6 +348,25 @@ public class GoogleCalendarService {
                   "end":   {"dateTime": "%s", "timeZone": "Europe/Madrid"}
                 }""".formatted(jsonString(title), jsonString(description != null ? description : ""),
                 start.format(fmt), end.format(fmt));
+    }
+
+    private String buildEventJsonWithMeet(String title, LocalDateTime start, LocalDateTime end, String description) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        String requestId = UUID.randomUUID().toString();
+        return """
+                {
+                  "summary": %s,
+                  "description": %s,
+                  "start": {"dateTime": "%s", "timeZone": "Europe/Madrid"},
+                  "end":   {"dateTime": "%s", "timeZone": "Europe/Madrid"},
+                  "conferenceData": {
+                    "createRequest": {
+                      "requestId": "%s",
+                      "conferenceSolutionKey": {"type": "hangoutsMeet"}
+                    }
+                  }
+                }""".formatted(jsonString(title), jsonString(description != null ? description : ""),
+                start.format(fmt), end.format(fmt), requestId);
     }
 
     private String jsonString(String s) {

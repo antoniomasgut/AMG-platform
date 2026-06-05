@@ -11,5 +11,6 @@ public record ChannelsResponse(
         String telegramBotLink,
         String whatsappPhoneNumber,
         String whatsappMetaPhoneNumberId,
-        String emailAddress
+        String emailAddress,
+        String metaPageId
 ) {}

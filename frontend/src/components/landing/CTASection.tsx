@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 
@@ -11,16 +11,35 @@ export function CTASection() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle');
+  const [utms, setUtms] = useState<{ utmSource?: string; utmMedium?: string; utmCampaign?: string }>({});
+
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const captured = {
+      utmSource:   p.get('utm_source')   ?? undefined,
+      utmMedium:   p.get('utm_medium')   ?? undefined,
+      utmCampaign: p.get('utm_campaign') ?? undefined,
+    };
+    setUtms(captured);
+    // Persisteix a sessionStorage per si l'usuari navega per la pàgina
+    if (captured.utmSource) sessionStorage.setItem('utm_source',   captured.utmSource);
+    if (captured.utmMedium) sessionStorage.setItem('utm_medium',   captured.utmMedium);
+    if (captured.utmCampaign) sessionStorage.setItem('utm_campaign', captured.utmCampaign);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setState('sending');
+    // Recupera UTMs de sessionStorage si no vénen de la URL actual
+    const source   = utms.utmSource   ?? sessionStorage.getItem('utm_source')   ?? undefined;
+    const medium   = utms.utmMedium   ?? sessionStorage.getItem('utm_medium')   ?? undefined;
+    const campaign = utms.utmCampaign ?? sessionStorage.getItem('utm_campaign') ?? undefined;
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
       const res = await fetch(`${apiUrl}/api/v1/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message }),
+        body: JSON.stringify({ name, email, message, utmSource: source, utmMedium: medium, utmCampaign: campaign }),
       });
       setState(res.ok ? 'ok' : 'error');
     } catch {

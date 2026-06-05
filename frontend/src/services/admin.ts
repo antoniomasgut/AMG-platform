@@ -13,9 +13,15 @@ export interface TenantResponse {
   email: string | null; phone: string | null;
   address: string | null; nif: string | null; contactPhone: string | null;
   preferredChannel: string | null;
-  sector: string | null; businessSize: string | null; contractedPhases: string[] | null;
+  sector: string | null; businessSize: string | null;
+  contractedPhases: string[] | null;
+  activePhases: string[] | null;
   agentSystemPrompt: string | null;
-  isActive: boolean; isFree: boolean; createdAt: string;
+  isActive: boolean; isFree: boolean;
+  billingStartDate: string | null;
+  implementationDeliveredAt: string | null;
+  onboardingCompletedAt: string | null;
+  createdAt: string;
 }
 
 export interface PageResponse<T> {
@@ -42,7 +48,8 @@ export interface UpdateTenantRequest {
   name?: string; slug?: string; email?: string; phone?: string;
   address?: string; nif?: string; contactPhone?: string;
   isActive?: boolean; isFree?: boolean; agentSystemPrompt?: string;
-  sector?: string | null; businessSize?: string | null; contractedPhases?: string[] | null;
+  sector?: string | null; businessSize?: string | null;
+  contractedPhases?: string[] | null; activePhases?: string[] | null;
 }
 
 export const listUsers = (params: { page?: number; size?: number; role?: string; tenantId?: string; search?: string } = {}) => {
@@ -91,6 +98,15 @@ export const createTenant = (data: CreateTenantRequest) =>
 
 export const updateTenant = (id: string, data: UpdateTenantRequest) =>
   apiFetch<TenantResponse>(`/tenants/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const markImplementationDelivered = (id: string) =>
+  apiFetch<TenantResponse>(`/tenants/${id}/deliver`, { method: 'POST' });
+
+export const markOnboardingCompleted = (id: string) =>
+  apiFetch<TenantResponse>(`/tenants/${id}/onboarding-complete`, { method: 'POST' });
+
+export const setBillingStartDate = (id: string, date: string) =>
+  apiFetch<TenantResponse>(`/tenants/${id}/billing-start-date`, { method: 'PUT', body: JSON.stringify({ billingStartDate: date }) });
 
 // --- Vault API (tenant services) ---
 
@@ -143,6 +159,7 @@ export interface ChannelsConfig {
   telegramChatId: number | null;
   whatsappPhoneNumber: string | null;
   whatsappMetaPhoneNumberId: string | null;
+  metaPageId: string | null;
 }
 
 export interface AIConfig {

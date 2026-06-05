@@ -47,8 +47,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <head>
         <meta name="google" content="notranslate" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
         <a

@@ -131,11 +131,12 @@ public class PlatformRecommendationService {
                 tenantId, Instant.now().minus(30, ChronoUnit.DAYS));
 
         Set<String> activePhases = new HashSet<>();
-        if (tenantOpt.isPresent() && tenantOpt.get().getContractedPhases() != null) {
-            Arrays.stream(tenantOpt.get().getContractedPhases().split(","))
+        tenantOpt.ifPresent(t -> {
+            var source = t.getActivePhases() != null ? t.getActivePhases() : t.getContractedPhases();
+            if (source != null) Arrays.stream(source.split(","))
                     .map(String::trim).filter(s -> !s.isBlank())
                     .forEach(activePhases::add);
-        }
+        });
 
         // ── UPGRADE OFFERS ──────────────────────────────────────────────────
 

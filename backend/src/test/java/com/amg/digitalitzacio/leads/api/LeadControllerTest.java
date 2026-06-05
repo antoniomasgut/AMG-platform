@@ -114,7 +114,7 @@ class LeadControllerTest {
     void createLead_returns201() throws Exception {
         var body = objectMapper.writeValueAsString(
                 new LeadRequest("Maria Pons", "maria@test.com", "+34 611 111 111",
-                        LeadSource.WHATSAPP, adminUser.getId(), null, "Interessada en pla basic", null, null));
+                        LeadSource.WHATSAPP, adminUser.getId(), null, "Interessada en pla basic", null, null, null, null, null));
 
         mockMvc.perform(post("/api/v1/leads")
                         .header("Authorization", "Bearer " + adminToken)
@@ -129,7 +129,7 @@ class LeadControllerTest {
     @Test
     void createLead_withoutName_returns400() throws Exception {
         var body = objectMapper.writeValueAsString(
-                new LeadRequest(null, "maria@test.com", null, null, null, null, null, null, null));
+                new LeadRequest(null, "maria@test.com", null, null, null, null, null, null, null, null, null, null));
 
         mockMvc.perform(post("/api/v1/leads")
                         .header("Authorization", "Bearer " + adminToken)
@@ -180,7 +180,7 @@ class LeadControllerTest {
     @Test
     void updateLead_returnsUpdatedLead() throws Exception {
         var body = objectMapper.writeValueAsString(
-                new LeadRequest("Joan Servera Updated", null, null, null, null, null, null, null, null));
+                new LeadRequest("Joan Servera Updated", null, null, null, null, null, null, null, null, null, null, null));
 
         mockMvc.perform(put("/api/v1/leads/{id}", existingLead.getId())
                         .header("Authorization", "Bearer " + adminToken)

@@ -23,6 +23,10 @@ public record LeadResponse(
         Instant lastContactAt,
         Instant lastServiceAt,
         Boolean hasWhatsapp,
+        String utmSource,
+        String utmMedium,
+        String utmCampaign,
+        String metaLeadId,
         boolean isActive,
         Instant createdAt,
         Instant updatedAt

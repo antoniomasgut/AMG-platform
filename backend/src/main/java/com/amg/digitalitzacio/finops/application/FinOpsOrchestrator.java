@@ -295,10 +295,11 @@ public class FinOpsOrchestrator implements FinOpsService {
             var tenantId = config.getTenantId();
             if (monthlyInvoiceRepository.findByTenantIdAndPeriod(tenantId, period).isPresent()) continue;
 
-            var amount = billingCalculator.calculateMonthlyAmount(tenantId, period);
-            if (amount.compareTo(BigDecimal.ZERO) == 0) continue;
-
             var tenant = tenantRepository.findById(tenantId).orElse(null);
+            var billingStartDate = tenant != null ? tenant.getBillingStartDate() : null;
+
+            var amount = billingCalculator.calculateMonthlyAmount(tenantId, period, billingStartDate);
+            if (amount.compareTo(BigDecimal.ZERO) == 0) continue;
 
             var holdedInvoiceId = finOpsClient.createInvoice(
                     config.getHoldedContactId() != null ? config.getHoldedContactId() : "UNKNOWN",

@@ -12,6 +12,10 @@ export interface Lead {
   lostReason?: string | null;
   estimatedValue?: number | null;
   hasWhatsapp?: boolean | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  metaLeadId?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -39,6 +43,9 @@ export interface CreateLeadRequest {
   source: string;
   notes?: string;
   estimatedValue?: number;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
 }
 
 export interface CreateActivityRequest {
@@ -93,3 +100,44 @@ export const getActivities = (leadId: string) =>
 
 export const createActivity = (leadId: string, data: CreateActivityRequest) =>
   apiFetch<Activity>(`/leads/${leadId}/activities`, { method: 'POST', body: JSON.stringify(data) });
+
+export interface ConvertLeadRequest {
+  tenantName: string;
+  billingEmail: string;
+  billingNif: string;
+  billingPhone?: string;
+  billingAddress?: string;
+  billingCity?: string;
+  sector?: string;
+  businessSize?: string;
+  setupAmount?: number;
+  monthlyAmount?: number;
+  portalBaseUrl?: string;
+}
+
+export interface AnalyzeNotesRequest {
+  notes: string;
+}
+
+export interface AnalyzeNotesResponse {
+  painPoints: string[];
+  recommendedSector: string;
+  recommendedSize: string;
+  setupAmount: number;
+  monthlyAmount: number;
+  recommendationPitch: string;
+}
+
+export const analyzeNotes = (leadId: string, data: AnalyzeNotesRequest) =>
+  apiFetch<AnalyzeNotesResponse>(`/leads/${leadId}/analyze-notes`, { method: 'POST', body: JSON.stringify(data) });
+
+export interface ConvertLeadResult {
+  tenantId: string;
+  tenantName: string;
+  stripeCheckoutUrl: string | null;
+  goCardlessRedirectUrl: string | null;
+  holdedInvoiceId: string | null;
+}
+
+export const convertLead = (leadId: string, data: ConvertLeadRequest) =>
+  apiFetch<ConvertLeadResult>(`/leads/${leadId}/convert`, { method: 'POST', body: JSON.stringify(data) });

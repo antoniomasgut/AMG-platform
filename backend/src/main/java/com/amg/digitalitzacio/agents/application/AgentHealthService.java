@@ -30,13 +30,14 @@ public class AgentHealthService {
         var chatLinkOpt = chatLinkRepository.findByTenantId(tenantId);
         var tenantOpt = tenantRepository.findById(tenantId);
 
-        // Active phases from tenant
+        // Active phases from tenant (respecta activePhases si s'ha configurat)
         Set<String> activePhases = new HashSet<>();
-        if (tenantOpt.isPresent() && tenantOpt.get().getContractedPhases() != null) {
-            Arrays.stream(tenantOpt.get().getContractedPhases().split(","))
+        tenantOpt.ifPresent(t -> {
+            var source = t.getActivePhases() != null ? t.getActivePhases() : t.getContractedPhases();
+            if (source != null) Arrays.stream(source.split(","))
                     .map(String::trim).filter(s -> !s.isBlank())
                     .forEach(activePhases::add);
-        }
+        });
 
         // Knowledge entries by category
         Set<KnowledgeCategory> filledCategories = new HashSet<>();

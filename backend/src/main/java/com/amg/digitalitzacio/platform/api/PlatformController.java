@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.platform.api;
 import com.amg.digitalitzacio.platform.api.dto.PlatformRecommendation;
 import com.amg.digitalitzacio.platform.application.PlatformRecommendationService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -18,6 +20,15 @@ import java.util.UUID;
 public class PlatformController {
 
     private final PlatformRecommendationService recommendationService;
+    private final SystemConfigService sysConfig;
+
+    /** Retorna el tenantId de la plataforma AMG (PLATFORM_TENANT_ID) */
+    @GetMapping("/self")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Map<String, String>> getSelf() {
+        String tenantId = sysConfig.get("PLATFORM_TENANT_ID");
+        return ResponseEntity.ok(Map.of("tenantId", tenantId != null ? tenantId : ""));
+    }
 
     /** Recomanacions de connectivitat/qualitat per al client */
     @GetMapping("/recommendations/{tenantId}")

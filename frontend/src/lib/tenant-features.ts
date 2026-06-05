@@ -48,7 +48,8 @@ export function useTenantFeatures(overrideTenantId?: string): TenantFeatures {
     };
   }
 
-  const phases = tenant?.contractedPhases ?? [];
+  // activePhases sobreescriu contractedPhases per al control operacional
+  const phases = (tenant?.activePhases ?? tenant?.contractedPhases) ?? [];
   const hasF1 = phases.includes('F1');
   const hasF2 = phases.includes('F2');
   const hasF3 = phases.includes('F3');

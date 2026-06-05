@@ -1,13 +1,14 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useTenantFeatures } from '@/lib/tenant-features';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { PhaseGuard } from '@/components/ui/PhaseGuard';
 import { getAnalytics } from '@/services/analytics';
 import { getTenant } from '@/services/admin';
+import { getMetaAdsConfig, getMetaAdsStats, syncMetaAds, type CampaignRow } from '@/services/meta-ads';
 
 const STAGE_LABELS: Record<string, string> = {
   NEW: 'Nous', CONTACTED: 'Contactats', QUALIFIED: 'Qualificats',
@@ -22,7 +23,8 @@ const CHANNEL_LABELS: Record<string, string> = {
 const SOURCE_LABELS: Record<string, string> = {
   LANDING_FORM: 'Formulari web', WHATSAPP: 'WhatsApp', EMAIL: 'Email',
   CHAT_WIDGET: 'Chat Widget', MANUAL: 'Manual', OTHER: 'Altres',
-  GOOGLE: 'Google', REFERRAL: 'Referència',
+  GOOGLE: 'Google', REFERRAL: 'Referència', WEB: 'Web',
+  FACEBOOK: 'Facebook Ads', INSTAGRAM: 'Instagram Ads', META_ADS: 'Meta Ads',
 };
 
 function KpiCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -53,6 +55,7 @@ export default function AnalyticsPage() {
   const { user } = useAuth();
   const tenantId = (user as any)?.tenantId as string | undefined;
   const features = useTenantFeatures();
+  const qc = useQueryClient();
 
   const { data: tenant } = useQuery({
     queryKey: ['tenant', tenantId],
@@ -64,6 +67,23 @@ export default function AnalyticsPage() {
     queryKey: ['analytics', tenantId],
     queryFn: () => getAnalytics(tenantId!),
     enabled: !!tenantId,
+  });
+
+  const { data: metaConfig } = useQuery({
+    queryKey: ['meta-ads-config', tenantId],
+    queryFn: () => getMetaAdsConfig(tenantId!),
+    enabled: !!tenantId,
+  });
+
+  const { data: metaStats } = useQuery({
+    queryKey: ['meta-ads-stats', tenantId],
+    queryFn: () => getMetaAdsStats(tenantId!),
+    enabled: !!tenantId && !!metaConfig?.enabled,
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: () => syncMetaAds(tenantId!),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['meta-ads-stats', tenantId] }),
   });
 
   const locale = params.locale;
@@ -152,6 +172,71 @@ export default function AnalyticsPage() {
                 </div>
               )}
             </div>
+
+            {/* Meta Ads campanyes */}
+            {metaConfig?.enabled && (
+              <div className="bg-surface-overlay border border-border-base rounded-md p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3">
+                    Meta Ads · Cost per Lead (últims 30 dies)
+                  </div>
+                  <button
+                    onClick={() => syncMutation.mutate()}
+                    disabled={syncMutation.isPending}
+                    className="f-mono text-[10px] uppercase text-ink-2 hover:text-accent border border-border-base hover:border-accent px-3 h-7 transition-colors disabled:opacity-50"
+                  >
+                    {syncMutation.isPending ? '…' : 'Sincronitzar'}
+                  </button>
+                </div>
+
+                {!metaStats || metaStats.campaigns.length === 0 ? (
+                  <div className="text-xs text-ink-3 py-4 text-center">
+                    Sense dades de campanyes. Assegura&apos;t que la sincronització s&apos;ha executat.
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <KpiCard label="Despesa total" value={`${Number(metaStats.totalSpend).toFixed(2)} €`} />
+                      <KpiCard label="Leads d'anuncis" value={metaStats.totalLeadsFromAds} />
+                      <KpiCard label="CPL mitjà" value={metaStats.avgCpl != null ? `${metaStats.avgCpl.toFixed(2)} €` : '—'} />
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-border-subtle">
+                            <th className="text-left f-mono text-[10px] uppercase tracking-widest text-ink-3 pb-2">Campanya</th>
+                            <th className="text-right f-mono text-[10px] uppercase tracking-widest text-ink-3 pb-2">Despesa</th>
+                            <th className="text-right f-mono text-[10px] uppercase tracking-widest text-ink-3 pb-2">Impressions</th>
+                            <th className="text-right f-mono text-[10px] uppercase tracking-widest text-ink-3 pb-2">Clics</th>
+                            <th className="text-right f-mono text-[10px] uppercase tracking-widest text-ink-3 pb-2">Leads</th>
+                            <th className="text-right f-mono text-[10px] uppercase tracking-widest text-ink-3 pb-2">CPL</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {metaStats.campaigns.map((row: CampaignRow) => (
+                            <tr key={row.campaignId} className="border-b border-border-subtle/30 hover:bg-surface-base/30">
+                              <td className="py-2 text-ink-1 max-w-[200px] truncate">{row.campaignName}</td>
+                              <td className="py-2 text-right f-mono text-ink-1">{Number(row.spend).toFixed(2)} €</td>
+                              <td className="py-2 text-right f-mono text-ink-2">{row.impressions.toLocaleString()}</td>
+                              <td className="py-2 text-right f-mono text-ink-2">{row.clicks.toLocaleString()}</td>
+                              <td className="py-2 text-right f-mono text-ink-1">{row.leads}</td>
+                              <td className="py-2 text-right f-mono text-accent-light font-semibold">
+                                {row.cpl != null ? `${row.cpl.toFixed(2)} €` : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {metaConfig.lastSyncAt && (
+                      <div className="text-[10px] text-ink-3 mt-2 text-right">
+                        Darrera sync: {new Date(metaConfig.lastSyncAt).toLocaleString('ca-ES')}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Resums */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

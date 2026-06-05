@@ -18,6 +18,8 @@ import com.amg.digitalitzacio.vault.domain.TenantServiceRepository;
 import com.amg.digitalitzacio.telegram.domain.TenantTelegramConfigRepository;
 import com.amg.digitalitzacio.whatsapp.domain.WhatsAppWabaConfigRepository;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -115,10 +117,47 @@ public class TenantService {
         if (request.sector() != null) tenant.setSector(BusinessSector.valueOf(request.sector().toUpperCase()));
         if (request.businessSize() != null) tenant.setBusinessSize(BusinessSize.valueOf(request.businessSize().toUpperCase()));
         if (request.contractedPhases() != null) tenant.setContractedPhases(toPhaseString(request.contractedPhases()));
+        if (request.activePhases() != null) tenant.setActivePhases(toPhaseString(request.activePhases()));
         if (request.agentSystemPrompt() != null) tenant.setAgentSystemPrompt(request.agentSystemPrompt());
         if (request.isFree() != null) tenant.setIsFree(request.isFree());
         if (request.isActive() != null) tenant.setIsActive(request.isActive());
 
+        tenant = tenantRepository.save(tenant);
+        return toResponse(tenant);
+    }
+
+    @Transactional
+    public TenantResponse markImplementationDelivered(UUID id) {
+        var tenant = tenantRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
+        
+        tenant.setImplementationDeliveredAt(Instant.now());
+        if (tenant.getBillingStartDate() == null) {
+            tenant.setBillingStartDate(LocalDate.now());
+        }
+        
+        tenant = tenantRepository.save(tenant);
+        return toResponse(tenant);
+    }
+
+    @Transactional
+    public TenantResponse markOnboardingCompleted(UUID id) {
+        var tenant = tenantRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
+        
+        tenant.setOnboardingCompletedAt(Instant.now());
+        
+        tenant = tenantRepository.save(tenant);
+        return toResponse(tenant);
+    }
+
+    @Transactional
+    public TenantResponse setBillingStartDate(UUID id, LocalDate date) {
+        var tenant = tenantRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
+        
+        tenant.setBillingStartDate(date);
+        
         tenant = tenantRepository.save(tenant);
         return toResponse(tenant);
     }
@@ -218,7 +257,12 @@ public class TenantService {
                 tenant.getSector() != null ? tenant.getSector().name() : null,
                 tenant.getBusinessSize() != null ? tenant.getBusinessSize().name() : null,
                 fromPhaseString(tenant.getContractedPhases()),
+                fromPhaseString(tenant.getActivePhases()),
                 tenant.getAgentSystemPrompt(),
-                Boolean.TRUE.equals(tenant.getIsActive()), Boolean.TRUE.equals(tenant.getIsFree()), tenant.getCreatedAt());
+                Boolean.TRUE.equals(tenant.getIsActive()), Boolean.TRUE.equals(tenant.getIsFree()),
+                tenant.getBillingStartDate(),
+                tenant.getImplementationDeliveredAt(),
+                tenant.getOnboardingCompletedAt(),
+                tenant.getCreatedAt());
     }
 }

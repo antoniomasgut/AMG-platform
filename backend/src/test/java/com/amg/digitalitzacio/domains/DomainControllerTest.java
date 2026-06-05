@@ -379,7 +379,7 @@ class DomainControllerTest {
                         .param("size", "10")
                         .header("Authorization", "Bearer " + superAdminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))));
+                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(1))));
     }
 
     // Extra: noAuth → 401

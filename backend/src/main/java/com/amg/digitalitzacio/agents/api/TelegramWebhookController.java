@@ -99,6 +99,12 @@ public class TelegramWebhookController {
                     return ResponseEntity.ok(okTgReply(chatId, reply));
                 }
 
+                // Comanda de festiu: /festiu [data]
+                if (text.toLowerCase().startsWith("/festiu")) {
+                    var reply = absenceRescheduleService.handleHolidayCommand(tenantId, text);
+                    return ResponseEntity.ok(okTgReply(chatId, reply));
+                }
+
                 // Try to route to an agent
                 boolean handled = false;
                 for (var agent : agentRegistry.getAllAgents()) {

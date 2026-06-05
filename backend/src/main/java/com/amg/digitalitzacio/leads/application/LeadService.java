@@ -7,6 +7,9 @@ import com.amg.digitalitzacio.leads.api.dto.*;
 import com.amg.digitalitzacio.leads.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.shared.notification.NotificationEvent;
+import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.amg.digitalitzacio.shared.notification.TenantNotificationService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
@@ -19,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +38,8 @@ public class LeadService {
     private final WhatsAppChannel whatsAppChannel;
     private final SystemConfigService sysConfig;
     private final TenantNotificationService notificationService;
+    private final AIProviderRouter aiProviderRouter;
+    private final ObjectMapper objectMapper;
 
     public LeadResponse createLead(LeadRequest request, UserPrincipal principal) {
         UUID tenantId = principal.tenantId();
@@ -52,6 +58,9 @@ public class LeadService {
         lead.setEstimatedValue(request.estimatedValue());
         lead.setNotes(request.notes());
         lead.setTags(request.tags());
+        lead.setUtmSource(request.utmSource());
+        lead.setUtmMedium(request.utmMedium());
+        lead.setUtmCampaign(request.utmCampaign());
 
         lead = leadRepository.save(lead);
 
@@ -392,6 +401,7 @@ public class LeadService {
                 lead.getEstimatedValue(), lead.getNotes(), lead.getTags(),
                 lead.getLostReason(), lead.getConvertedAt(),
                 lead.getLastContactAt(), lead.getLastServiceAt(), lead.getHasWhatsapp(),
+                lead.getUtmSource(), lead.getUtmMedium(), lead.getUtmCampaign(), lead.getMetaLeadId(),
                 lead.getIsActive(), lead.getCreatedAt(), lead.getUpdatedAt()
         );
     }
@@ -401,5 +411,63 @@ public class LeadService {
         return userRepository.findById(userId)
                 .map(u -> new LeadResponse.UserRef(u.getId(), u.getName()))
                 .orElse(null);
+    }
+
+    public AnalyzeNotesResponse analyzeNotes(UUID id, AnalyzeNotesRequest request, UserPrincipal principal) {
+        Lead lead = findLead(id);
+        verifyAccess(lead, principal);
+
+        // Guardem les notes si n'hi ha de noves
+        if (request.notes() != null && !request.notes().isBlank()) {
+            lead.setNotes(request.notes());
+            leadRepository.save(lead);
+        }
+
+        String systemPrompt = """
+            Ets un expert en vendes i digitalització de negocis locals per a l'agència AMG Digitalització.
+            La teva tasca és analitzar les notes preses durant una entrevista amb un client potencial (lead) i identificar les seves necessitats.
+            
+            Retorna ÚNICAMENT un objecte JSON amb la següent estructura i cap altre text:
+            {
+              "painPoints": ["Punt 1", "Punt 2"], // Llista dels principals problemes o dolors detectats
+              "recommendedSector": "Un dels valors: RESTAURANTE, PINTOR, PELUQUERIA, ABOGADO, CLINICA, TALLER, OTRO",
+              "recommendedSize": "Un dels valors: AUTONOMO, PETIT, MITJA, EMPRESA",
+              "setupAmount": 500, // Import de setup recomanat en euros (ex: 200, 500, 1000) depenent de la complexitat
+              "monthlyAmount": 50, // Import de quota mensual recomanada en euros (ex: 30, 50, 150)
+              "recommendationPitch": "Breu text de 2-3 frases per vendre-li la proposta"
+            }
+            """;
+
+        String userMessage = "Aquestes són les notes de l'entrevista amb el client:\n" + request.notes();
+
+        var aiProvider = aiProviderRouter.forModel(aiProviderRouter.defaultModel());
+        String responseText = aiProvider.chat(systemPrompt, List.of(), userMessage);
+
+        try {
+            // Eliminar possibles blocs de markdown (```json ... ```) de la resposta
+            String cleanJson = responseText.replaceAll("(?s)^```json\\s*", "").replaceAll("(?s)\\s*```$", "");
+            
+            Map<String, Object> parsed = objectMapper.readValue(cleanJson, new TypeReference<>() {});
+            
+            List<String> painPoints = parsed.get("painPoints") instanceof List<?> list ? (List<String>) list : List.of();
+            String sector = parsed.get("recommendedSector") instanceof String s ? s : "OTRO";
+            String size = parsed.get("recommendedSize") instanceof String s ? s : "AUTONOMO";
+            BigDecimal setup = parsed.get("setupAmount") instanceof Number n ? new BigDecimal(n.toString()) : BigDecimal.ZERO;
+            BigDecimal monthly = parsed.get("monthlyAmount") instanceof Number n ? new BigDecimal(n.toString()) : BigDecimal.ZERO;
+            String pitch = parsed.get("recommendationPitch") instanceof String s ? s : "";
+            
+            // També registrem que s'ha analitzat per IA
+            Activity activity = new Activity();
+            activity.setLeadId(lead.getId());
+            activity.setUserId(principal.id());
+            activity.setType(ActivityType.NOTE);
+            activity.setDescription("Notes analitzades per IA. Dolors: " + String.join(", ", painPoints));
+            activityRepository.save(activity);
+
+            return new AnalyzeNotesResponse(painPoints, sector, size, setup, monthly, pitch);
+        } catch (Exception e) {
+            log.error("Error parsejant la resposta de la IA: {}", responseText, e);
+            throw new RuntimeException("No s'ha pogut analitzar les notes amb la IA. Torna a intentar-ho.");
+        }
     }
 }

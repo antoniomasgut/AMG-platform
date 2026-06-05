@@ -17,5 +17,8 @@ public record LeadRequest(
         BigDecimal estimatedValue,
         String notes,
         @Size(max = 500) String tags,
-        Boolean hasWhatsapp
+        Boolean hasWhatsapp,
+        @Size(max = 100) String utmSource,
+        @Size(max = 100) String utmMedium,
+        @Size(max = 150) String utmCampaign
 ) {}

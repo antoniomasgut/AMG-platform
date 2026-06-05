@@ -65,8 +65,7 @@ public class TeamGrowthService {
     }
 
     private boolean hasF5(Tenant tenant) {
-        var phases = tenant.getContractedPhases();
-        return phases != null && phases.contains("F5");
+        return tenant.isPhaseActive("F5");
     }
 
     private void sendUpsell(Tenant tenant, Long chatId, String newMemberName) {

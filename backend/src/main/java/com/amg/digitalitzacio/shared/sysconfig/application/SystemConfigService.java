@@ -50,7 +50,10 @@ public class SystemConfigService {
         new KnownKey("EMAIL_INBOUND_DOMAIN",   "Domini inbound d'email", "Subdomini Cloudflare per rebre emails del bot (per defecte: inbound.amgdl.com). Només informatiu — canviar-lo aquí no modifica el DNS.", "EMAIL_INBOUND", false),
         new KnownKey("GOOGLE_CALENDAR_SA_JSON", "Google Calendar Service Account JSON", "JSON del Service Account de Google per crear i compartir calendaris (F2 Agenda)", "CALENDAR", true),
         new KnownKey("GOOGLE_OAUTH_CLIENT_ID",  "Google OAuth Client ID",               "Client ID de Google Cloud per al flux OAuth (connexió compte propi del client)", "CALENDAR", false),
-        new KnownKey("GOOGLE_OAUTH_CLIENT_SECRET", "Google OAuth Client Secret",         "Client Secret de Google Cloud per al flux OAuth del client", "CALENDAR", true)
+        new KnownKey("GOOGLE_OAUTH_CLIENT_SECRET",  "Google OAuth Client Secret",         "Client Secret de Google Cloud per al flux OAuth del client", "CALENDAR", true),
+        new KnownKey("META_WEBHOOK_VERIFY_TOKEN",   "Meta Webhook Verify Token",          "Token de verificació per al webhook de Meta Lead Ads (mínim 20 caràcters)", "META_ADS", true),
+        new KnownKey("META_PAGE_ACCESS_TOKEN",      "Meta Page Access Token (global)",    "Token d'accés de pàgina de Meta (fallback si no hi ha token específic per pàgina)", "META_ADS", true),
+        new KnownKey("OPENAI_API_KEY",              "OpenAI API Key",                     "Clau OpenAI per a generació d'imatges amb DALL·E 3 (Meta Ads creatius)", "IMAGE_GEN", true)
     );
 
     /**

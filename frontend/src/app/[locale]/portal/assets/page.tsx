@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
+import Image from 'next/image';
 import { listAssets, uploadAsset, deleteAsset, type AssetResponse } from '@/services/assets';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
@@ -121,11 +122,12 @@ export default function AssetsPage() {
                 {/* Miniatura */}
                 <div className="aspect-square bg-bg-1 relative flex items-center justify-center">
                   {isImage(asset.mimeType) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={asset.thumbnailUrl ?? asset.url}
                       alt={asset.originalName}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                      style={{ objectFit: 'cover' }}
                     />
                   ) : (
                     <I.Box size={32} stroke="#64748b" />

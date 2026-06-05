@@ -163,6 +163,14 @@ function superAdminGroups(t: T): NavGroup[] {
       ],
     },
     {
+      label: 'Plataforma AMG',
+      items: [
+        { label: 'Resum',        icon: I.Zap,      href: '/portal/platform' },
+        { label: 'Meta Ads AMG', icon: I.Trending, href: '/portal/platform/meta-ads' },
+        { label: 'Configuració', icon: I.Settings, href: '/portal/platform/config' },
+      ],
+    },
+    {
       label: t('groups.system'),
       items: [
         { label: t('items.catalog'), icon: I.Box, href: '/portal/admin/vault' },
@@ -171,6 +179,7 @@ function superAdminGroups(t: T): NavGroup[] {
         { label: t('items.backup'), icon: I.Database, href: '/portal/admin/backup' },
         { label: t('items.infraOps'), icon: I.Server, href: '/portal/admin/infraops' },
         { label: t('items.apiKeys'), icon: I.Key, href: '/portal/admin/config' },
+        { label: 'Reunions', icon: I.Calendar, href: '/portal/admin/booking' },
       ],
     },
   ];

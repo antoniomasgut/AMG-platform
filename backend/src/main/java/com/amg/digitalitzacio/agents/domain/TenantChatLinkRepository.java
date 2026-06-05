@@ -11,5 +11,6 @@ public interface TenantChatLinkRepository extends JpaRepository<TenantChatLink, 
     Optional<TenantChatLink> findByTelegramChatId(Long telegramChatId);
     Optional<TenantChatLink> findByWhatsappMetaPhoneNumberId(String phoneNumberId);
     Optional<TenantChatLink> findByEmailAddressIgnoreCase(String emailAddress);
+    Optional<TenantChatLink> findByMetaPageId(String metaPageId);
     void deleteByTenantId(UUID tenantId);
 }

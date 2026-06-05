@@ -280,7 +280,7 @@ class EngineControllerTest {
                 .title("Test").slug("test-contact")
                 .status(LandingStatus.PUBLISHED).build());
 
-        var request = new ContactRequest("Joan Servera", "joan@example.com", "+34600123456", "Vull pressupost", true);
+        var request = new ContactRequest("Joan Servera", "joan@example.com", "+34600123456", "Vull pressupost", true, null, null, null);
 
         mockMvc.perform(post("/api/v1/engine/render/test-contact/contact")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -360,7 +360,7 @@ class EngineControllerTest {
                 .title("Test").slug("test-noconsent")
                 .status(LandingStatus.PUBLISHED).build());
 
-        var request = new ContactRequest("Joan", "joan@test.com", null, "Sense consent", false);
+        var request = new ContactRequest("Joan", "joan@test.com", null, "Sense consent", false, null, null, null);
 
         mockMvc.perform(post("/api/v1/engine/render/test-noconsent/contact")
                 .contentType(MediaType.APPLICATION_JSON)

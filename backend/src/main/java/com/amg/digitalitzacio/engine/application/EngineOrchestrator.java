@@ -386,9 +386,12 @@ public class EngineOrchestrator implements EngineService {
                 crmLead.setName(request.name() != null ? request.name() : request.email());
                 crmLead.setEmail(request.email());
                 crmLead.setPhone(request.phone());
-                crmLead.setSource(LeadSource.LANDING_FORM);
+                crmLead.setSource(request.utmSource() != null ? inferSource(request.utmSource()) : LeadSource.LANDING_FORM);
                 crmLead.setStage(PipelineStage.NEW);
                 crmLead.setLastContactAt(Instant.now());
+                crmLead.setUtmSource(request.utmSource());
+                crmLead.setUtmMedium(request.utmMedium());
+                crmLead.setUtmCampaign(request.utmCampaign());
                 crmLead.setNotes("Formulari de contacte: " + landing.getTitle()
                         + (request.message() != null ? "\n\n" + request.message() : ""));
                 leadRepository.save(crmLead);
@@ -662,12 +665,18 @@ public class EngineOrchestrator implements EngineService {
         var bizType      = styles != null ? styles.getOrDefault("businessType", "LocalBusiness") : "LocalBusiness";
         var gaId         = styles != null ? styles.getOrDefault("gaId", "")            : "";
         var customCss    = styles != null ? styles.getOrDefault("customCss", "")       : "";
+        // Idioma de la pàgina (ca per defecte)
+        var lang         = styles != null ? styles.getOrDefault("language", "ca").toString() : "ca";
+        // URL base de les pàgines legals (per defecte apunta al portal AMG)
+        var legalBase    = styles != null ? styles.getOrDefault("legalBaseUrl", "https://amgdl.com/ca/legal").toString() : "https://amgdl.com/ca/legal";
         var waNumber     = waRaw.toString().replaceAll("[^0-9+]", "");
         var chatEnabled  = styles != null && Boolean.TRUE.equals(styles.get("chatEnabled"));
         var chatBizName  = styles != null ? styles.getOrDefault("chatBusinessName", landing.getTitle()).toString() : landing.getTitle();
 
-        var blocksHtml = new StringBuilder();
+        // Detectar imatge hero per a preload (millora LCP)
+        String heroImageUrl = "";
         var blocks = content != null ? content.get("blocks") : null;
+        var blocksHtml = new StringBuilder();
         boolean hasChatCta = false;
         if (blocks instanceof List<?> blockList) {
             for (var block : blockList) {
@@ -675,26 +684,51 @@ public class EngineOrchestrator implements EngineService {
                     @SuppressWarnings("unchecked")
                     var blockMap = (Map<String, Object>) block;
                     if ("chat-cta".equals(blockMap.get("type"))) hasChatCta = true;
-                    blocksHtml.append(renderBlock(blockMap, sv));
+                    // Capturar imatge del primer hero per a preload
+                    if (heroImageUrl.isBlank() && "hero".equals(blockMap.get("type"))) {
+                        var bp = blockMap.getOrDefault("props", Map.of());
+                        if (bp instanceof Map<?,?> bpm) {
+                            Object bgImage = bpm.get("bgImage");
+                            Object bgImageUrl = bpm.get("bgImageUrl");
+                            Object bi = bgImage != null ? bgImage : (bgImageUrl != null ? bgImageUrl : "");
+                            if (bi != null && !bi.toString().isBlank()) heroImageUrl = bi.toString();
+                        }
+                    }
+                    blocksHtml.append(renderBlock(blockMap, sv, landing.getSlug()));
                 }
             }
         }
 
+        // Schema.org sempre present (nom i URL com a mínim)
         var schemaJson   = buildSchemaOrg(landing.getTitle(), publicUrl, phone.toString(), address.toString(), bizType.toString());
         var waButton     = buildWhatsAppButton(waNumber);
-        var gaScript     = buildGa4Script(gaId.toString());
+        // GA4: s'injecta però s'activa NOMÉS quan l'usuari accepta cookies
+        var gaScript     = buildGa4ScriptDeferred(gaId.toString());
         var chatWidget   = (chatEnabled || hasChatCta) ? buildChatWidget(landing.getSlug(), sv.primary(), chatBizName) : "";
+        var cookieBanner = buildCookieBanner(sv.primary(), legalBase);
+        final String heroPreload = heroImageUrl.isBlank() ? "" :
+                "<link rel=\"preload\" as=\"image\" href=\"" + escapeHtml(heroImageUrl) + "\">";
 
-        return "<!DOCTYPE html><html lang=\"ca\"><head>" +
+        return "<!DOCTYPE html><html lang=\"" + escapeHtml(lang) + "\"><head>" +
                "<meta charset=\"UTF-8\">" +
                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
+               "<meta name=\"robots\" content=\"index, follow\">" +
                (landing.getMetaDescription() != null ? "<meta name=\"description\" content=\"" + escapeHtml(landing.getMetaDescription()) + "\">" : "") +
+               // Open Graph
                "<meta property=\"og:title\" content=\"" + escapeHtml(landing.getTitle()) + "\">" +
                (landing.getMetaDescription() != null ? "<meta property=\"og:description\" content=\"" + escapeHtml(landing.getMetaDescription()) + "\">" : "") +
                (landing.getOgImageUrl() != null ? "<meta property=\"og:image\" content=\"" + escapeHtml(landing.getOgImageUrl()) + "\">" : "") +
                "<meta property=\"og:url\" content=\"" + escapeHtml(publicUrl) + "\">" +
                "<meta property=\"og:type\" content=\"website\">" +
+               "<meta property=\"og:locale\" content=\"" + escapeHtml(lang) + "_ES\">" +
+               // Twitter Card
+               "<meta name=\"twitter:card\" content=\"summary_large_image\">" +
+               "<meta name=\"twitter:title\" content=\"" + escapeHtml(landing.getTitle()) + "\">" +
+               (landing.getMetaDescription() != null ? "<meta name=\"twitter:description\" content=\"" + escapeHtml(landing.getMetaDescription()) + "\">" : "") +
+               (landing.getOgImageUrl() != null ? "<meta name=\"twitter:image\" content=\"" + escapeHtml(landing.getOgImageUrl()) + "\">" : "") +
                "<link rel=\"canonical\" href=\"" + escapeHtml(publicUrl) + "\">" +
+               // Preload imatge hero (millora LCP)
+               heroPreload +
                "<title>" + escapeHtml(landing.getTitle()) + "</title>" +
                googleFontsLink +
                gaScript +
@@ -702,18 +736,20 @@ public class EngineOrchestrator implements EngineService {
                "<style>" +
                buildGlobalCss(sv) +
                buildWhatsAppCss() +
+               buildCookieBannerCss() +
                (customCss.toString().isBlank() ? "" : customCss.toString()) +
                "</style>" +
                "</head><body>" +
                blocksHtml +
                "<footer class=\"legal-footer\"><div class=\"w\">" +
                "<p>&copy; " + java.time.Year.now() + " " + escapeHtml(landing.getTitle()) + ". Tots els drets reservats.</p>" +
-               "<p><a href=\"/legal/avis-legal\">Avís legal</a> &middot; " +
-               "<a href=\"/legal/politica-de-privacitat\">Política de privacitat</a> &middot; " +
-               "<a href=\"/legal/politica-de-cookies\">Política de cookies</a></p>" +
+               "<p><a href=\"" + escapeHtml(legalBase) + "/avis-legal\" target=\"_blank\" rel=\"noopener\">Av&iacute;s legal</a> &middot; " +
+               "<a href=\"" + escapeHtml(legalBase) + "/politica-privacitat\" target=\"_blank\" rel=\"noopener\">Pol&iacute;tica de privacitat</a> &middot; " +
+               "<a href=\"" + escapeHtml(legalBase) + "/cookies\" target=\"_blank\" rel=\"noopener\">Pol&iacute;tica de cookies</a></p>" +
                "</div></footer>" +
                waButton +
                chatWidget +
+               cookieBanner +
                buildScrollAnimScript() +
                "</body></html>";
     }
@@ -743,11 +779,31 @@ public class EngineOrchestrator implements EngineService {
                "</svg></a>";
     }
 
-    private String buildGa4Script(String gaId) {
+    /**
+     * GA4: el codi es defineix però s'activa NOMES quan el visitant accepta cookies (consent mode).
+     * Compleix RGPD/ePrivacy: no s'envia cap dada a Google fins a consentiment explícit.
+     */
+    private String buildGa4ScriptDeferred(String gaId) {
         if (gaId == null || gaId.isBlank() || !gaId.startsWith("G-")) return "";
-        return "<script async src=\"https://www.googletagmanager.com/gtag/js?id=" + escapeHtml(gaId) + "\"></script>" +
-               "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}" +
-               "gtag('js',new Date());gtag('config','" + escapeHtml(gaId) + "');</script>";
+        String escapedId = escapeHtml(gaId);
+        return "<script>" +
+               // Inicialitzar dataLayer i gtag en mode 'denied' per defecte
+               "window.dataLayer=window.dataLayer||[];" +
+               "function gtag(){dataLayer.push(arguments)}" +
+               "gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});" +
+               // Funció que s'activa quan s'accepten les cookies
+               "window.__amgActivateGa=function(){" +
+               "var s=document.createElement('script');" +
+               "s.async=true;" +
+               "s.src='https://www.googletagmanager.com/gtag/js?id=" + escapedId + "';" +
+               "document.head.appendChild(s);" +
+               "gtag('js',new Date());" +
+               "gtag('config','" + escapedId + "');" +
+               "gtag('consent','update',{analytics_storage:'granted'});" +
+               "};" +
+               // Si l'usuari ja havia acceptat prèviament, activar ara directament
+               "if(localStorage.getItem('amg_cookie_consent')==='all'){window.__amgActivateGa();}" +
+               "</script>";
     }
 
     private String buildWhatsAppCss() {
@@ -789,7 +845,7 @@ public class EngineOrchestrator implements EngineService {
                "document.querySelectorAll('[data-anim]').forEach(function(el){io.observe(el)})})();</script>";
     }
 
-    private String renderBlock(Map<String, Object> block, StyleVars s) {
+    private String renderBlock(Map<String, Object> block, StyleVars s, String slug) {
         var type = String.valueOf(block.getOrDefault("type", ""));
         var rawProps = block.getOrDefault("props", Map.of());
         Map<String, Object> props;
@@ -804,7 +860,7 @@ public class EngineOrchestrator implements EngineService {
             case "hero"          -> renderHero(props, s);
             case "text"          -> renderText(props, s);
             case "services"      -> renderServices(props, s);
-            case "contact-form"  -> renderContactForm(props, s);
+            case "contact-form"  -> renderContactForm(props, s, slug);
             case "faq"           -> renderFaq(props, s);
             case "cta"           -> renderCta(props, s);
             case "chat-cta"      -> renderChatCta(props, s);
@@ -894,10 +950,16 @@ public class EngineOrchestrator implements EngineService {
                "<p style=\"margin:0 0 12px;font-size:.82rem;color:#6b7280\">Deixa'ns el teu nom i telèfon perquè puguem contactar-te si cal.</p>" +
                "<input id=\"amg-pc-name\" type=\"text\" placeholder=\"El teu nom *\" maxlength=\"100\" " +
                "style=\"border:1px solid #e0e0e0;border-radius:8px;padding:10px 14px;font-size:.88rem;outline:none;width:100%;box-sizing:border-box\" />" +
-               "<input id=\"amg-pc-phone\" type=\"tel\" placeholder=\"Telèfon *\" maxlength=\"20\" " +
+               "<input id=\"amg-pc-phone\" type=\"tel\" placeholder=\"Tel&egrave;fon *\" maxlength=\"20\" " +
                "style=\"border:1px solid #e0e0e0;border-radius:8px;padding:10px 14px;font-size:.88rem;outline:none;width:100%;box-sizing:border-box\" " +
                "onkeydown=\"if(event.key==='Enter')submitPreChat()\" />" +
-               "<div id=\"amg-pc-err\" style=\"color:#e53e3e;font-size:.8rem;display:none\">Omple els camps obligatoris.</div>" +
+               // Consentiment RGPD obligatori al xat
+               "<div style=\"display:flex;align-items:flex-start;gap:8px;margin-top:4px\">" +
+               "<input id=\"amg-pc-consent\" type=\"checkbox\" style=\"width:auto;margin-top:3px;flex-shrink:0;cursor:pointer\" />" +
+               "<label for=\"amg-pc-consent\" style=\"font-size:.78rem;color:#6b7280;cursor:pointer;line-height:1.4\">" +
+               "Accepto que les meves dades siguin tractades per atendre la meva consulta.</label>" +
+               "</div>" +
+               "<div id=\"amg-pc-err\" style=\"color:#e53e3e;font-size:.8rem;display:none\">Omple els camps obligatoris i accepta el tractament de dades.</div>" +
                "<button onclick=\"submitPreChat()\" " +
                "style=\"background:" + pc + ";color:#fff;border:none;border-radius:8px;padding:12px;font-size:.9rem;" +
                "font-weight:600;cursor:pointer;width:100%\">Iniciar xat &rarr;</button>" +
@@ -944,7 +1006,8 @@ public class EngineOrchestrator implements EngineService {
                "var name=document.getElementById('amg-pc-name').value.trim();" +
                "var phone=document.getElementById('amg-pc-phone').value.trim();" +
                "var err=document.getElementById('amg-pc-err');" +
-               "if(!name||!phone){err.style.display='block';return;}" +
+               "var consent=document.getElementById('amg-pc-consent').checked;" +
+               "if(!name||!phone||!consent){err.style.display='block';return;}" +
                "err.style.display='none';" +
                "showChat();" +
                "startSession(name,phone);};" +
@@ -989,6 +1052,50 @@ public class EngineOrchestrator implements EngineService {
         return "#374151";
     }
 
+    /** Banner de cookies RGPD per a microlandings — CSS injectat al <style> */
+    private String buildCookieBannerCss() {
+        return "#amg-cookie-banner{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#1e293b;color:#e2e8f0;" +
+               "padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;" +
+               "box-shadow:0 -4px 24px rgba(0,0,0,.35);font-size:.85rem;line-height:1.5}" +
+               "#amg-cookie-banner a{color:#93c5fd;text-decoration:underline}" +
+               "#amg-cookie-banner.hidden{display:none}" +
+               ".amg-cookie-btn{padding:10px 20px;border:none;border-radius:6px;font-weight:600;" +
+               "font-size:.82rem;cursor:pointer;white-space:nowrap}" +
+               ".amg-cookie-accept{background:var(--p,#2563eb);color:#fff}" +
+               ".amg-cookie-reject{background:transparent;color:#94a3b8;border:1px solid #475569}" +
+               "@media(max-width:640px){#amg-cookie-banner{flex-direction:column;align-items:flex-start}}";
+    }
+
+    /** Widget HTML del banner de cookies + JavaScript de gestió del consentiment */
+    private String buildCookieBanner(String primaryColor, String legalBase) {
+        return "<div id=\"amg-cookie-banner\">" +
+               "<p style=\"margin:0;max-width:640px\">" +
+               "Fem servir <strong>cookies t&egrave;cniques</strong> i, si ens ho permets, cookies <strong>anal&iacute;tiques</strong> " +
+               "per millorar l'experi&egrave;ncia. " +
+               "<a href=\"" + escapeHtml(legalBase) + "/cookies\" target=\"_blank\" rel=\"noopener\">M&eacute;s informaci&oacute;</a>." +
+               "</p>" +
+               "<div style=\"display:flex;gap:10px;flex-shrink:0\">" +
+               "<button class=\"amg-cookie-btn amg-cookie-reject\" onclick=\"amgCookieReject()\">Nomes essencials</button>" +
+               "<button class=\"amg-cookie-btn amg-cookie-accept\" onclick=\"amgCookieAccept()\">Acceptar-ho tot</button>" +
+               "</div></div>" +
+               "<script>" +
+               "(function(){" +
+               "var banner=document.getElementById('amg-cookie-banner');" +
+               // Si ja hi ha consentiment guardat, amagar el banner
+               "if(localStorage.getItem('amg_cookie_consent')){banner.classList.add('hidden');return;}" +
+               "window.amgCookieAccept=function(){" +
+               "localStorage.setItem('amg_cookie_consent','all');" +
+               "banner.classList.add('hidden');" +
+               // Activar GA4 si estava configurat
+               "if(typeof window.__amgActivateGa==='function')window.__amgActivateGa();" +
+               "};" +
+               "window.amgCookieReject=function(){" +
+               "localStorage.setItem('amg_cookie_consent','necessary');" +
+               "banner.classList.add('hidden');" +
+               "};" +
+               "})();</script>";
+    }
+
     private String escapeJs(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "");
@@ -1029,18 +1136,95 @@ public class EngineOrchestrator implements EngineService {
         return html.toString();
     }
 
-    private String renderContactForm(Map<String, Object> props, StyleVars s) {
+    private String renderContactForm(Map<String, Object> props, StyleVars s, String slug) {
         var title = str(props, "title", "Contacte");
         return "<section class=\"sec\" id=\"contact\" style=\"background:" + s.accent() + "10\">" +
                "<div class=\"w\" style=\"max-width:560px\">" +
                "<h2 class=\"sec-title\" data-anim>" + escapeHtml(title) + "</h2>" +
                "<form action=\"#\" method=\"POST\" onsubmit=\"return false\" style=\"background:#fff;padding:32px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08)\">" +
-               "<input name=\"nom\" placeholder=\"Nom i cognoms\" type=\"text\">" +
-               "<input name=\"email\" placeholder=\"Correu electrònic\" type=\"email\">" +
+               "<input name=\"nom\" placeholder=\"Nom i cognoms *\" type=\"text\" required>" +
+               "<input name=\"email\" placeholder=\"Correu electrònic *\" type=\"email\" required>" +
                "<input name=\"telefon\" placeholder=\"Telèfon\" type=\"tel\">" +
                "<textarea name=\"missatge\" placeholder=\"El vostre missatge\" rows=\"4\" style=\"resize:vertical\"></textarea>" +
+               "<div style=\"margin-bottom:16px;display:flex;align-items:flex-start;gap:8px\">" +
+               "<input id=\"amg-privacy-consent\" type=\"checkbox\" required style=\"width:auto;margin-top:6px;cursor:pointer;margin-bottom:0\">" +
+               "<label for=\"amg-privacy-consent\" style=\"font-size:0.85rem;color:#4b5563;cursor:pointer\">" +
+               "Accepto la <a href=\"/legal/politica-de-privacitat\" target=\"_blank\" style=\"color:" + s.primary() + ";text-decoration:underline\">pol&iacute;tica de privacitat</a> i l'ús de les meves dades per a aquesta consulta." +
+               "</label></div>" +
                "<button type=\"submit\" style=\"width:100%;padding:14px;background:" + s.primary() + ";color:#fff;border:none;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer\">Enviar missatge</button>" +
-               "</form></div></section>";
+               "</form></div>" +
+               "<script>" +
+               "(function() {" +
+               "  var form = document.querySelector('#contact form');" +
+               "  if (!form) return;" +
+               "  var statusDiv = document.createElement('div');" +
+               "  statusDiv.style.marginTop = '16px';" +
+               "  statusDiv.style.fontSize = '0.9rem';" +
+               "  statusDiv.style.fontWeight = '600';" +
+               "  statusDiv.style.display = 'none';" +
+               "  form.appendChild(statusDiv);" +
+               "  var btn = form.querySelector('button[type=\"submit\"]');" +
+               "  var getUtm = function(name) {" +
+               "    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);" +
+               "    var val = match && decodeURIComponent(match[1].replace(/\\+/g, ' '));" +
+               "    if (val) {" +
+               "      sessionStorage.setItem('amg_' + name, val);" +
+               "      return val;" +
+               "    }" +
+               "    return sessionStorage.getItem('amg_' + name);" +
+               "  };" +
+               "  btn.onclick = function(e) {" +
+               "    e.preventDefault();" +
+               "    var name = form.querySelector('input[name=\"nom\"]').value.trim();" +
+               "    var email = form.querySelector('input[name=\"email\"]').value.trim();" +
+               "    var phone = form.querySelector('input[name=\"telefon\"]').value.trim();" +
+               "    var msg = form.querySelector('textarea[name=\"missatge\"]').value.trim();" +
+               "    var consent = form.querySelector('#amg-privacy-consent').checked;" +
+               "    if (!name || !email || !consent) {" +
+               "      statusDiv.style.color = '#e53e3e';" +
+               "      statusDiv.textContent = 'Si us plau, omple els camps obligatoris i accepta la política de privacitat.';" +
+               "      statusDiv.style.display = 'block';" +
+               "      return;" +
+               "    }" +
+               "    btn.disabled = true;" +
+               "    btn.textContent = 'Enviant...';" +
+               "    statusDiv.style.display = 'none';" +
+               "    var payload = {" +
+               "      name: name," +
+               "      email: email," +
+               "      phone: phone," +
+               "      message: msg," +
+               "      consent: consent," +
+               "      utmSource: getUtm('utm_source')," +
+               "      utmMedium: getUtm('utm_medium')," +
+               "      utmCampaign: getUtm('utm_campaign')" +
+               "    };" +
+               "    fetch('/api/v1/engine/render/" + escapeJs(slug) + "/contact', {" +
+               "      method: 'POST'," +
+               "      headers: { 'Content-Type': 'application/json' }," +
+               "      body: JSON.stringify(payload)" +
+               "    })" +
+               "    .then(function(res) {" +
+               "      if (!res.ok) throw new Error();" +
+               "      return res.json();" +
+               "    })" +
+               "    .then(function(d) {" +
+               "      statusDiv.style.color = '#10b981';" +
+               "      statusDiv.textContent = d.message || 'Missatge rebut correctament.';" +
+               "      statusDiv.style.display = 'block';" +
+               "      form.reset();" +
+               "      btn.textContent = 'Missatge enviat!';" +
+               "    })" +
+               "    .catch(function() {" +
+               "      btn.disabled = false;" +
+               "      btn.textContent = 'Enviar missatge';" +
+               "      statusDiv.style.color = '#e53e3e';" +
+               "      statusDiv.textContent = 'S\\'ha produït un error en enviar el missatge. Intenta-ho de nou.';" +
+               "      statusDiv.style.display = 'block';" +
+               "    });" +
+               "  };" +
+               "})();" +
+               "</script></section>";
     }
 
     @SuppressWarnings("unchecked")
@@ -1313,5 +1497,15 @@ public class EngineOrchestrator implements EngineService {
         if (value == null) return LandingType.MICRO;
         try { return LandingType.valueOf(value.toUpperCase()); }
         catch (IllegalArgumentException e) { return LandingType.MICRO; }
+    }
+
+    private LeadSource inferSource(String utmSource) {
+        if (utmSource == null) return LeadSource.LANDING_FORM;
+        return switch (utmSource.toLowerCase()) {
+            case "facebook", "fb"  -> LeadSource.FACEBOOK;
+            case "instagram", "ig" -> LeadSource.INSTAGRAM;
+            case "meta"            -> LeadSource.META_ADS;
+            default                -> LeadSource.LANDING_FORM;
+        };
     }
 }

@@ -67,6 +67,7 @@ export interface AgendaConfig {
   service_zone?: string;
   estimated_pickup_days?: number;
   working_hours: Record<string, WorkDayConfig>;
+  holidays: string[];
   client_questions: ClientQuestion[];
   confirmation_template: string;
 }
@@ -91,12 +92,14 @@ const BASE_AGENDA: Omit<AgendaConfig, 'slot_duration_minutes' | 'buffer_minutes'
   max_days_advance: 30,
   min_notice_hours: 2,
   working_hours: BASE_WORKING_HOURS,
+  holidays: [],
 };
 
 export const DEFAULT_AGENDA: AgendaConfig = {
   ...BASE_AGENDA,
   slot_duration_minutes: 60,
   buffer_minutes: 0,
+  holidays: [],
   client_questions: [],
   confirmation_template: "Cita confirmada per al {{data}} a les {{hora}}. T'esperem!",
 };

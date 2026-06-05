@@ -133,6 +133,73 @@ function QuestionsBuilder({ questions, onChange }: {
   );
 }
 
+// ─── Holidays manager ─────────────────────────────────────────
+
+const MALLORCA_HOLIDAYS_2026 = [
+  '2026-01-01', '2026-01-06', '2026-04-02', '2026-04-03',
+  '2026-05-01', '2026-07-28', '2026-08-15', '2026-10-12',
+  '2026-11-01', '2026-12-06', '2026-12-08', '2026-12-25',
+];
+
+function HolidaysManager({ holidays, onChange }: {
+  holidays: string[];
+  onChange: (h: string[]) => void;
+}) {
+  const [dateInput, setDateInput] = React.useState('');
+
+  const add = () => {
+    const d = dateInput.trim();
+    if (!d || holidays.includes(d)) return;
+    onChange([...holidays].concat(d).sort());
+    setDateInput('');
+  };
+
+  const remove = (d: string) => onChange(holidays.filter(h => h !== d));
+
+  const preload = () => {
+    const merged = Array.from(new Set([...holidays, ...MALLORCA_HOLIDAYS_2026])).sort();
+    onChange(merged);
+  };
+
+  const formatDate = (d: string) => {
+    try {
+      return new Date(d + 'T00:00:00').toLocaleDateString('ca-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch { return d; }
+  };
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-3">
+        <input
+          type="date"
+          className={`${inp} flex-1`}
+          value={dateInput}
+          onChange={e => setDateInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), add())}
+        />
+        <AMGButton type="button" variant="secondary" size="sm" onClick={add}>Afegir</AMGButton>
+      </div>
+      {holidays.length > 0 ? (
+        <div className="space-y-1 mb-3 max-h-48 overflow-y-auto">
+          {holidays.map(d => (
+            <div key={d} className="flex items-center justify-between bg-surface-base rounded px-3 py-1.5">
+              <span className="f-mono text-xs text-ink-1">{formatDate(d)}</span>
+              <button type="button" onClick={() => remove(d)} className="text-ink-3 hover:text-red-400 transition-colors ml-2">
+                <I.X size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="f-mono text-xs text-ink-3 mb-3">Cap dia marcat com a festiu.</p>
+      )}
+      <AMGButton type="button" variant="ghost" size="sm" onClick={preload}>
+        + Pre-carregar festius Mallorca 2026
+      </AMGButton>
+    </div>
+  );
+}
+
 // ─── AGENDA FORM ───────────────────────────────────────────────
 
 const AGENDA_MODE_LABELS: Record<AgendaMode, { title: string; slotLabel: string; confirmLabel: string; zoneLabel?: string }> = {
@@ -158,16 +225,18 @@ function AgendaForm({ tenantId, sector }: { tenantId: string; sector?: string | 
   const sectorDefaults = getAgendaDefaults(sector);
   const [cfg, setCfg] = useState<AgendaConfig>(sectorDefaults);
   const [questions, setQuestions] = useState<ClientQuestion[]>(sectorDefaults.client_questions);
+  const [holidays, setHolidays] = useState<string[]>([]);
 
   useEffect(() => {
     const stored = parseConfig<AgendaConfig>(raw, sectorDefaults);
     setCfg(stored);
     setQuestions(stored.client_questions ?? []);
+    setHolidays(stored.holidays ?? []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [raw]);
 
   const mut = useMutation({
-    mutationFn: () => saveNexeConfig(tenantId, 'AGENDA', { ...cfg, client_questions: questions }),
+    mutationFn: () => saveNexeConfig(tenantId, 'AGENDA', { ...cfg, client_questions: questions, holidays }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['nexe-config', tenantId, 'AGENDA'] }),
   });
 
@@ -301,6 +370,15 @@ function AgendaForm({ tenantId, sector }: { tenantId: string; sector?: string | 
       {/* Working hours */}
       <SectionCard title="Horari d'atenció">
         <WorkingHoursGrid hours={cfg.working_hours} onChange={setDay} />
+      </SectionCard>
+
+      {/* Holidays */}
+      <SectionCard title="Festius i dies tancats">
+        <p className="f-mono text-xs text-ink-3 mb-3">
+          Dies en què el negoci no obre. El bot no oferirà cites en aquestes dates.
+          Pots afegir-les manualment o via <code className="bg-surface-base px-1 rounded text-[10px]">/festiu YYYY-MM-DD</code> al grup de Telegram.
+        </p>
+        <HolidaysManager holidays={holidays} onChange={setHolidays} />
       </SectionCard>
 
       {/* Slot configuration */}

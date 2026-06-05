@@ -1,6 +1,7 @@
 'use client';
 
 import type { FC } from 'react';
+import Image from 'next/image';
 import DOMPurify from 'dompurify';
 import type { Block, PageStyles } from '@/services/factory';
 
@@ -184,9 +185,9 @@ export const BlockRenderer: FC<Props> = ({
               />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 12 }}>
                 {placeholders.map((img, i) => (
-                  <div key={i} style={{ aspectRatio: '1', borderRadius: radius, overflow: 'hidden', background: '#f1f5f9' }}>
+                  <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: radius, overflow: 'hidden', background: '#f1f5f9' }}>
                     {img
-                      ? <img src={img} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ? <Image src={img} alt="" fill sizes="(max-width: 768px) 50vw, 33vw" style={{ objectFit: 'cover' }} />
                       : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>Foto</div>
                     }
                   </div>
@@ -426,7 +427,7 @@ export const BlockRenderer: FC<Props> = ({
                 {items.map((item, i) => (
                   <div key={i} style={{ textAlign: 'center', background: '#fff', borderRadius: radius, padding: '28px 20px', boxShadow: '0 2px 12px rgba(0,0,0,.08)' }}>
                     {item.photo
-                      ? <img src={item.photo} alt={item.name} style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', margin: '0 auto 16px' }} />
+                      ? <div style={{ position: 'relative', width: 80, height: 80, margin: '0 auto 16px' }}><Image src={item.photo} alt={item.name} fill sizes="80px" style={{ borderRadius: '50%', objectFit: 'cover' }} /></div>
                       : <div style={{ width: 80, height: 80, borderRadius: '50%', background: `${primary}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 28, color: primary }}>👤</div>
                     }
                     <h3 style={{ fontFamily: fontH, fontWeight: 700, marginBottom: 4, color: text }}>{item.name}</h3>

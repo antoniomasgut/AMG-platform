@@ -7,6 +7,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -59,6 +60,15 @@ public class Tenant {
     @Column(name = "contracted_phases", columnDefinition = "TEXT")
     private String contractedPhases; // comma-separated: "F1", "F2,F4", "F1,F3,F5"
 
+    @Column(name = "active_phases", columnDefinition = "TEXT")
+    private String activePhases; // null = totes les contractades actives; altrament sobreescriu
+
+    /** Comprova si una fase és operativa. Mira activePhases; si null, consulta contractedPhases. */
+    public boolean isPhaseActive(String phase) {
+        var source = activePhases != null ? activePhases : contractedPhases;
+        return source != null && source.contains(phase);
+    }
+
     @Column(name = "agent_system_prompt", columnDefinition = "TEXT")
     private String agentSystemPrompt;
 
@@ -69,6 +79,15 @@ public class Tenant {
     @Column(nullable = false)
     @Builder.Default
     private Boolean isFree = false;
+
+    @Column(name = "billing_start_date")
+    private LocalDate billingStartDate;
+
+    @Column(name = "implementation_delivered_at")
+    private Instant implementationDeliveredAt;
+
+    @Column(name = "onboarding_completed_at")
+    private Instant onboardingCompletedAt;
 
     @CreatedDate
     @Column(updatable = false)

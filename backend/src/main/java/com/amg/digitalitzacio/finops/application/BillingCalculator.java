@@ -15,7 +15,10 @@ public class BillingCalculator {
 
     private final TenantServiceRepository tenantServiceRepository;
 
-    public BigDecimal calculateMonthlyAmount(UUID tenantId, String period) {
+    public BigDecimal calculateMonthlyAmount(UUID tenantId, String period, LocalDate billingStartDate) {
+        if (billingStartDate == null) {
+            return BigDecimal.ZERO;
+        }
         // period = "2026-05"
         var parts = period.split("-");
         int year = Integer.parseInt(parts[0]);
@@ -32,19 +35,18 @@ public class BillingCalculator {
             if (ts.getMonthlyPriceLocked() == null || ts.getMonthlyPriceLocked().compareTo(BigDecimal.ZERO) == 0)
                 continue;
 
-            // Si activatedAt és dins el periode, calcular pro-rata
-            if (ts.getActivatedAt() != null) {
-                var activatedDate = ts.getActivatedAt().atZone(java.time.ZoneOffset.UTC).toLocalDate();
-                if (activatedDate.isAfter(periodEnd)) continue; // Activat el mes que ve, no compta
-                if (activatedDate.isAfter(periodStart)) {
-                    // Pro-rata: dies des d'activació fins a final de mes
-                    int activedays = periodEnd.getDayOfMonth() - activatedDate.getDayOfMonth() + 1;
-                    BigDecimal prorata = ts.getMonthlyPriceLocked()
-                            .multiply(BigDecimal.valueOf(activedays))
-                            .divide(BigDecimal.valueOf(daysInMonth), 2, RoundingMode.HALF_UP);
-                    total = total.add(prorata);
-                    continue;
-                }
+            // Use billingStartDate for pro-rata calculation
+            if (billingStartDate.isAfter(periodEnd)) {
+                return BigDecimal.ZERO; // No billing yet
+            }
+            if (billingStartDate.isAfter(periodStart)) {
+                // Pro-rata: days from billingStartDate to end of month
+                int activeDays = periodEnd.getDayOfMonth() - billingStartDate.getDayOfMonth() + 1;
+                BigDecimal prorata = ts.getMonthlyPriceLocked()
+                        .multiply(BigDecimal.valueOf(activeDays))
+                        .divide(BigDecimal.valueOf(daysInMonth), 2, RoundingMode.HALF_UP);
+                total = total.add(prorata);
+                continue;
             }
             total = total.add(ts.getMonthlyPriceLocked());
         }

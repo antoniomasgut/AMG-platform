@@ -24,9 +24,10 @@ import {
   type TelegramConfig,
   checkTenantDeletion, deleteTenant,
   type DeleteTenantCheck,
-  calcMonthly,
+  calcMonthly, markImplementationDelivered, markOnboardingCompleted, setBillingStartDate,
 } from '@/services/admin';
 import { createBudget, listBudgets, sendBudget, cancelBudget, updateBudget, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
+import { getMetaAdsConfig, saveMetaAdsConfig, syncMetaAds } from '@/services/meta-ads';
 import { getChannelUsageStats, type ChannelUsageStats } from '@/services/agents-conversational';
 import { SECTOR_CONTEXTS, getSectorContext } from '@/services/sector-contexts';
 import { listLandings } from '@/services/factory';
@@ -290,12 +291,14 @@ function getRequiredCredentials(slug: string, serviceType: string): string[] {
     .map(f => FIELD_LABELS[f.id] ?? f.id.replace(/_/g, ' '));
 }
 
-function SetupSection({ setup, tenantId, contractedPhases, onRefresh, onRemovePhase }: {
+function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefresh, onRemovePhase, onTogglePhase }: {
   setup: TenantSetup;
   tenantId: string;
   contractedPhases?: string[] | null;
+  activePhases?: string[] | null;
   onRefresh: () => void;
   onRemovePhase?: (phase: string) => void;
+  onTogglePhase?: (phase: string, enable: boolean) => void;
 }) {
   const hasProfiles = setup.profiles.length > 0;
   const hasAddons = setup.addons.length > 0;
@@ -413,26 +416,40 @@ function SetupSection({ setup, tenantId, contractedPhases, onRefresh, onRemovePh
               const phaseNum = parseInt(phase.replace('F', ''));
               const phaseName = NEXE_PHASE_NAMES[phaseNum] ?? phase;
               const phaseServices = NEXE_PHASE_SERVICES[phase] ?? [];
+              const isActive = (activePhases ?? contractedPhases ?? []).includes(phase);
               return (
-                <div key={phase} className="border border-border-base rounded p-3 space-y-2">
+                <div key={phase} className={`border rounded p-3 space-y-2 transition-opacity ${isActive ? 'border-border-base' : 'border-border-base opacity-50'}`}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="f-mono text-xs font-bold px-2 py-0.5 rounded border border-[rgba(255,107,0,0.4)] bg-[rgba(255,107,0,0.08)] text-accent-light">
+                      <span className={`f-mono text-xs font-bold px-2 py-0.5 rounded border ${isActive ? 'border-[rgba(255,107,0,0.4)] bg-[rgba(255,107,0,0.08)] text-accent-light' : 'border-border-base text-ink-3'}`}>
                         {phase}
                       </span>
                       <span className="text-sm font-medium text-ink-1">{phaseName}</span>
+                      {!isActive && <span className="f-mono text-[10px] text-ink-3 uppercase">inactiva</span>}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemovePhase(phase)}
-                      disabled={removingPhase === phase}
-                      title={`Eliminar ${phase}`}
-                      className="p-1 rounded text-ink-3 hover:text-red-400 hover:bg-[rgba(239,68,68,0.08)] transition disabled:opacity-40 flex-shrink-0"
-                    >
-                      {removingPhase === phase
-                        ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
-                        : <I.Trash size={13} />}
-                    </button>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {/* Toggle activa/desactiva */}
+                      <button
+                        type="button"
+                        onClick={() => onTogglePhase?.(phase, !isActive)}
+                        title={isActive ? `Desactivar ${phase}` : `Activar ${phase}`}
+                        className={`p-1 rounded transition ${isActive ? 'text-green-400 hover:text-green-300 hover:bg-green-500/10' : 'text-ink-3 hover:text-green-400 hover:bg-green-500/10'}`}
+                      >
+                        <I.Power size={13} />
+                      </button>
+                      {/* Eliminar del contracte */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhase(phase)}
+                        disabled={removingPhase === phase}
+                        title={`Eliminar ${phase} del contracte`}
+                        className="p-1 rounded text-ink-3 hover:text-red-400 hover:bg-[rgba(239,68,68,0.08)] transition disabled:opacity-40"
+                      >
+                        {removingPhase === phase
+                          ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
+                          : <I.Trash size={13} />}
+                      </button>
+                    </div>
                   </div>
                   {phaseServices.length > 0 && (
                     <div className="space-y-1.5">
@@ -928,6 +945,90 @@ function ContractSection({ tenant, onRefresh }: { tenant: TenantResponse; onRefr
   );
 }
 
+function LifecycleSection({ tenant, onRefresh }: { tenant: TenantResponse; onRefresh: () => void }) {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  
+  const handleDeliver = async () => {
+    if (!confirm('Estàs segur que vols marcar la implementació com a lliurada?')) return;
+    setSaving(true);
+    try {
+      await markImplementationDelivered(tenant.id);
+      toast('success', 'Implementació marcada com a lliurada');
+      onRefresh();
+    } catch {
+      toast('error', 'Error al actualitzar estat');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOnboarding = async () => {
+    if (!confirm("Estàs segur que vols marcar l'onboarding com a completat?")) return;
+    setSaving(true);
+    try {
+      await markOnboardingCompleted(tenant.id);
+      toast('success', 'Onboarding marcat com a completat');
+      onRefresh();
+    } catch {
+      toast('error', 'Error al actualitzar estat');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSetBillingDate = async () => {
+    const d = prompt("Introdueix la data d'inici de facturació (YYYY-MM-DD):", tenant.billingStartDate?.split('T')[0] ?? new Date().toISOString().split('T')[0]);
+    if (!d) return;
+    setSaving(true);
+    try {
+      await setBillingStartDate(tenant.id, d);
+      toast('success', 'Data de facturació actualitzada');
+      onRefresh();
+    } catch {
+      toast('error', 'Error al actualitzar la data');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fDate = (d: string | null) => d ? new Date(d).toLocaleDateString('ca-ES') : '--';
+
+  return (
+    <div className="p-4 sm:p-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="border border-border-base rounded p-4 flex flex-col items-start gap-3 bg-bg-0">
+          <div>
+            <div className="f-mono text-label uppercase tracking-wider text-ink-3">Data d'inici facturació</div>
+            <div className="text-sm font-semibold text-ink-0 mt-1">{fDate(tenant.billingStartDate)}</div>
+          </div>
+          <AMGButton size="sm" variant="ghost" disabled={saving} onClick={handleSetBillingDate}>Establir data</AMGButton>
+        </div>
+        
+        <div className="border border-border-base rounded p-4 flex flex-col items-start gap-3 bg-bg-0">
+          <div>
+            <div className="f-mono text-label uppercase tracking-wider text-ink-3">Implementació Lliurada</div>
+            <div className="text-sm font-semibold text-ink-0 mt-1">{fDate(tenant.implementationDeliveredAt)}</div>
+          </div>
+          <AMGButton size="sm" variant={tenant.implementationDeliveredAt ? "ghost" : "primary"} disabled={saving || !!tenant.implementationDeliveredAt} onClick={handleDeliver}>
+            {tenant.implementationDeliveredAt ? 'Lliurat' : 'Marcar Lliurat'}
+          </AMGButton>
+        </div>
+
+        <div className="border border-border-base rounded p-4 flex flex-col items-start gap-3 bg-bg-0">
+          <div>
+            <div className="f-mono text-label uppercase tracking-wider text-ink-3">Onboarding Completat</div>
+            <div className="text-sm font-semibold text-ink-0 mt-1">{fDate(tenant.onboardingCompletedAt)}</div>
+          </div>
+          <AMGButton size="sm" variant={tenant.onboardingCompletedAt ? "ghost" : "primary"} disabled={saving || !!tenant.onboardingCompletedAt || !tenant.implementationDeliveredAt} onClick={handleOnboarding}>
+            {tenant.onboardingCompletedAt ? 'Completat' : 'Marcar Completat'}
+          </AMGButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const MODE_LABELS: Record<string, { label: string; desc: string }> = {
   AUTO: { label: 'Automàtic', desc: 'L\'agent respon immediatament' },
   HYBRID: { label: 'Híbrid', desc: 'Respostes pendents d\'aprovació' },
@@ -1156,6 +1257,27 @@ function AgentConfigCard({ tenantId, agentSystemPrompt, sector }: { tenantId: st
                       save('wa-meta', () => updateAgentChannels(tenantId, { whatsappMetaPhoneNumberId: val }));
                   }}
                 />
+                {isLocked && <LockHint />}
+              </div>
+              <div className="space-y-1">
+                <label className="f-mono text-xs text-ink-2">Meta Page ID (Lead Ads)</label>
+                <input
+                  type="text"
+                  readOnly={isLocked}
+                  defaultValue={channels?.metaPageId ?? ''}
+                  key={`meta-page-${channels?.metaPageId ?? ''}`}
+                  placeholder="123456789012345"
+                  className={`w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none transition ${
+                    isLocked ? 'opacity-50 cursor-not-allowed' : 'focus:border-[#FF6B00]'
+                  }`}
+                  onBlur={(e) => {
+                    if (isLocked) return;
+                    const val = e.target.value.trim();
+                    if (val !== (channels?.metaPageId ?? ''))
+                      save('meta-page', () => updateAgentChannels(tenantId, { metaPageId: val }));
+                  }}
+                />
+                <p className="f-mono text-[10px] text-ink-3">Per rebre leads dels formularis natius de Facebook/Instagram</p>
                 {isLocked && <LockHint />}
               </div>
             </div>
@@ -1413,6 +1535,155 @@ function TelegramBotCard({ tenantId }: { tenantId: string }) {
 }
 
 type WaProvider = 'TWILIO' | 'META';
+
+function MetaAdsConfigCard({ tenantId }: { tenantId: string }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [adAccountId, setAdAccountId] = useState('');
+  const [accessToken, setAccessToken] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const { data: config, isLoading } = useQuery({
+    queryKey: ['meta-ads-config', tenantId],
+    queryFn: () => getMetaAdsConfig(tenantId),
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (config) setAdAccountId(config.adAccountId ?? '');
+  }, [config]);
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['meta-ads-config', tenantId] });
+
+  const handleToggle = async (enabled: boolean) => {
+    try {
+      await saveMetaAdsConfig(tenantId, { adAccountId: adAccountId || config?.adAccountId || '', enabled });
+      invalidate();
+      toast('success', enabled ? 'Meta Ads activat' : 'Meta Ads desactivat');
+    } catch {
+      toast('error', 'Error actualitzant la configuració');
+    }
+  };
+
+  const handleSave = async () => {
+    if (!adAccountId.trim()) { toast('error', 'L\'Ad Account ID és obligatori'); return; }
+    setSaving(true);
+    try {
+      await saveMetaAdsConfig(tenantId, {
+        adAccountId: adAccountId.trim(),
+        accessToken: accessToken.trim() || undefined,
+        enabled: config?.enabled ?? false,
+      });
+      setAccessToken('');
+      invalidate();
+      toast('success', 'Configuració Meta Ads desada');
+    } catch {
+      toast('error', 'Error desant la configuració');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await syncMetaAds(tenantId);
+      invalidate();
+      toast('success', 'Sincronització completada');
+    } catch {
+      toast('error', 'Error durant la sincronització');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  if (isLoading) return <div className="p-5 text-sm text-ink-3">Carregant...</div>;
+
+  return (
+    <div className="amg-card card-clip">
+      <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
+        <AMGSectionTitle eyebrow="Anuncis" title="Meta Ads Analytics" />
+        <div className="flex items-center gap-2">
+          {config?.enabled && (
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="f-mono text-[10px] uppercase text-ink-2 hover:text-accent border border-border-base hover:border-accent px-3 h-7 transition-colors disabled:opacity-50"
+            >
+              {syncing ? '…' : 'Sync ara'}
+            </button>
+          )}
+          <button
+            onClick={() => handleToggle(!config?.enabled)}
+            className={`f-mono text-[10px] uppercase px-3 h-7 border transition-colors ${
+              config?.enabled
+                ? 'bg-success/10 border-success/40 text-success hover:bg-success/20'
+                : 'border-border-base text-ink-3 hover:text-ink-1 hover:border-border-medium'
+            }`}
+          >
+            {config?.enabled ? 'Activat' : 'Desactivat'}
+          </button>
+        </div>
+      </div>
+      <div className="p-5 space-y-4">
+        <p className="text-xs text-ink-2">
+          Connecta el compte d&apos;anuncis de Meta per obtenir dades de despesa per campanya
+          i calcular el cost per lead (CPL) des de la pàgina d&apos;analítica.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="f-mono text-xs text-ink-2">Ad Account ID</label>
+            <input
+              type="text"
+              value={adAccountId}
+              onChange={e => setAdAccountId(e.target.value)}
+              placeholder="act_123456789 o 123456789"
+              className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]"
+            />
+            <p className="f-mono text-[10px] text-ink-3">Meta Ads Manager → Comptes d&apos;anuncis → ID</p>
+          </div>
+          <div className="space-y-1">
+            <label className="f-mono text-xs text-ink-2">
+              Access Token {config?.hasAccessToken && <span className="text-success ml-1">✓ configurat</span>}
+            </label>
+            <input
+              type="password"
+              value={accessToken}
+              onChange={e => setAccessToken(e.target.value)}
+              placeholder={config?.hasAccessToken ? '(deixa buit per mantenir)' : 'Token d\'accés de llarga durada'}
+              className="w-full bg-[rgba(255,255,255,0.04)] border border-border-base rounded px-3 py-2 text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00]"
+            />
+            <p className="f-mono text-[10px] text-ink-3">Marketing API: System User token o Page token amb ads_read</p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <AMGButton size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? 'Desant…' : 'Desar configuració'}
+          </AMGButton>
+          {config?.lastSyncAt && (
+            <span className="f-mono text-[10px] text-ink-3">
+              Darrera sync: {new Date(config.lastSyncAt).toLocaleString('ca-ES')}
+            </span>
+          )}
+        </div>
+
+        {config?.enabled && (
+          <div className="pt-3 border-t border-border-base">
+            <a
+              href={`meta-ads`}
+              className="f-mono text-xs text-accent-light hover:underline"
+            >
+              Gestionar campanyes →
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function WhatsAppMetaCard({ tenantId }: { tenantId: string }) {
   const qc = useQueryClient();
@@ -2745,6 +3016,21 @@ export default function TenantDetailPage() {
     }
   };
 
+  const handleTogglePhase = async (phase: string, enable: boolean) => {
+    const contracted = tenant?.contractedPhases ?? [];
+    const currentActive = tenant?.activePhases ?? contracted;
+    const updated = enable
+      ? Array.from(new Set([...currentActive, phase])).sort()
+      : currentActive.filter(p => p !== phase);
+    try {
+      await updateTenant(id, { activePhases: updated });
+      qc.invalidateQueries({ queryKey: ['tenant', id] });
+      toast('success', `Fase ${phase} ${enable ? 'activada' : 'desactivada'}`);
+    } catch {
+      toast('error', 'Error canviant estat de la fase');
+    }
+  };
+
   const { data: tenant, isLoading: loadingTenant, error: tenantErr } = useQuery({
     queryKey: ['tenant', id],
     queryFn: () => getTenant(id),
@@ -2857,6 +3143,7 @@ export default function TenantDetailPage() {
     whatsapp:  (waConfig?.status === 'CONNECTED' ? 'active' : waConfig ? 'warning' : 'neutral') as SectionStatus,
     gocardless:(gcConfig?.isActive ? 'active' : 'neutral') as SectionStatus,
     budgets:   ((budgets?.length ?? 0) > 0 ? 'active' : 'neutral') as SectionStatus,
+    lifecycle: 'neutral' as SectionStatus,
   };
 
   // Find services pending configuration that have a wizard defined
@@ -3101,6 +3388,17 @@ export default function TenantDetailPage() {
           <ContractSection tenant={tenant} onRefresh={invalidateTenant} />
         </CollapsibleSection>
 
+        {/* Cicle de vida de facturació i onboarding */}
+        <CollapsibleSection
+          eyebrow="Onboarding" title="Cicle de Vida"
+          status={secStatus.lifecycle}
+          collapsed={!!secCollapsed['lifecycle']} onToggle={() => toggleSec('lifecycle')}
+        >
+          <div className="amg-card card-clip">
+            <LifecycleSection tenant={tenant} onRefresh={invalidateTenant} />
+          </div>
+        </CollapsibleSection>
+
         {/* Serveis assignats */}
         <CollapsibleSection
           eyebrow="Assignació" title="Serveis assignats"
@@ -3124,8 +3422,10 @@ export default function TenantDetailPage() {
               setup={setup}
               tenantId={id}
               contractedPhases={tenant?.contractedPhases}
+              activePhases={tenant?.activePhases ?? tenant?.contractedPhases}
               onRefresh={invalidateSetup}
               onRemovePhase={handleRemovePhase}
+              onTogglePhase={handleTogglePhase}
             />
           ) : (
             <div className="p-8 text-center">
@@ -3164,6 +3464,15 @@ export default function TenantDetailPage() {
           collapsed={!!secCollapsed['whatsapp']} onToggle={() => toggleSec('whatsapp')}
         >
           <WhatsAppMetaCard tenantId={id} />
+        </CollapsibleSection>
+
+        {/* Meta Ads Analytics */}
+        <CollapsibleSection
+          eyebrow="Anuncis" title="Meta Ads Analytics"
+          status="neutral"
+          collapsed={!!secCollapsed['meta-ads']} onToggle={() => toggleSec('meta-ads')}
+        >
+          <MetaAdsConfigCard tenantId={id} />
         </CollapsibleSection>
 
         {/* GoCardless SEPA */}

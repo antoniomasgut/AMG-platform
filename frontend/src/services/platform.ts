@@ -8,6 +8,10 @@ export interface PlatformRecommendation {
   category: 'CLIENT_CONNECTIVITY' | 'UPGRADE_OFFER' | 'COST_OPTIMIZATION';
 }
 
+/** Retorna el tenantId de la plataforma AMG (configurat com a PLATFORM_TENANT_ID) */
+export const getPlatformSelf = () =>
+  apiFetch<{ tenantId: string }>('/platform/self');
+
 /** Problemes de connectivitat i qualitat que afecten directament el client */
 export const getClientRecommendations = (tenantId: string) =>
   apiFetch<PlatformRecommendation[]>(`/platform/recommendations/${tenantId}`);

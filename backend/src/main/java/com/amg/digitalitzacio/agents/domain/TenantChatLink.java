@@ -47,6 +47,9 @@ public class TenantChatLink {
     @Column(name = "email_address", length = 100)
     private String emailAddress;
 
+    @Column(name = "meta_page_id", length = 30)
+    private String metaPageId;
+
     @CreatedDate @Column(updatable = false)
     private Instant createdAt;
 

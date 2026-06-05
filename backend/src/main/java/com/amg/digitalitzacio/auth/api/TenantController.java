@@ -60,6 +60,25 @@ public class TenantController {
         return ResponseEntity.ok(tenantService.checkDeletion(id));
     }
 
+    @PostMapping("/{id}/deliver")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<TenantResponse> markImplementationDelivered(@PathVariable UUID id) {
+        return ResponseEntity.ok(tenantService.markImplementationDelivered(id));
+    }
+
+    @PostMapping("/{id}/onboarding-complete")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<TenantResponse> markOnboardingCompleted(@PathVariable UUID id) {
+        return ResponseEntity.ok(tenantService.markOnboardingCompleted(id));
+    }
+
+    @PutMapping("/{id}/billing-start-date")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<TenantResponse> setBillingStartDate(@PathVariable UUID id,
+                                                              @Valid @RequestBody SetBillingDateRequest request) {
+        return ResponseEntity.ok(tenantService.setBillingStartDate(id, request.billingStartDate()));
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('SUPER_ADMIN')")
