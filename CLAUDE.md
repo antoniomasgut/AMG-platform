@@ -160,13 +160,18 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 23 | Domain Reseller (registre i gestió de dominis) | ✅ Completat | specs/23-domain-reseller.md |
 | 24 | Agent Activation Flows (activació + canals + mode) | ✅ Completat | specs/24-agent-activation-flows.md |
 | 25 | Omnichannel Inbox (converses unificades) | ✅ Completat | specs/25-omnichannel-inbox.md |
-| 26 | RAG Knowledge Base (base de coneixement IA) | 🔨 En curs | specs/26-rag-knowledge-base.md |
+| 26 | RAG Knowledge Base (base de coneixement IA) | ✅ Completat | specs/26-rag-knowledge-base.md |
 | 27 | WhatsApp Business API (Meta Cloud, per tenant) | ✅ Completat | specs/27-whatsapp-business.md |
 | 28 | NexeLocal Service Configs (config per fase i sector) | ✅ Completat | — |
 | 29 | Web Hosting & Import (Bàsic + Pro) | ✅ Completat | specs/29-web-hosting-import.md |
 | 30 | Landing Chat Widget | ✅ Completat | specs/30-landing-chat-widget.md |
 | 31 | Agent Feature Toggles | ✅ Completat | specs/31-agent-feature-toggles.md |
 | 32 | Tenant Notifications (Telegram + Email) | ✅ Completat | specs/32-tenant-notifications.md |
+| 33 | Absence & Reschedule Cascade | ✅ Completat | specs/33-absence-reschedule.md |
+| 34 | Meta Lead Ads | ✅ Completat | specs/34-meta-lead-ads.md |
+| 35 | Meta Ads Analytics | ✅ Completat | specs/35-meta-ads-analytics.md |
+| 36 | Meta Ads Management | ✅ Completat | specs/36-meta-ads-management.md |
+| 37 | Tenant Document Builder | 📝 Esborrany | specs/37-tenant-document-builder.md |
 
 ---
 
