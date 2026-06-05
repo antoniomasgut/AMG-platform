@@ -121,3 +121,9 @@ Els tests Playwright existents no cobreixen:
 ## Mòduls completats ✅
 
 01 Auth · 02 Vault · 03 Leads CRM · 04 Engine · 05 Factory · 06 Assets · 07 Billing · 08 FinOps · 09 Payments · 09b GoCardless (backend) · 10 Automations · 11 Ops & Health · 12 Prospecting · 13 i18n+SEO+RGPD · 14 Admin Frontend · 15 Demo · 17 Service Wizard · 18 Backup · 19 InfraOps · 20 Agents (backend)
+
+## Millores de plataforma completades ✅
+
+- **OpenAPI/Swagger:** Documentació interactiva d'API a `/swagger-ui.html` i `/v3/api-docs`
+- **Sentry:** Monitoratge d'errors backend (Spring Boot) + frontend (Next.js)
+- **Cobertura de tests:** 273 tests backend (53 de nous: Auth 9, Vault 6, Knowledge Base 25, Conversation 10, Scheduler 3)

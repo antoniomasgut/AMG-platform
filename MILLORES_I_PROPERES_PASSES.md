@@ -18,8 +18,23 @@ Hem creat una eina pel vostre equip comercial per facilitar i agilitzar les truc
 - **Recomanacions Intel·ligents:** Integrat amb el model d'agents, la IA analitza el text en segons per llistar els **Punts de dolor**, classificar el negoci (Mida/Sector) i generar un *Pitch* de vendes personalitzat.
 - **Pressupost "En calent":** La IA també recomana un preu pel Setup i per a la quota Mensual i els injecta al procés de "Convertir a Client". Així pots llançar els enllaços de pagament Stripe+GoCardless abans i tot de penjar la videotrucada.
 
-### 3. Fiabilitat
-- Tota aquesta lògica ha estat afegida mantenint la plataforma totalment estable, passant satisfactòriament tots els tests del backend (220 tests aprovats).
+### 3. Documentació d'API (OpenAPI/Swagger)
+- S'ha integrat **springdoc-openapi** per exposar documentació interactiva de tots els endpoints del backend.
+- Accés a Swagger UI: `/swagger-ui.html` o `/swagger-ui/index.html`
+- Accés a l'especificació OpenAPI: `/v3/api-docs`
+- Configuració centralitzada a `OpenApiConfig.java` amb informació de contacte, llicència i servidors.
+
+### 4. Monitoratge d'Errors (Sentry)
+- **Backend:** S'ha integrat **Sentry Spring Boot** (`sentry-spring-boot-starter-jakarta`) per capturar errors no controlats al servidor.
+- **Frontend:** S'ha integrat **@sentry/nextjs** per capturar errors al navegador i al servidor Next.js.
+  - `instrumentation.ts` per al servidor Next.js
+  - `ErrorBoundary.tsx` captura errors React a Sentry
+  - `api.ts` captura errors d'API a Sentry
+- Configuració via `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` al `.env`
+
+### 5. Fiabilitat
+- Tota aquesta lògica ha estat afegida mantenint la plataforma totalment estable, passant satisfactòriament tots els tests del backend (**273 tests aprovats**).
+- Tests nous per als mòduls: Auth (9 tests), Vault (6 tests), Knowledge Base Controller/Service (25 tests), Conversation Service (10 tests), Scheduler (3 tests).
 
 ---
 

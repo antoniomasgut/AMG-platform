@@ -71,6 +71,8 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 - Build: Maven
 - **Email transaccional**: Brevo EU REST API (`POST https://api.brevo.com/v3/smtp/email`, header `api-key:`). Clau: `BREVO_API_KEY` a `SystemConfigService`. **NO** usar `JavaMailSender` ni Resend.
 - **`jakarta.mail`** (standalone `org.eclipse.angus:angus-mail`) — ONLY per al verificador SMTP del Vault; no és per a email transaccional
+- **OpenAPI/Swagger**: `springdoc-openapi-starter-webmvc-ui` — accés a `/swagger-ui.html` i `/v3/api-docs`
+- **Sentry**: `sentry-spring-boot-starter-jakarta` (backend) + `@sentry/nextjs` (frontend) — captura d'errors no controlats
 
 ### Frontend
 - Next.js 14 App Router, Tailwind CSS

@@ -254,6 +254,8 @@ curl -H "Authorization: Bearer TOKEN" https://api.el-teu-domini.cat/api/v1/infra
 - [ ] Backend health retorna `{"status":"UP"}`
 - [ ] Frontend carrega sense errors
 - [ ] Login com a SUPER_ADMIN funciona
+- [ ] Swagger UI accessible a `https://api.el-teu-domini.cat/swagger-ui.html`
+- [ ] Sentry DSN configurat (backend `SENTRY_DSN`, frontend `NEXT_PUBLIC_SENTRY_DSN`)
 - [ ] Telegram bot envia missatge de prova
 - [ ] Netdata accessible a `monitor.el-teu-domini.cat`
 - [ ] Backup manual executat i verificat (`POST /api/v1/ops/backups`)
