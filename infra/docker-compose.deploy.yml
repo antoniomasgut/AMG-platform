@@ -1,0 +1,36 @@
+services:
+
+  backend:
+    image: amg-backend:latest
+    container_name: amg-backend
+    restart: unless-stopped
+    networks:
+      - coolify
+      - amg-network
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://amg-postgres:5432/amg
+      SPRING_DATASOURCE_USERNAME: amg
+      SPRING_DATASOURCE_PASSWORD: amg_db_2026
+      SPRING_REDIS_HOST: amg-redis
+      SPRING_REDIS_PASSWORD: amg_redis_2026
+      JWT_SECRET: ${JWT_SECRET}
+      JASYPT_ENCRYPTOR_PASSWORD: amg_jasypt_2026
+
+  amg_frontend:
+    image: infra-frontend:latest
+    container_name: amg_frontend
+    restart: unless-stopped
+    networks:
+      - coolify
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: https://api.amgdl.com
+      HOSTNAME: 0.0.0.0
+      NEXT_TELEMETRY_DISABLED: "1"
+
+networks:
+  coolify:
+    external: true
+  amg-network:
+    external: true

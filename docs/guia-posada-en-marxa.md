@@ -193,6 +193,36 @@ Hauries de veure tots en estat `running`:
 
 ---
 
+## Pas 6b — Actualitzar backend/frontend (desplegament incremental)
+
+Quan hagis construït noves imatges (`amg-backend:latest`, `infra-frontend:latest`),
+usa el compose de desplegament per a un reinici net sense processos orfes:
+
+```bash
+# Primer de tot: assegura't que el JWT_SECRET està guardat al servidor
+mkdir -p /opt/amg/secrets
+openssl rand -base64 48 > /opt/amg/secrets/jwt_secret
+chmod 600 /opt/amg/secrets/jwt_secret
+
+# Per desplegar:
+export JWT_SECRET=$(cat /opt/amg/secrets/jwt_secret)
+
+docker compose -f infra/docker-compose.deploy.yml down
+docker compose -f infra/docker-compose.deploy.yml up -d
+```
+
+**Avantatges:**
+- `docker compose down` → atura i elimina backend + frontend (zero orfes)
+- `docker compose up -d` → crea contenidors nous amb les darreres imatges
+- Usa les xarxes `coolify` i `amg-network` (externes) per no tocar Postgres/Redis/Traefik
+- El `JWT_SECRET` es llegeix del fitxer `/opt/amg/secrets/jwt_secret` via variable d'entorn
+
+> ⚠️ **Nota:** Si canvies d'IP o recrees el servidor, hauràs de tornar a generar
+> el `jwt_secret` i reiniciar el backend. Tots els tokens JWT existents quedaran
+> invalidats.
+
+---
+
 ## Pas 7 — Configura Telegram per a alertes
 
 ### Crear el Bot
