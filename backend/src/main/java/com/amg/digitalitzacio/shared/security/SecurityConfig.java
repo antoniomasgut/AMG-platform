@@ -84,6 +84,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/demo/inbox/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/demo/inbox/**").permitAll()
                         .requestMatchers("/api/v1/demo/**").permitAll()
+                        // Swagger / OpenAPI
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/booking/*/days").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/booking/*/slots").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/booking/*").permitAll()

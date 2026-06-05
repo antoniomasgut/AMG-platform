@@ -107,7 +107,15 @@ export async function apiFetch<T = unknown>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    const error = new Error(body.message || body.detail || `Request failed: ${res.status}`) as Error & {
+    const errorMessage = body.message || body.detail || `Request failed: ${res.status}`;
+    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_SENTRY_DSN) {
+      import('@sentry/nextjs').then((Sentry) => {
+        Sentry.captureException(new Error(errorMessage), {
+          extra: { path, status: res.status, method: options.method || 'GET' },
+        });
+      });
+    }
+    const error = new Error(errorMessage) as Error & {
       status: number;
       body: unknown;
     };

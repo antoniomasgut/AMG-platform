@@ -5,6 +5,9 @@ import { useState, useEffect, type ReactNode } from 'react';
 import { AuthProvider } from '@/lib/auth-context';
 import { ToastProvider, useToast } from '@/lib/toast-context';
 import { useRouter, usePathname } from 'next/navigation';
+import { initSentry } from '@/lib/sentry';
+
+initSentry();
 
 function MissingApiKeyListener() {
   const { toast } = useToast();

@@ -1,3 +1,4 @@
+const { withSentryConfig } = require('@sentry/nextjs');
 const createNextIntlPlugin = require('next-intl/plugin');
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
@@ -42,4 +43,17 @@ const nextConfig = {
   },
 };
 
-module.exports = withBundleAnalyzer(withNextIntl(nextConfig));
+const sentryConfig = {
+  org: process.env.SENTRY_ORG || 'amg-digitalitzacio',
+  project: process.env.SENTRY_PROJECT || 'amg-portal',
+  silent: process.env.NODE_ENV !== 'production',
+  widenClientFileUpload: true,
+  tunnelRoute: '/monitoring',
+  disableLogger: true,
+  automaticVercelMonitors: false,
+};
+
+module.exports = withSentryConfig(
+  withBundleAnalyzer(withNextIntl(nextConfig)),
+  sentryConfig
+);

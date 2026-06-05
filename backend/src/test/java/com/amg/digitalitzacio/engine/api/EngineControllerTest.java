@@ -245,7 +245,7 @@ class EngineControllerTest {
                 .andExpect(content().string(containsString("og:title")))
                 .andExpect(content().string(containsString("og:description")))
                 .andExpect(content().string(containsString("canonical")))
-                .andExpect(content().string(containsString("Avís legal")));
+                .andExpect(content().string(containsString("Av&iacute;s legal")));
     }
 
     /* ── TC-08: Landing no publicada → 404 en públic ── */

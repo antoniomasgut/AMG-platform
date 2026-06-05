@@ -157,5 +157,10 @@ app:
       brevo-from-address: ${BREVO_FROM_ADDRESS:noreply@amgdl.com}
 
 
+  sentry:
+    dsn: ${SENTRY_DSN:}
+    traces-sample-rate: 0.1
+    environment: ${SPRING_PROFILES_ACTIVE:dev}
+
   hosting:
     data-path: ${HOSTING_DATA_PATH:/data/websites}
