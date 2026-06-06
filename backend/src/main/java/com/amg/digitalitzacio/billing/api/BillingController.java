@@ -74,7 +74,6 @@ public class BillingController {
     }
 
     @GetMapping("/budgets/preview")
-    @PreAuthorize("permitAll()")
     public BudgetResponse previewBudget(@RequestParam String token) {
         return billingService.previewBudget(token);
     }
