@@ -60,6 +60,15 @@ public class GeneratedDocument {
     @Column(length = 255)
     private String pdfUrl;
 
+    @Column(name = "storage_provider", length = 30)
+    private String storageProvider;
+
+    @Column(name = "storage_file_id", length = 255)
+    private String storageFileId;
+
+    @Column(name = "storage_path", length = 500)
+    private String storagePath;
+
     @Column(nullable = false)
     private Instant generatedAt;
 

@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.documents.builder.application;
 
 import com.amg.digitalitzacio.documents.builder.api.dto.*;
 import com.amg.digitalitzacio.documents.builder.domain.*;
+import com.amg.digitalitzacio.shared.storage.StorageProviderRouter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -10,8 +11,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.xhtmlrenderer.pdf.ITextRenderer;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.text.NumberFormat;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -29,6 +34,7 @@ public class DocumentBuilderService {
     private final GeneratedDocumentRepository documentRepo;
     private final DocumentNumberSequenceRepository seqRepo;
     private final ObjectMapper objectMapper;
+    private final StorageProviderRouter storageRouter;
 
     public List<TemplateResponse> listTemplates(UUID tenantId) {
         return templateRepo.findByTenantIdOrderByUpdatedAtDesc(tenantId).stream()
@@ -185,13 +191,41 @@ public class DocumentBuilderService {
     @Transactional
     public DocumentResponse generatePdf(UUID tenantId, GenerateRequest req) {
         var doc = generateDocument(tenantId, req);
-        String pdfUrl = "/api/v1/documents/" + doc.id() + "/pdf";
         var entity = documentRepo.findById(doc.id()).orElseThrow();
-        entity.setPdfUrl(pdfUrl);
+
+        try {
+            var html = entity.getHtmlContent();
+            if (html != null) {
+                var pdfBytes = renderPdf(html);
+                var provider = storageRouter.getProvider(tenantId);
+                var result = provider.upload(
+                    new ByteArrayInputStream(pdfBytes),
+                    doc.number() + ".pdf", "application/pdf");
+                entity.setStorageProvider(result.provider());
+                entity.setStorageFileId(result.fileId());
+                entity.setStoragePath(result.fileName());
+                var signedUrl = provider.getSignedUrl(result.fileId(), Duration.ofDays(1));
+                entity.setPdfUrl(signedUrl != null ? signedUrl : doc.number() + ".pdf");
+                log.info("PDF stored via {} for doc {}", result.provider(), doc.number());
+            } else {
+                entity.setPdfUrl("/api/v1/documents/" + doc.id() + "/pdf");
+            }
+        } catch (Exception e) {
+            log.warn("Failed to store PDF externally for {}: {}", doc.number(), e.getMessage());
+            entity.setPdfUrl("/api/v1/documents/" + doc.id() + "/pdf");
+        }
+
         documentRepo.save(entity);
-        return new DocumentResponse(doc.id(), doc.tenantId(), doc.templateId(),
-            doc.templateVersion(), doc.number(), doc.status(),
-            doc.htmlContent(), pdfUrl, doc.generatedAt(), doc.createdAt());
+        return toDocumentResponse(entity);
+    }
+
+    private byte[] renderPdf(String html) throws Exception {
+        var os = new ByteArrayOutputStream();
+        var renderer = new ITextRenderer();
+        renderer.setDocumentFromString(html);
+        renderer.layout();
+        renderer.createPDF(os);
+        return os.toByteArray();
     }
 
     public List<DocumentResponse> listDocuments(UUID tenantId) {
@@ -469,5 +503,20 @@ public class DocumentBuilderService {
         return new DocumentResponse(d.getId(), d.getTenantId(), d.getTemplateId(),
             d.getTemplateVersion(), d.getNumber(), d.getStatus(),
             d.getHtmlContent(), d.getPdfUrl(), d.getGeneratedAt(), d.getCreatedAt());
+    }
+
+    public String getDocumentPdfUrl(UUID documentId) {
+        var d = documentRepo.findById(documentId)
+            .orElseThrow(() -> new NoSuchElementException("Document not found: " + documentId));
+        if (d.getStorageProvider() != null && d.getStorageFileId() != null) {
+            try {
+                var provider = storageRouter.getProvider(d.getTenantId());
+                var signedUrl = provider.getSignedUrl(d.getStorageFileId(), Duration.ofDays(1));
+                if (signedUrl != null) return signedUrl;
+            } catch (Exception e) {
+                log.warn("Failed to refresh signed URL: {}", e.getMessage());
+            }
+        }
+        return d.getPdfUrl() != null ? d.getPdfUrl() : "/api/v1/documents/" + documentId + "/pdf";
     }
 }

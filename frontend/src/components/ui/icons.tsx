@@ -71,4 +71,5 @@ export const I = {
   Refresh: (p: IconProps) => <Icon {...p}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></Icon>,
   Power: (p: IconProps) => <Icon {...p}><path d="M12 2v10M4.93 4.93a10 10 0 1 0 14.14 0"/></Icon>,
   Briefcase: (p: IconProps) => <Icon {...p}><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M12 12h.01M8 12h.01M16 12h.01"/></Icon>,
+  Book: (p: IconProps) => <Icon {...p}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M12 6v7l-2-2-2 2V6"/></Icon>,
 };

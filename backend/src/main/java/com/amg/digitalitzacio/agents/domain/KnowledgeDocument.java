@@ -23,8 +23,21 @@ public class KnowledgeDocument {
     @Column(nullable = false, length = 255)
     private String filename;
 
-    @Column(name = "content_text", columnDefinition = "TEXT")
-    private String contentText;
+    @Column(name = "storage_path", length = 500)
+    private String storagePath;
+
+    @Column(name = "file_size")
+    private Long fileSize;
+
+    @Column(name = "content_type", length = 50)
+    private String contentType;
+
+    @Column(name = "extracted_text", columnDefinition = "TEXT")
+    private String extractedText;
+
+    @Builder.Default
+    @Column(name = "is_processed", nullable = false)
+    private Boolean isProcessed = false;
 
     @Builder.Default
     @Column(name = "is_active", nullable = false)

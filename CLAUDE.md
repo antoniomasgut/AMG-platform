@@ -160,7 +160,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 23 | Domain Reseller (registre i gestió de dominis) | ✅ Completat | specs/23-domain-reseller.md |
 | 24 | Agent Activation Flows (activació + canals + mode) | ✅ Completat | specs/24-agent-activation-flows.md |
 | 25 | Omnichannel Inbox (converses unificades) | ✅ Completat | specs/25-omnichannel-inbox.md |
-| 26 | RAG Knowledge Base (base de coneixement IA) | ✅ Completat | specs/26-rag-knowledge-base.md |
+| 26 | RAG Knowledge Base (base de coneixement IA) | ✅ Completat (backend + frontend) | specs/26-rag-knowledge-base.md |
 | 27 | WhatsApp Business API (Meta Cloud, per tenant) | ✅ Completat | specs/27-whatsapp-business.md |
 | 28 | NexeLocal Service Configs (config per fase i sector) | ✅ Completat | — |
 | 29 | Web Hosting & Import (Bàsic + Pro) | ✅ Completat | specs/29-web-hosting-import.md |
@@ -171,7 +171,10 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 34 | Meta Lead Ads | ✅ Completat | specs/34-meta-lead-ads.md |
 | 35 | Meta Ads Analytics | ✅ Completat | specs/35-meta-ads-analytics.md |
 | 36 | Meta Ads Management | ✅ Completat | specs/36-meta-ads-management.md |
-| 37 | Tenant Document Builder | 📝 Esborrany | specs/37-tenant-document-builder.md |
+| 37 | Tenant Document Builder | ✅ Completat (backend) · ✅ Frontend (nou) | specs/37-tenant-document-builder.md |
+| 38 | Tenant Storage (MinIO + S3) | ✅ Completat | specs/38-tenant-storage.md |
+| 39 | System Config | ✅ Completat | specs/39-system-config.md |
+| 40 | Google Workspace (Drive, Gmail, Calendar, Sheets) | ⏳ Backend complet · Frontend bàsic | specs/40-google-workspace.md |
 
 ---
 
@@ -221,7 +224,11 @@ Hibernate a producció usa `ddl-auto: validate` — les taules noves **cal crear
 | `whatsapp_waba_configs` | 2026-05-24 | Entitat Mòdul 27 |
 | `sector_phases` | 2026-05-26 | Catàleg de fases per sector (105 files via SQL) |
 | `nexe_service_configs` | 2026-05-28 | `(tenant_id UUID, service_key VARCHAR(30), config_json TEXT, updated_at TIMESTAMPTZ, PK(tenant_id, service_key))` |
-| `websites` | Pendent | `(id UUID PK, tenant_id UUID, type VARCHAR(20), status VARCHAR(20), domain VARCHAR(255), container_name VARCHAR(100), storage_bytes BIGINT, review_notes TEXT, reviewed_by UUID, reviewed_at TIMESTAMPTZ, deployed_at TIMESTAMPTZ, created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ)` |
+| `websites` | V23 | `(id UUID PK, tenant_id UUID, type VARCHAR(20), status VARCHAR(20), domain VARCHAR(255), container_name VARCHAR(100), storage_bytes BIGINT, review_notes TEXT, reviewed_by UUID, reviewed_at TIMESTAMPTZ, deployed_at TIMESTAMPTZ, created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ)` |
+| `storage_provider_configs` | V21 | `(tenant_id UUID, provider_key VARCHAR(30), config_json TEXT, is_active BOOLEAN, updated_at TIMESTAMPTZ, PK(tenant_id, provider_key))` |
+| `google_connections` | V22 | `(id UUID PK, tenant_id UUID, google_account_email VARCHAR, google_user_id VARCHAR, encrypted_access_token TEXT, encrypted_refresh_token TEXT, token_expires_at TIMESTAMPTZ, is_active BOOLEAN)` |
+| `google_module_configs` | V22 | `(tenant_id UUID PK, drive_enabled BOOLEAN, gmail_enabled BOOLEAN, calendar_enabled BOOLEAN, sheets_enabled BOOLEAN, drive_folder_id VARCHAR)` |
+| `oauth_states` | V22 | `(id UUID PK, tenant_id UUID, state_token VARCHAR(64) UNIQUE, redirect_uri VARCHAR(500), requested_scopes TEXT, expires_at TIMESTAMPTZ)` |
 
 **NexeLocal Service Configs** (`nexe_service_configs`):
 - Service keys: `AGENDA`, `PRESSUPOSTOS`, `FIDELITZACIO`, `EQUIP`

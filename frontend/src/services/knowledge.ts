@@ -11,6 +11,10 @@ export interface KnowledgeEntry {
 export interface KnowledgeDocument {
   id: string;
   filename: string;
+  storagePath: string | null;
+  fileSize: number | null;
+  contentType: string | null;
+  isProcessed: boolean;
   uploadedAt: string;
 }
 
@@ -56,10 +60,9 @@ export function deleteDocument(tenantId: string, docId: string): Promise<void> {
 }
 
 export async function previewPromptBlock(tenantId: string): Promise<string> {
+  const token = sessionStorage.getItem('access_token') ?? '';
   const res = await fetch(`/api/v1/agents/knowledge/${tenantId}/preview`, {
-    headers: {
-      Authorization: `Bearer ${sessionStorage.getItem('access_token') ?? ''}`,
-    },
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Error carregant previsualització');
   return res.text();

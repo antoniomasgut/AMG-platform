@@ -48,7 +48,8 @@ public class KnowledgeBaseService {
             ));
 
         List<KnowledgeDocumentResponse> docResponses = docs.stream()
-            .map(d -> new KnowledgeDocumentResponse(d.getId(), d.getFilename(), d.getUploadedAt()))
+            .map(d -> new KnowledgeDocumentResponse(d.getId(), d.getFilename(),
+                d.getStoragePath(), d.getFileSize(), d.getContentType(), d.getIsProcessed(), d.getUploadedAt()))
             .toList();
 
         return new KnowledgeBaseResponse(kb.getId(), kb.getTenantId(), kb.getIsActive(),
@@ -77,16 +78,22 @@ public class KnowledgeBaseService {
     }
 
     @Transactional
-    public KnowledgeDocumentResponse addDocument(UUID tenantId, String filename, String content) {
+    public KnowledgeDocumentResponse addDocument(UUID tenantId, String filename, String content,
+            String storagePath, Long fileSize, String contentType) {
         var kb = findOrCreate(tenantId);
         var doc = knowledgeDocumentRepository.save(
             KnowledgeDocument.builder()
                 .knowledgeBaseId(kb.getId())
                 .filename(filename)
-                .contentText(content)
+                .extractedText(content)
+                .storagePath(storagePath)
+                .fileSize(fileSize)
+                .contentType(contentType)
+                .isProcessed(true)
                 .build());
         bumpVersion(kb);
-        return new KnowledgeDocumentResponse(doc.getId(), doc.getFilename(), doc.getUploadedAt());
+        return new KnowledgeDocumentResponse(doc.getId(), doc.getFilename(),
+            doc.getStoragePath(), doc.getFileSize(), doc.getContentType(), doc.getIsProcessed(), doc.getUploadedAt());
     }
 
     @Transactional
@@ -132,7 +139,7 @@ public class KnowledgeBaseService {
             sb.append("\n[DOCUMENTS]\n");
             docs.forEach(d -> sb
                 .append("# ").append(d.getFilename()).append("\n")
-                .append(d.getContentText()).append("\n\n"));
+                .append(d.getExtractedText()).append("\n\n"));
         }
 
         return sb.toString();

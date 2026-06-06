@@ -49,7 +49,8 @@ public class KnowledgeController {
     public ResponseEntity<KnowledgeDocumentResponse> addDocument(
             @PathVariable UUID tenantId,
             @RequestBody AddDocumentRequest request) {
-        var response = knowledgeBaseService.addDocument(tenantId, request.filename(), request.content());
+        var response = knowledgeBaseService.addDocument(tenantId, request.filename(), request.content(),
+            null, null, "text/plain");
         return ResponseEntity.ok(response);
     }
 
@@ -67,7 +68,8 @@ public class KnowledgeController {
         try {
             String text = pdfTextExtractor.extract(file);
             if (text.isBlank()) return ResponseEntity.badRequest().body("No s'ha pogut extreure text del fitxer");
-            var response = knowledgeBaseService.addDocument(tenantId, file.getOriginalFilename(), text);
+            var response = knowledgeBaseService.addDocument(tenantId, file.getOriginalFilename(), text,
+                null, file.getSize(), file.getContentType());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error processant el fitxer: " + e.getMessage());

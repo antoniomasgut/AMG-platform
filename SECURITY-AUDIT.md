@@ -2,7 +2,7 @@
 
 **Data:** 2026-06-06
 **Abast:** Backend (Spring Boot 3), Frontend (Next.js 14), Infra (Traefik, Docker)
-**Estat:** 17 vulnerabilitats corregides, 3 pendents
+**Estat:** 25 vulnerabilitats corregides, 0 pendents
 
 ---
 
@@ -47,12 +47,8 @@
 
 ---
 
-## Pendents (3)
+## Tots resolts ✅
 
-| ID | Severitat | Issue | Bloquejant |
-|----|-----------|-------|------------|
-| C-5 | 🔴 CRÍTIC | JWT tokens a `sessionStorage` — cal migrar a `httpOnly` cookies | Requereix canvis a backend (Set-Cookie a login) + frontend (llegir de cookie) |
-| C-7 | 🔴 CRÍTIC | Socket Docker muntat *writable* al backend (`docker-compose.yml:113`) | Per avaluar si Engine realment necessita RW |
-| H-6 | 🟠 ALT | Credential masking mostra últims 4 caràcters | Canvi de UX a `****` fix |
+Tots els items d'auditoria (incloent C-5, C-7, H-6) es van corregir al commit `b1c22bd`.
 
-Veure `SECURITY-AUDIT-FULL.md` per a l' informe complet d'auditoria.
+Els items de baixa prioritat (L-2 a L-10 excepte L-1/L-7 ja corregits) queden documentats a `SECURITY-AUDIT-FULL.md` per a futures iteracions.

@@ -1,0 +1,101 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/lib/toast-context';
+import {
+  createTemplate, defaultLayout,
+  type DocumentType,
+  DOCUMENT_TYPES,
+} from '@/services/documents';
+import { PortalShell } from '@/components/portal/PortalShell';
+import { AMGButton } from '@/components/ui/button';
+import { AMGInput } from '@/components/ui/input';
+import { I } from '@/components/ui/icons';
+
+export default function NewDocumentTemplatePage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [name, setName] = useState('');
+  const [docType, setDocType] = useState<DocumentType>('quote');
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!name.trim()) e.name = 'El nom és obligatori';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      const result = await createTemplate({
+        name: name.trim(),
+        documentType: docType,
+        layout: JSON.stringify(defaultLayout()),
+        dataBindings: '{}',
+        styles: '{}',
+      });
+      toast('success', 'Plantilla creada');
+      router.push(`/portal/admin/documents/${result.id}/edit`);
+    } catch (err: any) {
+      toast('error', err?.body?.message || 'Error creant la plantilla');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <PortalShell breadcrumb="admin · documents · new" backHref="/portal/admin/documents">
+      <div className="p-4 sm:p-8 space-y-6 max-w-2xl">
+        <div>
+          <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / admin / documents / new /</span>
+          <div className="f-display font-bold text-xl mt-1">Nova plantilla de document</div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="amg-card card-clip p-6 space-y-5">
+          <AMGInput
+            label="Nom de la plantilla"
+            placeholder="Ex: Pressupost estàndard"
+            value={name}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+            error={errors.name}
+          />
+
+          <div>
+            <label className="f-mono text-label uppercase text-ink-2 mb-2 block">Tipus de document</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {DOCUMENT_TYPES.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setDocType(value)}
+                  className={`px-3 py-2 rounded text-xs f-mono uppercase tracking-wider border transition-colors ${
+                    docType === value
+                      ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.1)] text-[#FF6B00]'
+                      : 'border-border-base text-ink-2 hover:border-ink-1'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <AMGButton type="submit" disabled={loading} icon={I.Plus}>
+              {loading ? 'Creant...' : 'Crear plantilla'}
+            </AMGButton>
+            <AMGButton type="button" variant="outline" onClick={() => router.push('/portal/admin/documents')}>
+              Cancel·lar
+            </AMGButton>
+          </div>
+        </form>
+      </div>
+    </PortalShell>
+  );
+}

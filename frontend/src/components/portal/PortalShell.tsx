@@ -97,12 +97,16 @@ function adminGroups(t: T): NavGroup[] {
         { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
         { label: t('items.agentsAI'), icon: I.Bot, href: '/portal/agents' },
         { label: t('items.inbox'), icon: I.Mail, href: '/portal/agents/inbox' },
+        { label: t('items.google'), icon: I.Key, href: '/portal/admin/integrations/google' },
       ],
     },
     {
       label: t('groups.operations'),
       items: [
         { label: t('items.opsHealth'), icon: I.Activity, href: '/portal/ops' },
+        { label: t('items.documentTemplates'), icon: I.FileText, href: '/portal/admin/documents' },
+        { label: t('items.generatedDocs'), icon: I.Receipt, href: '/portal/admin/documents/list' },
+        { label: t('items.knowledge'), icon: I.Book, href: '/portal/admin/knowledge' },
       ],
     },
   ];
@@ -146,12 +150,16 @@ function superAdminGroups(t: T): NavGroup[] {
         { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
         { label: t('items.agentsAI'), icon: I.Bot, href: '/portal/agents' },
         { label: t('items.inbox'), icon: I.Mail, href: '/portal/agents/inbox' },
+        { label: t('items.google'), icon: I.Key, href: '/portal/admin/integrations/google' },
       ],
     },
     {
       label: t('groups.operations'),
       items: [
         { label: t('items.opsHealth'), icon: I.Activity, href: '/portal/ops' },
+        { label: t('items.documentTemplates'), icon: I.FileText, href: '/portal/admin/documents' },
+        { label: t('items.generatedDocs'), icon: I.Receipt, href: '/portal/admin/documents/list' },
+        { label: t('items.knowledge'), icon: I.Book, href: '/portal/admin/knowledge' },
       ],
     },
     {
