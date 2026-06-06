@@ -22,6 +22,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final String COOKIE_NAME = "access_token";
 
     private final JwtProvider jwtProvider;
 
@@ -55,6 +56,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var header = request.getHeader(AUTHORIZATION_HEADER);
         if (StringUtils.hasText(header) && header.startsWith(BEARER_PREFIX)) {
             return header.substring(BEARER_PREFIX.length());
+        }
+        var cookies = request.getCookies();
+        if (cookies != null) {
+            for (var c : cookies) {
+                if (COOKIE_NAME.equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
         }
         return null;
     }

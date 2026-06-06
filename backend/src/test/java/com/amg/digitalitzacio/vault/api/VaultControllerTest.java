@@ -351,7 +351,7 @@ class VaultControllerTest {
                 .content(objectMapper.writeValueAsString(credReq)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSet").value(true))
-                .andExpect(jsonPath("$.maskedValue").value("***2345"));
+                .andExpect(jsonPath("$.maskedValue").value("****"));
 
         // Verificar estat de configuració: el servei hauria d'estar configurat
         mockMvc.perform(get("/api/v1/vault/tenants/{tenantId}/setup", tenant.getId())
