@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -61,7 +62,7 @@ public class SecurityConfig {
                                 "/api/v1/billing/budgets/accept-phases",
                                 "/api/v1/billing/budgets/reject"
                         ).permitAll()
-                        .requestMatchers("/api/v1/billing/budgets/preview").permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/billing/budgets/preview")).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/engine/render/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/engine/render/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
