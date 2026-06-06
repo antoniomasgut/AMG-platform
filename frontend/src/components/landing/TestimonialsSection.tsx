@@ -8,6 +8,10 @@ interface Testimonial {
   text: string;
 }
 
+function initials(name: string): string {
+  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
 export function TestimonialsSection() {
   const t = useTranslations('landing.testimonials');
   const items = t.raw('items') as Testimonial[];
@@ -21,7 +25,7 @@ export function TestimonialsSection() {
         </div>
 
         <div className="mb-12">
-          <h2 className="f-display font-black text-3xl sm:text-4xl lg:text-5xl leading-[1.1] tracking-display whitespace-pre-line">
+          <h2 className="f-display font-black text-3xl sm:text-4xl lg:text-5xl leading-[1.1] tracking-display">
             {t('title')}
           </h2>
         </div>
@@ -30,19 +34,20 @@ export function TestimonialsSection() {
           {items.map((item, i) => (
             <div
               key={i}
-              className="amg-card card-clip p-6 flex flex-col gap-4 hover:border-border-medium transition-colors group"
+              className="amg-card p-6 flex flex-col gap-4 hover:border-border-medium transition-colors group"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-accent-light shrink-0">
-                <path d="M3 21C3 21 5 13 11 13V21H3Z" fill="currentColor" opacity="0.3"/>
-                <path d="M13 21C13 21 15 13 21 13V21H13Z" fill="currentColor" opacity="0.3"/>
-              </svg>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-accent-muted border border-accent/20 flex items-center justify-center">
+                  <span className="f-mono text-xs font-bold text-accent-light">{initials(item.name)}</span>
+                </div>
+                <div>
+                  <p className="font-bold text-sm text-ink-0">{item.name}</p>
+                  <p className="f-mono text-caption text-ink-3 uppercase tracking-caption">{item.role}</p>
+                </div>
+              </div>
               <p className="text-ui text-ink-2 leading-relaxed flex-1">
                 &ldquo;{item.text}&rdquo;
               </p>
-              <div className="pt-4 border-t border-border-subtle">
-                <p className="f-display font-bold text-sm text-ink-0">{item.name}</p>
-                <p className="f-mono text-caption text-ink-3 uppercase tracking-caption">{item.role}</p>
-              </div>
             </div>
           ))}
         </div>

@@ -1,12 +1,10 @@
 import { useTranslations } from 'next-intl';
 
 interface Fase {
-  code: string;
   name: string;
-  price: string;
   description: string;
   services: string[];
-  highlight: boolean;
+  highlight?: boolean;
 }
 
 export function PricingSection() {
@@ -15,65 +13,43 @@ export function PricingSection() {
 
   return (
     <section id="pricing" className="py-24 px-6 border-t border-border-subtle">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="flex items-center gap-2 mb-6">
           <div className="w-1.5 h-1.5 bg-accent" />
           <span className="f-mono text-label uppercase tracking-widest text-accent-light">{t('badge')}</span>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-12">
-          <h2 className="f-display font-black text-3xl sm:text-4xl lg:text-5xl leading-[1.1] tracking-display whitespace-pre-line">
+          <h2 className="f-display font-black text-3xl sm:text-4xl lg:text-5xl leading-[1.1] tracking-display">
             {t('title')}
           </h2>
-          <p className="text-ui text-ink-2 lg:text-right max-w-xs">{t('subtitle')}</p>
+          <p className="text-ui text-ink-2 lg:text-right max-w-sm">{t('subtitle')}</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           {fases.map((fase, i) => (
             <div
               key={i}
-              className={`relative card-clip flex flex-col gap-5 p-6 border transition-colors ${
+              className={`relative flex flex-col gap-4 p-5 border transition-colors ${
                 fase.highlight
-                  ? 'bg-accent-muted border-accent'
+                  ? 'bg-accent-subtle border-accent'
                   : 'bg-bg-1 border-border-base hover:border-border-medium'
               }`}
             >
               {fase.highlight && (
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-accent" />
               )}
-              {fase.highlight && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 f-mono text-[9px] uppercase tracking-widest bg-accent text-black px-3 py-1 whitespace-nowrap">
-                  {t('popular')}
-                </span>
-              )}
 
-              {/* Phase code + name */}
-              <div>
-                <span className="f-mono text-[10px] uppercase tracking-widest text-accent-light">{fase.code}</span>
-                <h3 className="f-display font-black text-md mt-1">{fase.name}</h3>
-                <p className="text-data text-ink-2 leading-relaxed mt-1">{fase.description}</p>
-              </div>
+              <h3 className="font-bold text-md">{fase.name}</h3>
+              <p className="text-data text-ink-2 leading-relaxed">{fase.description}</p>
 
-              {/* Pricing */}
-              <div className="border-t border-border-subtle pt-4">
-                <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-0.5">{t('fromLabel')}</div>
-                <div className="flex items-baseline gap-0.5">
-                  <span className={`f-display font-black text-2xl ${fase.highlight ? 'text-accent-light' : 'text-ink-0'}`}>
-                    {fase.price}
-                  </span>
-                  <span className="f-mono text-xs text-ink-3">{t('monthLabel')}</span>
-                </div>
-              </div>
-
-              {/* Services list */}
-              <div className="space-y-2">
-                <span className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('included')}</span>
+              <div className="space-y-1.5 mt-auto pt-4 border-t border-border-subtle">
                 {fase.services.map((service, j) => (
                   <div key={j} className="flex items-start gap-2">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-accent shrink-0 mt-1">
                       <path d="M20 6L9 17l-5-5" />
                     </svg>
-                    <span className="text-data text-ink-2 text-[12px] leading-snug">{service}</span>
+                    <span className="text-data text-ink-2 text-[11px] leading-snug">{service}</span>
                   </div>
                 ))}
               </div>
@@ -81,9 +57,14 @@ export function PricingSection() {
           ))}
         </div>
 
-        <div className="mt-8 space-y-2">
-          <p className="f-mono text-[10px] uppercase tracking-widest text-ink-3">{t('setupNote')}</p>
-          <p className="f-mono text-[10px] text-ink-3 opacity-60">{t('ctaNote')}</p>
+        <div className="mt-10 text-center">
+          <p className="f-mono text-caption uppercase tracking-widest text-ink-3">{t('setupNote')}</p>
+          <a
+            href="#contact"
+            className="inline-block mt-4 bg-accent hover:bg-accent-light text-black font-semibold f-mono text-xs uppercase px-8 h-12 leading-[3rem] transition-colors"
+          >
+            {t('ctaNote')}
+          </a>
         </div>
       </div>
     </section>

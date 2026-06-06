@@ -3,203 +3,911 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Auditoria Frontend — Portal AMG v3 · 14 maig 2026</title>
+<title>AMG Digitalització · Portal — Auditoria i Documentació Completa</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0d0d1a; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
-  .header { background: #13132a; border-bottom: 2px solid #FF6B00; padding: 32px 48px; }
-  .header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
-  .header p { color: #94a3b8; margin-top: 6px; font-size: 13px; }
-  .main { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
-  .scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 48px; }
-  .score-card { background: #13132a; border: 1px solid rgba(255,107,0,0.12); padding: 20px; position: relative; overflow: hidden; }
-  .score-card::after { content: ''; position: absolute; top: 0; right: 0; width: 3px; height: 100%; }
-  .score-card.excellent::after { background: #22c55e; }
-  .score-card.good::after { background: #3b82f6; }
-  .score-card.medium::after { background: #f59e0b; }
-  .score-card.poor::after { background: #ef4444; }
-  .score-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: #8896aa; margin-bottom: 8px; }
-  .score-value { font-size: 36px; font-weight: 900; line-height: 1; }
-  .score-value.excellent { color: #4ade80; }
-  .score-value.good { color: #93c5fd; }
-  .score-value.medium { color: #fcd34d; }
-  .score-value.poor { color: #f87171; }
-  .score-bar { height: 4px; background: #212140; margin-top: 12px; overflow: hidden; }
-  .score-bar-fill { height: 100%; }
-  .score-bar-fill.excellent { background: #22c55e; }
-  .score-bar-fill.good { background: #3b82f6; }
-  .score-bar-fill.medium { background: #f59e0b; }
-  .score-bar-fill.poor { background: #ef4444; }
-  .global-score { background: #13132a; border: 1px solid rgba(255,107,0,0.20); padding: 32px 40px; margin-bottom: 48px; display: flex; align-items: center; gap: 40px; }
-  .global-num { font-size: 72px; font-weight: 900; line-height: 1; color: #fcd34d; }
-  .global-info h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-  .global-info p { color: #94a3b8; font-size: 13px; max-width: 480px; }
-  .progress-bar { height: 8px; background: #212140; margin-top: 16px; width: 300px; overflow: hidden; }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, #FF6B00, #fcd34d); }
-  .section { margin-bottom: 40px; }
-  .section-title { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,107,0,0.12); }
-  .section-title h2 { font-size: 16px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-  .section-score { font-size: 22px; font-weight: 900; margin-left: auto; }
-  table { width: 100%; border-collapse: collapse; }
-  th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #8896aa; font-weight: 600; text-align: left; padding: 8px 12px; border-bottom: 1px solid rgba(255,107,0,0.08); }
-  td { padding: 10px 12px; border-bottom: 1px solid rgba(226,232,240,0.04); font-size: 13px; vertical-align: top; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,107,0,0.03); }
-  .check { color: #4ade80; }
-  .warn { color: #fcd34d; }
-  .cross { color: #f87171; }
-  .note { color: #94a3b8; font-size: 12px; display: block; margin-top: 2px; }
-  .issues { display: flex; flex-direction: column; gap: 12px; }
-  .issue { display: flex; gap: 14px; padding: 14px 16px; border-left: 3px solid; background: rgba(255,255,255,0.02); }
-  .issue.critical { border-color: #ef4444; }
-  .issue.high { border-color: #f59e0b; }
-  .issue.medium { border-color: #3b82f6; }
-  .issue-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; margin-top: 1px; }
-  .issue.critical .issue-label { color: #f87171; }
-  .issue.high .issue-label { color: #fcd34d; }
-  .issue.medium .issue-label { color: #93c5fd; }
-  .issue-text { font-size: 13px; line-height: 1.5; }
-  .issue-text strong { color: #e2e8f0; }
-  .issue-text code { font-family: monospace; font-size: 11px; background: rgba(255,255,255,0.07); padding: 1px 5px; border-radius: 3px; }
-  .comparison { display: flex; gap: 24px; margin-bottom: 48px; align-items: center; }
-  .comp-card { flex: 1; background: #13132a; border: 1px solid rgba(255,107,0,0.12); padding: 24px; text-align: center; }
-  .comp-num { font-size: 48px; font-weight: 900; line-height: 1; }
-  .comp-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #8896aa; margin-top: 8px; }
-  .comp-arrow { font-size: 24px; color: #FF6B00; }
-  footer { text-align: center; padding: 32px; color: #8896aa; font-size: 12px; border-top: 1px solid rgba(255,107,0,0.08); margin-top: 48px; }
+  :root {
+    --bg: #0d0d1a;
+    --bg1: #13132a;
+    --bg2: #1a1a2e;
+    --bg3: #212140;
+    --accent: #FF6B00;
+    --accent-light: #FF9A3C;
+    --ink0: #f1f5f9;
+    --ink1: #94a3b8;
+    --ink2: #64748b;
+    --success: #22c55e;
+    --info: #3b82f6;
+    --warning: #eab308;
+    --danger: #ef4444;
+    --border: #1e293b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink0);
+    line-height: 1.6;
+    font-size: 14px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+  h1 { font-size: 2.5rem; color: var(--accent); margin-bottom: 0.5rem; }
+  h2 { font-size: 1.8rem; color: var(--accent-light); margin-top: 3rem; margin-bottom: 1rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+  h3 { font-size: 1.3rem; color: var(--ink0); margin-top: 2rem; margin-bottom: 0.75rem; }
+  h4 { font-size: 1.1rem; color: var(--ink1); margin-top: 1.5rem; margin-bottom: 0.5rem; }
+
+  p { margin-bottom: 1rem; color: var(--ink1); }
+  a { color: var(--accent-light); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .subtitle { color: var(--ink2); font-size: 1.1rem; margin-bottom: 2rem; }
+  .meta { color: var(--ink2); font-size: 0.85rem; margin-bottom: 3rem; }
+
+  ul, ol { margin: 0.5rem 0 1rem 1.5rem; color: var(--ink1); }
+  li { margin-bottom: 0.3rem; }
+  code {
+    background: var(--bg2);
+    color: var(--accent-light);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  pre {
+    background: var(--bg2);
+    color: var(--ink0);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    border: 1px solid var(--border);
+    margin: 0.5rem 0 1rem 0;
+  }
+  pre code { background: none; padding: 0; }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge-green { background: rgba(34,197,94,0.15); color: var(--success); }
+  .badge-blue { background: rgba(59,130,246,0.15); color: var(--info); }
+  .badge-yellow { background: rgba(234,179,8,0.15); color: var(--warning); }
+  .badge-red { background: rgba(239,68,68,0.15); color: var(--danger); }
+  .badge-gray { background: rgba(100,116,139,0.2); color: var(--ink2); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 1.5rem 0;
+    font-size: 0.9rem;
+  }
+  th {
+    background: var(--bg3);
+    color: var(--ink1);
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+  }
+  td {
+    padding: 0.5rem 0.8rem;
+    border: 1px solid var(--border);
+    color: var(--ink1);
+  }
+  tr:hover td { background: var(--bg2); }
+
+  .card {
+    background: var(--bg1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+  .card h4 { margin-top: 0; }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .stat {
+    text-align: center;
+    background: var(--bg2);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); display: block; }
+  .stat-label { font-size: 0.85rem; color: var(--ink2); margin-top: 0.3rem; }
+
+  .toast {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin: 1rem 0;
+  }
+  .toast-info { background: rgba(59,130,246,0.12); color: var(--info); border: 1px solid rgba(59,130,246,0.2); }
+  .toast-success { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.2); }
+  .toast-warning { background: rgba(234,179,8,0.12); color: var(--warning); border: 1px solid rgba(234,179,8,0.2); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  .toc { background: var(--bg1); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; }
+  .toc h3 { margin-top: 0; margin-bottom: 1rem; }
+  .toc ul { list-style: none; margin: 0; padding: 0; columns: 2; }
+  .toc li { margin-bottom: 0.4rem; }
+  .toc a { color: var(--ink1); }
+  .toc a:hover { color: var(--accent-light); }
+
+  .tag { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin: 0.1rem; }
+  .tag-java { background: rgba(178,0,0,0.2); color: #ed7a7a; }
+  .tag-ts { background: rgba(49,120,198,0.2); color: #7ab0ed; }
+  .tag-infra { background: rgba(0,180,180,0.2); color: #7ad4d4; }
+  .tag-db { background: rgba(0,100,180,0.2); color: #7ab0ed; }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .toc ul { columns: 1; }
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.4rem; }
+  }
 </style>
 </head>
 <body>
-<div class="header">
-  <h1>Auditoria Frontend — Portal AMG v3</h1>
-  <p>14 maig 2026 &nbsp;&middot;&nbsp; 8 dimensions &nbsp;&middot;&nbsp; Sessió completa (millores ràpides + mitjanes + design system)</p>
+<div class="container">
+
+<h1>AMG Digitalització · Portal</h1>
+<p class="subtitle">Auditoria Tècnica Completa i Documentació Funcional del Projecte</p>
+<p class="meta">
+  <strong>Versió:</strong> 0.1.0 &nbsp;·&nbsp;
+  <strong>Data auditoria:</strong> Juny 2026 &nbsp;·&nbsp;
+  <strong>Stack:</strong> <span class="tag tag-java">Spring Boot 3.4 + Java 21</span>
+  <span class="tag tag-ts">Next.js 14 + React 18</span>
+  <span class="tag tag-infra">Docker + Traefik + Hetzner</span>
+  <span class="tag tag-db">PostgreSQL 16 + Redis 7</span>
+</p>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- TAULA DE CONTINGUTS                                          -->
+<!-- ============================================================ -->
+<div class="toc">
+<h3>📑 Taula de Continguts</h3>
+<ul>
+  <li><a href="#resum">1. Resum Executiu</a></li>
+  <li><a href="#arquitectura">2. Arquitectura General</a></li>
+  <li><a href="#backend">3. Backend (Spring Boot)</a></li>
+  <li><a href="#frontend">4. Frontend (Next.js)</a></li>
+  <li><a href="#infra">5. Infraestructura</a></li>
+  <li><a href="#moduls">6. Mòduls Funcionals</a></li>
+  <li><a href="#specs">7. Especificacions (Specs)</a></li>
+  <li><a href="#kits">8. Kits Operatius</a></li>
+  <li><a href="#seguretat">9. Seguretat</a></li>
+  <li><a href="#testing">10. Testing</a></li>
+  <li><a href="#conclusions">11. Conclusions i Recomanacions</a></li>
+</ul>
 </div>
-<div class="main">
 
-  <div class="comparison">
-    <div class="comp-card"><div class="comp-num" style="color:#f87171">42</div><div class="comp-label">Nota inicial</div></div>
-    <div class="comp-arrow">&rarr;</div>
-    <div class="comp-card"><div class="comp-num" style="color:#fcd34d">68</div><div class="comp-label">Millores ràpides</div></div>
-    <div class="comp-arrow">&rarr;</div>
-    <div class="comp-card" style="border-color:rgba(34,197,94,0.3)"><div class="comp-num" style="color:#4ade80">78</div><div class="comp-label">Sessió completa (avui)</div></div>
-  </div>
+<!-- ============================================================ -->
+<!-- 1. RESUM EXECUTIU                                            -->
+<!-- ============================================================ -->
+<h2 id="resum">1. Resum Executiu</h2>
 
-  <div class="global-score">
-    <div class="global-num">78</div>
-    <div class="global-info">
-      <h2>Nota global &mdash; <span style="color:#fcd34d">Bona</span></h2>
-      <p>Codi tècnic sòlid: 0 <code style="font-family:monospace;background:rgba(255,255,255,0.07);padding:1px 5px">any</code>, 5 headers de seguretat, WCAG AA, design system modern. Les mancances són de contingut i negoci: og-image absent, landing pública absent, dades legals amb placeholders.</p>
-      <div class="progress-bar"><div class="progress-fill" style="width:78%"></div></div>
-    </div>
-  </div>
+<p>
+  <strong>AMG Digitalització</strong> és una plataforma SaaS multi-tenant dissenyada per gestionar webs, automatitzacions i la presència digital de negocis locals, principalment a Mallorca. El projecte es troba en un estat <strong>altament avançat de desenvolupament</strong>, amb el backend quasi complet (36 mòduls especificats, 85+ entitats JPA, 47 controladors REST, 60+ serveis) i un frontend complet amb 50+ rutes, 61 components i plena internacionalització (4 idiomes).
+</p>
 
-  <div class="scores">
-    <div class="score-card good"><div class="score-label">Performance</div><div class="score-value good">68</div><div class="score-bar"><div class="score-bar-fill good" style="width:68%"></div></div></div>
-    <div class="score-card medium"><div class="score-label">SEO</div><div class="score-value medium">72</div><div class="score-bar"><div class="score-bar-fill medium" style="width:72%"></div></div></div>
-    <div class="score-card excellent"><div class="score-label">Accessibilitat</div><div class="score-value excellent">88</div><div class="score-bar"><div class="score-bar-fill excellent" style="width:88%"></div></div></div>
-    <div class="score-card excellent"><div class="score-label">Seguretat</div><div class="score-value excellent">92</div><div class="score-bar"><div class="score-bar-fill excellent" style="width:92%"></div></div></div>
-    <div class="score-card good"><div class="score-label">Qualitat codi</div><div class="score-value good">82</div><div class="score-bar"><div class="score-bar-fill good" style="width:82%"></div></div></div>
-    <div class="score-card excellent"><div class="score-label">Design System</div><div class="score-value excellent">85</div><div class="score-bar"><div class="score-bar-fill excellent" style="width:85%"></div></div></div>
-    <div class="score-card poor"><div class="score-label">Legal / RGPD</div><div class="score-value poor">55</div><div class="score-bar"><div class="score-bar-fill poor" style="width:55%"></div></div></div>
-    <div class="score-card poor"><div class="score-label">Contingut</div><div class="score-value poor">50</div><div class="score-bar"><div class="score-bar-fill poor" style="width:50%"></div></div></div>
+<div class="grid-3">
+  <div class="stat">
+    <span class="stat-value">694</span>
+    <span class="stat-label">Fitxers Java (main)</span>
   </div>
+  <div class="stat">
+    <span class="stat-value">36</span>
+    <span class="stat-label">Mòduls especificats</span>
+  </div>
+  <div class="stat">
+    <span class="stat-value">85+</span>
+    <span class="stat-label">Entitats JPA</span>
+  </div>
+  <div class="stat">
+    <span class="stat-value">47</span>
+    <span class="stat-label">Controladors REST</span>
+  </div>
+  <div class="stat">
+    <span class="stat-value">50+</span>
+    <span class="stat-label">Rutes frontend</span>
+  </div>
+  <div class="stat">
+    <span class="stat-value">4</span>
+    <span class="stat-label">Idiomes (ca/es/en/de)</span>
+  </div>
+</div>
 
-  <div class="section">
-    <div class="section-title"><h2>🎯 Pla d'acció prioritzat</h2></div>
-    <div class="issues">
-      <div class="issue critical"><div class="issue-label">1 · Avui</div><div class="issue-text"><strong>Omplir NIF i adreça a les pàgines legals</strong> — 15 minuts. Substituir <code>[NIF del titular]</code> i <code>[Adreça]</code> per les dades reals. Incompliment LSSI mentre estiguin buits.</div></div>
-      <div class="issue critical"><div class="issue-label">2 · Avui</div><div class="issue-text"><strong>Crear og-image.jpg (1200×630px)</strong> — 30-60 minuts. Cada compartició a LinkedIn, WhatsApp o X apareixerà amb la imatge. Màxim impacte per temps mínim.</div></div>
-      <div class="issue high"><div class="issue-label">3 · Proper sprint</div><div class="issue-text"><strong>Migrar 253 valors Tailwind inline a tokens</strong> — Substituir <code>text-[10px]</code> → <code>text-label</code>, <code>text-[#FF9A3C]</code> → <code>text-accent-light</code>. El design system té els tokens, cal usar-los.</div></div>
-      <div class="issue high"><div class="issue-label">4 · Proper sprint</div><div class="issue-text"><strong>Landing pública multi-idioma (Mòdul 13)</strong> — La inversió de major retorn en SEO. Spec a <code>specs/13-i18n-seo-rgpd.md</code>. Rutes <code>/[locale]/</code> amb Hero, Serveis, Preus, CTA.</div></div>
-      <div class="issue medium"><div class="issue-label">5 · Backlog</div><div class="issue-text"><strong>Revisar Server Components</strong> — 26 fitxers amb <code>'use client'</code>. Identificar quins es poden convertir per millorar LCP i reduir el bundle JS inicial.</div></div>
-      <div class="issue medium"><div class="issue-label">6 · Backlog</div><div class="issue-text"><strong>favicon.ico + apple-touch-icon.png + banner cookies</strong> — Assets de presència bàsica i compliment RGPD si s'usen cookies no essencials.</div></div>
-    </div>
-  </div>
+<p>
+  La plataforma utilitza un model de negoci de fases NexeLocal (F1-F5) que permet als negocis locals contractar serveis digitals progressius: captació de clients, agenda online, pressupostos, seguiment, i alertes d'equip. A més, ofereix landings, dominis, hosting web, chatbots IA, i integració amb WhatsApp Business, Telegram i email.
+</p>
 
-  <div class="section">
-    <div class="section-title"><h2>⚡ Performance</h2><span class="section-score" style="color:#93c5fd">68/100</span></div>
-    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
-      <tr><td>Font display:swap</td><td><span class="check">✓</span></td><td>Orbitron, Space Grotesk, Share Tech Mono. No hi ha FOIT.</td></tr>
-      <tr><td>Preconnect Google Fonts</td><td><span class="check">✓</span></td><td>googleapis.com i gstatic.com preconnectats.</td></tr>
-      <tr><td>Next.js standalone output</td><td><span class="check">✓</span></td><td>output: 'standalone' — optimitzat per Docker/Coolify.</td></tr>
-      <tr><td>Imatges lazy loading</td><td><span class="warn">⚠</span></td><td>1 ocurrència (BlockRenderer). Suficient per ara.</td></tr>
-      <tr><td>Fitxers 'use client'</td><td><span class="warn">⚠</span></td><td>26 fitxers. Oportunitat de conversió a Server Components.</td></tr>
-      <tr><td>Tailwind arbitrari inline</td><td><span class="warn">⚠</span></td><td>253 ocurrències de text-[Xpx], text-[#hex]. Tokens definits però no migrats.</td></tr>
-    </tbody></table>
-  </div>
+<!-- ============================================================ -->
+<!-- 2. ARQUITECTURA GENERAL                                      -->
+<!-- ============================================================ -->
+<h2 id="arquitectura">2. Arquitectura General</h2>
 
-  <div class="section">
-    <div class="section-title"><h2>🔍 SEO</h2><span class="section-score" style="color:#fcd34d">72/100</span></div>
-    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
-      <tr><td>Metadata completa</td><td><span class="check">✓</span></td><td>Title template, description (158 chars), OG, Twitter Cards, canonical via metadataBase.</td></tr>
-      <tr><td>robots.txt</td><td><span class="check">✓</span></td><td>Bloqueja /portal/ i /api/. Link al sitemap.</td></tr>
-      <tr><td>sitemap.xml + hreflang</td><td><span class="check">✓</span></td><td>4 URLs amb hreflang ca/es/en/de.</td></tr>
-      <tr><td>og-image.jpg</td><td><span class="cross">✗</span></td><td><strong>Crític:</strong> fitxer no existeix. Previsualitzacions socials buides.</td></tr>
-      <tr><td>Landing pública indexable</td><td><span class="cross">✗</span></td><td><strong>Crític:</strong> / redirigeix a /login. Google no indexa res de valor.</td></tr>
-      <tr><td>Structured data (JSON-LD)</td><td><span class="cross">✗</span></td><td>No implementat. Recomanat per rich snippets.</td></tr>
-    </tbody></table>
-  </div>
+<h3>2.1 Visió d'alt nivell</h3>
 
-  <div class="section">
-    <div class="section-title"><h2>♿ Accessibilitat</h2><span class="section-score" style="color:#4ade80">88/100</span></div>
-    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
-      <tr><td>Skip navigation link</td><td><span class="check">✓</span></td><td>Primer element del body. Focus visible amb bg taronja AMG.</td></tr>
-      <tr><td>Landmarks ARIA</td><td><span class="check">✓</span></td><td>aside, nav, main amb aria-label. 8 aria-labels en total al portal.</td></tr>
-      <tr><td>Labels formularis</td><td><span class="check">✓</span></td><td>Tots els inputs amb &lt;label&gt; associat o aria-label.</td></tr>
-      <tr><td>Contrast ink-0 (#e2e8f0)</td><td><span class="check">✓</span></td><td>13.7:1 — WCAG AAA</td></tr>
-      <tr><td>Contrast ink-1 (#94a3b8)</td><td><span class="check">✓</span></td><td>5.2:1 — WCAG AA</td></tr>
-      <tr><td>Contrast ink-2 (#8896aa)</td><td><span class="check">✓</span></td><td>4.51:1 — WCAG AA (corregit de #64748b → #8896aa)</td></tr>
-      <tr><td>prefers-reduced-motion</td><td><span class="check">✓</span></td><td>@media present a globals.css. Desactiva totes les animacions.</td></tr>
-      <tr><td>ink-3 (#64748b) en text</td><td><span class="warn">⚠</span></td><td>2.87:1 — documentat com "decorative only" però cal vigilar l'ús.</td></tr>
-      <tr><td>Focus visible (portal)</td><td><span class="warn">⚠</span></td><td>Sense focus ring consistent als elements interactius del portal.</td></tr>
-    </tbody></table>
-  </div>
+<pre>
+Internet
+   │
+[Traefik v3.2] ← Reverse Proxy + SSL (Let's Encrypt)
+   │
+   ├── api.${DOMAIN}    → Backend Spring Boot (port 8080)
+   ├── ${DOMAIN} / www   → Frontend Next.js (port 3000)
+   ├── storage.${DOMAIN} → MinIO Object Storage (port 9000)
+   ├── minio.${DOMAIN}   → MinIO Console (port 9001)
+   ├── monitor.${DOMAIN} → Netdata Monitoring (port 19999)
+   └── traefik.${DOMAIN} → Traefik Dashboard
+          │
+   ┌──────┴──────────────────────┐
+   │     Xarxa interna amg_net    │
+   │                              │
+   │  PostgreSQL 16 ←→ Backend    │
+   │  Redis 7       ←→ Backend    │
+   │  MinIO         ←→ Backend    │
+   │  Netdata       → Telegram    │
+   └──────────────────────────────┘
+</pre>
 
-  <div class="section">
-    <div class="section-title"><h2>🔒 Seguretat</h2><span class="section-score" style="color:#4ade80">92/100</span></div>
-    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
-      <tr><td>X-Frame-Options, X-Content-Type-Options</td><td><span class="check">✓</span></td><td>DENY + nosniff</td></tr>
-      <tr><td>HSTS + Referrer-Policy + Permissions-Policy</td><td><span class="check">✓</span></td><td>max-age=31536000 + strict-origin + camera/mic/geo desactivats</td></tr>
-      <tr><td>DOMPurify (XSS)</td><td><span class="check">✓</span></td><td>dangerouslySetInnerHTML sanititzat a BlockRenderer.</td></tr>
-      <tr><td>TypeScript : any</td><td><span class="check">✓</span></td><td>0 ocurrències. De 56 → 0 en aquesta sessió.</td></tr>
-      <tr><td>Variables d'entorn</td><td><span class="check">✓</span></td><td>Només NEXT_PUBLIC_* al client. Cap secret filtrat.</td></tr>
-      <tr><td>Content-Security-Policy</td><td><span class="cross">✗</span></td><td>No configurat. Complex amb Google Fonts (necessita nonces).</td></tr>
-    </tbody></table>
-  </div>
+<h3>2.2 Stack tecnològic</h3>
 
-  <div class="section">
-    <div class="section-title"><h2>🎨 Design System</h2><span class="section-score" style="color:#4ade80">85/100</span></div>
-    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
-      <tr><td>Paleta de colors completa</td><td><span class="check">✓</span></td><td>accent + hover + muted, bg-0→3, border-subtle/base/strong, ink-0→3, semantic + subtle + light variants.</td></tr>
-      <tr><td>Font pairing</td><td><span class="check">✓</span></td><td>Orbitron (display) + Space Grotesk (UI, nou) + Share Tech Mono (data).</td></tr>
-      <tr><td>Escala tipogràfica</td><td><span class="check">✓</span></td><td>label(10px)→7xl(72px). Major Third ×1.25. CSS custom properties a globals.css.</td></tr>
-      <tr><td>Dark mode profund</td><td><span class="check">✓</span></td><td>4 nivells de surface (#0d0d1a→#212140). Tint blau subtil, no negre pur.</td></tr>
-      <tr><td>Tokens en ús</td><td><span class="warn">⚠</span></td><td>Sistema definit però components antics usen valors inline. Migració pendent.</td></tr>
-    </tbody></table>
-  </div>
+<table>
+  <tr><th>Capa</th><th>Tecnologia</th><th>Versió</th></tr>
+  <tr><td>Backend</td><td>Spring Boot + Java</td><td>3.4.1 / 21</td></tr>
+  <tr><td>Frontend</td><td>Next.js + React + TypeScript</td><td>14.2 / 18.3 / 5.3</td></tr>
+  <tr><td>Base de dades</td><td>PostgreSQL</td><td>16</td></tr>
+  <tr><td>Caché / Rate Limiting</td><td>Redis</td><td>7</td></tr>
+  <tr><td>Object Storage</td><td>MinIO</td><td>latest</td></tr>
+  <tr><td>Proxy / SSL</td><td>Traefik</td><td>v3.2</td></tr>
+  <tr><td>Monitorització</td><td>Netdata</td><td>stable</td></tr>
+  <tr><td>Orquestració</td><td>Docker Compose</td><td>—</td></tr>
+  <tr><td>Cloud</td><td>Hetzner (Terraform)</td><td>nbg1</td></tr>
+  <tr><td>Migracions BD</td><td>Flyway</td><td>—</td></tr>
+  <tr><td>CI/CD</td><td>GitHub Actions</td><td>—</td></tr>
+</table>
 
-  <div class="section">
-    <div class="section-title"><h2>⚖️ Legal / RGPD</h2><span class="section-score" style="color:#f87171">55/100</span></div>
-    <table><thead><tr><th>Aspecte</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
-      <tr><td>Avís Legal + Privacitat + Cookies</td><td><span class="warn">⚠</span></td><td>Pàgines existents i ben estructurades. <span class="note">Crític: [NIF del titular] i [Adreça] sense omplir.</span></td></tr>
-      <tr><td>Links legals en login</td><td><span class="check">✓</span></td><td>TERMES, PRIVACITAT, SUPORT, TELÈFON al footer del login.</td></tr>
-      <tr><td>Links legals en portal</td><td><span class="cross">✗</span></td><td>El portal autenticat no té footer amb links a documents legals.</td></tr>
-      <tr><td>Banner de cookies</td><td><span class="cross">✗</span></td><td>No implementat. Obligatori per RGPD si s'usen cookies no essencials.</td></tr>
-    </tbody></table>
-  </div>
+<h3>2.3 Principis arquitectònics</h3>
+<ul>
+  <li><strong>Arquitectura hexagonal</strong> — cada mòdul segueix la jerarquia <code>api/</code> → <code>application/</code> → <code>domain/</code></li>
+  <li><strong>Multi-tenant</strong> — totes les entitats tenen <code>tenant_id</code> (separació lògica per schema PostgreSQL)</li>
+  <li><strong>RBAC</strong> — 3 rols: <code>SUPER_ADMIN</code>, <code>ADMIN</code>, <code>CLIENT</code></li>
+  <li><strong>Provider pattern</strong> — cada servei extern (Stripe, Holded, GoCardless, n8n, GCS, prospecting) té un provider amb implementació <code>mock</code> per defecte</li>
+  <li><strong>JWT stateless</strong> — autenticació via access token (15 min) + refresh token (7 dies)</li>
+  <li><strong>i18n first</strong> — 4 idiomes amb next-intl i locale prefix sempre visible</li>
+</ul>
 
-  <div class="section">
-    <div class="section-title"><h2>📄 Contingut i Assets</h2><span class="section-score" style="color:#f87171">50/100</span></div>
-    <table><thead><tr><th>Recurs</th><th>Estat</th><th>Detall</th></tr></thead><tbody>
-      <tr><td>Landing pública (/)</td><td><span class="cross">✗</span></td><td>Redirigeix a /login. Zero SEO, zero conversió orgànica. Spec 13 creat, pendent d'implementació.</td></tr>
-      <tr><td>og-image.jpg (1200×630)</td><td><span class="cross">✗</span></td><td>Referenciat però no existeix. Previsualitzacions socials buides.</td></tr>
-      <tr><td>favicon.svg</td><td><span class="check">✓</span></td><td>416 bytes. Hexàgon AMG amb "A". Funcional en navegadors moderns.</td></tr>
-      <tr><td>favicon.ico + apple-touch-icon.png</td><td><span class="warn">⚠</span></td><td>Referenciats però no existeixen. Fallback per navegadors antics i iOS.</td></tr>
-      <tr><td>robots.txt + sitemap.xml + 404</td><td><span class="check">✓</span></td><td>Tots correctes i personalitzats.</td></tr>
-    </tbody></table>
+<!-- ============================================================ -->
+<!-- 3. BACKEND                                                   -->
+<!-- ============================================================ -->
+<h2 id="backend">3. Backend (Spring Boot 3.4 + Java 21)</h2>
+
+<h3>3.1 Estructura de paquets</h3>
+
+<p>Base package: <code>com.amg.digitalitzacio</code>. Mòduls organitzats per domini:</p>
+
+<table>
+  <tr><th>Mòdul</th><th>Descripció</th><th>Entitats</th><th>Controladors</th></tr>
+  <tr><td>agents</td><td>Agents IA autònoms, inbox omnicanal, RAG</td><td>16</td><td>11</td></tr>
+  <tr><td>auth</td><td>Autenticació JWT, usuaris, tenants, preus</td><td>5</td><td>5</td></tr>
+  <tr><td>assets</td><td>Gestió d'arxius i imatges (MinIO)</td><td>1</td><td>1</td></tr>
+  <tr><td>automations</td><td>Workflows n8n</td><td>3</td><td>1</td></tr>
+  <tr><td>backup</td><td>Còpies de seguretat a GCS</td><td>3</td><td>1</td></tr>
+  <tr><td>billing</td><td>Pressupostos, descomptes, programes comercials</td><td>5</td><td>2</td></tr>
+  <tr><td>booking</td><td>Reserves online</td><td>2</td><td>1</td></tr>
+  <tr><td>chat</td><td>Context de xat per landings</td><td>1</td><td>2</td></tr>
+  <tr><td>demo</td><td>Tenant demo automàtic</td><td>—</td><td>1</td></tr>
+  <tr><td>documents</td><td>Parsing de documents (PDF per RAG)</td><td>—</td><td>1</td></tr>
+  <tr><td>domains</td><td>Registre i gestió de dominis</td><td>3</td><td>1</td></tr>
+  <tr><td>engine</td><td>Renderitzador de landings</td><td>5</td><td>2</td></tr>
+  <tr><td>finops</td><td>Operacions financeres (Holded)</td><td>5</td><td>1</td></tr>
+  <tr><td>gocardless</td><td>Domiciliació SEPA</td><td>3</td><td>1</td></tr>
+  <tr><td>hosting</td><td>Hosting web (Docker containers)</td><td>1</td><td>1</td></tr>
+  <tr><td>infraops</td><td>Monitorització de servidor</td><td>2</td><td>1</td></tr>
+  <tr><td>leads</td><td>CRM de leads</td><td>3</td><td>3</td></tr>
+  <tr><td>metaads</td><td>Gestió d'anuncis Meta Ads</td><td>6</td><td>2</td></tr>
+  <tr><td>ops</td><td>Health checks i alertes</td><td>3</td><td>1</td></tr>
+  <tr><td>payments</td><td>Pagaments Stripe</td><td>2</td><td>1</td></tr>
+  <tr><td>platform</td><td>Recomanacions de plataforma</td><td>—</td><td>1</td></tr>
+  <tr><td>prospecting</td><td>Prospecció de clients</td><td>2</td><td>1</td></tr>
+  <tr><td>shared</td><td>Cross-cutting: seguretat, AI, audit, notificacions, excepcions, sysconfig</td><td>3</td><td>2</td></tr>
+  <tr><td>telegram</td><td>Config Telegram per tenant</td><td>1</td><td>1</td></tr>
+  <tr><td>vault</td><td>Credencials AES-256, perfils de servei</td><td>13</td><td>1</td></tr>
+  <tr><td>visits</td><td>Tracking de visites</td><td>1</td><td>1</td></tr>
+  <tr><td>whatsapp</td><td>WhatsApp Business API (WABA)</td><td>1</td><td>1</td></tr>
+  <tr><td>widget</td><td>Chat widget per landings</td><td>—</td><td>1</td></tr>
+</table>
+
+<h3>3.2 Dependències principals (pom.xml)</h3>
+<table>
+  <tr><th>Dependència</th><th>Propòsit</th></tr>
+  <tr><td>spring-boot-starter-web</td><td>APIs REST</td></tr>
+  <tr><td>spring-boot-starter-data-jpa</td><td>ORM + Hibernate</td></tr>
+  <tr><td>spring-boot-starter-security</td><td>Seguretat + JWT</td></tr>
+  <tr><td>spring-boot-starter-data-redis</td><td>Caché + rate limiting</td></tr>
+  <tr><td>jjwt (0.12.6)</td><td>JSON Web Tokens</td></tr>
+  <tr><td>postgresql</td><td>Driver PostgreSQL</td></tr>
+  <tr><td>flyway-core + flyway-database-postgresql</td><td>Migracions de BD</td></tr>
+  <tr><td>stripe-java (28.4.0)</td><td>Pagaments Stripe</td></tr>
+  <tr><td>google-cloud-storage (2.43.1)</td><td>Backup a GCS</td></tr>
+  <tr><td>pdfbox (3.0.3)</td><td>Extracció de PDFs</td></tr>
+  <tr><td>mapstruct (1.6.3)</td><td>Mapper entre DTOs i entitats</td></tr>
+  <tr><td>angus-mail</td><td>Verificació SMTP (Vault)</td></tr>
+  <tr><td>lombok</td><td>Reducció de boilerplate</td></tr>
+</table>
+
+<h3>3.3 Proveïdors externs (tots amb provider mock per defecte)</h3>
+<table>
+  <tr><th>Servei</th><th>Provider</th><th>Provider real</th></tr>
+  <tr><td>Email transaccional</td><td>Brevo EU</td><td>REST API (no JavaMailSender)</td></tr>
+  <tr><td>Pagaments</td><td>Stripe</td><td>Checkout Sessions</td></tr>
+  <tr><td>Domiciliació SEPA</td><td>GoCardless</td><td>API REST + webhooks</td></tr>
+  <tr><td>Facturació</td><td>Holded</td><td>API + Verifactu</td></tr>
+  <tr><td>Automations</td><td>n8n</td><td>API REST self-hosted</td></tr>
+  <tr><td>Backup</td><td>Google Cloud Storage</td><td>Bucket GCS</td></tr>
+  <tr><td>Prospecció</td><td>Google Places</td><td>API de llocs</td></tr>
+  <tr><td>Domínis</td><td>OpenProvider</td><td>API de registre</td></tr>
+  <tr><td>WhatsApp</td><td>Twilio / Meta Cloud</td><td>REST API + webhooks</td></tr>
+  <tr><td>AI</td><td>Anthropic / DeepSeek</td><td>AIProviderRouter</td></tr>
+</table>
+
+<h3>3.4 Configuració de seguretat</h3>
+<ul>
+  <li>JWT amb HMAC-SHA, access token 15 min, refresh token 7 dies</li>
+  <li>BCrypt (strength 12) per contrasenyes</li>
+  <li>Rate limiting per email (5 intents/15min) i per IP (20 intents/15min)</li>
+  <li>3 intents fallits de login = bloqueig de 15 min</li>
+  <li>Endpoints públics: login, refresh, forgot/reset password, webhooks, health, widget, landing render</li>
+  <li>Filtre d'auditoria que registra totes les peticions autenticades</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 4. FRONTEND                                                  -->
+<!-- ============================================================ -->
+<h2 id="frontend">4. Frontend (Next.js 14 + React 18 + TypeScript)</h2>
+
+<h3>4.1 Estructura de rutes</h3>
+
+<h4>Rutes públiques (amb locale prefix)</h4>
+<table>
+  <tr><th>Ruta</th><th>Descripció</th></tr>
+  <tr><td><code>/</code></td><td>Redirecció a /ca</td></tr>
+  <tr><td><code>/[locale]</code></td><td>Landing page de màrqueting (Hero, Serveis, Preus, Com funciona, Testimonis, CTA)</td></tr>
+  <tr><td><code>/[locale]/login</code></td><td>Pàgina d'inici de sessió</td></tr>
+  <tr><td><code>/[locale]/forgot-password</code></td><td>Recuperació de contrasenya</td></tr>
+  <tr><td><code>/[locale]/reset-password</code></td><td>Reestablir contrasenya (amb token)</td></tr>
+  <tr><td><code>/[locale]/accept-budget</code></td><td>Aceptació de pressupost (token-based)</td></tr>
+  <tr><td><code>/[locale]/book/[token]</code></td><td>Pàgina de reserva (token-based)</td></tr>
+  <tr><td><code>/[locale]/legal/*</code></td><td>Pàgines legals (avis, cookies, privacitat, termes)</td></tr>
+  <tr><td><code>/demo/inbox/[token]</code></td><td>Demo inbox pública</td></tr>
+</table>
+
+<h4>Rutes del portal (autenticades)</h4>
+<table>
+  <tr><th>Ruta</th><th>Descripció</th><th>Rol</th></tr>
+  <tr><td><code>/portal</code></td><td>Dashboard (KPI cards, pipeline, invoices)</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/admin/tenants</code></td><td>CRUD de tenants</td><td>SUPER_ADMIN</td></tr>
+  <tr><td><code>/portal/admin/users</code></td><td>CRUD d'usuaris</td><td>SUPER_ADMIN</td></tr>
+  <tr><td><code>/portal/admin/vault</code></td><td>Catàleg de perfils/fases/serveis</td><td>SUPER_ADMIN</td></tr>
+  <tr><td><code>/portal/admin/templates</code></td><td>Plantilles de landing</td><td>SUPER_ADMIN</td></tr>
+  <tr><td><code>/portal/admin/backup</code></td><td>Gestió de backups</td><td>SUPER_ADMIN</td></tr>
+  <tr><td><code>/portal/admin/booking</code></td><td>Configuració de reserves</td><td>SUPER_ADMIN</td></tr>
+  <tr><td><code>/portal/admin/config</code></td><td>Configuració del sistema (API keys)</td><td>SUPER_ADMIN</td></tr>
+  <tr><td><code>/portal/admin/domains</code></td><td>Gestió de dominis</td><td>SUPER_ADMIN</td></tr>
+  <tr><td><code>/portal/admin/hosting</code></td><td>Hosting management</td><td>SUPER_ADMIN</td></tr>
+  <tr><td><code>/portal/admin/infraops</code></td><td>Mètriques d'infraestructura</td><td>SUPER_ADMIN</td></tr>
+  <tr><td><code>/portal/agents</code></td><td>Configuració d'agents IA</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/agents/inbox</code></td><td>Inbox omnicanal</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/agents/knowledge</code></td><td>Base de coneixement (RAG)</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/analytics</code></td><td>Analítiques</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/assets</code></td><td>Gestió d'arxius</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/automations</code></td><td>Workflows n8n</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/billing</code></td><td>Pressupostos i factures</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/landings</code></td><td>Gestió de landings + Factory (editor)</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/leads</code></td><td>CRM de leads (7-stage pipeline)</td><td>ADMIN</td></tr>
+  <tr><td><code>/portal/payments</code></td><td>Pagaments Stripe</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/prospecting</code></td><td>Prospecció de clients</td><td>ADMIN</td></tr>
+  <tr><td><code>/portal/platform</code></td><td>Resum de la plataforma</td><td>ADMIN</td></tr>
+  <tr><td><code>/portal/finops</code></td><td>Factures i operacions financeres</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/hosting</code></td><td>Hosting de llocs web</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/hosting/pro</code></td><td>Hosting Pro (Docker)</td><td>ADMIN/CLIENT</td></tr>
+  <tr><td><code>/portal/ops</code></td><td>Dashboard d'operacions</td><td>ADMIN</td></tr>
+  <tr><td><code>/portal/process</code></td><td>Flux de processos</td><td>ADMIN</td></tr>
+</table>
+
+<h3>4.2 Components destacats</h3>
+<table>
+  <tr><th>Grup</th><th>Components</th><th>Funció</th></tr>
+  <tr><td><strong>Design System</strong></td><td>AMGButton, AMGBadge, AMGSectionTitle, Input, FieldError, icons, PhaseGuard</td><td>Primitives de la interfície amb tema fosc i accent taronja (#FF6B00)</td></tr>
+  <tr><td><strong>Landing</strong></td><td>HeroSection, ProblemSection, ServicesSection, PricingSection, HowItWorksSection, CtaSection, TestimonialsSection, Footer, LocaleSwitcher</td><td>Pàgina de màrqueting amb seccions independents</td></tr>
+  <tr><td><strong>Portal Shell</strong></td><td>PortalShell, AuthGuard, Providers, ErrorBoundary</td><td>Layout del portal amb navegació lateral, capçalera i guard d'autenticació</td></tr>
+  <tr><td><strong>Factory (Editor)</strong></td><td>FactoryCanvas, SortableBlock, BlockCatalog, BlockProperties, BlockRenderer, PageStylesPanel, PreviewToolbar, VersionHistory, ImagePicker, ChatContextPanel, SectionContentFiller</td><td>Editor visual de landings amb drag & drop</td></tr>
+  <tr><td><strong>Wizard</strong></td><td>ServiceWizard, WizardWelcome, WizardProgress, WizardStepRenderer, WizardComplete</td><td>Assistent de configuració de serveis (24 definicions)</td></tr>
+  <tr><td><strong>Onboarding</strong></td><td>OnboardingGuide, OnboardingStep, OnboardingComplete</td><td>Guia de primers passos post-registre</td></tr>
+  <tr><td><strong>Admin</strong></td><td>DataTable, UserStatusBadge, TemplateForm, TemplateSectionEditor</td><td>Gestió administrativa</td></tr>
+</table>
+
+<h3>4.3 Estat i dades</h3>
+<table>
+  <tr><th>Sistema</th><th>Propòsit</th></tr>
+  <tr><td>Zustand (useEditorStore)</td><td>Estat de l'editor de landings (blocs, estils, selecció, dirty state)</td></tr>
+  <tr><td>React Context (auth-context)</td><td>Estat d'autenticació (user, login, logout, role checks)</td></tr>
+  <tr><td>React Context (toast-context)</td><td>Notificacions toast (success/error/warning/info)</td></tr>
+  <tr><td>@tanstack/react-query</td><td>Server state (queries i mutations per tots els serveis API)</td></tr>
+  <tr><td>sessionStorage</td><td>Tokens JWT (access_token, refresh_token), perfil d'usuari</td></tr>
+  <tr><td>localStorage</td><td>Consentiment de cookies, preferència d'idioma, skip onboarding</td></tr>
+</table>
+
+<h3>4.4 Serveis API (34 fitxers)</h3>
+<p>El directori <code>src/services/</code> conté 34 fitxers que encapsulen totes les crides a l'API backend, compartint un client base (<code>api.ts</code>) que gestiona:</p>
+<ul>
+  <li>Refreshing automàtic de tokens en 401</li>
+  <li>Gestió de <code>MISSING_API_KEY</code> event (quan falten claus d'API)</li>
+  <li>Headers d'autenticació automàtics</li>
+  <li>Error handling centralitzat</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 5. INFRAESTRUCTURA                                          -->
+<!-- ============================================================ -->
+<h2 id="infra">5. Infraestructura</h2>
+
+<h3>5.1 Desplegament (Docker Compose)</h3>
+<p>7 serveis en producció, orquestrats amb Docker Compose en un Hetzner VPS:</p>
+
+<table>
+  <tr><th>Servei</th><th>Container</th><th>Funció</th></tr>
+  <tr><td>Traefik v3.2</td><td>amg_traefik</td><td>Reverse proxy + SSL Let's Encrypt + dashboard</td></tr>
+  <tr><td>PostgreSQL 16</td><td>amg_postgres</td><td>Base de dades principal</td></tr>
+  <tr><td>Redis 7</td><td>amg_redis</td><td>Caché, JWT + rate limiting</td></tr>
+  <tr><td>MinIO</td><td>amg_minio</td><td>Object storage per assets</td></tr>
+  <tr><td>Backend</td><td>amg_backend</td><td>Spring Boot (JAR)</td></tr>
+  <tr><td>Frontend</td><td>amg_frontend</td><td>Next.js standalone</td></tr>
+  <tr><td>Netdata</td><td>amg_netdata</td><td>Monitorització + alertes Telegram</td></tr>
+</table>
+
+<h3>5.2 Subdominis i routing</h3>
+<table>
+  <tr><th>Subdomini</th><th>Servei</th><th>Auth</th></tr>
+  <tr><td><code>${APP_DOMAIN}</code></td><td>Frontend (Next.js)</td><td>—</td></tr>
+  <tr><td><code>www.${APP_DOMAIN}</code></td><td>Frontend (Next.js)</td><td>—</td></tr>
+  <tr><td><code>api.${APP_DOMAIN}</code></td><td>Backend (Spring Boot)</td><td>JWT</td></tr>
+  <tr><td><code>storage.${APP_DOMAIN}</code></td><td>MinIO API</td><td>—</td></tr>
+  <tr><td><code>minio.${APP_DOMAIN}</code></td><td>MinIO Console</td><td>—</td></tr>
+  <tr><td><code>monitor.${APP_DOMAIN}</code></td><td>Netdata</td><td>Basic Auth</td></tr>
+  <tr><td><code>traefik.${APP_DOMAIN}</code></td><td>Traefik Dashboard</td><td>Basic Auth</td></tr>
+</table>
+
+<h3>5.3 Middlewares Traefik</h3>
+<ul>
+  <li><strong>secureHeaders</strong> — HSTS, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy</li>
+  <li><strong>rateLimit</strong> — 100 peticions/min, burst 50</li>
+  <li><strong>corsApi</strong> — CORS per mètodes GET/POST/PUT/DELETE/OPTIONS</li>
+  <li><strong>auth</strong> — Basic Auth per dashboard i netdata</li>
+</ul>
+
+<h3>5.4 Monitorització (Netdata + Telegram)</h3>
+<p>5 alertes personalitzades amb notificació a Telegram:</p>
+<ul>
+  <li><strong>CPU</strong> — warn &gt;80%, crit &gt;95% (cada 1m)</li>
+  <li><strong>RAM</strong> — warn &gt;80%, crit &gt;90% (cada 1m)</li>
+  <li><strong>Disc</strong> — warn &gt;75%, crit &gt;90% (cada 5m)</li>
+  <li><strong>Swap</strong> — warn &gt;20%, crit &gt;50% (cada 1m)</li>
+  <li><strong>Docker containers</strong> — warn si hi ha exited, crit si &gt;2 (cada 30s)</li>
+</ul>
+
+<h3>5.5 CI/CD</h3>
+<p>GitHub Actions amb 2 jobs paral·lels en push/PR a main:</p>
+<ul>
+  <li><strong>backend-test</strong> — JDK 21 + Maven, executa <code>mvn test</code></li>
+  <li><strong>frontend-test</strong> — Node 20, executa <code>npm ci + npm run build</code></li>
+</ul>
+<p class="toast toast-warning">No hi ha desplegament automàtic en producció. El deploy es fa manualment via <code>make prod</code>.</p>
+
+<h3>5.6 Email entrant</h3>
+<p>Cloudflare Email Worker que rep correus a <code>*@inbound.amgdl.com</code>, parseja el RFC 2822 i reenvia a <code>/api/v1/agents/email/inbound</code>.</p>
+
+<h3>5.7 Terraform (Hetzner)</h3>
+<p>Infraestructura com a codi per crear servidors Hetzner amb 3 arquitectures possibles: <code>single</code>, <code>app_db</code>, <code>full</code>. Inclou xarxa privada, firewall i volum de dades.</p>
+
+<!-- ============================================================ -->
+<!-- 6. MÒDULS FUNCIONALS                                        -->
+<!-- ============================================================ -->
+<h2 id="moduls">6. Mòduls Funcionals</h2>
+
+<h3>6.1 Model de negoci: NexeLocal (F1-F5)</h3>
+
+<div class="card">
+El model de negoci es basa en 5 fases progressives que els clients poden contractar de forma independent (no acumulativa). El cost mensual depèn de l'ordre de contractació, no de quines fases específiques.
+
+<table>
+  <tr><th>Fase</th><th>Nom</th><th>Descripció</th><th>Serveis associats</th></tr>
+  <tr><td>F1</td><td>Captació</td><td>Landing page + formulari de contacte + botó WhatsApp</td><td>Landing Pro, Chat widget IA</td></tr>
+  <tr><td>F2</td><td>Agenda</td><td>Reserves online + recordatoris automàtics (4 modes per sector)</td><td>Agenda, Recordatoris</td></tr>
+  <tr><td>F3</td><td>Pressupostos</td><td>Envío de pressupostos + seguiment (2 modes: formal / llista de preus)</td><td>Pressupostos, CRM</td></tr>
+  <tr><td>F4</td><td>Seguiment</td><td>Fidelització + reenganxament de clients</td><td>Fidelització, Historial</td></tr>
+  <tr><td>F5</td><td>Alerta + Equip</td><td>Alertes d'equip + comunicació interna via Telegram</td><td>Alertes, Telegram bot</td></tr>
+</table>
+</div>
+
+<h3>6.2 Serveis independents</h3>
+<table>
+  <tr><th>Servei</th><th>Setup</th><th>Mensual</th></tr>
+  <tr><td>Micro-landing</td><td>30€</td><td>9€/mes</td></tr>
+  <tr><td>Landing Pro</td><td>80€</td><td>15€/mes</td></tr>
+  <tr><td>Domini autogestionat</td><td>30€</td><td>—</td></tr>
+  <tr><td>Domini gestionat</td><td>60€ (inclou 1r any)</td><td>15€/any</td></tr>
+  <tr><td>WhatsApp Business API</td><td>50€</td><td>—</td></tr>
+  <tr><td>Autom. bàsica (n8n)</td><td>20€</td><td>—</td></tr>
+  <tr><td>Autom. avançada (n8n)</td><td>60€</td><td>—</td></tr>
+  <tr><td>Bot IA bàsic</td><td>40€</td><td>—</td></tr>
+  <tr><td>Bot IA avançat (RAG)</td><td>100€</td><td>—</td></tr>
+  <tr><td>SMTP Corporatiu</td><td>25€</td><td>—</td></tr>
+  <tr><td>Google Analytics</td><td>25€</td><td>—</td></tr>
+</table>
+
+<h3>6.3 Vault (Credencials i Perfils)</h3>
+<p>El Vault és un sistema de gestió de credencials xifrades amb AES-256-GCM. Gestiona:</p>
+<ul>
+  <li><strong>Perfils de client</strong> — informació de negoci, sectors, preferències de canal</li>
+  <li><strong>Fases NexeLocal</strong> (F1-F5) amb serveis associats i credencials</li>
+  <li><strong>Add-ons</strong> — serveis addicionals independents de les fases</li>
+  <li><strong>Credencials</strong> — emmagatzemades xifrades amb auditoria d'accés</li>
+  <li><strong>Verificació SMTP</strong> — comprovació de servidors de correu</li>
+</ul>
+
+<h3>6.4 Agents IA Autònoms</h3>
+<ul>
+  <li><strong>Agent conversacional</strong> — respon a clients finals via WhatsApp/Telegram/Email amb integració RAG</li>
+  <li><strong>Agent de recordatoris</strong> — envia recordatoris de cites automàticament</li>
+  <li><strong>Agent de re-programació</strong> — quan un professional està absent, re-programa totes les cites</li>
+  <li><strong>Knowledge Base (RAG)</strong> — base de coneixement per sector amb documents i entrades personalitzades</li>
+  <li><strong>Inbox omnicanal</strong> — converses unificades de WhatsApp, Telegram i Email en una sola safata</li>
+  <li><strong>Feature toggles per fase</strong> — cada fase activa/desactiva funcionalitats del xat (FAQ, booking, preus, etc.)</li>
+</ul>
+
+<h3>6.5 Engine / Factory (Landings)</h3>
+<ul>
+  <li><strong>Engine</strong> — serveix landings estàtiques en dominis personalitzats amb control de versions</li>
+  <li><strong>Factory</strong> — editor visual amb drag & drop (dnd-kit), blocs ordenables, estils globals, vista prèvia en temps real</li>
+  <li><strong>Plantilles</strong> — catàleg de plantilles per sector amb seccions predefinides</li>
+  <li><strong>IA content filler</strong> — generació de contingut per secció via IA</li>
+</ul>
+
+<h3>6.6 Domain Reseller</h3>
+<ul>
+  <li>Registre de dominis via OpenProvider API</li>
+  <li>DNS management: A, CNAME, MX, TXT records</li>
+  <li>Auto-renovació anual</li>
+  <li>Preus per TLD (taula de preus)</li>
+</ul>
+
+<h3>6.7 Web Hosting</h3>
+<ul>
+  <li><strong>Import Basic</strong> — pujada de fitxers estàtics (HTML/CSS/JS via ZIP)</li>
+  <li><strong>Import Pro</strong> — contenidors Docker complets</li>
+  <li>Nginx serving amb domini vinculat</li>
+  <li>Revisió i aprovació per ADMIN</li>
+</ul>
+
+<h3>6.8 Facturació i Finances</h3>
+<ul>
+  <li><strong>Pressupostos</strong> — generació automàtica des del perfil de servei, acceptació pública via token</li>
+  <li><strong>Holded</strong> — creació automàtica de factures de setup i recorrents mensuals</li>
+  <li><strong>Stripe</strong> — pagament amb targeta via Checkout Session</li>
+  <li><strong>GoCardless</strong> — domiciliació SEPA automàtica mensual</li>
+  <li><strong>Programes comercials</strong> — Early Adopter, descomptes per referits</li>
+</ul>
+
+<h3>6.9 Leads CRM</h3>
+<ul>
+  <li>Pipeline de 7 etapes: NEW → CONTACTED → QUALIFIED → PROPOSAL → NEGOTIATION → WON/LOST</li>
+  <li>Activitats (trucades, emails, whatsapps, reunions)</li>
+  <li>Conversió de lead a tenant</li>
+  <li>Integració amb Meta Lead Ads (webhook)</li>
+  <li>Plantilles de missatges per outreach</li>
+</ul>
+
+<h3>6.10 Meta Ads</h3>
+<ul>
+  <li>Gestió completa de campanyes (campaign → ad set → creative)</li>
+  <li>Generació d'imatges via IA</li>
+  <li>Targeting per sector i ubicació</li>
+  <li>Cost per Lead analytics</li>
+  <li>Meta Lead Ads webhook</li>
+</ul>
+
+<h3>6.11 Altres mòduls</h3>
+<ul>
+  <li><strong>Booking</strong> — reserves online amb enllaços públics token-based</li>
+  <li><strong>Chat Widget</strong> — widget de xat IA incrustat a landings (side panel)</li>
+  <li><strong>Telegram Bot</strong> — notificacions i alertes al client</li>
+  <li><strong>Backup</strong> — còpies setmanals automàtiques + manuals a GCS</li>
+  <li><strong>InfraOps</strong> — mètriques de servidor cada 5 minuts, recomanacions d'escalat</li>
+  <li><strong>Visits</strong> — tracking de visites a landings</li>
+  <li><strong>Onboarding</strong> — guia interactiva de primers passos post-registre</li>
+  <li><strong>Service Setup Wizard</strong> — assistent visual per configurar serveis (24 definicions)</li>
+  <li><strong>Prospecting</strong> — cerca de clients potencials per sector i ubicació a Mallorca</li>
+  <li><strong>Demo</strong> — tenant demo automàtic amb dades simulades</li>
+  <li><strong>Notificacions</strong> — notificacions proactives per Telegram/Email al tenant</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 7. SPECS                                                    -->
+<!-- ============================================================ -->
+<h2 id="specs">7. Especificacions (Specs)</h2>
+
+<p>El directori <code>specs/</code> conté 36 especificacions detallades que cobreixen tota la funcionalitat de la plataforma:</p>
+
+<table>
+  <tr><th>#</th><th>Spec</th><th>Línies</th><th>Estat</th></tr>
+  <tr><td>01</td><td>Auth (JWT + RBAC)</td><td>666</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>02</td><td>Vault (AES-256 credencials)</td><td>1.181</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>02b</td><td>CRUD Perfils, Fases, Serveis (Admin)</td><td>481</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>03</td><td>Leads CRM</td><td>314</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>04</td><td>Engine (Landing Renderer)</td><td>574</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>05</td><td>Factory (Landing Editor)</td><td>323</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>06</td><td>Assets (Storage)</td><td>244</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>07</td><td>Billing (Pressupostos)</td><td>561</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>08</td><td>FinOps (Holded)</td><td>490</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>09</td><td>Payments (Stripe)</td><td>421</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>09b</td><td>GoCardless (SEPA)</td><td>236</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>10</td><td>Automations (n8n)</td><td>468</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>11</td><td>Ops & Health</td><td>315</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>12</td><td>Prospecting</td><td>360</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>13</td><td>i18n + SEO + RGPD</td><td>237</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>14</td><td>Admin Frontend (CRUD)</td><td>351</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>14b</td><td>Admin Tenant Detail</td><td>340</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>15</td><td>Demo</td><td>157</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>16</td><td>Onboarding</td><td>696</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>17</td><td>Service Guides + Setup Wizard</td><td>431 + 652</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>18</td><td>Backup Operacional</td><td>571</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>19</td><td>InfraOps</td><td>181</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>20</td><td>Agents Autònoms</td><td>499</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>21</td><td>Dashboards per Rol</td><td>470</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>22</td><td>Sector Pricing</td><td>211</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>23</td><td>Domain Reseller</td><td>384</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>24</td><td>Agent Activation Flows</td><td>441</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>25</td><td>Omnichannel Inbox</td><td>262</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>26</td><td>RAG Knowledge Base</td><td>527</td><td><span class="badge badge-yellow">En curs</span></td></tr>
+  <tr><td>27</td><td>WhatsApp Business API</td><td>233</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>28</td><td>NexeLocal Service Configs</td><td>276</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>29</td><td>Web Hosting & Import</td><td>256</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>30</td><td>Landing Chat Widget</td><td>322</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>31</td><td>Agent Feature Toggles</td><td>176</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>32</td><td>Tenant Notifications</td><td>386</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>33</td><td>Absence & Reschedule</td><td>130</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>34</td><td>Meta Lead Ads + UTM</td><td>203</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>35</td><td>Meta Ads Analytics (CPL)</td><td>160</td><td><span class="badge badge-green">Completat</span></td></tr>
+  <tr><td>36</td><td>Meta Ads Management</td><td>981</td><td><span class="badge badge-green">Completat</span></td></tr>
+</table>
+
+<p>Specs addicionals: <code>perfils-cataleg.md</code> (catàleg de serveis), <code>sector-dolors.md</code> (dolors per sector), <code>serveis-cataleg.md</code> (catàleg de serveis v2), <code>visio-producte-chatgpt.md</code> (visió de producte), <code>guides/web-externa-widget-formulari.md</code> (guia d'integració externa).</p>
+
+<!-- ============================================================ -->
+<!-- 8. KITS OPERATIUS                                          -->
+<!-- ============================================================ -->
+<h2 id="kits">8. Kits Operatius</h2>
+
+<p>10 espais de treball autònoms de Claude Code, cadascun amb el seu propi CLAUDE.md, INSTRUCCIONES.md i skills:</p>
+
+<table>
+  <tr><th>Kit</th><th>Descripció</th></tr>
+  <tr><td><strong>kit-web-scrolling</strong></td><td>Genera webs premium amb animacions de scroll (estil Apple)</td></tr>
+  <tr><td><strong>kit-instagram-web</strong></td><td>Converteix perfil d'Instagram en web de marca personal</td></tr>
+  <tr><td><strong>kit-automatizaciones-n8n</strong></td><td>Crea i gestiona workflows d'n8n (amb MCP opcional)</td></tr>
+  <tr><td><strong>kit-auditoria-seo</strong></td><td>Auditoria SEO completa amb informe HTML (8 categories, 0-100)</td></tr>
+  <tr><td><strong>kit-auditoria-meta-ads</strong></td><td>Audita anuncis Meta Ads + landing pages</td></tr>
+  <tr><td><strong>kit-auditoria-negocio</strong></td><td>Auditoria general de negoci digital</td></tr>
+  <tr><td><strong>kit-dashboard-facturas</strong></td><td>Llegeix PDFs de factures i genera dashboard financer</td></tr>
+  <tr><td><strong>kit-prospeccion</strong></td><td>Cerca clients potencials per sector/ciutat a Mallorca</td></tr>
+  <tr><td><strong>kit-extension-chrome</strong></td><td>Crea extensions Chrome (Manifest V3) des de zero</td></tr>
+  <tr><td><strong>kit-skill-creator</strong></td><td>Genera noves skills per a Claude Code</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<!-- 9. SEGURETAT                                               -->
+<!-- ============================================================ -->
+<h2 id="seguretat">9. Seguretat</h2>
+
+<h3>9.1 Autenticació i Autorització</h3>
+<ul>
+  <li>JWT amb HMAC-SHA, signatura amb secret configurable via <code>JWT_SECRET</code></li>
+  <li>Access token: 15 minuts de vida</li>
+  <li>Refresh token: 7 dies (UUID, emmagatzemat a PostgreSQL)</li>
+  <li>3 rols: <code>SUPER_ADMIN</code>, <code>ADMIN</code>, <code>CLIENT</code></li>
+  <li>Bloqueig després de 3 intents fallits (15 min)</li>
+  <li>Rate limiting per email (5/15min) i IP (20/15min) via Redis</li>
+</ul>
+
+<h3>9.2 Xifratge</h3>
+<ul>
+  <li>Credencials xifrades amb AES-256-GCM (Jasypt)</li>
+  <li>Contrasenyes amb BCrypt (strength 12)</li>
+  <li>JWT signat amb HMAC-SHA</li>
+</ul>
+
+<h3>9.3 Seguretat web (frontend)</h3>
+<ul>
+  <li>Content Security Policy amb nonce per scripts</li>
+  <li>X-Frame-Options: DENY</li>
+  <li>X-Content-Type-Options: nosniff</li>
+  <li>HSTS (1 any, includeSubDomains)</li>
+  <li>Permissions-Policy restrictiva</li>
+  <li>Strict CSP amb 'strict-dynamic'</li>
+</ul>
+
+<h3>9.4 Seguretat de xarxa (infra)</h3>
+<ul>
+  <li>Traefik amb SSL Let's Encrypt (TLS challenge)</li>
+  <li>Xarxa interna Docker (amg_net) — aïllament de serveis</li>
+  <li>Rate limiting global: 100 peticions/min</li>
+  <li>HSTS amb preload</li>
+  <li>Basic Auth per dashboards sensibles (Traefik, Netdata)</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 10. TESTING                                                -->
+<!-- ============================================================ -->
+<h2 id="testing">10. Testing</h2>
+
+<h3>10.1 Backend</h3>
+<ul>
+  <li><strong>Framework:</strong> JUnit 5 + Spring Boot Test + Spring Security Test</li>
+  <li><strong>BD de test:</strong> H2 in-memory amb <code>ddl-auto: create-drop</code></li>
+  <li><strong>Flyway:</strong> desactivat en test</li>
+  <li><strong>Cobertura:</strong> tests unitaris per auth, assets, automations, backup, billing, demo, domains, engine, finops, leads, ops, payments, prospecting, vault, shared</li>
+  <li><strong>Total:</strong> 19 fitxers de test (694 fitxers de codi font)</li>
+</ul>
+
+<h3>10.2 Frontend</h3>
+<ul>
+  <li><strong>Framework:</strong> Playwright</li>
+  <li><strong>Tests E2E:</strong> 20+ specs (smoke, public, auth, dashboard, admin, billing, landings, finops, automations, ops, payments, vault, rbac, onboarding, domains, inbox, knowledge, agent activation, etc.)</li>
+  <li><strong>Tests unitaris:</strong> auth, cookie, i18n, legal, smoke</li>
+  <li>Configuració de producció separada (<code>playwright.prod.config.ts</code>)</li>
+</ul>
+
+<h3>10.3 CI</h3>
+<p>GitHub Actions amb 2 jobs paral·lels: <code>mvn test</code> (backend) + <code>npm run build</code> (frontend).</p>
+
+<h3>10.4 Proves de seguretat</h3>
+<ul>
+  <li>12-rbac.spec.ts — validació de rols i permisos</li>
+  <li>Test de CSRF, CORS, rate limiting</li>
+  <li>Test de JWT expired/invalid</li>
+</ul>
+
+<!-- ============================================================ -->
+<!-- 11. CONCLUSIONS                                            -->
+<!-- ============================================================ -->
+<h2 id="conclusions">11. Conclusions i Recomanacions</h2>
+
+<div class="card">
+<h4>Punts forts ✅</h4>
+<ul>
+  <li><strong>Cobertura funcional molt àmplia</strong> — 36 mòduls especificats, quasi tots implementats</li>
+  <li><strong>Arquitectura hexagonal neta</strong> — separació clara en api/application/domain per cada mòdul</li>
+  <li><strong>Provider pattern</strong> — tots els serveis externs tenen mode mock, facilitant testing i desenvolupament offline</li>
+  <li><strong>Internacionalització completa</strong> — 4 idiomes amb next-intl, locale prefix, i SEO multilingüe</li>
+  <li><strong>Seguretat sòlida</strong> — JWT, CSP, rate limiting, AES-256, BCrypt, HSTS</li>
+  <li><strong>Infraestructura ben definida</strong> — Docker Compose, Traefik, Terraform, alertes Telegram</li>
+  <li><strong>Kits operatius</strong> — 10 kits que permeten escalar el negoci amb tasques especialitzades</li>
+  <li><strong>Model de negoci clar</strong> — fases NexeLocal F1-F5 amb preus i serveis ben definits</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Punts a millorar 🔧</h4>
+<ul>
+  <li><strong>Cobertura de tests backend baixa</strong> — només 19 fitxers de test per 694 fitxers de codi (2.7%)</li>
+  <li><strong>CI/CD incomplet</strong> — no hi ha desplegament automàtic a producció</li>
+  <li><strong>Monòlit Maven</strong> — tot el backend en un sol mòdul, idealment caldria modularitzar</li>
+  <li><strong>Spec 26 (RAG Knowledge Base)</strong> — en estat "en curs", pendent de completar</li>
+  <li><strong>No hi ha README.md</strong> — el projecte no té una documentació d'entrada al repositori</li>
+  <li><strong>Missatges i18n duplicats</strong> — els fitxers de traducció existeixen tant a <code>messages/</code> com a <code>src/messages/</code></li>
+  <li><strong>Sense monitoratge d'errors</strong> — no s'ha detectat integració amb Sentry, Datadog o similar</li>
+  <li><strong>Documentació API</strong> — no s'ha trobat OpenAPI/Swagger UI</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Recomanacions 🎯</h4>
+<ol>
+  <li><strong>Augmentar cobertura de tests</strong> — prioritzar tests unitaris per serveis i tests d'integració per als mòduls crítics (auth, vault, billing, payments)</li>
+  <li><strong>Afegir deploy automatitzat</strong> — GitHub Actions deploy a Hetzner via SSH/Docker Compose després de tests verds</li>
+  <li><strong>Completar mòdul 26 (RAG)</strong> — és l'únic spec pendent, crític per als agents IA conversacionals</li>
+  <li><strong>Implementar OpenAPI/Swagger</strong> — generar documentació interactiva de l'API REST</li>
+  <li><strong>Afegir monitoratge d'errors</strong> — Sentry tant per backend com per frontend</li>
+  <li><strong>Eliminar duplicació de messages</strong> — unificar en un sol directori</li>
+  <li><strong>Crear README.md</strong> — documentació d'inici ràpid per a nous desenvolupadors</li>
+  <li><strong>Modularitzar el backend</strong> — separar en mòduls Maven independents (auth, vault, engine, etc.)</li>
+  <li><strong>Auditoria de seguretat externa</strong> — tot i que la seguretat implementada és sòlida, una auditoria externa donaria confiança per a producció</li>
+</ol>
+</div>
+
+<hr>
+
+<h3>Mètriques del projecte</h3>
+
+<div class="grid-2">
+  <div>
+    <h4>Backend</h4>
+    <ul>
+      <li>Fitxers Java: 694 (main) + 19 (test)</li>
+      <li>Entitats JPA: 85+</li>
+      <li>Controladors REST: 47</li>
+      <li>Serveis: 60+</li>
+      <li>Repositoris JPA: ~90</li>
+      <li>Migracions Flyway: 15 (V1-V16)</li>
+      <li>Línies de codi (aprox): ~50.000+</li>
+    </ul>
   </div>
+  <div>
+    <h4>Frontend</h4>
+    <ul>
+      <li>Components React: 61</li>
+      <li>Rutes del portal: 50+</li>
+      <li>Serveis API: 34 fitxers</li>
+      <li>Idiomes: 4 (ca, es, en, de)</li>
+      <li>Definicions de wizard: 24</li>
+      <li>Tests E2E Playwright: 20+ specs</li>
+      <li>Línies de codi (aprox): ~30.000+</li>
+    </ul>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div>
+    <h4>Infraestructura</h4>
+    <ul>
+      <li>Serveis Docker: 7</li>
+      <li>Volums persistents: 7</li>
+      <li>Alertes Netdata: 5</li>
+      <li>Subdominis: 7</li>
+      <li>Arquitectures Terraform: 3</li>
+      <li>Scripts de manteniment: 3</li>
+    </ul>
+  </div>
+  <div>
+    <h4>Altres</h4>
+    <ul>
+      <li>Specs: 36 fitxers (12.000+ línies)</li>
+      <li>Kits operatius: 10</li>
+      <li>Proveïdors externs: 10+</li>
+      <li>Entorns: dev + prod</li>
+      <li>CI: GitHub Actions (2 jobs)</li>
+    </ul>
+  </div>
+</div>
+
+<hr>
+
+<p style="text-align:center;color:var(--ink2);padding:2rem 0;">
+  Documentació generada automàticament — AMG Digitalització · Portal — Juny 2026
+</p>
 
 </div>
-<footer>Auditoria generada per Claude Code &nbsp;&middot;&nbsp; Portal AMG Digitalització &nbsp;&middot;&nbsp; 14 maig 2026 &nbsp;&middot;&nbsp; 42 &rarr; 68 &rarr; 78/100</footer>
 </body>
 </html>

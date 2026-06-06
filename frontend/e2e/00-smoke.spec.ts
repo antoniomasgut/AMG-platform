@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginViaAPI, USERS, dismissCookies } from './helpers/auth';
+import { loginProd, dismissCookies } from './helpers/prod-auth';
 
 test.describe('SMOKE — Smoke test integral', () => {
 
@@ -22,7 +22,7 @@ test.describe('SMOKE — Smoke test integral', () => {
   });
 
   test('SMOKE-02: Login com a admin i accés al portal', async ({ page }) => {
-    const token = await loginViaAPI(page, USERS.admin);
+    const token = await loginProd(page);
     expect(token).toBeTruthy();
 
     await page.goto('/ca/portal');
@@ -36,8 +36,8 @@ test.describe('SMOKE — Smoke test integral', () => {
   });
 
   test('SMOKE-03: Dashboard del portal mostra dades', async ({ page }) => {
-    const token = await loginViaAPI(page, USERS.admin);
-    await expect(token).toBeTruthy();
+    const token = await loginProd(page);
+    expect(token).toBeTruthy();
 
     // Navegar directament al portal
     await page.goto('/ca/portal');

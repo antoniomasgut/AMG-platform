@@ -1,0 +1,473 @@
+package com.amg.digitalitzacio.documents.builder.application;
+
+import com.amg.digitalitzacio.documents.builder.api.dto.*;
+import com.amg.digitalitzacio.documents.builder.domain.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class DocumentBuilderService {
+
+    private final DocumentTemplateRepository templateRepo;
+    private final DocumentTemplateVersionRepository versionRepo;
+    private final GeneratedDocumentRepository documentRepo;
+    private final DocumentNumberSequenceRepository seqRepo;
+    private final ObjectMapper objectMapper;
+
+    public List<TemplateResponse> listTemplates(UUID tenantId) {
+        return templateRepo.findByTenantIdOrderByUpdatedAtDesc(tenantId).stream()
+            .map(this::toTemplateResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public TemplateResponse createTemplate(UUID tenantId, TemplateRequest req) {
+        var t = new DocumentTemplate();
+        t.setTenantId(tenantId);
+        t.setName(req.name());
+        t.setDocumentType(req.documentType());
+        t.setLayout(req.layout() != null ? req.layout() : "[]");
+        t.setDataBindings(req.dataBindings() != null ? req.dataBindings() : "{}");
+        t.setStyles(req.styles() != null ? req.styles() : "{}");
+        var saved = templateRepo.save(t);
+
+        saveVersionSnapshot(saved, "Versió inicial");
+        return toTemplateResponse(saved);
+    }
+
+    public TemplateResponse getTemplate(UUID id) {
+        var t = templateRepo.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("Template not found: " + id));
+        return toTemplateResponse(t);
+    }
+
+    @Transactional
+    public TemplateResponse updateTemplate(UUID id, TemplateRequest req) {
+        var t = templateRepo.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("Template not found: " + id));
+        if (req.name() != null) t.setName(req.name());
+        if (req.layout() != null) t.setLayout(req.layout());
+        if (req.dataBindings() != null) t.setDataBindings(req.dataBindings());
+        if (req.styles() != null) t.setStyles(req.styles());
+        t.setVersion(t.getVersion() + 1);
+        var saved = templateRepo.save(t);
+
+        saveVersionSnapshot(saved, "Actualització via API");
+        return toTemplateResponse(saved);
+    }
+
+    @Transactional
+    public void deleteTemplate(UUID id) {
+        var t = templateRepo.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("Template not found: " + id));
+        t.setActive(false);
+        templateRepo.save(t);
+    }
+
+    @Transactional
+    public TemplateResponse duplicateTemplate(UUID id) {
+        var t = templateRepo.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("Template not found: " + id));
+        var dup = new DocumentTemplate();
+        dup.setTenantId(t.getTenantId());
+        dup.setName(t.getName() + " (còpia)");
+        dup.setDocumentType(t.getDocumentType());
+        dup.setLayout(t.getLayout());
+        dup.setDataBindings(t.getDataBindings());
+        dup.setStyles(t.getStyles());
+        var saved = templateRepo.save(dup);
+        saveVersionSnapshot(saved, "Duplicat de " + t.getName());
+        return toTemplateResponse(saved);
+    }
+
+    public List<VersionResponse> listVersions(UUID templateId) {
+        return versionRepo.findByTemplateIdOrderByVersionDesc(templateId).stream()
+            .map(v -> new VersionResponse(v.getId(), v.getTemplateId(), v.getVersion(),
+                v.getLayout(), v.getDataBindings(), v.getStyles(), v.getNotes(), v.getCreatedAt()))
+            .collect(Collectors.toList());
+    }
+
+    public VersionResponse getVersion(UUID templateId, Integer version) {
+        var v = versionRepo.findByTemplateIdAndVersion(templateId, version)
+            .orElseThrow(() -> new NoSuchElementException("Version not found"));
+        return new VersionResponse(v.getId(), v.getTemplateId(), v.getVersion(),
+            v.getLayout(), v.getDataBindings(), v.getStyles(), v.getNotes(), v.getCreatedAt());
+    }
+
+    @Transactional
+    public TemplateResponse restoreVersion(UUID templateId, Integer version) {
+        var v = versionRepo.findByTemplateIdAndVersion(templateId, version)
+            .orElseThrow(() -> new NoSuchElementException("Version not found"));
+        var t = templateRepo.findById(templateId)
+            .orElseThrow(() -> new NoSuchElementException("Template not found"));
+        t.setLayout(v.getLayout());
+        t.setDataBindings(v.getDataBindings());
+        t.setStyles(v.getStyles());
+        t.setVersion(t.getVersion() + 1);
+        var saved = templateRepo.save(t);
+        saveVersionSnapshot(saved, "Restaurat versió " + version);
+        return toTemplateResponse(saved);
+    }
+
+    public String previewTemplate(UUID id) {
+        var t = templateRepo.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("Template not found: " + id));
+        Map<String, Object> ctx = new HashMap<>();
+        ctx.put("company", Map.of(
+            "name", "Nom Empresa", "taxId", "B12345678",
+            "phone", "+34 612 345 678", "email", "info@empresa.com",
+            "address", "C/ Exemple 1, 07001 Palma"
+        ));
+        ctx.put("customer", Map.of(
+            "name", "Client Exemple", "taxId", "12345678A",
+            "address", "C/ Major 10, Palma", "phone", "+34 600 000 000", "email", "client@exemple.com"
+        ));
+        ctx.put("document", Map.of(
+            "number", "DOC-0001", "date", LocalDate.now().toString(),
+            "validUntil", LocalDate.now().plusDays(30).toString()
+        ));
+        return renderHtml(t.getLayout(), ctx, t.getStyles());
+    }
+
+    @Transactional
+    public DocumentResponse generateDocument(UUID tenantId, GenerateRequest req) {
+        var t = templateRepo.findById(req.templateId())
+            .orElseThrow(() -> new NoSuchElementException("Template not found"));
+
+        var seq = seqRepo.findById(tenantId).orElseGet(() -> {
+            var s = new DocumentNumberSequence();
+            s.setTenantId(tenantId);
+            return seqRepo.save(s);
+        });
+        String number = seq.getPrefix() + "-" + String.format("%04d", seq.getNextNumber());
+        seq.setNextNumber(seq.getNextNumber() + 1);
+        seqRepo.save(seq);
+
+        Map<String, Object> variables = req.variables() != null ? req.variables() : new HashMap<>();
+        List<GenerateRequest.ArticleLine> articles = req.articles() != null ? req.articles() : List.of();
+
+        Map<String, Object> ctx = buildContext(tenantId, req, number, variables, articles);
+
+        String html = renderHtml(t.getLayout(), ctx, t.getStyles());
+
+        var doc = new GeneratedDocument();
+        doc.setTenantId(tenantId);
+        doc.setTemplateId(req.templateId());
+        doc.setTemplateVersion(t.getVersion());
+        doc.setNumber(number);
+        doc.setCustomerId(req.customerId());
+        doc.setCustomerData(toJson(req.customerData()));
+        doc.setVariables(toJson(variables));
+        doc.setArticles(toJson(articles));
+        doc.setCalculated(toJson(ctx.get("calculated")));
+        doc.setHtmlContent(html);
+        var saved = documentRepo.save(doc);
+
+        return toDocumentResponse(saved);
+    }
+
+    @Transactional
+    public DocumentResponse generatePdf(UUID tenantId, GenerateRequest req) {
+        var doc = generateDocument(tenantId, req);
+        String pdfUrl = "/api/v1/documents/" + doc.id() + "/pdf";
+        var entity = documentRepo.findById(doc.id()).orElseThrow();
+        entity.setPdfUrl(pdfUrl);
+        documentRepo.save(entity);
+        return new DocumentResponse(doc.id(), doc.tenantId(), doc.templateId(),
+            doc.templateVersion(), doc.number(), doc.status(),
+            doc.htmlContent(), pdfUrl, doc.generatedAt(), doc.createdAt());
+    }
+
+    public List<DocumentResponse> listDocuments(UUID tenantId) {
+        return documentRepo.findByTenantIdOrderByCreatedAtDesc(tenantId).stream()
+            .map(this::toDocumentResponse)
+            .collect(Collectors.toList());
+    }
+
+    public DocumentResponse getDocument(UUID id) {
+        var d = documentRepo.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("Document not found: " + id));
+        return toDocumentResponse(d);
+    }
+
+    public AIApplyRequest.AIApplyResponse applyAiOperations(UUID templateId, String prompt) {
+        if (prompt == null || prompt.isBlank()) {
+            throw new IllegalArgumentException("Prompt cannot be empty");
+        }
+        var operations = new ArrayList<AIApplyRequest.AIOperation>();
+
+        if (prompt.toLowerCase().contains("logo") && prompt.toLowerCase().contains("esquerra")) {
+            operations.add(new AIApplyRequest.AIOperation("move", "logo", 0, 0, null, null, null));
+        }
+        if (prompt.toLowerCase().contains("signatura") || prompt.toLowerCase().contains("signature")) {
+            Map<String, Object> style = new HashMap<>();
+            style.put("alignment", "right");
+            operations.add(new AIApplyRequest.AIOperation("add_block", "signature", null, null, 6, 2, style));
+        }
+        if (prompt.toLowerCase().contains("títol") && prompt.toLowerCase().contains("blau")) {
+            operations.add(new AIApplyRequest.AIOperation("update_style", "document_title", null, null, null, null,
+                Map.of("fontSize", 18, "fontWeight", "bold", "color", "#1a237e")));
+        }
+
+        return new AIApplyRequest.AIApplyResponse(operations);
+    }
+
+    private Map<String, Object> buildContext(UUID tenantId, GenerateRequest req, String number,
+                                              Map<String, Object> variables, List<GenerateRequest.ArticleLine> articles) {
+        Map<String, Object> ctx = new HashMap<>();
+
+        ctx.put("company", Map.of(
+            "name", "Empresa", "taxId", "", "phone", "",
+            "email", "", "address", "", "logo", ""
+        ));
+
+        if (req.customerData() != null) {
+            ctx.put("customer", req.customerData());
+        } else {
+            ctx.put("customer", Map.of(
+                "name", "", "taxId", "", "address", "", "phone", "", "email", ""
+            ));
+        }
+
+        ctx.put("document", Map.of(
+            "number", number,
+            "date", LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+            "validUntil", LocalDate.now().plusDays(30).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+        ));
+
+        ctx.put("variables", variables);
+
+        var calculated = calculate(articles, variables);
+        ctx.put("calculated", calculated);
+
+        return ctx;
+    }
+
+    private Map<String, Object> calculate(List<GenerateRequest.ArticleLine> articles, Map<String, Object> variables) {
+        double subtotal = 0;
+        var lines = new ArrayList<Map<String, Object>>();
+        for (var a : articles) {
+            double total = a.quantity() * a.unitPrice();
+            lines.add(Map.of(
+                "description", a.description(),
+                "quantity", a.quantity(),
+                "unitPrice", a.unitPrice(),
+                "total", total
+            ));
+            subtotal += total;
+        }
+
+        double discount = 0;
+        if (variables.containsKey("hours")) {
+            Number hours = (Number) variables.get("hours");
+            if (hours.doubleValue() > 20) discount = 10;
+        }
+
+        double taxRate = 21;
+        double tax = (subtotal - discount) * taxRate / 100;
+        double total = subtotal - discount + tax;
+
+        var fmt = NumberFormat.getCurrencyInstance(Locale.of("es", "ES"));
+        return Map.of(
+            "lines", lines,
+            "subtotal", fmt.format(subtotal),
+            "subtotalRaw", subtotal,
+            "discount", fmt.format(discount),
+            "discountRaw", discount,
+            "taxRate", taxRate,
+            "tax", fmt.format(tax),
+            "taxRaw", tax,
+            "total", fmt.format(total),
+            "totalRaw", total
+        );
+    }
+
+    private String renderHtml(String layoutJson, Map<String, Object> ctx, String stylesJson) {
+        try {
+            var layout = objectMapper.readTree(layoutJson);
+            var styles = objectMapper.readTree(stylesJson);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("""
+                <!DOCTYPE html><html><head><meta charset="UTF-8">
+                <style>
+                  body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+                  table { width: 100%%; border-collapse: collapse; margin: 16px 0; }
+                  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                  th { background: #f5f5f5; font-weight: 600; }
+                  .text-right { text-align: right; }
+                  .text-center { text-align: center; }
+                  .total-row { font-weight: bold; font-size: 1.1em; }
+                  .header { border-bottom: 2px solid #333; padding-bottom: 16px; margin-bottom: 24px; }
+                  .footer { border-top: 2px solid #333; padding-top: 16px; margin-top: 24px; font-size: 0.85em; color: #666; }
+                </style>
+                </head><body>
+                """);
+
+            if (layout.isArray()) {
+                for (var block : layout) {
+                    sb.append(renderBlock(block, ctx));
+                }
+            }
+
+            sb.append("</body></html>");
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("Error rendering HTML: {}", e.getMessage());
+            return "<html><body><p>Error rendering template</p></body></html>";
+        }
+    }
+
+    private String renderBlock(com.fasterxml.jackson.databind.JsonNode block, Map<String, Object> ctx) {
+        String type = block.path("type").asText();
+        var config = block.path("config");
+        var dataBinding = block.path("dataBinding");
+        String source = dataBinding.path("source").asText();
+        String field = dataBinding.path("field").asText();
+
+        String alignment = config.path("style").path("alignment").asText("left");
+        String alignClass = switch (alignment) {
+            case "center" -> "text-center";
+            case "right" -> "text-right";
+            default -> "";
+        };
+
+        return switch (type) {
+            case "document_title" -> "<h1 class=\"" + alignClass + "\">" + resolvePlaceholder(config, "text", "DOCUMENT") + "</h1>";
+            case "document_number" -> "<p class=\"" + alignClass + "\"><strong>Número:</strong> " + resolveCtx(ctx, "document", "number") + "</p>";
+            case "document_date" -> "<p class=\"" + alignClass + "\"><strong>Data:</strong> " + resolveCtx(ctx, "document", "date") + "</p>";
+            case "document_validity" -> "<p class=\"" + alignClass + "\"><strong>Validesa:</strong> " + resolveCtx(ctx, "document", "validUntil") + "</p>";
+            case "company_info" -> renderCompanyInfo(ctx, alignClass);
+            case "customer_info" -> renderCustomerInfo(ctx, alignClass);
+            case "products_table", "services_table" -> renderTable(ctx);
+            case "subtotal" -> "<p class=\"" + alignClass + "\"><strong>Subtotal:</strong> " + resolveCtx(ctx, "calculated", "subtotal") + "</p>";
+            case "discount" -> "<p class=\"" + alignClass + "\"><strong>Descompte:</strong> " + resolveCtx(ctx, "calculated", "discount") + "</p>";
+            case "tax" -> "<p class=\"" + alignClass + "\"><strong>IVA (" + resolveCtx(ctx, "calculated", "taxRate") + "%):</strong> " + resolveCtx(ctx, "calculated", "tax") + "</p>";
+            case "total" -> "<p class=\"" + alignClass + " total-row\"><strong>Total:</strong> " + resolveCtx(ctx, "calculated", "total") + "</p>";
+            case "text" -> "<p class=\"" + alignClass + "\">" + resolvePlaceholder(config, "text", "") + "</p>";
+            case "rich_text" -> "<div class=\"" + alignClass + "\">" + resolvePlaceholder(config, "html", "") + "</div>";
+            case "separator" -> "<hr>";
+            case "terms" -> "<div class=\"footer\"><p><strong>Termes i condicions:</strong> " + resolvePlaceholder(config, "text", "") + "</p></div>";
+            case "signature" -> "<div class=\"" + alignClass + "\" style=\"margin-top: 40px;\"><p>_________________________</p><p>Signatura</p></div>";
+            default -> "";
+        };
+    }
+
+    private String renderCompanyInfo(Map<String, Object> ctx, String alignClass) {
+        @SuppressWarnings("unchecked")
+        var c = (Map<String, Object>) ctx.getOrDefault("company", Map.of());
+        return "<div class=\"" + alignClass + " header\">" +
+            "<h2>" + esc(c.getOrDefault("name", "").toString()) + "</h2>" +
+            "<p>" + esc(c.getOrDefault("address", "").toString()) + "</p>" +
+            "<p>Tel: " + esc(c.getOrDefault("phone", "").toString()) + " | Email: " + esc(c.getOrDefault("email", "").toString()) + "</p>" +
+            "<p>CIF: " + esc(c.getOrDefault("taxId", "").toString()) + "</p></div>";
+    }
+
+    private String renderCustomerInfo(Map<String, Object> ctx, String alignClass) {
+        @SuppressWarnings("unchecked")
+        var c = (Map<String, Object>) ctx.getOrDefault("customer", Map.of());
+        return "<div class=\"" + alignClass + "\"><h3>Client</h3>" +
+            "<p>" + esc(c.getOrDefault("name", "").toString()) + "</p>" +
+            "<p>" + esc(c.getOrDefault("address", "").toString()) + "</p>" +
+            "<p>CIF: " + esc(c.getOrDefault("taxId", "").toString()) + "</p>" +
+            "<p>Tel: " + esc(c.getOrDefault("phone", "").toString()) + " | Email: " + esc(c.getOrDefault("email", "").toString()) + "</p></div>";
+    }
+
+    private String renderTable(Map<String, Object> ctx) {
+        @SuppressWarnings("unchecked")
+        var calculated = (Map<String, Object>) ctx.getOrDefault("calculated", Map.of());
+        @SuppressWarnings("unchecked")
+        var lines = (List<Map<String, Object>>) calculated.getOrDefault("lines", List.of());
+
+        StringBuilder sb = new StringBuilder("<table><thead><tr>");
+        sb.append("<th>Descripció</th><th class=\"text-right\">Quantitat</th>");
+        sb.append("<th class=\"text-right\">Preu/ud</th><th class=\"text-right\">Total</th>");
+        sb.append("</tr></thead><tbody>");
+        for (var line : lines) {
+            sb.append("<tr>");
+            sb.append("<td>").append(esc(line.getOrDefault("description", "").toString())).append("</td>");
+            sb.append("<td class=\"text-right\">").append(line.get("quantity")).append("</td>");
+            sb.append("<td class=\"text-right\">").append(formatPrice((Number) line.get("unitPrice"))).append("</td>");
+            sb.append("<td class=\"text-right\">").append(formatPrice((Number) line.get("total"))).append("</td>");
+            sb.append("</tr>");
+        }
+        sb.append("</tbody></table>");
+        return sb.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private String resolveCtx(Map<String, Object> ctx, String source, String field) {
+        var map = (Map<String, Object>) ctx.getOrDefault(source, Map.of());
+        Object val = map.get(field);
+        return val != null ? esc(val.toString()) : "{{" + source + "." + field + "}}";
+    }
+
+    private String resolvePlaceholder(com.fasterxml.jackson.databind.JsonNode config, String key, String fallback) {
+        String text = config.path(key).asText(fallback);
+        Pattern p = Pattern.compile("\\{\\{(\\w+)\\.(\\w+)\\}}");
+        Matcher m = p.matcher(text);
+        StringBuffer sb = new StringBuffer();
+        while (m.find()) {
+            m.appendReplacement(sb, "{{" + m.group(1) + "." + m.group(2) + "}}");
+        }
+        m.appendTail(sb);
+        return esc(sb.toString());
+    }
+
+    private String formatPrice(Number n) {
+        return NumberFormat.getCurrencyInstance(Locale.of("es", "ES")).format(n);
+    }
+
+    private String esc(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            .replace("\"", "&quot;").replace("'", "&#39;");
+    }
+
+    private void saveVersionSnapshot(DocumentTemplate t, String notes) {
+        var v = new DocumentTemplateVersion();
+        v.setTemplateId(t.getId());
+        v.setVersion(t.getVersion());
+        v.setLayout(t.getLayout());
+        v.setDataBindings(t.getDataBindings());
+        v.setStyles(t.getStyles());
+        v.setNotes(notes);
+        versionRepo.save(v);
+    }
+
+    private String toJson(Object obj) {
+        try {
+            return objectMapper.writeValueAsString(obj != null ? obj : Map.of());
+        } catch (JsonProcessingException e) {
+            return "{}";
+        }
+    }
+
+    private TemplateResponse toTemplateResponse(DocumentTemplate t) {
+        return new TemplateResponse(t.getId(), t.getTenantId(), t.getName(), t.getDocumentType(),
+            t.getVersion(), t.getActive(), t.getLayout(), t.getDataBindings(), t.getStyles(),
+            t.getCreatedAt(), t.getUpdatedAt());
+    }
+
+    private DocumentResponse toDocumentResponse(GeneratedDocument d) {
+        return new DocumentResponse(d.getId(), d.getTenantId(), d.getTemplateId(),
+            d.getTemplateVersion(), d.getNumber(), d.getStatus(),
+            d.getHtmlContent(), d.getPdfUrl(), d.getGeneratedAt(), d.getCreatedAt());
+    }
+}

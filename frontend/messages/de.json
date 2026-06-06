@@ -1,7 +1,7 @@
 {
   "common": {
     "amg": "AMG",
-    "tagline": "KI-Agent für lokale Unternehmen auf Mallorca",
+    "tagline": "Webdesign und Automatisierung für lokale Unternehmen auf Mallorca",
     "back": "Zurück",
     "send": "Senden",
     "save": "Speichern",
@@ -20,29 +20,20 @@
   },
   "landing": {
     "hero": {
-      "badge": "Für Selbständige und Kleinbetriebe auf Mallorca",
+      "badge": "Webdesign und Automatisierung für lokale Unternehmen",
       "title": "IHRE WEBSITE. IHRE PROZESSE.",
-      "titleAccent": "KLARE PREISE. PHASENWEISE.",
-      "subtitle": "Wir entwerfen, implementieren und pflegen Ihre digitale Präsenz phasenweise. Einmaliges Setup + niedrige monatliche Wartung. Transparent, ohne erzwungene Verträge.",
+      "titleAccent": "AN EINEM ORT.",
+      "subtitle": "Professionelle Landings, automatisiertes WhatsApp und Verwaltung von Terminen, Angeboten und Kundenbetreuung. Ein Team, eine feste Gebühr. Keine Überraschungen.",
       "cta": "KOSTENLOSE BERATUNG",
-      "ctaSecondary": "Phasen & Preise ansehen",
+      "ctaSecondary": "Lösungen ansehen",
       "stats": {
-        "uptimeValue": "ab 49€",
+        "uptimeValue": "ab 59€",
         "uptimeLabel": "Pro Monat",
         "clientsValue": "8+",
         "clientsLabel": "Aktive KMU",
         "automationsValue": "< 4h",
         "automationsLabel": "Reaktionszeit"
-      },
-      "sectors": [
-        "Kliniken",
-        "Renovierungen",
-        "Anwälte",
-        "Geschäfte",
-        "Restaurants",
-        "Friseure",
-        "Beratungen"
-      ]
+      }
     },
     "problem": {
       "badge": "Das echte Problem",
@@ -151,17 +142,17 @@
     "portalPreview": {
       "badge": "Ihr Kundenportal",
       "title": "IHR GESAMTES GESCHÄFT,\nIMMER SICHTBAR.",
-      "subtitle": "Jeder Kunde erhält Zugang zu einem privaten Dashboard, auf dem er den Status aller Dienste, Rechnungen und Störungen in Echtzeit einsehen kann — ohne nachfragen zu müssen.",
+      "subtitle": "Jeder Kunde erhält Zugang zu einem privaten Dashboard, um die Aktivität seines Assistenten, Gespräche, Buchungen und Rechnungen in Echtzeit zu sehen.",
       "features": [
         {
-          "icon": "📊",
-          "title": "Echtzeit-Status",
-          "description": "Sie sehen auf einen Blick, ob Ihre Website, Automatisierungen und Systeme betriebsbereit sind."
+          "icon": "💬",
+          "title": "Echtzeit-Aktivität",
+          "description": "Sehen Sie jedes Gespräch Ihres Assistenten, bestätigte Buchungen und gesendete Angebote auf einen Blick."
         },
         {
-          "icon": "🧾",
-          "title": "Rechnungen & Dokumente",
-          "description": "Zugang zu allen Rechnungen und einer Übersicht der gebuchten Dienste."
+          "icon": "📊",
+          "title": "Klare Metriken",
+          "description": "Wissen Sie, wie viele Nachrichten Ihr Assistent beantwortet hat, wie viele Buchungen bestätigt wurden und wie der Systemstatus ist."
         },
         {
           "icon": "🔔",
@@ -171,88 +162,78 @@
       ]
     },
     "testimonials": {
-      "badge": "Testimonials",
+      "badge": "Echte Fälle",
       "title": "WAS UNSERE\nKUNDEN SAGEN.",
       "items": [
         {
           "name": "Maria Rosselló",
-          "role": "Zahnklinik Rosselló",
-          "text": "Seit wir mit AMG arbeiten, muss ich mir keine Sorgen mehr um die Website oder Automatisierungen machen. Alles läuft von allein und falls ein Problem auftritt, wird es behoben bevor ich es merke."
+          "role": "Zahnklinik Rosselló · Palma",
+          "text": "Wir brauchten eine vertrauenswürdige Website und ein automatisches Buchungssystem. Sie erstellten die Seite in drei Tagen und der KI-Agent beantwortet Patientenanfragen rund um die Uhr. Jetzt finden uns Patienten über Google und buchen direkt."
         },
         {
           "name": "Pere Fullana",
-          "role": "Fullana Renovierungen",
-          "text": "Das Kundenportal ist fantastisch. Ich kann den Status meines gesamten Unternehmens in Echtzeit sehen, meine Rechnungen und sogar die aktiven Automatisierungen. 100%ige Empfehlung."
+          "role": "Fullana Renovierungen · Inca",
+          "text": "Ich verstehe nichts von Technik. Mit ihnen habe ich mit einer einfachen Landingpage angefangen und jetzt habe ich automatisiertes WhatsApp, das meine Angebote verwaltet. Ich bin begeistert, weil sie alles regeln und ich mich um nichts kümmern muss."
         },
         {
-          "name": "Caterina Cantallops",
-          "role": "Cantallops Rechtsanwälte",
-          "text": "Wir begannen mit einer Landing Page und jetzt ist die gesamte Kanzlei automatisiert. Der Support ist sofort da und löst jedes Problem. Ich würde das Team nie wechseln."
+          "name": "Joana Aiguabella",
+          "role": "Aiguabella Beratung · Manacor",
+          "text": "Wir haben die Website und den Agenten für Erstkontakte gebucht. Jetzt finden uns Kunden leicht und der Agent qualifiziert Anfragen, bevor sie an uns weitergeleitet werden. Wir haben verpasste Anrufe um 80% reduziert."
         }
       ]
     },
     "pricing": {
-      "badge": "Phasenbasierte Preise",
-      "title": "KLEIN ANFANGEN,\nWACHSEN WENN SIE BEREIT SIND.",
-      "subtitle": "Buchen Sie die Phasen, die Sie jetzt brauchen. Erweitern Sie, wenn Sie bereit sind. Einmaliges Setup + feste Monatsgebühr. Keine Überraschungen, kein Kleingedrucktes.",
-      "setupNote": "Einmaliges Setup ab 150€ · Monatlich inklusive: KI-Agent 24/7, Monitoring, bis zu 2 kleine Änderungen/Monat und technischer Support · Phasenerweiterung: 75€ + monatlicher Aufpreis",
-      "fromLabel": "ab",
-      "monthLabel": "/Monat",
-      "popular": "Am häufigsten gewählt",
-      "included": "Enthält:",
-      "ctaNote": "Kostenlose Beratung · Exakter Preis für Ihre Branche in 24h · Keine Verpflichtung",
+      "badge": "Wie wir arbeiten",
+      "title": "WIR ANALYSIEREN,\nEMPFEHLEN UND BEGLEITEN.",
+      "subtitle": "Bedarfsanalyse, maßgeschneiderter Vorschlag, phasenweise Umsetzung. Ab 59€/Monat.",
+      "setupNote": "Alle Lösungen inklusive Wartung, 24/7-Überwachung und technischem Support",
+      "ctaNote": "Kostenlose Beratung · Bedarfsanalyse · Maßgeschneidertes Angebot in 24h · Keine Verpflichtung",
       "fases": [
         {
-          "code": "F1",
-          "name": "Basiskommunikation",
-          "price": "59€",
-          "description": "Der Agent antwortet rund um die Uhr via WhatsApp, Telegram und E-Mail. Hybrid-Modus: Bot und Sie können im selben Thread antworten.",
+          "name": "24/7 Kommunikation",
+          "description": "Ihr KI-Agent antwortet automatisch auf WhatsApp, Telegram und E-Mail. Infos, Öffnungszeiten und Preise, immer verfügbar.",
           "services": [
             "Automatische Antworten 24/7",
             "WhatsApp + Telegram + E-Mail",
-            "Hybrid-Modus (Bot + Person)",
-            "Infos, Öffnungszeiten und Preise"
-          ],
-          "highlight": false
+            "Hybrid-Modus (Bot und Person im selben Thread)"
+          ]
         },
         {
-          "code": "F1+F2",
-          "name": "+ Terminverwaltung",
-          "price": "79€",
-          "description": "Der Agent verwaltet den Kalender: bestätigt Termine, sendet Erinnerungen und bearbeitet Stornierungen ohne Ihr Eingreifen.",
+          "name": "Terminverwaltung",
+          "description": "Der Agent verwaltet den Kalender: bestätigt Termine, sendet Erinnerungen und bearbeitet Stornierungen ohne Ihr Zutun.",
           "services": [
-            "Alles aus F1 inklusive",
             "Automatische Terminbestätigung",
             "Erinnerungen am Vortag",
-            "Stornierungsverwaltung"
+            "Stornierungs- und Änderungsverwaltung"
           ],
           "highlight": true
         },
         {
-          "code": "F1+F2+F3",
-          "name": "+ Angebote",
-          "price": "99€",
-          "description": "Der Agent erstellt PDF-Angebote, führt automatisch Nach und registriert Kundenantworten.",
+          "name": "Automatische Angebote",
+          "description": "Der Agent erstellt PDF-Angebote, führt automatisch Nachfassaktionen durch und protokolliert Kundenantworten.",
           "services": [
-            "Alles aus F1+F2 inklusive",
             "Automatische PDF-Angebote",
-            "Aktives Follow-up (unbeantwortete)",
-            "Antwort-Tracking"
-          ],
-          "highlight": false
+            "Nachfassaktionen bei unbeantworteten",
+            "Antwort- und Genehmigungsverfolgung"
+          ]
         },
         {
-          "code": "Komplett",
-          "name": "+ Kundenbindung",
-          "price": "129€",
-          "description": "Nachverkaufs-Follow-up, Reaktivierung inaktiver Kunden und automatische Google-Bewertungsanfragen.",
+          "name": "Kundenbindung",
+          "description": "Automatisches Post-Sale-Follow-up, Reaktivierung inaktiver Kunden und Google-Bewertungsanfragen.",
           "services": [
-            "Alles aus F3 inklusive",
-            "Automatisches Nachverkaufs-Follow-up",
+            "Automatisches Post-Sale-Follow-up",
             "Reaktivierung inaktiver Kunden",
-            "Google-Bewertungsanfragen"
-          ],
-          "highlight": false
+            "Automatische Bewertungsanfragen"
+          ]
+        },
+        {
+          "name": "Alarme & Team",
+          "description": "Integrieren Sie Ihr Team: interne Telegram-Benachrichtigungen, Störungsmeldungen und Koordination.",
+          "services": [
+            "Interne Telegram-Benachrichtigungen",
+            "Störungsmeldungen",
+            "Team-Koordination"
+          ]
         }
       ]
     },
@@ -261,7 +242,15 @@
       "subtitle": "Kostenlose Beratung, keine Verpflichtung. Wir erklären, wie wir Ihnen helfen können und senden Ihnen innerhalb von 24h ein Angebot.",
       "button": "PER WHATSAPP SCHREIBEN",
       "buttonSecondary": "ZUM PORTAL ANMELDEN",
-      "buttonDemo": "UNS EINE E-MAIL SCHREIBEN"
+      "buttonDemo": "UNS EINE E-MAIL SCHREIBEN",
+      "formTitle": "Oder senden Sie uns eine direkte Nachricht",
+      "formName": "Vor- und Nachname",
+      "formEmail": "E-Mail-Adresse",
+      "formMessage": "Erzählen Sie uns von Ihrem Projekt oder Ihrer Frage...",
+      "formError": "Konnte nicht gesendet werden. Versuchen Sie es später erneut oder schreiben Sie uns auf WhatsApp.",
+      "formSubmit": "NACHRICHT SENDEN",
+      "formSuccess": "Nachricht erhalten!",
+      "formSuccessDesc": "Wir melden uns innerhalb von 24h."
     },
     "footer": {
       "description": "Digitalisierungsplattform für lokale Unternehmen auf Mallorca.",

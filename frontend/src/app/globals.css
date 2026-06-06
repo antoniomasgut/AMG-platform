@@ -62,34 +62,8 @@
 
 /* ─────────── Card surface ─────────── */
 .amg-card {
-  background: #13132a;
-  border: 1px solid rgba(255, 107, 0, 0.12);
-}
-
-/* ─────────── Grid backgrounds ─────────── */
-.amg-grid {
-  background-image:
-    linear-gradient(rgba(255, 107, 0, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 107, 0, 0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-.amg-grid-sm {
-  background-image:
-    linear-gradient(rgba(255, 107, 0, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 107, 0, 0.04) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-
-/* ─────────── Hatch pattern ─────────── */
-.hatch {
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 8px,
-    rgba(255, 107, 0, 0.06) 8px,
-    rgba(255, 107, 0, 0.06) 9px
-  );
+  background: #0f172a;
+  border: 1px solid rgba(148,163,184,0.12);
 }
 
 /* ─────────── Blink animation ─────────── */
@@ -103,12 +77,33 @@
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .animate-slide-up {
-  animation: slide-up 0.25s ease-out;
+  animation: slide-up 0.4s var(--ease-out);
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s var(--ease-out);
+}
+
+/* ─────────── Reveal on scroll ─────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* ─────────── Focus visible ─────────── */
@@ -124,7 +119,7 @@
 
 /* ─────────── Base styles ─────────── */
 body {
-  background: #0d0d1a;
+  background: #0b1120;
   color: #e2e8f0;
   font-family: var(--font-sans), 'Space Grotesk', system-ui, sans-serif;
   font-size: var(--text-base);
@@ -139,10 +134,10 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0d0d1a;
+  background: #0b1120;
 }
 ::-webkit-scrollbar-thumb {
-  background: #212140;
+  background: #334155;
   border-radius: 0;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -153,7 +148,7 @@ body {
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 30px #1a1a2e inset !important;
+  -webkit-box-shadow: 0 0 0 30px #1e293b inset !important;
   -webkit-text-fill-color: #e2e8f0 !important;
 }
 

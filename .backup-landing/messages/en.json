@@ -1,0 +1,548 @@
+{
+  "common": {
+    "amg": "AMG",
+    "tagline": "AI Agent for local businesses in Mallorca",
+    "back": "Back",
+    "send": "Send",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Done"
+  },
+  "nav": {
+    "services": "Services",
+    "pricing": "How we work",
+    "howItWorks": "The process",
+    "contact": "Contact",
+    "login": "Sign in",
+    "portal": "My portal"
+  },
+  "landing": {
+    "hero": {
+      "badge": "For freelancers and small businesses in Mallorca",
+      "title": "YOUR WEBSITE. YOUR PROCESSES.",
+      "titleAccent": "CLEAR PRICES. BY PHASE.",
+      "subtitle": "We design, build and maintain your digital presence in phases. One-off setup per service + low monthly maintenance. Transparent, no forced contracts.",
+      "cta": "FREE CONSULTATION",
+      "ctaSecondary": "See phases & prices",
+      "stats": {
+        "uptimeValue": "from €49",
+        "uptimeLabel": "Per month",
+        "clientsValue": "8+",
+        "clientsLabel": "Active SMEs",
+        "automationsValue": "< 4h",
+        "automationsLabel": "Response time"
+      },
+      "sectors": [
+        "Clinics",
+        "Renovations",
+        "Lawyers",
+        "Shops",
+        "Restaurants",
+        "Hair salons",
+        "Consultancies"
+      ]
+    },
+    "problem": {
+      "badge": "The real problem",
+      "title": "YOU'RE A FREELANCER AND\nYOU DO EVERYTHING YOURSELF.",
+      "description": "You manage the website, bookings, quotes and WhatsApp — all at once. And every new tool adds another monthly fee. When something breaks, you don't know who to call.",
+      "items": [
+        {
+          "icon": "💸",
+          "text": "Monthly fees piling up: hosting, email, CRM, forms..."
+        },
+        {
+          "icon": "🚨",
+          "text": "No real support when the system goes down or the website stops working"
+        },
+        {
+          "icon": "⏳",
+          "text": "Hours lost with tools that don't talk to each other"
+        }
+      ]
+    },
+    "services": {
+      "badge": "Services",
+      "title": "EVERYTHING YOU NEED,\nWITH ONE TEAM.",
+      "subtitle": "From design to ongoing maintenance, without changing providers.",
+      "items": [
+        {
+          "icon": "🌐",
+          "title": "Websites & landings",
+          "description": "Professional landing pages optimised for conversion. Premium design, technical SEO and measured performance.",
+          "tag": "Web · Landing · SEO"
+        },
+        {
+          "icon": "🤖",
+          "title": "AI Agent",
+          "description": "The agent replies via WhatsApp, Telegram and email 24/7. It manages appointments, sends quotes and retains clients — without you having to lift a finger.",
+          "tag": "AI · WhatsApp · Telegram"
+        },
+        {
+          "icon": "🛡️",
+          "title": "Maintenance & SLA",
+          "description": "Systems monitored 24/7 with regular backups. When an incident occurs, we detect and resolve it before you even notice.",
+          "tag": "24/7 · Backups · SLA"
+        },
+        {
+          "icon": "🔄",
+          "title": "Changes & evolution",
+          "description": "Your business changes and so does the system. We implement improvements and adjustments whenever you need them.",
+          "tag": "Iteration · Improvements"
+        }
+      ]
+    },
+    "howItWorks": {
+      "badge": "Our process",
+      "title": "WE WORK IN PHASES,\nAT YOUR PACE.",
+      "steps": [
+        {
+          "number": "01",
+          "title": "We study your needs",
+          "description": "A discovery session to understand your business, your current processes and your goals. No strings attached."
+        },
+        {
+          "number": "02",
+          "title": "Phase-by-phase quote",
+          "description": "You receive a detailed, transparent proposal broken into phases. You choose which ones to implement and when."
+        },
+        {
+          "number": "03",
+          "title": "We build and launch",
+          "description": "Each phase is developed, tested and deployed. You have portal access to track all your services in real time."
+        },
+        {
+          "number": "04",
+          "title": "We stay by your side",
+          "description": "Maintenance, incident resolution and iterative improvements. The system grows with your business."
+        }
+      ]
+    },
+    "service": {
+      "badge": "How we work",
+      "title": "A TECHNICAL PARTNER,\nNOT A VENDOR.",
+      "subtitle": "Every client is different. That's why we don't have fixed rates: we study your needs and propose a phased solution with transparent pricing.",
+      "pillars": [
+        {
+          "icon": "🔍",
+          "title": "Personalised study",
+          "description": "We analyse your business, processes and goals. We design a tailored solution — no generic templates."
+        },
+        {
+          "icon": "📋",
+          "title": "Phase-based quote",
+          "description": "A clear, detailed proposal. You implement the phases you want, at your own pace and budget, with no forced commitments."
+        },
+        {
+          "icon": "🛡️",
+          "title": "Maintenance, backups & incidents",
+          "description": "System monitored 24/7 with regular backups. When an incident happens, we resolve it. If the service goes down, we're the first to know and act."
+        },
+        {
+          "icon": "🔄",
+          "title": "Changes & growth",
+          "description": "Your business evolves and so does the system. We adapt, improve and expand capabilities whenever you need it."
+        }
+      ],
+      "note": "Free initial consultation, no commitment. We'll explain exactly how we can help you."
+    },
+    "portalPreview": {
+      "badge": "Your client portal",
+      "title": "YOUR ENTIRE BUSINESS,\nALWAYS VISIBLE.",
+      "subtitle": "Every client gets access to a private dashboard where they can check the status of all their services, invoices and incidents in real time — without having to ask.",
+      "features": [
+        {
+          "icon": "📊",
+          "title": "Real-time status",
+          "description": "Know at a glance whether your website, automations and systems are running."
+        },
+        {
+          "icon": "🧾",
+          "title": "Invoices & documents",
+          "description": "Access all invoices and a summary of your contracted services."
+        },
+        {
+          "icon": "🔔",
+          "title": "Alerts & incidents",
+          "description": "We notify you when we detect a problem. You can track it directly from the portal."
+        }
+      ]
+    },
+    "testimonials": {
+      "badge": "Testimonials",
+      "title": "WHAT OUR\nCLIENTS SAY.",
+      "items": [
+        {
+          "name": "Maria Rosselló",
+          "role": "Rosselló Dental Clinic",
+          "text": "Since working with AMG, I no longer worry about the website or automations. Everything runs smoothly and if there's an issue, they fix it before I even notice."
+        },
+        {
+          "name": "Pere Fullana",
+          "role": "Fullana Renovations",
+          "text": "The client portal is amazing. I can see the status of my entire business in real time, my invoices and even the active automations. 100% recommended."
+        },
+        {
+          "name": "Caterina Cantallops",
+          "role": "Cantallops Attorneys",
+          "text": "We started with a landing page and now the entire office is automated. The support is immediate and always resolves any questions. I wouldn't change teams for anything."
+        }
+      ]
+    },
+    "pricing": {
+      "badge": "Phase-based pricing",
+      "title": "START SMALL,\nGROW WHEN YOU'RE READY.",
+      "subtitle": "Contract the phases you need now. Add more when you're ready. One-off setup + fixed monthly fee. No surprises, no small print.",
+      "setupNote": "One-off setup from €150 · Monthly includes: AI Agent 24/7, monitoring, up to 2 minor changes/month and technical support · Phase upgrade: €75 + monthly increment",
+      "fromLabel": "from",
+      "monthLabel": "/mo",
+      "popular": "Most chosen",
+      "included": "Includes:",
+      "ctaNote": "Free consultation · Exact price for your sector in 24h · No commitment",
+      "fases": [
+        {
+          "code": "F1",
+          "name": "Base communication",
+          "price": "€59",
+          "description": "The agent replies via WhatsApp, Telegram and Email 24/7. Hybrid mode: the bot and you can both reply in the same thread.",
+          "services": [
+            "Automatic replies 24/7",
+            "WhatsApp + Telegram + Email",
+            "Hybrid mode (bot + person)",
+            "Info, hours and prices"
+          ],
+          "highlight": false
+        },
+        {
+          "code": "F1+F2",
+          "name": "+ Appointment management",
+          "price": "€79",
+          "description": "The agent manages your calendar: confirms appointments, sends reminders and handles cancellations without you having to intervene.",
+          "services": [
+            "Everything in F1 included",
+            "Automatic appointment confirmation",
+            "Day-before reminders",
+            "Cancellation management"
+          ],
+          "highlight": true
+        },
+        {
+          "code": "F1+F2+F3",
+          "name": "+ Quotes",
+          "price": "€99",
+          "description": "The agent generates PDF quotes, automatically follows up and records client responses.",
+          "services": [
+            "Everything in F1+F2 included",
+            "Automatic PDF quotes",
+            "Active follow-up (unanswered)",
+            "Response tracking"
+          ],
+          "highlight": false
+        },
+        {
+          "code": "Complete",
+          "name": "+ Loyalty",
+          "price": "€129",
+          "description": "Post-sale follow-up, reactivation of inactive clients and automatic Google review requests.",
+          "services": [
+            "Everything in F3 included",
+            "Automatic post-sale follow-up",
+            "Inactive client reactivation",
+            "Google review requests"
+          ],
+          "highlight": false
+        }
+      ]
+    },
+    "cta": {
+      "title": "LET'S TALK ABOUT\nYOUR BUSINESS.",
+      "subtitle": "Free consultation, no commitment. We'll explain how we can help and send you a quote within 24h.",
+      "button": "CHAT ON WHATSAPP",
+      "buttonSecondary": "SIGN IN TO PORTAL",
+      "buttonDemo": "SEND US AN EMAIL"
+    },
+    "footer": {
+      "description": "Digitalisation platform for local businesses in Mallorca.",
+      "legal": "Legal",
+      "links": {
+        "avisLegal": "Legal Notice",
+        "privacitat": "Privacy",
+        "cookies": "Cookies",
+        "termes": "Terms of Service"
+      },
+      "contact": "Contact",
+      "copyright": "AMG Digitalitzacions. All rights reserved."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "PORTAL ACCESS",
+      "subtitle": "We send you a magic link by email. No passwords.",
+      "emailLabel": "Corporate email",
+      "emailPlaceholder": "you@company.com",
+      "sendMagicLink": "SEND MAGIC LINK",
+      "sending": "SENDING...",
+      "orWithPassword": "or with password",
+      "usePassword": "Use password",
+      "passwordTitle": "PASSWORD",
+      "passwordSubtitle": "Enter your password for",
+      "passwordLabel": "Password",
+      "enter": "SIGN IN",
+      "entering": "SIGNING IN...",
+      "forgotPassword": "FORGOT YOUR PASSWORD?",
+      "back": "← BACK",
+      "linkSent": "Link sent",
+      "checkEmail": "CHECK YOUR EMAIL",
+      "linkSentTo": "We've sent an access link to",
+      "linkExpires": "The link expires in",
+      "minutes": "15 min",
+      "checkSpam": "Check your spam folder if you don't see it.",
+      "resendLink": "RESEND LINK",
+      "useOtherEmail": "← USE A DIFFERENT EMAIL",
+      "errors": {
+        "incorrectCredentials": "Incorrect credentials",
+        "accountLocked": "Account locked. Try again later or reset your password.",
+        "tooManyAttempts": "Too many attempts. Try again in a few minutes.",
+        "loginError": "Login error",
+        "sendError": "Error sending the link",
+        "emailRequired": "Please enter your email first"
+      }
+    },
+    "forgotPassword": {
+      "badge": "Reset password",
+      "title": "RESET PASSWORD",
+      "subtitle": "Enter your email and we'll send you a link to reset your password.",
+      "emailLabel": "Corporate email",
+      "sendLink": "SEND LINK",
+      "sending": "SENDING...",
+      "linkSentBadge": "Link sent",
+      "checkEmail": "CHECK YOUR EMAIL",
+      "emailSentTo": "If the email exists, you'll receive a recovery link at",
+      "linkExpires": "The link expires in",
+      "minutes": "30 min",
+      "checkSpam": "Check your spam folder if you don't see it.",
+      "backToLogin": "← BACK TO LOGIN",
+      "error": "Error sending the request"
+    },
+    "resetPassword": {
+      "badge": "New password",
+      "title": "RESET PASSWORD",
+      "subtitle": "Enter your new password.",
+      "newPasswordLabel": "New password",
+      "confirmLabel": "Confirm password",
+      "update": "UPDATE PASSWORD",
+      "updating": "UPDATING...",
+      "invalidLink": "INVALID LINK",
+      "invalidLinkText": "This recovery link is invalid or has expired.",
+      "backToLogin": "BACK TO LOGIN",
+      "successTitle": "PASSWORD UPDATED",
+      "successText": "Redirecting to login...",
+      "goToLogin": "GO TO LOGIN",
+      "errors": {
+        "invalidToken": "Invalid or expired recovery link",
+        "minLength": "Password must be at least 4 characters",
+        "mismatch": "Passwords do not match",
+        "generic": "Error resetting password"
+      }
+    }
+  },
+  "portal": {
+    "sidebar": {
+      "system": "System status",
+      "nav": {
+        "dashboard": "Dashboard",
+        "landings": "Landings",
+        "automations": "Automations",
+        "billing": "Billing",
+        "settings": "Settings"
+      },
+      "logout": "Sign out"
+    },
+    "dashboard": {
+      "welcome": "Good morning",
+      "status": "System status",
+      "services": {
+        "landings": "Active landings",
+        "automations": "Automations",
+        "billing": "Invoices issued",
+        "storage": "Storage"
+      },
+      "invoices": {
+        "title": "Recent invoices",
+        "viewAll": "View all",
+        "cols": {
+          "id": "ID",
+          "concept": "Description",
+          "amount": "Amount",
+          "date": "Date",
+          "status": "Status"
+        },
+        "statuses": {
+          "paid": "Paid",
+          "pending": "Pending",
+          "overdue": "Overdue"
+        },
+        "empty": "No invoices"
+      }
+    }
+  },
+  "onboarding": {
+    "title": "Welcome, {name}! Let's get started.",
+    "subtitle": "Complete {total} step{steps} to get the most out of your portal",
+    "progress": "{completed} / {total} steps completed",
+    "skip": "Skip onboarding",
+    "complete_title": "YOU'RE ALL SET!",
+    "complete_subtitle": "Everything is configured. Your portal is ready.",
+    "complete_cta": "Go to dashboard",
+    "complete_cta_full": "GO TO DASHBOARD →",
+    "vault_pending": "Pending configuration",
+    "vault_pending_desc": "Your account has services pending configuration. Review them to activate.",
+    "vault_pending_cta": "Review configuration",
+    "error_title": "Connection error",
+    "error_desc": "Unable to load your portal data.",
+    "error_retry": "Retry",
+    "steps": {
+      "landing_title": "Create your first landing page",
+      "landing_desc": "Publish your website in under 5 minutes with the visual editor.",
+      "landing_cta": "GET STARTED",
+      "automation_title": "Connect an automation",
+      "automation_desc": "Connect n8n to send emails, WhatsApp, or receive automatic notifications.",
+      "automation_cta": "GET STARTED",
+      "billing_title": "Generate your first quote",
+      "billing_desc": "Create a custom quote and send it to your client as a PDF.",
+      "billing_cta": "GET STARTED"
+    }
+  },
+  "legal": {
+    "avisLegal": "Legal Notice",
+    "privacitat": "Privacy Policy",
+    "cookies": "Cookie Policy",
+    "termes": "Terms of Service"
+  },
+  "cookies": {
+    "message": "We use technical cookies necessary for the portal to function.",
+    "moreInfo": "Cookie policy",
+    "accept": "Accept",
+    "configure": "Configure",
+    "reject": "Reject"
+  },
+  "portalNav": {
+    "groups": {
+      "summary": "Overview",
+      "myServices": "My services",
+      "clientsLeads": "Clients & leads",
+      "finances": "Finances",
+      "overview": "Overview",
+      "acquisition": "1. Acquisition",
+      "commercial": "2. Sales",
+      "services": "3. Services",
+      "operations": "4. Operations",
+      "clients": "Clients",
+      "system": "System"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "myWebs": "My websites",
+      "automations": "Automations",
+      "agentAI": "AI Agent",
+      "agentsAI": "AI Agents",
+      "files": "Files",
+      "leadsCRM": "Leads CRM",
+      "quotes": "Quotes",
+      "invoices": "Invoices",
+      "payments": "Payments",
+      "process": "Process",
+      "prospecting": "Prospecting",
+      "landings": "Landings",
+      "domains": "Domains",
+      "assets": "Assets",
+      "opsHealth": "Ops & Health",
+      "tenants": "Tenants",
+      "users": "Users",
+      "programs": "Programmes",
+      "catalog": "Catalogue",
+      "templates": "Templates",
+      "backup": "Backup",
+      "infraOps": "InfraOps",
+      "apiKeys": "API Keys",
+      "inbox": "Conversations"
+    }
+  },
+  "portalDashboard": {
+    "greeting": "Good morning, {name}",
+    "noData": "No data",
+    "seeAll": "SEE ALL →",
+    "seeAllFem": "SEE ALL →",
+    "detail": "DETAIL →",
+    "admin": {
+      "kpi": {
+        "tenantsActive": "Active tenants",
+        "clients": "clients",
+        "leadsActive": "Active leads",
+        "convRateSub": "{total} total · {rate}% conv.",
+        "servicesMonitored": "Monitored services",
+        "incidents": "{count} open incidents",
+        "noIncidents": "No incidents",
+        "infra": "Infrastructure",
+        "paymentsPending": "Pending payments",
+        "completed": "{count} completed"
+      },
+      "pipeline": {
+        "section": "Acquisition",
+        "title": "Lead pipeline",
+        "stages": {
+          "NEW": "New",
+          "CONTACTED": "Contacted",
+          "QUALIFIED": "Qualified",
+          "PROPOSAL": "Proposal",
+          "NEGOTIATION": "Negotiation",
+          "WON": "Won"
+        }
+      },
+      "resources": {
+        "section": "Server",
+        "title": "Resources",
+        "noData": "No server data",
+        "disc": "Disk",
+        "dbConnections": "DB Connections",
+        "n8nTenants": "n8n tenants"
+      },
+      "actions": {
+        "title": "Quick actions",
+        "process": "FULL PROCESS",
+        "newLead": "NEW LEAD",
+        "tenants": "TENANTS",
+        "apiKeys": "API KEYS",
+        "backup": "BACKUP"
+      },
+      "invoicesSummaryComingSoon": "Invoice summary — coming soon"
+    },
+    "client": {
+      "billing": {
+        "totalInvested": "Total invested",
+        "pending": "{count} pending",
+        "upToDate": "UP TO DATE",
+        "lastQuote": "Last quote",
+        "none": "None",
+        "amount": "Amount"
+      },
+      "kpi": {
+        "webs": "Webs",
+        "total": "{count} total"
+      },
+      "invoices": {
+        "section": "History",
+        "title": "Latest invoices",
+        "seeAll": "SEE ALL →",
+        "empty": "No invoices yet"
+      },
+      "help": {
+        "title": "NEED HELP?",
+        "subtitle": "Your assigned technician is available to answer your questions.",
+        "contact": "CONTACT"
+      }
+    }
+  }
+}

@@ -22,7 +22,7 @@ export default defineConfig({
   workers: 1,
 
   webServer: {
-    command: 'npx next dev -p 3001',
+    command: 'NEXT_PUBLIC_API_URL=https://api.amgdl.com npx next dev -p 3001',
     port: 3001,
     reuseExistingServer: true,
     timeout: 60000,

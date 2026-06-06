@@ -3,8 +3,8 @@ import { Page } from '@playwright/test';
 export const API_BASE = 'https://api.amgdl.com';
 
 export const PROD_USER = {
-  email: 'antoniomasgut@gmail.com',
-  password: 'Desidia_10A2026',
+  email: 'playwright@amgdl.com',
+  password: 'Playwright_Test_2026',
 };
 
 export const TENANT_ID = '05003ce9-b624-4430-9988-55eec1e9cc93';

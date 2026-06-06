@@ -16,7 +16,7 @@ export function PortalSection() {
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-12">
-          <h2 className="f-display font-black text-3xl sm:text-4xl lg:text-5xl leading-[1.1] tracking-display whitespace-pre-line">
+          <h2 className="f-display font-black text-3xl sm:text-4xl lg:text-5xl leading-[1.1] tracking-display">
             {t('title')}
           </h2>
           <p className="text-ui text-ink-2 lg:text-right max-w-sm">{t('subtitle')}</p>
@@ -26,10 +26,10 @@ export function PortalSection() {
           {/* Feature list */}
           <div className="flex flex-col gap-4">
             {features.map((f, i) => (
-              <div key={i} className="amg-card card-clip p-5 flex gap-4">
+              <div key={i} className="amg-card p-5 flex gap-4">
                 <span className="text-2xl shrink-0 mt-0.5">{f.icon}</span>
                 <div>
-                  <h3 className="f-display font-black text-md mb-1">{f.title}</h3>
+                  <h3 className="font-bold text-md mb-1">{f.title}</h3>
                   <p className="text-ui text-ink-2 leading-relaxed">{f.description}</p>
                 </div>
               </div>
@@ -47,7 +47,7 @@ export function PortalSection() {
           </div>
 
           {/* Dashboard mockup */}
-          <div className="amg-card card-clip bg-bg-1 border border-border-medium overflow-hidden">
+          <div className="amg-card bg-bg-1 border border-border-medium overflow-hidden">
             {/* Mockup header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle bg-bg-2">
               <div className="flex items-center gap-2">
@@ -56,46 +56,48 @@ export function PortalSection() {
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#39d353] amg-blink" />
-                <span className="f-mono text-label text-ink-3">Operatiu</span>
+                <span className="f-mono text-label text-ink-3">Online</span>
               </div>
             </div>
 
             {/* Mockup stat cards */}
             <div className="grid grid-cols-2 gap-3 p-5 border-b border-border-subtle">
               {[
-                { label: 'Landings', value: '3', sub: 'actives', color: 'text-[#39d353]' },
-                { label: 'Automatitzacions', value: '5', sub: 'actives', color: 'text-accent-light' },
-                { label: 'Factures', value: '12', sub: 'emeses', color: 'text-ink-1' },
-                { label: 'Sistema', value: '99.9%', sub: 'uptime', color: 'text-[#39d353]' },
+                { label: 'Missatges gestionats', value: '1.247', sub: 'aquest mes', color: 'text-accent-light' },
+                { label: 'Reserves', value: '48', sub: 'confirmades', color: 'text-[#39d353]' },
+                { label: 'Pressupostos', value: '12', sub: 'enviats', color: 'text-ink-1' },
+                { label: 'Temps d\'activitat', value: '99.9%', sub: 'uptime', color: 'text-[#39d353]' },
               ].map((card) => (
                 <div key={card.label} className="border border-border-subtle p-3">
                   <div className="f-mono text-label text-ink-3 uppercase mb-1">{card.label}</div>
-                  <div className={`f-display font-black text-xl ${card.color}`}>{card.value}</div>
+                  <div className={`font-bold text-xl ${card.color}`}>{card.value}</div>
                   <div className="f-mono text-label text-ink-3">{card.sub}</div>
                 </div>
               ))}
             </div>
 
-            {/* Mockup invoice rows */}
+            {/* Mockup conversation feed */}
             <div className="p-5">
-              <div className="f-mono text-label text-ink-3 uppercase tracking-widest mb-3">Factures recents</div>
-              <div className="flex flex-col gap-2">
+              <div className="f-mono text-label text-ink-3 uppercase tracking-widest mb-3">Converses recents</div>
+              <div className="flex flex-col gap-0">
                 {[
-                  { id: '#0024', concept: 'Landing Pro · Fase 1', amount: '80€', status: 'Pagada', ok: true },
-                  { id: '#0023', concept: 'Automatització WhatsApp', amount: '60€', status: 'Pagada', ok: true },
-                  { id: '#0022', concept: 'Manteniment mensual', amount: '45€', status: 'Pendent', ok: false },
-                ].map((row) => (
-                  <div key={row.id} className="flex items-center justify-between py-2 border-b border-border-subtle last:border-0">
-                    <div className="flex items-center gap-3">
-                      <span className="f-mono text-label text-ink-3">{row.id}</span>
-                      <span className="f-mono text-label text-ink-1 hidden sm:block">{row.concept}</span>
+                  { name: 'Clínica Rosselló', preview: 'Bon dia, volia demanar hora per a una revisió...', time: 'Fa 5 min', read: true },
+                  { name: 'Fullana Reformes', preview: 'Em poden fer un pressupost per a una reforma de bany?', time: 'Fa 23 min', read: true },
+                  { name: 'Aiguabella Assessors', preview: 'Quins documents necessito per a la declaració...', time: 'Fa 1h', read: false },
+                ].map((row, i) => (
+                  <div key={i} className="flex items-start justify-between py-3 border-b border-border-subtle last:border-0 gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${row.read ? 'bg-bg-3' : 'bg-accent-muted'}`}>
+                        <span className={`f-mono text-[10px] font-bold ${row.read ? 'text-ink-3' : 'text-accent-light'}`}>
+                          {row.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <div className={`text-sm ${row.read ? 'text-ink-2' : 'text-ink-0 font-semibold'}`}>{row.name}</div>
+                        <div className="f-mono text-label text-ink-3 truncate max-w-[200px]">{row.preview}</div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="f-mono text-label text-ink-1 font-semibold">{row.amount}</span>
-                      <span className={`f-mono text-label px-2 py-0.5 border ${row.ok ? 'border-[#39d353]/30 text-[#39d353]' : 'border-amber-500/30 text-amber-400'}`}>
-                        {row.status}
-                      </span>
-                    </div>
+                    <span className="f-mono text-label text-ink-3 shrink-0">{row.time}</span>
                   </div>
                 ))}
               </div>

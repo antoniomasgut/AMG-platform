@@ -4,23 +4,30 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { getSystemConfig, setSystemConfig, deleteSystemConfig, testSystemConfig, TESTABLE_KEYS, type ConfigStatus } from '@/services/sysconfig';
+import { useTranslations } from 'next-intl';
+import { getSystemConfig, setSystemConfig, deleteSystemConfig, testSystemConfig, getAuditLog, TESTABLE_KEYS, type ConfigStatus } from '@/services/sysconfig';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { I } from '@/components/ui/icons';
 
-const CATEGORY_LABEL: Record<string, string> = {
-  AGENTS: 'Agents IA',
-  INFRAOPS: 'InfraOps',
-  PROSPECTING: 'Prospecció',
-  PAYMENTS: 'Pagaments',
-  FINOPS: 'FinOps',
-  BACKUP: 'Backup',
-  AUTOMATIONS: 'Automatitzacions',
-  CALENDAR: 'Calendari',
-  EMAIL_INBOUND: 'Email Inbound',
-};
+const CATEGORY_ORDER = [
+  'MAINTENANCE',
+  'AI_MODELS',
+  'STORAGE',
+  'AGENTS',
+  'INFRAOPS',
+  'PROSPECTING',
+  'PAYMENTS',
+  'FINOPS',
+  'BACKUP',
+  'AUTOMATIONS',
+  'CALENDAR',
+  'EMAIL_INBOUND',
+  'META_ADS',
+  'IMAGE_GEN',
+  'GENERAL',
+];
 
 type HelpStep = { n: number; text: React.ReactNode };
 
@@ -98,26 +105,32 @@ function CategoryHelp({ category }: { category: string }) {
   );
 }
 
-function StatusBadge({ status }: { status: ConfigStatus }) {
-  if (status.configured && status.source === 'ENV') {
-    return <AMGBadge tone="success">Variable d'entorn</AMGBadge>;
-  }
-  if (status.configured && status.source === 'DB') {
-    return <AMGBadge tone="info">Configurat (DB)</AMGBadge>;
-  }
-  return <AMGBadge tone="danger">No configurat</AMGBadge>;
+function SourceBadge({ status, t }: { status: ConfigStatus; t: (key: string) => string }) {
+  if (status.source === 'ENV') return <AMGBadge tone="success">{t('envSource')}</AMGBadge>;
+  if (status.source === 'DB') return <AMGBadge tone="info">{t('dbSource')}</AMGBadge>;
+  if (status.source === 'DEFAULT') return <AMGBadge tone="neutral">{t('defaultSource')}</AMGBadge>;
+  return <AMGBadge tone="danger">{t('missingSource')}</AMGBadge>;
 }
 
-function KeyRow({ item, onSave, onDelete }: {
+function TypeBadge({ type, t }: { type: string; t: (key: string) => string }) {
+  const label = t(`types.${type}`) ?? type;
+  return <AMGBadge tone="neutral">{label}</AMGBadge>;
+}
+
+function KeyRow({ item, onSave, onDelete, t }: {
   item: ConfigStatus;
   onSave: (key: string, value: string) => void;
   onDelete: (key: string) => void;
+  t: (key: string, opts?: any) => string;
 }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState('');
   const [show, setShow] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [showAudit, setShowAudit] = useState(false);
+  const [auditLog, setAuditLog] = useState<{ id: string; action: string; userEmail: string | null; changedAt: string }[]>([]);
+  const qc = useQueryClient();
 
   const handleTest = async () => {
     setTesting(true);
@@ -126,11 +139,22 @@ function KeyRow({ item, onSave, onDelete }: {
       const res = await testSystemConfig(item.key);
       setTestResult(res);
     } catch {
-      setTestResult({ ok: false, message: 'Error connectant amb el servidor.' });
+      setTestResult({ ok: false, message: t('testError') });
     } finally {
       setTesting(false);
     }
   };
+
+  const handleAudit = async () => {
+    if (showAudit) { setShowAudit(false); return; }
+    try {
+      const log = await getAuditLog(item.key);
+      setAuditLog(log);
+      setShowAudit(true);
+    } catch {}
+  };
+
+  const inputMode = item.type || 'secret';
 
   return (
     <div className={`px-4 sm:px-5 py-4 border-b border-border-base last:border-0 ${!item.configured ? 'bg-danger/[0.03]' : ''}`}>
@@ -138,8 +162,8 @@ function KeyRow({ item, onSave, onDelete }: {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-0.5">
             <span className="f-display font-bold text-sm">{item.label}</span>
-            <AMGBadge tone="neutral">{CATEGORY_LABEL[item.category] ?? item.category}</AMGBadge>
-            <StatusBadge status={item} />
+            <TypeBadge type={inputMode} t={t} />
+            <SourceBadge status={item} t={t} />
           </div>
           <p className="f-mono text-label text-ink-2 text-xs mt-0.5">{item.description}</p>
           <p className="f-mono text-label text-ink-3 text-xs mt-0.5 opacity-60">{item.key}</p>
@@ -148,29 +172,35 @@ function KeyRow({ item, onSave, onDelete }: {
         <div className="flex gap-2 shrink-0 flex-wrap justify-end">
           {item.configured && TESTABLE_KEYS.has(item.key) && (
             <AMGButton size="sm" variant="secondary" onClick={handleTest} disabled={testing}>
-              {testing ? '…' : 'Provar'}
+              {testing ? t('loadingTest') : t('btnTest')}
             </AMGButton>
           )}
           {!item.configured && (
             <AMGButton size="sm" icon={I.Plus} onClick={() => setEditing(true)}>
-              Configurar
+              {t('btnConfigure')}
             </AMGButton>
           )}
-          {item.configured && item.source === 'DB' && (
+          {item.configured && item.source !== 'ENV' && (
             <>
               <AMGButton size="sm" variant="secondary" icon={I.Edit} onClick={() => setEditing(true)}>
-                Editar
+                {t('btnEdit')}
               </AMGButton>
               <AMGButton
                 size="sm"
                 variant="ghost"
+                icon={I.FileText}
+                onClick={handleAudit}
+              />
+              <AMGButton
+                size="sm"
+                variant="ghost"
                 icon={I.Trash}
-                onClick={() => { if (confirm(`Eliminar la clau ${item.key}?`)) onDelete(item.key); }}
+                onClick={() => { if (confirm(t('confirmDelete', { key: item.key }))) onDelete(item.key); }}
               />
             </>
           )}
           {item.configured && item.source === 'ENV' && (
-            <span className="f-mono text-label text-xs text-ink-3 self-center">Llegida d'entorn</span>
+            <span className="f-mono text-label text-xs text-ink-3 self-center">{t('envRead')}</span>
           )}
         </div>
       </div>
@@ -181,38 +211,100 @@ function KeyRow({ item, onSave, onDelete }: {
         </div>
       )}
 
+      {showAudit && auditLog.length > 0 && (
+        <div className="mt-3 p-3 rounded bg-bg-1 border border-border-base text-xs f-mono space-y-1 max-h-40 overflow-y-auto">
+          <p className="text-ink-2 font-semibold mb-1">{t('auditTitle')}</p>
+          {auditLog.map(e => (
+            <div key={e.id} className="flex gap-2 text-ink-3">
+              <span className="text-ink-1">{e.action === 'SET' ? '🖊' : '🗑'}</span>
+              <span>{new Date(e.changedAt).toLocaleString('ca')}</span>
+              {e.userEmail && <span>— {e.userEmail}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
       {editing && (
-        <div className="mt-3 flex gap-2 items-start">
-          <div className="flex-1 relative">
-            <input
-              type={item.secret && !show ? 'password' : 'text'}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder={`Introdueix ${item.label}…`}
-              className="w-full bg-bg-1 border border-accent text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none pr-9"
-              autoFocus
-            />
-            {item.secret && (
+        <div className="mt-3">
+          {inputMode === 'boolean' ? (
+            <div className="flex gap-2 items-center">
               <button
                 type="button"
-                onClick={() => setShow(!show)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink-1"
+                onClick={() => setValue(value === 'true' ? 'false' : 'true')}
+                className={`w-10 h-6 rounded-full transition-colors ${value === 'true' ? 'bg-accent' : 'bg-ink-3'}`}
               >
-                {show ? <I.EyeOff size={14} /> : <I.Eye size={14} />}
+                <span className={`block w-4 h-4 bg-white rounded-full transition-transform ${value === 'true' ? 'translate-x-5' : 'translate-x-1'}`} />
               </button>
-            )}
-          </div>
-          <AMGButton
-            size="sm"
-            icon={I.Check}
-            disabled={!value.trim()}
-            onClick={() => { onSave(item.key, value.trim()); setEditing(false); setValue(''); }}
-          >
-            Desar
-          </AMGButton>
-          <AMGButton size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(''); }}>
-            Cancel·lar
-          </AMGButton>
+              <span className="f-mono text-xs text-ink-2">{value === 'true' ? t('toggleActive') : t('toggleInactive')}</span>
+              <AMGButton size="sm" icon={I.Check} onClick={() => { onSave(item.key, value || 'false'); setEditing(false); }}>
+                {t('btnSave')}
+              </AMGButton>
+              <AMGButton size="sm" variant="ghost" onClick={() => setEditing(false)}>{t('btnCancel')}</AMGButton>
+            </div>
+          ) : inputMode === 'json' ? (
+            <div className="flex gap-2 items-start">
+              <textarea
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder={t('placeholderJson')}
+                className="flex-1 bg-bg-1 border border-accent text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none min-h-[100px]"
+                autoFocus
+              />
+              <div className="flex gap-2 shrink-0">
+                <AMGButton size="sm" icon={I.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); }}>
+                  {t('btnSave')}
+                </AMGButton>
+                <AMGButton size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(''); }}>
+                  {t('btnCancel')}
+                </AMGButton>
+              </div>
+            </div>
+          ) : inputMode === 'number' ? (
+            <div className="flex gap-2 items-start">
+              <input
+                type="number"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder={t('placeholderNumber')}
+                className="w-40 bg-bg-1 border border-accent text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none"
+                autoFocus
+              />
+              <AMGButton size="sm" icon={I.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); }}>
+                {t('btnSave')}
+              </AMGButton>
+              <AMGButton size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(''); }}>
+                {t('btnCancel')}
+              </AMGButton>
+            </div>
+          ) : (
+            <div className="flex gap-2 items-start">
+              <div className="flex-1 relative">
+                <input
+                  type={inputMode === 'secret' && !show ? 'password' : 'text'}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  placeholder={t('placeholderValue', { label: item.label })}
+                  className="w-full bg-bg-1 border border-accent text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none pr-9"
+                  autoFocus
+                />
+                {inputMode === 'secret' && (
+                  <button
+                    type="button"
+                    onClick={() => setShow(!show)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink-1"
+                  >
+                    {show ? <I.EyeOff size={14} /> : <I.Eye size={14} />}
+                  </button>
+                )}
+              </div>
+              <AMGButton size="sm" icon={I.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); setValue(''); }}>
+                {t('btnSave')}
+              </AMGButton>
+              <AMGButton size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(''); }}>
+                {t('btnCancel')}
+              </AMGButton>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -223,6 +315,8 @@ export default function SystemConfigPage() {
   const { user, isSuperAdmin } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const [search, setSearch] = useState('');
+  const t = useTranslations('admin.config');
 
   const { data: configs = [], isLoading } = useQuery({
     queryKey: ['system-config'],
@@ -232,54 +326,89 @@ export default function SystemConfigPage() {
 
   const { mutate: doSave } = useMutation({
     mutationFn: ({ key, value }: { key: string; value: string }) => setSystemConfig(key, value),
-    onSuccess: (_, { key }) => {
-      toast('success', `Clau ${key} desada correctament`);
+    onSuccess: (res, { key }) => {
+      if ('error' in res) {
+        toast('error', (res as { error: string }).error);
+      } else {
+        toast('success', t('toastSaved', { key }));
+      }
       qc.invalidateQueries({ queryKey: ['system-config'] });
     },
-    onError: () => toast('error', 'Error desant la clau'),
+    onError: () => toast('error', t('toastSaveError')),
   });
 
   const { mutate: doDelete } = useMutation({
     mutationFn: (key: string) => deleteSystemConfig(key),
     onSuccess: (_, key) => {
-      toast('success', `Clau ${key} eliminada`);
+      toast('success', t('toastDeleted', { key }));
       qc.invalidateQueries({ queryKey: ['system-config'] });
     },
-    onError: () => toast('error', 'Error eliminant la clau'),
+    onError: () => toast('error', t('toastDeleteError')),
   });
 
   if (!user || !isSuperAdmin) return null;
 
   const list = configs as ConfigStatus[];
+  const filtered = list.filter(c =>
+    !search ||
+    c.key.toLowerCase().includes(search.toLowerCase()) ||
+    c.label.toLowerCase().includes(search.toLowerCase()) ||
+    c.description.toLowerCase().includes(search.toLowerCase())
+  );
   const missing = list.filter((c) => !c.configured).length;
 
-  // Group by category
-  const byCategory = list.reduce<Record<string, ConfigStatus[]>>((acc, c) => {
+  const byCategory = filtered.reduce<Record<string, ConfigStatus[]>>((acc, c) => {
     const cat = c.category;
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(c);
     return acc;
   }, {});
 
+  const sortedCategories = Object.keys(byCategory).sort(
+    (a, b) => (CATEGORY_ORDER.indexOf(a) !== -1 ? CATEGORY_ORDER.indexOf(a) : 999) -
+              (CATEGORY_ORDER.indexOf(b) !== -1 ? CATEGORY_ORDER.indexOf(b) : 999)
+  );
+
   return (
     <PortalShell breadcrumb="admin / config">
       <div className="p-4 sm:p-8 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / admin / config /</span>
+            <span className="f-mono text-label uppercase text-accent-light tracking-widest">{t('breadcrumbDisplay')}</span>
             <div className="flex items-center gap-3 mt-1">
-              <div className="f-display font-bold text-xl">API Keys del Sistema</div>
-              {missing > 0 && <AMGBadge tone="danger">{missing} no configurades</AMGBadge>}
-              {missing === 0 && list.length > 0 && <AMGBadge tone="success">Tot configurat</AMGBadge>}
+              <div className="f-display font-bold text-xl">{t('title')}</div>
+              {missing > 0 && <AMGBadge tone="danger">{t('missing', { n: missing })}</AMGBadge>}
+              {missing === 0 && list.length > 0 && <AMGBadge tone="success">{t('allConfigured')}</AMGBadge>}
             </div>
           </div>
         </div>
 
+        <div className="flex gap-3 items-center">
+          <div className="relative flex-1 max-w-sm">
+            <I.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('search')}
+              className="w-full bg-bg-1 border border-border-base text-ink-0 pl-9 pr-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+            />
+          </div>
+          {search && (
+            <AMGButton size="sm" variant="ghost" onClick={() => setSearch('')}>
+              <I.X size={14} />
+            </AMGButton>
+          )}
+          <span className="f-mono text-xs text-ink-3 ml-auto">
+            {t('count', { filtered: filtered.length, total: list.length })}
+          </span>
+        </div>
+
         <div className="amg-card card-clip p-4 border-l-2 border-l-accent bg-accent/5">
           <p className="f-mono text-label text-ink-1 text-xs leading-relaxed">
-            Les claus d'API s'emmagatzemen xifrades (AES-256) a la base de dades.
-            Les variables d'entorn tenen prioritat sobre les claus de la BD.
-            Canviar una clau aquí no requereix reiniciar el servidor.
+            {t('infoEncrypted')}
+            {' '}{t('infoEnvPriority')}
+            {' '}{t('infoNoRestart')}
           </p>
         </div>
 
@@ -288,29 +417,33 @@ export default function SystemConfigPage() {
             <span className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          Object.entries(byCategory).map(([category, items]) => (
-            <div key={category} className="amg-card card-clip">
-              <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
-                <div className="f-mono text-label uppercase text-ink-2 tracking-widest">
-                  {CATEGORY_LABEL[category] ?? category}
+          sortedCategories.map((category) => {
+            const items = byCategory[category];
+            return (
+              <div key={category} className="amg-card card-clip">
+                <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
+                  <div className="f-mono text-label uppercase text-ink-2 tracking-widest">
+                    {t(`categories.${category}`) ?? category}
+                  </div>
+                  <AMGBadge tone={items.every((i) => i.configured) ? 'success' : 'warning'}>
+                    {items.filter((i) => i.configured).length}/{items.length}
+                  </AMGBadge>
                 </div>
-                <AMGBadge tone={items.every((i) => i.configured) ? 'success' : 'warning'}>
-                  {items.filter((i) => i.configured).length}/{items.length}
-                </AMGBadge>
+                <div>
+                  <CategoryHelp category={category} />
+                  {items.map((item) => (
+                    <KeyRow
+                      key={item.key}
+                      item={item}
+                      t={t}
+                      onSave={(key, value) => doSave({ key, value })}
+                      onDelete={(key) => doDelete(key)}
+                    />
+                  ))}
+                </div>
               </div>
-              <div>
-                <CategoryHelp category={category} />
-                {items.map((item) => (
-                  <KeyRow
-                    key={item.key}
-                    item={item}
-                    onSave={(key, value) => doSave({ key, value })}
-                    onDelete={(key) => doDelete(key)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </PortalShell>

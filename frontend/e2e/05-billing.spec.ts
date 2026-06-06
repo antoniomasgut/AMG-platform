@@ -119,9 +119,13 @@ test.describe('Billing — Pressupostos (Mòdul 07)', () => {
     const resp = await apiDelete(page, token, `/api/v1/billing/budgets/${budget.id}`);
     expect(resp.status()).toBe(204);
 
-    // Verificar que ja no existeix: 404
+    // Verificar que el pressupost s'ha cancel·lat (soft-delete)
     const checkResp = await apiGet(page, token, `/api/v1/billing/tenants/${tenantId}/budgets/${budget.id}`);
-    expect([404, 400]).toContain(checkResp.status());
+    expect([200, 404, 400]).toContain(checkResp.status());
+    if (checkResp.status() === 200) {
+      const body = await checkResp.json();
+      expect(body.status).toBe('CANCELLED');
+    }
   });
 
   test('API: enviar pressupost (DRAFT → SENT)', async ({ page }) => {
@@ -376,15 +380,14 @@ test.describe('Billing — Pressupostos (Mòdul 07)', () => {
     // Ha de mostrar el total
     expect(modalText).toContain('€');
 
-    // Botons d'acció: editar (DRAFT), descarregar, clonar, eliminar
+    // Botons d'acció: editar (DRAFT), clonar, enviar, eliminar
     const editBtn = modal.locator('button[title="Editar"]');
-    const printBtn = modal.locator('button[title="Imprimir / PDF"]');
-    const cloneBtn = modal.locator('button[title="Clonar pressupost"]').or(modal.locator('button[title="Clonar"]'));
+    const cloneBtn = modal.locator('button[title="Clonar"]');
     const sendBtn = modal.locator('button[title="Enviar al client"]');
     const deleteBtn = modal.locator('button[title="Eliminar"]');
 
     await expect(editBtn).toBeVisible({ timeout: 2000 });
-    await expect(printBtn).toBeVisible({ timeout: 2000 });
+    await expect(cloneBtn).toBeVisible({ timeout: 2000 });
     await expect(deleteBtn).toBeVisible({ timeout: 2000 });
   });
 
@@ -443,8 +446,8 @@ test.describe('Billing — Pressupostos (Mòdul 07)', () => {
 
     const body = await page.locator('body').textContent();
     expect(body).toContain(budget.budgetNumber);
-    expect(body).toContain('Acceptar pressupost');
-    expect(body).toContain('AMG Digitalització');
+    expect(body).toContain('Acceptar proposta');
+    expect(body).toContain('AMG Digitalitzacions');
   });
 
   test('UI: pàgina acceptació client mostra fases i permet selecció', async ({ page }) => {
@@ -467,11 +470,11 @@ test.describe('Billing — Pressupostos (Mòdul 07)', () => {
 
     // Ha de mostrar les fases
     const body = await page.locator('body').textContent();
-    expect(body).toContain('Acceptar pressupost');
+    expect(body).toContain('Acceptar proposta');
     expect(body).toContain('€');
 
     // Botó acceptar visible i clickable
-    const acceptBtn = page.locator('button', { hasText: 'Acceptar pressupost' }).first();
+    const acceptBtn = page.locator('button', { hasText: 'Acceptar proposta' }).first();
     await expect(acceptBtn).toBeVisible({ timeout: 3000 });
   });
 

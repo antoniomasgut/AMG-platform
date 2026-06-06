@@ -52,6 +52,7 @@ rate-limiting:
   max-attempts-per-email: 5
   max-attempts-per-ip: 20
   window-minutes: 15
+  test-email: ${RATE_LIMIT_TEST_EMAIL:}
 
 app:
   cors:

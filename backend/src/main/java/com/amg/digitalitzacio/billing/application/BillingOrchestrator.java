@@ -272,7 +272,7 @@ public class BillingOrchestrator implements BillingService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = Exception.class)
     public AcceptRejectResponse acceptBudget(String token) {
         var budget = budgetRepository.findByAcceptanceToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
@@ -286,15 +286,25 @@ public class BillingOrchestrator implements BillingService {
 
         var lines = budgetLineRepository.findByBudgetIdOrderBySortOrder(budget.getId());
 
-        // Fases catàleg (UUID): aprova al vault
+        // Fases catàleg (UUID): aprova al vault després del commit per evitar rollback
         var phaseIds = lines.stream()
                 .map(BudgetLine::getPhaseId)
                 .filter(Objects::nonNull)
                 .distinct().toList();
-        for (var phaseId : phaseIds) {
-            try {
-                vaultService.approvePhase(budget.getTenantId(), phaseId);
-            } catch (Exception ignored) {}
+        if (!phaseIds.isEmpty()) {
+            var tenantId = budget.getTenantId();
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        for (var phaseId : phaseIds) {
+                            try {
+                                vaultService.approvePhase(tenantId, phaseId);
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                }
+            );
         }
 
         // Fases NexeLocal (F1-F5): afegeix a contractedPhases del tenant
@@ -335,7 +345,7 @@ public class BillingOrchestrator implements BillingService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = Exception.class)
     public AcceptRejectResponse acceptBudgetPhases(String token, List<String> phaseKeys) {
         var budget = budgetRepository.findByAcceptanceToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));

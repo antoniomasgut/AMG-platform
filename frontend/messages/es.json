@@ -1,7 +1,7 @@
 {
   "common": {
     "amg": "AMG",
-    "tagline": "Agente IA para negocios locales de Mallorca",
+    "tagline": "Diseño web y automatización para negocios locales de Mallorca",
     "back": "Volver",
     "send": "Enviar",
     "save": "Guardar",
@@ -20,33 +20,24 @@
   },
   "landing": {
     "hero": {
-      "badge": "Para autónomos y pequeños negocios de Mallorca",
-      "title": "EL AGENTE IA QUE TRABAJA",
-      "titleAccent": "MIENTRAS TÚ DUERMES.",
-      "subtitle": "Responde por WhatsApp, Telegram y email — gestiona citas, envía presupuestos y fideliza clientes. Setup único + cuota mensual fija. Sin sorpresas, sin letra pequeña.",
+      "badge": "Diseño web y automatización para negocios locales",
+      "title": "TU WEB Y TUS",
+      "titleAccent": "PROCESOS, EN UN SOLO LUGAR.",
+      "subtitle": "Diseño de landings profesionales, WhatsApp automatizado y gestión de reservas, presupuestos y seguimiento de clientes. Un solo equipo, una cuota fija. Sin sorpresas.",
       "cta": "CONSULTA GRATUITA",
-      "ctaSecondary": "Ver fases y precios",
+      "ctaSecondary": "Ver soluciones",
       "stats": {
-        "uptimeValue": "desde 49€",
+        "uptimeValue": "desde 59€",
         "uptimeLabel": "Al mes",
         "clientsValue": "8+",
         "clientsLabel": "Pymes activas",
         "automationsValue": "< 4h",
         "automationsLabel": "Tiempo de respuesta"
-      },
-      "sectors": [
-        "Clínicas",
-        "Reformas",
-        "Abogados",
-        "Comercios",
-        "Restaurantes",
-        "Peluquerías",
-        "Asesorías"
-      ]
+      }
     },
     "problem": {
       "badge": "El problema real",
-      "title": "ERES AUTÓNOMO/A Y LO\nHACES TODO TÚ.",
+      "title": "DEMASIADAS HERRAMIENTAS,\nDEMASIADAS CUOTAS.",
       "description": "Gestionas la web, las reservas, los presupuestos y el WhatsApp — todo a la vez. Y cada nueva herramienta añade una cuota mensual. Cuando algo falla, no sabes a quién llamar.",
       "items": [
         {
@@ -71,7 +62,7 @@
         {
           "icon": "🌐",
           "title": "Webs y landings",
-          "description": "Landings profesionales optimizadas para conversión. Diseño premium, SEO técnico y rendimiento medido.",
+          "description": "Landings profesionales con diseño responsive, SEO técnico, formulario de contacto y enlace directo a tu WhatsApp. Publicadas en 48h.",
           "tag": "Web · Landing · SEO"
         },
         {
@@ -151,17 +142,17 @@
     "portalPreview": {
       "badge": "Tu portal de cliente",
       "title": "TODO TU NEGOCIO,\nSIEMPRE VISIBLE.",
-      "subtitle": "Cada cliente tiene acceso a un dashboard privado donde puede consultar el estado de todos sus servicios, las facturas y las incidencias en tiempo real — sin tener que preguntar.",
+      "subtitle": "Cada cliente tiene acceso a un dashboard privado donde puede ver la actividad de su asistente, las conversaciones, reservas y facturas en tiempo real.",
       "features": [
         {
-          "icon": "📊",
-          "title": "Estado en tiempo real",
-          "description": "Sabes en todo momento si tu web, automatizaciones y sistemas están operativos."
+          "icon": "💬",
+          "title": "Actividad en tiempo real",
+          "description": "Ves cada conversación que gestiona el asistente, las reservas confirmadas y los presupuestos enviados."
         },
         {
-          "icon": "🧾",
-          "title": "Facturas y documentos",
-          "description": "Accede a todas las facturas y al resumen de los servicios contratados."
+          "icon": "📊",
+          "title": "Métricas claras",
+          "description": "Sabes cuántos mensajes ha respondido el asistente, cuántas reservas se han confirmado y el estado del sistema."
         },
         {
           "icon": "🔔",
@@ -171,88 +162,78 @@
       ]
     },
     "testimonials": {
-      "badge": "Testimonios",
+      "badge": "Casos reales",
       "title": "QUÉ DICEN\nNUESTROS CLIENTES.",
       "items": [
         {
           "name": "María Rosselló",
-          "role": "Clínica Dental Rosselló",
-          "text": "Desde que trabajamos con AMG, ya no me preocupo por la web ni las automatizaciones. Todo funciona solo y si hay algún problema, lo resuelven antes de que me dé cuenta."
+          "role": "Clínica Dental Rosselló · Palma",
+          "text": "Necesitábamos una web que transmitiera confianza y un sistema de reservas automático. Nos hicieron la web en tres días y el agente responde a los pacientes 24h. Ahora los pacientes nos encuentran por Google y reservan directamente."
         },
         {
           "name": "Pedro Fullana",
-          "role": "Fullana Reformas",
-          "text": "El portal de cliente es increíble. Puedo ver el estado de todo mi negocio en tiempo real, las facturas e incluso las automatizaciones activas. Lo recomiendo 100%."
+          "role": "Fullana Reformas · Inca",
+          "text": "Yo no entiendo de tecnología. Con ellos empecé con una landing sencilla y ahora tengo WhatsApp automatizado que me gestiona los presupuestos. Estoy encantado porque me solucionan todo y no me preocupo de nada."
         },
         {
-          "name": "Catalina Cantallops",
-          "role": "Cantallops Abogados",
-          "text": "Empezamos con una landing y ahora tenemos todo el despacho automatizado. El soporte es inmediato y siempre resuelve cualquier duda. No cambiaría de equipo por nada."
+          "name": "Joaquina Aiguabella",
+          "role": "Aiguabella Asesores · Manacor",
+          "text": "Contratamos la web y el agente para gestionar las consultas iniciales. Ahora los clientes nos encuentran fácilmente y el agente califica antes de pasarnos el contacto. Hemos reducido llamadas perdidas un 80%."
         }
       ]
     },
     "pricing": {
-      "badge": "Precios por fases",
-      "title": "EMPIEZA PEQUEÑO,\nCRECE CUANDO QUIERAS.",
-      "subtitle": "Contratas las fases que necesitas ahora. Añades las siguientes cuando estés listo. Setup único + cuota mensual fija sin sorpresas.",
-      "setupNote": "Setup único desde 150€ · Mensual incluye: Agente IA 24/7, monitorización, hasta 2 cambios/mes y soporte técnico · Ampliación de fase: 75€ + incremento mensual",
-      "fromLabel": "desde",
-      "monthLabel": "/mes",
-      "popular": "La más elegida",
-      "included": "Incluye:",
-      "ctaNote": "Consulta gratuita · Precio exacto para tu sector en 24h · Sin compromiso",
+      "badge": "Cómo trabajamos",
+      "title": "ANALIZAMOS, PROPONEMOS\nY TE ACOMPAÑAMOS.",
+      "subtitle": "Estudio de tus necesidades, propuesta a medida e implementación por fases. Desde 59€/mes.",
+      "setupNote": "Todas las soluciones incluyen mantenimiento, monitorización 24/7 y soporte técnico",
+      "ctaNote": "Consulta gratuita · Estudio de necesidades · Presupuesto personalizado en 24h · Sin compromiso",
       "fases": [
         {
-          "code": "F1",
-          "name": "Comunicación base",
-          "price": "59€",
-          "description": "El agente responde por WhatsApp, Telegram y Email las 24h. Modo híbrido: el bot y tú podéis contestar en el mismo hilo.",
+          "name": "Comunicación 24/7",
+          "description": "Tu agente responde automáticamente por WhatsApp, Telegram y Email. Información, horarios y precios, siempre disponibles.",
           "services": [
             "Respuestas automáticas 24/7",
             "WhatsApp + Telegram + Email",
-            "Modo híbrido (bot + persona)",
-            "Información, horarios y precios"
-          ],
-          "highlight": false
+            "Modo híbrido (bot y persona en el mismo hilo)"
+          ]
         },
         {
-          "code": "F1+F2",
-          "name": "+ Gestión de citas",
-          "price": "79€",
-          "description": "El agente gestiona la agenda: confirma citas, envía recordatorios y gestiona cancelaciones sin que tengas que intervenir.",
+          "name": "Gestión de reservas",
+          "description": "El agente gestiona la agenda: confirma citas, envía recordatorios y gestiona cancelaciones sin que tengas que hacer nada.",
           "services": [
-            "Todo de F1 incluido",
             "Confirmación de citas automática",
             "Recordatorios el día antes",
-            "Gestión de cancelaciones"
+            "Gestión de cancelaciones y cambios"
           ],
           "highlight": true
         },
         {
-          "code": "F1+F2+F3",
-          "name": "+ Presupuestos",
-          "price": "99€",
-          "description": "El agente genera presupuestos en PDF, hace el seguimiento automático y registra las respuestas del cliente.",
+          "name": "Presupuestos automáticos",
+          "description": "El agente genera presupuestos en PDF, hace el seguimiento y registra las respuestas de los clientes automáticamente.",
           "services": [
-            "Todo de F1+F2 incluido",
             "Presupuestos PDF automáticos",
-            "Seguimiento activo (no contestados)",
-            "Registro de respuestas"
-          ],
-          "highlight": false
+            "Seguimiento de no contestados",
+            "Registro de respuestas y aprobaciones"
+          ]
         },
         {
-          "code": "Completo",
-          "name": "+ Fidelización",
-          "price": "129€",
-          "description": "Seguimiento postventa, reactivación de clientes inactivos y generación de reseñas Google de forma automática.",
+          "name": "Fidelización y postventa",
+          "description": "Seguimiento postventa automático, reactivación de clientes inactivos y generación de reseñas Google.",
           "services": [
-            "Todo de F3 incluido",
             "Seguimiento postventa automático",
             "Reactivación de clientes inactivos",
-            "Solicitud reseñas Google"
-          ],
-          "highlight": false
+            "Solicitud automática de reseñas"
+          ]
+        },
+        {
+          "name": "Alertas y equipo",
+          "description": "Añade a tu equipo: alertas internas por Telegram, notificaciones de incidencias y coordinación entre trabajadores.",
+          "services": [
+            "Alertas internas por Telegram",
+            "Notificaciones de incidencias",
+            "Coordinación entre miembros del equipo"
+          ]
         }
       ]
     },
@@ -261,7 +242,15 @@
       "subtitle": "Consulta gratuita y sin compromiso. Te explicamos cómo podemos ayudarte y te damos presupuesto en 24h.",
       "button": "CONSULTA POR WHATSAPP",
       "buttonSecondary": "ACCEDER AL PORTAL",
-      "buttonDemo": "ESCRÍBENOS UN EMAIL"
+      "buttonDemo": "ESCRÍBENOS UN EMAIL",
+      "formTitle": "O envíanos un mensaje directo",
+      "formName": "Nombre y apellidos",
+      "formEmail": "Correo electrónico",
+      "formMessage": "Cuéntanos tu proyecto o duda...",
+      "formError": "No se ha podido enviar. Inténtalo más tarde o escríbenos por WhatsApp.",
+      "formSubmit": "ENVIAR MENSAJE",
+      "formSuccess": "¡Mensaje recibido!",
+      "formSuccessDesc": "Te responderemos en menos de 24h."
     },
     "footer": {
       "description": "Plataforma de digitalización para negocios locales en Mallorca.",

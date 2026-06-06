@@ -50,7 +50,7 @@ export function CTASection() {
   return (
     <section id="contact" className="py-24 px-6 border-t border-border-subtle">
       <div className="max-w-3xl mx-auto">
-        <div className="amg-grid p-8 sm:p-12 border border-border-medium relative overflow-hidden">
+        <div className="p-8 sm:p-12 border border-border-medium relative overflow-hidden bg-bg-1">
           <div className="absolute inset-0 pointer-events-none" style={{
             background: 'radial-gradient(ellipse at 50% 0%, rgba(255,107,0,0.15), transparent 60%)',
           }} />
@@ -107,7 +107,7 @@ export function CTASection() {
                     placeholder={t('formName')}
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="bg-[#0d0d1a] border border-border-base text-ink-0 text-sm px-3 h-10 focus:outline-none focus:border-accent f-mono placeholder:text-ink-3"
+                    className="bg-bg-0 border border-border-base text-ink-0 text-sm px-3 h-10 focus:outline-none focus:border-accent f-mono placeholder:text-ink-3"
                   />
                   <input
                     type="email"
@@ -115,7 +115,7 @@ export function CTASection() {
                     placeholder={t('formEmail')}
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    className="bg-[#0d0d1a] border border-border-base text-ink-0 text-sm px-3 h-10 focus:outline-none focus:border-accent f-mono placeholder:text-ink-3"
+                    className="bg-bg-0 border border-border-base text-ink-0 text-sm px-3 h-10 focus:outline-none focus:border-accent f-mono placeholder:text-ink-3"
                   />
                   <textarea
                     required
@@ -123,7 +123,7 @@ export function CTASection() {
                     value={message}
                     onChange={e => setMessage(e.target.value)}
                     rows={3}
-                    className="sm:col-span-2 bg-[#0d0d1a] border border-border-base text-ink-0 text-sm px-3 py-2 focus:outline-none focus:border-accent f-mono placeholder:text-ink-3 resize-none"
+                    className="sm:col-span-2 bg-bg-0 border border-border-base text-ink-0 text-sm px-3 py-2 focus:outline-none focus:border-accent f-mono placeholder:text-ink-3 resize-none"
                   />
                   {state === 'error' && (
                     <p className="sm:col-span-2 f-mono text-xs text-danger">{t('formError')}</p>
@@ -131,7 +131,7 @@ export function CTASection() {
                   <button
                     type="submit"
                     disabled={state === 'sending'}
-                    className="sm:col-span-2 btn-clip bg-[#1a1a2e] border border-border-medium hover:border-accent text-ink-1 hover:text-ink-0 font-semibold f-mono text-xs uppercase h-10 flex items-center justify-center transition-colors disabled:opacity-50"
+                    className="sm:col-span-2 bg-bg-2 border border-border-medium hover:border-accent text-ink-1 hover:text-ink-0 font-semibold f-mono text-xs uppercase h-10 flex items-center justify-center transition-colors disabled:opacity-50"
                   >
                     {state === 'sending' ? '…' : t('formSubmit')}
                   </button>

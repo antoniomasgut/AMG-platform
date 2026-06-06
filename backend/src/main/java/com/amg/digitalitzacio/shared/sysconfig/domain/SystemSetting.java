@@ -11,7 +11,7 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class SystemSetting {
 
     @Id
@@ -26,6 +26,18 @@ public class SystemSetting {
 
     @Column(name = "description")
     private String description;
+
+    @Column(name = "value_type", length = 20)
+    private String valueType;
+
+    @Column(name = "default_value", columnDefinition = "TEXT")
+    private String defaultValue;
+
+    @Column(name = "validation_rules", columnDefinition = "TEXT")
+    private String validationRules;
+
+    @Column(name = "sort_order")
+    private Integer sortOrder;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;

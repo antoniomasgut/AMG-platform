@@ -1,7 +1,7 @@
 {
   "common": {
     "amg": "AMG",
-    "tagline": "Agent IA per a negocis locals de Mallorca",
+    "tagline": "Disseny web i automatització per a negocis locals de Mallorca",
     "back": "Tornar",
     "send": "Enviar",
     "save": "Desar",
@@ -20,33 +20,24 @@
   },
   "landing": {
     "hero": {
-      "badge": "Per a autònoms i petits negocis de Mallorca",
-      "title": "L'AGENT IA QUE TREBALLA",
-      "titleAccent": "MENTRE TU DORMS.",
-      "subtitle": "Respon per WhatsApp, Telegram i email — gestiona cites, envia pressupostos i fidelitza clients. Setup únic + quota mensual fixa. Sense sorpreses, sense lletra petita.",
+      "badge": "Disseny web i automatització per a negocis locals",
+      "title": "LA TEVA WEB I ELS TEUS",
+      "titleAccent": "PROCESSOS, EN UN SOL LLOC.",
+      "subtitle": "Disseny de landings professionals, WhatsApp automatitzat i gestió de reserves, pressupostos i seguiment de clients. Un sol equip, una quota fixa. Sense sorpreses.",
       "cta": "CONSULTA GRATUÏTA",
-      "ctaSecondary": "Veure fases i preus",
+      "ctaSecondary": "Veure solucions",
       "stats": {
-        "uptimeValue": "des de 49€",
+        "uptimeValue": "des de 59€",
         "uptimeLabel": "Al mes",
         "clientsValue": "8+",
         "clientsLabel": "Pimes actives",
         "automationsValue": "< 4h",
         "automationsLabel": "Temps de resposta"
-      },
-      "sectors": [
-        "Clíniques",
-        "Reformes",
-        "Advocats",
-        "Comerços",
-        "Restaurants",
-        "Perruqueries",
-        "Assessories"
-      ]
+      }
     },
     "problem": {
       "badge": "El problema real",
-      "title": "ETS AUTÒNOM/A I HAS\nDE FER-HO TOT TU.",
+      "title": "MASSA EINES, MASSA\nQUOTES, MASSA TEMPS.",
       "description": "Gestiones la web, les reserves, els pressupostos i el WhatsApp — tot alhora. I cada eina nova afegeix una quota mensual. Quan alguna cosa falla, no saps a qui trucar.",
       "items": [
         {
@@ -71,7 +62,7 @@
         {
           "icon": "🌐",
           "title": "Webs i landings",
-          "description": "Landings professionals optimitzades per a conversió. Disseny premium, SEO tècnic i rendiment mesurat.",
+          "description": "Landings professionals amb disseny responsive, SEO tècnic, formulari de contacte i enllaç directe al teu WhatsApp. Publicades en 48h.",
           "tag": "Web · Landing · SEO"
         },
         {
@@ -151,17 +142,17 @@
     "portalPreview": {
       "badge": "El teu portal de client",
       "title": "TOT EL TEU NEGOCI,\nSEMPRE VISIBLE.",
-      "subtitle": "Cada client té accés a un dashboard privat on pot consultar l'estat de tots els serveis, les factures i les incidències en temps real — sense haver de preguntar.",
+      "subtitle": "Cada client té accés a un dashboard privat on pot veure l'activitat del seu assistent, les converses, reserves i factures en temps real.",
       "features": [
         {
-          "icon": "📊",
-          "title": "Estat en temps real",
-          "description": "Saps en tot moment si la teva web, automatitzacions i sistemes estan operatius."
+          "icon": "💬",
+          "title": "Activitat en temps real",
+          "description": "Veus cada conversa que gestiona l'assistent, les reserves confirmades i els pressupostos enviats."
         },
         {
-          "icon": "🧾",
-          "title": "Factures i documents",
-          "description": "Accedeix a totes les factures i al resum dels serveis contractats."
+          "icon": "📊",
+          "title": "Mètriques clares",
+          "description": "Saps quants missatges ha respost l'assistent, quantes reserves s'han confirmat i l'estat del sistema."
         },
         {
           "icon": "🔔",
@@ -171,88 +162,78 @@
       ]
     },
     "testimonials": {
-      "badge": "Testimonis",
+      "badge": "Casos reals",
       "title": "QUÈ DIUEN ELS\nNOSTRES CLIENTS.",
       "items": [
         {
           "name": "Maria Rosselló",
-          "role": "Clínica Dental Rosselló",
-          "text": "Des que treballem amb l'AMG, ja no m'he de preocupar per la web ni les automatitzacions. Tot funciona sol i si hi ha algun problema, m'ho resolen abans que me n'adoni."
+          "role": "Clínica Dental Rosselló · Palma",
+          "text": "Necessitàvem una web que transmetés confiança i un sistema de reserves automàtic. Ens van fer la web en tres dies i l'agent respon les preguntes dels pacients les 24h. Ara els pacients ens troben per Google i reserven directament."
         },
         {
           "name": "Pere Fullana",
-          "role": "Fullana Reformes",
-          "text": "El portal de client és una passada. Puc veure l'estat de tot el meu negoci en temps real, les factures i fins i tot les automatitzacions que tenim actives. Ho recoman 100%."
+          "role": "Fullana Reformes · Inca",
+          "text": "Jo no entenc de tecnologia. Amb ells vaig començar amb una landing senzilla i ara tinc WhatsApp automatitzat que em gestiona els pressupostos. Estic encantat perquè em solucionen tot i no m'he de preocupar de res."
         },
         {
-          "name": "Caterina Cantallops",
-          "role": "Cantallops Advocats",
-          "text": "Vàrem començar amb una landing i ara tenim tot el despatx automatitzat. El suport és immediat i sempre resol qualsevol dubte. No canviaria d'equip per res."
+          "name": "Joana Aiguabella",
+          "role": "Aiguabella Assessors · Manacor",
+          "text": "Vàrem contractar la web i l'agent per gestionar les consultes inicials. Ara els clients ens troben fàcilment i l'agent qualifica abans de passar-nos el contacte. Hem reduït trucades perdudes un 80%."
         }
       ]
     },
     "pricing": {
-      "badge": "Preus per fases",
-      "title": "COMENÇA PETIT,\nCREIX QUAN VULGUIS.",
-      "subtitle": "Contractes les fases que necessites ara. Afegeixes les següents quan estàs llest. Setup únic + quota mensual fixa sense sorpreses.",
-      "setupNote": "Setup únic des de 150€ · Mensual inclou: Agent IA 24/7, monitorització, fins a 2 canvis/mes i suport tècnic · Ampliació de fase: 75€ + increment mensual",
-      "fromLabel": "des de",
-      "monthLabel": "/mes",
-      "popular": "La més triada",
-      "included": "Inclou:",
-      "ctaNote": "Consulta gratuïta · Preu exacte per al teu sector en 24h · Sense compromís",
+      "badge": "Com treballem",
+      "title": "ANALITZEM, PROPOSEM,\nI T&#039;ACOMPANYEM.",
+      "subtitle": "Estudi de les teves necessitats, proposta a mida i implementació per fases. Des de 59€/mes.",
+      "setupNote": "Totes les solucions inclouen manteniment, monitorització 24/7 i suport tècnic",
+      "ctaNote": "Consulta gratuïta · Estudi de necessitats · Pressupost personalitzat en 24h · Sense compromís",
       "fases": [
         {
-          "code": "F1",
-          "name": "Comunicació base",
-          "price": "59€",
-          "description": "L'agent respon per WhatsApp, Telegram i Email les 24h. Mode híbrid: el bot i tu podeu contestar al mateix fil.",
+          "name": "Comunicació 24/7",
+          "description": "El teu agent respon automàticament per WhatsApp, Telegram i Email. Informació, horaris i preus, sempre disponibles.",
           "services": [
             "Respostes automàtiques 24/7",
             "WhatsApp + Telegram + Email",
-            "Mode híbrid (bot + persona)",
-            "Informació, horaris i preus"
-          ],
-          "highlight": false
+            "Mode híbrid (bot i persona al mateix fil)"
+          ]
         },
         {
-          "code": "F1+F2",
-          "name": "+ Gestió de cites",
-          "price": "79€",
-          "description": "L'agent gestiona l'agenda: confirma cites, envia recordatoris i gestiona cancel·lacions sense que hagis d'intervenir.",
+          "name": "Gestió de reserves",
+          "description": "L'agent gestiona l'agenda: confirma cites, envia recordatoris i gestiona cancel·lacions sense que hagis de fer res.",
           "services": [
-            "Tot de F1 inclòs",
             "Confirmació de cites automàtica",
             "Recordatoris el dia abans",
-            "Gestió de cancel·lacions"
+            "Gestió de cancel·lacions i canvis"
           ],
           "highlight": true
         },
         {
-          "code": "F1+F2+F3",
-          "name": "+ Pressupostos",
-          "price": "99€",
-          "description": "L'agent genera pressupostos en PDF, en fa el seguiment automàtic i registra les respostes del client.",
+          "name": "Pressupostos automàtics",
+          "description": "L'agent genera pressupostos en PDF, en fa el seguiment i registra les respostes dels clients automàticament.",
           "services": [
-            "Tot de F1+F2 inclòs",
             "Pressupostos PDF automàtics",
-            "Seguiment actiu (no contestats)",
-            "Registre de respostes"
-          ],
-          "highlight": false
+            "Seguiment de no contestats",
+            "Registre de respostes i aprovacions"
+          ]
         },
         {
-          "code": "Complet",
-          "name": "+ Fidelització",
-          "price": "129€",
-          "description": "Seguiment postvenda, reactivació de clients inactius i generació de resenyes Google de forma automàtica.",
+          "name": "Fidelització i postvenda",
+          "description": "Seguiment postvenda automàtic, reactivació de clients inactius i generació de resenyes Google.",
           "services": [
-            "Tot de F3 inclòs",
             "Seguiment postvenda automàtic",
             "Reactivació de clients inactius",
-            "Sol·licitud resenyes Google"
-          ],
-          "highlight": false
+            "Sol·licitud automàtica de resenyes"
+          ]
+        },
+        {
+          "name": "Alertes i equip",
+          "description": "Afegeix el teu equip al sistema: alertes internes per Telegram, notificacions i coordinació entre treballadors.",
+          "services": [
+            "Alertes internes per Telegram",
+            "Notificacions d'incidències",
+            "Coordinació entre membres de l'equip"
+          ]
         }
       ]
     },
@@ -261,7 +242,15 @@
       "subtitle": "Consulta gratuïta i sense compromís. T'expliquem com podem ajudar-te i et donem pressupost en 24h.",
       "button": "CONSULTA PER WHATSAPP",
       "buttonSecondary": "ACCEDIR AL PORTAL",
-      "buttonDemo": "ESCRIURE'NS UN EMAIL"
+      "buttonDemo": "ESCRIURE'NS UN EMAIL",
+      "formTitle": "O envia'ns un missatge directe",
+      "formName": "Nom i cognoms",
+      "formEmail": "Correu electrònic",
+      "formMessage": "Explica'ns el teu projecte o dubte...",
+      "formError": "No s'ha pogut enviar. Prova-ho més tard o escriu-nos per WhatsApp.",
+      "formSubmit": "ENVIAR MISSATGE",
+      "formSuccess": "Missatge rebut!",
+      "formSuccessDesc": "Et respondrem en menys de 24h."
     },
     "footer": {
       "description": "Plataforma de digitalització per a negocis locals a Mallorca.",

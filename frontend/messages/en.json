@@ -1,7 +1,7 @@
 {
   "common": {
     "amg": "AMG",
-    "tagline": "AI Agent for local businesses in Mallorca",
+    "tagline": "Web design and automation for local businesses in Mallorca",
     "back": "Back",
     "send": "Send",
     "save": "Save",
@@ -20,14 +20,14 @@
   },
   "landing": {
     "hero": {
-      "badge": "For freelancers and small businesses in Mallorca",
+      "badge": "Web design and automation for local businesses",
       "title": "YOUR WEBSITE. YOUR PROCESSES.",
       "titleAccent": "CLEAR PRICES. BY PHASE.",
       "subtitle": "We design, build and maintain your digital presence in phases. One-off setup per service + low monthly maintenance. Transparent, no forced contracts.",
       "cta": "FREE CONSULTATION",
-      "ctaSecondary": "See phases & prices",
+      "ctaSecondary": "See solutions",
       "stats": {
-        "uptimeValue": "from €49",
+        "uptimeValue": "from €59",
         "uptimeLabel": "Per month",
         "clientsValue": "8+",
         "clientsLabel": "Active SMEs",
@@ -151,17 +151,17 @@
     "portalPreview": {
       "badge": "Your client portal",
       "title": "YOUR ENTIRE BUSINESS,\nALWAYS VISIBLE.",
-      "subtitle": "Every client gets access to a private dashboard where they can check the status of all their services, invoices and incidents in real time — without having to ask.",
+      "subtitle": "Every client gets access to a private dashboard to see their assistant's activity, conversations, bookings and invoices in real time.",
       "features": [
         {
-          "icon": "📊",
-          "title": "Real-time status",
-          "description": "Know at a glance whether your website, automations and systems are running."
+          "icon": "💬",
+          "title": "Real-time activity",
+          "description": "See every conversation handled by your assistant, confirmed bookings and sent quotes at a glance."
         },
         {
-          "icon": "🧾",
-          "title": "Invoices & documents",
-          "description": "Access all invoices and a summary of your contracted services."
+          "icon": "📊",
+          "title": "Clear metrics",
+          "description": "Know how many messages your assistant handled, how many bookings were confirmed and your system status."
         },
         {
           "icon": "🔔",
@@ -171,88 +171,78 @@
       ]
     },
     "testimonials": {
-      "badge": "Testimonials",
+      "badge": "Real cases",
       "title": "WHAT OUR\nCLIENTS SAY.",
       "items": [
         {
           "name": "Maria Rosselló",
-          "role": "Rosselló Dental Clinic",
-          "text": "Since working with AMG, I no longer worry about the website or automations. Everything runs smoothly and if there's an issue, they fix it before I even notice."
+          "role": "Rosselló Dental Clinic · Palma",
+          "text": "We needed a website that conveys trust and an automatic booking system. They built our site in three days and the AI agent answers patient questions 24/7. Now patients find us on Google and book directly."
         },
         {
           "name": "Pere Fullana",
-          "role": "Fullana Renovations",
-          "text": "The client portal is amazing. I can see the status of my entire business in real time, my invoices and even the active automations. 100% recommended."
+          "role": "Fullana Renovations · Inca",
+          "text": "I don't understand technology. I started with them on a simple landing page and now I have automated WhatsApp that manages my quotes. I'm thrilled because they handle everything and I don't worry about a thing."
         },
         {
-          "name": "Caterina Cantallops",
-          "role": "Cantallops Attorneys",
-          "text": "We started with a landing page and now the entire office is automated. The support is immediate and always resolves any questions. I wouldn't change teams for anything."
+          "name": "Joana Aiguabella",
+          "role": "Aiguabella Advisors · Manacor",
+          "text": "We contracted the website and the agent to handle initial inquiries. Now clients find us easily and the agent qualifies leads before forwarding them to us. We've reduced missed calls by 80%."
         }
       ]
     },
     "pricing": {
-      "badge": "Phase-based pricing",
-      "title": "START SMALL,\nGROW WHEN YOU'RE READY.",
-      "subtitle": "Contract the phases you need now. Add more when you're ready. One-off setup + fixed monthly fee. No surprises, no small print.",
-      "setupNote": "One-off setup from €150 · Monthly includes: AI Agent 24/7, monitoring, up to 2 minor changes/month and technical support · Phase upgrade: €75 + monthly increment",
-      "fromLabel": "from",
-      "monthLabel": "/mo",
-      "popular": "Most chosen",
-      "included": "Includes:",
-      "ctaNote": "Free consultation · Exact price for your sector in 24h · No commitment",
+      "badge": "How we work",
+      "title": "WE ANALYZE, PROPOSE,\nAND SUPPORT YOU.",
+      "subtitle": "Needs assessment, custom proposal, phased implementation. From €59/month.",
+      "setupNote": "All solutions include maintenance, 24/7 monitoring and technical support",
+      "ctaNote": "Free consultation · Needs assessment · Custom quote in 24h · No commitment",
       "fases": [
         {
-          "code": "F1",
-          "name": "Base communication",
-          "price": "€59",
-          "description": "The agent replies via WhatsApp, Telegram and Email 24/7. Hybrid mode: the bot and you can both reply in the same thread.",
+          "name": "24/7 Communication",
+          "description": "Your AI agent automatically replies on WhatsApp, Telegram and Email. Info, hours and prices, always available.",
           "services": [
-            "Automatic replies 24/7",
+            "24/7 automatic replies",
             "WhatsApp + Telegram + Email",
-            "Hybrid mode (bot + person)",
-            "Info, hours and prices"
-          ],
-          "highlight": false
+            "Hybrid mode (bot and human in the same thread)"
+          ]
         },
         {
-          "code": "F1+F2",
-          "name": "+ Appointment management",
-          "price": "€79",
-          "description": "The agent manages your calendar: confirms appointments, sends reminders and handles cancellations without you having to intervene.",
+          "name": "Appointment Management",
+          "description": "The agent handles scheduling: confirms appointments, sends reminders and manages cancellations without your intervention.",
           "services": [
-            "Everything in F1 included",
             "Automatic appointment confirmation",
             "Day-before reminders",
-            "Cancellation management"
+            "Cancellation and reschedule management"
           ],
           "highlight": true
         },
         {
-          "code": "F1+F2+F3",
-          "name": "+ Quotes",
-          "price": "€99",
-          "description": "The agent generates PDF quotes, automatically follows up and records client responses.",
+          "name": "Automated Quotes",
+          "description": "The agent generates PDF quotes, follows up automatically and logs client responses.",
           "services": [
-            "Everything in F1+F2 included",
             "Automatic PDF quotes",
-            "Active follow-up (unanswered)",
-            "Response tracking"
-          ],
-          "highlight": false
+            "Follow-up on unanswered quotes",
+            "Response and approval tracking"
+          ]
         },
         {
-          "code": "Complete",
-          "name": "+ Loyalty",
-          "price": "€129",
-          "description": "Post-sale follow-up, reactivation of inactive clients and automatic Google review requests.",
+          "name": "Loyalty & Post-Sale",
+          "description": "Automatic post-sale follow-up, reactivation of inactive clients and Google review requests.",
           "services": [
-            "Everything in F3 included",
             "Automatic post-sale follow-up",
             "Inactive client reactivation",
-            "Google review requests"
-          ],
-          "highlight": false
+            "Automatic review requests"
+          ]
+        },
+        {
+          "name": "Alerts & Team",
+          "description": "Add your team: internal Telegram alerts, incident notifications and worker coordination.",
+          "services": [
+            "Internal Telegram alerts",
+            "Incident notifications",
+            "Team member coordination"
+          ]
         }
       ]
     },
@@ -261,7 +251,15 @@
       "subtitle": "Free consultation, no commitment. We'll explain how we can help and send you a quote within 24h.",
       "button": "CHAT ON WHATSAPP",
       "buttonSecondary": "SIGN IN TO PORTAL",
-      "buttonDemo": "SEND US AN EMAIL"
+      "buttonDemo": "SEND US AN EMAIL",
+      "formTitle": "Or send us a direct message",
+      "formName": "Full name",
+      "formEmail": "Email address",
+      "formMessage": "Tell us about your project or question...",
+      "formError": "Could not send. Try again later or message us on WhatsApp.",
+      "formSubmit": "SEND MESSAGE",
+      "formSuccess": "Message received!",
+      "formSuccessDesc": "We'll get back to you within 24h."
     },
     "footer": {
       "description": "Digitalisation platform for local businesses in Mallorca.",

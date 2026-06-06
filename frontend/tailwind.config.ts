@@ -13,16 +13,16 @@ const config: Config = {
         'accent-muted':  'rgba(255,107,0,0.12)',
 
         /* ── Dark surfaces ── */
-        'bg-0': '#0d0d1a',
-        'bg-1': '#13132a',
-        'bg-2': '#1a1a2e',
-        'bg-3': '#212140',
+        'bg-0': '#0b1120',
+        'bg-1': '#0f172a',
+        'bg-2': '#1e293b',
+        'bg-3': '#334155',
 
         /* ── Border tokens ── */
-        'border-subtle': 'rgba(255,107,0,0.08)',
-        'border-base':   'rgba(255,107,0,0.12)',
-        'border-medium': 'rgba(255,107,0,0.20)',
-        'border-strong': 'rgba(255,107,0,0.35)',
+        'border-subtle': 'rgba(148,163,184,0.10)',
+        'border-base':   'rgba(148,163,184,0.15)',
+        'border-medium': 'rgba(148,163,184,0.25)',
+        'border-strong': 'rgba(148,163,184,0.35)',
 
         /* ── Text tokens ── */
         'ink-0': '#e2e8f0',  // primary text
