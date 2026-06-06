@@ -6,7 +6,9 @@ import { routing } from './i18n/routing';
 const intlMiddleware = createIntlMiddleware(routing);
 
 export default function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const nonceBytes = new Uint8Array(32);
+  crypto.getRandomValues(nonceBytes);
+  const nonce = Buffer.from(nonceBytes).toString('base64');
 
   const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://amgdl.com';
   const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
@@ -28,6 +30,7 @@ export default function middleware(request: NextRequest) {
     `connect-src 'self' ${API_URL} ${SITE_URL}`,
     `frame-src 'none'`,
     `frame-ancestors 'none'`,
+    `object-src 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,
     ...(!isDev ? [`upgrade-insecure-requests`] : []),

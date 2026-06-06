@@ -127,7 +127,7 @@ export const BlockRenderer: FC<Props> = ({
                   contentEditable
                   suppressContentEditableWarning
                   style={{ color: text, opacity: 0.8, lineHeight: 1.8, fontSize: '1.05rem', outline: '2px solid rgba(255,107,0,0.4)', outlineOffset: 2, borderRadius: 2, minHeight: 40 }}
-                  onBlur={(e) => onUpdateProps?.({ body: e.currentTarget.innerHTML })}
+                  onBlur={(e) => onUpdateProps?.({ body: DOMPurify.sanitize(e.currentTarget.innerHTML) })}
                   onClick={(e) => e.stopPropagation()}
                   dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(s(p.body)) }}
                 />

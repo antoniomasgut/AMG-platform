@@ -11,11 +11,15 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://amg-postgres:5432/amg
       SPRING_DATASOURCE_USERNAME: amg
-      SPRING_DATASOURCE_PASSWORD: amg_db_2026
-      SPRING_REDIS_HOST: amg-redis
-      SPRING_REDIS_PASSWORD: amg_redis_2026
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATA_REDIS_HOST: amg-redis
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_HOST: amg-redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      JASYPT_ENCRYPTOR_PASSWORD: amg_jasypt_2026
+      JASYPT_ENCRYPTOR_PASSWORD: ${JASYPT_ENCRYPTOR_PASSWORD}
+    labels:
+      - "traefik.http.routers.backend.middlewares=secureHeaders,rateLimit,corsApi@file"
 
   amg_frontend:
     image: infra-frontend:latest
@@ -28,6 +32,8 @@ services:
       NEXT_PUBLIC_API_URL: https://api.amgdl.com
       HOSTNAME: 0.0.0.0
       NEXT_TELEMETRY_DISABLED: "1"
+    labels:
+      - "traefik.http.routers.frontend.middlewares=secureHeaders"
 
 networks:
   coolify:

@@ -582,6 +582,13 @@ public class TenantVaultService implements VaultService {
         var commReq = communicationRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Communication request not found: " + requestId));
 
+        if (commReq.getStatus() != CommunicationStatus.SENT) {
+            throw new IllegalStateException("Communication request is not in SENT status: " + commReq.getStatus());
+        }
+        if (commReq.getExpiresAt() != null && Instant.now().isAfter(commReq.getExpiresAt())) {
+            throw new IllegalStateException("Communication request has expired at: " + commReq.getExpiresAt());
+        }
+
         commReq.setStatus(CommunicationStatus.RESPONDED);
         commReq.setRespondedAt(Instant.now());
         commReq.setResponseData(request.text());

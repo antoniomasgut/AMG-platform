@@ -6,6 +6,7 @@ import com.amg.digitalitzacio.vault.api.dto.UpdateServicePriceRequest;
 import com.amg.digitalitzacio.vault.application.*;
 import com.amg.digitalitzacio.vault.domain.ImplementationStatus;
 import com.amg.digitalitzacio.vault.domain.ServiceStatus;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -274,7 +275,7 @@ public class VaultController {
 
     @PostMapping("/communication/{requestId}/respond")
     public CommunicationRespondResponse handleClientResponse(@PathVariable UUID requestId,
-                                                              @RequestBody CommunicationRespondRequest request) {
+                                                              @Valid @RequestBody CommunicationRespondRequest request) {
         return vaultService.handleClientResponse(requestId, request);
     }
 

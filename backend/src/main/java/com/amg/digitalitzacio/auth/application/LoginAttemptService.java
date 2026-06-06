@@ -16,7 +16,6 @@ public class LoginAttemptService {
     private final int maxPerEmail;
     private final int maxPerIp;
     private final long windowMinutes;
-
     public LoginAttemptService(
             StringRedisTemplate redis,
             @Value("${rate-limiting.max-attempts-per-email:5}") int maxPerEmail,

@@ -46,7 +46,7 @@ export async function updateStaticSite(tenantId: string, siteId: string, file: F
 }
 
 export async function exportSite(tenantId: string, siteId: string): Promise<void> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
   const res = await fetch(`${apiUrl}/api/v1/hosting/tenants/${tenantId}/sites/${siteId}/export`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},

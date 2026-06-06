@@ -27,14 +27,13 @@ public class VaultEncryption {
     @PostConstruct
     void init() {
         if (masterKeyBase64 == null || masterKeyBase64.isBlank()) {
-            byte[] key = new byte[32];
-            secureRandom.nextBytes(key);
-            secretKey = new SecretKeySpec(key, "AES");
-            return;
+            throw new IllegalStateException("VAULT_MASTER_KEY environment variable is required for production. " +
+                    "Set it to a 32-byte (256-bit) AES key encoded in Base64.");
         }
         byte[] decoded = Base64.getDecoder().decode(masterKeyBase64);
         if (decoded.length != 32) {
-            throw new IllegalStateException("VAULT_MASTER_KEY must decode to exactly 32 bytes (256 bits)");
+            throw new IllegalStateException("VAULT_MASTER_KEY must decode to exactly 32 bytes (256 bits). " +
+                    "Got " + decoded.length + " bytes. Use: openssl rand -base64 32");
         }
         secretKey = new SecretKeySpec(decoded, "AES");
     }

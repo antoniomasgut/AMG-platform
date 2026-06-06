@@ -6,7 +6,7 @@ spring:
 
 app:
   cors:
-    allowed-origins: https://amgdl.com,https://www.amgdl.com
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:https://amgdl.com,https://www.amgdl.com}
 
 logging:
   level:

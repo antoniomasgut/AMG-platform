@@ -20,7 +20,7 @@ services:
       - "traefik.http.routers.traefik-dashboard.tls=true"
       - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
       - "traefik.http.routers.traefik-dashboard.service=api@internal"
-      - "traefik.http.routers.traefik-dashboard.middlewares=auth"
+      - "traefik.http.routers.traefik-dashboard.middlewares=secureHeaders,auth"
       - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH}"
 
   postgres:
@@ -75,10 +75,11 @@ services:
       - "traefik.http.routers.minio-api.rule=Host(`storage.${APP_DOMAIN}`)"
       - "traefik.http.routers.minio-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.minio-api.service=minio-api-svc"
-      - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
+      - "traefik.http.routers.minio-api.middlewares=secureHeaders,rateLimit"
       - "traefik.http.routers.minio-console.rule=Host(`minio.${APP_DOMAIN}`)"
       - "traefik.http.routers.minio-console.tls.certresolver=letsencrypt"
       - "traefik.http.routers.minio-console.service=minio-console-svc"
+      - "traefik.http.routers.minio-console.middlewares=secureHeaders,rateLimit"
       - "traefik.http.services.minio-console-svc.loadbalancer.server.port=9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
@@ -125,6 +126,7 @@ services:
       - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=8080"
+      - "traefik.http.routers.backend.middlewares=secureHeaders,rateLimit,corsApi@file"
 
   frontend:
     build:
@@ -147,6 +149,7 @@ services:
       - "traefik.http.routers.frontend.tls=true"
       - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.frontend.middlewares=secureHeaders"
 
   netdata:
     image: netdata/netdata:stable
@@ -181,7 +184,7 @@ services:
       - "traefik.http.routers.netdata.rule=Host(`monitor.${APP_DOMAIN}`)"
       - "traefik.http.routers.netdata.tls=true"
       - "traefik.http.routers.netdata.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.netdata.middlewares=auth"
+      - "traefik.http.routers.netdata.middlewares=secureHeaders,auth"
       - "traefik.http.services.netdata.loadbalancer.server.port=19999"
 
 volumes:

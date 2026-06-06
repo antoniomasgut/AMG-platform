@@ -219,8 +219,8 @@ export const generateImage = (tenantId: string, data: GenerateImageRequest) =>
 export const uploadImage = async (tenantId: string, file: File): Promise<ImageUpload> => {
   const form = new FormData();
   form.append('file', file);
-  const token = typeof window !== 'undefined' ? localStorage.getItem('amg_token') : null;
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/meta-ads/tenants/${tenantId}/creatives/upload-image`, {
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
+  const res = await fetch(`/api/v1/meta-ads/tenants/${tenantId}/creatives/upload-image`, {
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: form,

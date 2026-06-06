@@ -19,6 +19,9 @@ public class JwtProvider {
     private final long refreshExpiration;
 
     public JwtProvider(JwtProperties props) {
+        if (props.secret() == null || props.secret().isBlank()) {
+            throw new IllegalStateException("JWT_SECRET must be configured in environment");
+        }
         this.secretKey = Keys.hmacShaKeyFor(props.secret().getBytes(StandardCharsets.UTF_8));
         this.accessExpiration = props.accessTokenExpiration();
         this.refreshExpiration = props.refreshTokenExpiration();

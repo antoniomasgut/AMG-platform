@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -172,7 +173,7 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
         .totals{border:1px solid #ddd;border-radius:6px;padding:12px;margin-top:24px}
         .total-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
         .total-row.bold{font-weight:700;font-size:16px;border-top:1px solid #ddd;padding-top:8px;margin-top:4px}
-      </style></head><body>${el.innerHTML}</body></html>`);
+      </style></head><body>${DOMPurify.sanitize(el.innerHTML)}</body></html>`);
     win.document.close();
     win.focus();
     setTimeout(() => win.print(), 400);

@@ -31,19 +31,25 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final AuditFilter auditFilter;
 
-    @Value("${app.cors.allowed-origins:http://localhost:3000}")
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:3001}")
     private String allowedOrigins;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // JWT stateless, no cal CSRF
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .headers(headers -> headers
                         .contentTypeOptions(Customizer.withDefaults())
                         .frameOptions(Customizer.withDefaults())
                         .xssProtection(Customizer.withDefaults())
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000)
+                                .preload(true))
+                        .referrerPolicy(referrer -> referrer
+                                .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST,
@@ -52,8 +58,10 @@ public class SecurityConfig {
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/reset-password",
                                 "/api/v1/billing/budgets/accept",
+                                "/api/v1/billing/budgets/accept-phases",
                                 "/api/v1/billing/budgets/reject"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/billing/budgets/preview").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/engine/render/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/engine/render/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
@@ -84,8 +92,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/demo/inbox/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/demo/inbox/**").permitAll()
                         .requestMatchers("/api/v1/demo/**").permitAll()
-                        // Swagger / OpenAPI
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // Swagger / OpenAPI (protegit — requereix autenticació)
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/booking/*/days").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/booking/*/slots").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/booking/*").permitAll()
@@ -96,7 +104,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/vault/**").authenticated()
                         .requestMatchers("/api/v1/engine/**").authenticated()
                         .requestMatchers("/api/v1/**").authenticated()
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) ->

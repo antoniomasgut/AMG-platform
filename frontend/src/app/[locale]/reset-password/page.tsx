@@ -28,7 +28,7 @@ function ResetPasswordForm() {
     setError('');
 
     if (!token) { setError(t('errors.invalidToken')); return; }
-    if (password.length < 4) { setError(t('errors.minLength')); return; }
+    if (password.length < 8) { setError(t('errors.minLength')); return; }
     if (password !== confirm) { setError(t('errors.mismatch')); return; }
 
     setLoading(true);
