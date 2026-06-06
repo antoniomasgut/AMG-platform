@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.shared.security;
 
 import com.amg.digitalitzacio.shared.audit.AuditFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,7 +53,10 @@ public class SecurityConfig {
                                 .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/billing/budgets/preview").permitAll()
+                        .requestMatchers((request) -> {
+                            var uri = request.getRequestURI();
+                            return uri.equals("/api/v1/billing/budgets/preview");
+                        }).permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/refresh",
