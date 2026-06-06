@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -16,7 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -34,6 +34,20 @@ public class SecurityConfig {
 
     @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:3001}")
     private String allowedOrigins;
+
+    @Bean
+    @Order(1)
+    public SecurityFilterChain previewChain(HttpSecurity http) throws Exception {
+        return http
+                .securityMatcher("/api/v1/billing/budgets/preview")
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll()
+                )
+                .build();
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -62,10 +76,7 @@ public class SecurityConfig {
                                 "/api/v1/billing/budgets/accept-phases",
                                 "/api/v1/billing/budgets/reject"
                         ).permitAll()
-                        .requestMatchers("/api/v1/billing/budgets/preview",
-                                "/api/v1/billing/budgets/accept",
-                                "/api/v1/billing/budgets/accept-phases",
-                                "/api/v1/billing/budgets/reject").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/engine/render/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/engine/render/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/engine/render/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
