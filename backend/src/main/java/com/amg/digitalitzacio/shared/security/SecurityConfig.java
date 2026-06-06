@@ -62,7 +62,10 @@ public class SecurityConfig {
                                 "/api/v1/billing/budgets/accept-phases",
                                 "/api/v1/billing/budgets/reject"
                         ).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/api/v1/billing/budgets/preview")).permitAll()
+                        .requestMatchers("/api/v1/billing/budgets/preview",
+                                "/api/v1/billing/budgets/accept",
+                                "/api/v1/billing/budgets/accept-phases",
+                                "/api/v1/billing/budgets/reject").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/engine/render/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/engine/render/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
