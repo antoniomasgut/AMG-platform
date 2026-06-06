@@ -11,4 +11,4 @@ app:
 logging:
   level:
     com.amg: INFO
-    org.springframework.security: TRACE
+    org.springframework.security: WARN
