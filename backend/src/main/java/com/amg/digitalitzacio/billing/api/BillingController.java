@@ -73,7 +73,7 @@ public class BillingController {
         return billingService.sendBudget(id);
     }
 
-    @GetMapping("/budgets/preview")
+    @PostMapping("/budgets/preview")
     public BudgetResponse previewBudget(@RequestParam String token) {
         return billingService.previewBudget(token);
     }
