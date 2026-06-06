@@ -11,6 +11,4 @@ app:
 logging:
   level:
     com.amg: INFO
-    org.springframework.security: DEBUG
-    org.springframework.security.web.access.intercept: TRACE
-    org.springframework.security.web.FilterChainProxy: TRACE
+    org.springframework.security: TRACE
