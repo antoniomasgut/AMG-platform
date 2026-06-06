@@ -119,6 +119,17 @@ public class LeadController {
         return ResponseEntity.noContent().build();
     }
 
+    // --- Neteja massiva de leads antics ---
+
+    @DeleteMapping("/purge")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Map<String, Integer>> purgeOldLeads(
+            @RequestParam(defaultValue = "90") int olderThanDays,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        int purged = leadService.purgeOldLeads(olderThanDays, principal);
+        return ResponseEntity.ok(Map.of("purged", purged));
+    }
+
     // --- RGPD: portabilitat de dades (Art. 20) ---
 
     @GetMapping("/export")

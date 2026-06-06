@@ -56,6 +56,7 @@ public class SystemConfigService {
         new KnownKey("GOOGLE_OAUTH_CLIENT_SECRET",  "Google OAuth Client Secret",         "Client Secret de Google Cloud per al flux OAuth del client", "CALENDAR", true, "secret", null, null, 30),
         new KnownKey("META_WEBHOOK_VERIFY_TOKEN",   "Meta Webhook Verify Token",          "Token de verificació per al webhook de Meta Lead Ads (mínim 20 caràcters)", "META_ADS", true, "secret", null, null, 10),
         new KnownKey("META_PAGE_ACCESS_TOKEN",      "Meta Page Access Token (global)",    "Token d'accés de pàgina de Meta (fallback si no hi ha token específic per pàgina)", "META_ADS", true, "secret", null, null, 20),
+        new KnownKey("META_APP_SECRET",             "Meta App Secret",                   "App Secret de l'aplicació de Meta per verificar signatures HMAC dels webhooks", "META_ADS", true, "secret", null, null, 30),
         new KnownKey("OPENAI_API_KEY",              "OpenAI API Key",                     "Clau OpenAI per a generació d'imatges amb DALL·E 3 (Meta Ads creatius)", "IMAGE_GEN", true, "secret", null, null, 10),
 
         // MAINTENANCE

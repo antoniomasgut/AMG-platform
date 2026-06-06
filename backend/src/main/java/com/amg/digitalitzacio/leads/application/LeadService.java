@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.math.BigDecimal;
 
@@ -107,9 +108,23 @@ public class LeadService {
         } else {
             page = tenantId != null
                     ? leadRepository.findByTenantId(tenantId, pageable)
-                    : leadRepository.findAll(pageable);
+                    : leadRepository.findAllActive(pageable);
         }
-        return page.map(this::toLeadResponse);
+
+        // Batch-load assigned user references to avoid N+1
+        Map<UUID, LeadResponse.UserRef> userRefMap = new HashMap<>();
+        Set<UUID> userIds = new HashSet<>();
+        for (Lead lead : page.getContent()) {
+            if (lead.getAssignedTo() != null) {
+                userIds.add(lead.getAssignedTo());
+            }
+        }
+        if (!userIds.isEmpty()) {
+            userRepository.findAllById(userIds).forEach(user ->
+                    userRefMap.put(user.getId(), new LeadResponse.UserRef(user.getId(), user.getName())));
+        }
+
+        return page.map(lead -> toLeadResponse(lead, userRefMap));
     }
 
     public LeadResponse getLead(UUID id, UserPrincipal principal) {
@@ -198,7 +213,7 @@ public class LeadService {
 
         long total = tenantId != null
                 ? leadRepository.countByTenantId(tenantId)
-                : leadRepository.count();
+                : leadRepository.countActive();
 
         Map<PipelineStage, Long> byStage = new HashMap<>();
         for (PipelineStage s : PipelineStage.values()) {
@@ -261,6 +276,18 @@ public class LeadService {
             activityRepository.deleteByLeadId(lead.getId());
         }
         leadRepository.saveAll(leads);
+    }
+
+    // --- Neteja massiva: soft-delete leads antics ---
+
+    public int purgeOldLeads(int olderThanDays, UserPrincipal principal) {
+        if (!"SUPER_ADMIN".equals(principal.role())) {
+            throw new IllegalArgumentException("Only SUPER_ADMIN can purge old leads");
+        }
+        Instant cutoff = Instant.now().minus(olderThanDays, ChronoUnit.DAYS);
+        int count = leadRepository.softDeleteLeadsOlderThan(cutoff);
+        log.info("Purged {} leads older than {} days (cutoff: {})", count, olderThanDays, cutoff);
+        return count;
     }
 
     // --- RGPD: portabilitat de dades (Art. 20) ---
@@ -398,6 +425,22 @@ public class LeadService {
                 lead.getId(), lead.getName(), lead.getEmail(), lead.getPhone(),
                 lead.getSource(), lead.getStage(),
                 getUserRef(lead.getAssignedTo()),
+                lead.getEstimatedValue(), lead.getNotes(), lead.getTags(),
+                lead.getLostReason(), lead.getConvertedAt(),
+                lead.getLastContactAt(), lead.getLastServiceAt(), lead.getHasWhatsapp(),
+                lead.getUtmSource(), lead.getUtmMedium(), lead.getUtmCampaign(), lead.getMetaLeadId(),
+                lead.getIsActive(), lead.getCreatedAt(), lead.getUpdatedAt()
+        );
+    }
+
+    private LeadResponse toLeadResponse(Lead lead, Map<UUID, LeadResponse.UserRef> userRefMap) {
+        LeadResponse.UserRef userRef = lead.getAssignedTo() != null
+                ? userRefMap.get(lead.getAssignedTo())
+                : null;
+        return new LeadResponse(
+                lead.getId(), lead.getName(), lead.getEmail(), lead.getPhone(),
+                lead.getSource(), lead.getStage(),
+                userRef,
                 lead.getEstimatedValue(), lead.getNotes(), lead.getTags(),
                 lead.getLostReason(), lead.getConvertedAt(),
                 lead.getLastContactAt(), lead.getLastServiceAt(), lead.getHasWhatsapp(),

@@ -18,7 +18,7 @@ public class DiscountManager implements DiscountService {
 
     @Override
     @Transactional
-    public DiscountResponse createDiscount(CreateDiscountRequest request) {
+    public DiscountResponse createDiscount(CreateDiscountRequest request, UUID createdBy) {
         var discount = Discount.builder()
                 .tenantId(request.tenantId())
                 .type(DiscountType.valueOf(request.type()))
@@ -28,7 +28,7 @@ public class DiscountManager implements DiscountService {
                 .label(request.label())
                 .validFrom(request.validFrom())
                 .validUntil(request.validUntil())
-                .createdBy(UUID.randomUUID()) // Will be overridden by controller
+                .createdBy(createdBy)
                 .build();
         discount = discountRepository.save(discount);
         return toDiscountResponse(discount);

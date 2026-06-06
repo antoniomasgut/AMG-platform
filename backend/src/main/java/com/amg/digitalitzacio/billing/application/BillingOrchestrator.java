@@ -120,7 +120,7 @@ public class BillingOrchestrator implements BillingService {
 
         var budget = Budget.builder()
                 .tenantId(tenantId).profileId(request.profileId())
-                .budgetNumber(generateBudgetNumber())
+                .budgetNumber(generateBudgetNumber(tenantId))
                 .status(BudgetStatus.DRAFT)
                 .subtotal(subtotal).discountTotal(discountTotal).total(total)
                 .notes(request.notes()).clientNotes(request.clientNotes())
@@ -415,9 +415,9 @@ public class BillingOrchestrator implements BillingService {
         return total;
     }
 
-    private String generateBudgetNumber() {
+    private String generateBudgetNumber(UUID tenantId) {
         var year = LocalDate.now().getYear();
-        var count = budgetRepository.count() + 1;
+        var count = budgetRepository.countByTenantId(tenantId) + 1;
         return String.format("BUD-%d-%04d", year, count);
     }
 
@@ -546,7 +546,9 @@ public class BillingOrchestrator implements BillingService {
                 phases, addons, budget.getSubtotal(), budget.getDiscountTotal(), budget.getTotal(),
                 monthlyTotal,
                 budget.getSentAt(), budget.getAcceptedAt(), budget.getRejectedAt(),
-                null,
+                budget.getAcceptanceToken() != null
+                    ? "https://amgdl.com/reject-budget?token=" + budget.getAcceptanceToken()
+                    : null,
                 budget.getAcceptanceToken() != null
                     ? "https://amgdl.com/accept-budget?token=" + budget.getAcceptanceToken()
                     : null,

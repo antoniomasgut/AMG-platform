@@ -2,11 +2,16 @@ package com.amg.digitalitzacio.leads.api;
 
 import com.amg.digitalitzacio.leads.application.MetaLeadWebhookService;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +36,7 @@ public class MetaLeadWebhookController {
 
     private final SystemConfigService sysConfig;
     private final MetaLeadWebhookService metaLeadWebhookService;
+    private final ObjectMapper objectMapper;
 
     /** Verificació del webhook per part de Meta (han de rebre el challenge de tornada). */
     @GetMapping
@@ -50,13 +56,42 @@ public class MetaLeadWebhookController {
 
     /** Recepció d'events de nous leads des de Meta. */
     @PostMapping
-    public ResponseEntity<String> receive(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<String> receive(
+            @RequestBody String rawBody,
+            @RequestHeader(name = "X-Hub-Signature-256", required = false) String signature) {
+
+        String appSecret = sysConfig.get("META_APP_SECRET");
+        if (appSecret != null && !appSecret.isBlank()) {
+            if (signature == null || !verifyHmacSignature(rawBody, signature, appSecret)) {
+                log.warn("Meta webhook: HMAC signature invàlida o absent");
+                return ResponseEntity.status(401).body("Unauthorized");
+            }
+        } else {
+            log.warn("Meta webhook: META_APP_SECRET no configurat, HMAC no verificat");
+        }
+
         try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> payload = objectMapper.readValue(rawBody, Map.class);
             processPayload(payload);
         } catch (Exception e) {
             log.error("Error processant webhook Meta leads: {}", e.getMessage());
         }
         return ResponseEntity.ok("EVENT_RECEIVED");
+    }
+
+    private boolean verifyHmacSignature(String body, String signature, String appSecret) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec keySpec = new SecretKeySpec(appSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            mac.init(keySpec);
+            byte[] hmacBytes = mac.doFinal(body.getBytes(StandardCharsets.UTF_8));
+            String expected = "sha256=" + HexFormat.of().formatHex(hmacBytes);
+            return expected.equals(signature);
+        } catch (Exception e) {
+            log.error("Error verificant HMAC signature: {}", e.getMessage());
+            return false;
+        }
     }
 
     @SuppressWarnings("unchecked")

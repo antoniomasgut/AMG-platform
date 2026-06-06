@@ -101,8 +101,9 @@ public class BillingController {
     @PostMapping("/discounts")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public DiscountResponse createDiscount(@RequestBody CreateDiscountRequest request) {
-        return discountService.createDiscount(request);
+    public DiscountResponse createDiscount(@RequestBody CreateDiscountRequest request,
+                                            @AuthenticationPrincipal UserPrincipal principal) {
+        return discountService.createDiscount(request, principal.id());
     }
 
     @GetMapping("/discounts")
