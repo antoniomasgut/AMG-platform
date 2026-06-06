@@ -18,6 +18,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       JASYPT_ENCRYPTOR_PASSWORD: ${JASYPT_ENCRYPTOR_PASSWORD}
+      VAULT_MASTER_KEY: ${VAULT_MASTER_KEY}
     labels:
       - "traefik.http.routers.backend.middlewares=secureHeaders,rateLimit,corsApi@file"
 
