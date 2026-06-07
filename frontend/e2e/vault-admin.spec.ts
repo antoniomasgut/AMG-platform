@@ -10,10 +10,10 @@ async function loginViaAPI(page: any) {
   const data = await resp.json();
   await page.goto('/ca/login');
   await page.waitForLoadState('networkidle');
-  await page.evaluate(({ token, refreshToken, user }) => {
-    sessionStorage.setItem('access_token', token);
-    sessionStorage.setItem('refresh_token', refreshToken);
-    sessionStorage.setItem('user', JSON.stringify(user));
+  await page.evaluate((args: { token: string; refreshToken: string; user: unknown }) => {
+    sessionStorage.setItem('access_token', args.token);
+    sessionStorage.setItem('refresh_token', args.refreshToken);
+    sessionStorage.setItem('user', JSON.stringify(args.user));
   }, { token: data.accessToken, refreshToken: data.refreshToken, user: data.user });
   return data.accessToken;
 }
@@ -102,8 +102,8 @@ test('Complete vault flow: create profile, phases, services, assign', async ({ p
   await page.waitForTimeout(500);
 
   // Click the profile in the modal via DOM API
-  await page.evaluate((name) => {
-    const buttons = document.querySelectorAll('.fixed.inset-0 button');
+  await page.evaluate((name: string) => {
+    const buttons = Array.from(document.querySelectorAll('.fixed.inset-0 button'));
     for (const btn of buttons) {
       if (btn.textContent?.includes(name)) {
         (btn as HTMLButtonElement).click();
@@ -117,7 +117,7 @@ test('Complete vault flow: create profile, phases, services, assign', async ({ p
   await page.evaluate(() => {
     const overlay = document.querySelector('.fixed.inset-0');
     if (!overlay) return;
-    const buttons = overlay.querySelectorAll('button');
+    const buttons = Array.from(overlay.querySelectorAll('button'));
     for (const btn of buttons) {
       if (btn.textContent?.trim() === 'Assignar perfil' && !btn.disabled) {
         (btn as HTMLButtonElement).click();

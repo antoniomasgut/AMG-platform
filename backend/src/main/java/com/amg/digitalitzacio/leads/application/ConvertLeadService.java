@@ -48,7 +48,8 @@ public class ConvertLeadService {
         var newTenant = tenantService.createTenant(new CreateTenantRequest(
                 req.tenantName(), slug,
                 req.billingEmail(), req.billingPhone(),
-                fullAddress, req.billingNif(),
+                fullAddress, req.billingCity(),
+                req.billingNif(),
                 req.billingPhone(),
                 null,
                 req.sector(), req.businessSize(),

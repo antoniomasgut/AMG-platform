@@ -11,7 +11,7 @@ export interface UserResponse {
 export interface TenantResponse {
   id: string; name: string; slug: string;
   email: string | null; phone: string | null;
-  address: string | null; nif: string | null; contactPhone: string | null;
+  address: string | null; city: string | null; nif: string | null; contactPhone: string | null;
   preferredChannel: string | null;
   sector: string | null; businessSize: string | null;
   contractedPhases: string[] | null;
@@ -41,12 +41,12 @@ export interface UpdateUserRequest {
 }
 
 export interface CreateTenantRequest {
-  name: string; slug: string; email?: string; phone?: string; address?: string;
+  name: string; slug: string; email?: string; phone?: string; address?: string; city?: string;
 }
 
 export interface UpdateTenantRequest {
   name?: string; slug?: string; email?: string; phone?: string;
-  address?: string; nif?: string; contactPhone?: string;
+  address?: string; city?: string; nif?: string; contactPhone?: string;
   isActive?: boolean; isFree?: boolean; agentSystemPrompt?: string;
   sector?: string | null; businessSize?: string | null;
   contractedPhases?: string[] | null; activePhases?: string[] | null;
@@ -504,6 +504,14 @@ export const cancelGoCardlessMandate = (tenantId: string) =>
 
 export const listGoCardlessPayments = (tenantId: string) =>
   apiFetch<{ content: GoCardlessPaymentItem[] }>(`/gocardless/tenants/${tenantId}/payments?size=10`);
+
+export interface ProviderSummary {
+  setup: { provider: string; stripeConfigured: boolean; stripeActive: boolean };
+  recurring: { provider: string; sepaMandateActive: boolean; gcMandateActive: boolean; gcMandateStatus: string | null };
+}
+
+export const getPaymentProviders = (tenantId: string) =>
+  apiFetch<ProviderSummary>(`/payments/tenants/${tenantId}/providers`);
 
 // ─── WhatsApp Business API (Spec 27) ─────────────────────────────────────────
 

@@ -6,6 +6,7 @@ public record UpdateTenantRequest(
         String email,
         String phone,
         String address,
+        String city,
         String nif,
         String contactPhone,
         String preferredChannel,

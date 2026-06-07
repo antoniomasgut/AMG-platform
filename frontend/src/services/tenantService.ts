@@ -8,6 +8,7 @@ export interface TenantResponse {
   email: string | null;
   phone: string | null;
   address: string | null;
+  city: string | null;
   sector: string | null;
   businessSize: string | null;
   contractedPhases: string[] | null;
@@ -22,6 +23,7 @@ export interface CreateTenantRequest {
   email?: string;
   phone?: string;
   address?: string;
+  city?: string;
   sector?: string;
   businessSize?: string;
   contractedPhases?: string[];
@@ -34,6 +36,7 @@ export interface UpdateTenantRequest {
   email?: string;
   phone?: string;
   address?: string;
+  city?: string;
   sector?: string;
   businessSize?: string;
   contractedPhases?: string[];

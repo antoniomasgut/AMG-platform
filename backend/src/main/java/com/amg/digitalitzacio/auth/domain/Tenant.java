@@ -39,6 +39,9 @@ public class Tenant {
     @Column(length = 255)
     private String address;
 
+    @Column(length = 100)
+    private String city;
+
     @Column(length = 20)
     private String nif;
 

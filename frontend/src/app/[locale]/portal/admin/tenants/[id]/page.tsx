@@ -5,26 +5,26 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/lib/toast-context';
 import {
-  getTenant, getTenantSetup, listCatalogServices,
-  listProfiles, assignProfileToTenant, removeProfileFromTenant,
-  assignPhaseToTenant, addStandaloneServiceToTenant, removeTenantService,
-  lookupSectorPricing, updateTenant, toggleTenantService,
-  getAgentChannels, updateAgentChannels, getAIConfig, updateAIConfig, getAvailableModels,
-  getGoCardlessConfig, getGoCardlessMandate, initiateGoCardlessMandate, cancelGoCardlessMandate,
-  listGoCardlessPayments, configureGoCardless,
-  SECTOR_LABELS, SIZE_LABELS, SECTOR_SIZES, PHASE_LABELS, PHASE_UPGRADE_PRICE,
-  listSectorPhases,
-  type SectorPhaseResponse,
-  type TenantResponse, type TenantSetup, type CatalogService, type CatalogPhaseResponse,
-  type CatalogProfileResponse, type SectorPricingResponse, type ChannelsConfig, type AIConfig, type ModelInfo,
-  type GoCardlessConfig, type GoCardlessMandate,
-  type WhatsAppWabaConfig,
-  getWhatsAppConfig, connectWhatsApp, verifyWhatsApp, disconnectWhatsApp, sendWhatsAppTest,
+  getTenant, updateTenant,
+  getGoCardlessConfig, configureGoCardless, getGoCardlessMandate,
+  initiateGoCardlessMandate, cancelGoCardlessMandate, listGoCardlessPayments,
+  getPaymentProviders,
+  markImplementationDelivered, markOnboardingCompleted, setBillingStartDate,
+  getTenantSetup, listCatalogServices, toggleTenantService, removeTenantService,
+  listProfiles, assignProfileToTenant, assignPhaseToTenant,
+  addStandaloneServiceToTenant,
+  getAgentChannels, updateAgentChannels,
+  getAIConfig, updateAIConfig, getAvailableModels,
   getTelegramConfig, connectTelegram, verifyTelegram, disconnectTelegram,
-  type TelegramConfig,
+  getWhatsAppConfig, connectWhatsApp, verifyWhatsApp, disconnectWhatsApp, sendWhatsAppTest,
+  lookupSectorPricing, listSectorPhases, calcMonthly,
   checkTenantDeletion, deleteTenant,
-  type DeleteTenantCheck,
-  calcMonthly, markImplementationDelivered, markOnboardingCompleted, setBillingStartDate,
+  SECTOR_SIZES, SECTOR_LABELS, SIZE_LABELS, PHASE_LABELS, PHASE_UPGRADE_PRICE,
+  type TenantResponse, type TenantSetup, type ChannelsConfig,
+  type CatalogService, type CatalogProfileResponse, type CatalogPhaseResponse,
+  type SectorPhaseResponse, type SectorPricingResponse,
+  type GoCardlessConfig, type GoCardlessMandate, type GoCardlessPaymentItem,
+  type ProviderSummary, type DeleteTenantCheck,
 } from '@/services/admin';
 import { createBudget, listBudgets, sendBudget, cancelBudget, updateBudget, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
 import { getMetaAdsConfig, saveMetaAdsConfig, syncMetaAds } from '@/services/meta-ads';
@@ -1980,10 +1980,16 @@ function GoCardlessCard({ tenantId }: { tenantId: string }) {
     enabled: mandate?.status === 'ACTIVE',
   });
 
+  const { data: providers } = useQuery({
+    queryKey: ['gc-providers', tenantId],
+    queryFn: () => getPaymentProviders(tenantId),
+  });
+
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['gc-config', tenantId] });
     qc.invalidateQueries({ queryKey: ['gc-mandate', tenantId] });
     qc.invalidateQueries({ queryKey: ['gc-payments', tenantId] });
+    qc.invalidateQueries({ queryKey: ['gc-providers', tenantId] });
   };
 
   const handleConfigure = async (e: React.FormEvent) => {
@@ -2046,6 +2052,22 @@ function GoCardlessCard({ tenantId }: { tenantId: string }) {
       </div>
 
       <div className="p-5 space-y-5">
+        {/* Provider summary */}
+        {providers && (
+          <div className="flex items-center gap-4 p-3 bg-[rgba(255,255,255,0.02)] border border-border-base rounded text-xs">
+            <div>
+              <span className="f-mono text-[10px] text-ink-3 uppercase tracking-wider">Proveïdor recurrent</span>
+              <div className="f-display font-bold text-sm mt-0.5">{providers.recurring.provider}</div>
+            </div>
+            {providers.recurring.gcMandateActive && (
+              <AMGBadge tone={providers.recurring.gcMandateStatus === 'ACTIVE' ? 'success' : 'warning'}>{providers.recurring.gcMandateStatus}</AMGBadge>
+            )}
+            {providers.recurring.sepaMandateActive && (
+              <AMGBadge tone="success">Mandat SEPA manual actiu</AMGBadge>
+            )}
+          </div>
+        )}
+
         {/* Config form */}
         {showConfigForm && (
           <form onSubmit={handleConfigure} className="space-y-3 p-4 border border-border-base rounded bg-[rgba(255,255,255,0.02)]">
@@ -2948,12 +2970,14 @@ export default function TenantDetailPage() {
   const [selectedBudget, setSelectedBudget] = useState<BudgetResponse | null>(null);
   const [togglingFree, setTogglingFree] = useState(false);
   const [togglingActive, setTogglingActive] = useState(false);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [editEmailValue, setEditEmailValue] = useState('');
   const [editingInfo, setEditingInfo] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
-  const [infoForm, setInfoForm] = useState({ name: '', nif: '', email: '', phone: '', address: '', contactPhone: '' });
+  const [infoForm, setInfoForm] = useState({ name: '', nif: '', email: '', phone: '', address: '', city: '', contactPhone: '' });
 
   const openEditInfo = (t: TenantResponse) => {
-    setInfoForm({ name: t.name, nif: t.nif ?? '', email: t.email ?? '', phone: t.phone ?? '', address: t.address ?? '', contactPhone: t.contactPhone ?? '' });
+    setInfoForm({ name: t.name, nif: t.nif ?? '', email: t.email ?? '', phone: t.phone ?? '', address: t.address ?? '', city: t.city ?? '', contactPhone: t.contactPhone ?? '' });
     setEditingInfo(true);
   };
 
@@ -2966,6 +2990,7 @@ export default function TenantDetailPage() {
         email: infoForm.email || undefined,
         phone: infoForm.phone || undefined,
         address: infoForm.address || undefined,
+        city: infoForm.city || undefined,
         contactPhone: infoForm.contactPhone || undefined,
       });
       qc.invalidateQueries({ queryKey: ['tenant', id] });
@@ -2988,6 +3013,20 @@ export default function TenantDetailPage() {
       toast('error', 'Error actualitzant l\'estat del tenant');
     } finally {
       setTogglingActive(false);
+    }
+  };
+
+  const saveEmail = async () => {
+    setSavingInfo(true);
+    try {
+      await updateTenant(id, { email: editEmailValue || undefined });
+      qc.invalidateQueries({ queryKey: ['tenant', id] });
+      toast('success', 'Email actualitzat');
+      setEditingEmail(false);
+    } catch {
+      toast('error', 'Error desant l\'email');
+    } finally {
+      setSavingInfo(false);
     }
   };
 
@@ -3173,7 +3212,29 @@ export default function TenantDetailPage() {
                 : <AMGBadge tone="neutral">Inactiu</AMGBadge>}
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-ink-2">
-              {tenant.email && <span className="flex items-center gap-1"><I.Mail size={12} />{tenant.email}</span>}
+              {editingEmail ? (
+                <span className="flex items-center gap-1">
+                  <I.Mail size={12} />
+                  <input
+                    type="email"
+                    value={editEmailValue}
+                    onChange={(e) => setEditEmailValue(e.target.value)}
+                    onBlur={() => { if (editEmailValue !== tenant.email) saveEmail(); else setEditingEmail(false); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') saveEmail(); if (e.key === 'Escape') { setEditEmailValue(tenant.email ?? ''); setEditingEmail(false); } }}
+                    className="bg-[rgba(255,255,255,0.06)] border border-border-base px-2 py-0.5 text-sm text-ink-0 rounded focus:outline-none focus:border-accent w-48"
+                    autoFocus
+                    ref={(el) => el?.select()}
+                  />
+                  <button onClick={saveEmail} className="text-accent-light hover:text-accent p-0.5"><I.Check size={12} /></button>
+                  <button onClick={() => { setEditEmailValue(tenant.email ?? ''); setEditingEmail(false); }} className="text-ink-2 hover:text-ink-0 p-0.5"><I.X size={12} /></button>
+                </span>
+              ) : (
+                <button onClick={() => { setEditEmailValue(tenant.email ?? ''); setEditingEmail(true); }} className="flex items-center gap-1 hover:text-accent-light transition-colors group">
+                  <I.Mail size={12} />
+                  <span>{tenant.email || '—'}</span>
+                  <I.Edit size={10} className="opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
+                </button>
+              )}
               {tenant.phone && <span className="flex items-center gap-1"><I.Smartphone size={12} />{tenant.phone}</span>}
               <span className="f-mono text-xs text-ink-3">/{tenant.slug}</span>
               <span className="f-mono text-xs text-ink-3">Creat {fmtDate(tenant.createdAt)}</span>
@@ -3308,8 +3369,9 @@ export default function TenantDetailPage() {
                   { key: 'phone', label: 'Telèfon', placeholder: '+34612345678' },
                   { key: 'contactPhone', label: 'Telèfon de contacte', placeholder: '+34612345678' },
                   { key: 'address', label: 'Adreça', placeholder: 'Carrer Exemple, 1' },
+                  { key: 'city', label: 'Municipi', placeholder: 'Palma' },
                 ].map(({ key, label, placeholder }) => (
-                  <div key={key} className={key === 'address' ? 'sm:col-span-2' : ''}>
+                  <div key={key} className={key === 'address' || key === 'city' ? 'sm:col-span-2' : ''}>
                     <label className="f-mono text-[10px] uppercase tracking-wider text-ink-3 block mb-1.5">{label}</label>
                     <input
                       type="text"
@@ -3329,6 +3391,7 @@ export default function TenantDetailPage() {
                   { label: 'Telèfon', value: tenant.phone },
                   { label: 'Telèfon de contacte', value: tenant.contactPhone },
                   { label: 'Adreça', value: tenant.address },
+                  { label: 'Municipi', value: tenant.city },
                 ].map(({ label, value }) => (
                   <div key={label}>
                     <div className="f-mono text-label uppercase text-ink-3 mb-1">{label}</div>

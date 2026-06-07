@@ -30,7 +30,7 @@ test.describe('Cookie consent banner', () => {
 
     // Click all "Acceptar totes" buttons (React StrictMode double-renders in dev)
     await page.evaluate(() => {
-      const buttons = document.querySelectorAll('button');
+      const buttons = Array.from(document.querySelectorAll('button'));
       for (const btn of buttons) {
         if (btn.textContent?.includes('Acceptar totes')) {
           btn.click();

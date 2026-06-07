@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.auth.application;
 
+import com.amg.digitalitzacio.agents.application.SectorKnowledgeSeedService;
 import com.amg.digitalitzacio.agents.domain.KnowledgeBaseRepository;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
@@ -52,6 +53,7 @@ public class TenantService {
     private final GoCardlessMandateRepository goCardlessMandateRepository;
     private final WhatsAppWabaConfigRepository whatsAppWabaConfigRepository;
     private final TenantTelegramConfigRepository tenantTelegramConfigRepository;
+    private final SectorKnowledgeSeedService sectorKnowledgeSeedService;
 
     @Transactional
     public TenantResponse createTenant(@Valid CreateTenantRequest request) {
@@ -67,6 +69,7 @@ public class TenantService {
                 .email(request.email())
                 .phone(request.phone())
                 .address(request.address())
+                .city(request.city())
                 .nif(request.nif())
                 .contactPhone(request.contactPhone())
                 .preferredChannel(request.preferredChannel() != null
@@ -81,6 +84,13 @@ public class TenantService {
                 .build();
 
         tenant = tenantRepository.save(tenant);
+        sectorKnowledgeSeedService.seed(tenant.getId(), sector, tenant.getName(), tenant.getCity());
+        // Auto-set billing start date if has contracted phases and is not free
+        if (request.contractedPhases() != null && !request.contractedPhases().isEmpty()
+                && !Boolean.TRUE.equals(request.isFree())) {
+            tenant.setBillingStartDate(LocalDate.now());
+            tenant = tenantRepository.save(tenant);
+        }
         return toResponse(tenant);
     }
 
@@ -110,6 +120,7 @@ public class TenantService {
         if (request.email() != null) tenant.setEmail(request.email());
         if (request.phone() != null) tenant.setPhone(request.phone());
         if (request.address() != null) tenant.setAddress(request.address());
+        if (request.city() != null) tenant.setCity(request.city());
         if (request.nif() != null) tenant.setNif(request.nif());
         if (request.contactPhone() != null) tenant.setContactPhone(request.contactPhone());
         if (request.preferredChannel() != null) tenant.setPreferredChannel(
@@ -252,7 +263,7 @@ public class TenantService {
         return new TenantResponse(
                 tenant.getId(), tenant.getName(), tenant.getSlug(),
                 tenant.getEmail(), tenant.getPhone(), tenant.getAddress(),
-                tenant.getNif(), tenant.getContactPhone(),
+                tenant.getCity(), tenant.getNif(), tenant.getContactPhone(),
                 tenant.getPreferredChannel() != null ? tenant.getPreferredChannel().name() : null,
                 tenant.getSector() != null ? tenant.getSector().name() : null,
                 tenant.getBusinessSize() != null ? tenant.getBusinessSize().name() : null,

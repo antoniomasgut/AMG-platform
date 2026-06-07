@@ -20,7 +20,7 @@ export default function NewTenantPage() {
   const router = useRouter();
 
   const [form, setForm] = useState({
-    name: '', slug: '', email: '', phone: '', address: '',
+    name: '', slug: '', email: '', phone: '', address: '', city: '',
     sector: '', businessSize: '',
     agentSystemPrompt: '',
   });
@@ -34,7 +34,7 @@ export default function NewTenantPage() {
 
   useEffect(() => {
     const user = getCurrentUser();
-    if (user?.role !== 'SUPER_ADMIN') router.push(`/portal/admin/tenants`);
+    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN')) router.push(`/portal/admin/tenants`);
   }, [router]);
 
   const lookupPricing = useCallback(async (sector: string, size: string) => {
@@ -93,7 +93,7 @@ export default function NewTenantPage() {
     try {
       await createTenant({
         name: form.name, slug: form.slug,
-        email: form.email || undefined, phone: form.phone || undefined, address: form.address || undefined,
+        email: form.email || undefined, phone: form.phone || undefined, address: form.address || undefined, city: form.city || undefined,
         sector: form.sector || undefined, businessSize: form.businessSize || undefined,
         contractedPhases: selectedPhases.length > 0 ? selectedPhases : undefined,
         isFree,
@@ -129,6 +129,8 @@ export default function NewTenantPage() {
             onChange={(e) => setForm(p => ({ ...p, phone: e.target.value }))} />
           <AMGInput label={t('tenants.fields.address' as any)} value={form.address}
             onChange={(e) => setForm(p => ({ ...p, address: e.target.value }))} />
+          <AMGInput label={t('tenants.fields.city' as any)} value={form.city}
+            onChange={(e) => setForm(p => ({ ...p, city: e.target.value }))} />
         </div>
 
         {/* Model de negoci */}
