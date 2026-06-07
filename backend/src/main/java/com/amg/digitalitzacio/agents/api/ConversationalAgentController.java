@@ -47,6 +47,7 @@ public class ConversationalAgentController {
     private final TenantRepository tenantRepository;
 
     @GetMapping("/{tenantId}/conversations")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ConversationResponse>> getConversations(
             @PathVariable UUID tenantId,
             @RequestParam(defaultValue = "0") int page,
@@ -80,6 +81,7 @@ public class ConversationalAgentController {
     }
 
     @GetMapping("/{tenantId}/pending/count")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Long>> getPendingCount(@PathVariable UUID tenantId) {
         try {
             var principal = getPrincipal();
@@ -95,6 +97,7 @@ public class ConversationalAgentController {
     }
 
     @GetMapping("/{tenantId}/pending")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PendingResponseDto>> getPending(@PathVariable UUID tenantId) {
         try {
             var principal = getPrincipal();
@@ -105,18 +108,15 @@ public class ConversationalAgentController {
             var responses = pending.stream()
                     .filter(c -> c.getRole() == ConversationRole.ASSISTANT)
                     .map(assistantMsg -> {
-                        // Find preceding user message
-                        String customerMessage = "";
-                        var allMsgs = conversationRepository.findByTenantIdOrderByCreatedAtDesc(
-                                tenantId, PageRequest.of(0, 1000));
-                        for (int i = 0; i < allMsgs.size() - 1; i++) {
-                            if (allMsgs.get(i).getId().equals(assistantMsg.getId()) &&
-                                    i + 1 < allMsgs.size() &&
-                                    allMsgs.get(i + 1).getRole() == ConversationRole.USER) {
-                                customerMessage = allMsgs.get(i + 1).getContent();
-                                break;
-                            }
-                        }
+                        // Cerca el missatge USER precedent amb una sola query puntual
+                        String customerMessage = conversationRepository
+                            .findTop1UserMessageBefore(
+                                tenantId,
+                                assistantMsg.getCustomerIdentifier(),
+                                assistantMsg.getChannel(),
+                                assistantMsg.getCreatedAt())
+                            .map(Conversation::getContent)
+                            .orElse("");
 
                         return new PendingResponseDto(
                                 assistantMsg.getId(),
@@ -139,6 +139,7 @@ public class ConversationalAgentController {
     }
 
     @PostMapping("/{tenantId}/pending/{id}/approve")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> approvePending(
             @PathVariable UUID tenantId,
             @PathVariable Long id) {
@@ -159,6 +160,7 @@ public class ConversationalAgentController {
     }
 
     @PostMapping("/{tenantId}/pending/{id}/edit")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> editPending(
             @PathVariable UUID tenantId,
             @PathVariable Long id,
@@ -184,6 +186,7 @@ public class ConversationalAgentController {
     }
 
     @DeleteMapping("/{tenantId}/pending/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> discardPending(
             @PathVariable UUID tenantId,
             @PathVariable Long id) {
@@ -208,6 +211,7 @@ public class ConversationalAgentController {
     }
 
     @PutMapping("/{tenantId}/mode")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updateMode(
             @PathVariable UUID tenantId,
             @RequestBody AgentModeRequest request) {
@@ -232,6 +236,7 @@ public class ConversationalAgentController {
     }
 
     @GetMapping("/{tenantId}/status")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AgentStatusResponse> getStatus(@PathVariable UUID tenantId) {
         try {
             var principal = getPrincipal();

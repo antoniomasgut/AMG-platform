@@ -74,8 +74,31 @@ public class ContactService {
 
     @Transactional(readOnly = true)
     public List<ContactSummaryResponse> listContacts(UUID tenantId) {
-        return contactRepository.findByTenantId(tenantId).stream()
-            .map(c -> buildSummary(tenantId, c))
+        var contacts = contactRepository.findByTenantId(tenantId);
+        if (contacts.isEmpty()) return List.of();
+
+        // Pre-càrrega en batch: 3 queries per a tots els contactes en lloc de 3×N×M
+        var contactIds = contacts.stream().map(Contact::getId).toList();
+        var allIdentifiers = contactIdentifierRepository.findByContactIdIn(contactIds);
+        var identifiersByContact = allIdentifiers.stream()
+            .collect(java.util.stream.Collectors.groupingBy(ContactIdentifier::getContactId));
+
+        var lastMessages = conversationRepository.findLastMessagePerIdentifierAndChannel(tenantId);
+        var lastMsgMap = new java.util.HashMap<String, Conversation>();
+        for (var msg : lastMessages) {
+            lastMsgMap.put(msg.getCustomerIdentifier() + ":" + msg.getChannel().name(), msg);
+        }
+
+        var pendingRaw = conversationRepository.countPendingGroupedByIdentifierAndChannel(tenantId);
+        var pendingMap = new java.util.HashMap<String, Long>();
+        for (var row : pendingRaw) {
+            pendingMap.put(row[0] + ":" + row[1], (Long) row[2]);
+        }
+
+        return contacts.stream()
+            .map(c -> buildSummaryFromMaps(c,
+                identifiersByContact.getOrDefault(c.getId(), List.of()),
+                lastMsgMap, pendingMap))
             .filter(s -> s.lastMessageAt() != null)
             .sorted(Comparator.comparing(ContactSummaryResponse::lastMessageAt).reversed())
             .toList();
@@ -161,14 +184,18 @@ public class ContactService {
     }
 
     private ContactIdentifier findMostRecentlyUsed(UUID tenantId, List<ContactIdentifier> identifiers) {
+        var idSet = identifiers.stream().map(ContactIdentifier::getIdentifier).toList();
+        var rows = conversationRepository.findMaxCreatedAtPerIdentifier(tenantId, idSet);
+        var maxByKey = new java.util.HashMap<String, Instant>();
+        for (var row : rows) {
+            maxByKey.put(row[0] + ":" + row[1], (Instant) row[2]);
+        }
         ContactIdentifier best = identifiers.get(0);
         Instant bestAt = Instant.EPOCH;
         for (var ci : identifiers) {
-            var last = conversationRepository
-                .findTop1ByTenantIdAndCustomerIdentifierAndChannelOrderByCreatedAtDesc(
-                    tenantId, ci.getIdentifier(), ci.getChannel());
-            if (last.isPresent() && last.get().getCreatedAt().isAfter(bestAt)) {
-                bestAt = last.get().getCreatedAt();
+            Instant last = maxByKey.getOrDefault(ci.getIdentifier() + ":" + ci.getChannel().name(), Instant.EPOCH);
+            if (last.isAfter(bestAt)) {
+                bestAt = last;
                 best = ci;
             }
         }
@@ -198,8 +225,11 @@ public class ContactService {
         }
     }
 
-    private ContactSummaryResponse buildSummary(UUID tenantId, Contact contact) {
-        var identifiers = contactIdentifierRepository.findByContactId(contact.getId());
+    private ContactSummaryResponse buildSummaryFromMaps(
+            Contact contact,
+            List<ContactIdentifier> identifiers,
+            java.util.Map<String, Conversation> lastMsgMap,
+            java.util.Map<String, Long> pendingMap) {
 
         String lastContent = null;
         String lastRole = null;
@@ -209,22 +239,16 @@ public class ContactService {
         long pendingCount = 0;
 
         for (var ci : identifiers) {
-            var lastMsg = conversationRepository
-                .findTop1ByTenantIdAndCustomerIdentifierAndChannelOrderByCreatedAtDesc(
-                    tenantId, ci.getIdentifier(), ci.getChannel());
-            if (lastMsg.isPresent()) {
-                var msg = lastMsg.get();
-                if (lastAt == null || msg.getCreatedAt().isAfter(lastAt)) {
-                    lastAt = msg.getCreatedAt();
-                    lastContent = msg.getContent();
-                    lastRole = msg.getRole().name();
-                    lastChannel = ci.getChannel().name();
-                    lastIdentifier = ci.getIdentifier();
-                }
+            String key = ci.getIdentifier() + ":" + ci.getChannel().name();
+            var msg = lastMsgMap.get(key);
+            if (msg != null && (lastAt == null || msg.getCreatedAt().isAfter(lastAt))) {
+                lastAt = msg.getCreatedAt();
+                lastContent = msg.getContent();
+                lastRole = msg.getRole().name();
+                lastChannel = ci.getChannel().name();
+                lastIdentifier = ci.getIdentifier();
             }
-            pendingCount += conversationRepository
-                .countByTenantIdAndCustomerIdentifierAndChannelAndPendingApprovalTrue(
-                    tenantId, ci.getIdentifier(), ci.getChannel());
+            pendingCount += pendingMap.getOrDefault(key, 0L);
         }
 
         var channelInfos = identifiers.stream()

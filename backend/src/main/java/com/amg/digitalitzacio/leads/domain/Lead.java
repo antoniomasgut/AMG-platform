@@ -13,7 +13,10 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "leads")
+@Table(name = "leads", indexes = {
+    @Index(name = "idx_leads_tenant_id", columnList = "tenant_id"),
+    @Index(name = "idx_leads_tenant_stage", columnList = "tenant_id, stage")
+})
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter

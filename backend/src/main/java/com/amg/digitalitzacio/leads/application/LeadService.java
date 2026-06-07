@@ -75,6 +75,7 @@ public class LeadService {
         return toLeadResponse(lead);
     }
 
+    @Transactional(readOnly = true)
     public Page<LeadResponse> listLeads(Pageable pageable, String stage, String source,
                                         UUID assignedTo, String search, UUID tenantIdFilter,
                                         UserPrincipal principal) {
@@ -127,6 +128,7 @@ public class LeadService {
         return page.map(lead -> toLeadResponse(lead, userRefMap));
     }
 
+    @Transactional(readOnly = true)
     public LeadResponse getLead(UUID id, UserPrincipal principal) {
         Lead lead = findLead(id);
         verifyAccess(lead, principal);
@@ -205,6 +207,7 @@ public class LeadService {
         return toLeadResponse(lead);
     }
 
+    @Transactional(readOnly = true)
     public LeadStatsResponse getLeadStats(UserPrincipal principal) {
         UUID tenantId = principal.tenantId();
         if ("SUPER_ADMIN".equals(principal.role())) {
@@ -292,6 +295,7 @@ public class LeadService {
 
     // --- RGPD: portabilitat de dades (Art. 20) ---
 
+    @Transactional(readOnly = true)
     public List<LeadResponse> exportLeadsForPortability(UserPrincipal principal) {
         UUID tenantId = principal.tenantId();
         return leadRepository.findByTenantId(tenantId)

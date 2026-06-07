@@ -89,4 +89,26 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
         @Param("tenantId") UUID tenantId,
         @Param("windowStart") Instant windowStart,
         @Param("windowEnd") Instant windowEnd);
+
+    /** Missatge USER més recent anterior a :before — per trobar el missatge del client que va generar un pendent. */
+    @Query("SELECT c FROM Conversation c WHERE c.tenantId = :tenantId AND c.customerIdentifier = :identifier AND c.channel = :channel AND c.role = 'USER' AND c.createdAt < :before ORDER BY c.createdAt DESC LIMIT 1")
+    Optional<Conversation> findTop1UserMessageBefore(
+        @Param("tenantId") UUID tenantId,
+        @Param("identifier") String identifier,
+        @Param("channel") ConversationChannel channel,
+        @Param("before") Instant before);
+
+    /** Darrer missatge per cada (customerIdentifier, channel) del tenant — per buildSummary sense N+1. */
+    @Query("SELECT c FROM Conversation c WHERE c.tenantId = :tenantId AND c.createdAt = (SELECT MAX(c2.createdAt) FROM Conversation c2 WHERE c2.tenantId = c.tenantId AND c2.customerIdentifier = c.customerIdentifier AND c2.channel = c.channel)")
+    List<Conversation> findLastMessagePerIdentifierAndChannel(@Param("tenantId") UUID tenantId);
+
+    /** Comptador de pendents per (customerIdentifier, channel) — per buildSummary sense N+1. */
+    @Query("SELECT c.customerIdentifier, c.channel, COUNT(c) FROM Conversation c WHERE c.tenantId = :tenantId AND c.pendingApproval = true GROUP BY c.customerIdentifier, c.channel")
+    List<Object[]> countPendingGroupedByIdentifierAndChannel(@Param("tenantId") UUID tenantId);
+
+    /** Darrera data de conversa per (customerIdentifier, channel) — per findMostRecentlyUsed sense N+1. */
+    @Query("SELECT c.customerIdentifier, c.channel, MAX(c.createdAt) FROM Conversation c WHERE c.tenantId = :tenantId AND c.customerIdentifier IN :identifiers GROUP BY c.customerIdentifier, c.channel")
+    List<Object[]> findMaxCreatedAtPerIdentifier(
+        @Param("tenantId") UUID tenantId,
+        @Param("identifiers") java.util.Collection<String> identifiers);
 }

@@ -77,7 +77,7 @@ public class WhatsAppController {
             log.info("WhatsApp webhook verified successfully");
             return ResponseEntity.ok(challenge);
         }
-        log.warn("WhatsApp webhook verification failed — mode={}, token={}", mode, verifyToken);
+        log.warn("WhatsApp webhook verification failed — mode={}, token_present={}", mode, verifyToken != null);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Verification failed");
     }
 

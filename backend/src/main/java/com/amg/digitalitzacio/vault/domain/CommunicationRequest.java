@@ -9,7 +9,10 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "communication_requests")
+@Table(name = "communication_requests", indexes = {
+    @Index(name = "idx_comm_req_tenant_id", columnList = "tenant_id"),
+    @Index(name = "idx_comm_req_status_expires", columnList = "status, expires_at")
+})
 @EntityListeners(AuditingEntityListener.class)
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class CommunicationRequest {

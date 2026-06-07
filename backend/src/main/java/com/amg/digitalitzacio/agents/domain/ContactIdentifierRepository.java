@@ -16,4 +16,7 @@ public interface ContactIdentifierRepository extends JpaRepository<ContactIdenti
     List<ContactIdentifier> findByContactId(UUID contactId);
 
     Optional<ContactIdentifier> findByTenantIdAndIdentifier(UUID tenantId, String identifier);
+
+    /** Batch load: tots els identificadors per una llista de contactes. */
+    List<ContactIdentifier> findByContactIdIn(java.util.Collection<UUID> contactIds);
 }

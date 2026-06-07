@@ -11,7 +11,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "prospects")
+@Table(name = "prospects", indexes = {
+    @Index(name = "idx_prospects_campaign_id", columnList = "campaign_id")
+})
 @EntityListeners(AuditingEntityListener.class)
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Prospect {

@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.billing.api;
 import com.amg.digitalitzacio.billing.api.dto.*;
 import com.amg.digitalitzacio.billing.application.BillingService;
 import com.amg.digitalitzacio.billing.application.DiscountService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,7 +27,7 @@ public class BillingController {
     @PostMapping("/tenants/{tenantId}/budgets")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public BudgetResponse createBudget(@PathVariable UUID tenantId, @RequestBody CreateBudgetRequest request) {
+    public BudgetResponse createBudget(@PathVariable UUID tenantId, @Valid @RequestBody CreateBudgetRequest request) {
         return billingService.createBudget(tenantId, request);
     }
 
@@ -56,7 +57,7 @@ public class BillingController {
 
     @PutMapping("/budgets/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public BudgetResponse updateBudget(@PathVariable UUID id, @RequestBody UpdateBudgetRequest request) {
+    public BudgetResponse updateBudget(@PathVariable UUID id, @Valid @RequestBody UpdateBudgetRequest request) {
         return billingService.updateBudget(id, request);
     }
 
@@ -101,7 +102,7 @@ public class BillingController {
     @PostMapping("/discounts")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public DiscountResponse createDiscount(@RequestBody CreateDiscountRequest request,
+    public DiscountResponse createDiscount(@Valid @RequestBody CreateDiscountRequest request,
                                             @AuthenticationPrincipal UserPrincipal principal) {
         return discountService.createDiscount(request, principal.id());
     }
@@ -116,7 +117,7 @@ public class BillingController {
 
     @PutMapping("/discounts/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public DiscountResponse updateDiscount(@PathVariable UUID id, @RequestBody UpdateDiscountRequest request) {
+    public DiscountResponse updateDiscount(@PathVariable UUID id, @Valid @RequestBody UpdateDiscountRequest request) {
         return discountService.updateDiscount(id, request);
     }
 
