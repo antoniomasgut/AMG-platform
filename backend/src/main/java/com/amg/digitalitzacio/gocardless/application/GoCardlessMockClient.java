@@ -23,7 +23,7 @@ public class GoCardlessMockClient implements GoCardlessClient {
     }
 
     @Override
-    public RedirectFlowResult completeRedirectFlow(String redirectFlowId) {
+    public RedirectFlowResult completeRedirectFlow(String tenantId, String redirectFlowId) {
         return new RedirectFlowResult(
                 "MD_MOCK_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(),
                 "Mock Account Holder",
@@ -33,12 +33,12 @@ public class GoCardlessMockClient implements GoCardlessClient {
     }
 
     @Override
-    public String createPayment(String mandateId, BigDecimal amount, LocalDate chargeDate, String description) {
+    public String createPayment(String tenantId, String mandateId, BigDecimal amount, LocalDate chargeDate, String description) {
         return "PM_MOCK_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     @Override
-    public void cancelMandate(String mandateId) {
+    public void cancelMandate(String tenantId, String mandateId) {
         // mock — no-op
     }
 }

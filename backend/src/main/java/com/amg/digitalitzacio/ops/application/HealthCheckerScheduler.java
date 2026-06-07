@@ -4,7 +4,9 @@ import com.amg.digitalitzacio.ops.domain.*;
 import com.amg.digitalitzacio.shared.notification.TelegramNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,9 @@ public class HealthCheckerScheduler {
     private final IncidentRepository incidentRepository;
     private final DataSource dataSource;
     private final TelegramNotifier telegramNotifier;
+
+    @Autowired(required = false)
+    private StringRedisTemplate redisTemplate;
 
     @Value("${app.healthcheck.n8n-url:http://localhost:5678/healthz}")
     private String n8nUrl;
@@ -88,15 +93,18 @@ public class HealthCheckerScheduler {
     }
 
     private boolean checkRedis() {
-        try {
-            var factory = dataSource.getClass().getClassLoader().loadClass(
-                    "org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory");
-            var conn = factory.getMethod("getConnection").invoke(null);
-            var ping = conn.getClass().getMethod("ping").invoke(conn);
-            return "PONG".equals(ping);
-        } catch (Exception e) {
-            log.debug("Redis not available, skipping health check: {}", e.getMessage());
+        if (redisTemplate == null) {
+            log.debug("Redis no configurat, saltant health check");
             return true;
+        }
+        try {
+            var conn = redisTemplate.getConnectionFactory().getConnection();
+            var pong = conn.ping();
+            conn.close();
+            return "PONG".equalsIgnoreCase(pong);
+        } catch (Exception e) {
+            log.debug("Redis health check failed: {}", e.getMessage());
+            return false;
         }
     }
 

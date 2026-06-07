@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +88,7 @@ public class MetaLeadWebhookController {
             mac.init(keySpec);
             byte[] hmacBytes = mac.doFinal(body.getBytes(StandardCharsets.UTF_8));
             String expected = "sha256=" + HexFormat.of().formatHex(hmacBytes);
-            return expected.equals(signature);
+            return MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             log.error("Error verificant HMAC signature: {}", e.getMessage());
             return false;

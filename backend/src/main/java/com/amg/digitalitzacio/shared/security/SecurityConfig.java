@@ -63,7 +63,6 @@ public class SecurityConfig {
                                 "/api/v1/billing/budgets/reject"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/engine/render/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/engine/render/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/engine/render/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
                         .requestMatchers(HttpMethod.GET, "/sitemap.xml").permitAll()
@@ -84,6 +83,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/agents/email/webhook/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/agents/email/inbound").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/nexe/calendar/oauth-callback").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/google/callback").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/whatsapp/webhook").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/whatsapp/webhook").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/chat/sessions").permitAll()

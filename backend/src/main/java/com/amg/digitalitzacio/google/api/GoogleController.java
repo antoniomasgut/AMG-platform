@@ -7,8 +7,10 @@ import com.amg.digitalitzacio.google.application.GoogleAuthService;
 import com.amg.digitalitzacio.google.application.GoogleOrchestrator;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,32 +25,38 @@ public class GoogleController {
     private final GoogleOrchestrator orchestrator;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
-    public ResponseEntity<GoogleStatusResponse> getStatus(@PathVariable UUID tenantId) {
+    @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
+    public ResponseEntity<GoogleStatusResponse> getStatus(
+            @PathVariable UUID tenantId,
+            @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(orchestrator.getStatus(tenantId));
     }
 
     @PostMapping("/auth-url")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
     public ResponseEntity<AuthUrlResponse> getAuthUrl(
             @PathVariable UUID tenantId,
-            @RequestBody AuthUrlRequest req) {
+            @RequestBody AuthUrlRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
         var result = authService.generateAuthUrl(tenantId, req.modules(), req.redirectUri());
         return ResponseEntity.ok(new AuthUrlResponse(result.authUrl(), result.stateToken()));
     }
 
     @PutMapping("/modules")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
     public ResponseEntity<Void> updateModules(
             @PathVariable UUID tenantId,
-            @RequestBody ModuleConfigRequest req) {
+            @RequestBody ModuleConfigRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
         orchestrator.updateModules(tenantId, req);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/test")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
-    public ResponseEntity<String> testConnection(@PathVariable UUID tenantId) {
+    @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
+    public ResponseEntity<String> testConnection(
+            @PathVariable UUID tenantId,
+            @AuthenticationPrincipal UserPrincipal principal) {
         try {
             var status = orchestrator.getStatus(tenantId);
             return ResponseEntity.ok("Connexió OK: " + status.email());
@@ -58,17 +66,20 @@ public class GoogleController {
     }
 
     @DeleteMapping("/disconnect")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
-    public ResponseEntity<Void> disconnect(@PathVariable UUID tenantId) {
+    @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
+    public ResponseEntity<Void> disconnect(
+            @PathVariable UUID tenantId,
+            @AuthenticationPrincipal UserPrincipal principal) {
         orchestrator.disconnect(tenantId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/send")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
     public ResponseEntity<String> sendMail(
             @PathVariable UUID tenantId,
-            @RequestBody SendMailRequest req) {
+            @RequestBody SendMailRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
         try {
             orchestrator.sendMail(tenantId, req);
             return ResponseEntity.ok("Correu enviat");
@@ -78,16 +89,19 @@ public class GoogleController {
     }
 
     @GetMapping("/drive")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
     public ResponseEntity<List<DriveFileItem>> listDriveFiles(
             @PathVariable UUID tenantId,
-            @RequestParam(required = false) String folderId) {
+            @RequestParam(required = false) String folderId,
+            @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(orchestrator.listDriveFiles(tenantId, folderId));
     }
 
     @GetMapping("/calendar/events")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
-    public ResponseEntity<List<CalendarEventItem>> listCalendarEvents(@PathVariable UUID tenantId) {
+    @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
+    public ResponseEntity<List<CalendarEventItem>> listCalendarEvents(
+            @PathVariable UUID tenantId,
+            @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(orchestrator.listCalendarEvents(tenantId));
     }
 }

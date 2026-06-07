@@ -93,14 +93,15 @@ public class GoCardlessRealClient implements GoCardlessClient {
     }
 
     @Override
-    public RedirectFlowResult completeRedirectFlow(String redirectFlowId) {
+    public RedirectFlowResult completeRedirectFlow(String tenantId, String redirectFlowId) {
         try {
             var body = new JsonObject();
             var data = new JsonObject();
             data.addProperty("redirect_flow_id", redirectFlowId);
             body.add("data", data);
 
-            var config = findConfigForRedirectFlow(redirectFlowId);
+            var config = configRepository.findByTenantId(UUID.fromString(tenantId))
+                .orElseThrow(() -> new RuntimeException("GoCardless not configured for tenant " + tenantId));
             var accessToken = resolveApiKey(config);
             var baseUrl = getBaseUrl(config);
 
@@ -134,9 +135,10 @@ public class GoCardlessRealClient implements GoCardlessClient {
     }
 
     @Override
-    public String createPayment(String mandateId, BigDecimal amount, LocalDate chargeDate, String description) {
+    public String createPayment(String tenantId, String mandateId, BigDecimal amount, LocalDate chargeDate, String description) {
         try {
-            var config = findConfigForMandate(mandateId);
+            var config = configRepository.findByTenantId(UUID.fromString(tenantId))
+                .orElseThrow(() -> new RuntimeException("GoCardless not configured for tenant " + tenantId));
             var accessToken = resolveApiKey(config);
             var baseUrl = getBaseUrl(config);
 
@@ -174,9 +176,10 @@ public class GoCardlessRealClient implements GoCardlessClient {
     }
 
     @Override
-    public void cancelMandate(String mandateId) {
+    public void cancelMandate(String tenantId, String mandateId) {
         try {
-            var config = findConfigForMandate(mandateId);
+            var config = configRepository.findByTenantId(UUID.fromString(tenantId))
+                .orElseThrow(() -> new RuntimeException("GoCardless not configured for tenant " + tenantId));
             var accessToken = resolveApiKey(config);
             var baseUrl = getBaseUrl(config);
 
@@ -219,15 +222,4 @@ public class GoCardlessRealClient implements GoCardlessClient {
             : "https://api-sandbox.gocardless.com";
     }
 
-    private GoCardlessConfig findConfigForRedirectFlow(String redirectFlowId) {
-        var configs = configRepository.findAll();
-        return configs.stream().findFirst()
-            .orElseThrow(() -> new RuntimeException("No GoCardless config found for redirect flow: " + redirectFlowId));
-    }
-
-    private GoCardlessConfig findConfigForMandate(String mandateId) {
-        var configs = configRepository.findAll();
-        return configs.stream().findFirst()
-            .orElseThrow(() -> new RuntimeException("No GoCardless config found for mandate: " + mandateId));
-    }
 }

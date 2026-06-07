@@ -44,6 +44,8 @@ public class GoogleAuthService {
     private final HttpClient http = HttpClient.newHttpClient();
 
     public record AuthUrlResponse(String authUrl, String stateToken) {}
+    public record ConnectedResponse(String email, String googleUserId) {}
+    /** @deprecated internament - no exposar tokens al client */
     public record TokenResponse(String accessToken, String refreshToken, int expiresIn, String email, String googleUserId) {}
 
     @Transactional
@@ -73,7 +75,7 @@ public class GoogleAuthService {
     }
 
     @Transactional
-    public TokenResponse handleCallback(String code, String stateToken) {
+    public ConnectedResponse handleCallback(String code, String stateToken) {
         var state = stateRepo.findByStateToken(stateToken)
             .orElseThrow(() -> new RuntimeException("State invàlid o inexistent"));
 
@@ -126,7 +128,7 @@ public class GoogleAuthService {
             var tenantId = state.getTenantId();
             tokenService.saveTokens(tenantId, accessToken, refreshToken, expiresIn, email, userId);
 
-            return new TokenResponse(accessToken, refreshToken, expiresIn, email, userId);
+            return new ConnectedResponse(email, userId);
 
         } catch (Exception e) {
             throw new RuntimeException("Error al callback OAuth: " + e.getMessage(), e);

@@ -114,9 +114,7 @@ public class EmbeddingService {
     private String resolveApiKey() {
         var key = systemConfig.get("OPENAI_API_KEY");
         if (key != null && !key.isBlank()) return key;
-        var anthropicKey = systemConfig.get("ANTHROPIC_API_KEY");
-        log.warn("No OPENAI_API_KEY configured for embeddings (ANTHROPIC_API_KEY={})",
-            anthropicKey != null ? "present" : "absent");
-        return key;
+        log.warn("No OPENAI_API_KEY configured for embeddings — vectorization disabled");
+        return null;
     }
 }

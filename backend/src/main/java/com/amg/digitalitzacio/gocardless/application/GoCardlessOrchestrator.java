@@ -79,7 +79,7 @@ public class GoCardlessOrchestrator implements GoCardlessService {
         var mandate = mandateRepository.findByTenantId(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("No pending mandate for tenant: " + tenantId));
 
-        var result = goCardlessClient.completeRedirectFlow(redirectFlowId);
+        var result = goCardlessClient.completeRedirectFlow(tenantId.toString(), redirectFlowId);
 
         mandate.setGcMandateId(result.mandateId());
         mandate.setGcRedirectFlowId(redirectFlowId);
@@ -112,7 +112,7 @@ public class GoCardlessOrchestrator implements GoCardlessService {
         var mandate = mandateRepository.findByTenantId(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("No mandate for tenant: " + tenantId));
         if (mandate.getGcMandateId() != null) {
-            goCardlessClient.cancelMandate(mandate.getGcMandateId());
+            goCardlessClient.cancelMandate(tenantId.toString(), mandate.getGcMandateId());
         }
         mandate.setStatus(GoCardlessMandateStatus.CANCELLED);
         mandateRepository.save(mandate);
@@ -223,6 +223,7 @@ public class GoCardlessOrchestrator implements GoCardlessService {
                 try {
                     var chargeDate = LocalDate.now().withDayOfMonth(5);
                     var gcPaymentId = goCardlessClient.createPayment(
+                            mandate.getTenantId().toString(),
                             mandate.getGcMandateId(),
                             invoice.getAmount(),
                             chargeDate,

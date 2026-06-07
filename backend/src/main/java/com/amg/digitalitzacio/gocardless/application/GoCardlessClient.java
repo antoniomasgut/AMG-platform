@@ -9,11 +9,11 @@ public interface GoCardlessClient {
 
     RedirectFlowCreated createRedirectFlow(String tenantId, String successReturnUrl, String description);
 
-    RedirectFlowResult completeRedirectFlow(String redirectFlowId);
+    RedirectFlowResult completeRedirectFlow(String tenantId, String redirectFlowId);
 
-    String createPayment(String mandateId, BigDecimal amount, LocalDate chargeDate, String description);
+    String createPayment(String tenantId, String mandateId, BigDecimal amount, LocalDate chargeDate, String description);
 
-    void cancelMandate(String mandateId);
+    void cancelMandate(String tenantId, String mandateId);
 
     record RedirectFlowCreated(String flowId, String redirectUrl) {}
 
