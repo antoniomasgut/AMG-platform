@@ -4,22 +4,23 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { getCampaigns, createCampaign, runCampaign, deleteCampaign, cloneCampaign, type Campaign, type ProspectSource } from '@/services/prospecting';
+import { getCampaigns, createCampaign, runCampaign, deleteCampaign, cloneCampaign, scheduleCampaign, unscheduleCampaign, type Campaign, type ProspectSource } from '@/services/prospecting';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useRouter, useParams } from 'next/navigation';
 
 const STATUS_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 'warning' | 'accent'> = {
   DRAFT: 'neutral',
+  SCHEDULED: 'accent',
   IN_PROGRESS: 'info',
   COMPLETED: 'success',
   FAILED: 'danger',
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  DRAFT: 'Pendent', IN_PROGRESS: 'En curs', COMPLETED: 'Completada', FAILED: 'Error',
+  DRAFT: 'Pendent', SCHEDULED: 'Programada', IN_PROGRESS: 'En curs', COMPLETED: 'Completada', FAILED: 'Error',
 };
 
 function fmtDate(d: string) {
@@ -90,6 +91,24 @@ export default function ProspectingPage() {
     onError: () => toast('error', 'Error clonant la campanya'),
   });
 
+  const { mutate: doSchedule, isPending: scheduling } = useMutation({
+    mutationFn: (id: string) => scheduleCampaign(id, new Date(Date.now() + 86400000).toISOString(), 7),
+    onSuccess: () => {
+      toast('success', 'Campanya programada');
+      qc.invalidateQueries({ queryKey: ['campaigns'] });
+    },
+    onError: () => toast('error', 'Error programant la campanya'),
+  });
+
+  const { mutate: doUnschedule } = useMutation({
+    mutationFn: (id: string) => unscheduleCampaign(id),
+    onSuccess: () => {
+      toast('success', 'Programació cancel·lada');
+      qc.invalidateQueries({ queryKey: ['campaigns'] });
+    },
+    onError: () => toast('error', 'Error cancel·lant la programació'),
+  });
+
   if (!user || !isAdmin) return null;
 
   return (
@@ -100,7 +119,7 @@ export default function ProspectingPage() {
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / prospecting /</span>
             <div className="f-display font-bold text-xl mt-1">Prospecció</div>
           </div>
-          <AMGButton icon={I.Plus} onClick={() => setShowForm(!showForm)}>
+          <AMGButton icon={IconSet.Plus} onClick={() => setShowForm(!showForm)}>
             Nova Campanya
           </AMGButton>
         </div>
@@ -148,7 +167,7 @@ export default function ProspectingPage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <AMGButton loading={creating} icon={I.Plus} onClick={() => doCreate()}>
+              <AMGButton loading={creating} icon={IconSet.Plus} onClick={() => doCreate()}>
                 Crear
               </AMGButton>
               <AMGButton variant="ghost" onClick={() => setShowForm(false)}>
@@ -169,7 +188,7 @@ export default function ProspectingPage() {
             </div>
           ) : (campaigns as Campaign[]).length === 0 ? (
             <div className="p-8 text-center">
-              <I.Search size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Search size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap campanya</div>
               <p className="f-mono text-label text-ink-2">Crea la primera campanya de prospecció</p>
             </div>
@@ -192,10 +211,15 @@ export default function ProspectingPage() {
                       <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">
                         {c.sector} / {c.location}
                       </td>
-                      <td className="px-4 sm:px-5 py-3">
+                      <td className="px-4 sm:px-5 py-3 space-y-1">
                         <AMGBadge tone={STATUS_TONE[c.status] ?? 'neutral'}>
                           {STATUS_LABEL[c.status] ?? c.status}
                         </AMGBadge>
+                        {c.status === 'SCHEDULED' && c.repeatIntervalDays && (
+                          <div className="f-mono text-[10px] text-ink-3">
+                            Cada {c.repeatIntervalDays} d{c.repeatIntervalDays === 1 ? 'ia' : 'ies'}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">
                         {c.totalFound ?? 0}
@@ -205,33 +229,54 @@ export default function ProspectingPage() {
                         <div className="flex gap-2">
                           <AMGButton
                             size="sm"
-                            icon={I.Eye}
+                            icon={IconSet.Eye}
                             variant="secondary"
                             onClick={() => router.push(`/${locale}/portal/prospecting/${c.id}`)}
                           >
                             Veure
                           </AMGButton>
-                          {c.status === 'DRAFT' && (
+                          {(c.status === 'DRAFT' || c.status === 'SCHEDULED') && (
                             <AMGButton
                               size="sm"
-                              icon={I.Play}
+                              icon={IconSet.Play}
                               loading={running && runningId === c.id}
                               onClick={() => doRun(c.id)}
                             >
                               Executar
                             </AMGButton>
                           )}
+                          {c.status === 'DRAFT' && (
+                            <AMGButton
+                              size="sm"
+                              variant="secondary"
+                              icon={IconSet.Clock}
+                              loading={scheduling}
+                              onClick={() => doSchedule(c.id)}
+                            >
+                              Programar
+                            </AMGButton>
+                          )}
+                          {c.status === 'SCHEDULED' && (
+                            <AMGButton
+                              size="sm"
+                              variant="ghost"
+                              icon={IconSet.X}
+                              onClick={() => doUnschedule(c.id)}
+                            >
+                              Aturar
+                            </AMGButton>
+                          )}
                           <AMGButton
                             size="sm"
                             variant="ghost"
-                            icon={I.Copy}
+                            icon={IconSet.Copy}
                             loading={cloning && cloningId === c.id}
                             onClick={() => doClone(c.id)}
                           />
                           <AMGButton
                             size="sm"
                             variant="ghost"
-                            icon={I.Trash}
+                            icon={IconSet.Trash}
                             onClick={() => { if (confirm('Eliminar campanya?')) doDelete(c.id); }}
                           />
                         </div>

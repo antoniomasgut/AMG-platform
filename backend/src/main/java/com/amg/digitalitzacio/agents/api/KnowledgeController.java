@@ -1,10 +1,10 @@
 package com.amg.digitalitzacio.agents.api;
 
 import com.amg.digitalitzacio.agents.api.dto.*;
-import com.amg.digitalitzacio.agents.application.KnowledgeBaseService;
-import com.amg.digitalitzacio.agents.application.PdfTextExtractor;
-import com.amg.digitalitzacio.agents.application.PromptBuilder;
+import com.amg.digitalitzacio.agents.application.*;
+import com.amg.digitalitzacio.agents.domain.KnowledgeBaseRepository;
 import com.amg.digitalitzacio.agents.domain.KnowledgeCategory;
+import com.amg.digitalitzacio.agents.domain.KnowledgeEntryRepository;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -24,6 +25,10 @@ public class KnowledgeController {
     private final PdfTextExtractor pdfTextExtractor;
     private final PromptBuilder promptBuilder;
     private final AIProviderRouter aiProviderRouter;
+    private final VectorSearchService vectorSearchService;
+    private final EmbeddingService embeddingService;
+    private final KnowledgeEntryRepository knowledgeEntryRepository;
+    private final KnowledgeBaseRepository knowledgeBaseRepository;
 
     private static final long MAX_UPLOAD_BYTES = 10L * 1024 * 1024; // 10 MB
 
@@ -89,6 +94,48 @@ public class KnowledgeController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<String> previewPromptBlock(@PathVariable UUID tenantId) {
         return ResponseEntity.ok(promptBuilder.build(tenantId, null));
+    }
+
+    @PostMapping("/{tenantId}/vectorize")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<Map<String, Object>> vectorize(@PathVariable UUID tenantId) {
+        var kbOpt = knowledgeBaseRepository.findByTenantId(tenantId);
+        if (kbOpt.isEmpty()) return ResponseEntity.ok(Map.of("error", "No knowledge base found"));
+        var entries = knowledgeEntryRepository.findByKnowledgeBaseIdAndIsActiveTrueOrderBySortOrder(kbOpt.get().getId());
+        int ok = 0, fail = 0;
+        for (var entry : entries) {
+            var vec = embeddingService.embedToJson(entry.getContent());
+            if (vec != null) {
+                entry.setEmbedding(vec);
+                entry.setIsVectorized(true);
+                knowledgeEntryRepository.save(entry);
+                ok++;
+            } else {
+                fail++;
+            }
+        }
+        return ResponseEntity.ok(Map.of("vectorized", ok, "failed", fail, "total", entries.size()));
+    }
+
+    @PostMapping("/{tenantId}/search")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> search(
+            @PathVariable UUID tenantId,
+            @RequestBody Map<String, String> body) {
+        var query = body.getOrDefault("query", "");
+        var limit = Integer.parseInt(body.getOrDefault("limit", "10"));
+        var kbOpt = knowledgeBaseRepository.findByTenantId(tenantId);
+        if (kbOpt.isEmpty()) return ResponseEntity.ok(List.of());
+        var results = vectorSearchService.search(kbOpt.get().getId(), query, limit);
+        var response = results.stream()
+            .map(r -> Map.<String, Object>of(
+                "entryKey", r.entry().getKey(),
+                "category", r.entry().getCategory().name(),
+                "content", r.entry().getContent(),
+                "score", Math.round(r.score() * 1000) / 1000.0
+            ))
+            .toList();
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{tenantId}/test")

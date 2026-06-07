@@ -7,7 +7,7 @@ import { getCurrentUser } from '@/services/auth';
 import { listLandings } from '@/services/factory';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 export default function LandingsPage() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function LandingsPage() {
           <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / landings /</span>
           <div className="f-display font-bold text-xl mt-1">Les meves landings</div>
         </div>
-        <AMGButton size="sm" icon={I.Plus} onClick={() => router.push('/portal/landings/new')}>
+        <AMGButton size="sm" icon={IconSet.Plus} onClick={() => router.push('/portal/landings/new')}>
           Nova landing
         </AMGButton>
       </div>
@@ -45,10 +45,10 @@ export default function LandingsPage() {
         </div>
       ) : landings.length === 0 ? (
         <div className="amg-card card-clip p-8 text-center">
-          <I.Globe size={32} stroke="#64748b" className="mx-auto mb-3" />
+          <IconSet.Globe size={32} stroke="#64748b" className="mx-auto mb-3" />
           <div className="f-display font-bold text-base mb-1">Cap landing creada</div>
           <p className="text-ui text-ink-1 mb-4">Crea la teva primera landing per començar</p>
-          <AMGButton size="sm" icon={I.Plus} onClick={() => router.push('/portal/landings/new')}>
+          <AMGButton size="sm" icon={IconSet.Plus} onClick={() => router.push('/portal/landings/new')}>
             Crear landing
           </AMGButton>
         </div>
@@ -67,7 +67,7 @@ export default function LandingsPage() {
                 <AMGButton
                   size="sm"
                   variant="secondary"
-                  icon={I.Edit}
+                  icon={IconSet.Edit}
                   onClick={() => router.push(`/portal/landings/${l.id}/edit`)}
                 >
                   Editar
@@ -76,7 +76,7 @@ export default function LandingsPage() {
                   <AMGButton
                     size="sm"
                     variant="ghost"
-                    icon={I.Globe}
+                    icon={IconSet.Globe}
                     onClick={() => window.open(l.publicUrl, '_blank')}
                   >
                     Veure

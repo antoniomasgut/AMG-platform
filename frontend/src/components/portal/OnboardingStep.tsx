@@ -1,7 +1,10 @@
 'use client';
 
+import { Link } from '@/i18n/navigation';
+import { IconSet } from '@/components/ui/icons';
+
 interface OnboardingStepProps {
-  num: number;
+  step: number;
   title: string;
   description: string;
   cta: string;
@@ -10,21 +13,23 @@ interface OnboardingStepProps {
   indeterminate?: boolean;
 }
 
-export function OnboardingStep({ num, title, description, cta, href, done, indeterminate }: OnboardingStepProps) {
-  const content = (
+export function OnboardingStep({ step, title, description, cta, href, done, indeterminate }: OnboardingStepProps) {
+  const label = `Pas ${step}: ${title} — ${done ? 'completat' : indeterminate ? 'no disponible' : 'pendent'}`;
+
+  const card = (
     <div
-      aria-label={`${num}. ${title}`}
-      className={`amg-card card-clip p-5 flex flex-col gap-3 transition-all duration-500 ${
+      aria-label={label}
+      className={`col-span-full md:col-span-1 amg-card card-clip p-5 flex flex-col gap-3 transition-all duration-500 ${
         done
           ? 'border-emerald-500/60 bg-emerald-900/10'
           : indeterminate
             ? 'border-slate-500/30 bg-[#1a1a2e]'
-            : 'border-amber-500/40 bg-[#1a1a2e] hover:border-[#FF6B00]/60 cursor-pointer'
+            : 'border-amber-500/40 bg-[#1a1a2e]'
       }`}
     >
       <div className="flex items-center gap-3">
         <div
-          className={`w-8 h-8 flex items-center justify-center text-sm font-bold f-mono ${
+          className={`w-8 h-8 flex items-center justify-center f-mono font-bold ${
             done
               ? 'bg-emerald-900/40 text-emerald-400 border border-emerald-500/40'
               : indeterminate
@@ -33,34 +38,36 @@ export function OnboardingStep({ num, title, description, cta, href, done, indet
           }`}
         >
           {done ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+            <IconSet.Check size={14} stroke="#4ade80" />
           ) : indeterminate ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
+            <IconSet.Clock size={14} stroke="#94a3b8" />
           ) : (
-            <span>{num}</span>
+            <span>{step}</span>
           )}
         </div>
         <span className="f-display font-bold text-sm">{title}</span>
       </div>
       <p className="text-data text-ink-2">{description}</p>
-      {!done && !indeterminate && (
-        <span className="f-mono text-label uppercase text-accent-light mt-auto">{cta} →</span>
-      )}
+      <div className="mt-auto">
+        {!done && !indeterminate && (
+          <span className="f-mono text-label uppercase btn-clip bg-accent hover:bg-accent-light text-black font-semibold px-3 py-1.5 inline-block text-xs transition-colors">
+            {cta} →
+          </span>
+        )}
+        {done && (
+          <span className="f-mono text-label uppercase text-emerald-400 font-semibold">
+            Fet!
+          </span>
+        )}
+      </div>
     </div>
   );
 
-  if (done || indeterminate) {
-    return content;
-  }
+  if (done || indeterminate) return card;
 
   return (
-    <a href={href} className="block">
-      {content}
-    </a>
+    <Link href={href} className="block col-span-full md:col-span-1">
+      {card}
+    </Link>
   );
 }

@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { AMGButton } from '@/components/ui/button';
 import { AMGInput } from '@/components/ui/input';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { createTenant } from '@/services/tenantService';
 import { getCurrentUser } from '@/services/auth';
 import {
@@ -110,7 +110,7 @@ export default function NewTenantPage() {
     <div className="p-4 sm:p-8 max-w-2xl space-y-6">
       <div className="flex items-center gap-3">
         <AMGButton variant="ghost" size="sm" onClick={() => router.back()}>
-          <I.Chevron size={16} className="rotate-180" />
+          <IconSet.Chevron size={16} className="rotate-180" />
         </AMGButton>
         <h1 className="f-display font-black text-lg text-white">{t('tenants.new')}</h1>
       </div>
@@ -188,7 +188,7 @@ export default function NewTenantPage() {
                       }`}>
                       {active && (
                         <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#FF6B00] rounded-full flex items-center justify-center">
-                          <I.Check size={9} stroke="#fff" />
+                          <IconSet.Check size={9} stroke="#fff" />
                         </span>
                       )}
                       <div className="font-bold">{ph}</div>

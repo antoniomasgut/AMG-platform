@@ -15,7 +15,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 const ConvertLeadModal = dynamic(() => import('@/components/leads/ConvertLeadModal').then(mod => mod.ConvertLeadModal), { ssr: false });
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useRouter, useParams } from 'next/navigation';
 
 const STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] as const;
@@ -167,7 +167,7 @@ export default function LeadDetailPage() {
             onClick={() => router.push(`/${locale}/portal/leads`)}
             className="f-mono text-label text-ink-2 hover:text-accent-light flex items-center gap-1 mb-3"
           >
-            <I.ArrowRight size={12} className="rotate-180" /> Tornar
+            <IconSet.ArrowRight size={12} className="rotate-180" /> Tornar
           </button>
           <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / leads /</span>
           <div className="flex items-center gap-3 mt-1">
@@ -257,7 +257,7 @@ export default function LeadDetailPage() {
             <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Videoconferència</div>
             <AMGButton
               size="sm"
-              icon={I.Calendar}
+              icon={IconSet.Calendar}
               loading={creatingToken}
               onClick={() => doCreateToken()}
             >
@@ -294,7 +294,7 @@ export default function LeadDetailPage() {
                       }}
                       className="f-mono text-xs text-accent-light hover:underline flex items-center gap-1"
                     >
-                      <I.Copy size={11} />
+                      <IconSet.Copy size={11} />
                       {copiedToken ? 'Copiat!' : 'Copiar link'}
                     </button>
                   )}
@@ -315,7 +315,7 @@ export default function LeadDetailPage() {
                         rel="noopener noreferrer"
                         className="text-xs text-accent-light hover:underline flex items-center gap-1"
                       >
-                        <I.Video size={12} /> Unir-se a Google Meet →
+                        <IconSet.Video size={12} /> Unir-se a Google Meet →
                       </a>
                     )}
                   </div>
@@ -328,7 +328,7 @@ export default function LeadDetailPage() {
         {/* Notes d'Entrevista (IA) */}
         <div className="amg-card card-clip p-6 space-y-4 border-l-4 border-l-[#FF6B00]">
           <div className="f-mono text-label uppercase text-ink-2 tracking-widest flex items-center gap-2">
-            <I.Zap size={14} className="text-[#FF6B00]" /> Notes d'Entrevista (IA)
+            <IconSet.Zap size={14} className="text-[#FF6B00]" /> Notes d'Entrevista (IA)
           </div>
           <p className="text-sm text-ink-3">
             Escriu les necessitats, problemes i dolors del client durant la videoconferència. La IA les analitzarà per preparar un pressupost.
@@ -343,7 +343,7 @@ export default function LeadDetailPage() {
           <div className="flex justify-end">
             <AMGButton
               size="sm"
-              icon={I.Zap}
+              icon={IconSet.Zap}
               loading={analyzingNotes}
               disabled={!interviewNotes.trim()}
               onClick={() => doAnalyzeNotes()}
@@ -355,7 +355,7 @@ export default function LeadDetailPage() {
           {analysis && (
             <div className="mt-6 pt-4 border-t border-[rgba(255,255,255,0.05)] space-y-4">
               <div className="flex items-center gap-2 mb-2">
-                <I.Check size={16} className="text-success" />
+                <IconSet.Check size={16} className="text-success" />
                 <span className="font-semibold text-sm">Anàlisi completat</span>
               </div>
               
@@ -398,7 +398,7 @@ export default function LeadDetailPage() {
               <div className="pt-2 flex justify-end">
                 <AMGButton
                   onClick={() => setShowConvertModal(true)}
-                  icon={I.Briefcase}
+                  icon={IconSet.Briefcase}
                 >
                   Convertir a Client amb aquesta proposta
                 </AMGButton>
@@ -442,7 +442,7 @@ export default function LeadDetailPage() {
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
             <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Activitats</div>
-            <AMGButton size="sm" icon={I.Plus} onClick={() => setShowActivityForm(!showActivityForm)}>
+            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setShowActivityForm(!showActivityForm)}>
               Nova activitat
             </AMGButton>
           </div>
@@ -493,7 +493,7 @@ export default function LeadDetailPage() {
             </div>
           ) : activities.length === 0 ? (
             <div className="p-6 text-center">
-              <I.Calendar size={24} stroke="#64748b" className="mx-auto mb-2" />
+              <IconSet.Calendar size={24} stroke="#64748b" className="mx-auto mb-2" />
               <p className="f-mono text-label text-ink-3">Cap activitat registrada</p>
             </div>
           ) : (

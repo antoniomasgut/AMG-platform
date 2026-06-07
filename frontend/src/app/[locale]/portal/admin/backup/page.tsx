@@ -9,7 +9,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGStat } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const STATUS_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 'warning' | 'accent'> = {
   PENDING: 'neutral',
@@ -89,7 +89,7 @@ export default function BackupPage() {
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
-            <AMGButton icon={I.Database} loading={triggering} onClick={() => doBackup()}>
+            <AMGButton icon={IconSet.Database} loading={triggering} onClick={() => doBackup()}>
               Backup Manual
             </AMGButton>
           </div>
@@ -100,25 +100,25 @@ export default function BackupPage() {
             <AMGStat
               label="Total backups"
               value={String(dashboard.totalBackups)}
-              icon={I.Database}
+              icon={IconSet.Database}
               tone="accent"
             />
             <AMGStat
               label="Últim backup"
               value={dashboard.lastBackup ? new Date(dashboard.lastBackup).toLocaleDateString('ca-ES') : 'Mai'}
-              icon={I.Clock}
+              icon={IconSet.Clock}
               tone={dashboard.lastBackupStatus === 'COMPLETED' ? 'success' : 'danger'}
             />
             <AMGStat
               label="Proper programat"
               value={dashboard.nextScheduledBackup ? new Date(dashboard.nextScheduledBackup).toLocaleDateString('ca-ES') : '—'}
-              icon={I.Calendar}
+              icon={IconSet.Calendar}
               tone="info"
             />
             <AMGStat
               label="Backups manuals"
               value={String(dashboard.manualFullCount ?? 0)}
-              icon={I.Check}
+              icon={IconSet.Check}
               tone="success"
             />
           </div>
@@ -135,7 +135,7 @@ export default function BackupPage() {
             </div>
           ) : (backups as BackupTask[]).length === 0 ? (
             <div className="p-8 text-center">
-              <I.Database size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Database size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap backup</div>
               <p className="f-mono text-label text-ink-2">Inicia el primer backup manualment</p>
             </div>

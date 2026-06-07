@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect, type ReactNode } from 'react';
 import { AuthProvider } from '@/lib/auth-context';
+import { ThemeProvider } from '@/lib/theme-context';
 import { ToastProvider, useToast } from '@/lib/toast-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { initSentry } from '@/lib/sentry';
@@ -38,12 +39,14 @@ export function Providers({ children, nonce: _nonce }: { children: ReactNode; no
   const [queryClient] = useState(() => new QueryClient());
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>
-          <MissingApiKeyListener />
-          {children}
-        </ToastProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <MissingApiKeyListener />
+            {children}
+          </ToastProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

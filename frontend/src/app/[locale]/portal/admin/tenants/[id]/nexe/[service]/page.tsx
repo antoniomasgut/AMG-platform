@@ -16,7 +16,7 @@ import {
 } from '@/services/nexe-configs';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 // ─── Helpers ───────────────────────────────────────────────────
 
@@ -123,7 +123,7 @@ function QuestionsBuilder({ questions, onChange }: {
             </label>
             <button type="button" onClick={() => remove(q.id)}
               className="text-ink-3 hover:text-red-400 transition-colors">
-              <I.X size={12} />
+              <IconSet.X size={12} />
             </button>
           </div>
         ))}
@@ -185,7 +185,7 @@ function HolidaysManager({ holidays, onChange }: {
             <div key={d} className="flex items-center justify-between bg-surface-base rounded px-3 py-1.5">
               <span className="f-mono text-xs text-ink-1">{formatDate(d)}</span>
               <button type="button" onClick={() => remove(d)} className="text-ink-3 hover:text-red-400 transition-colors ml-2">
-                <I.X size={12} />
+                <IconSet.X size={12} />
               </button>
             </div>
           ))}
@@ -526,7 +526,7 @@ function PressupostosForm({ tenantId, sector }: { tenantId: string; sector?: str
                 <span className="f-mono text-xs text-ink-3">{mode === 'pricelist' ? 'Tractament' : 'Servei'} {i + 1}</span>
                 <button type="button" onClick={() => removeService(s.id)}
                   className="text-ink-3 hover:text-red-400 transition-colors">
-                  <I.X size={12} />
+                  <IconSet.X size={12} />
                 </button>
               </div>
               <div className={`grid gap-2 ${mode === 'pricelist' ? 'grid-cols-2' : 'grid-cols-2'}`}>
@@ -737,7 +737,7 @@ function EquipForm({ tenantId }: { tenantId: string }) {
                 <span className="f-mono text-xs text-ink-3">Membre {i + 1}</span>
                 <button type="button" onClick={() => removeMember(m.id)}
                   className="text-ink-3 hover:text-red-400 transition-colors">
-                  <I.X size={12} />
+                  <IconSet.X size={12} />
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-2">

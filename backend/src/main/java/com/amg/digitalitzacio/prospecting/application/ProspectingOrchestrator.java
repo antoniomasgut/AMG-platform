@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,15 +31,18 @@ public class ProspectingOrchestrator implements ProspectingService {
 
     @Override
     public CampaignResponse createCampaign(CreateCampaignRequest request, UUID createdBy) {
+        var status = Boolean.TRUE.equals(request.scheduled()) ? CampaignStatus.SCHEDULED : CampaignStatus.DRAFT;
         var campaign = ProspectCampaign.builder()
                 .name(request.name())
                 .sector(request.sector())
                 .location(request.location())
                 .source(request.source())
-                .status(CampaignStatus.DRAFT)
+                .status(status)
                 .searchParams(request.searchParams())
                 .notes(request.notes())
                 .createdBy(createdBy)
+                .scheduledNextRun(request.scheduledNextRun())
+                .repeatIntervalDays(request.repeatIntervalDays())
                 .build();
         campaign = campaignRepository.save(campaign);
         return toCampaignResponse(campaign);
@@ -76,6 +80,9 @@ public class ProspectingOrchestrator implements ProspectingService {
         if (request.source() != null) campaign.setSource(request.source());
         if (request.searchParams() != null) campaign.setSearchParams(request.searchParams());
         if (request.notes() != null) campaign.setNotes(request.notes());
+        if (request.scheduled() != null) campaign.setStatus(request.scheduled() ? CampaignStatus.SCHEDULED : CampaignStatus.DRAFT);
+        if (request.scheduledNextRun() != null) campaign.setScheduledNextRun(request.scheduledNextRun());
+        if (request.repeatIntervalDays() != null) campaign.setRepeatIntervalDays(request.repeatIntervalDays());
         campaign = campaignRepository.save(campaign);
         return toCampaignResponse(campaign);
     }
@@ -404,10 +411,33 @@ public class ProspectingOrchestrator implements ProspectingService {
         return count;
     }
 
+    @Override
+    public CampaignResponse scheduleCampaign(UUID campaignId, Instant nextRun, int repeatDays) {
+        var campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found: " + campaignId));
+        campaign.setStatus(CampaignStatus.SCHEDULED);
+        campaign.setScheduledNextRun(nextRun);
+        campaign.setRepeatIntervalDays(repeatDays);
+        campaign = campaignRepository.save(campaign);
+        return toCampaignResponse(campaign);
+    }
+
+    @Override
+    public CampaignResponse unscheduleCampaign(UUID campaignId) {
+        var campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found: " + campaignId));
+        campaign.setStatus(CampaignStatus.DRAFT);
+        campaign.setScheduledNextRun(null);
+        campaign.setRepeatIntervalDays(null);
+        campaign = campaignRepository.save(campaign);
+        return toCampaignResponse(campaign);
+    }
+
     private CampaignResponse toCampaignResponse(ProspectCampaign c) {
         return new CampaignResponse(c.getId(), c.getName(), c.getSector(), c.getLocation(),
                 c.getSource().name(), c.getStatus().name(), c.getTotalFound(), c.getTotalExported(),
-                c.getSearchParams(), c.getNotes(), c.getCreatedBy(), c.getCreatedAt(), c.getUpdatedAt());
+                c.getSearchParams(), c.getNotes(), c.getCreatedBy(), c.getCreatedAt(), c.getUpdatedAt(),
+                c.getScheduledNextRun(), c.getRepeatIntervalDays());
     }
 
     private ProspectResponse toProspectResponse(Prospect p) {

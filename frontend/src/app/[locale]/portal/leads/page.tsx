@@ -13,7 +13,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGStat } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
@@ -142,7 +142,7 @@ function TemplateSendModal({
               </div>
             </div>
             <button onClick={onClose} className="p-1.5 text-ink-3 hover:text-ink-0">
-              <I.X size={16} />
+              <IconSet.X size={16} />
             </button>
           </div>
 
@@ -251,13 +251,13 @@ function TemplateSendModal({
                         <button onClick={() => setPreviewIdx(i => Math.max(0, i - 1))}
                           disabled={previewIdx === 0}
                           className="p-1 text-ink-3 hover:text-ink-0 disabled:opacity-30">
-                          <I.ChevronLeft size={14} />
+                          <IconSet.ChevronLeft size={14} />
                         </button>
                         <span className="f-mono text-[10px] text-ink-3">{previewIdx + 1}/{selectedList.length}</span>
                         <button onClick={() => setPreviewIdx(i => Math.min(selectedList.length - 1, i + 1))}
                           disabled={previewIdx === selectedList.length - 1}
                           className="p-1 text-ink-3 hover:text-ink-0 disabled:opacity-30">
-                          <I.Chevron size={14} />
+                          <IconSet.Chevron size={14} />
                         </button>
                       </div>
                     )}
@@ -310,7 +310,7 @@ function TemplateSendModal({
             <div className="flex gap-2">
               <AMGButton variant="ghost" onClick={onClose}>Cancel·lar</AMGButton>
               <AMGButton
-                icon={channel === 'WHATSAPP' ? I.Smartphone : I.Mail}
+                icon={channel === 'WHATSAPP' ? IconSet.Smartphone : IconSet.Mail}
                 loading={sending}
                 disabled={!canSend}
                 onClick={() => onSend(selectedTemplate!.id, Array.from(selectedLeads), channel)}
@@ -390,7 +390,7 @@ function DemoModal({
               <div className="f-mono text-[10px] text-ink-3 mt-0.5">{lead.name} · {lead.email}</div>
             </div>
             <button onClick={onClose} className="p-1.5 text-ink-3 hover:text-ink-0">
-              <I.X size={16} />
+              <IconSet.X size={16} />
             </button>
           </div>
 
@@ -524,7 +524,7 @@ function OutreachModal({
               <div className="f-mono text-[10px] text-ink-3 mt-0.5">{selected.size} lead{selected.size !== 1 ? 's' : ''} seleccionat{selected.size !== 1 ? 's' : ''}</div>
             </div>
             <button onClick={onClose} className="p-1.5 text-ink-3 hover:text-ink-0 transition-colors">
-              <I.X size={16} />
+              <IconSet.X size={16} />
             </button>
           </div>
 
@@ -639,7 +639,7 @@ function OutreachModal({
             <div className="flex gap-2">
               <AMGButton variant="ghost" onClick={onClose}>Cancel·lar</AMGButton>
               <AMGButton
-                icon={I.Mail}
+                icon={IconSet.Mail}
                 loading={sending}
                 disabled={selected.size === 0 || !demoUrl.trim()}
                 onClick={() => onSend({ leadIds: Array.from(selected), subject, body, demoUrl, language })}
@@ -763,13 +763,13 @@ export default function LeadsPage() {
             <AMGButton variant="secondary" onClick={() => router.push(`/${locale}/portal/leads/templates`)}>
               Plantilles
             </AMGButton>
-            <AMGButton variant="secondary" icon={I.Mail} onClick={() => setShowOutreach(true)}>
+            <AMGButton variant="secondary" icon={IconSet.Mail} onClick={() => setShowOutreach(true)}>
               Enviar demo
             </AMGButton>
-            <AMGButton variant="secondary" icon={I.Smartphone} onClick={() => setShowTemplateSend(true)}>
+            <AMGButton variant="secondary" icon={IconSet.Smartphone} onClick={() => setShowTemplateSend(true)}>
               Enviar plantilla
             </AMGButton>
-            <AMGButton icon={I.Plus} onClick={() => router.push(`/${locale}/portal/leads/new`)}>
+            <AMGButton icon={IconSet.Plus} onClick={() => router.push(`/${locale}/portal/leads/new`)}>
               Nou Lead
             </AMGButton>
           </div>
@@ -777,17 +777,17 @@ export default function LeadsPage() {
 
         {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <AMGStat label="Total leads" value={String(stats.total)} icon={I.Users} tone="accent" />
-            <AMGStat label="Guanyats" value={String(stats.byStage?.WON ?? 0)} icon={I.Check} tone="success" />
-            <AMGStat label="Perduts" value={String(stats.byStage?.LOST ?? 0)} icon={I.X} tone="danger" />
-            <AMGStat label="Conversió" value={fmt(stats.conversionRate)} icon={I.Trending} tone="info" />
+            <AMGStat label="Total leads" value={String(stats.total)} icon={IconSet.Users} tone="accent" />
+            <AMGStat label="Guanyats" value={String(stats.byStage?.WON ?? 0)} icon={IconSet.Check} tone="success" />
+            <AMGStat label="Perduts" value={String(stats.byStage?.LOST ?? 0)} icon={IconSet.X} tone="danger" />
+            <AMGStat label="Conversió" value={fmt(stats.conversionRate)} icon={IconSet.Trending} tone="info" />
           </div>
         )}
 
         {/* Toolbar filtre */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[180px] max-w-xs">
-            <I.Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none" />
+            <IconSet.Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none" />
             <input
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}

@@ -4,7 +4,7 @@ import { useState, useEffect, type FC } from 'react';
 import { useEditorStore } from '@/store/editor';
 import { BLOCK_TEMPLATES, generateBlock, listAIModels, type AIModelInfo } from '@/services/factory';
 import { ImagePicker } from './ImagePicker';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 export const BlockProperties: FC = () => {
   const selectedBlockId = useEditorStore((s) => s.selectedBlockId);
@@ -119,7 +119,7 @@ export const BlockProperties: FC = () => {
               onClick={() => setImgPickerFor(key)}
               className="w-full aspect-video flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border-base rounded text-ink-3 hover:border-[#FF6B00] hover:text-accent-light transition bg-[#0d0d1a]"
             >
-              <I.Image size={22} />
+              <IconSet.Image size={22} />
               <span className="f-mono text-[10px] uppercase tracking-wider">Afegir imatge</span>
             </button>
           )}
@@ -279,7 +279,7 @@ export const BlockProperties: FC = () => {
               : 'text-ink-2 hover:text-ink-0 hover:bg-[rgba(255,255,255,0.05)]'
           }`}
         >
-          <I.Eye size={12} />
+          <IconSet.Eye size={12} />
           <span>Config</span>
         </button>
       </div>

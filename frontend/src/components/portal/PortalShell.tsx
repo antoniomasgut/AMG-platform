@@ -2,12 +2,15 @@
 
 import { useAuth } from '@/lib/auth-context';
 import { useTenantFeatures } from '@/lib/tenant-features';
+import { useTheme } from '@/lib/theme-context';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { I } from '@/components/ui/icons';
+import { useQuery } from '@tanstack/react-query';
+import { IconSet } from '@/components/ui/icons';
 import { AMGLogo } from '@/components/ui/AMGLogo';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { getPendingCount } from '@/services/agents-conversational';
 
 const LOCALES = ['ca', 'es', 'en', 'de'];
 
@@ -26,34 +29,35 @@ function clientGroups(t: T, features: { canAccessAnalytics: boolean; canAccessDo
     {
       label: t('groups.summary'),
       items: [
-        { label: t('items.dashboard'), icon: I.Dashboard, href: '/portal' },
+        { label: t('items.dashboard'), icon: IconSet.Dashboard, href: '/portal' },
       ],
     },
     {
       label: t('groups.myServices'),
       items: [
-        { label: t('items.myWebs'), icon: I.Globe, href: '/portal/landings' },
-        { label: t('items.hosting'), icon: I.Server, href: '/portal/hosting' },
-        { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
-        { label: t('items.agentAI'), icon: I.Bot, href: '/portal/agents' },
-        { label: t('items.inbox'), icon: I.Mail, href: '/portal/agents/inbox' },
-        { label: t('items.files'), icon: I.Image, href: '/portal/assets' },
+        { label: t('items.myWebs'), icon: IconSet.Globe, href: '/portal/landings' },
+        { label: t('items.hosting'), icon: IconSet.Server, href: '/portal/hosting' },
+        { label: t('items.automations'), icon: IconSet.Zap, href: '/portal/automations' },
+        { label: t('items.agentAI'), icon: IconSet.Bot, href: '/portal/agents' },
+        { label: t('items.inbox'), icon: IconSet.Mail, href: '/portal/agents/inbox' },
+        { label: t('items.files'), icon: IconSet.Image, href: '/portal/assets' },
+        { label: t('items.serveis'), icon: IconSet.Book, href: '/portal/serveis' },
       ],
     },
     {
       label: t('groups.clientsLeads'),
       items: [
-        { label: t('items.leadsCRM'), icon: I.Users, href: '/portal/leads' },
-        { label: 'Analítica',  icon: I.Trending,  href: '/portal/analytics', locked: analyticsLocked },
-        { label: 'Documents',  icon: I.FileText,  href: '/portal/documents', locked: documentsLocked },
+        { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads' },
+        { label: 'Analítica',  icon: IconSet.Trending,  href: '/portal/analytics', locked: analyticsLocked },
+        { label: 'Documents',  icon: IconSet.FileText,  href: '/portal/documents', locked: documentsLocked },
       ],
     },
     {
       label: t('groups.finances'),
       items: [
-        { label: t('items.quotes'), icon: I.Receipt, href: '/portal/billing' },
-        { label: t('items.invoices'), icon: I.Trending, href: '/portal/finops' },
-        { label: t('items.payments'), icon: I.CreditCard, href: '/portal/payments' },
+        { label: t('items.quotes'), icon: IconSet.Receipt, href: '/portal/billing' },
+        { label: t('items.invoices'), icon: IconSet.Trending, href: '/portal/finops' },
+        { label: t('items.payments'), icon: IconSet.CreditCard, href: '/portal/payments' },
       ],
     },
   ];
@@ -67,46 +71,47 @@ function adminGroups(t: T): NavGroup[] {
     {
       label: t('groups.overview'),
       items: [
-        { label: t('items.dashboard'), icon: I.Dashboard, href: '/portal' },
-        { label: t('items.process'), icon: I.Flow, href: '/portal/process' },
+        { label: t('items.dashboard'), icon: IconSet.Dashboard, href: '/portal' },
+        { label: t('items.process'), icon: IconSet.Flow, href: '/portal/process' },
       ],
     },
     {
       label: t('groups.acquisition'),
       items: [
-        { label: t('items.prospecting'), icon: I.Search, href: '/portal/prospecting' },
-        { label: t('items.leadsCRM'), icon: I.Users, href: '/portal/leads' },
-        { label: 'Analítica',           icon: I.Trending, href: '/portal/analytics' },
-        { label: 'Documents',           icon: I.FileText, href: '/portal/documents' },
+        { label: t('items.prospecting'), icon: IconSet.Search, href: '/portal/prospecting' },
+        { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads' },
+        { label: 'Analítica',           icon: IconSet.Trending, href: '/portal/analytics' },
+        { label: 'Documents',           icon: IconSet.FileText, href: '/portal/documents' },
       ],
     },
     {
       label: t('groups.commercial'),
       items: [
-        { label: t('items.quotes'), icon: I.Receipt, href: '/portal/billing' },
-        { label: t('items.payments'), icon: I.CreditCard, href: '/portal/payments' },
-        { label: t('items.invoices'), icon: I.Trending, href: '/portal/finops' },
+        { label: t('items.quotes'), icon: IconSet.Receipt, href: '/portal/billing' },
+        { label: t('items.payments'), icon: IconSet.CreditCard, href: '/portal/payments' },
+        { label: t('items.invoices'), icon: IconSet.Trending, href: '/portal/finops' },
       ],
     },
     {
       label: t('groups.services'),
       items: [
-        { label: t('items.landings'), icon: I.Globe, href: '/portal/landings' },
-        { label: t('items.domains'), icon: I.Link, href: '/portal/admin/domains' },
-        { label: t('items.assets'), icon: I.Image, href: '/portal/assets' },
-        { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
-        { label: t('items.agentsAI'), icon: I.Bot, href: '/portal/agents' },
-        { label: t('items.inbox'), icon: I.Mail, href: '/portal/agents/inbox' },
-        { label: t('items.google'), icon: I.Key, href: '/portal/admin/integrations/google' },
+        { label: t('items.landings'), icon: IconSet.Globe, href: '/portal/landings' },
+        { label: t('items.domains'), icon: IconSet.Link, href: '/portal/admin/domains' },
+        { label: t('items.assets'), icon: IconSet.Image, href: '/portal/assets' },
+        { label: t('items.automations'), icon: IconSet.Zap, href: '/portal/automations' },
+        { label: t('items.agentsAI'), icon: IconSet.Bot, href: '/portal/agents' },
+        { label: t('items.inbox'), icon: IconSet.Mail, href: '/portal/agents/inbox' },
+        { label: 'Integracions', icon: IconSet.Key, href: '/portal/admin/integrations' },
+        { label: t('items.serveis'), icon: IconSet.Book, href: '/portal/serveis' },
       ],
     },
     {
       label: t('groups.operations'),
       items: [
-        { label: t('items.opsHealth'), icon: I.Activity, href: '/portal/ops' },
-        { label: t('items.documentTemplates'), icon: I.FileText, href: '/portal/admin/documents' },
-        { label: t('items.generatedDocs'), icon: I.Receipt, href: '/portal/admin/documents/list' },
-        { label: t('items.knowledge'), icon: I.Book, href: '/portal/admin/knowledge' },
+        { label: t('items.opsHealth'), icon: IconSet.Activity, href: '/portal/ops' },
+        { label: t('items.documentTemplates'), icon: IconSet.FileText, href: '/portal/admin/documents' },
+        { label: t('items.generatedDocs'), icon: IconSet.Receipt, href: '/portal/admin/documents/list' },
+        { label: t('items.knowledge'), icon: IconSet.Book, href: '/portal/admin/knowledge' },
       ],
     },
   ];
@@ -120,74 +125,75 @@ function superAdminGroups(t: T): NavGroup[] {
     {
       label: t('groups.overview'),
       items: [
-        { label: t('items.dashboard'), icon: I.Dashboard, href: '/portal' },
-        { label: t('items.process'), icon: I.Flow, href: '/portal/process' },
+        { label: t('items.dashboard'), icon: IconSet.Dashboard, href: '/portal' },
+        { label: t('items.process'), icon: IconSet.Flow, href: '/portal/process' },
       ],
     },
     {
       label: t('groups.acquisition'),
       items: [
-        { label: t('items.prospecting'), icon: I.Search, href: '/portal/prospecting' },
-        { label: t('items.leadsCRM'), icon: I.Users, href: '/portal/leads' },
-        { label: 'Analítica',           icon: I.Trending, href: '/portal/analytics' },
-        { label: 'Documents',           icon: I.FileText, href: '/portal/documents' },
+        { label: t('items.prospecting'), icon: IconSet.Search, href: '/portal/prospecting' },
+        { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads' },
+        { label: 'Analítica',           icon: IconSet.Trending, href: '/portal/analytics' },
+        { label: 'Documents',           icon: IconSet.FileText, href: '/portal/documents' },
       ],
     },
     {
       label: t('groups.commercial'),
       items: [
-        { label: t('items.quotes'), icon: I.Receipt, href: '/portal/billing' },
-        { label: t('items.payments'), icon: I.CreditCard, href: '/portal/payments' },
-        { label: t('items.invoices'), icon: I.Trending, href: '/portal/finops' },
+        { label: t('items.quotes'), icon: IconSet.Receipt, href: '/portal/billing' },
+        { label: t('items.payments'), icon: IconSet.CreditCard, href: '/portal/payments' },
+        { label: t('items.invoices'), icon: IconSet.Trending, href: '/portal/finops' },
       ],
     },
     {
       label: t('groups.services'),
       items: [
-        { label: t('items.landings'), icon: I.Globe, href: '/portal/landings' },
-        { label: t('items.domains'), icon: I.Link, href: '/portal/admin/domains' },
-        { label: t('items.assets'), icon: I.Image, href: '/portal/assets' },
-        { label: t('items.automations'), icon: I.Zap, href: '/portal/automations' },
-        { label: t('items.agentsAI'), icon: I.Bot, href: '/portal/agents' },
-        { label: t('items.inbox'), icon: I.Mail, href: '/portal/agents/inbox' },
-        { label: t('items.google'), icon: I.Key, href: '/portal/admin/integrations/google' },
+        { label: t('items.landings'), icon: IconSet.Globe, href: '/portal/landings' },
+        { label: t('items.domains'), icon: IconSet.Link, href: '/portal/admin/domains' },
+        { label: t('items.assets'), icon: IconSet.Image, href: '/portal/assets' },
+        { label: t('items.automations'), icon: IconSet.Zap, href: '/portal/automations' },
+        { label: t('items.agentsAI'), icon: IconSet.Bot, href: '/portal/agents' },
+        { label: t('items.inbox'), icon: IconSet.Mail, href: '/portal/agents/inbox' },
+        { label: 'Integracions', icon: IconSet.Key, href: '/portal/admin/integrations' },
+        { label: t('items.serveis'), icon: IconSet.Book, href: '/portal/serveis' },
       ],
     },
     {
       label: t('groups.operations'),
       items: [
-        { label: t('items.opsHealth'), icon: I.Activity, href: '/portal/ops' },
-        { label: t('items.documentTemplates'), icon: I.FileText, href: '/portal/admin/documents' },
-        { label: t('items.generatedDocs'), icon: I.Receipt, href: '/portal/admin/documents/list' },
-        { label: t('items.knowledge'), icon: I.Book, href: '/portal/admin/knowledge' },
+        { label: t('items.opsHealth'), icon: IconSet.Activity, href: '/portal/ops' },
+        { label: t('items.documentTemplates'), icon: IconSet.FileText, href: '/portal/admin/documents' },
+        { label: t('items.generatedDocs'), icon: IconSet.Receipt, href: '/portal/admin/documents/list' },
+        { label: t('items.knowledge'), icon: IconSet.Book, href: '/portal/admin/knowledge' },
       ],
     },
     {
       label: t('groups.clients'),
       items: [
-        { label: t('items.tenants'), icon: I.Building, href: '/portal/admin/tenants' },
-        { label: t('items.users'), icon: I.Shield, href: '/portal/admin/users' },
-        { label: t('items.programs'), icon: I.Sparkles, href: '/portal/billing/programs' },
+        { label: t('items.tenants'), icon: IconSet.Building, href: '/portal/admin/tenants' },
+        { label: t('items.users'), icon: IconSet.Shield, href: '/portal/admin/users' },
+        { label: t('items.programs'), icon: IconSet.Sparkles, href: '/portal/billing/programs' },
       ],
     },
     {
       label: 'Plataforma AMG',
       items: [
-        { label: 'Resum',        icon: I.Zap,      href: '/portal/platform' },
-        { label: 'Meta Ads AMG', icon: I.Trending, href: '/portal/platform/meta-ads' },
-        { label: 'Configuració', icon: I.Settings, href: '/portal/platform/config' },
+        { label: 'Resum',        icon: IconSet.Zap,      href: '/portal/platform' },
+        { label: 'Meta Ads AMG', icon: IconSet.Trending, href: '/portal/platform/meta-ads' },
+        { label: 'Configuració', icon: IconSet.Settings, href: '/portal/platform/config' },
       ],
     },
     {
       label: t('groups.system'),
       items: [
-        { label: t('items.catalog'), icon: I.Box, href: '/portal/admin/vault' },
-        { label: t('items.templates'), icon: I.Layers, href: '/portal/admin/templates' },
-        { label: t('items.hosting'), icon: I.Globe, href: '/portal/admin/hosting' },
-        { label: t('items.backup'), icon: I.Database, href: '/portal/admin/backup' },
-        { label: t('items.infraOps'), icon: I.Server, href: '/portal/admin/infraops' },
-        { label: t('items.apiKeys'), icon: I.Key, href: '/portal/admin/config' },
-        { label: 'Reunions', icon: I.Calendar, href: '/portal/admin/booking' },
+        { label: t('items.catalog'), icon: IconSet.Box, href: '/portal/admin/vault' },
+        { label: t('items.templates'), icon: IconSet.Layers, href: '/portal/admin/templates' },
+        { label: t('items.hosting'), icon: IconSet.Globe, href: '/portal/admin/hosting' },
+        { label: t('items.backup'), icon: IconSet.Database, href: '/portal/admin/backup' },
+        { label: t('items.infraOps'), icon: IconSet.Server, href: '/portal/admin/infraops' },
+        { label: t('items.apiKeys'), icon: IconSet.Key, href: '/portal/admin/config' },
+        { label: 'Reunions', icon: IconSet.Calendar, href: '/portal/admin/booking' },
       ],
     },
   ];
@@ -196,12 +202,35 @@ function superAdminGroups(t: T): NavGroup[] {
 // ─────────────────────────────────────────────────────────────────────────────
 // Shell
 // ─────────────────────────────────────────────────────────────────────────────
+function ThemeToggleIcon() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button
+      aria-label={theme === 'dark' ? 'Activar mode clar' : 'Activar mode fosc'}
+      onClick={toggle}
+      className="text-ink-2 hover:text-ink-0 transition-colors p-1 shrink-0"
+    >
+      {theme === 'dark' ? <IconSet.Sun size={18} /> : <IconSet.Moon size={18} />}
+    </button>
+  );
+}
+
 export function PortalShell({ children, breadcrumb, backHref }: { children: ReactNode; breadcrumb: string; backHref?: string }) {
   const { user, isSuperAdmin, isAdmin } = useAuth();
+  const { theme, toggle } = useTheme();
   const features = useTenantFeatures();
   const pathname = usePathname();
   const t = useTranslations('portalNav');
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const tenantId = user?.tenantId ?? null;
+  const { data: pendingData } = useQuery({
+    queryKey: ['pendingCount', tenantId],
+    queryFn: () => getPendingCount(tenantId!),
+    enabled: !!tenantId && (isAdmin || isSuperAdmin),
+    refetchInterval: 30000,
+  });
+  const pendingCount = pendingData?.count ?? 0;
 
   if (!user) return null;
 
@@ -244,9 +273,14 @@ export function PortalShell({ children, breadcrumb, backHref }: { children: Reac
                   }`}
                 >
                   {active && !locked && <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#FF6B00]" />}
-                  <Icon size={13} />
+                  <Icon size={16} />
                   <span className="flex-1">{label}</span>
-                  {locked && <I.Lock size={10} className="shrink-0" />}
+                  {href === '/portal/agents/inbox' && pendingCount > 0 && (
+                    <span className="flex items-center justify-center min-w-[20px] h-[20px] px-1.5 rounded-full bg-[#FF6B00] text-[10px] font-bold text-white leading-none">
+                      {pendingCount > 99 ? '99+' : pendingCount}
+                    </span>
+                  )}
+                  {locked && <IconSet.Lock size={12} className="shrink-0" />}
                 </a>
               );
             })}
@@ -265,18 +299,19 @@ export function PortalShell({ children, breadcrumb, backHref }: { children: Reac
               {isSuperAdmin ? 'Super Admin' : isAdmin ? 'Admin' : 'Client'} · {user.email}
             </div>
           </div>
+          <ThemeToggleIcon />
         </div>
       </div>
     </>
   );
 
   return (
-    <div className="flex w-full min-h-dvh bg-[#0d0d1a] overflow-hidden">
+    <div className="flex w-full min-h-dvh bg-[var(--surface-page)] overflow-hidden">
 
       {/* Desktop sidebar */}
       <aside
         aria-label="Navegació del portal"
-        className="hidden lg:flex w-[210px] shrink-0 bg-[#13132a] border-r border-border-base flex-col"
+        className="hidden lg:flex w-[210px] shrink-0 bg-[var(--surface-sidebar)] border-r border-border-base flex-col"
       >
         <NavContent />
       </aside>
@@ -286,7 +321,7 @@ export function PortalShell({ children, breadcrumb, backHref }: { children: Reac
         <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setMobileOpen(false)}>
           <div className="absolute inset-0 bg-black/60" />
           <aside
-            className="absolute left-0 top-0 bottom-0 w-[210px] bg-[#13132a] border-r border-border-base flex flex-col z-50"
+            className="absolute left-0 top-0 bottom-0 w-[210px] bg-[var(--surface-sidebar)] border-r border-border-base flex flex-col z-50"
             onClick={(e) => e.stopPropagation()}
           >
             <NavContent />
@@ -302,20 +337,27 @@ export function PortalShell({ children, breadcrumb, backHref }: { children: Reac
             className="lg:hidden text-ink-1 hover:text-ink-0 transition-colors"
             onClick={() => setMobileOpen(true)}
           >
-            <I.Menu size={20} />
+            <IconSet.Menu size={20} />
           </button>
           {backHref && (
             <a
               href={backHref}
               className="flex items-center gap-1 f-mono text-label text-ink-2 hover:text-accent-light transition-colors shrink-0"
             >
-              <I.ArrowRight size={13} className="rotate-180" />
+              <IconSet.ArrowRight size={16} className="rotate-180" />
               Tornar
             </a>
           )}
           <span className="f-mono text-label uppercase text-accent-light tracking-widest text-xs">
             / portal / {breadcrumb} /
           </span>
+          <button
+            aria-label={theme === 'dark' ? 'Activar mode clar' : 'Activar mode fosc'}
+            onClick={toggle}
+            className="ml-auto text-ink-2 hover:text-ink-0 transition-colors p-1"
+          >
+            {theme === 'dark' ? <IconSet.Sun size={18} /> : <IconSet.Moon size={18} />}
+          </button>
         </div>
         <main aria-label="Contingut principal" className="flex-1 overflow-auto">
           {children}

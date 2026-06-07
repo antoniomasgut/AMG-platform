@@ -8,7 +8,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGStat } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const STATUS_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 'warning' | 'accent'> = {
   PENDING: 'warning',
@@ -78,19 +78,19 @@ export default function PaymentsPage() {
             <AMGStat
               label="Total cobrat"
               value={String(dashboard.completedCount)}
-              icon={I.CreditCard}
+              icon={IconSet.CreditCard}
               tone="success"
             />
             <AMGStat
               label="Pendent"
               value={String(dashboard.pendingCount)}
-              icon={I.Clock}
+              icon={IconSet.Clock}
               tone={dashboard.pendingCount > 0 ? 'danger' : 'accent'}
             />
             <AMGStat
               label="Fallits"
               value={String(dashboard.failedCount)}
-              icon={I.ArrowRight}
+              icon={IconSet.ArrowRight}
               tone="info"
             />
           </div>
@@ -107,7 +107,7 @@ export default function PaymentsPage() {
             </div>
           ) : (payments as Payment[]).length === 0 ? (
             <div className="p-8 text-center">
-              <I.CreditCard size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.CreditCard size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap pagament</div>
               <p className="f-mono text-label text-ink-2">No hi ha pagaments registrats</p>
             </div>
@@ -141,7 +141,7 @@ export default function PaymentsPage() {
                             <AMGButton
                               size="sm"
                               variant="ghost"
-                              icon={I.ArrowRight}
+                              icon={IconSet.ArrowRight}
                               disabled={refunding}
                               onClick={() => {
                                 if (confirm('Iniciar reembors?')) doRefund(p.id);

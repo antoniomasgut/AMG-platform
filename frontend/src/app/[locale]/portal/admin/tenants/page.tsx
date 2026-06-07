@@ -11,7 +11,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const PAGE_SIZE = 20;
 
@@ -44,7 +44,7 @@ function NewTenantModal({ onClose, onCreated }: { onClose: () => void; onCreated
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Nou tenant</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {([
@@ -184,7 +184,7 @@ export default function AdminTenantsPage() {
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / admin / tenants /</span>
             <div className="f-display font-bold text-xl mt-1">Gestió de tenants</div>
           </div>
-          <AMGButton size="sm" icon={I.Plus} onClick={() => setShowNewTenant(true)}>Nou tenant</AMGButton>
+          <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setShowNewTenant(true)}>Nou tenant</AMGButton>
         </div>
 
         {/* Admin sub-nav */}
@@ -200,7 +200,7 @@ export default function AdminTenantsPage() {
         {/* Search + filtres + ordenació */}
         <div className="flex flex-wrap gap-3 items-center">
           <div className="relative">
-            <I.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-2" />
+            <IconSet.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-2" />
             <input
               type="search"
               placeholder="Cerca per nom o slug..."
@@ -272,10 +272,10 @@ export default function AdminTenantsPage() {
                 <AMGButton size="sm" variant="ghost" disabled={bulkLoading}
                   onClick={() => setConfirmDelete(true)}
                   className="text-red-400 hover:text-red-300">
-                  <I.Trash size={14} className="mr-1" />Eliminar
+                  <IconSet.Trash size={14} className="mr-1" />Eliminar
                 </AMGButton>
                 <button onClick={() => setSelected(new Set())} className="text-ink-3 hover:text-ink-1 ml-1">
-                  <I.X size={14} />
+                  <IconSet.X size={14} />
                 </button>
               </div>
             )}
@@ -287,7 +287,7 @@ export default function AdminTenantsPage() {
             </div>
           ) : tenants.length === 0 ? (
             <div className="p-8 text-center">
-              <I.Building size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Building size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap tenant trobat</div>
             </div>
           ) : (
@@ -389,7 +389,7 @@ export default function AdminTenantsPage() {
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setConfirmDelete(false)}>
           <div className="amg-card card-clip w-full max-w-sm p-6 space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-3">
-              <I.AlertCircle size={20} className="text-red-400 flex-shrink-0" />
+              <IconSet.AlertCircle size={20} className="text-red-400 flex-shrink-0" />
               <div className="f-display font-bold text-base">Eliminar {selected.size} tenant{selected.size > 1 ? 's' : ''}</div>
             </div>
             <p className="text-sm text-ink-2">Aquesta acció és irreversible. S&apos;eliminaran tots els serveis i dades associats.</p>

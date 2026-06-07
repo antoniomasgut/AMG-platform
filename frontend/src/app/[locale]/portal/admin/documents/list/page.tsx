@@ -8,7 +8,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const STATUS_TONES: Record<string, 'neutral' | 'info' | 'success' | 'warning' | 'danger'> = {
   DRAFT: 'neutral',
@@ -64,7 +64,7 @@ export default function GeneratedDocumentsPage() {
             </div>
           ) : !docs || docs.length === 0 ? (
             <div className="p-8 text-center">
-              <I.Receipt size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Receipt size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap document generat</div>
               <p className="f-mono text-xs text-ink-2 mb-4">Genera el primer document des d&apos;una plantilla</p>
               <AMGButton size="sm" onClick={() => window.location.href = '/portal/admin/documents'}>
@@ -99,12 +99,12 @@ export default function GeneratedDocumentsPage() {
                             variant="secondary"
                             onClick={() => window.location.href = `/portal/admin/documents/view/${d.id}`}
                           >
-                            <I.Eye size={14} />
+                            <IconSet.Eye size={14} />
                             Veure
                           </AMGButton>
                           {d.pdfUrl && (
                             <AMGButton size="sm" variant="secondary" onClick={() => window.open(d.pdfUrl!, '_blank')}>
-                              <I.Download size={14} />
+                              <IconSet.Download size={14} />
                               PDF
                             </AMGButton>
                           )}

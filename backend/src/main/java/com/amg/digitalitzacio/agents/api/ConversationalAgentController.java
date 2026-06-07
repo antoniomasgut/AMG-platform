@@ -79,6 +79,21 @@ public class ConversationalAgentController {
         }
     }
 
+    @GetMapping("/{tenantId}/pending/count")
+    public ResponseEntity<Map<String, Long>> getPendingCount(@PathVariable UUID tenantId) {
+        try {
+            var principal = getPrincipal();
+            validateTenantAccess(tenantId, principal);
+            long count = conversationRepository.countByTenantIdAndPendingApprovalTrue(tenantId);
+            return ResponseEntity.ok(Map.of("count", count));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error counting pending for tenant {}", tenantId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @GetMapping("/{tenantId}/pending")
     public ResponseEntity<List<PendingResponseDto>> getPending(@PathVariable UUID tenantId) {
         try {

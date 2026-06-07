@@ -13,7 +13,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'accent' | 'neutral'> = {
   ACTIVE: 'success', INACTIVE: 'neutral', DEPLOYED: 'info' as 'accent',
@@ -94,7 +94,7 @@ export default function AutomationsPage() {
             <div className="f-display font-bold text-xl mt-1">Automatitzacions n8n</div>
           </div>
           {isAdmin && (
-            <AMGButton size="sm" icon={I.Plus} onClick={() => setShowTemplates((v) => !v)}>
+            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setShowTemplates((v) => !v)}>
               {showTemplates ? 'Tancar' : 'Afegir workflow'}
             </AMGButton>
           )}
@@ -116,7 +116,7 @@ export default function AutomationsPage() {
                       <AMGBadge tone="accent">{tpl.category}</AMGBadge>
                     </div>
                     <p className="text-ui text-ink-2 mb-4 text-xs">{tpl.description}</p>
-                    <AMGButton size="sm" variant="secondary" icon={I.Plus} disabled={assigning} onClick={() => doAssign(tpl.key)}>
+                    <AMGButton size="sm" variant="secondary" icon={IconSet.Plus} disabled={assigning} onClick={() => doAssign(tpl.key)}>
                       Assignar
                     </AMGButton>
                   </div>
@@ -142,7 +142,7 @@ export default function AutomationsPage() {
             </div>
           ) : workflows.length === 0 ? (
             <div className="p-8 text-center">
-              <I.Zap size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Zap size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap workflow configurat</div>
               <p className="text-ui text-ink-2">
                 {isAdmin ? 'Afegeix un workflow des del catàleg de plantilles' : 'El teu tècnic configurarà els workflows per a tu'}
@@ -154,7 +154,7 @@ export default function AutomationsPage() {
                 <div key={wf.id} className="p-4 sm:p-5 flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="w-9 h-9 bg-accent-muted border border-border-strong flex items-center justify-center shrink-0">
-                      <I.Zap size={14} stroke="#FF9A3C" />
+                      <IconSet.Zap size={14} stroke="#FF9A3C" />
                     </div>
                     <div className="min-w-0">
                       <div className="f-display font-bold text-sm truncate">{wf.templateName}</div>
@@ -174,12 +174,12 @@ export default function AutomationsPage() {
 
                   <div className="flex gap-2 flex-wrap">
                     {wf.status === 'DRAFT' && (
-                      <AMGButton size="sm" variant="secondary" icon={I.Upload} onClick={() => doDeploy(wf.id)}>
+                      <AMGButton size="sm" variant="secondary" icon={IconSet.Upload} onClick={() => doDeploy(wf.id)}>
                         Desplegar
                       </AMGButton>
                     )}
                     {wf.status === 'DEPLOYED' && (
-                      <AMGButton size="sm" icon={I.Play} onClick={() => doActivate(wf.id)}>
+                      <AMGButton size="sm" icon={IconSet.Play} onClick={() => doActivate(wf.id)}>
                         Activar
                       </AMGButton>
                     )}
@@ -190,11 +190,11 @@ export default function AutomationsPage() {
                     )}
                     {wf.n8nWebhookUrl && (
                       <a href={wf.n8nWebhookUrl} target="_blank" rel="noopener">
-                        <AMGButton size="sm" variant="ghost" icon={I.Link}>n8n</AMGButton>
+                        <AMGButton size="sm" variant="ghost" icon={IconSet.Link}>n8n</AMGButton>
                       </a>
                     )}
                     {isAdmin && (
-                      <AMGButton size="sm" variant="ghost" icon={I.Trash} onClick={() => doDelete(wf.id)} />
+                      <AMGButton size="sm" variant="ghost" icon={IconSet.Trash} onClick={() => doDelete(wf.id)} />
                     )}
                   </div>
                 </div>

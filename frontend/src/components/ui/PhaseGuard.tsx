@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { I } from './icons';
+import { IconSet } from './icons';
 
 interface PhaseGuardProps {
   allowed: boolean;
@@ -25,7 +25,7 @@ export function PhaseGuard({ allowed, loading, phaseName, phaseLabel, descriptio
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-5 text-center px-4">
         <div className="w-14 h-14 rounded-full bg-surface-overlay border border-border-base flex items-center justify-center">
-          <I.Lock size={22} className="text-ink-3" />
+          <IconSet.Lock size={22} className="text-ink-3" />
         </div>
         <div className="space-y-1 max-w-xs">
           <div className="text-sm font-semibold text-ink-1">Funcionalitat no disponible</div>

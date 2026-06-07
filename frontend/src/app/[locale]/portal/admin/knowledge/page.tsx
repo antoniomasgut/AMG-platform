@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { AMGBadge } from '@/components/ui/badge';
 
 export default function KnowledgeListPage() {
@@ -50,7 +50,7 @@ export default function KnowledgeListPage() {
             </div>
           ) : !tenants || tenants.length === 0 ? (
             <div className="amg-card card-clip p-8 text-center">
-              <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">{t('noTenants')}</div>
               <p className="f-mono text-xs text-ink-2">{t('noTenantsDesc')}</p>
             </div>

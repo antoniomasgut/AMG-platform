@@ -6,7 +6,7 @@ import { listSectorTemplates, updateSectorTemplate, type SectorTemplateResponse 
 import { AMGButton } from '@/components/ui/button';
 import { AMGInput } from '@/components/ui/input';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { apiFetch } from '@/services/api';
 
 type TabType = 'prospecting' | 'meta-ads' | 'agent-prompt';
@@ -204,20 +204,20 @@ export default function SectorTemplatesPage() {
               {!editMode ? (
                 <>
                   {currentBlock && (
-                    <AMGButton size="sm" variant="ghost" icon={I.Edit} onClick={enterEdit}>
+                    <AMGButton size="sm" variant="ghost" icon={IconSet.Edit} onClick={enterEdit}>
                       Editar
                     </AMGButton>
                   )}
-                  <AMGButton size="sm" variant="ghost" icon={I.Copy} onClick={() => copyToClipboard(renderedBody)}>
+                  <AMGButton size="sm" variant="ghost" icon={IconSet.Copy} onClick={() => copyToClipboard(renderedBody)}>
                     Copiar
                   </AMGButton>
                 </>
               ) : (
                 <>
-                  <AMGButton size="sm" variant="ghost" icon={I.X} onClick={() => setEditMode(false)}>
+                  <AMGButton size="sm" variant="ghost" icon={IconSet.X} onClick={() => setEditMode(false)}>
                     Cancel·lar
                   </AMGButton>
-                  <AMGButton size="sm" variant="primary" icon={I.Check} loading={saving} onClick={saveToDb}>
+                  <AMGButton size="sm" variant="primary" icon={IconSet.Check} loading={saving} onClick={saveToDb}>
                     Desar
                   </AMGButton>
                 </>

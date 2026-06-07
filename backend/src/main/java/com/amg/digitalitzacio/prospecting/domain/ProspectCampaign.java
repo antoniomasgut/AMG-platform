@@ -48,6 +48,10 @@ public class ProspectCampaign {
     @Column(nullable = false)
     private UUID createdBy;
 
+    private Instant scheduledNextRun;
+
+    private Integer repeatIntervalDays;
+
     @CreatedDate @Column(updatable = false)
     private Instant createdAt;
 

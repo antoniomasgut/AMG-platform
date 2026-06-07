@@ -16,7 +16,14 @@ export function OnboardingComplete({ userName, onGoToDashboard }: OnboardingComp
     <div className="amg-card card-clip p-8 text-center animate-slide-up" role="region" aria-label={t('complete_title')}>
       <div className="w-16 h-16 bg-emerald-900/30 border border-emerald-500/40 flex items-center justify-center mx-auto mb-4">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 6 9 17 4 12" />
+          <style>{`
+            @keyframes drawCheck { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
+            .checkAnim { stroke-dasharray: 40; stroke-dashoffset: 40; }
+            @media (prefers-reduced-motion: no-preference) {
+              .checkAnim { animation: drawCheck 0.5s ease-out forwards; }
+            }
+          `}</style>
+          <polyline points="20 6 9 17 4 12" className="checkAnim" />
         </svg>
       </div>
       <div className="f-display font-bold text-2xl mb-2">{t('complete_title')}, {userName.toUpperCase()}!</div>

@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useToast } from '@/lib/toast-context';
 import {
   getKnowledge,
@@ -120,7 +120,7 @@ export default function KnowledgeDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <AMGButton size="sm" variant="outline" icon={I.Eye} onClick={handlePreview} loading={previewLoading}>
+            <AMGButton size="sm" variant="outline" icon={IconSet.Eye} onClick={handlePreview} loading={previewLoading}>
               {t('preview')}
             </AMGButton>
           </div>
@@ -245,7 +245,7 @@ function EntriesPanel({ category, entries, onSave, saving, t }: {
       <div className="flex justify-between items-center">
         <span className="f-mono text-label uppercase text-ink-3">{t('entries')} · {category}</span>
         <div className="flex gap-2">
-          <AMGButton size="sm" variant="outline" icon={I.Plus} onClick={addItem}>{t('addEntry')}</AMGButton>
+          <AMGButton size="sm" variant="outline" icon={IconSet.Plus} onClick={addItem}>{t('addEntry')}</AMGButton>
           <AMGButton size="sm" onClick={() => onSave(items)} loading={saving}>{t('save')}</AMGButton>
         </div>
       </div>
@@ -269,7 +269,7 @@ function EntriesPanel({ category, entries, onSave, saving, t }: {
                   className="w-14 bg-[#0d0d1a] border border-border-base px-2 h-8 text-xs text-ink-0 text-center focus:outline-none focus:border-[#FF6B00]"
                 />
                 <button onClick={() => removeItem(idx)} className="text-ink-2 hover:text-danger transition-colors">
-                  <I.X size={14} />
+                  <IconSet.X size={14} />
                 </button>
               </div>
             </div>
@@ -310,7 +310,7 @@ function DocumentUpload({ onUpload, uploading, t }: {
   return (
     <div className="amg-card card-clip p-4">
       <label className="cursor-pointer flex items-center gap-3">
-        <I.Upload size={18} className="text-ink-2" />
+        <IconSet.Upload size={18} className="text-ink-2" />
         <span className="f-mono text-xs text-ink-2">{t('uploadDoc')}</span>
         <input type="file" accept=".pdf,.txt,application/pdf,text/plain" onChange={handleFile} className="hidden" disabled={uploading} />
       </label>
@@ -326,7 +326,7 @@ function DocumentList({ docs, onDelete, t }: {
   if (docs.length === 0) {
     return (
       <div className="amg-card card-clip p-6 text-center">
-        <I.FileText size={24} stroke="#64748b" className="mx-auto mb-2" />
+        <IconSet.FileText size={24} stroke="#64748b" className="mx-auto mb-2" />
         <p className="f-mono text-xs text-ink-2">{t('noDocs')}</p>
       </div>
     );
@@ -337,7 +337,7 @@ function DocumentList({ docs, onDelete, t }: {
       {docs.map(doc => (
         <div key={doc.id} className="amg-card card-clip p-3 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <I.FileText size={16} className="text-ink-2 shrink-0" />
+            <IconSet.FileText size={16} className="text-ink-2 shrink-0" />
             <div className="min-w-0">
               <div className="f-display font-bold text-sm truncate">{doc.filename}</div>
               <div className="f-mono text-[10px] text-ink-3">
@@ -346,7 +346,7 @@ function DocumentList({ docs, onDelete, t }: {
             </div>
           </div>
           <button onClick={() => onDelete(doc.id)} className="text-ink-2 hover:text-danger transition-colors shrink-0">
-            <I.Trash size={14} />
+            <IconSet.Trash size={14} />
           </button>
         </div>
       ))}
@@ -364,7 +364,7 @@ function PreviewPanel({ preview }: { preview: string | null }) {
         </pre>
       ) : (
         <div className="amg-card card-clip p-8 text-center">
-          <I.Eye size={24} stroke="#64748b" className="mx-auto mb-2" />
+          <IconSet.Eye size={24} stroke="#64748b" className="mx-auto mb-2" />
           <p className="f-mono text-xs text-ink-2">Fes clic a "Previsualitzar" per veure el system prompt</p>
         </div>
       )}
@@ -393,7 +393,7 @@ function TestPanel({ testMessage, setTestMessage, handleTest, testLoading, testR
             onKeyDown={(e) => e.key === 'Enter' && handleTest()}
           />
         </div>
-        <AMGButton size="sm" icon={I.Play} onClick={handleTest} loading={testLoading} disabled={!testMessage.trim()}>
+        <AMGButton size="sm" icon={IconSet.Play} onClick={handleTest} loading={testLoading} disabled={!testMessage.trim()}>
           Provar
         </AMGButton>
       </div>

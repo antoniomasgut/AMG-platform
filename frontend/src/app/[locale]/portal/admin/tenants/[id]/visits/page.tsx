@@ -11,7 +11,7 @@ import {
   type VisitRecordResponse, type VisitRecordRequest,
 } from '@/services/analytics';
 import { useToast } from '@/lib/toast-context';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const inp = "w-full bg-surface-base border border-border-base rounded px-3 py-1.5 text-sm text-ink-1 focus:outline-none focus:border-accent-light";
 
@@ -123,7 +123,7 @@ export default function VisitsPage() {
             <p className="text-sm text-ink-2 mt-0.5">{tenant?.name}</p>
           </div>
           {!showForm && (
-            <AMGButton size="sm" icon={I.Plus} onClick={() => { setShowForm(true); setEditing(null); }}>
+            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => { setShowForm(true); setEditing(null); }}>
               Nova visita
             </AMGButton>
           )}
@@ -179,11 +179,11 @@ export default function VisitsPage() {
                     <div className="flex gap-1 shrink-0">
                       <button onClick={() => { setEditing(v); setShowForm(false); }}
                         className="p-1.5 rounded text-ink-3 hover:text-ink-0 hover:bg-surface-base transition">
-                        <I.Edit size={13} />
+                        <IconSet.Edit size={13} />
                       </button>
                       <button onClick={() => deleteMut.mutate(v.id)}
                         className="p-1.5 rounded text-ink-3 hover:text-red-400 hover:bg-[rgba(239,68,68,0.08)] transition">
-                        <I.Trash size={13} />
+                        <IconSet.Trash size={13} />
                       </button>
                     </div>
                   </div>

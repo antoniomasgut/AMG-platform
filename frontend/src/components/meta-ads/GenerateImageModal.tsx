@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useToast } from '@/lib/toast-context';
 import { generateImage, type GenerateImageRequest, type ImageUpload } from '@/services/meta-ads';
 
@@ -61,7 +61,7 @@ export function GenerateImageModal({ tenantId, initialPrompt = '', onAccept, onC
             <p className="text-xs text-ink-3 mt-0.5">DALL·E 3 · Puja automàticament a Meta Ads</p>
           </div>
           <button type="button" onClick={onClose} className="text-ink-3 hover:text-ink-1">
-            <I.X size={18} />
+            <IconSet.X size={18} />
           </button>
         </div>
 
@@ -132,7 +132,7 @@ export function GenerateImageModal({ tenantId, initialPrompt = '', onAccept, onC
                 <img src={result.url} alt="Generated" className="w-full h-full object-cover" />
               </div>
               <div className="flex items-center gap-2">
-                <I.Check size={12} className="text-[#39d353]" />
+                <IconSet.Check size={12} className="text-[#39d353]" />
                 <span className="text-xs text-[#39d353]">Pujada a Meta · hash: {result.hash.slice(0, 12)}...</span>
               </div>
             </div>

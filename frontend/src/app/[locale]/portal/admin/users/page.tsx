@@ -11,7 +11,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const ROLE_TONE: Record<string, 'danger' | 'warning' | 'accent'> = {
   SUPER_ADMIN: 'danger', ADMIN: 'warning', CLIENT: 'accent',
@@ -54,7 +54,7 @@ function NewUserModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Nou usuari</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {([
@@ -136,7 +136,7 @@ export default function AdminUsersPage() {
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / admin / usuaris /</span>
             <div className="f-display font-bold text-xl mt-1">Gestió d&apos;usuaris</div>
           </div>
-          <AMGButton size="sm" icon={I.Plus} onClick={() => setShowNewUser(true)}>Nou usuari</AMGButton>
+          <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setShowNewUser(true)}>Nou usuari</AMGButton>
         </div>
 
         {/* Admin sub-nav */}
@@ -152,7 +152,7 @@ export default function AdminUsersPage() {
         {/* Filters */}
         <div className="flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-[200px]">
-            <I.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-2" />
+            <IconSet.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-2" />
             <input
               type="search"
               placeholder="Cerca per email o nom..."
@@ -189,7 +189,7 @@ export default function AdminUsersPage() {
             </div>
           ) : users.length === 0 ? (
             <div className="p-8 text-center">
-              <I.Users size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Users size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap usuari trobat</div>
             </div>
           ) : (
@@ -227,12 +227,12 @@ export default function AdminUsersPage() {
                         <td className="px-4 sm:px-5 py-3">
                           <div className="flex gap-2">
                             {u.isBlocked && (
-                              <AMGButton size="sm" variant="secondary" icon={I.Lock} onClick={() => doUnlock(u.id)}>
+                              <AMGButton size="sm" variant="secondary" icon={IconSet.Lock} onClick={() => doUnlock(u.id)}>
                                 Desbloquejar
                               </AMGButton>
                             )}
                             <AMGButton
-                              size="sm" variant="ghost" icon={I.Trash}
+                              size="sm" variant="ghost" icon={IconSet.Trash}
                               onClick={() => { if (confirm(`Eliminar ${u.email}?`)) doDelete(u.id); }}
                             />
                           </div>

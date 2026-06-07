@@ -6,7 +6,7 @@ import { useRouter } from '@/i18n/navigation';
 import { useParams } from 'next/navigation';
 import { AMGButton } from '@/components/ui/button';
 import { AMGInput } from '@/components/ui/input';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { createUser } from '@/services/userService';
 import { listTenants } from '@/services/tenantService';

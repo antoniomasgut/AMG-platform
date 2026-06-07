@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { getPlatformSelf } from '@/services/platform';
 import { getTenant } from '@/services/admin';
 import { getMetaAdsConfig } from '@/services/meta-ads';
@@ -15,7 +15,7 @@ function SetupBanner({ locale }: { locale: string }) {
   return (
     <div className="bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.3)] rounded-xl p-6 space-y-3">
       <div className="flex items-start gap-3">
-        <I.AlertCircle size={18} className="text-[#FF6B00] mt-0.5 flex-shrink-0" />
+        <IconSet.AlertCircle size={18} className="text-[#FF6B00] mt-0.5 flex-shrink-0" />
         <div>
           <h2 className="text-sm font-semibold text-ink-1">Tenant de plataforma no configurat</h2>
           <p className="text-xs text-ink-2 mt-1">
@@ -154,7 +154,7 @@ export default function PlatformHubPage() {
                       {link.badge && (
                         <span className="text-[10px] text-[#39d353] font-mono">✓ {link.badge}</span>
                       )}
-                      <I.ArrowRight size={14} className="text-ink-3 group-hover:text-[#FF6B00] transition-colors" />
+                      <IconSet.ArrowRight size={14} className="text-ink-3 group-hover:text-[#FF6B00] transition-colors" />
                     </div>
                   </div>
                   <p className="text-xs text-ink-3">{link.desc}</p>

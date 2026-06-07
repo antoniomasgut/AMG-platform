@@ -8,7 +8,7 @@ import { createBudget, listDiscounts, type DiscountResponse } from '@/services/b
 import { calculatePrice, getSectorCategoryLabel, F_PHASE_MONTHLY, SIZE_FACTORS } from '@/services/pricing';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useToast } from '@/lib/toast-context';
 
 // ── Dades diagnòstic per sector ───────────────────────────────────────────────
@@ -409,7 +409,7 @@ export default function DiagnosticPage() {
             <AMGButton
               onClick={handleDiagnosticNext}
               disabled={!sector || !size}
-              icon={I.ArrowRight}
+              icon={IconSet.ArrowRight}
             >
               Veure recomanació
             </AMGButton>
@@ -434,7 +434,7 @@ export default function DiagnosticPage() {
                 <div className="space-y-1">
                   {sectorData.pains.filter(p => checkedPains.has(p.id)).map(p => (
                     <div key={p.id} className="flex items-center gap-2 text-sm text-ink-1">
-                      <I.Check size={12} className="text-[#FF6B00] shrink-0" />
+                      <IconSet.Check size={12} className="text-[#FF6B00] shrink-0" />
                       {p.label}
                     </div>
                   ))}
@@ -514,13 +514,13 @@ export default function DiagnosticPage() {
             })()}
 
             <div className="flex gap-3">
-              <AMGButton variant="outline" onClick={() => setStep(0)} icon={I.ArrowRight} className="[&_svg]:rotate-180">
+              <AMGButton variant="outline" onClick={() => setStep(0)} icon={IconSet.ArrowRight} className="[&_svg]:rotate-180">
                 Enrere
               </AMGButton>
               <AMGButton
                 onClick={handleRecommendationNext}
                 disabled={selectedPhaseNums.size === 0}
-                icon={I.ArrowRight}
+                icon={IconSet.ArrowRight}
               >
                 Crear pressupost
               </AMGButton>
@@ -660,14 +660,14 @@ export default function DiagnosticPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <AMGButton variant="outline" onClick={() => setStep(1)} icon={I.ArrowRight} className="[&_svg]:rotate-180">
+                  <AMGButton variant="outline" onClick={() => setStep(1)} icon={IconSet.ArrowRight} className="[&_svg]:rotate-180">
                     Enrere
                   </AMGButton>
                   <AMGButton
                     onClick={handleCreate}
                     disabled={creating || !selectedProfileId || selectedPhaseIds.size === 0}
                     loading={creating}
-                    icon={I.Receipt}
+                    icon={IconSet.Receipt}
                     className="flex-1 justify-center"
                   >
                     Crear pressupost

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { forgotPassword } from '@/services/auth';
 
 export default function ForgotPasswordPage() {
@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
           {sent ? (
             <>
               <div className="w-16 h-16 bg-[rgba(57,211,83,0.12)] border border-[#39d353] flex items-center justify-center mb-5 mx-auto">
-                <I.Check size={24} stroke="#39d353" />
+                <IconSet.Check size={24} stroke="#39d353" />
               </div>
               <h2 className="f-display font-black text-2xl text-center">COMPROVA EL TEU EMAIL</h2>
               <p className="text-ui text-ink-1 mt-2 text-center">
@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
               <div className="f-mono text-sm text-accent-light text-center mt-1">{email}</div>
 
               <div className="mt-6 p-3 border-l-2 border-l-[#58a6ff] bg-[rgba(88,166,255,0.05)] flex gap-3">
-                <I.Clock size={14} stroke="#58a6ff" className="shrink-0 mt-0.5" />
+                <IconSet.Clock size={14} stroke="#58a6ff" className="shrink-0 mt-0.5" />
                 <div className="text-data text-ink-1">
                   L&apos;enllaç caduca en <span className="text-info f-mono">30 min</span>.
                   Revisa la carpeta de spam si no el veus.
@@ -81,7 +81,7 @@ export default function ForgotPasswordPage() {
                     Email corporatiu
                   </span>
                   <div className="relative flex items-center h-10 bg-[#1a1a2e]/80 border border-border-base focus-within:border-[#FF6B00] transition">
-                    <div className="pl-3 text-ink-3"><I.Mail size={14} /></div>
+                    <div className="pl-3 text-ink-3"><IconSet.Mail size={14} /></div>
                     <input
                       type="email"
                       value={email}
@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
                   {loading ? (
                     <span className="w-3 h-3 border-2 border-black/60 border-t-transparent rounded-full animate-spin"></span>
                   ) : (
-                    <I.ArrowRight size={14} />
+                    <IconSet.ArrowRight size={14} />
                   )}
                   {loading ? 'ENVIANT...' : 'ENVIAR ENLLAÇ'}
                 </button>

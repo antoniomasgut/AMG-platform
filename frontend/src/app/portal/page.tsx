@@ -6,7 +6,7 @@ import { useApiErrorHandler } from '@/lib/use-api-error';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import {
   fetchBillingDashboard, fetchInvoices, fetchLandings, fetchWorkflows,
   type BillingDashboard, type Invoice, type LandingSummary, type WorkflowSummary,
@@ -79,12 +79,12 @@ function PortalSidebar({ userName, userEmail, userRole: _userRole, isSuperAdmin,
       <nav aria-label="Menú principal" className="flex-1 p-3 space-y-1">
         <div className="f-mono text-[9px] uppercase tracking-widest text-ink-2 px-3 py-2">El meu compte</div>
         {([
-          { label: 'Dashboard', icon: I.Dashboard, active: true, href: '/portal' },
-          { label: 'Landings', icon: I.Globe, active: false, href: '/portal/landings' },
-          { label: 'Serveis', icon: I.Box, active: false, href: '/portal' },
-          { label: 'Factures', icon: I.Receipt, active: false, href: '/portal' },
-          { label: 'Suport', icon: I.Bell, active: false, href: '/portal' },
-          ...(isSuperAdmin ? [{ label: 'Admin', icon: I.Settings, active: false, href: '/portal' }] : []),
+          { label: 'Dashboard', icon: IconSet.Dashboard, active: true, href: '/portal' },
+          { label: 'Landings', icon: IconSet.Globe, active: false, href: '/portal/landings' },
+          { label: 'Serveis', icon: IconSet.Box, active: false, href: '/portal' },
+          { label: 'Factures', icon: IconSet.Receipt, active: false, href: '/portal' },
+          { label: 'Suport', icon: IconSet.Bell, active: false, href: '/portal' },
+          ...(isSuperAdmin ? [{ label: 'Admin', icon: IconSet.Settings, active: false, href: '/portal' }] : []),
         ] as const).map(({ label, icon: Icon, active, href }) => (
           <a key={label} href={href}
             className={`relative flex items-center gap-3 px-3 h-10 f-mono text-xs uppercase tracking-wider cursor-pointer ${
@@ -167,7 +167,7 @@ function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
       </AMGSectionTitle>
       {invoices.length === 0 ? (
         <div className="py-8 text-center">
-          <I.Receipt size={24} stroke="#8896aa" className="mx-auto mb-2" />
+          <IconSet.Receipt size={24} stroke="#8896aa" className="mx-auto mb-2" />
           <p className="f-mono text-caption text-ink-2 uppercase">Cap factura encara</p>
         </div>
       ) : (
@@ -182,7 +182,7 @@ function InvoicesTable({ invoices }: { invoices: Invoice[] }) {
                 <span className="hidden sm:block"><AMGBadge tone={BADGE_TONE[inv.status] || 'accent'}>{inv.status}</AMGBadge></span>
                 <a href={inv.invoicePdfUrl || '#'} target="_blank" rel="noopener"
                   className={`text-ink-1 hover:text-accent-light ${!inv.invoicePdfUrl ? 'opacity-30 pointer-events-none' : ''}`}>
-                  <I.Download size={12} />
+                  <IconSet.Download size={12} />
                 </a>
               </div>
             ))}
@@ -272,10 +272,10 @@ export default function PortalPage() {
   const activeWorkflows = workflows.filter((w) => w.status === 'ACTIVE').length;
 
   const serviceCards: ServiceCard[] = [
-    { name: 'Landings', icon: I.Globe, used: activeLandings, total: landings.length || 1, unit: 'actives' },
-    { name: 'Workflows', icon: I.Zap, used: activeWorkflows, total: workflows.length || 1, unit: 'actius' },
-    { name: 'Factures', icon: I.Receipt, used: invoices.length, total: Math.max(invoices.length, 1), unit: 'emeses' },
-    { name: 'Pressupostos', icon: I.CreditCard, used: billing?.pendingBudgets ?? 0, total: Math.max(billing?.pendingBudgets ?? 0, 1), unit: 'pendents' },
+    { name: 'Landings', icon: IconSet.Globe, used: activeLandings, total: landings.length || 1, unit: 'actives' },
+    { name: 'Workflows', icon: IconSet.Zap, used: activeWorkflows, total: workflows.length || 1, unit: 'actius' },
+    { name: 'Factures', icon: IconSet.Receipt, used: invoices.length, total: Math.max(invoices.length, 1), unit: 'emeses' },
+    { name: 'Pressupostos', icon: IconSet.CreditCard, used: billing?.pendingBudgets ?? 0, total: Math.max(billing?.pendingBudgets ?? 0, 1), unit: 'pendents' },
   ];
 
   const showOnboarding =
@@ -296,22 +296,22 @@ export default function PortalPage() {
       <main aria-label="Contingut principal" className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
         <div className="h-16 border-b border-border-base flex items-center px-4 sm:px-8 gap-4">
-          <button aria-label="Obrir menú" className="lg:hidden text-ink-1"><I.Menu size={20} /></button>
+          <button aria-label="Obrir menú" className="lg:hidden text-ink-1"><IconSet.Menu size={20} /></button>
           <div className="flex-1 hidden sm:block">
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal /</span>
             <div className="f-display font-bold text-lg leading-tight mt-0.5">
               Bon dia, {user.name?.split(' ')[0] || 'usuari'}
             </div>
           </div>
-          <AMGButton variant="outline" size="sm" icon={I.Globe}>VER LANDING</AMGButton>
-          <AMGButton size="sm" icon={I.Bell}>SUPORT</AMGButton>
+          <AMGButton variant="outline" size="sm" icon={IconSet.Globe}>VER LANDING</AMGButton>
+          <AMGButton size="sm" icon={IconSet.Bell}>SUPORT</AMGButton>
         </div>
 
         <div className="flex-1 overflow-auto amg-grid p-4 sm:p-8 space-y-6">
           {/* Error banner */}
           {error && (
             <div className="flex items-center gap-3 p-4 border-l-[3px] border-l-[#f0b429] amg-card card-clip">
-              <I.AlertCircle size={16} stroke="#f0b429" />
+              <IconSet.AlertCircle size={16} stroke="#f0b429" />
               <span className="text-ui text-warning flex-1">{error}</span>
               <button onClick={loadDashboard} className="f-mono text-caption uppercase text-accent-light hover:underline">REINTENTAR</button>
             </div>
@@ -319,11 +319,16 @@ export default function PortalPage() {
 
           {showOnboarding ? (
             <OnboardingGuide
+              tenantId={user.tenantId ?? ''}
               userName={user.name?.split(' ')[0] || 'usuari'}
-              assignedServiceTypes={new Set(['LANDING', 'AUTOMATION', 'BILLING'])}
-              landingsCount={landings.length}
-              workflowsCount={workflows.length}
-              invoicesCount={invoices.length}
+              assignedServices={[
+                { type: 'LANDING' },
+                { type: 'AUTOMATION' },
+                { type: 'BILLING' },
+              ]}
+              landings={landings}
+              workflows={workflows}
+              invoices={invoices}
               onSkip={handleSkipOnboarding}
               onComplete={() => setOnboardingComplete(true)}
             />
@@ -378,14 +383,14 @@ export default function PortalPage() {
                   <InvoicesTable invoices={invoices} />
                 </div>
                 <div className="amg-card card-clip p-4 sm:p-5 flex flex-col">
-                  <I.Sparkles size={20} stroke="#FF9A3C" />
+                  <IconSet.Sparkles size={20} stroke="#FF9A3C" />
                   <div className="f-display font-bold text-base mt-3">NECESSITES AJUDA?</div>
                   <p className="text-ui text-ink-1 mt-1 flex-1">
                     El teu tècnic assignat està disponible per respondre els teus dubtes.
                   </p>
                   <div className="space-y-2 mt-4">
-                    <AMGButton size="sm" icon={I.Mail} className="w-full justify-center">ESCRIURE AL EQUIP</AMGButton>
-                    <AMGButton variant="outline" size="sm" icon={I.Play} className="w-full justify-center">VEURE TUTORIALS</AMGButton>
+                    <AMGButton size="sm" icon={IconSet.Mail} className="w-full justify-center">ESCRIURE AL EQUIP</AMGButton>
+                    <AMGButton variant="outline" size="sm" icon={IconSet.Play} className="w-full justify-center">VEURE TUTORIALS</AMGButton>
                   </div>
                 </div>
               </div>

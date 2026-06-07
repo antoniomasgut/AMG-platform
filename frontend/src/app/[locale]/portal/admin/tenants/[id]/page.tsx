@@ -36,7 +36,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 function fmtDate(d: string | null) {
   if (!d) return '—';
@@ -112,7 +112,7 @@ function CollapsibleSection({
         {warning && <span className="f-mono text-[9px] text-amber-400 shrink-0">⚠ {warning}</span>}
         <span className="flex-1 h-px bg-border-base mx-1" />
         {labelText && <span className={`f-mono text-[9px] shrink-0 ${labelCls}`}>{labelText}</span>}
-        <I.Chevron
+        <IconSet.Chevron
           size={13}
           className={`text-ink-3 transition-transform shrink-0 ${collapsed ? '' : 'rotate-90'}`}
         />
@@ -159,7 +159,7 @@ function ServiceCatalogTable({ services }: { services: CatalogService[] }) {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 px-4 sm:px-5 py-3 border-b border-border-base">
         <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <I.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+          <IconSet.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
           <input
             type="text"
             value={query}
@@ -335,7 +335,7 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
   if (!hasNexePhases && !hasProfiles && !hasAddons && !hasStandalone) {
     return (
       <div className="p-8 text-center">
-        <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
+        <IconSet.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
         <div className="f-display font-bold text-sm mb-1">Cap servei assignat</div>
         <p className="f-mono text-xs text-ink-2">Aquest tenant encara no té fases ni serveis assignats</p>
       </div>
@@ -363,7 +363,7 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
                   : 'border-border-base text-ink-2 hover:border-ink-2 hover:text-ink-1'
               }`}
             >
-              <I.Settings size={11} />
+              <IconSet.Settings size={11} />
               {isPending ? 'Configurar' : 'Gestionar'}
             </a>
             <button
@@ -375,14 +375,14 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
             >
               {removingId === svc.tenantServiceId
                 ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
-                : <I.Trash size={13} />}
+                : <IconSet.Trash size={13} />}
             </button>
           </div>
         </div>
         {requiredCreds.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5 pl-1">
             <span className="f-mono text-[10px] text-amber-400 flex items-center gap-1">
-              <I.Key size={9} /> Claus pendents:
+              <IconSet.Key size={9} /> Claus pendents:
             </span>
             {requiredCreds.map(c => (
               <span key={c} className="f-mono text-[10px] px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-500/8 text-amber-400">
@@ -408,7 +408,7 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
               onClick={() => router.push(`/portal/admin/tenants/${tenantId}/activate`)}
               className="flex items-center gap-1.5 px-3 py-1 f-mono text-xs font-semibold text-accent-light border border-[rgba(255,107,0,0.5)] bg-[rgba(255,107,0,0.06)] hover:bg-[rgba(255,107,0,0.15)] rounded transition"
             >
-              <I.Zap size={11} /> Posar en marxa →
+              <IconSet.Zap size={11} /> Posar en marxa →
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -435,7 +435,7 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
                         title={isActive ? `Desactivar ${phase}` : `Activar ${phase}`}
                         className={`p-1 rounded transition ${isActive ? 'text-green-400 hover:text-green-300 hover:bg-green-500/10' : 'text-ink-3 hover:text-green-400 hover:bg-green-500/10'}`}
                       >
-                        <I.Power size={13} />
+                        <IconSet.Power size={13} />
                       </button>
                       {/* Eliminar del contracte */}
                       <button
@@ -447,7 +447,7 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
                       >
                         {removingPhase === phase
                           ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
-                          : <I.Trash size={13} />}
+                          : <IconSet.Trash size={13} />}
                       </button>
                     </div>
                   </div>
@@ -472,7 +472,7 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
                                 : 'border-[rgba(255,107,0,0.4)] text-accent-light hover:bg-[rgba(255,107,0,0.1)]'
                             }`}
                           >
-                            <I.Settings size={10} />
+                            <IconSet.Settings size={10} />
                             {svcItem.action === 'navigate' ? 'Configurar' : 'Gestionar'}
                           </button>
                         </div>
@@ -493,7 +493,7 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
           {setup.profiles.map((p) => (
             <div key={p.profile.id} className="border border-border-base rounded p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <I.Box size={14} className="text-accent-light" />
+                <IconSet.Box size={14} className="text-accent-light" />
                 <span className="f-display font-bold text-sm">{p.profile.name}</span>
               </div>
               {p.phases.map((ph) => (
@@ -518,7 +518,7 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
           {(hasNexePhases || hasProfiles) && <div className="f-mono text-label uppercase tracking-widest text-ink-3 text-[10px]">Serveis individuals</div>}
           <div className="border border-border-base rounded p-4 space-y-2">
             <div className="flex items-center gap-2 mb-1">
-              <I.Zap size={14} className="text-accent-light" />
+              <IconSet.Zap size={14} className="text-accent-light" />
               <span className="f-display font-bold text-sm">Serveis individuals</span>
             </div>
             {setup.standalone!.map((svc) => (
@@ -532,7 +532,7 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
       {hasAddons && (
         <div className="border border-border-base rounded p-4 space-y-2">
           <div className="flex items-center gap-2 mb-1">
-            <I.Plus size={14} className="text-accent-light" />
+            <IconSet.Plus size={14} className="text-accent-light" />
             <span className="f-display font-bold text-sm">Add-ons</span>
           </div>
           {setup.addons.map((a) => (
@@ -580,7 +580,7 @@ function AssignProfileModal({ tenantId, onClose, onAssigned }: { tenantId: strin
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Assignar perfil</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         {isLoading ? (
           <div className="flex justify-center py-8">
@@ -588,7 +588,7 @@ function AssignProfileModal({ tenantId, onClose, onAssigned }: { tenantId: strin
           </div>
         ) : activeProfiles.length === 0 ? (
           <div className="text-center py-6">
-            <I.Box size={24} stroke="#64748b" className="mx-auto mb-2" />
+            <IconSet.Box size={24} stroke="#64748b" className="mx-auto mb-2" />
             <div className="f-display font-bold text-sm mb-1">Cap perfil disponible</div>
             <p className="f-mono text-xs text-ink-2">Crea perfils des de la secció Catàleg</p>
           </div>
@@ -658,7 +658,7 @@ function AddPhaseModal({ tenantId, onClose, onAdded }: { tenantId: string; onClo
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Afegir fases</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         {isLoading ? (
           <div className="flex justify-center py-8"><span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>
@@ -742,14 +742,14 @@ function AddServiceModal({ tenantId, onClose, onAdded }: { tenantId: string; onC
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Afegir servei individual</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         {isLoading ? (
           <div className="flex justify-center py-8"><span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>
         ) : (
           <div className="space-y-3">
             <div className="relative">
-              <I.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+              <IconSet.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
               <input type="text" value={query} onChange={e => setQuery(e.target.value)}
                 placeholder="Cercar servei..."
                 className="w-full pl-8 pr-3 py-1.5 bg-[rgba(255,255,255,0.04)] border border-border-base rounded text-sm f-mono text-ink-1 focus:outline-none focus:border-[#FF6B00] placeholder:text-ink-3" />
@@ -824,7 +824,7 @@ function ContractSection({ tenant, onRefresh }: { tenant: TenantResponse; onRefr
       <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
         <AMGSectionTitle eyebrow="Grandària" title="Contracte" />
         {!editing ? (
-          <AMGButton size="sm" variant="ghost" icon={I.Edit} onClick={() => { setEditSector(tenant.sector ?? ''); setEditSize(tenant.businessSize ?? ''); setEditing(true); }}>
+          <AMGButton size="sm" variant="ghost" icon={IconSet.Edit} onClick={() => { setEditSector(tenant.sector ?? ''); setEditSize(tenant.businessSize ?? ''); setEditing(true); }}>
             Editar
           </AMGButton>
         ) : (
@@ -1040,7 +1040,7 @@ const TELEGRAM_BOT_USERNAME = 'AMGDL_Test_Bot';
 function LockHint() {
   return (
     <span className="f-mono text-[10px] text-ink-3 flex items-center gap-1 mt-1">
-      <I.Lock size={10} /> Atura el bot per editar
+      <IconSet.Lock size={10} /> Atura el bot per editar
     </span>
   );
 }
@@ -1067,7 +1067,7 @@ function ActivationModal({ channels, agentSystemPrompt, onConfirm, onClose, conf
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Activar el bot</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         <p className="text-sm text-ink-2">
           El bot es posarà en marxa immediatament. Compartiu aquestes instruccions amb el client:
@@ -1510,7 +1510,7 @@ function TelegramBotCard({ tenantId }: { tenantId: string }) {
             )}
             <div className="flex items-center gap-2 flex-wrap">
               {(config.status === 'ERROR' || !config.webhookRegistered) && (
-                <AMGButton size="sm" icon={I.Zap} onClick={handleVerify} loading={verifying}>
+                <AMGButton size="sm" icon={IconSet.Zap} onClick={handleVerify} loading={verifying}>
                   Re-registrar webhook
                 </AMGButton>
               )}
@@ -1523,7 +1523,7 @@ function TelegramBotCard({ tenantId }: { tenantId: string }) {
 
         {!isLoading && !config && !showForm && (
           <div className="text-center py-6">
-            <I.Smartphone size={28} stroke="#64748b" className="mx-auto mb-3" />
+            <IconSet.Smartphone size={28} stroke="#64748b" className="mx-auto mb-3" />
             <p className="text-sm text-ink-2 mb-3">Cap bot de Telegram configurat per aquest tenant.</p>
             <p className="f-mono text-[10px] text-ink-3 mb-4">Crea un bot amb @BotFather i entra el token aquí. El webhook es registrarà automàticament.</p>
             <AMGButton size="sm" onClick={() => setShowForm(true)}>Configurar bot</AMGButton>
@@ -1894,12 +1894,12 @@ function WhatsAppMetaCard({ tenantId }: { tenantId: string }) {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {wabaConfig.status === 'PENDING' && (
-                    <AMGButton size="sm" icon={I.Zap} onClick={handleVerify} loading={verifying}>
+                    <AMGButton size="sm" icon={IconSet.Zap} onClick={handleVerify} loading={verifying}>
                       Verificar connexió
                     </AMGButton>
                   )}
                   {wabaConfig.status === 'ERROR' && (
-                    <AMGButton size="sm" icon={I.Zap} onClick={handleVerify} loading={verifying}>
+                    <AMGButton size="sm" icon={IconSet.Zap} onClick={handleVerify} loading={verifying}>
                       Reintentar verificació
                     </AMGButton>
                   )}
@@ -1928,7 +1928,7 @@ function WhatsAppMetaCard({ tenantId }: { tenantId: string }) {
 
             {!wabaConfig && !showForm && (
               <div className="text-center py-6">
-                <I.Smartphone size={28} stroke="#64748b" className="mx-auto mb-3" />
+                <IconSet.Smartphone size={28} stroke="#64748b" className="mx-auto mb-3" />
                 <p className="text-sm text-ink-2 mb-3">Meta Business Suite no configurat per aquest tenant.</p>
                 <AMGButton size="sm" onClick={() => setShowForm(true)}>Configurar Meta</AMGButton>
               </div>
@@ -2118,7 +2118,7 @@ function GoCardlessCard({ tenantId }: { tenantId: string }) {
             {!mandate ? (
               <div className="p-4 bg-[rgba(255,255,255,0.02)] border border-border-base rounded space-y-3">
                 <p className="text-sm text-ink-2">Cap mandat actiu. Inicia el flux de domiciliació per al client.</p>
-                <AMGButton size="sm" onClick={handleInitiate} loading={initiating} icon={I.Zap}>
+                <AMGButton size="sm" onClick={handleInitiate} loading={initiating} icon={IconSet.Zap}>
                   Iniciar mandat SEPA
                 </AMGButton>
               </div>
@@ -2186,7 +2186,7 @@ function GoCardlessCard({ tenantId }: { tenantId: string }) {
 
         {!gcConfig && !showConfigForm && (
           <div className="text-center py-6">
-            <I.CreditCard size={28} stroke="#64748b" className="mx-auto mb-3" />
+            <IconSet.CreditCard size={28} stroke="#64748b" className="mx-auto mb-3" />
             <p className="text-sm text-ink-2 mb-3">GoCardless no està configurat per aquest tenant.</p>
             <AMGButton size="sm" onClick={() => setShowConfigForm(true)}>Configurar GoCardless</AMGButton>
           </div>
@@ -2291,7 +2291,7 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
       <div className="amg-card card-clip w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Nou pressupost</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
 
         <form onSubmit={handleCreate} className="space-y-4">
@@ -2608,26 +2608,26 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
               {isDraft && mode === 'view' && (
                 <button title="Editar" onClick={() => setMode('edit')}
                   className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition">
-                  <I.Edit size={15} />
+                  <IconSet.Edit size={15} />
                 </button>
               )}
               <button title="Clonar" onClick={handleClone} disabled={cloning}
                 className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition disabled:opacity-40">
-                <I.Copy size={15} />
+                <IconSet.Copy size={15} />
               </button>
               {isDraft && mode === 'view' && (
                 <button title="Enviar al client" onClick={handleSend} disabled={sending}
                   className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition disabled:opacity-40">
-                  <I.ArrowRight size={15} />
+                  <IconSet.ArrowRight size={15} />
                 </button>
               )}
               <button title="Eliminar" onClick={handleCancel} disabled={cancelling}
                 className="p-1.5 rounded text-red-400 hover:text-red-300 hover:bg-[rgba(239,68,68,0.12)] transition disabled:opacity-40">
-                <I.Trash size={15} />
+                <IconSet.Trash size={15} />
               </button>
               <button onClick={mode === 'edit' ? () => setMode('view') : onClose}
                 className="p-1.5 ml-1 rounded text-ink-2 hover:text-ink-0">
-                <I.X size={17} />
+                <IconSet.X size={17} />
               </button>
             </div>
           </div>
@@ -2914,7 +2914,7 @@ function DeleteTenantModal({ tenantId, tenantName, onClose, onDeleted }: {
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base text-white">Eliminar tenant</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
 
         {loading ? (
@@ -3157,7 +3157,7 @@ export default function TenantDetailPage() {
     return (
       <PortalShell breadcrumb="admin · tenants · error" backHref={`/${locale}/portal/admin/tenants`}>
         <div className="p-4 sm:p-8 text-center py-12">
-          <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
+          <IconSet.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
           <div className="f-display font-bold text-sm mb-1">Error carregant el tenant</div>
           <p className="f-mono text-xs text-ink-2 mb-4">No s'ha pogut carregar la informació del tenant</p>
           <AMGButton size="sm" onClick={() => window.location.reload()}>Reintentar</AMGButton>
@@ -3214,7 +3214,7 @@ export default function TenantDetailPage() {
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-ink-2">
               {editingEmail ? (
                 <span className="flex items-center gap-1">
-                  <I.Mail size={12} />
+                  <IconSet.Mail size={12} />
                   <input
                     type="email"
                     value={editEmailValue}
@@ -3225,17 +3225,17 @@ export default function TenantDetailPage() {
                     autoFocus
                     ref={(el) => el?.select()}
                   />
-                  <button onClick={saveEmail} className="text-accent-light hover:text-accent p-0.5"><I.Check size={12} /></button>
-                  <button onClick={() => { setEditEmailValue(tenant.email ?? ''); setEditingEmail(false); }} className="text-ink-2 hover:text-ink-0 p-0.5"><I.X size={12} /></button>
+                  <button onClick={saveEmail} className="text-accent-light hover:text-accent p-0.5"><IconSet.Check size={12} /></button>
+                  <button onClick={() => { setEditEmailValue(tenant.email ?? ''); setEditingEmail(false); }} className="text-ink-2 hover:text-ink-0 p-0.5"><IconSet.X size={12} /></button>
                 </span>
               ) : (
                 <button onClick={() => { setEditEmailValue(tenant.email ?? ''); setEditingEmail(true); }} className="flex items-center gap-1 hover:text-accent-light transition-colors group">
-                  <I.Mail size={12} />
+                  <IconSet.Mail size={12} />
                   <span>{tenant.email || '—'}</span>
-                  <I.Edit size={10} className="opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
+                  <IconSet.Edit size={10} className="opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
                 </button>
               )}
-              {tenant.phone && <span className="flex items-center gap-1"><I.Smartphone size={12} />{tenant.phone}</span>}
+              {tenant.phone && <span className="flex items-center gap-1"><IconSet.Smartphone size={12} />{tenant.phone}</span>}
               <span className="f-mono text-xs text-ink-3">/{tenant.slug}</span>
               <span className="f-mono text-xs text-ink-3">Creat {fmtDate(tenant.createdAt)}</span>
             </div>
@@ -3251,14 +3251,14 @@ export default function TenantDetailPage() {
             </AMGButton>
             <AMGButton
               size="sm"
-              icon={I.Plus}
+              icon={IconSet.Plus}
               onClick={() => window.location.href = `/portal/landings/new?tenantId=${id}`}
             >
               Crear landing
             </AMGButton>
             <AMGButton
               size="sm"
-              icon={I.Search}
+              icon={IconSet.Search}
               onClick={() => router.push(`/${locale}/portal/admin/tenants/${id}/diagnostic`)}
             >
               Diagnòstic →
@@ -3266,7 +3266,7 @@ export default function TenantDetailPage() {
             <AMGButton
               size="sm"
               variant="secondary"
-              icon={I.Receipt}
+              icon={IconSet.Receipt}
               onClick={() => setShowNewBudget(true)}
             >
               Nou pressupost
@@ -3283,7 +3283,7 @@ export default function TenantDetailPage() {
             ))}
             <AMGButton
               size="sm"
-              icon={I.Sparkles}
+              icon={IconSet.Sparkles}
               onClick={() => router.push(`/${locale}/portal/admin/tenants/${id}/wizard`)}
             >
               Setup Wizard
@@ -3291,7 +3291,7 @@ export default function TenantDetailPage() {
             <AMGButton
               size="sm"
               variant="ghost"
-              icon={I.Bell}
+              icon={IconSet.Bell}
               onClick={() => router.push(`/${locale}/portal/admin/tenants/${id}/notifications`)}
             >
               Notificacions
@@ -3299,7 +3299,7 @@ export default function TenantDetailPage() {
             <AMGButton
               size="sm"
               variant="ghost"
-              icon={I.BarChart}
+              icon={IconSet.BarChart}
               onClick={() => router.push(`/${locale}/portal/analytics`)}
             >
               Analítica
@@ -3307,7 +3307,7 @@ export default function TenantDetailPage() {
             <AMGButton
               size="sm"
               variant="ghost"
-              icon={I.FileText}
+              icon={IconSet.FileText}
               onClick={() => router.push(`/${locale}/portal/admin/tenants/${id}/visits`)}
             >
               Visites
@@ -3349,7 +3349,7 @@ export default function TenantDetailPage() {
           <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
             <AMGSectionTitle eyebrow="Identificació" title="Dades d'identificació" />
             {!editingInfo ? (
-              <AMGButton size="sm" variant="ghost" icon={I.Edit} onClick={() => openEditInfo(tenant)}>
+              <AMGButton size="sm" variant="ghost" icon={IconSet.Edit} onClick={() => openEditInfo(tenant)}>
                 Editar
               </AMGButton>
             ) : (
@@ -3472,8 +3472,8 @@ export default function TenantDetailPage() {
           <div className="p-4 sm:p-5 border-b border-border-base flex flex-wrap items-center justify-between gap-2">
             <AMGSectionTitle eyebrow="Assignació" title="Serveis assignats" />
             <div className="flex items-center gap-2">
-              <AMGButton size="sm" variant="ghost" icon={I.Layers} onClick={() => setShowAddPhase(true)}>Fase</AMGButton>
-              <AMGButton size="sm" variant="ghost" icon={I.Zap} onClick={() => setShowAddService(true)}>Servei</AMGButton>
+              <AMGButton size="sm" variant="ghost" icon={IconSet.Layers} onClick={() => setShowAddPhase(true)}>Fase</AMGButton>
+              <AMGButton size="sm" variant="ghost" icon={IconSet.Zap} onClick={() => setShowAddService(true)}>Servei</AMGButton>
             </div>
           </div>
           {loadingSetup ? (
@@ -3492,7 +3492,7 @@ export default function TenantDetailPage() {
             />
           ) : (
             <div className="p-8 text-center">
-              <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
+              <IconSet.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Error de càrrega</div>
             </div>
           )}
@@ -3557,14 +3557,14 @@ export default function TenantDetailPage() {
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
             <AMGSectionTitle eyebrow="Facturació" title="Pressupostos" />
-            <AMGButton size="sm" icon={I.Plus} onClick={() => setShowNewBudget(true)}>
+            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setShowNewBudget(true)}>
               Nou pressupost
             </AMGButton>
           </div>
           <div className="p-5">
             {!budgets || budgets.length === 0 ? (
               <div className="text-center py-6">
-                <I.Receipt size={28} stroke="#64748b" className="mx-auto mb-3" />
+                <IconSet.Receipt size={28} stroke="#64748b" className="mx-auto mb-3" />
                 <p className="text-sm text-ink-2">Cap pressupost generat per aquest tenant.</p>
               </div>
             ) : (
@@ -3592,7 +3592,7 @@ export default function TenantDetailPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="f-display font-bold text-sm text-white">{b.total.toFixed(2)} €</span>
-                      <I.Chevron size={14} className="text-ink-3" />
+                      <IconSet.Chevron size={14} className="text-ink-3" />
                     </div>
                   </button>
                 ))}

@@ -7,7 +7,7 @@ import { getCurrentUser } from '@/services/auth';
 import { createLanding } from '@/services/factory';
 import { TemplateSelector } from '@/components/factory/TemplateSelector';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 function slugify(text: string): string {
   return text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

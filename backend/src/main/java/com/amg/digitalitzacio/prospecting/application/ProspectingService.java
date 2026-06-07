@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.prospecting.application;
 
 import com.amg.digitalitzacio.prospecting.api.dto.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,4 +25,6 @@ public interface ProspectingService {
     int qualifyTop(UUID campaignId, int topN);
     int qualifyByMinScore(UUID campaignId, int minScore);
     int exportQualifiedProspects(UUID campaignId);
+    CampaignResponse scheduleCampaign(UUID campaignId, Instant nextRun, int repeatDays);
+    CampaignResponse unscheduleCampaign(UUID campaignId);
 }

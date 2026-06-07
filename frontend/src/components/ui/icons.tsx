@@ -2,7 +2,7 @@ import React from 'react';
 
 type IconProps = { size?: number; stroke?: string; className?: string };
 
-const Icon = ({ d, size = 16, stroke = 'currentColor', children, className = '' }: {
+const Icon = ({ d, size = 20, stroke = 'currentColor', children, className = '' }: {
   d?: string; size?: number; stroke?: string; children?: React.ReactNode; className?: string;
 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke}
@@ -11,7 +11,7 @@ const Icon = ({ d, size = 16, stroke = 'currentColor', children, className = '' 
   </svg>
 );
 
-export const I = {
+export const IconSet = {
   Dashboard: (p: IconProps) => <Icon {...p}><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></Icon>,
   Users: (p: IconProps) => <Icon {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>,
   Box: (p: IconProps) => <Icon {...p}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></Icon>,
@@ -72,4 +72,6 @@ export const I = {
   Power: (p: IconProps) => <Icon {...p}><path d="M12 2v10M4.93 4.93a10 10 0 1 0 14.14 0"/></Icon>,
   Briefcase: (p: IconProps) => <Icon {...p}><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M12 12h.01M8 12h.01M16 12h.01"/></Icon>,
   Book: (p: IconProps) => <Icon {...p}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M12 6v7l-2-2-2 2V6"/></Icon>,
+  Sun: (p: IconProps) => <Icon {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></Icon>,
+  Moon: (p: IconProps) => <Icon {...p}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></Icon>,
 };

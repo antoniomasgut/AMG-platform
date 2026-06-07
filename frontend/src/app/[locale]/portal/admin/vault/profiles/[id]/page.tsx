@@ -15,7 +15,7 @@ import {
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { profileFormSchema, serviceFormSchema, phaseNameSchema, sortOrderSchema } from '@/lib/validations/vault';
 import { FieldError } from '@/components/ui/field-error';
 
@@ -58,7 +58,7 @@ function EditProfileModal({ profile, onClose, onUpdated }: { profile: CatalogPro
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Editar perfil</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -122,7 +122,7 @@ function AddPhaseModal({ profileId, onClose, onCreated }: { profileId: string; o
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Nova fase</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -214,7 +214,7 @@ function AddServiceToPhaseModal({ phaseId, onClose, onCreated }: { phaseId: stri
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Afegir servei a la fase</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
 
         <div className="flex gap-2">
@@ -359,7 +359,7 @@ function AddDirectServiceModal({ profileId, onClose, onCreated }: { profileId: s
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Afegir servei directe</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
 
         <div className="flex gap-2">
@@ -507,8 +507,8 @@ function PhaseCard({ phase, profileId, onUpdated, onDeleted, onAddService }: {
               <div className="flex items-center gap-2 shrink-0">
                 <span className="f-mono text-xs text-ink-2">{totalPrice.toFixed(2)} €</span>
                 <button onClick={() => { setEditing(true); setEditName(phase.name); setEditSort(String(phase.sortOrder ?? '')); }}
-                  className="text-ink-2 hover:text-accent-light transition"><I.Edit size={14} /></button>
-                <button onClick={handleDelete} className="text-ink-2 hover:text-danger transition"><I.Trash size={14} /></button>
+                  className="text-ink-2 hover:text-accent-light transition"><IconSet.Edit size={14} /></button>
+                <button onClick={handleDelete} className="text-ink-2 hover:text-danger transition"><IconSet.Trash size={14} /></button>
               </div>
             </>
           )}
@@ -531,7 +531,7 @@ function PhaseCard({ phase, profileId, onUpdated, onDeleted, onAddService }: {
             </div>
           ))
         )}
-        <AMGButton size="sm" variant="outline" onClick={() => onAddService(phase.id)} icon={I.Plus}>
+        <AMGButton size="sm" variant="outline" onClick={() => onAddService(phase.id)} icon={IconSet.Plus}>
           Afegir servei
         </AMGButton>
       </div>
@@ -578,7 +578,7 @@ export default function ProfileDetailPage() {
     return (
       <PortalShell breadcrumb="admin · catàleg · error" backHref={`/${locale}/portal/admin/vault`}>
         <div className="p-8 text-center">
-          <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
+          <IconSet.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
           <div className="f-display font-bold text-sm mb-1">Error carregant el perfil</div>
           <AMGButton size="sm" onClick={() => router.push('/portal/admin/vault')}>Tornar al catàleg</AMGButton>
         </div>
@@ -602,7 +602,7 @@ export default function ProfileDetailPage() {
               {profile.description && <span>{profile.description}</span>}
             </div>
           </div>
-          <AMGButton size="sm" variant="secondary" onClick={() => setShowEditProfile(true)} icon={I.Edit}>
+          <AMGButton size="sm" variant="secondary" onClick={() => setShowEditProfile(true)} icon={IconSet.Edit}>
             Editar perfil
           </AMGButton>
         </div>
@@ -634,12 +634,12 @@ export default function ProfileDetailPage() {
               <div className="f-mono text-label uppercase text-ink-3 text-xs tracking-widest">Serveis directes</div>
               <div className="f-display font-bold text-sm mt-0.5">Serveis sense fase assignada</div>
             </div>
-            <AMGButton size="sm" icon={I.Plus} onClick={() => setShowAddDirectService(true)}>Afegir servei</AMGButton>
+            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setShowAddDirectService(true)}>Afegir servei</AMGButton>
           </div>
           <div className="p-4 sm:p-5">
             {!profile.directServices || profile.directServices.length === 0 ? (
               <div className="text-center py-8">
-                <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
+                <IconSet.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
                 <div className="f-display font-bold text-sm mb-1">Cap servei directe</div>
                 <p className="f-mono text-xs text-ink-2">Afegeix serveis que no requereixin fase</p>
               </div>
@@ -660,7 +660,7 @@ export default function ProfileDetailPage() {
                       <button
                         onClick={() => { if (confirm(`Eliminar "${svc.name}" del perfil?`)) deleteService(svc.id).then(() => invalidate()); }}
                         className="text-ink-2 hover:text-danger transition">
-                        <I.X size={14} />
+                        <IconSet.X size={14} />
                       </button>
                     </div>
                   </div>
@@ -677,12 +677,12 @@ export default function ProfileDetailPage() {
               <div className="f-mono text-label uppercase text-ink-3 text-xs tracking-widest">Fases</div>
               <div className="f-display font-bold text-sm mt-0.5">Fases i serveis del perfil</div>
             </div>
-            <AMGButton size="sm" icon={I.Plus} onClick={() => setShowAddPhase(true)}>Nova fase</AMGButton>
+            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setShowAddPhase(true)}>Nova fase</AMGButton>
           </div>
           <div className="p-4 sm:p-5 space-y-4">
             {(!profile.phases || profile.phases.length === 0) ? (
               <div className="text-center py-8">
-                <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
+                <IconSet.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
                 <div className="f-display font-bold text-sm mb-1">Cap fase definida</div>
                 <p className="f-mono text-xs text-ink-2">Afegeix la primera fase al perfil</p>
               </div>

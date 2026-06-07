@@ -11,7 +11,7 @@ import {
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 export default function GenerateDocumentPage() {
   const params = useParams();
@@ -86,7 +86,7 @@ export default function GenerateDocumentPage() {
     return (
       <PortalShell breadcrumb="admin · documents · generate" backHref="/portal/admin/documents">
         <div className="p-8 text-center">
-          <I.FileText size={28} stroke="#64748b" className="mx-auto mb-3" />
+          <IconSet.FileText size={28} stroke="#64748b" className="mx-auto mb-3" />
           <div className="f-display font-bold text-sm">Plantilla no trobada</div>
         </div>
       </PortalShell>
@@ -97,12 +97,12 @@ export default function GenerateDocumentPage() {
     return (
       <PortalShell breadcrumb={`admin · documents · ${template.name}`} backHref="/portal/admin/documents">
         <div className="p-4 sm:p-8 space-y-6 max-w-2xl mx-auto text-center">
-          <I.Check size={48} className="mx-auto text-green-500" />
+          <IconSet.Check size={48} className="mx-auto text-green-500" />
           <div className="f-display font-bold text-xl mt-4">Document generat correctament</div>
           <p className="text-ink-1 mt-2">Pots veure el document o generar-ne un altre.</p>
           <div className="flex gap-3 justify-center mt-6">
             <AMGButton onClick={() => router.push(`/portal/admin/documents/view/${resultId}`)}>
-              <I.Eye size={14} />
+              <IconSet.Eye size={14} />
               Veure document
             </AMGButton>
             <AMGButton variant="outline" onClick={() => setResultId(null)}>
@@ -163,7 +163,7 @@ export default function GenerateDocumentPage() {
             <div className="flex items-center justify-between mb-3">
               <div className="f-display font-bold text-sm">Articles / Serveis</div>
               <AMGButton size="sm" variant="secondary" onClick={addArticle}>
-                <I.Plus size={14} />
+                <IconSet.Plus size={14} />
                 Afegir línia
               </AMGButton>
             </div>
@@ -187,7 +187,7 @@ export default function GenerateDocumentPage() {
                   </div>
                   {articles.length > 1 && (
                     <button onClick={() => removeArticle(idx)} className="pt-2 text-ink-2 hover:text-red-400">
-                      <I.X size={16} />
+                      <IconSet.X size={16} />
                     </button>
                   )}
                 </div>
@@ -203,10 +203,10 @@ export default function GenerateDocumentPage() {
 
           {/* Actions */}
           <div className="flex gap-3 border-t border-border-base pt-4">
-            <AMGButton onClick={() => doGenerate()} disabled={generating} icon={I.FileText}>
+            <AMGButton onClick={() => doGenerate()} disabled={generating} icon={IconSet.FileText}>
               {generating ? 'Generant...' : 'Generar document'}
             </AMGButton>
-            <AMGButton variant="secondary" onClick={() => doGeneratePdf()} disabled={generatingPdf} icon={I.Download}>
+            <AMGButton variant="secondary" onClick={() => doGeneratePdf()} disabled={generatingPdf} icon={IconSet.Download}>
               {generatingPdf ? 'Generant...' : 'Generar PDF'}
             </AMGButton>
           </div>

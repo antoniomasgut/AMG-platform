@@ -7,7 +7,7 @@ import { useToast } from '@/lib/toast-context';
 import { createLead } from '@/services/leads';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useRouter, useParams } from 'next/navigation';
 
 const SOURCES = ['WEBSITE', 'REFERRAL', 'COLD_CALL', 'SOCIAL_MEDIA', 'OTHER'] as const;
@@ -107,7 +107,7 @@ export default function NewLeadPage() {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <AMGButton type="submit" loading={isPending} icon={I.Plus}>
+            <AMGButton type="submit" loading={isPending} icon={IconSet.Plus}>
               Crear Lead
             </AMGButton>
             <AMGButton

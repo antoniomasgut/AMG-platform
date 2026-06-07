@@ -8,7 +8,7 @@ import {
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Esborrany',
@@ -42,7 +42,7 @@ export default function ViewDocumentPage() {
     return (
       <PortalShell breadcrumb="admin · documents · view" backHref="/portal/admin/documents/list">
         <div className="p-8 text-center">
-          <I.FileText size={28} stroke="#64748b" className="mx-auto mb-3" />
+          <IconSet.FileText size={28} stroke="#64748b" className="mx-auto mb-3" />
           <div className="f-display font-bold text-sm">Document no trobat</div>
         </div>
       </PortalShell>
@@ -64,7 +64,7 @@ export default function ViewDocumentPage() {
           </div>
           <div className="flex gap-2">
             {doc.pdfUrl && (
-              <AMGButton size="sm" icon={I.Download} onClick={() => window.open(doc.pdfUrl!, '_blank')}>
+              <AMGButton size="sm" icon={IconSet.Download} onClick={() => window.open(doc.pdfUrl!, '_blank')}>
                 Descarregar PDF
               </AMGButton>
             )}
@@ -83,7 +83,7 @@ export default function ViewDocumentPage() {
             </div>
           ) : (
             <div className="text-center py-12 text-ink-2">
-              <I.FileText size={24} stroke="currentColor" className="mx-auto mb-3" />
+              <IconSet.FileText size={24} stroke="currentColor" className="mx-auto mb-3" />
               <p className="f-mono text-xs">Aquest document no té contingut HTML disponible</p>
             </div>
           )}

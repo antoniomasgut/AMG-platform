@@ -119,7 +119,7 @@ class KnowledgeBaseServiceTest {
     @Test
     void addDocument_incrementsVersion() {
         int before = kb.getVersion();
-        knowledgeBaseService.addDocument(tenantId, "test.txt", "content");
+        knowledgeBaseService.addDocument(tenantId, "test.txt", "content", null, null, null);
 
         kb = knowledgeBaseRepository.findByTenantId(tenantId).orElseThrow();
         assertThat(kb.getVersion(), is(before + 1));
@@ -145,7 +145,7 @@ class KnowledgeBaseServiceTest {
     void buildKnowledgeBlock_includesDocuments() {
         knowledgeDocumentRepository.save(KnowledgeDocument.builder()
                 .knowledgeBaseId(kb.getId()).filename("menu.pdf")
-                .contentText("Menú: Pizza 10€, Pasta 12€").build());
+                .extractedText("Menú: Pizza 10€, Pasta 12€").build());
 
         var block = knowledgeBaseService.buildKnowledgeBlock(tenantId);
         assertThat(block, containsString("DOCUMENTS"));
@@ -156,7 +156,7 @@ class KnowledgeBaseServiceTest {
     @Test
     void addDocument_rejectsNonExistentTenant() {
         var unknownId = UUID.randomUUID();
-        var doc = knowledgeBaseService.addDocument(unknownId, "test.txt", "content");
+        var doc = knowledgeBaseService.addDocument(unknownId, "test.txt", "content", null, null, null);
         assertThat(doc, is(notNullValue()));
     }
 }

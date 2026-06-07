@@ -15,7 +15,7 @@ import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGInput } from '@/components/ui/input';
 import { AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 function fmtDate(d: string | null) {
   if (!d) return '—';
@@ -90,7 +90,7 @@ function RegisterDomainModal({ onClose, onRegistered }: { onClose: () => void; o
       <div className="amg-card card-clip w-full max-w-lg p-6 space-y-5" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Registrar domini</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
 
         {/* Cercador */}
@@ -130,8 +130,8 @@ function RegisterDomainModal({ onClose, onRegistered }: { onClose: () => void; o
           }`}>
             <div className="flex items-center gap-2 mb-2">
               {checkResult.available
-                ? <><I.Check size={16} className="text-green-400" /><span className="font-semibold text-green-400">Disponible</span></>
-                : <><I.X size={16} className="text-red-400" /><span className="font-semibold text-red-400">No disponible</span></>
+                ? <><IconSet.Check size={16} className="text-green-400" /><span className="font-semibold text-green-400">Disponible</span></>
+                : <><IconSet.X size={16} className="text-red-400" /><span className="font-semibold text-red-400">No disponible</span></>
               }
               <span className="f-mono text-sm text-ink-1 ml-1">{checkResult.domainName}</span>
             </div>
@@ -302,7 +302,7 @@ export default function DomainsPage() {
             <h1 className="f-display font-bold text-xl mt-1">Dominis</h1>
             <p className="text-sm text-ink-2 mt-1">Gestió i venda de dominis per als clients</p>
           </div>
-          <AMGButton variant="primary" icon={I.Plus} onClick={() => setShowRegister(true)}>
+          <AMGButton variant="primary" icon={IconSet.Plus} onClick={() => setShowRegister(true)}>
             Registrar domini
           </AMGButton>
         </div>
@@ -310,7 +310,7 @@ export default function DomainsPage() {
         {/* Alerta expiració */}
         {expiringCount > 0 && (
           <div className="flex items-center gap-3 p-4 border border-[rgba(255,107,0,0.35)] bg-[rgba(255,107,0,0.06)] rounded">
-            <I.AlertCircle size={18} className="text-accent-light flex-shrink-0" />
+            <IconSet.AlertCircle size={18} className="text-accent-light flex-shrink-0" />
             <div className="text-sm text-ink-1">
               <span className="font-semibold text-accent-light">{expiringCount} domini{expiringCount > 1 ? 's' : ''}</span>
               {' '}expira{expiringCount > 1 ? 'n' : ''} en els pròxims 30 dies
@@ -331,7 +331,7 @@ export default function DomainsPage() {
               </div>
             ) : domains.length === 0 ? (
               <div className="p-12 text-center">
-                <I.Link size={28} stroke="#64748b" className="mx-auto mb-3" />
+                <IconSet.Link size={28} stroke="#64748b" className="mx-auto mb-3" />
                 <div className="f-display font-bold text-sm mb-1">Cap domini registrat</div>
                 <p className="f-mono text-xs text-ink-2 mb-4">Registra el primer domini per a un client</p>
                 <AMGButton size="sm" onClick={() => setShowRegister(true)}>Registrar domini</AMGButton>

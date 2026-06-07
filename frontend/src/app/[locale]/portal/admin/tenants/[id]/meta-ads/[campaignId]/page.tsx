@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useToast } from '@/lib/toast-context';
 import { GenerateImageModal } from '@/components/meta-ads/GenerateImageModal';
 import {
@@ -137,7 +137,7 @@ function AdSetCard({ adSet, tenantId, onDeleted, onAdded }: {
         onClick={() => setExpanded(e => !e)}
       >
         <div className="flex items-center gap-2">
-          {expanded ? <I.ChevDown size={12} className="text-ink-3" /> : <I.Chevron size={12} className="text-ink-3" />}
+          {expanded ? <IconSet.ChevDown size={12} className="text-ink-3" /> : <IconSet.Chevron size={12} className="text-ink-3" />}
           <span className="text-sm font-medium text-ink-1">{adSet.name}</span>
           <AMGBadge tone={STATUS_TONE[adSet.status] as any}>
             {STATUS_LABEL[adSet.status] ?? adSet.status}
@@ -217,7 +217,7 @@ function AdSetCard({ adSet, tenantId, onDeleted, onAdded }: {
                     onClick={() => setShowGenModal(true)}
                     className="flex items-center gap-1 text-xs text-[#FF6B00] hover:text-[#FF9A3C] font-medium"
                   >
-                    <I.Sparkles size={12} />
+                    <IconSet.Sparkles size={12} />
                     Genera amb IA
                   </button>
                 </div>
@@ -264,7 +264,7 @@ function AdSetCard({ adSet, tenantId, onDeleted, onAdded }: {
           ) : (
             <button type="button" onClick={() => setShowNewAd(true)}
               className="flex items-center gap-1 text-xs text-accent-light hover:underline">
-              <I.Plus size={12} />Afegir anunci
+              <IconSet.Plus size={12} />Afegir anunci
             </button>
           )}
 
@@ -469,7 +469,7 @@ export default function CampaignDetailPage() {
             {campaign.status !== 'ARCHIVED' && (
               <button type="button" onClick={() => setShowNewAdSet(s => !s)}
                 className="flex items-center gap-1 text-xs text-accent-light hover:underline">
-                <I.Plus size={12} />Afegir ad set
+                <IconSet.Plus size={12} />Afegir ad set
               </button>
             )}
           </div>

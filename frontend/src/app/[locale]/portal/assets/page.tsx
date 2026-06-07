@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { listAssets, uploadAsset, deleteAsset, type AssetResponse } from '@/services/assets';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -70,7 +70,7 @@ export default function AssetsPage() {
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / assets /</span>
             <div className="f-display font-bold text-xl mt-1">Fitxers i Imatges</div>
           </div>
-          <AMGButton icon={I.Upload} loading={uploading} onClick={() => inputRef.current?.click()}>
+          <AMGButton icon={IconSet.Upload} loading={uploading} onClick={() => inputRef.current?.click()}>
             Pujar fitxer
           </AMGButton>
           <input
@@ -98,7 +98,7 @@ export default function AssetsPage() {
             </div>
           ) : (
             <>
-              <I.Upload size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Upload size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Arrossega fitxers aquí</div>
               <p className="f-mono text-label text-ink-2">o fes clic a "Pujar fitxer"</p>
             </>
@@ -111,7 +111,7 @@ export default function AssetsPage() {
           </div>
         ) : assets.length === 0 ? (
           <div className="amg-card card-clip p-8 text-center">
-            <I.Image size={28} stroke="#64748b" className="mx-auto mb-3" />
+            <IconSet.Image size={28} stroke="#64748b" className="mx-auto mb-3" />
             <div className="f-display font-bold text-sm mb-1">Cap fitxer</div>
             <p className="f-mono text-label text-ink-2">Puja el primer fitxer del teu tenant</p>
           </div>
@@ -130,7 +130,7 @@ export default function AssetsPage() {
                       style={{ objectFit: 'cover' }}
                     />
                   ) : (
-                    <I.Box size={32} stroke="#64748b" />
+                    <IconSet.Box size={32} stroke="#64748b" />
                   )}
                   <button
                     onClick={() => {
@@ -138,7 +138,7 @@ export default function AssetsPage() {
                     }}
                     className="absolute top-2 right-2 w-7 h-7 bg-danger/80 hover:bg-danger text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <I.Trash size={12} />
+                    <IconSet.Trash size={12} />
                   </button>
                 </div>
                 {/* Info */}

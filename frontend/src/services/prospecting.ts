@@ -10,6 +10,8 @@ export interface Campaign {
   totalFound: number;
   totalExported: number;
   createdAt: string;
+  scheduledNextRun?: string | null;
+  repeatIntervalDays?: number | null;
 }
 
 export interface Prospect {
@@ -100,3 +102,9 @@ export const qualifyTop = (id: string, topN = 10) =>
 
 export const qualifyByMinScore = (id: string, minScore: number) =>
   apiFetch<{ qualified: number }>(`/prospecting/campaigns/${id}/qualify-min-score?minScore=${minScore}`, { method: 'POST' });
+
+export const scheduleCampaign = (id: string, nextRun: string, repeatDays: number) =>
+  apiFetch<Campaign>(`/prospecting/campaigns/${id}/schedule?nextRun=${encodeURIComponent(nextRun)}&repeatDays=${repeatDays}`, { method: 'POST' });
+
+export const unscheduleCampaign = (id: string) =>
+  apiFetch<Campaign>(`/prospecting/campaigns/${id}/unschedule`, { method: 'POST' });

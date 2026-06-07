@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useToast } from '@/lib/toast-context';
 import { getPlatformSelf } from '@/services/platform';
 import { getTenant, listTenants } from '@/services/admin';
@@ -72,7 +72,7 @@ function ConfigKeyRow({ item, onSave }: {
           )}
           {item.configured && item.source === 'DB' && (
             <AMGButton size="sm" variant="secondary" onClick={() => setEditing(true)}>
-              <I.Edit size={12} />Editar
+              <IconSet.Edit size={12} />Editar
             </AMGButton>
           )}
         </div>
@@ -92,7 +92,7 @@ function ConfigKeyRow({ item, onSave }: {
             {item.secret && (
               <button type="button" onClick={() => setShow(s => !s)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink-1">
-                {show ? <I.EyeOff size={14} /> : <I.Eye size={14} />}
+                {show ? <IconSet.EyeOff size={14} /> : <IconSet.Eye size={14} />}
               </button>
             )}
           </div>
@@ -224,7 +224,7 @@ export default function PlatformConfigPage() {
             <p className="text-xs text-ink-3 mt-0.5">Stripe, Holded, GCS, n8n, Twilio, Google Calendar...</p>
           </div>
           <a href={`/${locale}/portal/admin/config`} className="text-xs text-accent-light hover:underline flex items-center gap-1">
-            Obrir configuració completa <I.ArrowRight size={12} />
+            Obrir configuració completa <IconSet.ArrowRight size={12} />
           </a>
         </div>
 

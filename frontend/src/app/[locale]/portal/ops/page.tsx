@@ -12,7 +12,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGStat, AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const SEVERITY_TONE: Record<string, 'danger' | 'warning' | 'info'> = {
   CRITICAL: 'danger', WARNING: 'warning', INFO: 'info',
@@ -106,7 +106,7 @@ export default function OpsPage() {
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / ops /</span>
             <div className="f-display font-bold text-xl mt-1">Ops & Health</div>
           </div>
-          <AMGButton size="sm" icon={I.Upload} disabled={backingUp} onClick={() => doBackup()}>
+          <AMGButton size="sm" icon={IconSet.Upload} disabled={backingUp} onClick={() => doBackup()}>
             {backingUp ? 'Fent còpia...' : 'Còpia ara'}
           </AMGButton>
         </div>
@@ -116,25 +116,25 @@ export default function OpsPage() {
             <AMGStat
               label="Serveis UP"
               value={`${dashboard.currentStatus.up} / ${dashboard.currentStatus.services}`}
-              icon={I.Activity}
+              icon={IconSet.Activity}
               tone={dashboard.currentStatus.down > 0 ? 'danger' : 'success'}
             />
             <AMGStat
               label="Incidents oberts"
               value={String(dashboard.openIncidents)}
-              icon={I.AlertCircle}
+              icon={IconSet.AlertCircle}
               tone={dashboard.openIncidents > 0 ? 'danger' : 'success'}
             />
             <AMGStat
               label="Uptime"
               value={`${dashboard.uptimePercentage.toFixed(1)}%`}
-              icon={I.Trending}
+              icon={IconSet.Trending}
               tone={dashboard.uptimePercentage >= 99 ? 'success' : 'danger'}
             />
             <AMGStat
               label="Resposta mitj."
               value={dashboard.avgResponseTimeMs ? `${Math.round(dashboard.avgResponseTimeMs)} ms` : '—'}
-              icon={I.Clock}
+              icon={IconSet.Clock}
               tone="info"
             />
           </div>
@@ -166,7 +166,7 @@ export default function OpsPage() {
             </div>
           ) : incidents.length === 0 ? (
             <div className="p-8 text-center">
-              <I.Check size={28} stroke="#39d353" className="mx-auto mb-3" />
+              <IconSet.Check size={28} stroke="#39d353" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap incident actiu</div>
               <p className="text-ui text-ink-2">Tots els serveis funcionen correctament</p>
             </div>
@@ -189,7 +189,7 @@ export default function OpsPage() {
                       <AMGButton size="sm" variant="outline" onClick={() => doAck(inc.id)}>Reconèixer</AMGButton>
                     )}
                     {inc.status !== 'RESOLVED' && (
-                      <AMGButton size="sm" icon={I.Check} onClick={() => doResolve(inc.id)}>Resoldre</AMGButton>
+                      <AMGButton size="sm" icon={IconSet.Check} onClick={() => doResolve(inc.id)}>Resoldre</AMGButton>
                     )}
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export default function OpsPage() {
             <div className="divide-y divide-[rgba(226,232,240,0.04)]">
               {backups.slice(0, 5).map((b) => (
                 <div key={b.id} className="px-4 sm:px-5 py-3 flex items-center gap-4">
-                  <I.Upload size={14} stroke="#8896aa" />
+                  <IconSet.Upload size={14} stroke="#8896aa" />
                   <div className="flex-1 min-w-0">
                     <div className="f-mono text-xs text-ink-1">{b.type} — {b.description ?? '—'}</div>
                     <div className="f-mono text-label text-ink-3">{fmtDate(b.startedAt)}</div>

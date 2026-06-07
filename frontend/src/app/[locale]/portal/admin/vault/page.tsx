@@ -16,7 +16,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { profileFormSchema, serviceFormSchema } from '@/lib/validations/vault';
 import { FieldError } from '@/components/ui/field-error';
 
@@ -61,7 +61,7 @@ function NewProfileModal({ onClose, onCreated }: { onClose: () => void; onCreate
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Nou perfil</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -148,7 +148,7 @@ function NewServiceModal({ onClose, onCreated }: { onClose: () => void; onCreate
       <div className="amg-card card-clip w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Nou servei</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -332,7 +332,7 @@ export default function AdminVaultPage() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="f-mono text-label uppercase text-ink-3">Perfils de serveis</span>
-              <AMGButton size="sm" icon={I.Plus} onClick={() => setShowNewProfile(true)}>Nou perfil</AMGButton>
+              <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setShowNewProfile(true)}>Nou perfil</AMGButton>
             </div>
             {loadingProfiles ? (
               <div className="flex justify-center py-12">
@@ -340,7 +340,7 @@ export default function AdminVaultPage() {
               </div>
             ) : !profiles || profiles.length === 0 ? (
               <div className="amg-card card-clip p-8 text-center">
-                <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
+                <IconSet.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
                 <div className="f-display font-bold text-sm mb-1">Cap perfil</div>
                 <p className="f-mono text-xs text-ink-2">Crea el primer perfil per començar</p>
               </div>
@@ -351,7 +351,7 @@ export default function AdminVaultPage() {
                     <ProfileCard profile={p} />
                     <button onClick={(e) => { e.stopPropagation(); if (confirm('Eliminar aquest perfil?')) doDeleteProfile(p.id); }}
                       className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded bg-black/40 opacity-0 group-hover:opacity-100 hover:bg-danger/80 transition text-ink-2 hover:text-white">
-                      <I.X size={14} />
+                      <IconSet.X size={14} />
                     </button>
                   </div>
                 ))}
@@ -365,7 +365,7 @@ export default function AdminVaultPage() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="f-mono text-label uppercase text-ink-3">Catàleg de serveis</span>
-              <AMGButton size="sm" icon={I.Plus} onClick={() => setShowNewService(true)}>Nou servei</AMGButton>
+              <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setShowNewService(true)}>Nou servei</AMGButton>
             </div>
             {loadingServices ? (
               <div className="flex justify-center py-12">
@@ -373,7 +373,7 @@ export default function AdminVaultPage() {
               </div>
             ) : !services || services.length === 0 ? (
               <div className="amg-card card-clip p-8 text-center">
-                <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
+                <IconSet.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
                 <div className="f-display font-bold text-sm mb-1">Cap servei al catàleg</div>
                 <p className="f-mono text-xs text-ink-2">Crea serveis per afegir-los al catàleg</p>
               </div>
@@ -438,7 +438,7 @@ export default function AdminVaultPage() {
               </div>
             ) : !outdated || outdated.length === 0 ? (
               <div className="amg-card card-clip p-8 text-center">
-                <I.Check size={28} stroke="#22c55e" className="mx-auto mb-3" />
+                <IconSet.Check size={28} stroke="#22c55e" className="mx-auto mb-3" />
                 <div className="f-display font-bold text-sm mb-1">Tot actualitzat</div>
                 <p className="f-mono text-xs text-ink-2">Cap servei de client desfassat</p>
               </div>

@@ -16,7 +16,7 @@ const Icon = ({ d, size = 16, stroke = 'currentColor', children }: { d?: string;
   </svg>
 );
 
-const I = {
+const IconSet = {
   Mail: (p: IconProps) => <Icon {...p}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></Icon>,
   Lock: (p: IconProps) => <Icon {...p}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></Icon>,
   ArrowRight: (p: IconProps) => <Icon {...p}><path d="M5 12h14M13 5l7 7-7 7"/></Icon>,
@@ -134,14 +134,14 @@ export default function LoginPage() {
             {state === 'sent' ? (
               <>
                 <div className="w-16 h-16 bg-accent-muted border border-accent flex items-center justify-center mb-5 mx-auto">
-                  <I.Mail size={24} stroke="#FF9A3C" />
+                  <IconSet.Mail size={24} stroke="#FF9A3C" />
                 </div>
                 <h2 className="f-display font-black text-2xl text-center">{t('checkEmail')}</h2>
                 <p className="text-ui text-ink-1 mt-2 text-center">{t('linkSentTo')}</p>
                 <div className="f-mono text-sm text-accent-light text-center mt-1">{successEmail}</div>
 
                 <div className="mt-6 p-3 border-l-2 border-l-[#58a6ff] bg-[rgba(88,166,255,0.05)] flex gap-3">
-                  <I.Clock size={14} stroke="#58a6ff" className="shrink-0 mt-0.5" />
+                  <IconSet.Clock size={14} stroke="#58a6ff" className="shrink-0 mt-0.5" />
                   <div className="text-data text-ink-1">
                     {t('linkExpires')} <span className="text-info f-mono">{t('minutes')}</span>. {t('checkSpam')}
                   </div>
@@ -160,7 +160,7 @@ export default function LoginPage() {
                   <label className="block">
                     <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">{t('emailLabel')}</span>
                     <div className="relative flex items-center h-10 bg-bg-2/80 border border-border-base focus-within:border-accent transition">
-                      <div className="pl-3 text-ink-3"><I.Mail size={14} /></div>
+                      <div className="pl-3 text-ink-3"><IconSet.Mail size={14} /></div>
                       <input
                         type="email"
                         value={email}
@@ -184,7 +184,7 @@ export default function LoginPage() {
                     disabled={submitting || !email.trim()}
                     className="w-full h-10 f-mono text-xs uppercase btn-clip bg-accent hover:bg-accent-light text-black font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                   >
-                    {submitting ? <span className="w-3 h-3 border-2 border-black/60 border-t-transparent rounded-full animate-spin" /> : <I.ArrowRight size={14} />}
+                    {submitting ? <span className="w-3 h-3 border-2 border-black/60 border-t-transparent rounded-full animate-spin" /> : <IconSet.ArrowRight size={14} />}
                     {submitting ? t('sending') : t('sendMagicLink')}
                   </button>
                 </form>
@@ -202,7 +202,7 @@ export default function LoginPage() {
                   <label className="block">
                     <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">{t('emailLabel')}</span>
                     <div className="relative flex items-center h-10 bg-bg-2/80 border border-border-base focus-within:border-accent transition">
-                      <div className="pl-3 text-ink-3"><I.Mail size={14} /></div>
+                      <div className="pl-3 text-ink-3"><IconSet.Mail size={14} /></div>
                       <input
                         type="email"
                         value={email}
@@ -218,7 +218,7 @@ export default function LoginPage() {
                   <label className="block">
                     <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">{t('passwordLabel')}</span>
                     <div className="relative flex items-center h-10 bg-bg-2/80 border border-border-base focus-within:border-accent transition">
-                      <div className="pl-3 text-ink-3"><I.Lock size={14} /></div>
+                      <div className="pl-3 text-ink-3"><IconSet.Lock size={14} /></div>
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={password}
@@ -233,14 +233,14 @@ export default function LoginPage() {
                         aria-label={showPassword ? 'Ocultar contrasenya' : 'Mostrar contrasenya'}
                         className="pr-3 text-ink-2 hover:text-ink-0 transition"
                       >
-                        {showPassword ? <I.EyeOff size={14} /> : <I.Eye size={14} />}
+                        {showPassword ? <IconSet.EyeOff size={14} /> : <IconSet.Eye size={14} />}
                       </button>
                     </div>
                   </label>
 
                   {errorMsg && (
                     <div className="flex items-start gap-2 p-3 border-l-2 border-l-danger bg-[rgba(255,68,68,0.05)]">
-                      <I.AlertCircle size={14} stroke="#ff6666" className="shrink-0 mt-0.5" />
+                      <IconSet.AlertCircle size={14} stroke="#ff6666" className="shrink-0 mt-0.5" />
                       <span className="text-data text-danger-light">{errorMsg}</span>
                     </div>
                   )}
@@ -250,7 +250,7 @@ export default function LoginPage() {
                     disabled={submitting || !email.trim() || !password}
                     className="w-full h-10 f-mono text-xs uppercase btn-clip bg-accent hover:bg-accent-light text-black font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                   >
-                    {submitting ? <span className="w-3 h-3 border-2 border-black/60 border-t-transparent rounded-full animate-spin" /> : <I.ArrowRight size={14} />}
+                    {submitting ? <span className="w-3 h-3 border-2 border-black/60 border-t-transparent rounded-full animate-spin" /> : <IconSet.ArrowRight size={14} />}
                     {submitting ? t('entering') : t('enter')}
                   </button>
 

@@ -85,6 +85,16 @@ public class PromptBuilder {
             sb.append(buildEquipBlock(equipJson));
         }
 
+        String ragJson = configs.get("RAG");
+        if (isEnabled(ragJson)) {
+            sb.append(buildRagBlock(ragJson));
+        }
+
+        String horariJson = configs.get("HORARI");
+        if (isEnabled(horariJson)) {
+            sb.append(buildHorariBlock(horariJson));
+        }
+
         return sb.toString();
     }
 
@@ -221,6 +231,45 @@ public class PromptBuilder {
     private static String str(Map<String, Object> m, String key, String def) {
         Object v = m.get(key);
         return v != null && !v.toString().isBlank() ? v.toString() : def;
+    }
+
+    private String buildRagBlock(String json) {
+        try {
+            Map<String, Object> c = objectMapper.readValue(json, new TypeReference<>() {});
+            var sb = new StringBuilder("\nBASE DE CONEIXEMENT (RAG):\n");
+            sb.append("- Utilitza la base de coneixement del negoci per respondre preguntes sobre serveis, horaris, preus i informació del negoci\n");
+
+            String customInstructions = str(c, "customInstructions", "");
+            if (!customInstructions.isBlank()) {
+                sb.append("- Instruccions addicionals: ").append(customInstructions).append("\n");
+            }
+
+            String sourcePriority = str(c, "sourcePriority", "");
+            if (!sourcePriority.isBlank()) {
+                sb.append("- Prioritza les fonts en aquest ordre: ").append(sourcePriority).append("\n");
+            }
+
+            return sb.toString();
+        } catch (Exception e) {
+            log.debug("Could not parse RAG config: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    private String buildHorariBlock(String json) {
+        try {
+            Map<String, Object> c = objectMapper.readValue(json, new TypeReference<>() {});
+            var sb = new StringBuilder("\nFORA D'HORARI:\n");
+            String message = str(c, "outOfHoursMessage", "");
+            if (!message.isBlank()) {
+                sb.append("- Missatge per a clients fora d'horari: \"").append(message).append("\"\n");
+            }
+            sb.append("- Informa els clients sobre l'horari del negoci i quan podran rebre resposta\n");
+            return sb.toString();
+        } catch (Exception e) {
+            log.debug("Could not parse HORARI config: {}", e.getMessage());
+            return "";
+        }
     }
 
     private String buildHistoryBlock(CustomerContext context) {

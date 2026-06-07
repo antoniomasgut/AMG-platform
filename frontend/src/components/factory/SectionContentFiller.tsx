@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { blockTypeFromBackend, type TemplateSectionView } from '@/services/templates';
 import { BLOCK_TEMPLATES } from '@/services/factory';
 
@@ -50,7 +50,7 @@ function ArrayFieldEditor({
       <div className="flex items-center justify-between">
         <label className="f-mono text-label uppercase text-ink-2 text-xs">{label}</label>
         <button type="button" onClick={addItem} className="text-accent-light hover:text-accent text-xs flex items-center gap-1">
-          <I.Plus size={12} /> Afegir
+          <IconSet.Plus size={12} /> Afegir
         </button>
       </div>
       {value.length === 0 ? (
@@ -81,7 +81,7 @@ function ArrayFieldEditor({
                 }
               </div>
               <button type="button" onClick={() => removeItem(i)} className="text-ink-2 hover:text-warning mt-1">
-                <I.X size={12} />
+                <IconSet.X size={12} />
               </button>
             </div>
           ))}
@@ -225,7 +225,7 @@ export function SectionContentFillerList({ sections, filledSections, onSectionCh
   if (sections.length === 0) {
     return (
       <div className="p-8 text-center">
-        <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
+        <IconSet.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
         <p className="f-mono text-xs text-ink-2">Aquesta plantilla no té seccions</p>
       </div>
     );

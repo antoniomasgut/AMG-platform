@@ -6,7 +6,7 @@ import { useState, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useToast } from '@/lib/toast-context';
 import { GenerateImageModal } from '@/components/meta-ads/GenerateImageModal';
 import {
@@ -407,7 +407,7 @@ export default function NewCampaignPage() {
                   onClick={() => setShowGenModal(true)}
                   className="flex items-center gap-1.5 text-xs text-[#FF6B00] hover:text-[#FF9A3C] font-medium transition-colors"
                 >
-                  <I.Sparkles size={13} />
+                  <IconSet.Sparkles size={13} />
                   Genera amb IA
                 </button>
               </div>
@@ -436,7 +436,7 @@ export default function NewCampaignPage() {
                     <span className="text-xs text-ink-3">Pujant...</span>
                   ) : (
                     <>
-                      <I.Upload size={20} className="text-ink-3 mb-2" />
+                      <IconSet.Upload size={20} className="text-ink-3 mb-2" />
                       <span className="text-xs text-ink-2">Fes clic per seleccionar una imatge</span>
                       <span className="text-xs text-ink-3 mt-0.5">JPG, PNG — recomanat 1200×628px</span>
                     </>

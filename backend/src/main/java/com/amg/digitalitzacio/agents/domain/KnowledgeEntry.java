@@ -38,6 +38,13 @@ public class KnowledgeEntry {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    @Column(name = "embedding", columnDefinition = "TEXT")
+    private String embedding;
+
+    @Builder.Default
+    @Column(name = "is_vectorized", nullable = false)
+    private Boolean isVectorized = false;
+
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;

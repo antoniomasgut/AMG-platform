@@ -9,7 +9,7 @@ import { getSystemConfig, setSystemConfig, deleteSystemConfig, testSystemConfig,
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const CATEGORY_ORDER = [
   'MAINTENANCE',
@@ -80,9 +80,9 @@ function CategoryHelp({ category }: { category: string }) {
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center gap-2 px-4 sm:px-5 py-2.5 text-left hover:bg-accent/5 transition-colors"
       >
-        <I.AlertCircle size={13} className="text-accent-light flex-shrink-0" />
+        <IconSet.AlertCircle size={13} className="text-accent-light flex-shrink-0" />
         <span className="f-mono text-xs text-accent-light">Com configurar — instruccions pas a pas</span>
-        <I.ChevDown size={13} className={`ml-auto text-ink-3 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <IconSet.ChevDown size={13} className={`ml-auto text-ink-3 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div className="px-4 sm:px-5 pb-5 space-y-6 bg-[rgba(255,107,0,0.03)]">
@@ -176,25 +176,25 @@ function KeyRow({ item, onSave, onDelete, t }: {
             </AMGButton>
           )}
           {!item.configured && (
-            <AMGButton size="sm" icon={I.Plus} onClick={() => setEditing(true)}>
+            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setEditing(true)}>
               {t('btnConfigure')}
             </AMGButton>
           )}
           {item.configured && item.source !== 'ENV' && (
             <>
-              <AMGButton size="sm" variant="secondary" icon={I.Edit} onClick={() => setEditing(true)}>
+              <AMGButton size="sm" variant="secondary" icon={IconSet.Edit} onClick={() => setEditing(true)}>
                 {t('btnEdit')}
               </AMGButton>
               <AMGButton
                 size="sm"
                 variant="ghost"
-                icon={I.FileText}
+                icon={IconSet.FileText}
                 onClick={handleAudit}
               />
               <AMGButton
                 size="sm"
                 variant="ghost"
-                icon={I.Trash}
+                icon={IconSet.Trash}
                 onClick={() => { if (confirm(t('confirmDelete', { key: item.key }))) onDelete(item.key); }}
               />
             </>
@@ -236,7 +236,7 @@ function KeyRow({ item, onSave, onDelete, t }: {
                 <span className={`block w-4 h-4 bg-white rounded-full transition-transform ${value === 'true' ? 'translate-x-5' : 'translate-x-1'}`} />
               </button>
               <span className="f-mono text-xs text-ink-2">{value === 'true' ? t('toggleActive') : t('toggleInactive')}</span>
-              <AMGButton size="sm" icon={I.Check} onClick={() => { onSave(item.key, value || 'false'); setEditing(false); }}>
+              <AMGButton size="sm" icon={IconSet.Check} onClick={() => { onSave(item.key, value || 'false'); setEditing(false); }}>
                 {t('btnSave')}
               </AMGButton>
               <AMGButton size="sm" variant="ghost" onClick={() => setEditing(false)}>{t('btnCancel')}</AMGButton>
@@ -251,7 +251,7 @@ function KeyRow({ item, onSave, onDelete, t }: {
                 autoFocus
               />
               <div className="flex gap-2 shrink-0">
-                <AMGButton size="sm" icon={I.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); }}>
+                <AMGButton size="sm" icon={IconSet.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); }}>
                   {t('btnSave')}
                 </AMGButton>
                 <AMGButton size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(''); }}>
@@ -269,7 +269,7 @@ function KeyRow({ item, onSave, onDelete, t }: {
                 className="w-40 bg-bg-1 border border-accent text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none"
                 autoFocus
               />
-              <AMGButton size="sm" icon={I.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); }}>
+              <AMGButton size="sm" icon={IconSet.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); }}>
                 {t('btnSave')}
               </AMGButton>
               <AMGButton size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(''); }}>
@@ -293,11 +293,11 @@ function KeyRow({ item, onSave, onDelete, t }: {
                     onClick={() => setShow(!show)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink-1"
                   >
-                    {show ? <I.EyeOff size={14} /> : <I.Eye size={14} />}
+                    {show ? <IconSet.EyeOff size={14} /> : <IconSet.Eye size={14} />}
                   </button>
                 )}
               </div>
-              <AMGButton size="sm" icon={I.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); setValue(''); }}>
+              <AMGButton size="sm" icon={IconSet.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); setValue(''); }}>
                 {t('btnSave')}
               </AMGButton>
               <AMGButton size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(''); }}>
@@ -385,7 +385,7 @@ export default function SystemConfigPage() {
 
         <div className="flex gap-3 items-center">
           <div className="relative flex-1 max-w-sm">
-            <I.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+            <IconSet.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
             <input
               type="text"
               value={search}
@@ -396,7 +396,7 @@ export default function SystemConfigPage() {
           </div>
           {search && (
             <AMGButton size="sm" variant="ghost" onClick={() => setSearch('')}>
-              <I.X size={14} />
+              <IconSet.X size={14} />
             </AMGButton>
           )}
           <span className="f-mono text-xs text-ink-3 ml-auto">

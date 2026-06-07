@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useToast } from '@/lib/toast-context';
 import { getTenant } from '@/services/admin';
 import {
@@ -221,7 +221,7 @@ export default function MetaAdsCampaignsPage() {
             <p className="text-sm text-ink-3 mt-0.5">Campanyes de Facebook i Instagram Ads</p>
           </div>
           <AMGButton onClick={() => router.push(`/${locale}/portal/admin/tenants/${tenantId}/meta-ads/new`)}>
-            <I.Plus size={14} />Nova campanya
+            <IconSet.Plus size={14} />Nova campanya
           </AMGButton>
         </div>
 

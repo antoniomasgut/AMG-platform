@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { getSystemConfig } from '@/services/sysconfig';
 import { getLeadStats } from '@/services/leads';
 import { getCampaigns } from '@/services/prospecting';
@@ -183,7 +183,7 @@ export default function ProcessPage() {
       num: 1,
       title: 'Configuració inicial',
       desc: 'Configura les API keys, el catàleg de serveis i les plantilles de landing.',
-      icon: I.Key,
+      icon: IconSet.Key,
       status: loading ? 'loading' : missingKeys > 5 ? 'blocked' : missingKeys > 0 ? 'attention' : 'ok',
       items: [
         { label: 'API Keys', value: `${configuredKeys} / ${cfgList.length} configurades`, ok: missingKeys === 0 },
@@ -201,7 +201,7 @@ export default function ProcessPage() {
       num: 2,
       title: 'Prospecció',
       desc: 'Cerca empreses per sector i localitat amb Google Maps o Pàgines Grogues.',
-      icon: I.Search,
+      icon: IconSet.Search,
       status: loading ? 'loading' : campaigns.length === 0 ? 'blocked' : activeCamps > 0 ? 'attention' : 'ok',
       items: [
         { label: 'Campanyes totals', value: campaigns.length },
@@ -219,7 +219,7 @@ export default function ProcessPage() {
       num: 3,
       title: 'Leads CRM',
       desc: 'Gestiona el pipeline de leads des de Nou fins a Guanyat o Perdut.',
-      icon: I.Users,
+      icon: IconSet.Users,
       status: loading ? 'loading' : totalLeads === 0 ? 'blocked' : proposalLeads > 0 ? 'attention' : 'ok',
       items: [
         { label: 'Total leads', value: totalLeads },
@@ -237,7 +237,7 @@ export default function ProcessPage() {
       num: 4,
       title: 'Crear Tenant',
       desc: 'Quan un lead és guanyat, crea el seu compte (tenant) i assigna-li un perfil de serveis.',
-      icon: I.Building,
+      icon: IconSet.Building,
       status: loading ? 'loading' : tenantsTotal === 0 ? 'blocked' : 'ok',
       items: [
         { label: 'Tenants actius', value: tenantsTotal },
@@ -255,7 +255,7 @@ export default function ProcessPage() {
       num: 5,
       title: 'Pressupost',
       desc: 'Genera el pressupost per fases, envia\'l al client i espera l\'acceptació.',
-      icon: I.Receipt,
+      icon: IconSet.Receipt,
       status: loading ? 'loading' : 'ok',
       items: [
         { label: 'Pas 1', value: 'Tenant → Pressupostos → Crear per perfil', ok: true },
@@ -273,7 +273,7 @@ export default function ProcessPage() {
       num: 6,
       title: 'Implementació de serveis',
       desc: 'Configura cada fase contractada amb el wizard "Posar en marxa" per tenant.',
-      icon: I.Layers,
+      icon: IconSet.Layers,
       status: loading ? 'loading' : tenantsWithPhases.length === 0 ? 'ok' : 'attention',
       items: [
         { label: 'Tenants amb fases contractades', value: tenantsWithPhases.length, ok: tenantsWithPhases.length === 0 },
@@ -292,7 +292,7 @@ export default function ProcessPage() {
       num: 7,
       title: 'Agents & Automatitzacions',
       desc: 'Activa els agents de comunicació IA i les automatitzacions n8n.',
-      icon: I.Bot,
+      icon: IconSet.Bot,
       status: loading ? 'loading' : totalMessages === 0 ? 'attention' : 'ok',
       items: [
         { label: 'Missatges (30 dies)', value: totalMessages, ok: totalMessages > 0 },
@@ -311,7 +311,7 @@ export default function ProcessPage() {
       num: 8,
       title: 'Manteniment i monitorització',
       desc: 'Supervisa serveis, backups i infraestructura. Respon incidents ràpidament.',
-      icon: I.Activity,
+      icon: IconSet.Activity,
       status: loading ? 'loading' : !infraOk || openIncidents > 0 ? 'attention' : !lastBackupOk ? 'attention' : 'ok',
       items: [
         {
@@ -366,7 +366,7 @@ export default function ProcessPage() {
         {!loading && blockers.length === 0 && (
           <div className="amg-card card-clip p-4 border-l-2 border-l-success bg-success/5">
             <div className="flex items-center gap-2">
-              <I.Check size={14} stroke="#39d353" />
+              <IconSet.Check size={14} stroke="#39d353" />
               <span className="f-mono text-label text-xs text-success">Tot el flux de treball operatiu. Cap acció pendent.</span>
             </div>
           </div>
@@ -413,7 +413,7 @@ export default function ProcessPage() {
         {isSuperAdmin && tenantsWithPhases.length > 0 && (
           <div className="amg-card card-clip p-5 space-y-4">
             <div className="flex items-center gap-2">
-              <I.Zap size={14} className="text-accent-light" />
+              <IconSet.Zap size={14} className="text-accent-light" />
               <span className="f-display font-bold text-sm">Fases contractades per activar</span>
               <AMGBadge tone="warning">{tenantsWithPhases.length}</AMGBadge>
             </div>
@@ -443,7 +443,7 @@ export default function ProcessPage() {
                     variant="primary"
                     onClick={() => router.push(`/${locale}/portal/admin/tenants/${t.id}/activate`)}
                   >
-                    <I.Zap size={11} /> Posar en marxa
+                    <IconSet.Zap size={11} /> Posar en marxa
                   </AMGButton>
                 </div>
               ))}

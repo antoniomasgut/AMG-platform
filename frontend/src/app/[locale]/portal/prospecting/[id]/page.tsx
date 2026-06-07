@@ -9,12 +9,13 @@ import {
   getCampaign, getCampaignProspects, exportProspect, enrichAllProspects, enrichProspect,
   exportContactableProspects, scoreProspects, qualifyByMinScore,
   updateProspect, exportQualifiedProspects,
+  scheduleCampaign, unscheduleCampaign,
   type Campaign, type Prospect,
 } from '@/services/prospecting';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useRouter, useParams } from 'next/navigation';
 
 const PROSPECT_STATUS_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 'warning'> = {
@@ -32,11 +33,11 @@ const PROSPECT_STATUS_LABEL: Record<string, string> = {
 };
 
 const CAMPAIGN_STATUS_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 'warning' | 'accent'> = {
-  DRAFT: 'neutral', IN_PROGRESS: 'info', COMPLETED: 'success', FAILED: 'danger',
+  DRAFT: 'neutral', SCHEDULED: 'accent', IN_PROGRESS: 'info', COMPLETED: 'success', FAILED: 'danger',
 };
 
 const CAMPAIGN_STATUS_LABEL: Record<string, string> = {
-  DRAFT: 'Pendent', IN_PROGRESS: 'En curs', COMPLETED: 'Completada', FAILED: 'Error',
+  DRAFT: 'Pendent', SCHEDULED: 'Programada', IN_PROGRESS: 'En curs', COMPLETED: 'Completada', FAILED: 'Error',
 };
 
 function StarRating({ rating }: { rating: number }) {
@@ -98,7 +99,7 @@ function ProspectDrawer({
               onClick={onClose}
               className="p-1.5 text-ink-3 hover:text-ink-0 hover:bg-bg-2 rounded transition-colors"
             >
-              <I.X size={16} />
+              <IconSet.X size={16} />
             </button>
           </div>
         </div>
@@ -109,10 +110,10 @@ function ProspectDrawer({
           <section>
             <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Contacte</div>
             <div className="space-y-2">
-              <DetailRow icon={<I.Phone size={13} />} label="Telèfon" value={prospect.phone} />
-              <DetailRow icon={<I.Mail size={13} />} label="Email" value={prospect.email} />
+              <DetailRow icon={<IconSet.Phone size={13} />} label="Telèfon" value={prospect.phone} />
+              <DetailRow icon={<IconSet.Mail size={13} />} label="Email" value={prospect.email} />
               <DetailRow
-                icon={<I.Globe size={13} />}
+                icon={<IconSet.Globe size={13} />}
                 label="Web"
                 value={prospect.website
                   ? <a href={prospect.website} target="_blank" rel="noopener noreferrer"
@@ -128,8 +129,8 @@ function ProspectDrawer({
           <section>
             <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Ubicació</div>
             <div className="space-y-2">
-              <DetailRow icon={<I.MapPin size={13} />} label="Adreça" value={prospect.address} />
-              <DetailRow icon={<I.Building size={13} />} label="Municipi" value={
+              <DetailRow icon={<IconSet.MapPin size={13} />} label="Adreça" value={prospect.address} />
+              <DetailRow icon={<IconSet.Building size={13} />} label="Municipi" value={
                 [prospect.city, prospect.postalCode].filter(Boolean).join(' · ') || null
               } />
             </div>
@@ -188,7 +189,7 @@ function ProspectDrawer({
         <div className="p-4 border-t border-border-base flex flex-col gap-2">
           {prospect.status === 'QUALIFIED' && (
             <AMGButton
-              icon={I.ArrowRight}
+              icon={IconSet.ArrowRight}
               loading={exporting}
               onClick={() => onExport(prospect.id)}
               className="w-full justify-center"
@@ -199,7 +200,7 @@ function ProspectDrawer({
           {prospect.status !== 'EXPORTED' && prospect.status !== 'QUALIFIED' && prospect.status !== 'DISCARDED' && (
             <div className="flex gap-2">
               <AMGButton
-                icon={I.Check}
+                icon={IconSet.Check}
                 loading={updatingStatus}
                 onClick={() => onQualify(prospect.id)}
                 className="flex-1 justify-center bg-success/10 border-success/30 text-success hover:bg-success/20"
@@ -208,7 +209,7 @@ function ProspectDrawer({
               </AMGButton>
               <AMGButton
                 variant="secondary"
-                icon={I.X}
+                icon={IconSet.X}
                 loading={updatingStatus}
                 onClick={() => onDiscard(prospect.id)}
                 className="flex-1 justify-center text-danger hover:bg-danger/10"
@@ -220,7 +221,7 @@ function ProspectDrawer({
           {prospect.status === 'DISCARDED' && (
             <AMGButton
               variant="secondary"
-              icon={I.Refresh}
+              icon={IconSet.Refresh}
               loading={updatingStatus}
               onClick={() => onQualify(prospect.id)}
               className="w-full justify-center"
@@ -230,7 +231,7 @@ function ProspectDrawer({
           )}
           <AMGButton
             variant="secondary"
-            icon={I.Refresh}
+            icon={IconSet.Refresh}
             loading={enriching}
             onClick={() => onEnrich(prospect.id)}
             className="w-full justify-center"
@@ -358,6 +359,24 @@ export default function CampaignDetailPage() {
     onError: () => toast('error', 'Error exportant els prospects qualificats'),
   });
 
+  const { mutate: doSchedule, isPending: scheduling } = useMutation({
+    mutationFn: () => scheduleCampaign(id, new Date(Date.now() + 86400000).toISOString(), 7),
+    onSuccess: () => {
+      toast('success', 'Campanya programada cada 7 dies');
+      qc.invalidateQueries({ queryKey: ['campaign', id] });
+    },
+    onError: () => toast('error', 'Error programant la campanya'),
+  });
+
+  const { mutate: doUnschedule } = useMutation({
+    mutationFn: () => unscheduleCampaign(id),
+    onSuccess: () => {
+      toast('success', 'Programació cancel·lada');
+      qc.invalidateQueries({ queryKey: ['campaign', id] });
+    },
+    onError: () => toast('error', 'Error cancel·lant la programació'),
+  });
+
   if (!user || !isAdmin) return null;
 
   if (loadingCampaign) {
@@ -400,7 +419,7 @@ export default function CampaignDetailPage() {
         </div>
 
         {/* Campaign info */}
-        <div className="amg-card card-clip p-5">
+        <div className="amg-card card-clip p-5 space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { label: 'Sector', value: c.sector },
@@ -413,6 +432,21 @@ export default function CampaignDetailPage() {
                 <div className="f-display font-bold text-sm text-ink-0">{value}</div>
               </div>
             ))}
+          </div>
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-border-base">
+            {c.status === 'DRAFT' && (
+              <AMGButton size="sm" icon={IconSet.Clock} loading={scheduling} onClick={() => doSchedule()}>
+                Programar (cada 7 dies)
+              </AMGButton>
+            )}
+            {c.status === 'SCHEDULED' && (
+              <>
+                <AMGBadge tone="accent">Repeteix cada {c.repeatIntervalDays ?? 7} dies</AMGBadge>
+                <AMGButton size="sm" variant="ghost" icon={IconSet.X} onClick={() => doUnschedule()}>
+                  Aturar programació
+                </AMGButton>
+              </>
+            )}
           </div>
         </div>
 
@@ -428,7 +462,7 @@ export default function CampaignDetailPage() {
                 <AMGButton
                   size="sm"
                   variant="secondary"
-                  icon={I.Sparkles}
+                  icon={IconSet.Sparkles}
                   loading={scoring}
                   onClick={() => doScore()}
                 >
@@ -448,7 +482,7 @@ export default function CampaignDetailPage() {
                     <AMGButton
                       size="sm"
                       variant="secondary"
-                      icon={I.Phone}
+                      icon={IconSet.Phone}
                       loading={qualifying}
                       onClick={() => {
                         const count = prospectList.filter(p => (p.score ?? 0) >= minScoreFilter && !p.phone).length;
@@ -464,7 +498,7 @@ export default function CampaignDetailPage() {
                 <AMGButton
                   size="sm"
                   variant="secondary"
-                  icon={I.Refresh}
+                  icon={IconSet.Refresh}
                   loading={enrichingAll}
                   onClick={() => doEnrichAll()}
                 >
@@ -473,7 +507,7 @@ export default function CampaignDetailPage() {
                 {prospectList.some(p => p.status === 'QUALIFIED') && (
                   <AMGButton
                     size="sm"
-                    icon={I.ArrowRight}
+                    icon={IconSet.ArrowRight}
                     loading={exportingQualified}
                     onClick={() => {
                       const count = prospectList.filter(p => p.status === 'QUALIFIED').length;
@@ -503,7 +537,7 @@ export default function CampaignDetailPage() {
             </div>
           ) : prospectList.length === 0 ? (
             <div className="p-8 text-center">
-              <I.Search size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Search size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap prospect trobat</div>
               <p className="f-mono text-label text-ink-2">Executa la campanya per obtenir resultats</p>
             </div>
@@ -574,7 +608,7 @@ export default function CampaignDetailPage() {
                           <AMGButton
                             size="sm"
                             variant="ghost"
-                            icon={I.Eye}
+                            icon={IconSet.Eye}
                             onClick={() => setSelectedProspect(p)}
                           >
                             Veure

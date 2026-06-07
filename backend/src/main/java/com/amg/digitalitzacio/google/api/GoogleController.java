@@ -1,15 +1,17 @@
 package com.amg.digitalitzacio.google.api;
 
 import com.amg.digitalitzacio.google.api.dto.*;
+import com.amg.digitalitzacio.google.application.CalendarEventItem;
+import com.amg.digitalitzacio.google.application.DriveFileItem;
 import com.amg.digitalitzacio.google.application.GoogleAuthService;
 import com.amg.digitalitzacio.google.application.GoogleOrchestrator;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -73,5 +75,19 @@ public class GoogleController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/drive")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<List<DriveFileItem>> listDriveFiles(
+            @PathVariable UUID tenantId,
+            @RequestParam(required = false) String folderId) {
+        return ResponseEntity.ok(orchestrator.listDriveFiles(tenantId, folderId));
+    }
+
+    @GetMapping("/calendar/events")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<List<CalendarEventItem>> listCalendarEvents(@PathVariable UUID tenantId) {
+        return ResponseEntity.ok(orchestrator.listCalendarEvents(tenantId));
     }
 }

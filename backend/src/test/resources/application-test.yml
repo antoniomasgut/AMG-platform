@@ -7,3 +7,5 @@ spring:
 
 jwt:
   secret: dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0cy1vbmx5LW11c3QtYmUtbG9uZy1lbm91Z2gtMjU2Yml0cw==
+
+VAULT_MASTER_KEY: 4ZGtPqTicuZpUdYJiMgFSCo5DITnY5lEoA8QAFTV4jI=

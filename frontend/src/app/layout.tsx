@@ -47,6 +47,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <head>
         <meta name="google" content="notranslate" />
+        <script nonce={nonce} dangerouslySetInnerHTML={{
+          __html: `(function(){try{var t=localStorage.getItem('amg_theme');if(t==='light'){document.documentElement.setAttribute('data-theme','light')}}catch(e){}})()`
+        }} />
       </head>
       <body>
         <a

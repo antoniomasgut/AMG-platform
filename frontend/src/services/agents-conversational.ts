@@ -32,6 +32,9 @@ export const getAgentStatus = (tenantId: string) =>
 export const getPendingConversations = (tenantId: string) =>
   apiFetch<PendingResponseDto[]>(`/agents/conversational/${tenantId}/pending`);
 
+export const getPendingCount = (tenantId: string) =>
+  apiFetch<{ count: number }>(`/agents/conversational/${tenantId}/pending/count`);
+
 export const getConversations = (tenantId: string, page: number = 0, size: number = 20) =>
   apiFetch<ConversationResponse[]>(
     `/agents/conversational/${tenantId}/conversations?page=${page}&size=${size}`

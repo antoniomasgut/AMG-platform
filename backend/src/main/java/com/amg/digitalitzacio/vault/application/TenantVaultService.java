@@ -30,6 +30,7 @@ public class TenantVaultService implements VaultService {
     private final TenantServiceAddonRepository tenantServiceAddonRepository;
     private final CredentialAuditLogRepository credentialAuditLogRepository;
     private final CommunicationRequestRepository communicationRequestRepository;
+    private final VaultCommunicationService vaultCommunicationService;
     private final VaultEncryption encryption;
     private final InvoiceService invoiceService;
     private final PaymentService paymentService;
@@ -553,16 +554,9 @@ public class TenantVaultService implements VaultService {
             subject = "Informació requerida per " + svc.getName();
         }
 
-        var commRequest = CommunicationRequest.builder()
-                .tenantId(tenantId).tenantServiceId(ts.getId())
-                .channel(channel).recipient(recipient)
-                .subject(subject).body(body)
-                .status(CommunicationStatus.SENT)
-                .requestType(reqType).fieldId(fieldId)
-                .sentAt(Instant.now())
-                .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
-                .build();
-        commRequest = communicationRequestRepository.save(commRequest);
+        var commRequest = vaultCommunicationService.send(tenantId, ts.getId(), channel, recipient,
+                subject, body, reqType, fieldId,
+                Instant.now().plus(7, ChronoUnit.DAYS));
 
         // Update service status to AWAITING_CLIENT
         ts.setStatus(ServiceStatus.AWAITING_CLIENT);

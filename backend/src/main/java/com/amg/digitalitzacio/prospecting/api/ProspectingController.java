@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -146,5 +147,20 @@ public class ProspectingController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public Map<String, Integer> exportQualified(@PathVariable UUID id) {
         return Map.of("exported", service.exportQualifiedProspects(id));
+    }
+
+    @PostMapping("/campaigns/{id}/schedule")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public CampaignResponse scheduleCampaign(
+            @PathVariable UUID id,
+            @RequestParam Instant nextRun,
+            @RequestParam(defaultValue = "7") int repeatDays) {
+        return service.scheduleCampaign(id, nextRun, repeatDays);
+    }
+
+    @PostMapping("/campaigns/{id}/unschedule")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public CampaignResponse unscheduleCampaign(@PathVariable UUID id) {
+        return service.unscheduleCampaign(id);
     }
 }

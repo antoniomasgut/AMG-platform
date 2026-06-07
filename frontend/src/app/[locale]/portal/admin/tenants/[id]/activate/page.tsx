@@ -6,7 +6,7 @@ import { getTenant } from '@/services/admin';
 import { getNexeConfigs, getAgendaMode, getQuoteMode } from '@/services/nexe-configs';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -52,7 +52,7 @@ function getPhaseInfo(phase: string, sector?: string | null) {
         label: 'F1',
         title: 'Captació',
         desc: 'Captura leads des de la web, WhatsApp i email. L\'agent classifica i crea fitxes automàticament.',
-        icon: I.Globe,
+        icon: IconSet.Globe,
         href: (tenantId: string, locale: string) => `/${locale}/portal/landings`,
         ctaLabel: 'Anar a Landings',
       };
@@ -67,7 +67,7 @@ function getPhaseInfo(phase: string, sector?: string | null) {
             : agendaMode === 'vehicle'    ? 'Recepciona vehicles, estima recollida i elimina trucades innecessàries.'
             : agendaMode === 'meeting'    ? 'Confirma reunions, envia recordatoris i redueix no-shows.'
             : 'Confirma cites, envia recordatoris automàtics i redueix cites perdudes.',
-        icon: I.Calendar,
+        icon: IconSet.Calendar,
         href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/agenda`,
         ctaLabel: 'Configurar Agenda',
       };
@@ -78,7 +78,7 @@ function getPhaseInfo(phase: string, sector?: string | null) {
         desc: quoteMode === 'pricelist'
           ? 'Publica el catàleg de serveis i preus que l\'agent mostrarà als clients.'
           : 'L\'agent genera pressupostos i fa seguiment dels que queden sense resposta.',
-        icon: I.Receipt,
+        icon: IconSet.Receipt,
         href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/pressupostos`,
         ctaLabel: quoteMode === 'pricelist' ? 'Configurar Catàleg' : 'Configurar Pressupostos',
       };
@@ -87,7 +87,7 @@ function getPhaseInfo(phase: string, sector?: string | null) {
         label: 'F4',
         title: 'Seguiment',
         desc: 'Cap client oblidat: recordatoris automàtics, sol·licitud de ressenyes i reactivació de clients inactius.',
-        icon: I.Heart,
+        icon: IconSet.Heart,
         href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/fidelitzacio`,
         ctaLabel: 'Configurar Seguiment',
       };
@@ -96,7 +96,7 @@ function getPhaseInfo(phase: string, sector?: string | null) {
         label: 'F5',
         title: 'Alertes & Equip',
         desc: 'Alertes proactives al grup de Telegram: leads sense resposta, cites pendents i informe diari.',
-        icon: I.Users,
+        icon: IconSet.Users,
         href: (tenantId: string, locale: string) => `/${locale}/portal/admin/tenants/${tenantId}/nexe/equip`,
         ctaLabel: 'Configurar Alertes',
       };
@@ -111,14 +111,14 @@ function StatusChip({ done }: { done: boolean }) {
   if (done) {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 f-mono text-label text-xs bg-success/10 text-success border border-success/20">
-        <I.Check size={10} />
+        <IconSet.Check size={10} />
         Configurat
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 f-mono text-label text-xs bg-warning/10 text-warning border border-warning/20">
-      <I.Clock size={10} />
+      <IconSet.Clock size={10} />
       Pendent
     </span>
   );
@@ -179,7 +179,7 @@ function PhaseCard({
           {/* Done indicator */}
           {configured && (
             <div className="shrink-0 w-6 h-6 bg-success/20 flex items-center justify-center">
-              <I.Check size={12} stroke="#39d353" />
+              <IconSet.Check size={12} stroke="#39d353" />
             </div>
           )}
         </div>
@@ -211,7 +211,7 @@ function BotCard({ tenantId, locale }: { tenantId: string; locale: string }) {
               Configura el canal principal del bot (WhatsApp, Telegram), el mode de resposta (AUTO/HYBRID/MANUAL) i la base de coneixement.
             </p>
             <div className="flex items-center gap-2">
-              <I.Bot size={13} className="text-ink-3" />
+              <IconSet.Bot size={13} className="text-ink-3" />
               <AMGButton size="sm" variant="primary" onClick={() => router.push(`/${locale}/portal/admin/tenants/${tenantId}#section-agent-config`)}>
                 Configurar Agent →
               </AMGButton>
@@ -315,7 +315,7 @@ export default function ActivateWizardPage() {
             </div>
             {pct === 100 && (
               <div className="flex items-center gap-2 mt-3">
-                <I.Check size={13} stroke="#39d353" />
+                <IconSet.Check size={13} stroke="#39d353" />
                 <span className="f-mono text-label text-xs text-success">
                   Totes les fases configurades. Recorda activar el Bot IA!
                 </span>
@@ -327,7 +327,7 @@ export default function ActivateWizardPage() {
         {/* No phases */}
         {!loading && phases.length === 0 && (
           <div className="amg-card card-clip p-6 text-center">
-            <I.AlertTriangle size={24} className="mx-auto mb-3 text-ink-3" />
+            <IconSet.AlertTriangle size={24} className="mx-auto mb-3 text-ink-3" />
             <div className="f-display font-bold text-sm mb-1">Sense fases contractades</div>
             <p className="f-mono text-label text-xs text-ink-2 mb-4">
               Aquest tenant no té fases NexeLocal actives. Accepta un pressupost primer.

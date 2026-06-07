@@ -19,7 +19,7 @@ import {
   type ConversationResponse,
 } from '@/services/agents-conversational';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -101,7 +101,7 @@ function ContactList({
       {/* Search */}
       <div className="p-3 border-b border-border-base">
         <div className="relative">
-          <I.Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3" />
+          <IconSet.Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3" />
           <input
             type="text"
             placeholder="Cerca contacte..."
@@ -280,7 +280,7 @@ function ThreadView({
                 className="text-sm font-semibold text-ink-0 hover:text-accent-light transition-colors flex items-center gap-1.5"
               >
                 {contact.displayName}
-                <I.Edit size={11} className="text-ink-3" />
+                <IconSet.Edit size={11} className="text-ink-3" />
               </button>
             )}
 
@@ -365,7 +365,7 @@ function ThreadView({
       <div className="border-t border-border-base p-3">
         {agentMode === 'AUTO' ? (
           <div className="flex items-center gap-2 px-3 py-2 bg-[#1a1a2e] rounded border border-border-base">
-            <I.Bot size={13} className="text-green-400 shrink-0" />
+            <IconSet.Bot size={13} className="text-green-400 shrink-0" />
             <span className="text-[11px] text-ink-3">El bot respon automàticament. Canvia a Manual per escriure tu.</span>
           </div>
         ) : (
@@ -501,7 +501,7 @@ function ModeToggle({ tenantId, currentMode }: { tenantId: string; currentMode: 
       >
         <span className="w-1.5 h-1.5 rounded-full bg-current" />
         {MODE_LABELS[currentMode]}
-        <I.ChevDown size={10} />
+        <IconSet.ChevDown size={10} />
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 bg-[#1a1a2e] border border-border-base rounded shadow-xl z-10 min-w-[120px]">
@@ -591,7 +591,7 @@ export default function InboxPage() {
         {/* Header */}
         <div className="px-4 py-2.5 border-b border-border-base flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2">
-            <I.Mail size={14} className="text-accent-light" />
+            <IconSet.Mail size={14} className="text-accent-light" />
             <span className="text-xs font-semibold text-ink-0">Converses</span>
             {totalPending > 0 && (
               <span className="bg-orange-500 text-black text-[9px] font-bold rounded-full px-1.5 py-0.5">
@@ -642,7 +642,7 @@ export default function InboxPage() {
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full gap-3 text-ink-3">
-                <I.Mail size={32} />
+                <IconSet.Mail size={32} />
                 <p className="text-sm">Selecciona una conversa</p>
                 <p className="text-xs">
                   {contacts.length === 0

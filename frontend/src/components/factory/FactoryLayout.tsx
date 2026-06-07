@@ -12,7 +12,7 @@ import { FactoryCanvas } from './FactoryCanvas';
 import { PreviewToolbar } from './PreviewToolbar';
 import { BlockRenderer } from './BlockRenderer';
 import { VersionHistory } from './VersionHistory';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import type { BlockType } from '@/services/factory';
 
 type SidebarTab = 'blocks' | 'properties' | 'styles' | 'chat' | 'versions';
@@ -125,7 +125,7 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
           className="flex items-center gap-1 text-ink-2 hover:text-ink-0 transition shrink-0 f-mono text-xs"
           title="Tornar a Landings"
         >
-          <I.Chevron size={16} className="rotate-180" />
+          <IconSet.Chevron size={16} className="rotate-180" />
         </button>
         <span className="f-mono text-xs uppercase tracking-wider text-ink-0 truncate max-w-[180px]">
           {landing?.title || 'Editor'}

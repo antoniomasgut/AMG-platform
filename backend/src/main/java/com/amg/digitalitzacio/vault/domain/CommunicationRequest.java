@@ -27,5 +27,7 @@ public class CommunicationRequest {
     @Column(name = "expires_at") private Instant expiresAt;
     @Column(name = "sent_at") private Instant sentAt;
     @Column(name = "responded_at") private Instant respondedAt;
+    @Builder.Default @Column(name = "retry_count") private int retryCount = 0;
+    @Builder.Default @Column(name = "max_retries") private int maxRetries = 3;
     @CreatedDate @Column(updatable = false) private Instant createdAt;
 }

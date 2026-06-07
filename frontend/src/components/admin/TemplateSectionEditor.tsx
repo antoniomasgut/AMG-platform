@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import type { TemplateSectionView, TemplateSectionRequest } from '@/services/templates';
 import { blockTypeFromBackend } from '@/services/templates';
 import { BLOCK_TEMPLATES, type BlockType } from '@/services/factory';
@@ -81,7 +81,7 @@ export function TemplateSectionEditor({ sections, onAdd, onUpdate, onRemove, loa
         <h3 className="f-display font-bold text-sm">Seccions ({sections.length})</h3>
         {!showForm && (
           <AMGButton size="sm" onClick={() => setShowForm(true)}>
-            <I.Plus size={14} className="mr-1" /> Afegir secció
+            <IconSet.Plus size={14} className="mr-1" /> Afegir secció
           </AMGButton>
         )}
       </div>
@@ -123,7 +123,7 @@ export function TemplateSectionEditor({ sections, onAdd, onUpdate, onRemove, loa
 
       {sections.length === 0 && !showForm ? (
         <div className="p-6 text-center">
-          <I.Box size={24} stroke="#64748b" className="mx-auto mb-2" />
+          <IconSet.Box size={24} stroke="#64748b" className="mx-auto mb-2" />
           <p className="f-mono text-xs text-ink-2">Cap secció definida</p>
         </div>
       ) : (
@@ -136,10 +136,10 @@ export function TemplateSectionEditor({ sections, onAdd, onUpdate, onRemove, loa
                 <div key={section.id} className="flex items-center gap-2 border border-border-base rounded p-3">
                   <div className="flex flex-col gap-0.5">
                     <button onClick={() => handleMoveUp(index)} disabled={index === 0} className="text-ink-2 hover:text-ink-0 disabled:opacity-30">
-                      <I.ArrowUp size={14} />
+                      <IconSet.ArrowUp size={14} />
                     </button>
                     <button onClick={() => handleMoveDown(index)} disabled={index >= sections.length - 1} className="text-ink-2 hover:text-ink-0 disabled:opacity-30">
-                      <I.ChevDown size={14} />
+                      <IconSet.ChevDown size={14} />
                     </button>
                   </div>
                   <span className="f-mono text-[10px] text-ink-3 w-5">{section.sortOrder}</span>
@@ -147,10 +147,10 @@ export function TemplateSectionEditor({ sections, onAdd, onUpdate, onRemove, loa
                   <span className="text-sm text-ink-0 flex-1">{blockMeta?.label ?? section.blockType}</span>
                   <span className="f-mono text-[10px] text-ink-3 uppercase">{section.blockType}</span>
                   <button onClick={() => handleEdit(section)} className="text-ink-2 hover:text-accent-light p-1">
-                    <I.Edit size={14} />
+                    <IconSet.Edit size={14} />
                   </button>
                   <button onClick={() => onRemove(section.id)} className="text-ink-2 hover:text-warning p-1">
-                    <I.Trash size={14} />
+                    <IconSet.Trash size={14} />
                   </button>
                 </div>
               );

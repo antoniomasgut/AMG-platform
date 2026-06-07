@@ -6,11 +6,12 @@ import { OnboardingStep } from './OnboardingStep';
 import { OnboardingComplete } from './OnboardingComplete';
 
 interface OnboardingGuideProps {
+  tenantId: string;
   userName: string;
-  assignedServiceTypes: Set<string>;
-  landingsCount: number;
-  workflowsCount: number;
-  invoicesCount: number;
+  assignedServices: Array<{ type: string; isAddon?: boolean }>;
+  landings: any[];
+  workflows: any[];
+  invoices: any[];
   vaultPending?: boolean;
   onSkip: () => void;
   onComplete: () => void;
@@ -18,7 +19,7 @@ interface OnboardingGuideProps {
 
 interface StepDef {
   id: 'landing' | 'automation' | 'billing';
-  num: number;
+  step: number;
   title: string;
   description: string;
   cta: string;
@@ -27,11 +28,12 @@ interface StepDef {
 }
 
 export function OnboardingGuide({
+  tenantId,
   userName,
-  assignedServiceTypes,
-  landingsCount,
-  workflowsCount,
-  invoicesCount,
+  assignedServices,
+  landings,
+  workflows,
+  invoices,
   vaultPending = false,
   onSkip,
   onComplete,
@@ -39,46 +41,52 @@ export function OnboardingGuide({
   const locale = useLocale();
   const t = useTranslations('onboarding');
 
-  const steps: StepDef[] = [];
-  let num = 1;
+  const activeTypes = new Set(
+    assignedServices
+      .filter(s => !s.isAddon)
+      .map(s => s.type)
+  );
 
-  if (assignedServiceTypes.has('LANDING')) {
+  const steps: StepDef[] = [];
+  let stepNum = 1;
+
+  if (activeTypes.has('LANDING')) {
     steps.push({
-      id: 'landing', num: num++,
+      id: 'landing', step: stepNum++,
       title: t('steps.landing_title'),
       description: t('steps.landing_desc'),
       cta: t('steps.landing_cta'),
-      href: `/${locale}/portal/landings/new`,
-      done: landingsCount > 0,
+      href: '/portal/landings/new',
+      done: landings.length > 0,
     });
   }
-  if (assignedServiceTypes.has('AUTOMATION')) {
+  if (activeTypes.has('AUTOMATION')) {
     steps.push({
-      id: 'automation', num: num++,
+      id: 'automation', step: stepNum++,
       title: t('steps.automation_title'),
       description: t('steps.automation_desc'),
       cta: t('steps.automation_cta'),
-      href: `/${locale}/portal/automations`,
-      done: workflowsCount > 0,
+      href: '/portal/automations',
+      done: workflows.length > 0,
     });
   }
-  if (assignedServiceTypes.has('BILLING')) {
+  if (activeTypes.has('BILLING')) {
     steps.push({
-      id: 'billing', num: num++,
+      id: 'billing', step: stepNum++,
       title: t('steps.billing_title'),
       description: t('steps.billing_desc'),
       cta: t('steps.billing_cta'),
-      href: `/${locale}/portal/billing`,
-      done: invoicesCount > 0,
+      href: '/portal/billing',
+      done: invoices.length > 0,
     });
   }
 
-  const completedCount = steps.filter((s) => s.done).length;
+  const completedCount = steps.filter(s => s.done).length;
   const totalCount = steps.length;
   const prevCompletedRef = useRef(completedCount);
 
   useEffect(() => {
-    if (completedCount === totalCount && totalCount > 0 && completedCount > prevCompletedRef.current) {
+    if (totalCount > 0 && completedCount === totalCount && completedCount > prevCompletedRef.current) {
       onComplete();
     }
     prevCompletedRef.current = completedCount;
@@ -121,10 +129,10 @@ export function OnboardingGuide({
       </div>
 
       <div className={`grid ${colsClass} gap-4`}>
-        {steps.map((step) => (
+        {steps.map(step => (
           <OnboardingStep
             key={step.id}
-            num={step.num}
+            step={step.step}
             title={step.title}
             description={step.description}
             cta={step.cta}

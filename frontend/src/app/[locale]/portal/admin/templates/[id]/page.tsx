@@ -12,7 +12,7 @@ import { TemplateSectionEditor } from '@/components/admin/TemplateSectionEditor'
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import type { CreateTemplateRequest, TemplateSectionRequest } from '@/services/templates';
 
 export default function EditTemplatePage() {
@@ -83,7 +83,7 @@ export default function EditTemplatePage() {
     return (
       <PortalShell breadcrumb="admin · plantilles · error" backHref={`/${locale}/portal/admin/templates`}>
         <div className="p-4 sm:p-8 text-center py-12">
-          <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
+          <IconSet.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
           <div className="f-display font-bold text-sm mb-1">Error carregant la plantilla</div>
           <p className="f-mono text-xs text-ink-2 mb-4">No s'ha pogut carregar la informació</p>
           <AMGButton size="sm" onClick={() => router.push('/portal/admin/templates')}>

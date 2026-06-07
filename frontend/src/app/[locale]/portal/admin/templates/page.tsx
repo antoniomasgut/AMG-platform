@@ -11,7 +11,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -30,7 +30,7 @@ function ConfirmDeleteModal({
       <div className="amg-card card-clip w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Eliminar plantilla</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         <p className="text-sm text-ink-1">
           Estàs segur d'eliminar la plantilla <strong>{template.name}</strong>? Aquesta acció no es pot desfer.
@@ -77,7 +77,7 @@ export default function AdminTemplatesPage() {
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / admin / plantilles /</span>
             <div className="f-display font-bold text-xl mt-1">Gestió de plantilles</div>
           </div>
-          <AMGButton size="sm" icon={I.Plus} onClick={() => window.location.href = '/portal/admin/templates/new'}>
+          <AMGButton size="sm" icon={IconSet.Plus} onClick={() => window.location.href = '/portal/admin/templates/new'}>
             Nova plantilla
           </AMGButton>
         </div>
@@ -107,7 +107,7 @@ export default function AdminTemplatesPage() {
             </div>
           ) : !templates || templates.length === 0 ? (
             <div className="p-8 text-center">
-              <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap plantilla</div>
               <p className="f-mono text-xs text-ink-2 mb-4">Crea la primera plantilla per començar</p>
               <AMGButton size="sm" onClick={() => window.location.href = '/portal/admin/templates/new'}>
@@ -155,7 +155,7 @@ export default function AdminTemplatesPage() {
                             variant="ghost"
                             onClick={() => setDeleteTarget(t)}
                           >
-                            <I.Trash size={14} />
+                            <IconSet.Trash size={14} />
                           </AMGButton>
                         </div>
                       </td>

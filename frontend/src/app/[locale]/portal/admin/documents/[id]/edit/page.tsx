@@ -12,7 +12,7 @@ import {
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const BLOCK_TYPE_LABELS: Record<string, string> = {};
 for (const cat of BLOCK_LIBRARY) {
@@ -54,7 +54,7 @@ function AiModal({
       <div className="amg-card card-clip w-full max-w-lg p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">IA - Modificar plantilla</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         <p className="text-sm text-ink-1">Descriu amb text què vols canviar de la plantilla (ex: &ldquo;Posa el logo a l&apos;esquerra&rdquo;).</p>
         <textarea
@@ -95,7 +95,7 @@ function VersionHistoryModal({
       <div className="amg-card card-clip w-full max-w-lg p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="f-display font-bold text-base">Historial de versions</div>
-          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><I.X size={18} /></button>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         {!versions ? (
           <div className="flex justify-center py-8">
@@ -295,7 +295,7 @@ export default function EditDocumentTemplatePage() {
     return (
       <PortalShell breadcrumb="admin · documents · edit">
         <div className="p-8 text-center">
-          <I.FileText size={28} stroke="#64748b" className="mx-auto mb-3" />
+          <IconSet.FileText size={28} stroke="#64748b" className="mx-auto mb-3" />
           <div className="f-display font-bold text-sm">Plantilla no trobada</div>
         </div>
       </PortalShell>
@@ -317,13 +317,13 @@ export default function EditDocumentTemplatePage() {
           </div>
           <div className="flex items-center gap-2">
             <AMGButton size="sm" variant="ghost" onClick={() => setShowVersions(true)}>
-              <I.Clock size={14} />
+              <IconSet.Clock size={14} />
             </AMGButton>
             <AMGButton size="sm" variant="ghost" onClick={() => window.open(`/portal/admin/documents/${id}/preview`, '_blank')}>
-              <I.Eye size={14} />
+              <IconSet.Eye size={14} />
             </AMGButton>
             <AMGButton size="sm" variant="secondary" onClick={() => setShowAi(true)}>
-              <I.Sparkles size={14} />
+              <IconSet.Sparkles size={14} />
               IA
             </AMGButton>
             <AMGButton size="sm" disabled={!dirty || saving} onClick={save}>
@@ -341,7 +341,7 @@ export default function EditDocumentTemplatePage() {
                 <div className="flex items-center justify-between">
                   <div className="f-display font-bold text-sm">{BLOCK_TYPE_LABELS[selectedBlock.type] || selectedBlock.type}</div>
                   <button onClick={() => setSelectedBlockId(null)} className="text-ink-2 hover:text-ink-0">
-                    <I.X size={14} />
+                    <IconSet.X size={14} />
                   </button>
                 </div>
 
@@ -474,7 +474,7 @@ export default function EditDocumentTemplatePage() {
 
                   <div className="border-t border-border-base pt-3">
                     <AMGButton size="sm" variant="danger" onClick={() => removeBlock(selectedBlock.id)}>
-                      <I.Trash size={14} />
+                      <IconSet.Trash size={14} />
                       Eliminar bloc
                     </AMGButton>
                   </div>
@@ -485,7 +485,7 @@ export default function EditDocumentTemplatePage() {
                 <div className="f-display font-bold text-sm">Blocs disponibles</div>
                 <div className="flex gap-2 flex-wrap">
                   <AMGButton size="sm" variant="ghost" onClick={() => setShowAi(true)}>
-                    <I.Sparkles size={14} />
+                    <IconSet.Sparkles size={14} />
                     Pregunta a la IA
                   </AMGButton>
                 </div>
@@ -573,7 +573,7 @@ export default function EditDocumentTemplatePage() {
                             onClick={(e) => { e.stopPropagation(); removeBlock(block.id); }}
                             className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
                           >
-                            <I.X size={8} />
+                            <IconSet.X size={8} />
                           </button>
                         </div>
                       ))}

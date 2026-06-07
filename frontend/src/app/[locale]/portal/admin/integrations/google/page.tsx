@@ -10,7 +10,7 @@ import {
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 export default function GoogleIntegrationPage() {
   const { user } = useAuth();
@@ -115,7 +115,7 @@ export default function GoogleIntegrationPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                    <I.Check size={18} className="text-green-500" />
+                    <IconSet.Check size={18} className="text-green-500" />
                   </div>
                   <div>
                     <div className="f-display font-bold text-sm">Connectat</div>
@@ -168,7 +168,7 @@ export default function GoogleIntegrationPage() {
             {/* Not connected */}
             <div className="amg-card card-clip p-6 space-y-4">
               <div className="text-center py-4">
-                <I.Play size={32} stroke="#64748b" className="mx-auto mb-3" />
+                <IconSet.Play size={32} stroke="#64748b" className="mx-auto mb-3" />
                 <div className="f-display font-bold text-sm mb-1">Google no connectat</div>
                 <p className="text-sm text-ink-2 mb-4">Selecciona els mòduls que vols utilitzar i connecta el teu compte</p>
               </div>
@@ -196,7 +196,7 @@ export default function GoogleIntegrationPage() {
               </div>
 
               <div className="flex justify-center pt-2">
-                <AMGButton icon={I.Play} onClick={handleConnect}>
+                <AMGButton icon={IconSet.Play} onClick={handleConnect}>
                   Connecta amb Google
                 </AMGButton>
               </div>

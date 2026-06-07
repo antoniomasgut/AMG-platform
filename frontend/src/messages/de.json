@@ -529,6 +529,9 @@
     "vault_pending": "Konfiguration ausstehend",
     "vault_pending_desc": "Dein Konto hat Dienste, die noch konfiguriert werden müssen. Überprüfe sie zur Aktivierung.",
     "vault_pending_cta": "Überprüfen →",
+    "error_title": "Fehler beim Laden",
+    "error_desc": "Das Dashboard konnte nicht geladen werden. Bitte versuche es erneut.",
+    "error_retry": "Erneut versuchen",
     "steps": {
       "landing_title": "Erstelle deine erste Landing Page",
       "landing_desc": "Veröffentliche deine Website in unter 5 Minuten mit dem visuellen Editor.",
@@ -581,7 +584,673 @@
       "hosting": "Web Hosting",
       "backup": "Backups",
       "infraOps": "Infrastruktur",
-      "apiKeys": "API-Schlüssel"
+      "apiKeys": "API-Schlüssel",
+      "serveis": "Dienstleistungen"
+    }
+  },
+  "wizard": {
+    "agenda": {
+      "title": "Online-Terminbuchung einrichten",
+      "description": "Wir verbinden Ihren Geschäftskalender, damit Kunden direkt über WhatsApp oder die Website Termine buchen können.",
+      "prerequisites": "Sie benötigen: den Link oder API-Key Ihres Kalenders (Google Calendar oder Calendly).",
+      "step1": {
+        "title": "Kalenderkonfiguration",
+        "description": "Geben Sie den API-Key ein und wählen Sie den Kalendertyp."
+      },
+      "step2": {
+        "title": "Benachrichtigungen anpassen",
+        "description": "Konfigurieren Sie Bestätigungs- und Erinnerungsvorlagen für Ihre Kunden."
+      },
+      "step3": {
+        "title": "Verbindung prüfen",
+        "description": "Wir testen, ob der Kalender korrekt funktioniert."
+      },
+      "field": {
+        "calendar_type": "Kalendertyp",
+        "api_key": "API-Key / Kalender-URL",
+        "api_key_hint": "Fügen Sie den öffentlichen Link oder API-Key Ihres Google Calendar oder Calendly ein.",
+        "confirmation": "Bestätigungsvorlage",
+        "confirmation_placeholder": "z.B.: Hallo {name}, Ihr Termin wurde bestätigt für {date}"
+      },
+      "calendar": {
+        "google": "Google Calendar",
+        "calendly": "Calendly"
+      }
+    },
+    "analytics": {
+      "title": "Google Analytics einrichten",
+      "description": "Verbinden Sie Google Analytics zur Messung von Traffic und Nutzerverhalten auf Ihrer Website.",
+      "prerequisites": "Sie benötigen: ein Google Analytics-Konto und Bearbeitungsrechte für die Property.",
+      "step1": {
+        "title": "Tracking-ID",
+        "description": "Geben Sie die Property-ID von Google Analytics ein (Format G-XXXXXXXXXX)."
+      },
+      "step2": {
+        "title": "Überprüfung",
+        "description": "Überprüfen Sie, ob das Tracking korrekt eingerichtet ist."
+      },
+      "field": {
+        "property_id": "Property-ID",
+        "property_id_placeholder": "G-XXXXXXXXXX",
+        "oauth": "OAuth 2.0 (optional)"
+      }
+    },
+    "automation": {
+      "title": "n8n Automatisierung einrichten",
+      "description": "Verbinden Sie n8n zur Erstellung automatischer Workflows, die Zeit sparen.",
+      "prerequisites": "Sie benötigen: die URL Ihres n8n-Servers und einen API-Key.",
+      "step1": {
+        "title": "n8n-Verbindung",
+        "description": "Geben Sie die URL und den API-Key Ihres n8n-Servers ein."
+      },
+      "step2": {
+        "title": "Verbindungstest",
+        "description": "Wir überprüfen die Verbindung zu n8n."
+      },
+      "step3": {
+        "title": "Vordefinierte Workflows",
+        "description": "Wählen Sie die automatischen Workflows aus, die Sie aktivieren möchten."
+      },
+      "field": {
+        "url": "n8n-Server-URL",
+        "url_placeholder": "https://n8n.beispiel.de",
+        "api_key": "n8n-API-Key"
+      }
+    },
+    "bot_ia": {
+      "title": "KI-Bot einrichten",
+      "description": "Erstellen Sie einen virtuellen Assistenten, der automatisch auf Kundenanfragen antwortet.",
+      "prerequisites": "Sie benötigen: einen API-Key von Anthropic (Claude) oder OpenAI.",
+      "step1": {
+        "title": "Basiskonfiguration",
+        "description": "Geben Sie Ihrem Bot einen Namen und beschreiben Sie seine Persönlichkeit."
+      },
+      "step2": {
+        "title": "Modellauswahl",
+        "description": "Wählen Sie das KI-Modell für Ihren Bot."
+      },
+      "step3": {
+        "title": "Bot testen",
+        "description": "Testen Sie, wie Ihr Bot antwortet."
+      },
+      "field": {
+        "name": "Bot-Name",
+        "name_placeholder": "z.B.: Maria, Virtueller Assistent",
+        "model": "KI-Modell",
+        "api_key": "API-Key",
+        "welcome": "Begrüßungsnachricht",
+        "welcome_placeholder": "z.B.: Hallo! Ich bin der virtuelle Assistent von..."
+      },
+      "model": {
+        "sonnet": "Claude Sonnet (schnell & günstig)",
+        "haiku": "Claude Haiku (sehr schnell, basis)",
+        "gpt4o": "GPT-4o (fortgeschritten)"
+      }
+    },
+    "bot_ia_rag": {
+      "title": "KI-Bot mit RAG einrichten",
+      "description": "Erstellen Sie einen intelligenten Assistenten, der Fragen basierend auf Ihren Dokumenten beantwortet.",
+      "prerequisites": "Sie benötigen: Anthropic-API-Key und Dokumente (PDF, TXT, DOCX).",
+      "step1": {
+        "title": "Basiskonfiguration",
+        "description": "Geben Sie dem Bot einen Namen und wählen Sie das Modell."
+      },
+      "step2": {
+        "title": "Wissensdokumente",
+        "description": "Laden Sie die Dokumente hoch, die der Bot verwenden soll."
+      },
+      "step3": {
+        "title": "Bot testen",
+        "description": "Stellen Sie eine Testfrage, um die Antwort zu prüfen."
+      },
+      "field": {
+        "name": "Bot-Name",
+        "name_placeholder": "z.B.: Technischer Support KI",
+        "model": "KI-Modell",
+        "api_key": "API-Key",
+        "documents": "Wissensdokumente",
+        "documents_placeholder": "Dateien hierher ziehen",
+        "documents_hint": "Unterstützte Formate: PDF, TXT, DOCX"
+      },
+      "model": {
+        "sonnet": "Claude Sonnet (Präzision)",
+        "haiku": "Claude Haiku (schnell)"
+      }
+    },
+    "calculadora": {
+      "title": "Angebotsrechner einrichten",
+      "description": "Konfigurieren Sie einen interaktiven Angebotsrechner für Ihre Website.",
+      "prerequisites": "Sie benötigen: die Berechnungsregeln und Preisstaffeln.",
+      "step1": {
+        "title": "Vorlage",
+        "description": "Wählen Sie eine Vorlage für den Rechner."
+      },
+      "step2": {
+        "title": "Berechnungsregeln",
+        "description": "Definieren Sie die Berechnungslogik."
+      },
+      "step3": {
+        "title": "Veröffentlichen",
+        "description": "Überprüfen und veröffentlichen Sie den Rechner."
+      },
+      "field": {
+        "template": "Vorlage",
+        "template_placeholder": "Vorlage auswählen",
+        "rules": "Berechnungsregeln",
+        "rules_placeholder": "z.B.: 50€/Stunde * Arbeitsstunden"
+      }
+    },
+    "cobrament": {
+      "title": "Kartenzahlung einrichten",
+      "description": "Verbinden Sie ein Zahlungsgateway für Kreditkartenzahlungen.",
+      "prerequisites": "Sie benötigen: ein Stripe- oder GoCardless-Konto.",
+      "step1": {
+        "title": "API-Schlüssel",
+        "description": "Geben Sie die öffentlichen und geheimen Schlüssel Ihres Zahlungsanbieters ein."
+      },
+      "step2": {
+        "title": "Webhook",
+        "description": "Konfigurieren Sie den Webhook für Zahlungsbenachrichtigungen."
+      },
+      "step3": {
+        "title": "Überprüfung",
+        "description": "Überprüfen Sie, ob Zahlungen korrekt funktionieren."
+      },
+      "field": {
+        "public_key": "Öffentlicher Schlüssel",
+        "secret_key": "Geheimer Schlüssel",
+        "webhook": "Webhook-URL",
+        "webhook_secret": "Webhook-Secret"
+      }
+    },
+    "common": {
+      "yes": "Ja",
+      "no": "Nein"
+    },
+    "crm": {
+      "title": "CRM einrichten",
+      "description": "Konfigurieren Sie Ihre Verkaufspipeline und Lead-Verwaltung.",
+      "prerequisites": "Sie benötigen: die Liste der Phasen Ihres Verkaufsprozesses.",
+      "step1": {
+        "title": "Pipeline-Phasen",
+        "description": "Definieren Sie die Phasen Ihres Verkaufsprozesses."
+      },
+      "step2": {
+        "title": "Benachrichtigungen",
+        "description": "Konfigurieren Sie, wie Sie über neue Leads benachrichtigt werden."
+      },
+      "step3": {
+        "title": "WhatsApp-Integration",
+        "description": "Verbinden Sie WhatsApp zur Lead-Verwaltung per Chat."
+      },
+      "field": {
+        "stages": "Pipeline-Phasen",
+        "stages_placeholder": "Neuer Lead, Kontaktiert, Termin, Abgeschlossen",
+        "notify_whatsapp": "Per WhatsApp benachrichtigen"
+      }
+    },
+    "domain": {
+      "title": "Domain einrichten",
+      "description": "Registrieren oder verbinden Sie eine Domain für Ihre Website.",
+      "prerequisites": "Sie benötigen: den Domainnamen, den Sie verwenden möchten.",
+      "step1": {
+        "title": "Domain-Name",
+        "description": "Geben Sie die Domain ein, die Sie konfigurieren möchten."
+      },
+      "step2": {
+        "title": "DNS-Server",
+        "description": "Konfigurieren Sie die Nameserver bei Selbstverwaltung."
+      },
+      "step3": {
+        "title": "SSL-Überprüfung",
+        "description": "Warten Sie auf die SSL-Zertifikatserstellung."
+      },
+      "field": {
+        "name": "Domain-Name",
+        "name_placeholder": "beispiel.de",
+        "type": "Verwaltungstyp",
+        "ns1": "Nameserver 1",
+        "ns2": "Nameserver 2"
+      },
+      "type": {
+        "managed": "Von AMG verwaltet",
+        "self": "Selbstverwaltet"
+      }
+    },
+    "facturacio": {
+      "title": "Rechnungsstellung einrichten",
+      "description": "Konfigurieren Sie die Ausstellung elektronischer Rechnungen.",
+      "prerequisites": "Sie benötigen: Steuernummer, Geschäftsadresse und Bankkonto.",
+      "step1": {
+        "title": "Steuerdaten",
+        "description": "Geben Sie die Steuerdaten Ihres Unternehmens ein."
+      },
+      "step2": {
+        "title": "Rechnungs-API",
+        "description": "Verbinden Sie Ihren Anbieter für elektronische Rechnungen."
+      },
+      "step3": {
+        "title": "Test",
+        "description": "Erstellen Sie eine Testrechnung zur Überprüfung."
+      },
+      "field": {
+        "vat": "Steuernummer",
+        "vat_placeholder": "12345678A",
+        "address": "Geschäftsadresse",
+        "address_placeholder": "Musterstraße 123, Palma",
+        "api_key": "API-Key",
+        "day": "Rechnungstag"
+      }
+    },
+    "formulari": {
+      "title": "Kontaktformular einrichten",
+      "description": "Konfigurieren Sie ein Kontaktformular für Ihre Website.",
+      "prerequisites": "Sie benötigen: die E-Mail-Adresse für Benachrichtigungen.",
+      "step1": {
+        "title": "Ziel-E-Mail",
+        "description": "Geben Sie die E-Mail ein, an die Nachrichten gesendet werden."
+      },
+      "step2": {
+        "title": "Veröffentlichen",
+        "description": "Das Formular ist bereit zum Empfang von Nachrichten."
+      },
+      "field": {
+        "email": "Ziel-E-Mail",
+        "email_placeholder": "hallo@ihrunternehmen.de"
+      }
+    },
+    "galeria": {
+      "title": "Bildergalerie einrichten",
+      "description": "Konfigurieren Sie eine Bildergalerie für Ihre Website.",
+      "prerequisites": "Sie benötigen: die Bilder, die Sie anzeigen möchten.",
+      "step1": {
+        "title": "Kategorien",
+        "description": "Definieren Sie die Kategorien der Galerie."
+      },
+      "step2": {
+        "title": "Veröffentlichen",
+        "description": "Die Galerie ist bereit zur Veröffentlichung."
+      },
+      "field": {
+        "categories": "Kategorien",
+        "categories_placeholder": "Innen, Außen, Projekte..."
+      }
+    },
+    "historial": {
+      "title": "Gesprächsverlauf einrichten",
+      "description": "Konfigurieren Sie den intelligenten Gesprächsverlauf.",
+      "prerequisites": "Sie benötigen: Zugriff auf den Gesprächsverlauf.",
+      "step1": {
+        "title": "Konfiguration",
+        "description": "Konfigurieren Sie die Speicherung des Verlaufs."
+      },
+      "step2": {
+        "title": "Veröffentlichen",
+        "description": "Der Verlauf ist bereit."
+      },
+      "field": {
+        "config": "Konfiguration",
+        "config_placeholder": "Konfigurationsparameter"
+      }
+    },
+    "landing": {
+      "title": "Landing Page einrichten",
+      "description": "Veröffentlichen Sie Ihre Website in wenigen Minuten.",
+      "prerequisites": "Sie benötigen: den Inhalt Ihrer Website (Texte, Bilder).",
+      "step1": {
+        "title": "Vorlage auswählen",
+        "description": "Wählen Sie eine Vorlage für Ihre Landing Page."
+      },
+      "step2": {
+        "title": "Inhalt anpassen",
+        "description": "Füllen Sie Texte, Bilder und Abschnitte Ihrer Website."
+      },
+      "step3": {
+        "title": "Veröffentlichen",
+        "description": "Ihre Website ist in Sekunden online."
+      },
+      "field": {
+        "template": "Vorlage"
+      }
+    },
+    "landing_extra": {
+      "description": "Fügen Sie eine zusätzliche Landing Page hinzu. Sie benötigen den Inhalt der neuen Website."
+    },
+    "quest": {
+      "title": "Fragebogen einrichten",
+      "description": "Erstellen Sie einen interaktiven Fragebogen zur Lead-Qualifizierung.",
+      "prerequisites": "Sie benötigen: die Fragen für den Fragebogen.",
+      "step1": {
+        "title": "Fragen",
+        "description": "Geben Sie die Fragen für den Fragebogen ein."
+      },
+      "step2": {
+        "title": "Veröffentlichen",
+        "description": "Der Fragebogen ist bereit."
+      },
+      "field": {
+        "questions": "Fragen",
+        "questions_placeholder": "Jede Zeile ist eine Frage"
+      }
+    },
+    "recordatori": {
+      "title": "Erinnerung einrichten",
+      "description": "Konfigurieren Sie automatische WhatsApp-Erinnerungen.",
+      "prerequisites": "Sie benötigen: die Vorlage für die Erinnerungsnachricht.",
+      "step1": {
+        "title": "Nachrichtenvorlage",
+        "description": "Passen Sie die Erinnerungsnachricht an."
+      },
+      "step2": {
+        "title": "Vorlaufzeit",
+        "description": "Wie viele Minuten vor dem Termin wird die Erinnerung gesendet."
+      },
+      "step3": {
+        "title": "Aktivieren",
+        "description": "Die Erinnerung ist betriebsbereit."
+      },
+      "field": {
+        "template": "Nachrichtenvorlage",
+        "template_placeholder": "z.B.: Hallo {name}, Sie haben einen Termin in {hours} Stunden.",
+        "hours": "Stunden Vorlauf",
+        "link_code": "Link-Code"
+      }
+    },
+    "reenganxament": {
+      "title": "Re-Engagement einrichten",
+      "description": "Gewinnen Sie inaktive Kunden mit automatischen Nachrichten zurück.",
+      "prerequisites": "Sie benötigen: Nachrichtenvorlagen für Kampagnen.",
+      "step1": {
+        "title": "Daten-API",
+        "description": "Verbinden Sie die Kundendatenquelle."
+      },
+      "step2": {
+        "title": "Vorlagen",
+        "description": "Passen Sie die Re-Engagement-Nachrichten an."
+      },
+      "step3": {
+        "title": "Aktivieren",
+        "description": "Die Kampagne ist betriebsbereit."
+      },
+      "field": {
+        "api_url": "Kunden-API-URL",
+        "api_url_placeholder": "https://api.beispiel.de/kunden",
+        "api_key": "API-Key",
+        "months": "Monate Inaktivität",
+        "template": "Nachrichtenvorlage",
+        "template_placeholder": "z.B.: Wir haben lange nichts von Ihnen gehört..."
+      }
+    },
+    "ressenya": {
+      "title": "Google Bewertungen einrichten",
+      "description": "Bitten Sie Kunden automatisch um Google-Bewertungen.",
+      "prerequisites": "Sie benötigen: den Google-Bewertungslink Ihres Unternehmens.",
+      "step1": {
+        "title": "Bewertungslink",
+        "description": "Geben Sie den Link ein, über den Kunden Bewertungen hinterlassen."
+      },
+      "step2": {
+        "title": "Personalisierung",
+        "description": "Passen Sie die Anfrage-Nachricht an."
+      },
+      "step3": {
+        "title": "Aktivieren",
+        "description": "Das System ist betriebsbereit."
+      },
+      "field": {
+        "url": "Google-Bewertungslink",
+        "url_placeholder": "https://search.google.com/local/writereview?pid=..."
+      }
+    },
+    "smtp": {
+      "title": "Unternehmens-SMTP einrichten",
+      "description": "Konfigurieren Sie den E-Mail-Server für den Versand von E-Mails von Ihrer Domain.",
+      "prerequisites": "Sie benötigen: die SMTP-Zugangsdaten Ihres E-Mail-Anbieters.",
+      "step1": {
+        "title": "Serverkonfiguration",
+        "description": "Geben Sie die Verbindungsdaten des SMTP-Servers ein."
+      },
+      "step2": {
+        "title": "Überprüfung",
+        "description": "Testen Sie den Versand einer Bestätigungs-E-Mail."
+      },
+      "field": {
+        "host": "SMTP-Server",
+        "host_placeholder": "smtp.beispiel.de",
+        "port": "Port",
+        "port_placeholder": "587",
+        "user": "Benutzer",
+        "user_placeholder": "sie@beispiel.de",
+        "password": "Passwort",
+        "security": "Sicherheit"
+      },
+      "security": {
+        "tls": "TLS",
+        "ssl": "SSL",
+        "none": "Keine Verschlüsselung"
+      }
+    },
+    "telegram": {
+      "title": "Telegram-Bot einrichten",
+      "description": "Erstellen und verbinden Sie einen Telegram-Bot für Ihr Unternehmen.",
+      "prerequisites": "Sie benötigen: einen Bot-Token von @BotFather bei Telegram.",
+      "step1": {
+        "title": "Bot-Token",
+        "description": "Geben Sie den Token Ihres Telegram-Bots ein."
+      },
+      "step2": {
+        "title": "Webhook-URL",
+        "description": "Konfigurieren Sie den Webhook zum Empfang von Nachrichten."
+      },
+      "step3": {
+        "title": "Befehle",
+        "description": "Definieren Sie die Befehle, die der Bot versteht."
+      },
+      "step4": {
+        "title": "Test",
+        "description": "Senden Sie eine Testnachricht an den Bot."
+      },
+      "field": {
+        "token": "Bot-Token",
+        "token_hint": "Holen Sie ihn bei @BotFather auf Telegram",
+        "username": "Bot-Benutzername",
+        "username_placeholder": "z.B.: ihrunternehmen_bot",
+        "webhook": "Webhook-URL",
+        "commands": "Befehle (optional)",
+        "commands_placeholder": "/start, /hilfe, /preise",
+        "commands_hint": "Trennen Sie Befehle mit Komma"
+      }
+    },
+    "validation": {
+      "domain": "Ungültiges Domain-Format (z.B.: beispiel.de)",
+      "phone": "Ungültiges Telefonformat (z.B.: +34600123456)",
+      "port": "Port muss eine Zahl zwischen 10 und 65535 sein"
+    },
+    "whatsapp": {
+      "title": "WhatsApp Business einrichten",
+      "description": "Verbinden Sie Ihr WhatsApp Business-Konto zur Kundenkommunikation.",
+      "prerequisites": "Sie benötigen: die API-Zugangsdaten von WhatsApp Business (Meta).",
+      "step1": {
+        "title": "API-Zugangsdaten",
+        "description": "Geben Sie die WhatsApp Business API-Schlüssel ein."
+      },
+      "step2": {
+        "title": "Webhook",
+        "description": "Kopieren Sie die Webhook-URL und konfigurieren Sie sie im Meta-Panel."
+      },
+      "step3": {
+        "title": "Überprüfung",
+        "description": "Überprüfen Sie die WhatsApp-Verbindung."
+      },
+      "field": {
+        "api_key": "API-Schlüssel",
+        "phone": "Telefonnummer",
+        "account_id": "Konto-ID (WABA)",
+        "webhook_url": "Webhook-URL"
+      }
+    },
+    "xat": {
+      "title": "Web-Chat einrichten",
+      "description": "Fügen Sie einen Live-Chat zu Ihrer Website hinzu.",
+      "prerequisites": "Sie benötigen: die Widget-ID Ihres Chat-Anbieters.",
+      "step1": {
+        "title": "Widget-ID",
+        "description": "Geben Sie die Widget-ID des Chats ein."
+      },
+      "step2": {
+        "title": "Veröffentlichen",
+        "description": "Der Chat erscheint auf Ihrer Website."
+      },
+      "field": {
+        "widget_id": "Widget-ID",
+        "widget_id_placeholder": "z.B.: widget_abc123",
+        "api_key": "API-Key"
+      }
+    }
+  },
+  "guides": {
+    "title": "Dienstleistungen",
+    "subtitle": "Anleitungen zu Ihren aktiven Diensten",
+    "no_services": "Sie haben noch keine aktiven Dienste",
+    "no_services_desc": "Sobald Sie aktive Dienste haben, werden die Anleitungen hier angezeigt.",
+    "no_guides": "Anleitung für diesen Dienst nicht verfügbar",
+    "no_guides_desc": "Für diese Art von Dienst ist keine Anleitung verfügbar.",
+    "service_not_found": "Dienst nicht gefunden",
+    "view_guide": "Anleitung anzeigen",
+    "view_all": "Alle Dienste anzeigen",
+    "new_services_title": "Sie haben neue aktive Dienste!",
+    "new_services_cta": "Anleitungen anzeigen",
+    "dismiss": "Verstanden",
+    "section_credentials": "Anmeldedaten",
+    "section_access": "Zugriff",
+    "section_setup": "Einrichtung",
+    "section_troubleshoot": "Fehlerbehebung",
+    "section_howto": "Wie man es benutzt",
+    "section_howto_edit": "Wie bearbeiten",
+    "section_howto_publish": "Wie veröffentlichen",
+    "section_howto_manage": "Wie verwalten",
+    "section_domains": "Domains",
+    "section_dns": "DNS",
+    "section_test": "Verbindung testen",
+    "section_workflows": "Aktive Workflows",
+    "section_manage_responses": "Antworten verwalten",
+    "section_propagation": "Propagationszeit",
+    "section_verify": "Überprüfung",
+    "no_credentials": "Anmeldedaten nicht konfiguriert",
+    "status": "Status",
+    "status_ready": "Aktiv",
+    "status_configuring": "In Konfiguration",
+    "status_pending": "Ausstehend",
+    "guide": "Anleitung",
+    "faq_title": "Häufig gestellte Fragen",
+    "service_ready": "Bereit!",
+    "back_to_list": "Zurück zur Liste",
+    "configure_service": "Dienst konfigurieren",
+    "service_titles": {
+      "LANDING": "Landing Page",
+      "WHATSAPP": "WhatsApp Business",
+      "SMTP": "Corporate SMTP",
+      "BOT_IA": "Basis-KI-Bot",
+      "AUTOMATION": "n8n-Automatisierung",
+      "DOMAIN": "Domain"
+    },
+    "service_descriptions": {
+      "LANDING": "Ihre professionelle Website. Erfahren Sie, wie Sie sie bearbeiten und veröffentlichen.",
+      "WHATSAPP": "WhatsApp Business Messaging in Ihr Portal integriert.",
+      "SMTP": "Unternehmens-E-Mail für Ihre Domain. Richten Sie sie in Ihrem E-Mail-Client ein.",
+      "BOT_IA": "KI-gestützter virtueller Assistent, der automatisch auf Ihre Kunden antwortet.",
+      "AUTOMATION": "n8n-Automatisierungen für Ihr Unternehmen.",
+      "DOMAIN": "Verwalten Sie Ihre Domain und DNS-Konfiguration."
+    },
+    "landing": {
+      "access_link": "https://{domain}",
+      "edit_step_1": "Gehen Sie zum Portal und navigieren Sie zu Landings",
+      "edit_step_2": "Wählen Sie die Landing, die Sie bearbeiten möchten",
+      "edit_step_3": "Verwenden Sie den visuellen Editor, um Inhalte zu ändern",
+      "edit_step_4": "Klicken Sie auf Speichern, um Ihre Änderungen zu übernehmen",
+      "publish_step_1": "Bearbeiten Sie den Inhalt Ihrer Landing",
+      "publish_step_2": "Zeigen Sie eine Vorschau an, bevor Sie veröffentlichen",
+      "publish_step_3": "Klicken Sie auf Veröffentlichen, um live zu gehen",
+      "domains_text": "Sie können eine benutzerdefinierte Domain für Ihre Landing verwenden. Wenn Sie die Domain selbst verwalten, müssen Sie die Nameserver auf unsere Server umleiten.",
+      "faq_colors_q": "Wie ändere ich die Farbe meiner Landing?",
+      "faq_colors_a": "Gehen Sie im visuellen Editor zur Registerkarte Anpassung. Dort finden Sie Optionen zum Ändern von Farben, Schriftarten und Stilen.",
+      "faq_sections_q": "Wie füge ich einen neuen Abschnitt hinzu?",
+      "faq_sections_a": "Klicken Sie im Editor auf \"Abschnitt hinzufügen\" und wählen Sie aus den verfügbaren Vorlagen.",
+      "faq_domain_q": "Wie verbinde ich meine Domain?",
+      "faq_domain_a": "Gehen Sie im Landing-Konfigurationspanel zum Domain-Bereich und folgen Sie den Anweisungen zur Nameserver-Konfiguration.",
+      "faq_seo_q": "Wie verbessere ich das SEO meiner Landing?",
+      "faq_seo_a": "Der Editor enthält grundlegende SEO-Optionen: Titel, Beschreibung und Schlüsselwörter. Für fortgeschrittene Verbesserungen kontaktieren Sie Ihren Techniker."
+    },
+    "whatsapp": {
+      "access_text": "Der WhatsApp Business API-Dienst ist in Ihr Portal integriert. Sie können Konversationen im Posteingang verwalten.",
+      "how_it_works": "Wenn ein Kunde eine Nachricht über das Webformular sendet, wird sie automatisch in Ihrem WhatsApp Business empfangen. Sie können direkt vom Portal aus antworten.",
+      "test_link": "https://wa.me/{phone}",
+      "faq_no_messages_q": "Warum erhalte ich keine Nachrichten?",
+      "faq_no_messages_a": "Überprüfen Sie, ob die Telefonnummer bei Meta verifiziert und der Webhook korrekt konfiguriert ist.",
+      "faq_change_number_q": "Wie ändere ich die WhatsApp-Nummer?",
+      "faq_change_number_a": "Sie müssen eine neue Nummer über das Meta Business-Panel konfigurieren und die Anmeldedaten in Ihrem Portal aktualisieren.",
+      "faq_template_q": "Wie erstelle ich Nachrichtenvorlagen?",
+      "faq_template_a": "WhatsApp Business-Vorlagen werden über das Meta Business-Panel verwaltet. Sie müssen vor der Verwendung von Meta genehmigt werden."
+    },
+    "smtp": {
+      "outlook_title": "Outlook Einrichtung",
+      "outlook_step_1": "Öffnen Sie Outlook und gehen Sie zu Einstellungen",
+      "outlook_step_2": "Fügen Sie ein E-Mail-Konto hinzu und wählen Sie Manuelle Einrichtung",
+      "outlook_step_3": "Geben Sie die SMTP-Anmeldedaten (Server, Port, Benutzername, Passwort) mit TLS ein",
+      "gmail_title": "Gmail Einrichtung",
+      "gmail_step_1": "Öffnen Sie die Gmail-Einstellungen",
+      "gmail_step_2": "Gehen Sie zu \"Alle Einstellungen anzeigen\"",
+      "gmail_step_3": "Fügen Sie ein E-Mail-Konto unter Konten und Import hinzu",
+      "gmail_step_4": "Wählen Sie \"E-Mail-Konto hinzufügen\" und geben Sie die SMTP-Daten ein",
+      "thunderbird_title": "Thunderbird Einrichtung",
+      "thunderbird_step_1": "Öffnen Sie Thunderbird und gehen Sie zu Datei > Neu > Mail",
+      "thunderbird_step_2": "Wählen Sie Manuelle Konfiguration",
+      "thunderbird_step_3": "Geben Sie die SMTP-Serverdaten ein",
+      "thunderbird_step_4": "Klicken Sie auf Erneut prüfen und dann auf Fertig",
+      "test_link": "/portal/admin/config",
+      "faq_send_q": "Warum kann ich keine E-Mails senden?",
+      "faq_send_a": "Überprüfen Sie, ob Ihr E-Mail-Client den richtigen Port verwendet (587 mit TLS oder 465 mit SSL). Stellen Sie sicher, dass das Passwort korrekt ist.",
+      "faq_port_q": "Welchen Port soll ich verwenden?",
+      "faq_port_a": "Port 587 mit TLS (empfohlen) oder Port 465 mit SSL. Port 25 ist aus Sicherheitsgründen nicht verfügbar.",
+      "faq_auth_q": "Warum werde ich ständig zur Authentifizierung aufgefordert?",
+      "faq_auth_a": "Stellen Sie sicher, dass Sie \"Passwort speichern\" in Ihrem E-Mail-Client aktiviert haben. Wenn das Problem weiterhin besteht, generieren Sie ein App-Passwort."
+    },
+    "bot_ia": {
+      "access_link": "https://chat.amg.cat/{slug}",
+      "how_it_works": "Der KI-Bot antwortet automatisch 24/7 auf Nachrichten Ihrer Kunden. Sie können Antworten und Tonfall über das Verwaltungspanel anpassen.",
+      "manage_link": "/portal/admin/knowledge",
+      "faq_add_info_q": "Wie füge ich dem Bot weitere Informationen hinzu?",
+      "faq_add_info_a": "Über das Wissensverwaltungspanel können Sie PDF-, TXT- oder DOCX-Dokumente hochladen, damit der Bot daraus lernen kann.",
+      "faq_bad_response_q": "Warum antwortet der Bot nicht richtig?",
+      "faq_bad_response_a": "Überprüfen Sie, ob die Wissensdatenbank ausreichende und aktuelle Informationen enthält. Wenn das Problem bestehen bleibt, passen Sie den Ton und die Anweisungen des Bots an.",
+      "faq_integration_q": "Kann er mit WhatsApp integriert werden?",
+      "faq_integration_a": "Ja, der Bot kann mit WhatsApp Business, Telegram und dem Web-Chat integriert werden. Verwalten Sie die Integrationen über das Agenten-Panel."
+    },
+    "automation": {
+      "access_link": "https://n8n.amg.cat",
+      "workflows_text": "Workflows automatisieren wiederkehrende Aufgaben in Ihrem Unternehmen. Jeder Workflow hat eine spezifische Funktion: E-Mails senden, Leads verwalten, Daten aktualisieren usw.",
+      "manage_step_1": "Greifen Sie über den Zugriffslink auf n8n zu",
+      "manage_step_2": "Melden Sie sich mit Ihren Anmeldedaten an",
+      "manage_step_3": "Über das Panel können Sie Workflows aktivieren, deaktivieren oder ändern",
+      "faq_failed_q": "Der Workflow ist fehlgeschlagen, was tun?",
+      "faq_failed_a": "Überprüfen Sie das Fehlerprotokoll in n8n. Meistens handelt es sich um ein Verbindungsproblem mit einer externen API. Wenn Sie es nicht lösen können, kontaktieren Sie Ihren Techniker.",
+      "faq_new_automations_q": "Kann ich neue Automatisierungen hinzufügen?",
+      "faq_new_automations_a": "Ja, Sie können über das n8n-Panel neue Workflows erstellen. Wenn Sie Hilfe benötigen, fragen Sie Ihren zugewiesenen Techniker.",
+      "faq_monitoring_q": "Wie weiß ich, ob die Workflows laufen?",
+      "faq_monitoring_a": "n8n zeigt den Status jedes Workflows an (aktiv, inaktiv, Fehler). Sie können auch Benachrichtigungen per E-Mail oder Telegram konfigurieren."
+    },
+    "domain": {
+      "setup_step_1": "Greifen Sie auf das Panel Ihres Domain-Registrars zu",
+      "setup_step_2": "Ändern Sie die Nameserver zu denen im DNS-Bereich",
+      "setup_step_3": "Warten Sie auf die vollständige Propagation (24-72h)",
+      "propagation_text": "Die DNS-Propagation kann weltweit zwischen 24 und 72 Stunden dauern. Während dieser Zeit kann Ihre Domain von einigen Standorten aus zugänglich sein, von anderen nicht.",
+      "verify_link": "https://dnschecker.org",
+      "faq_time_q": "Wie lange dauert die Domain-Propagation?",
+      "faq_time_a": "Normalerweise zwischen 24 und 48 Stunden, in extremen Fällen kann es bis zu 72 Stunden dauern.",
+      "faq_not_visible_q": "Meine Website wird nach 72h nicht angezeigt",
+      "faq_not_visible_a": "Überprüfen Sie, ob die Nameserver bei Ihrem Registrar korrekt konfiguriert sind. Wenn ja, kontaktieren Sie Ihren Techniker.",
+      "faq_ssl_q": "Wie wird das SSL-Zertifikat generiert?",
+      "faq_ssl_a": "Das SSL-Zertifikat wird automatisch generiert, sobald die Domain auf unsere Server zeigt. Es kann bis zu 15 Minuten dauern."
     }
   }
 }

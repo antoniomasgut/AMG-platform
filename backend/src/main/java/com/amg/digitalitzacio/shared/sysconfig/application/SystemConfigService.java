@@ -58,6 +58,8 @@ public class SystemConfigService {
         new KnownKey("META_PAGE_ACCESS_TOKEN",      "Meta Page Access Token (global)",    "Token d'accés de pàgina de Meta (fallback si no hi ha token específic per pàgina)", "META_ADS", true, "secret", null, null, 20),
         new KnownKey("META_APP_SECRET",             "Meta App Secret",                   "App Secret de l'aplicació de Meta per verificar signatures HMAC dels webhooks", "META_ADS", true, "secret", null, null, 30),
         new KnownKey("OPENAI_API_KEY",              "OpenAI API Key",                     "Clau OpenAI per a generació d'imatges amb DALL·E 3 (Meta Ads creatius)", "IMAGE_GEN", true, "secret", null, null, 10),
+        new KnownKey("META_ADS_MANAGEMENT_TOKEN",   "Meta Ads Management Token",          "System User Token de Meta amb permisos ads_management per crear i gestionar campanyes.", "META_ADS", true, "secret", null, null, 40),
+        new KnownKey("META_ADS_APP_ID",             "Meta Ads App ID",                    "App ID de la Facebook App per a Meta Ads Management.", "META_ADS", false, "string", null, null, 50),
 
         // MAINTENANCE
         new KnownKey("MAINTENANCE_MODE",     "Mode manteniment",          "Bloqueja l'accés a usuaris no-admin.", "MAINTENANCE", false, "boolean", "false", null, 10),

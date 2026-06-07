@@ -12,7 +12,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGStat, AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const BADGE_TONE: Record<string, 'success' | 'warning' | 'danger' | 'accent' | 'neutral'> = {
   PAID: 'success', PENDING: 'warning', OVERDUE: 'danger',
@@ -87,10 +87,10 @@ export default function FinOpsPage() {
 
         {dashboard && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <AMGStat label="Total facturat" value={fmt(dashboard.totalInvoiced)} icon={I.Receipt} tone="accent" />
-            <AMGStat label="Total pagat" value={fmt(dashboard.totalPaid)} icon={I.Check} tone="success" />
-            <AMGStat label="Pendent" value={fmt(dashboard.totalPending)} icon={I.Clock} tone={dashboard.totalPending > 0 ? 'danger' : 'success'} />
-            <AMGStat label="Vençut" value={fmt(dashboard.totalOverdue)} icon={I.AlertCircle} tone={dashboard.totalOverdue > 0 ? 'danger' : 'success'} />
+            <AMGStat label="Total facturat" value={fmt(dashboard.totalInvoiced)} icon={IconSet.Receipt} tone="accent" />
+            <AMGStat label="Total pagat" value={fmt(dashboard.totalPaid)} icon={IconSet.Check} tone="success" />
+            <AMGStat label="Pendent" value={fmt(dashboard.totalPending)} icon={IconSet.Clock} tone={dashboard.totalPending > 0 ? 'danger' : 'success'} />
+            <AMGStat label="Vençut" value={fmt(dashboard.totalOverdue)} icon={IconSet.AlertCircle} tone={dashboard.totalOverdue > 0 ? 'danger' : 'success'} />
           </div>
         )}
 
@@ -120,7 +120,7 @@ export default function FinOpsPage() {
             </div>
           ) : invoices.length === 0 ? (
             <div className="p-8 text-center">
-              <I.Receipt size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Receipt size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap factura trobada</div>
               <p className="text-ui text-ink-2">Les factures apareixeran aquí quan es generin</p>
             </div>
@@ -150,15 +150,15 @@ export default function FinOpsPage() {
                         <td className="px-4 sm:px-5 py-3">
                           {inv.invoicePdfUrl ? (
                             <a href={inv.invoicePdfUrl} target="_blank" rel="noopener" className="text-accent-light hover:text-ink-0 transition-colors">
-                              <I.Download size={14} />
+                              <IconSet.Download size={14} />
                             </a>
                           ) : (
-                            <span className="text-ink-3 opacity-40"><I.Download size={14} /></span>
+                            <span className="text-ink-3 opacity-40"><IconSet.Download size={14} /></span>
                           )}
                         </td>
                         <td className="px-4 sm:px-5 py-3">
                           {inv.status === 'PENDING' && (
-                            <AMGButton size="sm" variant="ghost" icon={I.Trash} onClick={() => doCancel(inv.id)}>
+                            <AMGButton size="sm" variant="ghost" icon={IconSet.Trash} onClick={() => doCancel(inv.id)}>
                               Cancel·lar
                             </AMGButton>
                           )}

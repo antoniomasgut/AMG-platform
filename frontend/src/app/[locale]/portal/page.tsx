@@ -7,7 +7,7 @@ import { useApiErrorHandler } from '@/lib/use-api-error';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import {
   fetchBillingDashboard, fetchInvoices, fetchLandings, fetchWorkflows,
   type BillingDashboard, type Invoice, type LandingSummary, type WorkflowSummary,
@@ -19,6 +19,8 @@ import { getInfraStatus, type InfraStatus } from '@/services/infraops';
 import { getPaymentDashboard, type PaymentDashboard } from '@/services/payments';
 import { getGlobalChannelUsageStats, type ChannelUsageStats } from '@/services/agents-conversational';
 import { OnboardingGuide } from '@/components/portal/OnboardingGuide';
+import { GuidesSection } from '@/components/guides/GuidesSection';
+import { ServiceDeliveryAlert } from '@/components/guides/ServiceDeliveryAlert';
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
@@ -101,8 +103,8 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
   if (loading) {
     return (
       <div className="p-6 space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-24 animate-pulse bg-[#212140] rounded" />
+        {[...Array(3)].map((_, idx) => (
+          <div key={idx} className="h-24 animate-pulse bg-[#212140] rounded" />
         ))}
       </div>
     );
@@ -118,7 +120,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
             label={t('admin.kpi.tenantsActive')}
             value={totalTenants}
             sub={t('admin.kpi.clients')}
-            icon={I.Building}
+            icon={IconSet.Building}
             href="/portal/admin/tenants"
           />
         )}
@@ -126,7 +128,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
           label={t('admin.kpi.leadsActive')}
           value={leads ? (leads.total - (leads.byStage?.LOST ?? 0) - (leads.byStage?.WON ?? 0)) : '—'}
           sub={leads ? t('admin.kpi.convRateSub', { total: leads.total, rate: Math.round(leads.conversionRate ?? 0) }) : ''}
-          icon={I.Users}
+          icon={IconSet.Users}
           href="/portal/leads"
         />
         <KpiCard
@@ -134,7 +136,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
           value={ops ? `${ops.currentStatus.up}/${ops.currentStatus.services}` : '—'}
           sub={ops ? (ops.openIncidents > 0 ? t('admin.kpi.incidents', { count: ops.openIncidents }) : t('admin.kpi.noIncidents')) : ''}
           tone={sysOk === true ? 'ok' : sysOk === false ? 'crit' : 'default'}
-          icon={I.Activity}
+          icon={IconSet.Activity}
           href="/portal/ops"
         />
         {isSuperAdmin ? (
@@ -143,7 +145,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
             value={infra ? `${infra.cpu.percent}% CPU` : '—'}
             sub={infra ? `RAM ${infra.ram.percent}% · Disk ${infra.disk.percent}%` : ''}
             tone={infraTone}
-            icon={I.Server}
+            icon={IconSet.Server}
             href="/portal/admin/infraops"
           />
         ) : (
@@ -151,7 +153,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
             label={t('admin.kpi.paymentsPending')}
             value={payments ? payments.pendingCount : '—'}
             sub={payments ? t('admin.kpi.completed', { count: payments.completedCount }) : ''}
-            icon={I.CreditCard}
+            icon={IconSet.CreditCard}
           />
         )}
       </div>
@@ -265,21 +267,21 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
         <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-3">{t('admin.actions.title')}</div>
         <div className="flex flex-wrap gap-2">
           <a href="/portal/process">
-            <AMGButton size="sm" icon={I.Flow}>{t('admin.actions.process')}</AMGButton>
+            <AMGButton size="sm" icon={IconSet.Flow}>{t('admin.actions.process')}</AMGButton>
           </a>
           <a href="/portal/leads/new">
-            <AMGButton size="sm" variant="outline" icon={I.Plus}>{t('admin.actions.newLead')}</AMGButton>
+            <AMGButton size="sm" variant="outline" icon={IconSet.Plus}>{t('admin.actions.newLead')}</AMGButton>
           </a>
           {isSuperAdmin && (
             <>
               <a href="/portal/admin/tenants">
-                <AMGButton size="sm" variant="outline" icon={I.Building}>{t('admin.actions.tenants')}</AMGButton>
+                <AMGButton size="sm" variant="outline" icon={IconSet.Building}>{t('admin.actions.tenants')}</AMGButton>
               </a>
               <a href="/portal/admin/config">
-                <AMGButton size="sm" variant="outline" icon={I.Key}>{t('admin.actions.apiKeys')}</AMGButton>
+                <AMGButton size="sm" variant="outline" icon={IconSet.Key}>{t('admin.actions.apiKeys')}</AMGButton>
               </a>
               <a href="/portal/admin/backup">
-                <AMGButton size="sm" variant="outline" icon={I.Database}>{t('admin.actions.backup')}</AMGButton>
+                <AMGButton size="sm" variant="outline" icon={IconSet.Database}>{t('admin.actions.backup')}</AMGButton>
               </a>
             </>
           )}
@@ -370,23 +372,23 @@ interface ClientData {
   tenantSetup: TenantSetup | null;
 }
 
-function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped, onboardingComplete, onSkip, onComplete }: {
+function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped, onboardingComplete, loadError, onSkip, onComplete }: {
   data: ClientData; loading: boolean; userName: string; tenantId: string | null;
-  onboardingSkipped: boolean; onboardingComplete: boolean;
+  onboardingSkipped: boolean; onboardingComplete: boolean; loadError: string | null;
   onSkip: () => void; onComplete: () => void;
 }) {
   const t = useTranslations('portalDashboard');
+  const ot = useTranslations('onboarding');
   const { billing, invoices, landings, workflows, tenantSetup } = data;
   const activeLandings = landings.filter(l => l.status === 'PUBLISHED' || l.status === 'ACTIVE').length;
   const activeWorkflows = workflows.filter(w => w.status === 'ACTIVE').length;
 
-  // Assigned service types from Vault
-  const assignedServiceTypes = new Set(
-    (tenantSetup?.profiles ?? [])
-      .flatMap(p => p.phases)
-      .flatMap(ph => ph.services)
-      .map(s => s.service.type)
-  );
+  // Assigned services from Vault
+  const assignedServices = (tenantSetup?.profiles ?? [])
+    .flatMap(p => p.phases)
+    .flatMap(ph => ph.services)
+    .map(s => ({ type: s.service.type, isAddon: (s as any).isAddon ?? false }));
+  const assignedServiceTypes = new Set(assignedServices.map(s => s.type));
   // Vault pending: any phase not yet APPROVED
   const vaultPending = (tenantSetup?.profiles ?? [])
     .flatMap(p => p.phases)
@@ -401,19 +403,14 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
 
   // Fallback: if vault data unavailable, use simple check (all 3 resources empty)
   const fallbackPending = !tenantSetup && landings.length === 0 && workflows.length === 0 && invoices.length === 0;
-  const showOnboarding = !onboardingSkipped && !onboardingComplete && !loading &&
+  const showOnboarding = !onboardingSkipped && !onboardingComplete && !loading && !loadError &&
     (hasOnboardingServices ? hasPendingStep : fallbackPending);
-
-  // Fallback service types when vault not loaded (show all 3 steps)
-  const effectiveTypes = assignedServiceTypes.size > 0
-    ? assignedServiceTypes
-    : new Set(['LANDING', 'AUTOMATION', 'BILLING']);
 
   if (loading) {
     return (
       <div className="p-6 space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-24 animate-pulse bg-[#212140] rounded" />
+        {[...Array(3)].map((_, idx) => (
+          <div key={idx} className="h-24 animate-pulse bg-[#212140] rounded" />
         ))}
       </div>
     );
@@ -423,11 +420,12 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
     return (
       <div className="p-4 sm:p-6">
         <OnboardingGuide
+          tenantId={tenantId ?? ''}
           userName={userName}
-          assignedServiceTypes={effectiveTypes}
-          landingsCount={landings.length}
-          workflowsCount={workflows.length}
-          invoicesCount={invoices.length}
+          assignedServices={assignedServices}
+          landings={landings}
+          workflows={workflows}
+          invoices={invoices}
           vaultPending={vaultPending}
           onSkip={onSkip}
           onComplete={onComplete}
@@ -438,6 +436,10 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
+
+      {tenantId && <ServiceDeliveryAlert tenantId={tenantId} />}
+
+      {tenantId && <GuidesSection tenantId={tenantId} />}
 
       {/* Hero billing */}
       <div className="amg-card card-clip p-4 sm:p-6 relative overflow-hidden">
@@ -481,7 +483,7 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
         </div>
         {invoices.length === 0 ? (
           <div className="py-8 text-center">
-            <I.Receipt size={24} className="mx-auto mb-2 opacity-30" />
+            <IconSet.Receipt size={24} className="mx-auto mb-2 opacity-30" />
             <p className="f-mono text-[10px] uppercase text-ink-3">{t('client.invoices.empty')}</p>
           </div>
         ) : (
@@ -494,7 +496,7 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
                 <AMGBadge tone={BADGE_TONE[inv.status] || 'accent'}>{inv.status}</AMGBadge>
                 <a href={inv.invoicePdfUrl || '#'} target="_blank" rel="noopener"
                   className={`text-ink-2 hover:text-accent-light ${!inv.invoicePdfUrl ? 'opacity-30 pointer-events-none' : ''}`}>
-                  <I.Download size={12} />
+                  <IconSet.Download size={12} />
                 </a>
               </div>
             ))}
@@ -504,13 +506,13 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
 
       {/* Ajuda */}
       <div className="amg-card card-clip p-4 sm:p-5 flex items-start gap-4">
-        <I.Sparkles size={20} className="text-accent shrink-0 mt-0.5" />
+        <IconSet.Sparkles size={20} className="text-accent shrink-0 mt-0.5" />
         <div className="flex-1">
           <div className="f-display font-bold text-sm">{t('client.help.title')}</div>
           <p className="text-ui text-ink-1 mt-1 text-sm">{t('client.help.subtitle')}</p>
         </div>
         <a href="mailto:info@amgdl.com">
-          <AMGButton size="sm" icon={I.Mail}>{t('client.help.contact')}</AMGButton>
+          <AMGButton size="sm" icon={IconSet.Mail}>{t('client.help.contact')}</AMGButton>
         </a>
       </div>
 
@@ -525,9 +527,11 @@ export default function PortalPage() {
   const { user, isSuperAdmin, isAdmin } = useAuth();
   const handleApiError = useApiErrorHandler();
   const t = useTranslations('portalDashboard');
+  const ot = useTranslations('onboarding');
   const isStaff = isSuperAdmin || isAdmin;
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Admin data
   const [adminData, setAdminData] = useState<AdminData>({
@@ -551,6 +555,7 @@ export default function PortalPage() {
   const loadDashboard = useCallback(async () => {
     if (!user) return;
     setLoading(true);
+    setLoadError(null);
     try {
       if (isStaff) {
         const [tenants, leads, ops, infra, payments, channelStats] = await Promise.all([
@@ -582,6 +587,8 @@ export default function PortalPage() {
       }
     } catch (err: unknown) {
       handleApiError(err, 'Dashboard');
+      if (err instanceof Error) setLoadError(err.message);
+      else setLoadError('Error loading dashboard');
     } finally {
       setLoading(false);
     }
@@ -614,9 +621,25 @@ export default function PortalPage() {
         </span>
       </div>
 
+      {loadError && !isStaff && !onboardingSkipped && !onboardingComplete && (
+        <div className="p-4 sm:p-6">
+          <div className="amg-card card-clip p-6 text-center border border-[#f85149]/40 bg-[#f85149]/5">
+            <IconSet.AlertCircle size={24} className="mx-auto mb-3 text-[#f85149]" />
+            <div className="f-display font-bold text-sm mb-1">{ot('error_title')}</div>
+            <p className="text-ink-2 text-sm mb-4">{ot('error_desc')}</p>
+            <button
+              onClick={loadDashboard}
+              className="f-mono text-label uppercase btn-clip bg-accent hover:bg-accent-light text-black font-semibold px-5 h-10 transition-colors"
+            >
+              {ot('error_retry')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {isStaff ? (
         <AdminDashboard data={adminData} loading={loading} isSuperAdmin={isSuperAdmin} />
-      ) : (
+      ) : !loadError ? (
         <ClientDashboard
           data={clientData}
           loading={loading}
@@ -624,10 +647,11 @@ export default function PortalPage() {
           tenantId={user.tenantId ?? null}
           onboardingSkipped={onboardingSkipped}
           onboardingComplete={onboardingComplete}
+          loadError={loadError}
           onSkip={handleSkipOnboarding}
           onComplete={() => setOnboardingComplete(true)}
         />
-      )}
+      ) : null}
     </PortalShell>
   );
 }

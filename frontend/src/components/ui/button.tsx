@@ -48,7 +48,7 @@ export function AMGButton({
       {loading ? (
         <span className="w-3 h-3 border-2 border-black/60 border-t-transparent rounded-full animate-spin" />
       ) : Ico ? (
-        <Ico size={size === 'sm' ? 12 : 14} />
+        <Ico size={size === 'sm' ? 16 : size === 'lg' ? 20 : 18} />
       ) : null}
       {children}
     </button>

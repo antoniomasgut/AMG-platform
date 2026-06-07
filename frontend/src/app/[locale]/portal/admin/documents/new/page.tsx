@@ -11,7 +11,7 @@ import {
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGInput } from '@/components/ui/input';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 export default function NewDocumentTemplatePage() {
   const router = useRouter();
@@ -87,7 +87,7 @@ export default function NewDocumentTemplatePage() {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <AMGButton type="submit" disabled={loading} icon={I.Plus}>
+            <AMGButton type="submit" disabled={loading} icon={IconSet.Plus}>
               {loading ? 'Creant...' : 'Crear plantilla'}
             </AMGButton>
             <AMGButton type="button" variant="outline" onClick={() => router.push('/portal/admin/documents')}>

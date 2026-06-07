@@ -6,7 +6,7 @@ import { getInfraStatus, getRecommendations, type InfraStatus, type Recommendati
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGStat } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const SEVERITY_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 'warning'> = {
   LOW: 'info',
@@ -94,25 +94,25 @@ export default function InfraOpsPage() {
               <AMGStat
                 label="CPU"
                 value={`${s.cpu.percent.toFixed(1)}%`}
-                icon={I.Activity}
+                icon={IconSet.Activity}
                 tone={metricTone(s.cpu.percent)}
               />
               <AMGStat
                 label="RAM"
                 value={`${s.ram.percent.toFixed(1)}%`}
-                icon={I.Server}
+                icon={IconSet.Server}
                 tone={metricTone(s.ram.percent)}
               />
               <AMGStat
                 label="Disc"
                 value={`${s.disk.percent.toFixed(1)}%`}
-                icon={I.Database}
+                icon={IconSet.Database}
                 tone={metricTone(s.disk.percent)}
               />
               <AMGStat
                 label="BD Connexions"
                 value={`${s.database.activeConnections ?? 0}/${s.database.maxConnections ?? 0}`}
-                icon={I.Box}
+                icon={IconSet.Box}
                 tone={metricTone(s.database.percent)}
               />
             </div>
@@ -142,7 +142,7 @@ export default function InfraOpsPage() {
             </div>
           ) : recs.length === 0 ? (
             <div className="p-8 text-center">
-              <I.Check size={28} stroke="#39d353" className="mx-auto mb-3" />
+              <IconSet.Check size={28} stroke="#39d353" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1 text-success">Tot correcte</div>
               <p className="f-mono text-label text-ink-2">No hi ha recomanacions pendents</p>
             </div>

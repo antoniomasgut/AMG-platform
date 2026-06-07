@@ -70,7 +70,7 @@ class ProspectingControllerTest {
     void tc01_createCampaign_returns201() throws Exception {
         var request = new com.amg.digitalitzacio.prospecting.api.dto.CreateCampaignRequest(
                 "Restaurants Palma", "restaurant", "Palma",
-                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null);
+                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null, null, null, null);
 
         mockMvc.perform(post("/api/v1/prospecting/campaigns")
                         .header("Authorization", "Bearer " + adminToken)
@@ -93,7 +93,7 @@ class ProspectingControllerTest {
     void tc03_runCampaign_returns202() throws Exception {
         var createReq = new com.amg.digitalitzacio.prospecting.api.dto.CreateCampaignRequest(
                 "Restaurants Palma", "restaurant", "Palma",
-                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null);
+                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null, null, null, null);
 
         var createJson = mockMvc.perform(post("/api/v1/prospecting/campaigns")
                         .header("Authorization", "Bearer " + adminToken)
@@ -114,7 +114,7 @@ class ProspectingControllerTest {
     void tc04_listProspects_returns200() throws Exception {
         var createReq = new com.amg.digitalitzacio.prospecting.api.dto.CreateCampaignRequest(
                 "Test Campaign", "restaurant", "Palma",
-                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null);
+                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null, null, null, null);
 
         var createJson = mockMvc.perform(post("/api/v1/prospecting/campaigns")
                         .header("Authorization", "Bearer " + adminToken)
@@ -139,7 +139,7 @@ class ProspectingControllerTest {
     void tc05_updateProspectStatus_returns200() throws Exception {
         var createReq = new com.amg.digitalitzacio.prospecting.api.dto.CreateCampaignRequest(
                 "Test", "restaurant", "Palma",
-                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null);
+                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null, null, null, null);
 
         var createJson = mockMvc.perform(post("/api/v1/prospecting/campaigns")
                         .header("Authorization", "Bearer " + adminToken)
@@ -177,7 +177,7 @@ class ProspectingControllerTest {
     void tc06_enrichProspect_returns200() throws Exception {
         var createReq = new com.amg.digitalitzacio.prospecting.api.dto.CreateCampaignRequest(
                 "Test", "restaurant", "Palma",
-                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null);
+                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null, null, null, null);
 
         var createJson = mockMvc.perform(post("/api/v1/prospecting/campaigns")
                         .header("Authorization", "Bearer " + adminToken)
@@ -210,7 +210,7 @@ class ProspectingControllerTest {
     void tc07_exportProspect_returns201() throws Exception {
         var createReq = new com.amg.digitalitzacio.prospecting.api.dto.CreateCampaignRequest(
                 "Export Test", "restaurant", "Palma",
-                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null);
+                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null, null, null, null);
 
         var createJson = mockMvc.perform(post("/api/v1/prospecting/campaigns")
                         .header("Authorization", "Bearer " + adminToken)
@@ -243,7 +243,7 @@ class ProspectingControllerTest {
     void tc08_exportAllProspects_returns200() throws Exception {
         var createReq = new com.amg.digitalitzacio.prospecting.api.dto.CreateCampaignRequest(
                 "Export All", "restaurant", "Palma",
-                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null);
+                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null, null, null, null);
 
         var createJson = mockMvc.perform(post("/api/v1/prospecting/campaigns")
                         .header("Authorization", "Bearer " + adminToken)
@@ -281,7 +281,7 @@ class ProspectingControllerTest {
     void tc11_deleteCampaign_returns204() throws Exception {
         var createReq = new com.amg.digitalitzacio.prospecting.api.dto.CreateCampaignRequest(
                 "Delete Me", "restaurant", "Palma",
-                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null);
+                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null, null, null, null);
 
         var createJson = mockMvc.perform(post("/api/v1/prospecting/campaigns")
                         .header("Authorization", "Bearer " + adminToken)
@@ -301,7 +301,7 @@ class ProspectingControllerTest {
     void tc12_exportAlreadyExportedProspect_returns409() throws Exception {
         var createReq = new com.amg.digitalitzacio.prospecting.api.dto.CreateCampaignRequest(
                 "Conflict Test", "restaurant", "Palma",
-                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null);
+                com.amg.digitalitzacio.prospecting.domain.ProspectSource.GOOGLE_MAPS, null, null, null, null, null);
 
         var createJson = mockMvc.perform(post("/api/v1/prospecting/campaigns")
                         .header("Authorization", "Bearer " + adminToken)

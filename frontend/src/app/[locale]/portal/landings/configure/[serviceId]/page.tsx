@@ -10,7 +10,7 @@ import { createLandingFromTemplate, TEMPLATE_STYLES } from '@/services/factory';
 import { apiFetch } from '@/services/api';
 import { SectionContentFillerList } from '@/components/factory/SectionContentFiller';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 type Step = 'select-template' | 'fill-content' | 'confirm';
 
@@ -89,7 +89,7 @@ function ConfigureLandingForm() {
     return (
       <PortalShell breadcrumb="landings / configurar" backHref={`/${locale}/portal/landings`}>
         <div className="p-4 sm:p-8 text-center py-12">
-          <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
+          <IconSet.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
           <div className="f-display font-bold text-sm mb-1">Falta tenantId</div>
           <p className="f-mono text-xs text-ink-2">Aquesta pàgina requereix un tenantId com a paràmetre</p>
         </div>
@@ -119,7 +119,7 @@ function ConfigureLandingForm() {
             </div>
           ) : !templates || templates.length === 0 ? (
             <div className="amg-card card-clip p-8 text-center">
-              <I.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.Box size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap plantilla disponible</div>
               <p className="f-mono text-xs text-ink-2">Crea una plantilla des del panell d&apos;admin</p>
             </div>
@@ -159,7 +159,7 @@ function ConfigureLandingForm() {
               />
             ) : (
               <div className="amg-card card-clip p-8 text-center">
-                <I.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
+                <IconSet.AlertCircle size={28} stroke="#ff6666" className="mx-auto mb-3" />
                 <div className="f-display font-bold text-sm mb-1">Error carregant la plantilla</div>
               </div>
             )}

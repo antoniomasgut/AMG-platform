@@ -16,7 +16,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGStat, AMGSectionTitle } from '@/components/ui/stat';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const BADGE_TONE: Record<string, 'accent' | 'info' | 'success' | 'danger' | 'warning' | 'neutral'> = {
   DRAFT: 'accent', SENT: 'info', ACCEPTED: 'success',
@@ -233,30 +233,30 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
               {isDraft && mode === 'view' && (
                 <button title="Editar" onClick={enterEdit} disabled={loadingSetup}
                   className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition disabled:opacity-40">
-                  {loadingSetup ? <span className="w-3.5 h-3.5 border border-[#FF6B00] border-t-transparent rounded-full animate-spin block" /> : <I.Edit size={15} />}
+                  {loadingSetup ? <span className="w-3.5 h-3.5 border border-[#FF6B00] border-t-transparent rounded-full animate-spin block" /> : <IconSet.Edit size={15} />}
                 </button>
               )}
               <button title="Imprimir / PDF" onClick={handlePrint}
                 className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition">
-                <I.Download size={15} />
+                <IconSet.Download size={15} />
               </button>
               <button title="Clonar" onClick={handleClone} disabled={cloning}
                 className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition disabled:opacity-40">
-                <I.Copy size={15} />
+                <IconSet.Copy size={15} />
               </button>
               {isDraft && mode === 'view' && (
                 <button title="Enviar al client" onClick={handleSend} disabled={sending}
                   className="p-1.5 rounded text-ink-2 hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition disabled:opacity-40">
-                  <I.ArrowRight size={15} />
+                  <IconSet.ArrowRight size={15} />
                 </button>
               )}
               <button title="Eliminar" onClick={handleCancel} disabled={cancelling}
                 className="p-1.5 rounded text-red-400 hover:text-red-300 hover:bg-[rgba(239,68,68,0.12)] transition disabled:opacity-40">
-                <I.Trash size={15} />
+                <IconSet.Trash size={15} />
               </button>
               <button onClick={mode === 'edit' ? () => setMode('view') : onClose}
                 className="p-1.5 ml-1 rounded text-ink-2 hover:text-ink-0">
-                <I.X size={17} />
+                <IconSet.X size={17} />
               </button>
             </div>
           </div>
@@ -343,7 +343,7 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
               {budget.status === 'ACCEPTED' && budget.tenantId && (
                 <div className="rounded border border-success/30 bg-success/5 p-4 space-y-3">
                   <div className="flex items-center gap-2">
-                    <I.Check size={13} stroke="#39d353" />
+                    <IconSet.Check size={13} stroke="#39d353" />
                     <span className="f-mono text-label text-xs text-success font-semibold uppercase tracking-wider">
                       Pressupost acceptat
                     </span>
@@ -467,11 +467,11 @@ export default function BillingPage() {
 
         {dashboard && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <AMGStat label="Total gastat" value={fmt(dashboard.totalSpent)} icon={I.CreditCard} tone="accent" />
+            <AMGStat label="Total gastat" value={fmt(dashboard.totalSpent)} icon={IconSet.CreditCard} tone="accent" />
             <AMGStat
               label="Pendents aprovació"
               value={String(dashboard.pendingBudgets)}
-              icon={I.Clock}
+              icon={IconSet.Clock}
               tone={dashboard.pendingBudgets > 0 ? 'danger' : 'success'}
             />
             {dashboard.recentPhases.slice(0, 2).map((ph, i) => (
@@ -503,7 +503,7 @@ export default function BillingPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center">
-              <I.CreditCard size={28} stroke="#64748b" className="mx-auto mb-3" />
+              <IconSet.CreditCard size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap pressupost</div>
               <p className="text-ui text-ink-2">
                 {isAdmin ? 'No hi ha pressupostos creats' : 'Contacta amb el teu tècnic per sol·licitar un pressupost'}

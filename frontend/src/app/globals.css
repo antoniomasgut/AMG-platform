@@ -31,39 +31,91 @@
   --duration-base:   150ms;
   --duration-slow:   250ms;
   --ease-out:        cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ── Theme: Dark (default) ── */
+  --color-bg-0: #0b1120;
+  --color-bg-1: #0f172a;
+  --color-bg-2: #1e293b;
+  --color-bg-3: #334155;
+
+  --color-ink-0: #e2e8f0;
+  --color-ink-1: #94a3b8;
+  --color-ink-2: #8896aa;
+  --color-ink-3: #64748b;
+
+  --color-border-subtle: rgba(148,163,184,0.10);
+  --color-border-base:   rgba(148,163,184,0.15);
+  --color-border-medium: rgba(148,163,184,0.25);
+  --color-border-strong: rgba(148,163,184,0.35);
+
+  --surface-page:    #0d0d1a;
+  --surface-sidebar: #13132a;
+  --surface-card:    #0f172a;
+  --surface-card-alt:#1a1a2e;
+  --surface-hover:   rgba(255,255,255,0.03);
+  --surface-hover-sm:rgba(255,255,255,0.02);
+
+  --body-bg:    #0b1120;
+  --body-color: #e2e8f0;
+
+  --scrollbar-track: #0b1120;
+  --scrollbar-thumb: #334155;
+
+  --autofill-bg:    #1e293b;
+  --autofill-text:  #e2e8f0;
+}
+
+[data-theme="light"] {
+  --color-bg-0: #f8fafc;
+  --color-bg-1: #f1f5f9;
+  --color-bg-2: #e2e8f0;
+  --color-bg-3: #cbd5e1;
+
+  --color-ink-0: #0f172a;
+  --color-ink-1: #334155;
+  --color-ink-2: #475569;
+  --color-ink-3: #64748b;
+
+  --color-border-subtle: rgba(148,163,184,0.25);
+  --color-border-base:   rgba(148,163,184,0.35);
+  --color-border-medium: rgba(148,163,184,0.50);
+  --color-border-strong: rgba(148,163,184,0.65);
+
+  --surface-page:    #f8fafc;
+  --surface-sidebar: #f1f5f9;
+  --surface-card:    #ffffff;
+  --surface-card-alt:#ffffff;
+  --surface-hover:   rgba(0,0,0,0.03);
+  --surface-hover-sm:rgba(0,0,0,0.02);
+
+  --body-bg:    #f8fafc;
+  --body-color: #0f172a;
+
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+
+  --autofill-bg:    #f1f5f9;
+  --autofill-text:  #0f172a;
 }
 
 /* ─────────── Font utility classes ─────────── */
 .f-display { font-family: var(--font-display), sans-serif; }
 .f-mono    { font-family: var(--font-mono), 'ui-monospace', monospace; }
 
-/* ─────────── Clip-paths ─────────── */
+/* ─────────── Rounded corners ─────────── */
 .btn-clip {
-  clip-path: polygon(
-    calc(100% - 10px) 0%,
-    100% 10px,
-    100% 100%,
-    10px 100%,
-    0% calc(100% - 10px),
-    0% 0%
-  );
+  border-radius: 8px;
 }
 
 .card-clip {
-  clip-path: polygon(
-    calc(100% - 14px) 0%,
-    100% 14px,
-    100% 100%,
-    14px 100%,
-    0% calc(100% - 14px),
-    0% 0%
-  );
+  border-radius: 12px;
 }
 
 /* ─────────── Card surface ─────────── */
 .amg-card {
-  background: #0f172a;
-  border: 1px solid rgba(148,163,184,0.12);
+  background: var(--surface-card);
+  border: 1px solid var(--color-border-base);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
 }
 
 /* ─────────── Blink animation ─────────── */
@@ -119,8 +171,8 @@
 
 /* ─────────── Base styles ─────────── */
 body {
-  background: #0b1120;
-  color: #e2e8f0;
+  background: var(--body-bg);
+  color: var(--body-color);
   font-family: var(--font-sans), 'Space Grotesk', system-ui, sans-serif;
   font-size: var(--text-base);
   line-height: 1.5;
@@ -134,10 +186,10 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b1120;
+  background: var(--scrollbar-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--scrollbar-thumb);
   border-radius: 0;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -148,8 +200,8 @@ body {
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 30px #1e293b inset !important;
-  -webkit-text-fill-color: #e2e8f0 !important;
+  -webkit-box-shadow: 0 0 0 30px var(--autofill-bg) inset !important;
+  -webkit-text-fill-color: var(--autofill-text) !important;
 }
 
 /* ─────────── Reduced motion ─────────── */

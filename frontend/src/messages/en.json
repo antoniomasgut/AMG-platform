@@ -529,6 +529,9 @@
     "vault_pending": "Configuration pending",
     "vault_pending_desc": "Your account has services pending configuration. Review them to activate.",
     "vault_pending_cta": "Review →",
+    "error_title": "Error loading",
+    "error_desc": "Could not load the dashboard. Please try again.",
+    "error_retry": "Try again",
     "steps": {
       "landing_title": "Create your first landing page",
       "landing_desc": "Publish your website in under 5 minutes with the visual editor.",
@@ -581,7 +584,673 @@
       "hosting": "Web Hosting",
       "backup": "Backups",
       "infraOps": "Infrastructure",
-      "apiKeys": "API Keys"
+      "apiKeys": "API Keys",
+      "serveis": "Services"
+    }
+  },
+  "wizard": {
+    "agenda": {
+      "title": "Online Booking Setup",
+      "description": "Connect your business calendar so clients can book appointments directly from WhatsApp or your website.",
+      "prerequisites": "You'll need: your calendar link or API key (Google Calendar or Calendly).",
+      "step1": {
+        "title": "Calendar Configuration",
+        "description": "Enter your API key and select the calendar type you use."
+      },
+      "step2": {
+        "title": "Customize Notifications",
+        "description": "Configure confirmation and reminder templates for your clients."
+      },
+      "step3": {
+        "title": "Verify Connection",
+        "description": "We'll test to make sure the booking system works properly."
+      },
+      "field": {
+        "calendar_type": "Calendar Type",
+        "api_key": "Calendar API Key / URL",
+        "api_key_hint": "Paste your public link or API key from Google Calendar or Calendly.",
+        "confirmation": "Confirmation Template",
+        "confirmation_placeholder": "E.g.: Hi {name}, your appointment has been confirmed for {date}"
+      },
+      "calendar": {
+        "google": "Google Calendar",
+        "calendly": "Calendly"
+      }
+    },
+    "analytics": {
+      "title": "Google Analytics Setup",
+      "description": "Connect Google Analytics to measure traffic and user behaviour on your website.",
+      "prerequisites": "You'll need: a Google Analytics account and edit permissions on the property.",
+      "step1": {
+        "title": "Tracking ID",
+        "description": "Enter your Google Analytics property ID (format G-XXXXXXXXXX)."
+      },
+      "step2": {
+        "title": "Verification",
+        "description": "Verify the tracking is configured correctly."
+      },
+      "field": {
+        "property_id": "Property ID",
+        "property_id_placeholder": "G-XXXXXXXXXX",
+        "oauth": "OAuth 2.0 (optional)"
+      }
+    },
+    "automation": {
+      "title": "n8n Automation Setup",
+      "description": "Connect n8n to create automatic workflows that save your business time.",
+      "prerequisites": "You'll need: your n8n server URL and an API Key.",
+      "step1": {
+        "title": "n8n Connection",
+        "description": "Enter your n8n server URL and API Key."
+      },
+      "step2": {
+        "title": "Connection Test",
+        "description": "We'll verify the connection to n8n is working."
+      },
+      "step3": {
+        "title": "Predefined Workflows",
+        "description": "Select the automatic workflows you'd like to enable."
+      },
+      "field": {
+        "url": "n8n Server URL",
+        "url_placeholder": "https://n8n.example.com",
+        "api_key": "n8n API Key"
+      }
+    },
+    "bot_ia": {
+      "title": "AI Bot Setup",
+      "description": "Create a virtual assistant that automatically responds to your clients' messages.",
+      "prerequisites": "You'll need: an API Key from Anthropic (Claude) or OpenAI.",
+      "step1": {
+        "title": "Basic Configuration",
+        "description": "Name your bot and define its personality."
+      },
+      "step2": {
+        "title": "Model Selection",
+        "description": "Choose the AI model that will power your bot."
+      },
+      "step3": {
+        "title": "Test the Bot",
+        "description": "Run a test to see how your bot responds."
+      },
+      "field": {
+        "name": "Bot Name",
+        "name_placeholder": "E.g.: Maria, Virtual Assistant",
+        "model": "AI Model",
+        "api_key": "API Key",
+        "welcome": "Welcome Message",
+        "welcome_placeholder": "E.g.: Hi! I'm the virtual assistant for..."
+      },
+      "model": {
+        "sonnet": "Claude Sonnet (fast & affordable)",
+        "haiku": "Claude Haiku (very fast, basic)",
+        "gpt4o": "GPT-4o (advanced)"
+      }
+    },
+    "bot_ia_rag": {
+      "title": "AI Bot with RAG Setup",
+      "description": "Create a smart assistant that can answer questions based on your documents.",
+      "prerequisites": "You'll need: Anthropic API Key and documents in PDF, TXT or DOCX.",
+      "step1": {
+        "title": "Basic Configuration",
+        "description": "Name your bot and select the model."
+      },
+      "step2": {
+        "title": "Knowledge Documents",
+        "description": "Upload the documents the bot will use to answer questions."
+      },
+      "step3": {
+        "title": "Test the Bot",
+        "description": "Ask a test question to see how it responds."
+      },
+      "field": {
+        "name": "Bot Name",
+        "name_placeholder": "E.g.: Technical Support AI",
+        "model": "AI Model",
+        "api_key": "API Key",
+        "documents": "Knowledge Documents",
+        "documents_placeholder": "Drag files here",
+        "documents_hint": "Supported formats: PDF, TXT, DOCX"
+      },
+      "model": {
+        "sonnet": "Claude Sonnet (precision)",
+        "haiku": "Claude Haiku (fast)"
+      }
+    },
+    "calculadora": {
+      "title": "Budget Calculator Setup",
+      "description": "Configure an interactive budget calculator for your website.",
+      "prerequisites": "You'll need: the calculation rules and price ranges.",
+      "step1": {
+        "title": "Template",
+        "description": "Select a template for the calculator."
+      },
+      "step2": {
+        "title": "Calculation Rules",
+        "description": "Define how the budget is calculated."
+      },
+      "step3": {
+        "title": "Publish",
+        "description": "Review and publish the calculator."
+      },
+      "field": {
+        "template": "Template",
+        "template_placeholder": "Select a template",
+        "rules": "Calculation Rules",
+        "rules_placeholder": "E.g.: 50€/hour * hours worked"
+      }
+    },
+    "cobrament": {
+      "title": "Card Payment Setup",
+      "description": "Connect a payment gateway to accept credit card payments from clients.",
+      "prerequisites": "You'll need: a Stripe or GoCardless account.",
+      "step1": {
+        "title": "API Keys",
+        "description": "Enter the public and secret keys from your payment provider."
+      },
+      "step2": {
+        "title": "Webhook",
+        "description": "Configure the webhook to receive payment notifications."
+      },
+      "step3": {
+        "title": "Verification",
+        "description": "Verify payments work correctly."
+      },
+      "field": {
+        "public_key": "Public Key",
+        "secret_key": "Secret Key",
+        "webhook": "Webhook URL",
+        "webhook_secret": "Webhook Secret"
+      }
+    },
+    "common": {
+      "yes": "Yes",
+      "no": "No"
+    },
+    "crm": {
+      "title": "CRM Setup",
+      "description": "Configure your sales pipeline and lead management.",
+      "prerequisites": "You'll need: the list of stages in your sales process.",
+      "step1": {
+        "title": "Pipeline Stages",
+        "description": "Define the stages of your sales process."
+      },
+      "step2": {
+        "title": "Notifications",
+        "description": "Configure how you'd like to receive notifications of new leads."
+      },
+      "step3": {
+        "title": "WhatsApp Integration",
+        "description": "Connect to WhatsApp to manage leads from chat."
+      },
+      "field": {
+        "stages": "Pipeline Stages",
+        "stages_placeholder": "New Lead, Contacted, Meeting, Closed",
+        "notify_whatsapp": "Notify via WhatsApp"
+      }
+    },
+    "domain": {
+      "title": "Domain Setup",
+      "description": "Register or connect a domain for your website.",
+      "prerequisites": "You'll need: the domain name you want to use.",
+      "step1": {
+        "title": "Domain Name",
+        "description": "Enter the domain you want to configure."
+      },
+      "step2": {
+        "title": "DNS Servers",
+        "description": "Configure nameservers if you manage the domain yourself."
+      },
+      "step3": {
+        "title": "SSL Verification",
+        "description": "Wait for the SSL certificate to be generated."
+      },
+      "field": {
+        "name": "Domain Name",
+        "name_placeholder": "example.com",
+        "type": "Management Type",
+        "ns1": "Nameserver 1",
+        "ns2": "Nameserver 2"
+      },
+      "type": {
+        "managed": "Managed by AMG",
+        "self": "Self-managed"
+      }
+    },
+    "facturacio": {
+      "title": "Invoicing Setup",
+      "description": "Configure electronic invoice issuance.",
+      "prerequisites": "You'll need: Tax ID, fiscal address, and bank account.",
+      "step1": {
+        "title": "Tax Information",
+        "description": "Enter your business tax details."
+      },
+      "step2": {
+        "title": "Invoicing API",
+        "description": "Connect your e-invoicing provider."
+      },
+      "step3": {
+        "title": "Test",
+        "description": "Generate a test invoice to verify."
+      },
+      "field": {
+        "vat": "Tax ID / VAT",
+        "vat_placeholder": "12345678A",
+        "address": "Fiscal Address",
+        "address_placeholder": "123 Example St, Palma",
+        "api_key": "API Key",
+        "day": "Invoicing Day"
+      }
+    },
+    "formulari": {
+      "title": "Contact Form Setup",
+      "description": "Configure a contact form for your website.",
+      "prerequisites": "You'll need: the email where you want to receive notifications.",
+      "step1": {
+        "title": "Destination Email",
+        "description": "Enter the email where messages will arrive."
+      },
+      "step2": {
+        "title": "Publish",
+        "description": "The form will be ready to receive messages."
+      },
+      "field": {
+        "email": "Destination Email",
+        "email_placeholder": "hello@yourbusiness.com"
+      }
+    },
+    "galeria": {
+      "title": "Image Gallery Setup",
+      "description": "Configure an image gallery for your website.",
+      "prerequisites": "You'll need: the images you want to display.",
+      "step1": {
+        "title": "Categories",
+        "description": "Define the gallery categories."
+      },
+      "step2": {
+        "title": "Publish",
+        "description": "The gallery will be ready to publish."
+      },
+      "field": {
+        "categories": "Categories",
+        "categories_placeholder": "Interior, Exterior, Projects..."
+      }
+    },
+    "historial": {
+      "title": "Smart History Setup",
+      "description": "Configure the intelligent conversation history.",
+      "prerequisites": "You'll need: access to the conversation history.",
+      "step1": {
+        "title": "Configuration",
+        "description": "Configure how the history is saved."
+      },
+      "step2": {
+        "title": "Publish",
+        "description": "The history will be ready."
+      },
+      "field": {
+        "config": "Configuration",
+        "config_placeholder": "Configuration parameters"
+      }
+    },
+    "landing": {
+      "title": "Landing Page Setup",
+      "description": "Publish your website in minutes.",
+      "prerequisites": "You'll need: your website content (texts, images).",
+      "step1": {
+        "title": "Select a Template",
+        "description": "Choose a template for your landing page."
+      },
+      "step2": {
+        "title": "Customize Content",
+        "description": "Fill in the texts, images and sections of your website."
+      },
+      "step3": {
+        "title": "Publish",
+        "description": "Your website will be online in seconds."
+      },
+      "field": {
+        "template": "Template"
+      }
+    },
+    "landing_extra": {
+      "description": "Add an extra landing page to your account. You'll need the new website's content."
+    },
+    "quest": {
+      "title": "Questionnaire Setup",
+      "description": "Create an interactive questionnaire to qualify leads.",
+      "prerequisites": "You'll need: the questions for the questionnaire.",
+      "step1": {
+        "title": "Questions",
+        "description": "Enter the questionnaire questions."
+      },
+      "step2": {
+        "title": "Publish",
+        "description": "The questionnaire will be ready."
+      },
+      "field": {
+        "questions": "Questions",
+        "questions_placeholder": "Each line is a question"
+      }
+    },
+    "recordatori": {
+      "title": "Reminder Setup",
+      "description": "Configure automatic WhatsApp reminders.",
+      "prerequisites": "You'll need: the reminder message template.",
+      "step1": {
+        "title": "Message Template",
+        "description": "Customize the reminder message."
+      },
+      "step2": {
+        "title": "Advance Notice",
+        "description": "How many minutes before should the reminder be sent?"
+      },
+      "step3": {
+        "title": "Activate",
+        "description": "The reminder will be operational."
+      },
+      "field": {
+        "template": "Message Template",
+        "template_placeholder": "E.g.: Hi {name}, you have an appointment in {hours} hours.",
+        "hours": "Hours in advance",
+        "link_code": "Link Code"
+      }
+    },
+    "reenganxament": {
+      "title": "Re-engagement Setup",
+      "description": "Win back inactive clients with automatic messages.",
+      "prerequisites": "You'll need: message templates for campaigns.",
+      "step1": {
+        "title": "Data API",
+        "description": "Connect the client data source."
+      },
+      "step2": {
+        "title": "Templates",
+        "description": "Customize the re-engagement messages."
+      },
+      "step3": {
+        "title": "Activate",
+        "description": "The campaign will be operational."
+      },
+      "field": {
+        "api_url": "Client API URL",
+        "api_url_placeholder": "https://api.example.com/clients",
+        "api_key": "API Key",
+        "months": "Months inactive",
+        "template": "Message Template",
+        "template_placeholder": "E.g.: We haven't heard from you in a while..."
+      }
+    },
+    "ressenya": {
+      "title": "Google Reviews Setup",
+      "description": "Automatically ask clients for Google reviews.",
+      "prerequisites": "You'll need: your business Google review link.",
+      "step1": {
+        "title": "Review Link",
+        "description": "Enter the link where clients will leave their review."
+      },
+      "step2": {
+        "title": "Customization",
+        "description": "Customize the request message."
+      },
+      "step3": {
+        "title": "Activate",
+        "description": "The system will be operational."
+      },
+      "field": {
+        "url": "Google Review Link",
+        "url_placeholder": "https://search.google.com/local/writereview?pid=..."
+      }
+    },
+    "smtp": {
+      "title": "Corporate SMTP Setup",
+      "description": "Configure your corporate mail server to send emails from your domain.",
+      "prerequisites": "You'll need: the SMTP credentials from your email provider.",
+      "step1": {
+        "title": "Server Configuration",
+        "description": "Enter the SMTP server connection details."
+      },
+      "step2": {
+        "title": "Verification",
+        "description": "Test sending a verification email."
+      },
+      "field": {
+        "host": "SMTP Server",
+        "host_placeholder": "smtp.example.com",
+        "port": "Port",
+        "port_placeholder": "587",
+        "user": "Username",
+        "user_placeholder": "you@example.com",
+        "password": "Password",
+        "security": "Security"
+      },
+      "security": {
+        "tls": "TLS",
+        "ssl": "SSL",
+        "none": "No encryption"
+      }
+    },
+    "telegram": {
+      "title": "Telegram Bot Setup",
+      "description": "Create and connect a Telegram bot for your business.",
+      "prerequisites": "You'll need: a Bot Token from @BotFather on Telegram.",
+      "step1": {
+        "title": "Bot Token",
+        "description": "Enter your Telegram bot token."
+      },
+      "step2": {
+        "title": "Webhook URL",
+        "description": "Configure the webhook to receive messages."
+      },
+      "step3": {
+        "title": "Commands",
+        "description": "Define the commands the bot will understand."
+      },
+      "step4": {
+        "title": "Test",
+        "description": "Send a test message to the bot."
+      },
+      "field": {
+        "token": "Bot Token",
+        "token_hint": "Get it from @BotFather on Telegram",
+        "username": "Bot Username",
+        "username_placeholder": "e.g.: yourbusiness_bot",
+        "webhook": "Webhook URL",
+        "commands": "Commands (optional)",
+        "commands_placeholder": "/start, /help, /pricing",
+        "commands_hint": "Separate each command with a comma"
+      }
+    },
+    "validation": {
+      "domain": "Invalid domain format (e.g.: example.com)",
+      "phone": "Invalid phone format (e.g.: +34600123456)",
+      "port": "Port must be a number between 10 and 65535"
+    },
+    "whatsapp": {
+      "title": "WhatsApp Business Setup",
+      "description": "Connect your WhatsApp Business account to manage customer conversations.",
+      "prerequisites": "You'll need: WhatsApp Business API credentials (Meta).",
+      "step1": {
+        "title": "API Credentials",
+        "description": "Enter your WhatsApp Business API keys."
+      },
+      "step2": {
+        "title": "Webhook",
+        "description": "Copy the webhook URL and configure it in your Meta dashboard."
+      },
+      "step3": {
+        "title": "Verification",
+        "description": "Verify the WhatsApp connection is working correctly."
+      },
+      "field": {
+        "api_key": "API Key",
+        "phone": "Phone Number",
+        "account_id": "Account ID (WABA)",
+        "webhook_url": "Webhook URL"
+      }
+    },
+    "xat": {
+      "title": "Web Chat Setup",
+      "description": "Add a live chat to your website.",
+      "prerequisites": "You'll need: the widget ID from your chat provider.",
+      "step1": {
+        "title": "Widget ID",
+        "description": "Enter the chat widget ID."
+      },
+      "step2": {
+        "title": "Publish",
+        "description": "The chat will appear on your website."
+      },
+      "field": {
+        "widget_id": "Widget ID",
+        "widget_id_placeholder": "E.g.: widget_abc123",
+        "api_key": "API Key"
+      }
+    }
+  },
+  "guides": {
+    "title": "Services",
+    "subtitle": "Usage guides for your active services",
+    "no_services": "You don't have any active services yet",
+    "no_services_desc": "Once you have active services, their guides will appear here.",
+    "no_guides": "Guide not available for this service",
+    "no_guides_desc": "This service type does not have a usage guide available.",
+    "service_not_found": "Service not found",
+    "view_guide": "View guide",
+    "view_all": "View all services",
+    "new_services_title": "You have new active services!",
+    "new_services_cta": "View guides",
+    "dismiss": "Got it",
+    "section_credentials": "Credentials",
+    "section_access": "Access",
+    "section_setup": "Setup",
+    "section_troubleshoot": "Troubleshooting",
+    "section_howto": "How to use",
+    "section_howto_edit": "How to edit",
+    "section_howto_publish": "How to publish",
+    "section_howto_manage": "How to manage",
+    "section_domains": "Domains",
+    "section_dns": "DNS",
+    "section_test": "Test connection",
+    "section_workflows": "Active workflows",
+    "section_manage_responses": "Manage responses",
+    "section_propagation": "Propagation time",
+    "section_verify": "Verification",
+    "no_credentials": "Credentials not configured",
+    "status": "Status",
+    "status_ready": "Active",
+    "status_configuring": "Configuring",
+    "status_pending": "Pending",
+    "guide": "Guide",
+    "faq_title": "Frequently asked questions",
+    "service_ready": "Ready!",
+    "back_to_list": "Back to list",
+    "configure_service": "Configure service",
+    "service_titles": {
+      "LANDING": "Landing Page",
+      "WHATSAPP": "WhatsApp Business",
+      "SMTP": "Corporate SMTP",
+      "BOT_IA": "Basic AI Bot",
+      "AUTOMATION": "n8n Automation",
+      "DOMAIN": "Domain"
+    },
+    "service_descriptions": {
+      "LANDING": "Your professional website. Learn how to edit and publish it.",
+      "WHATSAPP": "WhatsApp Business messaging integrated into your portal.",
+      "SMTP": "Corporate email for your domain. Configure it in your email client.",
+      "BOT_IA": "AI virtual assistant that automatically replies to your customers.",
+      "AUTOMATION": "n8n automations for your business.",
+      "DOMAIN": "Manage your domain and DNS configuration."
+    },
+    "landing": {
+      "access_link": "https://{domain}",
+      "edit_step_1": "Go to the portal and navigate to Landings",
+      "edit_step_2": "Select the landing you want to edit",
+      "edit_step_3": "Use the visual editor to modify content",
+      "edit_step_4": "Click Save to keep your changes",
+      "publish_step_1": "Edit your landing content",
+      "publish_step_2": "Preview changes before publishing",
+      "publish_step_3": "Click Publish to go live",
+      "domains_text": "You can use a custom domain for your landing. If you manage the domain yourself, you'll need to point the nameservers to our servers.",
+      "faq_colors_q": "How do I change the color of my landing?",
+      "faq_colors_a": "In the visual editor, go to the customization tab. You'll find options to change colors, fonts, and styles.",
+      "faq_sections_q": "How do I add a new section?",
+      "faq_sections_a": "From the editor, click \"Add section\" and choose from the available templates.",
+      "faq_domain_q": "How do I connect my domain?",
+      "faq_domain_a": "In the landing settings panel, go to the domain section and follow the instructions to configure the nameservers.",
+      "faq_seo_q": "How do I improve my landing's SEO?",
+      "faq_seo_a": "The editor includes basic SEO options: title, description, and keywords. For advanced improvements, contact your technician."
+    },
+    "whatsapp": {
+      "access_text": "The WhatsApp Business API service is integrated into your portal. You can manage conversations from the inbox.",
+      "how_it_works": "When a customer sends a message from the web form, it is automatically received in your WhatsApp Business. You can reply directly from the portal.",
+      "test_link": "https://wa.me/{phone}",
+      "faq_no_messages_q": "Why am I not receiving messages?",
+      "faq_no_messages_a": "Check that the phone number is verified in Meta and that the webhook is correctly configured.",
+      "faq_change_number_q": "How do I change the WhatsApp number?",
+      "faq_change_number_a": "You need to configure a new number from the Meta Business panel and update the credentials in your portal.",
+      "faq_template_q": "How do I create message templates?",
+      "faq_template_a": "WhatsApp Business templates are managed from the Meta Business panel. They will need Meta approval before use."
+    },
+    "smtp": {
+      "outlook_title": "Outlook Setup",
+      "outlook_step_1": "Open Outlook and go to Settings",
+      "outlook_step_2": "Add an email account and select Manual setup",
+      "outlook_step_3": "Enter the SMTP credentials (server, port, username, password) with TLS",
+      "gmail_title": "Gmail Setup",
+      "gmail_step_1": "Open Gmail Settings",
+      "gmail_step_2": "Go to \"See all settings\"",
+      "gmail_step_3": "Add an email account from Accounts and Import",
+      "gmail_step_4": "Select \"Add a mail account\" and enter the SMTP details",
+      "thunderbird_title": "Thunderbird Setup",
+      "thunderbird_step_1": "Open Thunderbird and go to File > New > Mail",
+      "thunderbird_step_2": "Select Manual configuration",
+      "thunderbird_step_3": "Enter the SMTP server details",
+      "thunderbird_step_4": "Click Re-test and then Done",
+      "test_link": "/portal/admin/config",
+      "faq_send_q": "Why can't I send emails?",
+      "faq_send_a": "Verify that your email client uses the correct port (587 with TLS or 465 with SSL). Check that the password is correct.",
+      "faq_port_q": "Which port should I use?",
+      "faq_port_a": "Port 587 with TLS (recommended) or port 465 with SSL. Port 25 is not available for security reasons.",
+      "faq_auth_q": "Why does it keep asking me for authentication?",
+      "faq_auth_a": "Make sure you have checked \"Remember password\" in your email client. If the issue persists, generate an app password."
+    },
+    "bot_ia": {
+      "access_link": "https://chat.amg.cat/{slug}",
+      "how_it_works": "The AI bot automatically responds to your customers' messages 24/7. You can customize responses and tone from the management panel.",
+      "manage_link": "/portal/admin/knowledge",
+      "faq_add_info_q": "How do I add more information to the bot?",
+      "faq_add_info_a": "From the knowledge management panel, you can upload PDF, TXT, or DOCX documents for the bot to learn from.",
+      "faq_bad_response_q": "Why isn't the bot responding correctly?",
+      "faq_bad_response_a": "Check that the knowledge base has sufficient and up-to-date information. If the problem persists, adjust the bot's tone and instructions.",
+      "faq_integration_q": "Can it be integrated with WhatsApp?",
+      "faq_integration_a": "Yes, the bot can be integrated with WhatsApp Business, Telegram, and the web chat. Manage integrations from the agents panel."
+    },
+    "automation": {
+      "access_link": "https://n8n.amg.cat",
+      "workflows_text": "Workflows automate repetitive tasks in your business. Each workflow has a specific function: sending emails, managing leads, updating data, etc.",
+      "manage_step_1": "Access n8n from the access link",
+      "manage_step_2": "Sign in with your credentials",
+      "manage_step_3": "From the panel, you can activate, deactivate, or modify workflows",
+      "faq_failed_q": "The workflow failed, what do I do?",
+      "faq_failed_a": "Check the error log in n8n. It is usually a connection issue with an external API. If you can't resolve it, contact your technician.",
+      "faq_new_automations_q": "Can I add new automations?",
+      "faq_new_automations_a": "Yes, you can create new workflows from the n8n panel. If you need help, ask your assigned technician.",
+      "faq_monitoring_q": "How do I know if workflows are running?",
+      "faq_monitoring_a": "n8n shows the status of each workflow (active, inactive, error). You can also configure alert notifications via email or Telegram."
+    },
+    "domain": {
+      "setup_step_1": "Access your domain registrar's panel",
+      "setup_step_2": "Change the nameservers to the ones in the DNS section",
+      "setup_step_3": "Wait for propagation to complete (24-72h)",
+      "propagation_text": "DNS propagation can take between 24 and 72 hours to complete worldwide. During this time, your domain may be accessible from some locations but not others.",
+      "verify_link": "https://dnschecker.org",
+      "faq_time_q": "How long does domain propagation take?",
+      "faq_time_a": "Usually between 24 and 48 hours, but it can take up to 72 hours in extreme cases.",
+      "faq_not_visible_q": "My website is not showing after 72h",
+      "faq_not_visible_a": "Check that the nameservers are correctly configured at your registrar. If they are, contact your technician.",
+      "faq_ssl_q": "How is the SSL certificate generated?",
+      "faq_ssl_a": "The SSL certificate is automatically generated once the domain points to our servers. It can take up to 15 minutes."
     }
   }
 }

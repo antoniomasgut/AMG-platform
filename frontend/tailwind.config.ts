@@ -12,23 +12,23 @@ const config: Config = {
         'accent-subtle': 'rgba(255,107,0,0.08)',
         'accent-muted':  'rgba(255,107,0,0.12)',
 
-        /* ── Dark surfaces ── */
-        'bg-0': '#0b1120',
-        'bg-1': '#0f172a',
-        'bg-2': '#1e293b',
-        'bg-3': '#334155',
+        /* ── Themed surfaces (CSS variables) ── */
+        'bg-0': 'var(--color-bg-0)',
+        'bg-1': 'var(--color-bg-1)',
+        'bg-2': 'var(--color-bg-2)',
+        'bg-3': 'var(--color-bg-3)',
 
-        /* ── Border tokens ── */
-        'border-subtle': 'rgba(148,163,184,0.10)',
-        'border-base':   'rgba(148,163,184,0.15)',
-        'border-medium': 'rgba(148,163,184,0.25)',
-        'border-strong': 'rgba(148,163,184,0.35)',
+        /* ── Themed borders ── */
+        'border-subtle': 'var(--color-border-subtle)',
+        'border-base':   'var(--color-border-base)',
+        'border-medium': 'var(--color-border-medium)',
+        'border-strong': 'var(--color-border-strong)',
 
-        /* ── Text tokens ── */
-        'ink-0': '#e2e8f0',  // primary text
-        'ink-1': '#94a3b8',  // secondary text
-        'ink-2': '#8896aa',  // muted text — WCAG AA ≥4.5:1 on #0d0d1a
-        'ink-3': '#64748b',  // decorative only — NOT for readable text
+        /* ── Themed text ── */
+        'ink-0': 'var(--color-ink-0)',
+        'ink-1': 'var(--color-ink-1)',
+        'ink-2': 'var(--color-ink-2)',
+        'ink-3': 'var(--color-ink-3)',
 
         /* ── Semantic: solid ── */
         danger:  '#ef4444',

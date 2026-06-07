@@ -1,7 +1,7 @@
 'use client';
 
 import { useToast } from '@/lib/toast-context';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 const COLORS = {
   success: { border: '#39d353', bg: 'rgba(57,211,83,0.1)', icon: '#39d353' },
@@ -11,10 +11,10 @@ const COLORS = {
 };
 
 const ICONS = {
-  success: I.Check,
-  error: I.AlertCircle,
-  warning: I.AlertCircle,
-  info: I.Bell,
+  success: IconSet.Check,
+  error: IconSet.AlertCircle,
+  warning: IconSet.AlertCircle,
+  info: IconSet.Bell,
 };
 
 export function ToastContainer() {
@@ -48,7 +48,7 @@ export function ToastContainer() {
                 )}
               </div>
               <button onClick={() => dismiss(t.id)} className="text-ink-3 hover:text-ink-0 transition shrink-0">
-                <I.X size={12} />
+                <IconSet.X size={12} />
               </button>
             </div>
           </div>

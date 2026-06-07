@@ -56,7 +56,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> deactivateUser(@PathVariable UUID id) {
         userService.deactivateUser(id);
         return ResponseEntity.noContent().build();

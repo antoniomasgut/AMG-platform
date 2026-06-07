@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { resetPassword } from '@/services/auth';
 
 function ResetPasswordForm() {
@@ -43,7 +43,7 @@ function ResetPasswordForm() {
       <div className="w-full min-h-dvh bg-[#0d0d1a] flex items-center justify-center p-6">
         <div className="amg-card card-clip p-8 max-w-[420px] w-full text-center">
           <div className="w-16 h-16 bg-[rgba(255,68,68,0.12)] border border-[rgba(255,68,68,0.35)] flex items-center justify-center mx-auto mb-5">
-            <I.AlertCircle size={24} stroke="#ff6666" />
+            <IconSet.AlertCircle size={24} stroke="#ff6666" />
           </div>
           <h2 className="f-display font-black text-2xl">ENLLAÇ INVALID</h2>
           <p className="text-ui text-ink-1 mt-2">Aquest enllaç de recuperació és invàlid o ha expirat.</p>
@@ -58,7 +58,7 @@ function ResetPasswordForm() {
       <div className="w-full min-h-dvh bg-[#0d0d1a] flex items-center justify-center p-6">
         <div className="amg-card card-clip p-8 max-w-[420px] w-full text-center">
           <div className="w-16 h-16 bg-[rgba(57,211,83,0.12)] border border-[#39d353] flex items-center justify-center mx-auto mb-5">
-            <I.Check size={24} stroke="#39d353" />
+            <IconSet.Check size={24} stroke="#39d353" />
           </div>
           <h2 className="f-display font-black text-2xl">CONTRASENYA ACTUALITZADA</h2>
           <p className="text-ui text-ink-1 mt-2">Redirigint al login...</p>
@@ -89,7 +89,7 @@ function ResetPasswordForm() {
             <label className="block">
               <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">Nova contrasenya</span>
               <div className="relative flex items-center h-10 bg-[#1a1a2e]/80 border border-border-base focus-within:border-[#FF6B00] transition">
-                <div className="pl-3 text-ink-3"><I.Lock size={14} /></div>
+                <div className="pl-3 text-ink-3"><IconSet.Lock size={14} /></div>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
@@ -103,7 +103,7 @@ function ResetPasswordForm() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="pr-3 text-ink-3 hover:text-ink-0 transition"
                 >
-                  {showPassword ? <I.EyeOff size={14} /> : <I.Eye size={14} />}
+                  {showPassword ? <IconSet.EyeOff size={14} /> : <IconSet.Eye size={14} />}
                 </button>
               </div>
             </label>
@@ -111,7 +111,7 @@ function ResetPasswordForm() {
             <label className="block">
               <span className="block f-mono uppercase text-label tracking-label text-ink-1 mb-1.5">Confirmar contrasenya</span>
               <div className="relative flex items-center h-10 bg-[#1a1a2e]/80 border border-border-base focus-within:border-[#FF6B00] transition">
-                <div className="pl-3 text-ink-3"><I.Lock size={14} /></div>
+                <div className="pl-3 text-ink-3"><IconSet.Lock size={14} /></div>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={confirm}
@@ -136,7 +136,7 @@ function ResetPasswordForm() {
               {loading ? (
                 <span className="w-3 h-3 border-2 border-black/60 border-t-transparent rounded-full animate-spin"></span>
               ) : (
-                <I.ArrowRight size={14} />
+                <IconSet.ArrowRight size={14} />
               )}
               {loading ? 'ACTUALITZANT...' : 'ACTUALITZAR CONTRASENYA'}
             </button>

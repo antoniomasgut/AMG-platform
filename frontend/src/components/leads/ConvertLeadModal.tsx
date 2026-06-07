@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { convertLead, type ConvertLeadResult } from '@/services/leads';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useToast } from '@/lib/toast-context';
 
 const inp = "w-full bg-[#0d0d1a] border border-[#2a2a50] rounded px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-[#FF6B00] placeholder:text-[#404060]";
@@ -60,7 +60,7 @@ function SuccessView({ result, onClose }: { result: ConvertLeadResult; onClose: 
                 onClick={() => copy(result.stripeCheckoutUrl!, setCopiedStripe)}
                 className="text-xs text-[#FF6B00] hover:underline flex items-center gap-1"
               >
-                <I.Copy size={11} /> {copiedStripe ? 'Copiat!' : 'Copiar link'}
+                <IconSet.Copy size={11} /> {copiedStripe ? 'Copiat!' : 'Copiar link'}
               </button>
             </div>
             <p className="text-xs text-[#6060a0] mb-2">Envia aquest link al client perquè pagui el setup ara</p>
@@ -86,7 +86,7 @@ function SuccessView({ result, onClose }: { result: ConvertLeadResult; onClose: 
                 onClick={() => copy(result.goCardlessRedirectUrl!, setCopiedGC)}
                 className="text-xs text-[#FF6B00] hover:underline flex items-center gap-1"
               >
-                <I.Copy size={11} /> {copiedGC ? 'Copiat!' : 'Copiar link'}
+                <IconSet.Copy size={11} /> {copiedGC ? 'Copiat!' : 'Copiar link'}
               </button>
             </div>
             <p className="text-xs text-[#6060a0] mb-2">El client autoritza la domiciliació per als mensuals</p>
@@ -169,7 +169,7 @@ export function ConvertLeadModal({ leadId, leadName, leadEmail, initialPhone, in
             <p className="text-xs text-[#a0a0c0]">{leadName}</p>
           </div>
           <button onClick={onClose} className="text-[#6060a0] hover:text-white transition-colors">
-            <I.X size={18} />
+            <IconSet.X size={18} />
           </button>
         </div>
 

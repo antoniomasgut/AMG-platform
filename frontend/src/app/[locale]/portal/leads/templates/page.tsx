@@ -15,7 +15,7 @@ import {
 } from '@/services/message-templates';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
@@ -62,7 +62,7 @@ function TemplateForm({ initial, onSave, onCancel, saving }: TemplateFormProps) 
             {initial ? 'Editar plantilla' : 'Nova plantilla'}
           </div>
           <button onClick={onCancel} className="p-1.5 text-ink-3 hover:text-ink-0 transition-colors">
-            <I.X size={16} />
+            <IconSet.X size={16} />
           </button>
         </div>
 
@@ -224,7 +224,7 @@ export default function TemplatesPage() {
             <AMGButton variant="secondary" onClick={() => router.push(`/${locale}/portal/leads`)}>
               ← Leads
             </AMGButton>
-            <AMGButton icon={I.Plus} onClick={() => setShowCreate(true)}>
+            <AMGButton icon={IconSet.Plus} onClick={() => setShowCreate(true)}>
               Nova plantilla
             </AMGButton>
           </div>
@@ -282,14 +282,14 @@ export default function TemplatesPage() {
                             className="p-1.5 text-ink-3 hover:text-accent-light transition-colors"
                             title="Editar"
                           >
-                            <I.Edit size={14} />
+                            <IconSet.Edit size={14} />
                           </button>
                           <button
                             onClick={() => setDeleteId(tpl.id)}
                             className="p-1.5 text-ink-3 hover:text-red-400 transition-colors"
                             title="Eliminar"
                           >
-                            <I.Trash size={14} />
+                            <IconSet.Trash size={14} />
                           </button>
                         </div>
                       </div>

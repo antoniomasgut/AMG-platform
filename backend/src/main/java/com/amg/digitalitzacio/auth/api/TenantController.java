@@ -23,7 +23,7 @@ public class TenantController {
     private final TenantService tenantService;
 
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<TenantResponse> createTenant(@Valid @RequestBody CreateTenantRequest request) {
         var response = tenantService.createTenant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

@@ -17,7 +17,7 @@ import {
 import { SECTOR_CONTEXTS } from '@/services/sector-contexts';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 import { useToast } from '@/lib/toast-context';
 
 // ── Styles ───────────────────────────────────────────────────────────────────
@@ -29,11 +29,11 @@ const sel = `${inp} cursor-pointer`;
 // ── Phase definitions ────────────────────────────────────────────────────────
 
 const PHASE_INFO: Record<string, { label: string; desc: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = {
-  F1: { label: 'Captació', desc: 'Captura leads des de web, WhatsApp i email. Agent classifica i crea fitxes automàticament.', icon: I.Globe },
-  F2: { label: 'Agenda', desc: 'Confirma cites, envia recordatoris automàtics i gestiona absències.', icon: I.Calendar },
-  F3: { label: 'Pressupostos', desc: "L'agent genera pressupostos i fa seguiment dels que queden sense resposta.", icon: I.Receipt },
-  F4: { label: 'Seguiment', desc: "Cap client oblidat: recordatoris, sol·licituds de ressenya i reactivació d'inactius.", icon: I.Heart },
-  F5: { label: 'Alertes & Equip', desc: 'Alertes proactives al Telegram: leads, cites, informe diari i gestió de l\'equip.', icon: I.Users },
+  F1: { label: 'Captació', desc: 'Captura leads des de web, WhatsApp i email. Agent classifica i crea fitxes automàticament.', icon: IconSet.Globe },
+  F2: { label: 'Agenda', desc: 'Confirma cites, envia recordatoris automàtics i gestiona absències.', icon: IconSet.Calendar },
+  F3: { label: 'Pressupostos', desc: "L'agent genera pressupostos i fa seguiment dels que queden sense resposta.", icon: IconSet.Receipt },
+  F4: { label: 'Seguiment', desc: "Cap client oblidat: recordatoris, sol·licituds de ressenya i reactivació d'inactius.", icon: IconSet.Heart },
+  F5: { label: 'Alertes & Equip', desc: 'Alertes proactives al Telegram: leads, cites, informe diari i gestió de l\'equip.', icon: IconSet.Users },
 };
 
 // Recommended phases by sector
@@ -275,14 +275,14 @@ function F1Step({ tenant, onSave }: { tenant: TenantResponse; onSave: () => Prom
       </div>
       <div className="p-4 bg-[rgba(255,107,0,0.05)] border border-[rgba(255,107,0,0.2)] rounded space-y-2">
         <div className="flex items-center gap-2">
-          <I.Globe size={14} className="text-accent-light shrink-0" />
+          <IconSet.Globe size={14} className="text-accent-light shrink-0" />
           <span className="text-sm font-medium text-ink-0">Landings</span>
         </div>
         <p className="text-xs text-ink-2">Assegura't que hi hagi almenys una landing publicada per a aquest tenant. Podràs crear-la des de la secció <span className="text-accent-light">Landings</span>.</p>
       </div>
       <div className="p-4 border border-border-base rounded space-y-2">
         <div className="flex items-center gap-2">
-          <I.Bot size={14} className="text-ink-3 shrink-0" />
+          <IconSet.Bot size={14} className="text-ink-3 shrink-0" />
           <span className="text-sm text-ink-1">L'agent es configurarà al pas <span className="text-accent-light">Agent IA</span></span>
         </div>
       </div>
@@ -352,7 +352,7 @@ function F2Step({ tenantId, tenant, existingConfig, onSave }: {
           <p className="text-xs text-ink-3 mt-0.5">Configura el calendari i les hores de disponibilitat.</p>
         </div>
         {tenant.sector && (
-          <AMGButton size="sm" variant="ghost" onClick={applyTemplate} icon={I.Sparkles}>
+          <AMGButton size="sm" variant="ghost" onClick={applyTemplate} icon={IconSet.Sparkles}>
             Plantilla {SECTOR_LABELS[tenant.sector] ?? tenant.sector}
           </AMGButton>
         )}
@@ -375,11 +375,11 @@ function F2Step({ tenantId, tenant, existingConfig, onSave }: {
       {cfg.calendar_type === 'google_oauth' && (
         <div className="p-4 border border-[rgba(255,107,0,0.3)] rounded bg-[rgba(255,107,0,0.04)] space-y-3">
           <div className="flex items-center gap-2">
-            <I.Calendar size={14} className="text-accent-light" />
+            <IconSet.Calendar size={14} className="text-accent-light" />
             <span className="text-sm font-medium text-ink-1">Autorització Google Calendar</span>
           </div>
           {!oauthUrl ? (
-            <AMGButton size="sm" onClick={handleGetOAuth} loading={loadingOauth} icon={I.Link}>
+            <AMGButton size="sm" onClick={handleGetOAuth} loading={loadingOauth} icon={IconSet.Link}>
               Obtenir URL d'autorització
             </AMGButton>
           ) : (
@@ -488,7 +488,7 @@ function F3Step({ tenant, existingConfig, onSave }: {
           <p className="text-xs text-ink-3 mt-0.5">Defineix el catàleg de serveis per generar pressupostos.</p>
         </div>
         {tenant.sector && (
-          <AMGButton size="sm" variant="ghost" onClick={applyTemplate} icon={I.Sparkles}>
+          <AMGButton size="sm" variant="ghost" onClick={applyTemplate} icon={IconSet.Sparkles}>
             Plantilla {SECTOR_LABELS[tenant.sector] ?? tenant.sector}
           </AMGButton>
         )}
@@ -519,7 +519,7 @@ function F3Step({ tenant, existingConfig, onSave }: {
           <label className={lbl}>Catàleg de serveis ({cfg.services_catalog.length})</label>
           <button type="button" onClick={() => set('services_catalog', [...cfg.services_catalog, { id: crypto.randomUUID(), name: '', price: 0, unit: 'unitat', description: '' }])}
             className="text-xs text-accent-light hover:text-accent f-mono flex items-center gap-1">
-            <I.Plus size={11} /> Afegir servei
+            <IconSet.Plus size={11} /> Afegir servei
           </button>
         </div>
         <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
@@ -533,7 +533,7 @@ function F3Step({ tenant, existingConfig, onSave }: {
                 onChange={e => set('services_catalog', cfg.services_catalog.map((s, i) => i === idx ? { ...s, unit: e.target.value } : s))} />
               <button type="button" onClick={() => set('services_catalog', cfg.services_catalog.filter((_, i) => i !== idx))}
                 className="text-ink-3 hover:text-red-400 transition p-1">
-                <I.Trash size={12} />
+                <IconSet.Trash size={12} />
               </button>
             </div>
           ))}
@@ -738,7 +738,7 @@ function AgentStep({ tenantId, tenant, channels, onSave }: {
           {tenant.sector && SECTOR_CONTEXTS[tenant.sector] && (
             <button type="button" onClick={() => applyTemplate(tenant.sector!)}
               className="flex items-center gap-1 text-xs text-accent-light hover:text-accent f-mono">
-              <I.Sparkles size={11} />
+              <IconSet.Sparkles size={11} />
               Aplicar plantilla {SECTOR_LABELS[tenant.sector!] ?? tenant.sector}
             </button>
           )}
@@ -784,7 +784,7 @@ function DoneStep({ tenant, selectedPhases, tenantId, locale, onRestart }: {
     <div className="space-y-6">
       <div className="text-center py-6">
         <div className="w-16 h-16 mx-auto rounded-full bg-[rgba(57,211,83,0.15)] border border-[rgba(57,211,83,0.3)] flex items-center justify-center mb-4">
-          <I.Check size={28} className="text-[#39d353]" />
+          <IconSet.Check size={28} className="text-[#39d353]" />
         </div>
         <h2 className="text-lg font-bold text-ink-0">Configuració completada!</h2>
         <p className="text-sm text-ink-2 mt-1">{tenant.name} està llest per posar en marxa.</p>
@@ -794,10 +794,10 @@ function DoneStep({ tenant, selectedPhases, tenantId, locale, onRestart }: {
         <div className="f-mono text-[10px] uppercase tracking-wider text-ink-3">Fases configurades</div>
         {selectedPhases.map(phase => {
           const info = PHASE_INFO[phase];
-          const Icon = info?.icon ?? I.Check;
+          const Icon = info?.icon ?? IconSet.Check;
           return (
             <div key={phase} className="flex items-center gap-3 p-3 bg-[rgba(57,211,83,0.05)] border border-[rgba(57,211,83,0.2)] rounded">
-              <I.Check size={13} className="text-[#39d353] shrink-0" />
+              <IconSet.Check size={13} className="text-[#39d353] shrink-0" />
               <Icon size={13} className="text-ink-3 shrink-0" />
               <span className="text-sm text-ink-1">{phase} — {info?.label}</span>
             </div>
@@ -1017,7 +1017,7 @@ export default function TenantWizardPage() {
               </div>
               <button onClick={handleRestart}
                 className="text-xs f-mono text-ink-3 hover:text-ink-1 flex items-center gap-1 transition">
-                <I.Refresh size={12} /> Reiniciar
+                <IconSet.Refresh size={12} /> Reiniciar
               </button>
             </div>
           </div>
@@ -1099,7 +1099,7 @@ export default function TenantWizardPage() {
                 <div className="mt-6 pt-4 border-t border-border-base">
                   <button onClick={() => setCurrentStep(s => Math.max(0, s - 1))}
                     className="flex items-center gap-1.5 text-xs text-ink-3 hover:text-ink-1 f-mono transition">
-                    <I.ArrowRight size={12} className="rotate-180" /> Tornar
+                    <IconSet.ArrowRight size={12} className="rotate-180" /> Tornar
                   </button>
                 </div>
               )}

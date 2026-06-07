@@ -529,6 +529,9 @@
     "vault_pending": "Configuració pendent",
     "vault_pending_desc": "El teu compte té serveis pendents de configurar. Revisa'ls per activar-los.",
     "vault_pending_cta": "Revisar →",
+    "error_title": "Error en carregar",
+    "error_desc": "No s'ha pogut carregar el dashboard. Torna-ho a provar.",
+    "error_retry": "Tornar a provar",
     "steps": {
       "landing_title": "Crea la teva primera landing",
       "landing_desc": "Publica la teva web en menys de 5 minuts amb l'editor visual.",
@@ -581,7 +584,673 @@
       "hosting": "Web Hosting",
       "backup": "Còpies de seguretat",
       "infraOps": "Infraestructura",
-      "apiKeys": "Claus API"
+      "apiKeys": "Claus API",
+      "serveis": "Serveis"
+    }
+  },
+  "wizard": {
+    "agenda": {
+      "title": "Configuració de l'Agenda Online",
+      "description": "Connectarem l'agenda del teu negoci perquè els clients puguin reservar cita directament des de WhatsApp o la web.",
+      "prerequisites": "Necessitaràs: l'enllaç o API key del teu calendari (Google Calendar o Calendly).",
+      "step1": {
+        "title": "Configuració del calendari",
+        "description": "Introdueix l'API key i selecciona el tipus de calendari que utilitzes."
+      },
+      "step2": {
+        "title": "Personalitza les notificacions",
+        "description": "Configura les plantilles de confirmació i recordatori per als teus clients."
+      },
+      "step3": {
+        "title": "Verifica la connexió",
+        "description": "Fem una prova per assegurar que l'agenda funciona correctament."
+      },
+      "field": {
+        "calendar_type": "Tipus de calendari",
+        "api_key": "API Key / URL del calendari",
+        "api_key_hint": "Enganxa l'enllaç públic o l'API key del teu Google Calendar o Calendly.",
+        "confirmation": "Plantilla de confirmació",
+        "confirmation_placeholder": "Ex: Hola {name}, la teva cita ha estat confirmada per al {date}"
+      },
+      "calendar": {
+        "google": "Google Calendar",
+        "calendly": "Calendly"
+      }
+    },
+    "analytics": {
+      "title": "Configuració de Google Analytics",
+      "description": "Connectarem Google Analytics per mesurar el trànsit i el comportament dels usuaris a la teva web.",
+      "prerequisites": "Necessitaràs: un compte de Google Analytics i permisos d'edició al property.",
+      "step1": {
+        "title": "ID de seguiment",
+        "description": "Introdueix l'ID de property de Google Analytics (format G-XXXXXXXXXX)."
+      },
+      "step2": {
+        "title": "Verificació",
+        "description": "Verifica que el tracking s'ha configurat correctament."
+      },
+      "field": {
+        "property_id": "Property ID",
+        "property_id_placeholder": "G-XXXXXXXXXX",
+        "oauth": "OAuth 2.0 (opcional)"
+      }
+    },
+    "automation": {
+      "title": "Configuració de l'Automatització n8n",
+      "description": "Connectarem n8n per crear fluxos de treball automàtics que estalvien temps al teu negoci.",
+      "prerequisites": "Necessitaràs: la URL del teu servidor n8n i una API Key.",
+      "step1": {
+        "title": "Connexió a n8n",
+        "description": "Introdueix la URL i l'API Key del teu servidor n8n."
+      },
+      "step2": {
+        "title": "Prova de connexió",
+        "description": "Verifiquem que la connexió amb n8n és correcta."
+      },
+      "step3": {
+        "title": "Workflows predefinits",
+        "description": "Selecciona els workflows automàtics que vols activar."
+      },
+      "field": {
+        "url": "URL del servidor n8n",
+        "url_placeholder": "https://n8n.exemple.com",
+        "api_key": "API Key n8n"
+      }
+    },
+    "bot_ia": {
+      "title": "Configuració del Bot IA",
+      "description": "Crearem un assistent virtual que respon automàticament als missatges dels teus clients.",
+      "prerequisites": "Necessitaràs: una API Key d'Anthropic (Claude) o OpenAI.",
+      "step1": {
+        "title": "Configuració bàsica",
+        "description": "Dona nom al teu bot i introdueix la seva personalitat."
+      },
+      "step2": {
+        "title": "Selecció de model",
+        "description": "Tria el model d'IA que impulsarà el teu bot."
+      },
+      "step3": {
+        "title": "Prova el bot",
+        "description": "Fes una prova per veure com respon el teu bot."
+      },
+      "field": {
+        "name": "Nom del bot",
+        "name_placeholder": "Ex: Maria, Assistent Virtual",
+        "model": "Model d'IA",
+        "api_key": "API Key",
+        "welcome": "Missatge de benvinguda",
+        "welcome_placeholder": "Ex: Hola! Sóc l'assistent virtual de..."
+      },
+      "model": {
+        "sonnet": "Claude Sonnet (ràpid i econòmic)",
+        "haiku": "Claude Haiku (molt ràpid, bàsic)",
+        "gpt4o": "GPT-4o (avançat)"
+      }
+    },
+    "bot_ia_rag": {
+      "title": "Configuració del Bot IA amb RAG",
+      "description": "Crearem un assistent intel·ligent que pot respondre preguntes basant-se en els teus documents.",
+      "prerequisites": "Necessitaràs: API Key d'Anthropic i documents en PDF, TXT o DOCX.",
+      "step1": {
+        "title": "Configuració bàsica",
+        "description": "Dona nom al bot i selecciona el model."
+      },
+      "step2": {
+        "title": "Documents de coneixement",
+        "description": "Puja els documents que el bot usarà per respondre."
+      },
+      "step3": {
+        "title": "Prova el bot",
+        "description": "Fes una pregunta de prova per veure com respon."
+      },
+      "field": {
+        "name": "Nom del bot",
+        "name_placeholder": "Ex: Suport Tècnic IA",
+        "model": "Model d'IA",
+        "api_key": "API Key",
+        "documents": "Documents de coneixement",
+        "documents_placeholder": "Arrossega els fitxers aquí",
+        "documents_hint": "Formats admesos: PDF, TXT, DOCX"
+      },
+      "model": {
+        "sonnet": "Claude Sonnet (precisió)",
+        "haiku": "Claude Haiku (ràpid)"
+      }
+    },
+    "calculadora": {
+      "title": "Configuració de la Calculadora",
+      "description": "Configura una calculadora de pressupostos interactiva per al teu web.",
+      "prerequisites": "Necessitaràs: les regles de càlcul i els intervals de preus.",
+      "step1": {
+        "title": "Plantilla",
+        "description": "Selecciona una plantilla per a la calculadora."
+      },
+      "step2": {
+        "title": "Regles de càlcul",
+        "description": "Defineix com es calcula el pressupost."
+      },
+      "step3": {
+        "title": "Publica",
+        "description": "Revisa i publica la calculadora."
+      },
+      "field": {
+        "template": "Plantilla",
+        "template_placeholder": "Selecciona una plantilla",
+        "rules": "Regles de càlcul",
+        "rules_placeholder": "Ex: 50€/hora * hores treball"
+      }
+    },
+    "cobrament": {
+      "title": "Configuració de Cobrament amb Targeta",
+      "description": "Connecta un passarel·la de pagament per cobrar als clients amb targeta de crèdit.",
+      "prerequisites": "Necessitaràs: compte a Stripe o GoCardless.",
+      "step1": {
+        "title": "Claus API",
+        "description": "Introdueix les claus públiques i secretes del teu proveïdor de pagaments."
+      },
+      "step2": {
+        "title": "Webhook",
+        "description": "Configura el webhook per rebre notificacions de pagament."
+      },
+      "step3": {
+        "title": "Verificació",
+        "description": "Verifica que els pagaments funcionen correctament."
+      },
+      "field": {
+        "public_key": "Clau pública",
+        "secret_key": "Clau secreta",
+        "webhook": "URL del webhook",
+        "webhook_secret": "Secret del webhook"
+      }
+    },
+    "common": {
+      "yes": "Sí",
+      "no": "No"
+    },
+    "crm": {
+      "title": "Configuració del CRM",
+      "description": "Configura el pipeline de vendes i la gestió de leads.",
+      "prerequisites": "Necessitaràs: la llista d'etapes del teu procés comercial.",
+      "step1": {
+        "title": "Etapes del pipeline",
+        "description": "Defineix les etapes del teu procés de vendes."
+      },
+      "step2": {
+        "title": "Notificacions",
+        "description": "Configura com vols rebre notificacions dels nous leads."
+      },
+      "step3": {
+        "title": "Integració WhatsApp",
+        "description": "Connecta amb WhatsApp per gestionar leads des del xat."
+      },
+      "field": {
+        "stages": "Etapes del pipeline",
+        "stages_placeholder": "Nou lead, Contactat, Reunió, Tancat",
+        "notify_whatsapp": "Notificar per WhatsApp"
+      }
+    },
+    "domain": {
+      "title": "Configuració del Domini",
+      "description": "Registra o connecta un domini per a la teva web.",
+      "prerequisites": "Necessitaràs: el nom de domini que vols utilitzar.",
+      "step1": {
+        "title": "Nom del domini",
+        "description": "Introdueix el domini que vols configurar."
+      },
+      "step2": {
+        "title": "Servidors DNS",
+        "description": "Configura els nameservers si gestiones tu el domini."
+      },
+      "step3": {
+        "title": "Verificació SSL",
+        "description": "Espera que el certificat SSL es generi."
+      },
+      "field": {
+        "name": "Nom del domini",
+        "name_placeholder": "exemple.com",
+        "type": "Tipus de gestió",
+        "ns1": "Nameserver 1",
+        "ns2": "Nameserver 2"
+      },
+      "type": {
+        "managed": "Gestionat per AMG",
+        "self": "Auto-gestionat"
+      }
+    },
+    "facturacio": {
+      "title": "Configuració de la Facturació",
+      "description": "Configura l'emissió de factures electròniques.",
+      "prerequisites": "Necessitaràs: NIF, adreça fiscal i compte bancari.",
+      "step1": {
+        "title": "Dades fiscals",
+        "description": "Introdueix les dades fiscals del teu negoci."
+      },
+      "step2": {
+        "title": "API de facturació",
+        "description": "Connecta amb el teu proveïdor de facturació electrònica."
+      },
+      "step3": {
+        "title": "Prova",
+        "description": "Genera una factura de prova per verificar."
+      },
+      "field": {
+        "vat": "NIF / CIF",
+        "vat_placeholder": "12345678A",
+        "address": "Adreça fiscal",
+        "address_placeholder": "C/ Exemple 123, Palma",
+        "api_key": "API Key",
+        "day": "Dia de facturació"
+      }
+    },
+    "formulari": {
+      "title": "Configuració del Formulari",
+      "description": "Configura un formulari de contacte per a la teva web.",
+      "prerequisites": "Necessitaràs: l'email on vols rebre les notificacions.",
+      "step1": {
+        "title": "Email de destinació",
+        "description": "Introdueix l'email on arribaran els missatges."
+      },
+      "step2": {
+        "title": "Publica",
+        "description": "El formulari estarà llest per rebre missatges."
+      },
+      "field": {
+        "email": "Email de destinació",
+        "email_placeholder": "hola@elteunegoci.com"
+      }
+    },
+    "galeria": {
+      "title": "Configuració de la Galeria",
+      "description": "Configura una galeria d'imatges per a la teva web.",
+      "prerequisites": "Necessitaràs: les imatges que vols mostrar.",
+      "step1": {
+        "title": "Categories",
+        "description": "Defineix les categories de la galeria."
+      },
+      "step2": {
+        "title": "Publica",
+        "description": "La galeria estarà llesta per publicar."
+      },
+      "field": {
+        "categories": "Categories",
+        "categories_placeholder": "Interior, Exterior, Projectes..."
+      }
+    },
+    "historial": {
+      "title": "Configuració de l'Historial",
+      "description": "Configura l'historial intel·ligent de converses.",
+      "prerequisites": "Necessitaràs: accés a l'historial de converses.",
+      "step1": {
+        "title": "Configuració",
+        "description": "Configura com es guarda l'historial."
+      },
+      "step2": {
+        "title": "Publica",
+        "description": "L'historial estarà llest."
+      },
+      "field": {
+        "config": "Configuració",
+        "config_placeholder": "Paràmetres de configuració"
+      }
+    },
+    "landing": {
+      "title": "Configuració de la Landing",
+      "description": "Publica la teva pàgina web en pocs minuts.",
+      "prerequisites": "Necessitaràs: el contingut de la teva web (textos, imatges).",
+      "step1": {
+        "title": "Selecciona una plantilla",
+        "description": "Tria una plantilla per a la teva landing page."
+      },
+      "step2": {
+        "title": "Personalitza el contingut",
+        "description": "Omple els textos, imatges i seccions de la teva web."
+      },
+      "step3": {
+        "title": "Publica",
+        "description": "La teva web estarà en línia en segons."
+      },
+      "field": {
+        "template": "Plantilla"
+      }
+    },
+    "landing_extra": {
+      "description": "Afegeix una landing addicional al teu compte. Necessitaràs el contingut de la nova web."
+    },
+    "quest": {
+      "title": "Configuració del Qüestionari",
+      "description": "Crea un qüestionari interactiu per qualificar leads.",
+      "prerequisites": "Necessitaràs: les preguntes del qüestionari.",
+      "step1": {
+        "title": "Preguntes",
+        "description": "Introdueix les preguntes del qüestionari."
+      },
+      "step2": {
+        "title": "Publica",
+        "description": "El qüestionari estarà llest."
+      },
+      "field": {
+        "questions": "Preguntes",
+        "questions_placeholder": "Cada línia és una pregunta"
+      }
+    },
+    "recordatori": {
+      "title": "Configuració del Recordatori",
+      "description": "Configura recordatoris automàtics per WhatsApp.",
+      "prerequisites": "Necessitaràs: la plantilla del missatge de recordatori.",
+      "step1": {
+        "title": "Plantilla del missatge",
+        "description": "Personalitza el missatge de recordatori."
+      },
+      "step2": {
+        "title": "Temps d'avís",
+        "description": "Quants minuts abans s'envia el recordatori."
+      },
+      "step3": {
+        "title": "Activa",
+        "description": "El recordatori estarà operatiu."
+      },
+      "field": {
+        "template": "Plantilla del missatge",
+        "template_placeholder": "Ex: Hola {name}, tens una cita en {hours} hores.",
+        "hours": "Hores d'antelació",
+        "link_code": "Codi d'enllaç"
+      }
+    },
+    "reenganxament": {
+      "title": "Configuració del Reenganxament",
+      "description": "Recupera clients inactius amb missatges automàtics.",
+      "prerequisites": "Necessitaràs: plantilles de missatges per a campanyes.",
+      "step1": {
+        "title": "API de dades",
+        "description": "Connecta la font de dades de clients."
+      },
+      "step2": {
+        "title": "Plantilles",
+        "description": "Personalitza els missatges de reenganxament."
+      },
+      "step3": {
+        "title": "Activa",
+        "description": "La campanya estarà operativa."
+      },
+      "field": {
+        "api_url": "URL de la API de clients",
+        "api_url_placeholder": "https://api.exemple.com/clients",
+        "api_key": "API Key",
+        "months": "Mesos d'inactivitat",
+        "template": "Plantilla de missatge",
+        "template_placeholder": "Ex: Feia temps que no sabíem de tu..."
+      }
+    },
+    "ressenya": {
+      "title": "Configuració de Ressenyes Google",
+      "description": "Demana ressenyes de Google automàticament als teus clients.",
+      "prerequisites": "Necessitaràs: l'enllaç de ressenyes de Google del teu negoci.",
+      "step1": {
+        "title": "Enllaç de ressenyes",
+        "description": "Introdueix l'enllaç on els clients deixaran la ressenya."
+      },
+      "step2": {
+        "title": "Personalització",
+        "description": "Personalitza el missatge de sol·licitud."
+      },
+      "step3": {
+        "title": "Activa",
+        "description": "El sistema estarà operatiu."
+      },
+      "field": {
+        "url": "Enllaç de ressenya Google",
+        "url_placeholder": "https://search.google.com/local/writereview?pid=..."
+      }
+    },
+    "smtp": {
+      "title": "Configuració SMTP Corporatiu",
+      "description": "Configura el servidor de correu corporatiu per enviar emails des del teu domini.",
+      "prerequisites": "Necessitaràs: les credencials SMTP del teu proveïdor de correu.",
+      "step1": {
+        "title": "Configuració del servidor",
+        "description": "Introdueix les dades de connexió del servidor SMTP."
+      },
+      "step2": {
+        "title": "Verificació",
+        "description": "Prova l'enviament d'un email de verificació."
+      },
+      "field": {
+        "host": "Servidor SMTP",
+        "host_placeholder": "smtp.exemple.com",
+        "port": "Port",
+        "port_placeholder": "587",
+        "user": "Usuari",
+        "user_placeholder": "tu@exemple.com",
+        "password": "Contrasenya",
+        "security": "Seguretat"
+      },
+      "security": {
+        "tls": "TLS",
+        "ssl": "SSL",
+        "none": "Sense xifrat"
+      }
+    },
+    "telegram": {
+      "title": "Configuració del Bot de Telegram",
+      "description": "Crea i connecta un bot de Telegram per al teu negoci.",
+      "prerequisites": "Necessitaràs: un Bot Token de @BotFather a Telegram.",
+      "step1": {
+        "title": "Token del bot",
+        "description": "Introdueix el token del teu bot de Telegram."
+      },
+      "step2": {
+        "title": "URL del webhook",
+        "description": "Configura el webhook per rebre missatges."
+      },
+      "step3": {
+        "title": "Comandes",
+        "description": "Defineix les comandes que entendrà el bot."
+      },
+      "step4": {
+        "title": "Prova",
+        "description": "Envia un missatge de prova al bot."
+      },
+      "field": {
+        "token": "Bot Token",
+        "token_hint": "Obtén-lo de @BotFather a Telegram",
+        "username": "Nom d'usuari del bot",
+        "username_placeholder": "ex: elteunegoci_bot",
+        "webhook": "URL del webhook",
+        "commands": "Comandes (opcional)",
+        "commands_placeholder": "/start, /ajuda, /preus",
+        "commands_hint": "Separa cada comanda amb una coma"
+      }
+    },
+    "validation": {
+      "domain": "Format de domini no vàlid (ex: exemple.com)",
+      "phone": "Format de telèfon no vàlid (ex: +34600123456)",
+      "port": "El port ha de ser un número entre 10 i 65535"
+    },
+    "whatsapp": {
+      "title": "Configuració de WhatsApp Business",
+      "description": "Connecta el teu compte de WhatsApp Business per gestionar converses amb clients.",
+      "prerequisites": "Necessitaràs: les credencials de l'API de WhatsApp Business (Meta).",
+      "step1": {
+        "title": "Credencials API",
+        "description": "Introdueix les claus de l'API de WhatsApp Business."
+      },
+      "step2": {
+        "title": "Webhook",
+        "description": "Copia la URL del webhook i configura-la al teu panell de Meta."
+      },
+      "step3": {
+        "title": "Verificació",
+        "description": "Verifica que la connexió amb WhatsApp funciona correctament."
+      },
+      "field": {
+        "api_key": "Clau API",
+        "phone": "Número de telèfon",
+        "account_id": "ID del compte (WABA)",
+        "webhook_url": "URL del webhook"
+      }
+    },
+    "xat": {
+      "title": "Configuració del Xat Web",
+      "description": "Afegeix un xat en viu a la teva pàgina web.",
+      "prerequisites": "Necessitaràs: el widget ID del teu proveïdor de xat.",
+      "step1": {
+        "title": "Widget ID",
+        "description": "Introdueix l'ID del widget de xat."
+      },
+      "step2": {
+        "title": "Publica",
+        "description": "El xat apareixerà a la teva web."
+      },
+      "field": {
+        "widget_id": "Widget ID",
+        "widget_id_placeholder": "Ex: widget_abc123",
+        "api_key": "API Key"
+      }
+    }
+  },
+  "guides": {
+    "title": "Serveis",
+    "subtitle": "Guies d'ús dels teus serveis actius",
+    "no_services": "Encara no tens serveis actius",
+    "no_services_desc": "Quan tinguis serveis actius, veuràs les guies aquí.",
+    "no_guides": "Guia no disponible per a aquest servei",
+    "no_guides_desc": "Aquest tipus de servei no té una guia d'ús disponible.",
+    "service_not_found": "Servei no trobat",
+    "view_guide": "Veure guia",
+    "view_all": "Veure tots els serveis",
+    "new_services_title": "Tens nous serveis actius!",
+    "new_services_cta": "Veure guies",
+    "dismiss": "D'acord",
+    "section_credentials": "Credencials",
+    "section_access": "Accés",
+    "section_setup": "Configuració",
+    "section_troubleshoot": "Resolució de problemes",
+    "section_howto": "Com utilitzar-ho",
+    "section_howto_edit": "Com editar",
+    "section_howto_publish": "Com publicar",
+    "section_howto_manage": "Com gestionar",
+    "section_domains": "Dominis",
+    "section_dns": "DNS",
+    "section_test": "Provar connexió",
+    "section_workflows": "Workflows actius",
+    "section_manage_responses": "Gestionar respostes",
+    "section_propagation": "Temps de propagació",
+    "section_verify": "Verificació",
+    "no_credentials": "Credencials no configurades",
+    "status": "Estat",
+    "status_ready": "Actiu",
+    "status_configuring": "En configuració",
+    "status_pending": "Pendent",
+    "guide": "Guia",
+    "faq_title": "Preguntes freqüents",
+    "service_ready": "Llest!",
+    "back_to_list": "Tornar al llistat",
+    "configure_service": "Configurar servei",
+    "service_titles": {
+      "LANDING": "Landing Page",
+      "WHATSAPP": "WhatsApp Business",
+      "SMTP": "SMTP Corporatiu",
+      "BOT_IA": "Bot IA Bàsic",
+      "AUTOMATION": "Automatització n8n",
+      "DOMAIN": "Domini"
+    },
+    "service_descriptions": {
+      "LANDING": "La teva pàgina web professional. Aprèn a editar-la i publicar-la.",
+      "WHATSAPP": "Missatgeria WhatsApp Business integrada al teu portal.",
+      "SMTP": "Correu corporatiu per al teu domini. Configura'l al teu client de correu.",
+      "BOT_IA": "Assistent virtual amb IA que respon automàticament als teus clients.",
+      "AUTOMATION": "Automatitzacions amb n8n per al teu negoci.",
+      "DOMAIN": "Gestiona el teu domini i configuració DNS."
+    },
+    "landing": {
+      "access_link": "https://{domain}",
+      "edit_step_1": "Accedeix al portal i ves a l'apartat Landings",
+      "edit_step_2": "Selecciona la landing que vols editar",
+      "edit_step_3": "Utilitza l'editor visual per modificar el contingut",
+      "edit_step_4": "Fes clic a Desa per guardar els canvis",
+      "publish_step_1": "Edita el contingut de la teva landing",
+      "publish_step_2": "Previsualitza els canvis abans de publicar",
+      "publish_step_3": "Fes clic a Publica per posar-la en línia",
+      "domains_text": "Pots utilitzar un domini personalitzat per a la teva landing. Si el domini el gestiones tu, hauràs de configurar els nameservers apuntant als nostres servidors.",
+      "faq_colors_q": "Com canvio el color de la meva landing?",
+      "faq_colors_a": "A l'editor visual, ves a la pestanya de personalització. Hi trobaràs opcions per canviar colors, fonts i estils.",
+      "faq_sections_q": "Com afegeixo una secció nova?",
+      "faq_sections_a": "Des de l'editor, fes clic al botó \"Afegeix secció\" i tria entre les plantilles disponibles.",
+      "faq_domain_q": "Com connecto el meu domini?",
+      "faq_domain_a": "Al panell de configuració de la landing, ves a l'apartat de domini i segueix les instruccions per configurar els nameservers.",
+      "faq_seo_q": "Com milloro el SEO de la meva landing?",
+      "faq_seo_a": "L'editor inclou opcions de SEO bàsic: títol, descripció i paraules clau. Per a millores avançades, contacta amb el teu tècnic."
+    },
+    "whatsapp": {
+      "access_text": "El servei WhatsApp Business API està integrat al vostre portal. Pots gestionar les converses des de la safata d'entrada.",
+      "how_it_works": "Quan un client envia un missatge des del formulari web, aquest es rep automàticament al vostre WhatsApp Business. Podeu respondre directament des del portal.",
+      "test_link": "https://wa.me/{phone}",
+      "faq_no_messages_q": "Per què no rebo missatges?",
+      "faq_no_messages_a": "Comprova que el número de telèfon estigui verificat a Meta i que el webhook estigui correctament configurat.",
+      "faq_change_number_q": "Com canvio el número de WhatsApp?",
+      "faq_change_number_a": "Has de configurar un nou número des del panell de Meta Business i actualitzar les credencials al teu portal.",
+      "faq_template_q": "Com creo plantilles de missatges?",
+      "faq_template_a": "Les plantilles de WhatsApp Business es gestionen des del panell de Meta Business. Necessitaran aprovació de Meta abans d'usar-se."
+    },
+    "smtp": {
+      "outlook_title": "Configuració Outlook",
+      "outlook_step_1": "Obre Outlook i ves a Configuració",
+      "outlook_step_2": "Afegeix un compte de correu i selecciona Configuració manual",
+      "outlook_step_3": "Introdueix les credencials SMTP (servidor, port, usuari, contrasenya) amb TLS",
+      "gmail_title": "Configuració Gmail",
+      "gmail_step_1": "Obre Configuració de Gmail",
+      "gmail_step_2": "Ves a \"Veure totes les configuracions\"",
+      "gmail_step_3": "Afegeix un compte de correu des de l'apartat Comptes i importació",
+      "gmail_step_4": "Selecciona \"Afegeix un compte de correu\" i introdueix les dades SMTP",
+      "thunderbird_title": "Configuració Thunderbird",
+      "thunderbird_step_1": "Obre Thunderbird i ves a Fitxer > Nou > Correu",
+      "thunderbird_step_2": "Selecciona Configuració manual",
+      "thunderbird_step_3": "Introdueix les dades del servidor SMTP",
+      "thunderbird_step_4": "Fes clic a Re-prova i després a Fet",
+      "test_link": "/portal/admin/config",
+      "faq_send_q": "Per què no puc enviar correus?",
+      "faq_send_a": "Verifica que el teu client de correu utilitzi el port correcte (587 amb TLS o 465 amb SSL). Comprova que la contrasenya sigui correcta.",
+      "faq_port_q": "Quin port he d'usar?",
+      "faq_port_a": "Port 587 amb TLS (recomanat) o port 465 amb SSL. El port 25 no està disponible per seguretat.",
+      "faq_auth_q": "Per què em demana autenticació constantment?",
+      "faq_auth_a": "Assegura't d'haver marcat l'opció \"Recorda contrasenya\" al teu client de correu. Si el problema persisteix, genera una contrasenya d'aplicació."
+    },
+    "bot_ia": {
+      "access_link": "https://chat.amg.cat/{slug}",
+      "how_it_works": "El bot IA respon automàticament als missatges dels teus clients les 24 hores del dia. Pots personalitzar les respostes i el to de veu des del panell de gestió.",
+      "manage_link": "/portal/admin/knowledge",
+      "faq_add_info_q": "Com afegeixo més informació al bot?",
+      "faq_add_info_a": "Des del panell de gestió de coneixement, pots pujar documents en PDF, TXT o DOCX perquè el bot aprengui.",
+      "faq_bad_response_q": "Per què el bot no respon bé?",
+      "faq_bad_response_a": "Revisa que la base de coneixement tingui informació suficient i actualitzada. Si el problema persisteix, ajusta el to i les instruccions del bot.",
+      "faq_integration_q": "Es pot integrar amb WhatsApp?",
+      "faq_integration_a": "Sí, el bot es pot integrar amb WhatsApp Business, Telegram i el xat web. Gestiona-ho des del panell d'agents."
+    },
+    "automation": {
+      "access_link": "https://n8n.amg.cat",
+      "workflows_text": "Els workflows automatitzen tasques repetitives del teu negoci. Cada workflow fa una funció específica: enviar emails, gestionar leads, actualizar dades, etc.",
+      "manage_step_1": "Accedeix a n8n des de l'enllaç d'accés",
+      "manage_step_2": "Inicia sessió amb les teves credencials",
+      "manage_step_3": "Des del panell, pots activar, desactivar o modificar workflows",
+      "faq_failed_q": "El workflow ha fallat, què faig?",
+      "faq_failed_a": "Revisa el log d'errors a n8n. Normalment és un problema de connexió amb alguna API externa. Si no pots resoldre-ho, contacta amb el teu tècnic.",
+      "faq_new_automations_q": "Puc afegir noves automatitzacions?",
+      "faq_new_automations_a": "Sí, des del panell de n8n pots crear nous workflows. Si necessites ajuda, demana-ho al teu tècnic assignat.",
+      "faq_monitoring_q": "Com sé si els workflows funcionen?",
+      "faq_monitoring_a": "n8n mostra l'estat de cada workflow (actiu, inactiu, error). També pots configurar notificacions d'alerta per email o Telegram."
+    },
+    "domain": {
+      "setup_step_1": "Accedeix al panell del teu registrador de dominis",
+      "setup_step_2": "Canvia els nameservers pels que tens a l'apartat DNS",
+      "setup_step_3": "Espera que la propagació es completi (24-72h)",
+      "propagation_text": "La propagació DNS pot trigar entre 24 i 72 hores a completar-se mundialment. Durant aquest temps, el teu domini pot ser accessible des d'unes ubicacions i des d'altres no.",
+      "verify_link": "https://dnschecker.org",
+      "faq_time_q": "Quant triga la propagació del domini?",
+      "faq_time_a": "Normalment entre 24 i 48 hores, però pot trigar fins a 72 hores en casos extrems.",
+      "faq_not_visible_q": "El meu web no es veu després de 72h",
+      "faq_not_visible_a": "Comprova que els nameservers estiguin correctament configurats al teu registrador. Si ho estan, contacta amb el teu tècnic.",
+      "faq_ssl_q": "Com es genera el certificat SSL?",
+      "faq_ssl_a": "El certificat SSL es genera automàticament un cop el domini apunta als nostres servidors. Pot trigar fins a 15 minuts."
     }
   }
 }

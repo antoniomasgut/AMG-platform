@@ -38,7 +38,7 @@ import {
 import { listContacts, clearContactMemory, testTenantEmail } from '@/services/agents-conversational';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
-import { I } from '@/components/ui/icons';
+import { IconSet } from '@/components/ui/icons';
 
 type Tab = 'agent' | 'pending' | 'conversations' | 'coneixement' | 'ia';
 
@@ -385,7 +385,7 @@ export default function AgentsPage() {
               <div className="p-4 bg-bg-1 rounded space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <I.Bell size={18} />
+                    <IconSet.Bell size={18} />
                     <span className="text-sm font-medium">Telegram</span>
                   </div>
                   <AMGBadge tone={channels?.telegramLinked ? 'success' : 'warning'}>
@@ -407,7 +407,7 @@ export default function AgentsPage() {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-xs text-accent-light hover:underline f-mono border border-accent/30 px-2 py-1 rounded"
                       >
-                        <I.Bell size={12} />
+                        <IconSet.Bell size={12} />
                         Obrir bot de Telegram →
                       </a>
                     )}
@@ -422,7 +422,7 @@ export default function AgentsPage() {
               <div className="p-4 bg-bg-1 rounded space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <I.Smartphone size={18} />
+                    <IconSet.Smartphone size={18} />
                     <span className="text-sm font-medium">WhatsApp</span>
                   </div>
                   <AMGBadge tone={channels?.whatsappPhoneNumber ? 'success' : 'neutral'}>
@@ -528,7 +528,7 @@ export default function AgentsPage() {
               <div className="p-4 bg-bg-1 rounded space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <I.Mail size={18} />
+                    <IconSet.Mail size={18} />
                     <span className="text-sm font-medium">Email</span>
                   </div>
                   <AMGBadge tone={channels?.emailAddress ? 'success' : 'warning'}>
@@ -706,7 +706,7 @@ export default function AgentsPage() {
                   }
                   className="px-6 py-3 bg-success text-white rounded font-semibold hover:opacity-90 disabled:opacity-40 flex items-center gap-2"
                 >
-                  <I.Bot size={16} />
+                  <IconSet.Bot size={16} />
                   {activateMutation.isPending ? 'Activant...' : 'ACTIVAR BOT'}
                 </button>
               ) : (
@@ -732,7 +732,7 @@ export default function AgentsPage() {
           <div>
             {pending.length === 0 ? (
               <div className="amg-card card-clip p-12 text-center">
-                <I.Check size={32} stroke="#39d353" className="mx-auto mb-3" />
+                <IconSet.Check size={32} stroke="#39d353" className="mx-auto mb-3" />
                 <div className="f-display font-bold text-sm mb-1 text-success">Tot al dia</div>
                 <p className="f-mono text-label text-ink-2">No hi ha respostes pendents</p>
               </div>
@@ -833,7 +833,7 @@ export default function AgentsPage() {
           <div>
             {conversations.length === 0 ? (
               <div className="amg-card card-clip p-12 text-center">
-                <I.Bot size={32} stroke="#6366f1" className="mx-auto mb-3" />
+                <IconSet.Bot size={32} stroke="#6366f1" className="mx-auto mb-3" />
                 <div className="f-display font-bold text-sm mb-1 text-accent">Sense converses</div>
                 <p className="f-mono text-label text-ink-2">Quan els clients escribin, apareixeran aquí</p>
               </div>
@@ -1236,12 +1236,12 @@ export default function AgentsPage() {
                 >
                   {testModelMutation.isPending ? (
                     <>
-                      <I.Zap size={14} />
+                      <IconSet.Zap size={14} />
                       Processant...
                     </>
                   ) : (
                     <>
-                      <I.Bot size={14} />
+                      <IconSet.Bot size={14} />
                       Enviar
                     </>
                   )}
@@ -1281,7 +1281,7 @@ export default function AgentsPage() {
                 onClick={() => setShowActivationModal(false)}
                 className="text-ink-2 hover:text-ink-1"
               >
-                <I.X size={20} />
+                <IconSet.X size={20} />
               </button>
             </div>
             <p className="text-sm text-ink-2">
@@ -1291,7 +1291,7 @@ export default function AgentsPage() {
             {activationInstructions?.telegram?.configured && (
               <div className="p-4 bg-bg-1 rounded space-y-2">
                 <div className="flex items-center gap-2">
-                  <I.Bell size={16} />
+                  <IconSet.Bell size={16} />
                   <span className="text-sm font-semibold">Telegram</span>
                   {activationInstructions.telegram.active && (
                     <AMGBadge tone="success">Actiu</AMGBadge>
@@ -1316,7 +1316,7 @@ export default function AgentsPage() {
             {activationInstructions?.whatsapp?.configured && (
               <div className="p-4 bg-bg-1 rounded space-y-2">
                 <div className="flex items-center gap-2">
-                  <I.Smartphone size={16} />
+                  <IconSet.Smartphone size={16} />
                   <span className="text-sm font-semibold">WhatsApp</span>
                   {activationInstructions.whatsapp.active && (
                     <AMGBadge tone="success">Actiu</AMGBadge>

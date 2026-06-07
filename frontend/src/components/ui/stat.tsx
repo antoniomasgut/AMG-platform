@@ -22,7 +22,7 @@ export function AMGStat({ label, value, delta, tone = 'accent', icon: Ico }: Sta
     <div className="card-clip amg-card p-5 relative overflow-hidden">
       <div className="flex items-start justify-between">
         <span className="f-mono uppercase text-label tracking-[0.18em] text-ink-3">{label}</span>
-        {Ico && <div className={`${colors[tone]} opacity-80`}><Ico size={16} /></div>}
+        {Ico && <div className={`${colors[tone]} opacity-80`}><Ico /></div>}
       </div>
       <div className="mt-3 flex items-baseline gap-2">
         <span className={`f-display font-bold text-3xl ${colors[tone]}`}>{value}</span>
