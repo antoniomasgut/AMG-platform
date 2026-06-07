@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.agents.api;
 import com.amg.digitalitzacio.agents.api.dto.*;
 import com.amg.digitalitzacio.agents.application.ContactService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,7 +42,7 @@ public class ContactController {
     public ResponseEntity<Void> sendReply(
             @PathVariable UUID tenantId,
             @PathVariable UUID contactId,
-            @RequestBody SendReplyRequest request,
+            @Valid @RequestBody SendReplyRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         contactService.sendReply(tenantId, contactId, request.text());
         return ResponseEntity.ok().build();
@@ -52,7 +53,7 @@ public class ContactController {
     public ResponseEntity<Void> renameContact(
             @PathVariable UUID tenantId,
             @PathVariable UUID contactId,
-            @RequestBody RenameContactRequest request,
+            @Valid @RequestBody RenameContactRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         contactService.renameContact(tenantId, contactId, request.displayName());
         return ResponseEntity.ok().build();
@@ -63,7 +64,7 @@ public class ContactController {
     public ResponseEntity<Void> updateProfile(
             @PathVariable UUID tenantId,
             @PathVariable UUID contactId,
-            @RequestBody UpdateContactProfileRequest request,
+            @Valid @RequestBody UpdateContactProfileRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         contactService.updateProfile(tenantId, contactId, request.displayName(), request.phone(), request.email());
         return ResponseEntity.ok().build();

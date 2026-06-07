@@ -9,7 +9,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "knowledge_entries")
+@Table(name = "knowledge_entries", indexes = {
+    @Index(name = "idx_knowledge_entries_kb_id", columnList = "knowledge_base_id")
+})
 @EntityListeners(AuditingEntityListener.class)
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class KnowledgeEntry {

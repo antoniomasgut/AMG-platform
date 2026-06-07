@@ -6,6 +6,7 @@ import com.amg.digitalitzacio.agents.domain.KnowledgeBaseRepository;
 import com.amg.digitalitzacio.agents.domain.KnowledgeCategory;
 import com.amg.digitalitzacio.agents.domain.KnowledgeEntryRepository;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,7 +44,7 @@ public class KnowledgeController {
     public ResponseEntity<Void> updateEntries(
             @PathVariable UUID tenantId,
             @PathVariable String category,
-            @RequestBody UpdateEntriesRequest request) {
+            @Valid @RequestBody UpdateEntriesRequest request) {
         var cat = KnowledgeCategory.valueOf(category.toUpperCase());
         knowledgeBaseService.updateEntries(tenantId, cat, request.entries());
         return ResponseEntity.noContent().build();
@@ -53,7 +54,7 @@ public class KnowledgeController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<KnowledgeDocumentResponse> addDocument(
             @PathVariable UUID tenantId,
-            @RequestBody AddDocumentRequest request) {
+            @Valid @RequestBody AddDocumentRequest request) {
         var response = knowledgeBaseService.addDocument(tenantId, request.filename(), request.content(),
             null, null, "text/plain");
         return ResponseEntity.ok(response);
@@ -153,7 +154,7 @@ public class KnowledgeController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<KnowledgeTestResponse> testResponse(
             @PathVariable UUID tenantId,
-            @RequestBody KnowledgeTestRequest request) {
+            @Valid @RequestBody KnowledgeTestRequest request) {
         String systemPrompt = promptBuilder.build(tenantId, null);
         String response = aiProviderRouter.forModel(null).chat(systemPrompt, List.of(), request.message());
         return ResponseEntity.ok(new KnowledgeTestResponse(response, systemPrompt));

@@ -109,15 +109,12 @@ public class ContactService {
         assertContactBelongsToTenant(tenantId, contactId);
 
         var identifiers = contactIdentifierRepository.findByContactId(contactId);
-        var messages = new ArrayList<com.amg.digitalitzacio.agents.domain.Conversation>();
-        for (var ci : identifiers) {
-            messages.addAll(conversationRepository
-                .findByTenantIdAndCustomerIdentifierAndChannelOrderByCreatedAtAsc(
-                    tenantId, ci.getIdentifier(), ci.getChannel()));
-        }
+        if (identifiers.isEmpty()) return List.of();
+        var identifierStrings = identifiers.stream().map(ContactIdentifier::getIdentifier).toList();
+        var messages = conversationRepository
+            .findByTenantIdAndCustomerIdentifierInOrderByCreatedAtAsc(tenantId, identifierStrings);
 
         return messages.stream()
-            .sorted(Comparator.comparing(com.amg.digitalitzacio.agents.domain.Conversation::getCreatedAt))
             .map(c -> new ConversationResponse(
                 c.getId(), c.getCustomerIdentifier(), c.getChannel(),
                 c.getRole(), c.getContent(), c.getPendingApproval(), c.getCreatedAt()))

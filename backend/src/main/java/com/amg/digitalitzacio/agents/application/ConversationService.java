@@ -24,10 +24,12 @@ public class ConversationService {
 
     private static final String REDIS_KEY_PATTERN = "conv:%s:%s:%s";
 
+    @Transactional(readOnly = true)
     public List<Conversation> loadHistory(UUID tenantId, String customerIdentifier, ConversationChannel channel) {
         return loadCustomerContext(tenantId, customerIdentifier, channel).recentMessages();
     }
 
+    @Transactional(readOnly = true)
     public CustomerContext loadCustomerContext(UUID tenantId, String customerIdentifier, ConversationChannel channel) {
         var recent = loadRecentFromDatabase(tenantId, customerIdentifier, channel);
         long total = conversationRepository.countByTenantIdAndCustomerIdentifierAndChannel(

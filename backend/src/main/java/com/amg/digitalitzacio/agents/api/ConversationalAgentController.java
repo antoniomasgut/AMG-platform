@@ -15,6 +15,7 @@ import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -164,7 +165,7 @@ public class ConversationalAgentController {
     public ResponseEntity<Void> editPending(
             @PathVariable UUID tenantId,
             @PathVariable Long id,
-            @RequestBody EditPendingRequest request) {
+            @Valid @RequestBody EditPendingRequest request) {
         try {
             var principal = getPrincipal();
             validateTenantAccess(tenantId, principal);
@@ -214,7 +215,7 @@ public class ConversationalAgentController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updateMode(
             @PathVariable UUID tenantId,
-            @RequestBody AgentModeRequest request) {
+            @Valid @RequestBody AgentModeRequest request) {
         try {
             var principal = getPrincipal();
             validateTenantAccess(tenantId, principal);
@@ -293,7 +294,7 @@ public class ConversationalAgentController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<com.amg.digitalitzacio.agents.api.dto.ChannelsResponse> updateChannels(
             @PathVariable UUID tenantId,
-            @RequestBody com.amg.digitalitzacio.agents.api.dto.UpdateChannelsRequest request) {
+            @Valid @RequestBody com.amg.digitalitzacio.agents.api.dto.UpdateChannelsRequest request) {
         var chatLink = tenantChatLinkRepository.findByTenantId(tenantId)
                 .orElseGet(() -> com.amg.digitalitzacio.agents.domain.TenantChatLink.builder()
                         .tenantId(tenantId).build());
@@ -349,7 +350,7 @@ public class ConversationalAgentController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<TenantAIConfig> updateAIConfig(
             @PathVariable UUID tenantId,
-            @RequestBody AIConfigRequest request) {
+            @Valid @RequestBody AIConfigRequest request) {
         var config = tenantAIConfigRepository.findById(tenantId)
                 .orElse(TenantAIConfig.defaultFor(tenantId));
         if (request.preferredModel() != null && !request.preferredModel().isBlank())
@@ -376,7 +377,7 @@ public class ConversationalAgentController {
     /** Test directe d'un model: envia un missatge i retorna la resposta */
     @PostMapping("/test-model")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public ResponseEntity<Map<String, String>> testModel(@RequestBody AIModelTestRequest request) {
+    public ResponseEntity<Map<String, String>> testModel(@Valid @RequestBody AIModelTestRequest request) {
         try {
             var provider = aiProviderRouter.forModel(request.model());
             String response = provider.chat(

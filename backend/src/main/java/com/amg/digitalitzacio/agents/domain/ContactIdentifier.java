@@ -10,7 +10,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "contact_identifiers",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"tenant_id", "channel", "identifier"}))
+    uniqueConstraints = @UniqueConstraint(columnNames = {"tenant_id", "channel", "identifier"}),
+    indexes = {
+        @Index(name = "idx_contact_identifiers_contact_id", columnList = "contact_id")
+    })
 @EntityListeners(AuditingEntityListener.class)
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ContactIdentifier {

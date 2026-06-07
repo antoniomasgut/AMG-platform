@@ -141,7 +141,7 @@ public class LeadController {
     @PostMapping("/outreach")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<Map<String, Integer>> sendOutreach(
-            @RequestBody OutreachRequest request,
+            @Valid @RequestBody OutreachRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(leadService.sendOutreach(request, principal));
     }
@@ -149,7 +149,7 @@ public class LeadController {
     @PostMapping("/send-template")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<Map<String, Integer>> sendTemplate(
-            @RequestBody SendTemplateRequest request,
+            @Valid @RequestBody SendTemplateRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(leadService.sendTemplate(request, principal));
     }
@@ -185,7 +185,7 @@ public class LeadController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<ConvertLeadResult> convertToClient(
             @PathVariable UUID leadId,
-            @RequestBody ConvertLeadRequest req) {
+            @Valid @RequestBody ConvertLeadRequest req) {
         return ResponseEntity.ok(convertLeadService.convert(leadId, req));
     }
 }

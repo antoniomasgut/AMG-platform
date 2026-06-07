@@ -5,6 +5,7 @@ import com.amg.digitalitzacio.booking.application.BookingService;
 import com.amg.digitalitzacio.booking.domain.BookingToken;
 import com.amg.digitalitzacio.booking.domain.MeetingSettings;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,7 +36,7 @@ public class BookingController {
     @PutMapping("/settings")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<MeetingSettings> updateSettings(
-            @RequestBody MeetingSettingsRequest req,
+            @Valid @RequestBody MeetingSettingsRequest req,
             @AuthenticationPrincipal UserPrincipal p) {
         MeetingSettings s = bookingService.getOrCreate(p.tenantId());
         if (req.workingDays()         != null) s.setWorkingDays(req.workingDays());
@@ -101,7 +102,7 @@ public class BookingController {
     @PostMapping("/{token}/confirm")
     public ResponseEntity<Map<String, Object>> confirm(
             @PathVariable String token,
-            @RequestBody BookingConfirmRequest req) {
+            @Valid @RequestBody BookingConfirmRequest req) {
         LocalDateTime slot = LocalDateTime.parse(req.slotDatetime());
         BookingService.BookingResult result = bookingService.confirmBooking(token, slot);
         var resp = new java.util.HashMap<String, Object>();

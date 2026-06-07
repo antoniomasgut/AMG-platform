@@ -98,6 +98,12 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
         @Param("channel") ConversationChannel channel,
         @Param("before") Instant before);
 
+    /** Totes les converses d'un conjunt d'identifiers — per getThread sense N+1. */
+    @Query("SELECT c FROM Conversation c WHERE c.tenantId = :tenantId AND c.customerIdentifier IN :identifiers ORDER BY c.createdAt ASC")
+    List<Conversation> findByTenantIdAndCustomerIdentifierInOrderByCreatedAtAsc(
+        @Param("tenantId") UUID tenantId,
+        @Param("identifiers") java.util.Collection<String> identifiers);
+
     /** Darrer missatge per cada (customerIdentifier, channel) del tenant — per buildSummary sense N+1. */
     @Query("SELECT c FROM Conversation c WHERE c.tenantId = :tenantId AND c.createdAt = (SELECT MAX(c2.createdAt) FROM Conversation c2 WHERE c2.tenantId = c.tenantId AND c2.customerIdentifier = c.customerIdentifier AND c2.channel = c.channel)")
     List<Conversation> findLastMessagePerIdentifierAndChannel(@Param("tenantId") UUID tenantId);
