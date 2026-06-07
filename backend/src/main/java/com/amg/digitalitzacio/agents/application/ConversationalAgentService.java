@@ -3,16 +3,7 @@ package com.amg.digitalitzacio.agents.application;
 import com.amg.digitalitzacio.agents.application.channel.EmailChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
-import com.amg.digitalitzacio.agents.domain.ConversationChannel;
-import com.amg.digitalitzacio.agents.domain.AgentMode;
-import com.amg.digitalitzacio.agents.domain.ConversationRole;
-import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
-import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
-import com.amg.digitalitzacio.agents.domain.ScheduledAgentTask;
-import com.amg.digitalitzacio.agents.domain.ScheduledAgentTaskRepository;
-import com.amg.digitalitzacio.agents.domain.ScheduledTaskStatus;
-import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
-import com.amg.digitalitzacio.leads.domain.LeadRepository;
+import com.amg.digitalitzacio.agents.domain.*;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.amg.digitalitzacio.shared.ai.ChatMessage;
 import com.amg.digitalitzacio.shared.notification.NotificationEvent;
@@ -22,7 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -32,106 +22,93 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Orquestrador principal de l'agent conversacional. Sense @Transactional de classe:
+ * les dues transaccions curtes (preparació + persistència) es gestionen via
+ * AgentTransactionalHelper per evitar que la connexió BD quedi bloquejada durant
+ * les crides HTTP externes (IA, Telegram, WhatsApp, Email, Google Calendar).
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ConversationalAgentService {
 
-    private final ConversationService conversationService;
-    private final ContactService contactService;
+    private final AgentTransactionalHelper helper;
     private final PromptBuilder promptBuilder;
-    private final TenantChatLinkRepository tenantChatLinkRepository;
-    private final TenantAIConfigRepository tenantAIConfigRepository;
-    private final LeadRepository leadRepository;
+    private final NexeServiceConfigService nexeServiceConfigService;
     private final TelegramBotClient telegramBotClient;
     private final WhatsAppChannel whatsAppChannel;
     private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final EmailChannel emailChannel;
     private final AIProviderRouter aiProviderRouter;
-    private final ChannelUsageService channelUsageService;
-    private final NexeServiceConfigService nexeServiceConfigService;
-    private final GoogleCalendarService googleCalendarService;
-    private final ScheduledAgentTaskRepository taskRepository;
     private final TenantNotificationService notificationService;
+    private final GoogleCalendarService googleCalendarService;
     private final ObjectMapper objectMapper;
 
     private static final Pattern BOOKING_TAG = Pattern.compile(
             "\\[CONFIRMA_CITA:(\\{.*?\\})]", Pattern.DOTALL);
+    private static final String REMINDER_AGENT_SLUG = "appointment-reminder";
 
-    public void handleIncoming(UUID tenantId, String customerIdentifier, ConversationChannel channel, String text) {
+    public void handleIncoming(UUID tenantId, String identifier, ConversationChannel channel, String text) {
         try {
             log.info("Handling incoming message for tenantId={}, channel={}", tenantId, channel);
 
-            var chatLinkOpt = tenantChatLinkRepository.findByTenantId(tenantId);
-            if (chatLinkOpt.isEmpty()) {
-                log.warn("TenantChatLink not found for tenant {}", tenantId);
+            // TX 1: valida agent + persista USER + carrega context (connexió BD alliberada en sortir)
+            var prepOpt = helper.prepareIncoming(tenantId, identifier, channel, text);
+            if (prepOpt.isEmpty()) {
+                log.info("Agent inactiu o no configurat per tenant {} — missatge ignorat", tenantId);
                 return;
             }
-            var chatLink = chatLinkOpt.get();
+            var prep = prepOpt.get();
 
-            if (!Boolean.TRUE.equals(chatLink.getIsActive())) {
-                log.info("Agent is inactive for tenant {} — message ignored", tenantId);
-                return;
-            }
-
-            boolean isNewContact = contactService.findOrCreate(tenantId, channel, customerIdentifier);
-            touchLeadContactAt(tenantId, channel, customerIdentifier);
-
-            if (isNewContact) {
-                NotificationEvent evt = (channel == ConversationChannel.EMAIL) ? NotificationEvent.EMAIL_NEW : NotificationEvent.WHATSAPP_NEW;
-                String subject = (channel == ConversationChannel.EMAIL) ? extractEmailSubject(text) : "";
+            if (prep.isNewContact()) {
+                NotificationEvent evt = channel == ConversationChannel.EMAIL
+                        ? NotificationEvent.EMAIL_NEW : NotificationEvent.WHATSAPP_NEW;
+                String subject = channel == ConversationChannel.EMAIL ? extractEmailSubject(text) : "";
                 notificationService.notify(tenantId, evt, Map.of(
-                        "identifier", customerIdentifier,
-                        "subject", subject,
-                        "message", text));
+                        "identifier", identifier, "subject", subject, "message", text));
             }
 
-            conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.USER, text, false);
-
-            var context = conversationService.loadCustomerContext(tenantId, customerIdentifier, channel);
-            String systemPrompt = promptBuilder.build(tenantId, context);
-
-            var aiConfig = tenantAIConfigRepository.findById(tenantId)
-                    .orElse(TenantAIConfig.defaultFor(tenantId));
-            String model = aiConfig.getPreferredModel() != null
-                    ? aiConfig.getPreferredModel()
-                    : aiProviderRouter.defaultModel();
-
-            var chatHistory = context.recentMessages().stream()
+            // Sense TX: construcció del prompt (BD pròpia per servei)
+            String systemPrompt = promptBuilder.build(tenantId, prep.context());
+            var chatHistory = prep.context().recentMessages().stream()
                     .map(c -> new ChatMessage(c.getRole().name(), c.getContent()))
                     .toList();
 
+            // Sense TX: crida HTTP a l'API d'IA (pot trigar 5-30 s)
+            String model = prep.preferredModel() != null ? prep.preferredModel() : aiProviderRouter.defaultModel();
             var provider = aiProviderRouter.forModel(model);
-            String assistantResponse = provider.chat(systemPrompt, chatHistory, text);
-
-            if (assistantResponse == null || assistantResponse.isBlank()) {
-                log.warn("AI provider '{}' returned empty response for tenant {}", provider.providerName(), tenantId);
+            String aiResponse = provider.chat(systemPrompt, chatHistory, text);
+            if (aiResponse == null || aiResponse.isBlank()) {
+                log.warn("AI provider '{}' ha retornat resposta buida per tenant {}", provider.providerName(), tenantId);
                 return;
             }
 
-            // Extreu el tag de booking si existeix i crea l'event al Google Calendar
-            String cleanedResponse = processBookingTag(assistantResponse, tenantId, customerIdentifier, channel);
+            // Sense TX: processa tag de booking + crida HTTP a Google Calendar si cal
+            var booking = processBookingTag(aiResponse, tenantId, identifier, channel);
+            if (booking.notificationData() != null) {
+                notificationService.notify(tenantId, NotificationEvent.BOOKING_CONFIRMED, booking.notificationData());
+            }
 
-            switch (chatLink.getAgentMode()) {
-                case AUTO:
+            // TX 2: persista ASSISTANT + tasca de recordatori (connexió BD alliberada en sortir)
+            boolean pending = prep.agentMode() == AgentMode.HYBRID;
+            helper.persistResponse(tenantId, identifier, channel, booking.cleanedResponse(),
+                    pending, booking.reminderTask());
+
+            // Sense TX: enviament via canal extern
+            switch (prep.agentMode()) {
+                case AUTO -> {
                     String senderId = channel == ConversationChannel.WHATSAPP_META
-                            ? chatLink.getWhatsappMetaPhoneNumberId()
-                            : chatLink.getWhatsappPhoneNumber();
-                    sendViaChannel(senderId, customerIdentifier, channel, cleanedResponse,
-                            aiConfig.getSenderEmail(), aiConfig.getSenderName(), aiConfig.getReplyToEmail());
-                    channelUsageService.record(tenantId, channel.name());
-                    conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.ASSISTANT, cleanedResponse, false);
-                    break;
-                case HYBRID:
-                    conversationService.save(tenantId, customerIdentifier, channel, ConversationRole.ASSISTANT, cleanedResponse, true);
-                    notifyTenantViaInternalTelegram(chatLink.getTelegramChatId(), customerIdentifier, text, cleanedResponse);
-                    break;
-                case MANUAL:
-                    notifyTenantViaInternalTelegram(chatLink.getTelegramChatId(), customerIdentifier, text, null);
-                    break;
-                default:
-                    log.warn("Unknown agent mode: {}", chatLink.getAgentMode());
+                            ? prep.whatsappMetaPhoneNumberId()
+                            : prep.whatsappPhoneNumber();
+                    sendViaChannel(senderId, identifier, channel, booking.cleanedResponse(),
+                            prep.senderEmail(), prep.senderName(), prep.replyToEmail());
+                }
+                case HYBRID -> notifyTenantViaInternalTelegram(
+                        prep.telegramChatId(), identifier, text, booking.cleanedResponse());
+                case MANUAL -> notifyTenantViaInternalTelegram(
+                        prep.telegramChatId(), identifier, text, null);
+                default -> log.warn("Agent mode desconegut: {}", prep.agentMode());
             }
 
         } catch (Exception e) {
@@ -139,136 +116,131 @@ public class ConversationalAgentService {
         }
     }
 
-    private void sendViaChannel(String fromNumber, String customerIdentifier, ConversationChannel channel, String text) {
-        sendViaChannel(fromNumber, customerIdentifier, channel, text, null, null, null);
-    }
-
-    private void sendViaChannel(String fromNumber, String customerIdentifier, ConversationChannel channel, String text,
-                                String senderEmail, String senderName, String replyToEmail) {
+    /**
+     * Punt d'entrada per al canal WIDGET. Sempre retorna una resposta immediata.
+     * Retorna null si l'agent no està actiu.
+     */
+    public String processWidgetMessage(UUID tenantId, String widgetSessionId, String text) {
         try {
-            switch (channel) {
-                case WHATSAPP      -> whatsAppChannel.sendMessage(fromNumber != null ? fromNumber : "", customerIdentifier, text);
-                case WHATSAPP_META -> whatsAppMetaChannel.sendMessage(fromNumber != null ? fromNumber : "", customerIdentifier, text);
-                case TELEGRAM      -> telegramBotClient.sendMessage(Long.parseLong(customerIdentifier), text);
-                case EMAIL         -> emailChannel.sendMessage(customerIdentifier, "Resposta del teu agent", text, senderEmail, senderName, replyToEmail);
-                default            -> log.warn("Unsupported channel: {}", channel);
+            String identifier = "wgt:" + widgetSessionId;
+
+            // TX 1
+            var prepOpt = helper.prepareWidgetMessage(tenantId, identifier, text);
+            if (prepOpt.isEmpty()) return null;
+            var prep = prepOpt.get();
+
+            // Sense TX: prompt + IA
+            String systemPrompt = promptBuilder.build(tenantId, prep.context());
+            var chatHistory = prep.context().recentMessages().stream()
+                    .map(c -> new ChatMessage(c.getRole().name(), c.getContent()))
+                    .toList();
+
+            String model = prep.preferredModel() != null ? prep.preferredModel() : aiProviderRouter.defaultModel();
+            String aiResponse = aiProviderRouter.forModel(model).chat(systemPrompt, chatHistory, text);
+            if (aiResponse == null || aiResponse.isBlank()) return null;
+
+            // Sense TX: booking tag (no hi ha recordatori per WIDGET)
+            var booking = processBookingTag(aiResponse, tenantId, identifier, ConversationChannel.WIDGET);
+            if (booking.notificationData() != null) {
+                notificationService.notify(tenantId, NotificationEvent.BOOKING_CONFIRMED, booking.notificationData());
             }
+
+            // TX 2
+            boolean pending = prep.agentMode() == AgentMode.HYBRID;
+            helper.persistResponse(tenantId, identifier, ConversationChannel.WIDGET,
+                    booking.cleanedResponse(), pending, booking.reminderTask());
+
+            // Sense TX: notificació interna
+            if (prep.agentMode() == AgentMode.HYBRID) {
+                notifyTenantViaInternalTelegram(prep.telegramChatId(), identifier, text, booking.cleanedResponse());
+            } else if (prep.agentMode() == AgentMode.MANUAL) {
+                notifyTenantViaInternalTelegram(prep.telegramChatId(), identifier, text, null);
+            }
+
+            return booking.cleanedResponse();
+
         } catch (Exception e) {
-            log.error("Error sending via channel {} to {}: {}", channel, customerIdentifier, e.getMessage());
+            log.error("Error processing widget message for tenantId={}", tenantId, e);
+            return null;
         }
     }
 
-    private void notifyTenantViaInternalTelegram(Long telegramChatId, String customerIdentifier, String customerMessage, String suggestedResponse) {
+    // ── Enviament per canal ───────────────────────────────────────────────────
+
+    private void sendViaChannel(String fromNumber, String identifier, ConversationChannel channel, String text) {
+        sendViaChannel(fromNumber, identifier, channel, text, null, null, null);
+    }
+
+    private void sendViaChannel(String fromNumber, String identifier, ConversationChannel channel, String text,
+                                 String senderEmail, String senderName, String replyToEmail) {
+        try {
+            switch (channel) {
+                case WHATSAPP      -> whatsAppChannel.sendMessage(fromNumber != null ? fromNumber : "", identifier, text);
+                case WHATSAPP_META -> whatsAppMetaChannel.sendMessage(fromNumber != null ? fromNumber : "", identifier, text);
+                case TELEGRAM      -> telegramBotClient.sendMessage(Long.parseLong(identifier), text);
+                case EMAIL         -> emailChannel.sendMessage(identifier, "Resposta del teu agent", text, senderEmail, senderName, replyToEmail);
+                default            -> log.warn("Canal no suportat per enviament: {}", channel);
+            }
+        } catch (Exception e) {
+            log.error("Error enviant via {} a {}: {}", channel, identifier, e.getMessage());
+        }
+    }
+
+    private void notifyTenantViaInternalTelegram(Long telegramChatId, String identifier,
+                                                  String customerMessage, String suggestedResponse) {
         if (telegramChatId == null) return;
         try {
             String msg = suggestedResponse != null
-                ? "🤖 Missatge de %s:\n\n%s\n\n✍️ Resposta suggerida:\n%s\n\nAccepta o edita al portal.".formatted(customerIdentifier, customerMessage, suggestedResponse)
-                : "📬 Missatge de %s:\n\n%s".formatted(customerIdentifier, customerMessage);
+                ? "🤖 Missatge de %s:\n\n%s\n\n✍️ Resposta suggerida:\n%s\n\nAccepta o edita al portal."
+                    .formatted(identifier, customerMessage, suggestedResponse)
+                : "📬 Missatge de %s:\n\n%s".formatted(identifier, customerMessage);
             telegramBotClient.sendMessage(telegramChatId, msg);
         } catch (Exception e) {
-            log.error("Error notifying tenant via Telegram: {}", e.getMessage());
+            log.error("Error notificant tenant via Telegram intern: {}", e.getMessage());
         }
     }
 
-    private void touchLeadContactAt(UUID tenantId, ConversationChannel channel, String identifier) {
-        try {
-            var opt = switch (channel) {
-                case EMAIL -> leadRepository.findFirstByTenantIdAndEmail(tenantId, identifier);
-                default    -> leadRepository.findFirstByTenantIdAndPhone(tenantId, identifier);
-            };
-            opt.ifPresent(lead -> {
-                lead.setLastContactAt(Instant.now());
-                leadRepository.save(lead);
-            });
-        } catch (Exception ignored) {}
-    }
+    // ── Processament tag de booking ───────────────────────────────────────────
 
-    /**
-     * Punt d'entrada per al canal WIDGET. Sempre retorna una resposta immediata (el navegador no pot
-     * rebre push); persista la conversa a PostgreSQL perquè aparegui a la inbox omnicanal.
-     * Retorna null si l'agent no està actiu (el caller usa el camí Redis directe com a fallback).
-     */
-    public String processWidgetMessage(UUID tenantId, String widgetSessionId, String text) {
-        var chatLinkOpt = tenantChatLinkRepository.findByTenantId(tenantId);
-        if (chatLinkOpt.isEmpty() || !Boolean.TRUE.equals(chatLinkOpt.get().getIsActive())) {
-            return null;
-        }
-        var chatLink = chatLinkOpt.get();
+    private record BookingProcessed(
+        String cleanedResponse,
+        ScheduledAgentTask reminderTask,
+        Map<String, String> notificationData
+    ) {}
 
-        String identifier = "wgt:" + widgetSessionId;
-        contactService.findOrCreate(tenantId, ConversationChannel.WIDGET, identifier);
-        conversationService.save(tenantId, identifier, ConversationChannel.WIDGET,
-                ConversationRole.USER, text, false);
-
-        var context = conversationService.loadCustomerContext(tenantId, identifier, ConversationChannel.WIDGET);
-        String systemPrompt = promptBuilder.build(tenantId, context);
-
-        var aiConfig = tenantAIConfigRepository.findById(tenantId)
-                .orElse(TenantAIConfig.defaultFor(tenantId));
-        String model = aiConfig.getPreferredModel() != null
-                ? aiConfig.getPreferredModel()
-                : aiProviderRouter.defaultModel();
-
-        var chatHistory = context.recentMessages().stream()
-                .map(c -> new ChatMessage(c.getRole().name(), c.getContent()))
-                .toList();
-
-        var provider = aiProviderRouter.forModel(model);
-        String assistantResponse = provider.chat(systemPrompt, chatHistory, text);
-        if (assistantResponse == null || assistantResponse.isBlank()) {
-            return null;
-        }
-
-        String cleaned = processBookingTag(assistantResponse, tenantId, identifier, ConversationChannel.WIDGET);
-
-        // WIDGET: sempre resposta immediata; HYBRID guarda com a pendent per a la inbox
-        boolean pending = chatLink.getAgentMode() == AgentMode.HYBRID;
-        conversationService.save(tenantId, identifier, ConversationChannel.WIDGET,
-                ConversationRole.ASSISTANT, cleaned, pending);
-        channelUsageService.record(tenantId, ConversationChannel.WIDGET.name());
-
-        if (chatLink.getAgentMode() == AgentMode.HYBRID) {
-            notifyTenantViaInternalTelegram(chatLink.getTelegramChatId(), identifier, text, cleaned);
-        } else if (chatLink.getAgentMode() == AgentMode.MANUAL) {
-            notifyTenantViaInternalTelegram(chatLink.getTelegramChatId(), identifier, text, null);
-        }
-
-        return cleaned;
-    }
-
-    private static final String REMINDER_AGENT_SLUG = "appointment-reminder";
-
-    /** Extreu el tag [CONFIRMA_CITA:{...}] de la resposta, crea l'event al Calendar i retorna el text net. */
-    private String processBookingTag(String response, UUID tenantId,
-                                     String identifier, ConversationChannel channel) {
+    private BookingProcessed processBookingTag(String response, UUID tenantId,
+                                                String identifier, ConversationChannel channel) {
         Matcher m = BOOKING_TAG.matcher(response);
-        if (!m.find()) return response;
+        if (!m.find()) return new BookingProcessed(response, null, null);
 
         String cleaned = BOOKING_TAG.matcher(response).replaceAll("").strip();
 
         try {
-            String json = m.group(1);
-            Map<String, Object> booking = objectMapper.readValue(json, new TypeReference<>() {});
+            Map<String, Object> booking = objectMapper.readValue(m.group(1), new TypeReference<>() {});
 
+            // NexeServiceConfigService té @Transactional(readOnly=true) propi
             String agendaJson = nexeServiceConfigService.getAllAsMap(tenantId).get("AGENDA");
-            if (agendaJson == null) return cleaned;
+            if (agendaJson == null) return new BookingProcessed(cleaned, null, null);
 
             Map<String, Object> agenda = objectMapper.readValue(agendaJson, new TypeReference<>() {});
             String calType = String.valueOf(agenda.get("calendar_type"));
-            if (!"google".equals(calType) && !"google_oauth".equals(calType)) return cleaned;
+            if (!"google".equals(calType) && !"google_oauth".equals(calType))
+                return new BookingProcessed(cleaned, null, null);
+
             String calId = (String) agenda.get("google_calendar_id");
-            if (calId == null || calId.isBlank()) return cleaned;
+            if (calId == null || calId.isBlank()) return new BookingProcessed(cleaned, null, null);
 
             String date = (String) booking.get("date");
             String time = (String) booking.get("time");
-            if (date == null || time == null) return cleaned;
+            if (date == null || time == null) return new BookingProcessed(cleaned, null, null);
 
             LocalDateTime start = LocalDateTime.parse(date + "T" + time,
                     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
             int duration = booking.get("duration") instanceof Number n ? n.intValue() : 60;
-            String name  = booking.get("name") instanceof String s ? s : "Client";
+            String name  = booking.get("name")  instanceof String s ? s : "Client";
             String notes = booking.get("notes") instanceof String s ? s : "";
 
+            // Crida HTTP externa: Google Calendar
             if ("google_oauth".equals(calType)) {
                 String refreshToken = (String) agenda.get("google_refresh_token");
                 googleCalendarService.createEventOAuth(refreshToken, calId, "Cita: " + name, start, duration, notes);
@@ -276,33 +248,24 @@ public class ConversationalAgentService {
                 googleCalendarService.createEvent(calId, "Cita: " + name, start, duration, notes);
             }
 
-            // Programa recordatori si el canal pot rebre missatges (no WIDGET)
-            if (channel != ConversationChannel.WIDGET) {
-                scheduleAppointmentReminder(tenantId, identifier, channel, name, date, time, agenda);
-            }
+            // Construeix la tasca de recordatori (es persistirà a TX 2)
+            ScheduledAgentTask reminderTask = channel != ConversationChannel.WIDGET
+                    ? buildReminderTask(tenantId, identifier, channel, name, date, time, agenda)
+                    : null;
 
-            notificationService.notify(tenantId, NotificationEvent.BOOKING_CONFIRMED, Map.of(
-                    "nom_client", name,
-                    "data", date,
-                    "hora", time,
-                    "duracio", String.valueOf(duration),
-                    "notes", notes));
+            return new BookingProcessed(cleaned, reminderTask, Map.of(
+                    "nom_client", name, "data", date, "hora", time,
+                    "duracio", String.valueOf(duration), "notes", notes));
+
         } catch (Exception e) {
-            log.warn("Could not process booking tag: {}", e.getMessage());
+            log.warn("No s'ha pogut processar el tag de booking: {}", e.getMessage());
+            return new BookingProcessed(cleaned, null, null);
         }
-        return cleaned;
     }
 
-    private String extractEmailSubject(String text) {
-        if (text == null) return "";
-        int nl = text.indexOf('\n');
-        String firstLine = nl > 0 ? text.substring(0, nl).strip() : text.strip();
-        return firstLine.length() > 80 ? firstLine.substring(0, 80) + "…" : firstLine;
-    }
-
-    private void scheduleAppointmentReminder(UUID tenantId, String identifier, ConversationChannel channel,
-                                              String name, String date, String time,
-                                              Map<String, Object> agenda) {
+    private ScheduledAgentTask buildReminderTask(UUID tenantId, String identifier, ConversationChannel channel,
+                                                  String name, String date, String time,
+                                                  Map<String, Object> agenda) {
         try {
             int hoursBefore = agenda.get("reminder_hours_before") instanceof Number n ? n.intValue() : 24;
             LocalDateTime eventStart = LocalDateTime.parse(date + "T" + time,
@@ -311,26 +274,30 @@ public class ConversationalAgentService {
                     .atZone(java.time.ZoneId.of("Europe/Madrid"))
                     .toInstant()
                     .minusSeconds(hoursBefore * 3600L);
-            if (scheduledAt.isBefore(Instant.now())) return; // ja ha passat la finestra
+            if (scheduledAt.isBefore(Instant.now())) return null;
 
             String payload = objectMapper.writeValueAsString(Map.of(
-                    "identifier", identifier,
-                    "channel", channel.name(),
-                    "name", name,
-                    "date", date,
-                    "time", time
-            ));
-            taskRepository.save(ScheduledAgentTask.builder()
+                    "identifier", identifier, "channel", channel.name(),
+                    "name", name, "date", date, "time", time));
+
+            return ScheduledAgentTask.builder()
                     .tenantId(tenantId)
                     .agentSlug(REMINDER_AGENT_SLUG)
                     .taskType("SEND_REMINDER")
                     .payload(payload)
                     .scheduledAt(scheduledAt)
                     .status(ScheduledTaskStatus.PENDING)
-                    .build());
-            log.info("[Booking] Recordatori programat per {} a les {} ({}h abans)", name, scheduledAt, hoursBefore);
+                    .build();
         } catch (Exception e) {
-            log.warn("[Booking] No s'ha pogut programar el recordatori: {}", e.getMessage());
+            log.warn("[Booking] No s'ha pogut construir el recordatori: {}", e.getMessage());
+            return null;
         }
+    }
+
+    private String extractEmailSubject(String text) {
+        if (text == null) return "";
+        int nl = text.indexOf('\n');
+        String firstLine = nl > 0 ? text.substring(0, nl).strip() : text.strip();
+        return firstLine.length() > 80 ? firstLine.substring(0, 80) + "…" : firstLine;
     }
 }
