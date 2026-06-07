@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.vault.domain;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,5 +13,5 @@ public interface CommunicationRequestRepository extends JpaRepository<Communicat
     List<CommunicationRequest> findByTenantServiceIdOrderByCreatedAtDesc(UUID tenantServiceId);
     List<CommunicationRequest> findByTenantIdAndStatusOrderByCreatedAtDesc(UUID tenantId, CommunicationStatus status);
     @Query("SELECT r FROM CommunicationRequest r WHERE r.status = 'SENT' AND r.expiresAt IS NOT NULL AND r.expiresAt < :now AND r.retryCount < r.maxRetries")
-    List<CommunicationRequest> findExpiredForRetry(@Param("now") Instant now);
+    List<CommunicationRequest> findExpiredForRetry(@Param("now") Instant now, Pageable pageable);
 }

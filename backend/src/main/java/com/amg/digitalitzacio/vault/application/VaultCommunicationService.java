@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.data.domain.PageRequest;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +83,7 @@ public class VaultCommunicationService {
 
     @Transactional
     public List<CommunicationRequest> retryExpired() {
-        var expired = requestRepository.findExpiredForRetry(Instant.now());
+        var expired = requestRepository.findExpiredForRetry(Instant.now(), PageRequest.of(0, 100));
         for (var req : expired) {
             req.setRetryCount(req.getRetryCount() + 1);
             req.setExpiresAt(Instant.now().plus(java.time.Duration.ofDays(1)));

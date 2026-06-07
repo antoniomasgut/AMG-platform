@@ -123,10 +123,10 @@ public class ProspectingOrchestrator implements ProspectingService {
 
         var existingPlaceIds = incomingPlaceIds.isEmpty()
                 ? java.util.Collections.<String>emptySet()
-                : prospectRepository.findExistingPlaceIds(incomingPlaceIds);
+                : prospectRepository.findExistingPlaceIds(campaignId, incomingPlaceIds);
         var existingPhones = incomingPhones.isEmpty()
                 ? java.util.Collections.<String>emptySet()
-                : prospectRepository.findExistingPhones(incomingPhones);
+                : prospectRepository.findExistingPhones(campaignId, incomingPhones);
 
         var toSave = new java.util.ArrayList<Prospect>();
         int skipped = 0;

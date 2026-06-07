@@ -19,9 +19,9 @@ public interface ProspectRepository extends JpaRepository<Prospect, UUID> {
     long countByCampaignId(UUID campaignId);
     long countByCampaignIdAndStatus(UUID campaignId, ProspectStatus status);
 
-    @Query("SELECT p.googlePlaceId FROM Prospect p WHERE p.googlePlaceId IN :ids")
-    Set<String> findExistingPlaceIds(@Param("ids") Collection<String> ids);
+    @Query("SELECT p.googlePlaceId FROM Prospect p WHERE p.campaignId = :campaignId AND p.googlePlaceId IN :ids")
+    Set<String> findExistingPlaceIds(@Param("campaignId") UUID campaignId, @Param("ids") Collection<String> ids);
 
-    @Query("SELECT p.phone FROM Prospect p WHERE p.phone IN :phones")
-    Set<String> findExistingPhones(@Param("phones") Collection<String> phones);
+    @Query("SELECT p.phone FROM Prospect p WHERE p.campaignId = :campaignId AND p.phone IN :phones")
+    Set<String> findExistingPhones(@Param("campaignId") UUID campaignId, @Param("phones") Collection<String> phones);
 }

@@ -1,4 +1,8 @@
 spring:
+  datasource:
+    url: jdbc:postgresql://172.23.0.6:5432/amg_digitalitzacio
+    username: amg
+    password: devpassword123
   jpa:
     hibernate:
       ddl-auto: create-drop

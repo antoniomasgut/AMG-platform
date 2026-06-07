@@ -94,11 +94,13 @@ public class TenantService {
         return toResponse(tenant);
     }
 
+    @Transactional(readOnly = true)
     public Page<TenantResponse> listTenants(Pageable pageable, String search, Boolean isActive, Boolean isFree) {
         String searchParam = (search != null && !search.isBlank()) ? search : null;
         return tenantRepository.findFiltered(searchParam, isActive, isFree, pageable).map(this::toResponse);
     }
 
+    @Transactional(readOnly = true)
     public TenantResponse getTenant(UUID id) {
         var tenant = getTenantOrThrow(id);
         return toResponse(tenant);
