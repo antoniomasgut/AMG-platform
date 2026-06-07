@@ -11,6 +11,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -33,7 +36,7 @@ public class SectorTemplateController {
         } else if (type != null) {
             results = repository.findByTypeOrderBySortOrder(type);
         } else {
-            results = repository.findAll();
+            results = repository.findAll(PageRequest.of(0, 500, Sort.by("sortOrder"))).getContent();
         }
         return results.stream().map(this::toResponse).toList();
     }

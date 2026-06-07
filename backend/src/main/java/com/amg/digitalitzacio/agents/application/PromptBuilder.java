@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -65,35 +66,12 @@ public class PromptBuilder {
 
         var sb = new StringBuilder("\n\n--- CONFIGURACIÓ DE SERVEIS ---\n");
 
-        String agendaJson = configs.get("AGENDA");
-        if (isEnabled(agendaJson)) {
-            sb.append(buildAgendaBlock(agendaJson));
-        }
-
-        String pressupostosJson = configs.get("PRESSUPOSTOS");
-        if (isEnabled(pressupostosJson)) {
-            sb.append(buildPressupostosBlock(pressupostosJson));
-        }
-
-        String fidelitzacioJson = configs.get("FIDELITZACIO");
-        if (isEnabled(fidelitzacioJson)) {
-            sb.append(buildFidelitzacioBlock(fidelitzacioJson));
-        }
-
-        String equipJson = configs.get("EQUIP");
-        if (isEnabled(equipJson)) {
-            sb.append(buildEquipBlock(equipJson));
-        }
-
-        String ragJson = configs.get("RAG");
-        if (isEnabled(ragJson)) {
-            sb.append(buildRagBlock(ragJson));
-        }
-
-        String horariJson = configs.get("HORARI");
-        if (isEnabled(horariJson)) {
-            sb.append(buildHorariBlock(horariJson));
-        }
+        appendIfEnabled(sb, configs.get("AGENDA"),       this::buildAgendaBlock);
+        appendIfEnabled(sb, configs.get("PRESSUPOSTOS"), this::buildPressupostosBlock);
+        appendIfEnabled(sb, configs.get("FIDELITZACIO"), this::buildFidelitzacioBlock);
+        appendIfEnabled(sb, configs.get("EQUIP"),        this::buildEquipBlock);
+        appendIfEnabled(sb, configs.get("RAG"),          this::buildRagBlock);
+        appendIfEnabled(sb, configs.get("HORARI"),       this::buildHorariBlock);
 
         return sb.toString();
     }
@@ -216,6 +194,10 @@ public class PromptBuilder {
             log.debug("Could not parse EQUIP config: {}", e.getMessage());
             return "";
         }
+    }
+
+    private void appendIfEnabled(StringBuilder sb, String json, Function<String, String> builder) {
+        if (isEnabled(json)) sb.append(builder.apply(json));
     }
 
     private boolean isEnabled(String json) {

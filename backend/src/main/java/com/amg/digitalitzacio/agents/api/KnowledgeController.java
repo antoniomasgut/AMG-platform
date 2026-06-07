@@ -101,19 +101,28 @@ public class KnowledgeController {
     public ResponseEntity<Map<String, Object>> vectorize(@PathVariable UUID tenantId) {
         var kbOpt = knowledgeBaseRepository.findByTenantId(tenantId);
         if (kbOpt.isEmpty()) return ResponseEntity.ok(Map.of("error", "No knowledge base found"));
+
         var entries = knowledgeEntryRepository.findByKnowledgeBaseIdAndIsActiveTrueOrderBySortOrder(kbOpt.get().getId());
+        if (entries.isEmpty()) return ResponseEntity.ok(Map.of("vectorized", 0, "failed", 0, "total", 0));
+
+        // Una sola crida HTTP batch en lloc de N crides individuals
+        var texts = entries.stream().map(e -> e.getContent()).toList();
+        var vectors = embeddingService.embedBatchToJson(texts);
+
         int ok = 0, fail = 0;
-        for (var entry : entries) {
-            var vec = embeddingService.embedToJson(entry.getContent());
+        var toSave = new java.util.ArrayList<com.amg.digitalitzacio.agents.domain.KnowledgeEntry>();
+        for (int i = 0; i < entries.size(); i++) {
+            var vec = i < vectors.size() ? vectors.get(i) : null;
             if (vec != null) {
-                entry.setEmbedding(vec);
-                entry.setIsVectorized(true);
-                knowledgeEntryRepository.save(entry);
+                entries.get(i).setEmbedding(vec);
+                entries.get(i).setIsVectorized(true);
+                toSave.add(entries.get(i));
                 ok++;
             } else {
                 fail++;
             }
         }
+        knowledgeEntryRepository.saveAll(toSave);
         return ResponseEntity.ok(Map.of("vectorized", ok, "failed", fail, "total", entries.size()));
     }
 

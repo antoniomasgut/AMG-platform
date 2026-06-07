@@ -100,15 +100,13 @@ public class TenantService {
     }
 
     public TenantResponse getTenant(UUID id) {
-        var tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
+        var tenant = getTenantOrThrow(id);
         return toResponse(tenant);
     }
 
     @Transactional
     public TenantResponse updateTenant(UUID id, @Valid UpdateTenantRequest request) {
-        var tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
+        var tenant = getTenantOrThrow(id);
 
         if (request.name() != null) tenant.setName(request.name());
         if (request.slug() != null) {
@@ -139,8 +137,7 @@ public class TenantService {
 
     @Transactional
     public TenantResponse markImplementationDelivered(UUID id) {
-        var tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
+        var tenant = getTenantOrThrow(id);
         
         tenant.setImplementationDeliveredAt(Instant.now());
         if (tenant.getBillingStartDate() == null) {
@@ -153,8 +150,7 @@ public class TenantService {
 
     @Transactional
     public TenantResponse markOnboardingCompleted(UUID id) {
-        var tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
+        var tenant = getTenantOrThrow(id);
         
         tenant.setOnboardingCompletedAt(Instant.now());
         
@@ -164,13 +160,17 @@ public class TenantService {
 
     @Transactional
     public TenantResponse setBillingStartDate(UUID id, LocalDate date) {
-        var tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
+        var tenant = getTenantOrThrow(id);
         
         tenant.setBillingStartDate(date);
         
         tenant = tenantRepository.save(tenant);
         return toResponse(tenant);
+    }
+
+    private Tenant getTenantOrThrow(UUID id) {
+        return tenantRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
     }
 
     private String toPhaseString(List<String> phases) {
@@ -195,8 +195,7 @@ public class TenantService {
     /** Comprova si un tenant es pot eliminar. Només les factures bloquegen l'eliminació. */
     @Transactional(readOnly = true)
     public DeleteTenantCheckResponse checkDeletion(UUID id) {
-        tenantRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
+        getTenantOrThrow(id);
 
         List<String> warnings = new ArrayList<>();
 
@@ -234,8 +233,7 @@ public class TenantService {
     /** Elimina un tenant i totes les seves dades associades (serveis, agent, KB, pagament). */
     @Transactional
     public void deleteTenant(UUID id) {
-        tenantRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
+        getTenantOrThrow(id);
 
         // Re-validates before deleting
         var check = checkDeletion(id);

@@ -17,8 +17,8 @@ public class CampaignScheduler {
     private final ProspectCampaignRepository campaignRepository;
     private final ProspectingOrchestrator orchestrator;
 
+    // No @Transactional — runCampaign fa scraping HTTP; cada save té la seva pròpia transacció
     @Scheduled(fixedRate = 3_600_000)
-    @Transactional
     public void executeScheduledCampaigns() {
         var due = campaignRepository.findScheduledDue(Instant.now());
         if (due.isEmpty()) return;

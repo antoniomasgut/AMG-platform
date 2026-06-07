@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ProspectingOrchestrator implements ProspectingService {
 
     private final ProspectCampaignRepository campaignRepository;
@@ -30,6 +29,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     private final ObjectMapper objectMapper;
 
     @Override
+    @Transactional
     public CampaignResponse createCampaign(CreateCampaignRequest request, UUID createdBy) {
         var status = Boolean.TRUE.equals(request.scheduled()) ? CampaignStatus.SCHEDULED : CampaignStatus.DRAFT;
         var campaign = ProspectCampaign.builder()
@@ -71,6 +71,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     @Override
+    @Transactional
     public CampaignResponse updateCampaign(UUID campaignId, UpdateCampaignRequest request) {
         var campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found: " + campaignId));
@@ -88,6 +89,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     @Override
+    @Transactional
     public void deleteCampaign(UUID campaignId) {
         campaignRepository.deleteById(campaignId);
     }
@@ -113,24 +115,35 @@ public class ProspectingOrchestrator implements ProspectingService {
 
         var prospects = scraper.search(campaign.getSector(), campaign.getLocation(), params, campaignId);
 
-        int count = 0;
+        // Deduplicació bulk: 2 queries IN en lloc de 2*N queries individuals
+        var incomingPlaceIds = prospects.stream()
+                .map(p -> p.getGooglePlaceId()).filter(id -> id != null).collect(Collectors.toSet());
+        var incomingPhones = prospects.stream()
+                .map(p -> p.getPhone()).filter(ph -> ph != null && !ph.isBlank()).collect(Collectors.toSet());
+
+        var existingPlaceIds = incomingPlaceIds.isEmpty()
+                ? java.util.Collections.<String>emptySet()
+                : prospectRepository.findExistingPlaceIds(incomingPlaceIds);
+        var existingPhones = incomingPhones.isEmpty()
+                ? java.util.Collections.<String>emptySet()
+                : prospectRepository.findExistingPhones(incomingPhones);
+
+        var toSave = new java.util.ArrayList<Prospect>();
         int skipped = 0;
         for (var prospect : prospects) {
-            // Deduplicació per googlePlaceId (global)
-            if (prospect.getGooglePlaceId() != null
-                    && prospectRepository.existsByGooglePlaceId(prospect.getGooglePlaceId())) {
+            if (prospect.getGooglePlaceId() != null && existingPlaceIds.contains(prospect.getGooglePlaceId())) {
                 skipped++;
                 continue;
             }
-            // Deduplicació per telèfon (evita el mateix negoci amb Place ID diferent)
             if (prospect.getPhone() != null && !prospect.getPhone().isBlank()
-                    && prospectRepository.existsByPhone(prospect.getPhone())) {
+                    && existingPhones.contains(prospect.getPhone())) {
                 skipped++;
                 continue;
             }
-            prospectRepository.save(prospect);
-            count++;
+            toSave.add(prospect);
         }
+        prospectRepository.saveAll(toSave);
+        int count = toSave.size();
         log.info("Campaign {}: {} prospects saved, {} duplicates skipped", campaignId, count, skipped);
 
         campaign.setStatus(CampaignStatus.COMPLETED);
@@ -152,6 +165,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     @Override
+    @Transactional
     public ProspectResponse updateProspect(UUID prospectId, UpdateProspectRequest request) {
         var prospect = prospectRepository.findById(prospectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
@@ -208,19 +222,7 @@ public class ProspectingOrchestrator implements ProspectingService {
                 .sorted(java.util.Comparator.comparingInt(p -> -(p.getScore() != null ? p.getScore() : 0)))
                 .limit(topN)
                 .toList();
-
-        int qualified = 0;
-        for (var prospect : candidates) {
-            try {
-                var details = scraper.fetchDetails(prospect.getGooglePlaceId());
-                applyDetails(prospect, details);
-                prospect.setScore(calculateScore(prospect));
-                prospectRepository.save(prospect);
-                qualified++;
-            } catch (Exception e) {
-                log.debug("qualifyTop failed for prospect {}: {}", prospect.getId(), e.getMessage());
-            }
-        }
+        int qualified = fetchDetailsAndScoreAll(candidates);
         log.info("QualifyTop {}/{} prospects in campaign {}", qualified, candidates.size(), campaignId);
         return qualified;
     }
@@ -232,20 +234,23 @@ public class ProspectingOrchestrator implements ProspectingService {
                 .filter(p -> p.getGooglePlaceId() != null)
                 .filter(p -> p.getPhone() == null || p.getPhone().isBlank())
                 .toList();
+        int qualified = fetchDetailsAndScoreAll(candidates);
+        log.info("QualifyByMinScore(>={}) {}/{} prospects in campaign {}", minScore, qualified, candidates.size(), campaignId);
+        return qualified;
+    }
 
+    private int fetchDetailsAndScoreAll(List<Prospect> candidates) {
         int qualified = 0;
         for (var prospect : candidates) {
             try {
-                var details = scraper.fetchDetails(prospect.getGooglePlaceId());
-                applyDetails(prospect, details);
+                applyDetails(prospect, scraper.fetchDetails(prospect.getGooglePlaceId()));
                 prospect.setScore(calculateScore(prospect));
                 prospectRepository.save(prospect);
                 qualified++;
             } catch (Exception e) {
-                log.debug("qualifyByMinScore failed for prospect {}: {}", prospect.getId(), e.getMessage());
+                log.debug("fetchDetailsAndScore failed for prospect {}: {}", prospect.getId(), e.getMessage());
             }
         }
-        log.info("QualifyByMinScore(>={}) {}/{} prospects in campaign {}", minScore, qualified, candidates.size(), campaignId);
         return qualified;
     }
 
@@ -285,6 +290,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     @Override
+    @Transactional
     public CampaignResponse cloneCampaign(UUID campaignId) {
         var original = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found: " + campaignId));
@@ -339,6 +345,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     @Override
+    @Transactional
     public LeadExportResponse exportProspect(UUID prospectId) {
         var prospect = prospectRepository.findById(prospectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
@@ -412,6 +419,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     @Override
+    @Transactional
     public CampaignResponse scheduleCampaign(UUID campaignId, Instant nextRun, int repeatDays) {
         var campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found: " + campaignId));
@@ -423,6 +431,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     @Override
+    @Transactional
     public CampaignResponse unscheduleCampaign(UUID campaignId) {
         var campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found: " + campaignId));

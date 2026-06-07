@@ -16,8 +16,10 @@ import java.net.http.HttpResponse;
 @RequiredArgsConstructor
 public class BrevoCommunicationSender implements CommunicationSender {
 
+    private static final HttpClient HTTP = HttpClient.newHttpClient();
+    private static final String DEFAULT_SENDER = "noreply@amgdl.com";
+
     private final SystemConfigService systemConfig;
-    private final HttpClient http = HttpClient.newHttpClient();
 
     @Override
     public boolean send(String recipient, String subject, String body) {
@@ -29,7 +31,7 @@ public class BrevoCommunicationSender implements CommunicationSender {
             }
             var senderEmail = systemConfig.get("BREVO_SENDER_EMAIL");
             if (senderEmail == null || senderEmail.isBlank()) {
-                senderEmail = "noreply@amgdl.com";
+                senderEmail = DEFAULT_SENDER;
             }
 
             var json = """
@@ -48,7 +50,7 @@ public class BrevoCommunicationSender implements CommunicationSender {
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
 
-            var response = http.send(request, HttpResponse.BodyHandlers.ofString());
+            var response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 201 || response.statusCode() == 200) {
                 log.info("Brevo email sent to {}: {}", recipient, subject);
                 return true;

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -22,22 +23,20 @@ public class VaultCommunicationService {
 
     private Map<CommunicationChannel, CommunicationSender> senderMap;
 
-    private Map<CommunicationChannel, CommunicationSender> getSenderMap() {
-        if (senderMap == null) {
-            senderMap = senders.stream()
-                .collect(Collectors.toMap(CommunicationSender::supportedChannel, s -> s));
-        }
-        return senderMap;
+    @PostConstruct
+    void init() {
+        senderMap = senders.stream()
+            .collect(Collectors.toMap(CommunicationSender::supportedChannel, s -> s));
     }
 
     @Transactional
     public CommunicationRequest send(UUID tenantId, UUID tenantServiceId, CommunicationChannel channel,
                                      String recipient, String subject, String body,
                                      RequestType requestType, UUID fieldId, Instant expiresAt) {
-        var sender = getSenderMap().get(channel);
+        var sender = senderMap.get(channel);
         if (sender == null) {
             log.warn("No sender for channel {}, falling back to EMAIL", channel);
-            sender = getSenderMap().get(CommunicationChannel.EMAIL);
+            sender = senderMap.get(CommunicationChannel.EMAIL);
         }
 
         var request = CommunicationRequest.builder()
@@ -72,13 +71,10 @@ public class VaultCommunicationService {
         var request = requestRepository.findById(requestId)
             .orElseThrow(() -> new RuntimeException("Communication request not found: " + requestId));
 
-        var saved = requestRepository.findById(requestId).orElse(null);
-        if (saved == null) return;
-
-        saved.setResponseData(responseData);
-        saved.setStatus(CommunicationStatus.RESPONDED);
-        saved.setRespondedAt(Instant.now());
-        requestRepository.save(saved);
+        request.setResponseData(responseData);
+        request.setStatus(CommunicationStatus.RESPONDED);
+        request.setRespondedAt(Instant.now());
+        requestRepository.save(request);
 
         log.info("Communication request {} responded: {}", requestId, responseData);
     }
@@ -90,7 +86,7 @@ public class VaultCommunicationService {
             req.setRetryCount(req.getRetryCount() + 1);
             req.setExpiresAt(Instant.now().plus(java.time.Duration.ofDays(1)));
 
-            var sender = getSenderMap().get(req.getChannel());
+            var sender = senderMap.get(req.getChannel());
             if (sender != null) {
                 try {
                     boolean delivered = sender.send(req.getRecipient(), req.getSubject(), req.getBody());
