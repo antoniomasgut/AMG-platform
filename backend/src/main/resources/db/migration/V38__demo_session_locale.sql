@@ -1,0 +1,2 @@
+ALTER TABLE demo_sessions
+    ADD COLUMN IF NOT EXISTS locale VARCHAR(5) NOT NULL DEFAULT 'ca';
