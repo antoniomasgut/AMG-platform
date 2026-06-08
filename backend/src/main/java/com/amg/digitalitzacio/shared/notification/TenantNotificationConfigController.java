@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -31,7 +32,7 @@ public class TenantNotificationConfigController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #tenantId == #principal.tenantId()) or (hasRole('CLIENT') and #tenantId == #principal.tenantId())")
     public ResponseEntity<NotificationConfigResponse> updateConfig(
             @PathVariable UUID tenantId,
-            @RequestBody NotificationConfigRequest req,
+            @Valid @RequestBody NotificationConfigRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
 
         var config = configRepository.findById(tenantId)

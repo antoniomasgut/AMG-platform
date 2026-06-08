@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public class MetaAdsCampaignController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<CampaignResponse> createCampaign(
             @PathVariable UUID tenantId,
-            @RequestBody CreateCampaignRequest req,
+            @Valid @RequestBody CreateCampaignRequest req,
             @AuthenticationPrincipal UserPrincipal p) {
         if (!checkAccess(p, tenantId)) return ResponseEntity.status(403).build();
         return ResponseEntity.status(HttpStatus.CREATED).body(campaignService.createCampaign(tenantId, req));
@@ -60,7 +61,7 @@ public class MetaAdsCampaignController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<CampaignResponse> updateCampaign(
             @PathVariable UUID tenantId, @PathVariable UUID id,
-            @RequestBody CreateCampaignRequest req,
+            @Valid @RequestBody CreateCampaignRequest req,
             @AuthenticationPrincipal UserPrincipal p) {
         if (!checkAccess(p, tenantId)) return ResponseEntity.status(403).build();
         return ResponseEntity.ok(campaignService.updateCampaign(tenantId, id, req));
@@ -127,7 +128,7 @@ public class MetaAdsCampaignController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<AdSetResponse> createAdSet(
             @PathVariable UUID tenantId, @PathVariable UUID campaignId,
-            @RequestBody CreateAdSetRequest req,
+            @Valid @RequestBody CreateAdSetRequest req,
             @AuthenticationPrincipal UserPrincipal p) {
         if (!checkAccess(p, tenantId)) return ResponseEntity.status(403).build();
         return ResponseEntity.status(HttpStatus.CREATED).body(campaignService.createAdSet(tenantId, campaignId, req));
@@ -137,7 +138,7 @@ public class MetaAdsCampaignController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<AdSetResponse> updateAdSet(
             @PathVariable UUID tenantId, @PathVariable UUID adSetId,
-            @RequestBody CreateAdSetRequest req,
+            @Valid @RequestBody CreateAdSetRequest req,
             @AuthenticationPrincipal UserPrincipal p) {
         if (!checkAccess(p, tenantId)) return ResponseEntity.status(403).build();
         return ResponseEntity.ok(campaignService.updateAdSet(tenantId, adSetId, req));
@@ -159,7 +160,7 @@ public class MetaAdsCampaignController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<AdResponse> createAd(
             @PathVariable UUID tenantId, @PathVariable UUID adSetId,
-            @RequestBody CreateAdRequest req,
+            @Valid @RequestBody CreateAdRequest req,
             @AuthenticationPrincipal UserPrincipal p) {
         if (!checkAccess(p, tenantId)) return ResponseEntity.status(403).build();
         return ResponseEntity.status(HttpStatus.CREATED).body(campaignService.createAd(tenantId, adSetId, req));
@@ -191,7 +192,7 @@ public class MetaAdsCampaignController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<ImageUploadResponse> generateImage(
             @PathVariable UUID tenantId,
-            @RequestBody GenerateImageRequest req,
+            @Valid @RequestBody GenerateImageRequest req,
             @AuthenticationPrincipal UserPrincipal p) {
         if (!checkAccess(p, tenantId)) return ResponseEntity.status(403).build();
         try {

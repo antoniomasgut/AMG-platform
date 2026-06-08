@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.UUID;
@@ -22,6 +23,7 @@ public class PromptBuilder {
     private final TenantRepository tenantRepository;
     private final ObjectMapper objectMapper;
 
+    @Transactional(readOnly = true)
     public String build(UUID tenantId, CustomerContext context) {
         String basePrompt = resolveTenantSystemPrompt(tenantId);
         String knowledgeBlock = knowledgeBaseService.buildKnowledgeBlock(tenantId);

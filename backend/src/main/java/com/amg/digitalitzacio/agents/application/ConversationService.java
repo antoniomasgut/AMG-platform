@@ -21,6 +21,7 @@ public class ConversationService {
     private final ContactRepository contactRepository;
     private final ContactIdentifierRepository contactIdentifierRepository;
     private final StringRedisTemplate stringRedisTemplate;
+    private final ContactMessageCountUpdater messageCountUpdater;
 
     private static final String REDIS_KEY_PATTERN = "conv:%s:%s:%s";
 
@@ -57,7 +58,7 @@ public class ConversationService {
             .build();
 
         conversationRepository.save(conversation);
-        incrementContactMessageCount(tenantId, customerIdentifier, channel);
+        messageCountUpdater.increment(tenantId, customerIdentifier, channel);
         invalidateCache(tenantId, customerIdentifier, channel);
 
         log.debug("Saved conversation: tenant={}, customer={}, channel={}, role={}, pending={}",
@@ -79,19 +80,6 @@ public class ConversationService {
                 tenantId, customerIdentifier, channel);
         Collections.reverse(conversations);
         return conversations;
-    }
-
-    private void incrementContactMessageCount(UUID tenantId, String customerIdentifier, ConversationChannel channel) {
-        try {
-            contactIdentifierRepository
-                .findByTenantIdAndChannelAndIdentifier(tenantId, channel, customerIdentifier)
-                .ifPresent(ci -> contactRepository.findById(ci.getContactId()).ifPresent(contact -> {
-                    contact.setTotalMessageCount(contact.getTotalMessageCount() + 1);
-                    contactRepository.save(contact);
-                }));
-        } catch (Exception e) {
-            log.warn("Could not increment message count for tenant={}, customer={}: {}", tenantId, customerIdentifier, e.getMessage());
-        }
     }
 
     private void invalidateCache(UUID tenantId, String customerIdentifier, ConversationChannel channel) {

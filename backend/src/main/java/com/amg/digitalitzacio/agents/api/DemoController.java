@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.time.Instant;
 import java.util.List;
@@ -47,7 +48,7 @@ public class DemoController {
     @PostMapping("/api/v1/admin/demo/inbox")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("isAuthenticated()")
-    public DemoSessionResponse createDemoSession(@RequestBody DemoCreateRequest request) {
+    public DemoSessionResponse createDemoSession(@Valid @RequestBody DemoCreateRequest request) {
         var session = demoInboxService.createSession(
                 request.prospectEmail(),
                 request.companyName(),
@@ -63,7 +64,7 @@ public class DemoController {
     @PreAuthorize("isAuthenticated()")
     public DemoSessionResponse updateDemoSession(
             @PathVariable UUID token,
-            @RequestBody DemoUpdateRequest request) {
+            @Valid @RequestBody DemoUpdateRequest request) {
         var session = demoInboxService.updateSession(token, request.companyName(), request.agentContext());
         return new DemoSessionResponse(
                 session.getToken(),
@@ -95,7 +96,7 @@ public class DemoController {
     @PostMapping("/api/v1/demo/inbox/{token}/reply")
     public ResponseEntity<Map<String, String>> sendDemoReply(
             @PathVariable UUID token,
-            @RequestBody SendReplyRequest request) {
+            @Valid @RequestBody SendReplyRequest request) {
         var session = demoInboxService.validateSession(token);
 
         // Blocked sessions cannot receive more messages

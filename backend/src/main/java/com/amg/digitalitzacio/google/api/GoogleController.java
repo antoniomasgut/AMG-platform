@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,7 +37,7 @@ public class GoogleController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
     public ResponseEntity<AuthUrlResponse> getAuthUrl(
             @PathVariable UUID tenantId,
-            @RequestBody AuthUrlRequest req,
+            @Valid @RequestBody AuthUrlRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
         var result = authService.generateAuthUrl(tenantId, req.modules(), req.redirectUri());
         return ResponseEntity.ok(new AuthUrlResponse(result.authUrl(), result.stateToken()));
@@ -46,7 +47,7 @@ public class GoogleController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
     public ResponseEntity<Void> updateModules(
             @PathVariable UUID tenantId,
-            @RequestBody ModuleConfigRequest req,
+            @Valid @RequestBody ModuleConfigRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
         orchestrator.updateModules(tenantId, req);
         return ResponseEntity.ok().build();
@@ -78,7 +79,7 @@ public class GoogleController {
     @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
     public ResponseEntity<String> sendMail(
             @PathVariable UUID tenantId,
-            @RequestBody SendMailRequest req,
+            @Valid @RequestBody SendMailRequest req,
             @AuthenticationPrincipal UserPrincipal principal) {
         try {
             orchestrator.sendMail(tenantId, req);

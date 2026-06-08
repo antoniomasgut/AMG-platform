@@ -20,9 +20,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EmbeddingService {
 
+    private static final HttpClient HTTP = HttpClient.newHttpClient();
+    private static final Gson GSON = new Gson();
+
     private final SystemConfigService systemConfig;
-    private final HttpClient http = HttpClient.newHttpClient();
-    private final Gson gson = new Gson();
 
     private static final int DIMENSIONS = 1536;
 
@@ -40,16 +41,16 @@ public class EmbeddingService {
                 .uri(URI.create("https://api.openai.com/v1/embeddings"))
                 .header("Authorization", "Bearer " + apiKey)
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(body)))
+                .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(body)))
                 .build();
 
-            var response = http.send(request, HttpResponse.BodyHandlers.ofString());
+            var response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
                 log.warn("Embedding API failed: {} {}", response.statusCode(), response.body());
                 return null;
             }
 
-            var json = gson.fromJson(response.body(), JsonObject.class);
+            var json = GSON.fromJson(response.body(), JsonObject.class);
             var data = json.getAsJsonArray("data");
             if (data == null || data.isEmpty()) return null;
 
@@ -76,7 +77,48 @@ public class EmbeddingService {
     public String embedToJson(String text) {
         var vec = embed(text);
         if (vec == null) return null;
-        return gson.toJson(vec);
+        return GSON.toJson(vec);
+    }
+
+    /** Vectoritza múltiples textos amb una sola crida a l'API (batch). */
+    public List<String> embedBatchToJson(List<String> texts) {
+        var apiKey = resolveApiKey();
+        if (apiKey == null || texts == null || texts.isEmpty()) return List.of();
+        try {
+            var inputArray = new JsonArray();
+            texts.forEach(inputArray::add);
+
+            var body = new JsonObject();
+            body.add("input", inputArray);
+            body.addProperty("model", "text-embedding-3-small");
+            body.addProperty("dimensions", DIMENSIONS);
+
+            var request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.openai.com/v1/embeddings"))
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(body)))
+                .build();
+
+            var response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                log.warn("Batch embedding API failed: {}", response.statusCode());
+                return List.of();
+            }
+
+            var data = GSON.fromJson(response.body(), JsonObject.class).getAsJsonArray("data");
+            var results = new ArrayList<String>(data.size());
+            for (int i = 0; i < data.size(); i++) {
+                var embedding = data.get(i).getAsJsonObject().getAsJsonArray("embedding");
+                var vec = new float[embedding.size()];
+                for (int j = 0; j < embedding.size(); j++) vec[j] = embedding.get(j).getAsFloat();
+                results.add(GSON.toJson(vec));
+            }
+            return results;
+        } catch (Exception e) {
+            log.error("Batch embedding error: {}", e.getMessage());
+            return List.of();
+        }
     }
 
     public double cosineSimilarity(float[] a, float[] b) {
@@ -94,8 +136,8 @@ public class EmbeddingService {
     public double cosineSimilarity(String jsonA, String jsonB) {
         if (jsonA == null || jsonB == null) return 0;
         try {
-            var arrA = gson.fromJson(jsonA, float[].class);
-            var arrB = gson.fromJson(jsonB, float[].class);
+            var arrA = GSON.fromJson(jsonA, float[].class);
+            var arrB = GSON.fromJson(jsonB, float[].class);
             return cosineSimilarity(arrA, arrB);
         } catch (Exception e) {
             return 0;
@@ -105,7 +147,7 @@ public class EmbeddingService {
     public float[] parseEmbedding(String json) {
         if (json == null) return null;
         try {
-            return gson.fromJson(json, float[].class);
+            return GSON.fromJson(json, float[].class);
         } catch (Exception e) {
             return null;
         }

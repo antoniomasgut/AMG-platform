@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import jakarta.validation.Valid;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -49,7 +50,7 @@ public class SectorTemplateController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public SectorTemplateResponse update(@PathVariable UUID id, @RequestBody SectorTemplateRequest req) {
+    public SectorTemplateResponse update(@PathVariable UUID id, @Valid @RequestBody SectorTemplateRequest req) {
         var tpl = repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Template no trobat"));
         if (req.title() != null) tpl.setTitle(req.title());
@@ -59,7 +60,7 @@ public class SectorTemplateController {
 
     @PostMapping
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<SectorTemplateResponse> create(@RequestBody SectorTemplateRequest req) {
+    public ResponseEntity<SectorTemplateResponse> create(@Valid @RequestBody SectorTemplateRequest req) {
         // Not a real endpoint for now — creation done via seeder
         return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
     }

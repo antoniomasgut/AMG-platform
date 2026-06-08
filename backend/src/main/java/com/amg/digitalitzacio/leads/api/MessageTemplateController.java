@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.time.Instant;
 import java.util.List;
@@ -47,7 +48,7 @@ public class MessageTemplateController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TemplateResponse> create(
-            @RequestBody TemplateRequest request,
+            @Valid @RequestBody TemplateRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         MessageTemplate created = templateService.create(request, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(created));
@@ -57,7 +58,7 @@ public class MessageTemplateController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TemplateResponse> update(
             @PathVariable UUID id,
-            @RequestBody TemplateRequest request,
+            @Valid @RequestBody TemplateRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         MessageTemplate updated = templateService.update(id, request, principal);
         return ResponseEntity.ok(toResponse(updated));

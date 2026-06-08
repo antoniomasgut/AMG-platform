@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.UUID;
 
@@ -35,7 +36,7 @@ public class MetaAdsController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<MetaAdsConfigResponse> saveConfig(
             @PathVariable UUID tenantId,
-            @RequestBody MetaAdsConfigRequest request,
+            @Valid @RequestBody MetaAdsConfigRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         if (!"SUPER_ADMIN".equals(principal.role()) && !tenantId.equals(principal.tenantId())) {
             return ResponseEntity.status(403).build();

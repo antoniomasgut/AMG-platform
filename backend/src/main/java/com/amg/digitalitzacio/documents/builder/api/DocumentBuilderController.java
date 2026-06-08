@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -30,7 +31,7 @@ public class DocumentBuilderController {
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<TemplateResponse> createTemplate(
             @AuthenticationPrincipal UserPrincipal user,
-            @RequestBody TemplateRequest req) {
+            @Valid @RequestBody TemplateRequest req) {
         if (req.name() == null || req.name().isBlank()) {
             return ResponseEntity.badRequest().build();
         }
@@ -45,7 +46,7 @@ public class DocumentBuilderController {
     @PutMapping("/templates/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<TemplateResponse> updateTemplate(
-            @PathVariable UUID id, @RequestBody TemplateRequest req) {
+            @PathVariable UUID id, @Valid @RequestBody TemplateRequest req) {
         return ResponseEntity.ok(service.updateTemplate(id, req));
     }
 
@@ -87,7 +88,7 @@ public class DocumentBuilderController {
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<DocumentResponse> generateDocument(
             @AuthenticationPrincipal UserPrincipal user,
-            @RequestBody GenerateRequest req) {
+            @Valid @RequestBody GenerateRequest req) {
         if (req.templateId() == null) return ResponseEntity.badRequest().build();
         return ResponseEntity.ok(service.generateDocument(user.tenantId(), req));
     }
@@ -96,7 +97,7 @@ public class DocumentBuilderController {
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<DocumentResponse> generatePdf(
             @AuthenticationPrincipal UserPrincipal user,
-            @RequestBody GenerateRequest req) {
+            @Valid @RequestBody GenerateRequest req) {
         if (req.templateId() == null) return ResponseEntity.badRequest().build();
         return ResponseEntity.ok(service.generatePdf(user.tenantId(), req));
     }
@@ -114,7 +115,7 @@ public class DocumentBuilderController {
     @PostMapping("/ai/apply")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<AIApplyRequest.AIApplyResponse> applyAiOperations(
-            @RequestBody AIApplyRequest req) {
+            @Valid @RequestBody AIApplyRequest req) {
         if (req.prompt() == null || req.prompt().isBlank()) {
             return ResponseEntity.badRequest().build();
         }

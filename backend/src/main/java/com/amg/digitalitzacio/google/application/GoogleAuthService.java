@@ -37,11 +37,12 @@ public class GoogleAuthService {
         "sheets", "https://www.googleapis.com/auth/spreadsheets"
     );
 
+    private static final HttpClient HTTP = HttpClient.newHttpClient();
+
     private final OAuthStateRepository stateRepo;
     private final GoogleConfigService configService;
     private final GoogleTokenService tokenService;
     private final ObjectMapper objectMapper;
-    private final HttpClient http = HttpClient.newHttpClient();
 
     public record AuthUrlResponse(String authUrl, String stateToken) {}
     public record ConnectedResponse(String email, String googleUserId) {}
@@ -74,7 +75,7 @@ public class GoogleAuthService {
         return new AuthUrlResponse(AUTH_URL + "?" + params, state.getStateToken());
     }
 
-    @Transactional
+    // No @Transactional — conté 2 crides HTTP a Google; saveTokens ja té la seva pròpia transacció
     public ConnectedResponse handleCallback(String code, String stateToken) {
         var state = stateRepo.findByStateToken(stateToken)
             .orElseThrow(() -> new RuntimeException("State invàlid o inexistent"));
@@ -102,7 +103,7 @@ public class GoogleAuthService {
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
-            var tokenRes = http.send(tokenReq, HttpResponse.BodyHandlers.ofString());
+            var tokenRes = HTTP.send(tokenReq, HttpResponse.BodyHandlers.ofString());
             if (tokenRes.statusCode() != 200) {
                 throw new RuntimeException("Error intercanviant code: " + tokenRes.body());
             }
@@ -119,7 +120,7 @@ public class GoogleAuthService {
                 .GET()
                 .build();
 
-            var userRes = http.send(userReq, HttpResponse.BodyHandlers.ofString());
+            var userRes = HTTP.send(userReq, HttpResponse.BodyHandlers.ofString());
             @SuppressWarnings("unchecked")
             var userJson = objectMapper.readValue(userRes.body(), Map.class);
             var email = (String) userJson.get("email");

@@ -1,8 +1,8 @@
 .PHONY: dev dev-down dev-reset dev-status logs \
-        backend frontend \
-        prod prod-down prod-status \
+        backend frontend backend-build \
+        prod prod-down prod-status prod-validate \
         shell-postgres shell-redis shell-n8n \
-        env-check seed
+        env-check seed pre-deploy flyway-repair schema-check
 
 ENV_FILE=.env
 COMPOSE_DEV=docker compose -f infra/docker-compose.dev.yml --env-file $(ENV_FILE)
@@ -113,3 +113,40 @@ seed:
 	  -d $$(grep ^POSTGRES_DB $(ENV_FILE) | cut -d= -f2) \
 	  -f /dev/stdin < infra/postgres/seed.sql
 	@echo "Seed completat ✓"
+
+# ───────────────────────────────────────────
+#  DEPLOY & VALIDATION (prod)
+# ───────────────────────────────────────────
+
+pre-deploy:
+	@echo "── Pre-deploy validation ──"
+	infra/scripts/pre-deploy.sh
+
+prod-validate: pre-deploy
+	@echo "── Validant Docker Compose ──"
+	$(COMPOSE_PROD) config > /dev/null
+	@echo "Compose config OK"
+	@echo "── Comprovant build ──"
+	$(COMPOSE_PROD) build --dry-run backend 2>/dev/null || true
+	@echo ""
+	@echo "Executa 'make prod' per desplegar"
+
+backend-build:
+	@echo "── Compilant backend ──"
+	cd backend && mvn package -DskipTests -q
+	@echo "Build completat ✓"
+
+flyway-repair:
+	@echo "── Reparant Flyway checksums ──"
+	$(COMPOSE_PROD) exec -T postgres psql \
+	  -U $$(grep ^POSTGRES_USER $(ENV_FILE) | cut -d= -f2) \
+	  -d $$(grep ^POSTGRES_DB $(ENV_FILE) | cut -d= -f2) \
+	  -c "DELETE FROM flyway_schema_history WHERE version IN ('$(filter-out $@,$(MAKECMDGOALS))');" 2>/dev/null || true
+	@echo "History entry deleted. Re-deploy per re-aplicar."
+
+schema-check:
+	@echo "── Generant DDL que Hibernate espera ──"
+	@echo "Compara amb l'schema real a la BD:"
+	@echo '  make shell-postgres'
+	@echo "Per veure les migracions pendents:"
+	@echo "  docker compose -f infra/docker-compose.yml exec -T postgres psql -U amg -d amg_platform -c \"SELECT version, description FROM flyway_schema_history ORDER BY version;\""
