@@ -71,6 +71,12 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
 
     void deleteByTenantId(UUID tenantId);
 
+    @Query("SELECT l FROM Lead l WHERE l.tenantId = :tenantId AND l.isActive = true AND l.stage IN :stages " +
+           "AND (l.lastContactAt IS NULL OR l.lastContactAt < :cutoff) AND l.updatedAt < :cutoff")
+    List<Lead> findStaleByTenantIdAndStages(@Param("tenantId") UUID tenantId,
+                                            @Param("stages") List<PipelineStage> stages,
+                                            @Param("cutoff") Instant cutoff);
+
     List<Lead> findByUpdatedAtBeforeAndIsActive(Instant cutoff, Boolean isActive);
 
     List<Lead> findByUpdatedAtBefore(Instant cutoff);
