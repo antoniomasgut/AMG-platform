@@ -21,6 +21,8 @@ import {
   deactivateAgent,
   getActivationInstructions,
   updateChannels,
+  getAgencyChatConfig,
+  updateAgencyChatConfig,
   type AgentStatusResponse,
   type PendingResponseDto,
   type ConversationResponse,
@@ -41,7 +43,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
 import { IconSet } from '@/components/ui/icons';
 
-type Tab = 'agent' | 'pending' | 'conversations' | 'coneixement' | 'ia' | 'xat';
+type Tab = 'agent' | 'pending' | 'conversations' | 'coneixement' | 'ia' | 'xat' | 'widget';
 type ChatMsg = { role: 'user' | 'agent'; text: string };
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -60,8 +62,27 @@ const KNOWLEDGE_CATEGORIES = [
   { key: 'EXTRA', label: 'Informació addicional', hint: 'Qualsevol altra informació rellevant' },
 ];
 
+const AGENCY_CHAT_TEMPLATES = [
+  {
+    label: 'Agència Digital (per defecte)',
+    systemPrompt: "Ets l'assistent virtual d'AMG Digitalitzacions, una agència digital de Mallorca especialitzada en digitalització de negocis locals. Ajudes els visitants a entendre els serveis (landings, WhatsApp Business, agents IA, automatitzacions) i a demanar informació o pressupost. Respon en l'idioma del visitant (català, castellà, anglès o alemany). Sigues amable, concís i professional.",
+  },
+  {
+    label: 'Consultoria (formal)',
+    systemPrompt: "Ets l'assistent virtual d'AMG Digitalitzacions. Atens consultes professionals sobre digitalització empresarial. Recull les necessitats del visitant i ofereix una primera orientació, animant-los a concertar una reunió. Tracta de vostè. Respon en l'idioma del visitant.",
+  },
+  {
+    label: 'Captació de leads',
+    systemPrompt: "Ets l'assistent virtual d'AMG Digitalitzacions. El teu objectiu és entendre el negoci del visitant i recomanar-li el paquet de digitalització adequat (Fase 1: agent IA, Fase 2: agenda, Fase 3: pressupostos). Sempre acaba convidant-los a deixar el seu contacte o a demanar una demo. Respon en l'idioma del visitant.",
+  },
+  {
+    label: 'Suport tècnic',
+    systemPrompt: "Ets l'assistent de suport tècnic d'AMG Digitalitzacions. Ajudes als clients existents a resoldre dubtes sobre la plataforma, configuració d'agents, canals de comunicació i facturació. Si no pots resoldre-ho, indica que un tècnic contactarà en breu. Respon en l'idioma del visitant.",
+  },
+];
+
 export default function AgentsPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isSuperAdmin } = useAuth();
   const tenantId = user?.tenantId;
   const [activeTab, setActiveTab] = useState<Tab>('agent');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -96,6 +117,12 @@ export default function AgentsPage() {
   const [chatLoading, setChatLoading] = useState(false);
   const chatSessionId = useRef(crypto.randomUUID());
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const [widgetBusinessName, setWidgetBusinessName] = useState('');
+  const [widgetSystemPrompt, setWidgetSystemPrompt] = useState('');
+  const [widgetModel, setWidgetModel] = useState('');
+  const [widgetSaving, setWidgetSaving] = useState(false);
+  const [widgetSaved, setWidgetSaved] = useState(false);
 
   const { data: status } = useQuery({
     queryKey: ['agent-status', tenantId],
@@ -139,6 +166,21 @@ export default function AgentsPage() {
     queryFn: () => getAIConfig(tenantId!),
     enabled: !!user && !!tenantId && isAdmin && activeTab === 'ia',
   });
+
+  const { data: widgetConfig } = useQuery({
+    queryKey: ['agency-chat-config', tenantId],
+    queryFn: () => getAgencyChatConfig(tenantId!),
+    enabled: !!user && !!tenantId && isSuperAdmin && activeTab === 'widget',
+  });
+
+  // Populate widget form when data loads
+  const [widgetConfigLoaded, setWidgetConfigLoaded] = useState(false);
+  if (widgetConfig && !widgetConfigLoaded) {
+    setWidgetBusinessName(widgetConfig.businessName ?? '');
+    setWidgetSystemPrompt(widgetConfig.systemPrompt ?? '');
+    setWidgetModel(widgetConfig.preferredModel ?? '');
+    setWidgetConfigLoaded(true);
+  }
 
   const updateModeMutation = useMutation({
     mutationFn: (mode: 'AUTO' | 'HYBRID' | 'MANUAL') => updateAgentMode(tenantId!, mode),
@@ -312,6 +354,7 @@ export default function AgentsPage() {
     { key: 'conversations', label: 'Converses' },
     ...(isAdmin ? [{ key: 'coneixement' as Tab, label: 'Coneixement' }] : []),
     ...(isAdmin ? [{ key: 'ia' as Tab, label: 'Model IA' }] : []),
+    ...(isSuperAdmin ? [{ key: 'widget' as Tab, label: '🌐 Widget web' }] : []),
   ];
 
   return (
@@ -1462,6 +1505,95 @@ export default function AgentsPage() {
           </div>
         </div>
       )}
+
+        {/* Widget Web Tab (SUPER_ADMIN only) */}
+        {activeTab === 'widget' && isSuperAdmin && (
+          <div className="space-y-6 max-w-2xl">
+            <div>
+              <div className="text-sm font-semibold text-ink-1 mb-1">Widget de xat — amgdl.com</div>
+              <p className="text-xs text-ink-3">Configura el comportament de l&apos;assistent que apareix al web públic d&apos;AMG Digitalitzacions.</p>
+            </div>
+
+            {/* Templates */}
+            <div>
+              <div className="text-xs font-semibold text-ink-2 uppercase tracking-wider mb-2">Plantilla de comportament</div>
+              <div className="grid grid-cols-2 gap-2">
+                {AGENCY_CHAT_TEMPLATES.map(t => (
+                  <button
+                    key={t.label}
+                    onClick={() => { setWidgetSystemPrompt(t.systemPrompt); setWidgetConfigLoaded(false); }}
+                    className="text-left px-3 py-2 rounded-lg border border-border-base text-xs text-ink-1 hover:border-accent hover:bg-accent/5 transition-colors"
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Business name */}
+            <div>
+              <label className="text-xs font-semibold text-ink-2 block mb-1">Nom del negoci (mostrat al widget)</label>
+              <input
+                type="text"
+                value={widgetBusinessName}
+                onChange={e => setWidgetBusinessName(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-accent bg-bg-1"
+                placeholder="AMG Digitalitzacions"
+              />
+            </div>
+
+            {/* Model */}
+            <div>
+              <label className="text-xs font-semibold text-ink-2 block mb-1">Model d&apos;IA</label>
+              <select
+                value={widgetModel}
+                onChange={e => setWidgetModel(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-accent bg-bg-1"
+              >
+                <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (ràpid, econòmic)</option>
+                <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (equilibrat)</option>
+                <option value="claude-opus-4-7">Claude Opus 4.7 (màxima qualitat)</option>
+              </select>
+            </div>
+
+            {/* System prompt */}
+            <div>
+              <label className="text-xs font-semibold text-ink-2 block mb-1">Prompt del sistema (comportament de l&apos;agent)</label>
+              <textarea
+                value={widgetSystemPrompt}
+                onChange={e => setWidgetSystemPrompt(e.target.value)}
+                rows={8}
+                className="w-full px-3 py-2 text-sm border border-border-base rounded-lg focus:outline-none focus:border-accent bg-bg-1 font-mono resize-y"
+                placeholder="Instruccions de comportament per a l'agent..."
+              />
+              <div className="text-xs text-ink-3 mt-1">{widgetSystemPrompt.length} caràcters</div>
+            </div>
+
+            <button
+              onClick={async () => {
+                if (!tenantId) return;
+                setWidgetSaving(true);
+                setWidgetSaved(false);
+                try {
+                  await updateAgencyChatConfig(tenantId, {
+                    businessName: widgetBusinessName,
+                    systemPrompt: widgetSystemPrompt,
+                    preferredModel: widgetModel,
+                  });
+                  setWidgetSaved(true);
+                  setTimeout(() => setWidgetSaved(false), 3000);
+                } finally {
+                  setWidgetSaving(false);
+                }
+              }}
+              disabled={widgetSaving}
+              className="px-6 py-2 bg-accent text-white rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+            >
+              {widgetSaving ? 'Desant...' : widgetSaved ? '✓ Desat' : 'Desar configuració'}
+            </button>
+          </div>
+        )}
+
     </PortalShell>
   );
 }

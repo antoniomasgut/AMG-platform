@@ -4,6 +4,9 @@ import com.amg.digitalitzacio.agents.application.ChannelUsageService;
 import com.amg.digitalitzacio.agents.application.GoogleCalendarService;
 import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.PromptBuilder;
+import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
+import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.chat.domain.ChatSession;
 import com.amg.digitalitzacio.chat.domain.LandingChatContext;
 import com.amg.digitalitzacio.chat.domain.LandingChatContextRepository;
@@ -47,7 +50,8 @@ public class ChatSessionService {
     private static final int    MAX_MSGS_PER_SESSION = 20;
     private static final int    MAX_SESSIONS_PER_IP  = 10;
     private static final int    MAX_MSGS_PER_IP_HOUR = 60;
-    private static final String CHAT_MODEL           = "claude-haiku-4-5-20251001";
+    private static final String CHAT_MODEL_DEFAULT    = "claude-haiku-4-5-20251001";
+    private static final String DEEPSEEK_BASE         = "https://api.deepseek.com";
     private static final int    MAX_RESPONSE_TOKENS  = 300;
     private static final int    MAX_HISTORY_PAIRS    = 10;
     private static final int    MAX_INPUT_CHARS      = 500;
@@ -74,6 +78,8 @@ public class ChatSessionService {
     private final SystemConfigService sysConfig;
     private final RestClient.Builder restClientBuilder;
     private final ChannelUsageService channelUsageService;
+    private final TenantRepository tenantRepository;
+    private final TenantAIConfigRepository aiConfigRepository;
 
     @Value("${app.landing.base-domain:webs.amgdl.com}")
     private String landingBaseDomain;
@@ -102,7 +108,7 @@ public class ChatSessionService {
             if (agendaJson != null) systemPrompt += promptBuilder.buildAgendaBlock(agendaJson);
         }
 
-        var greeting = generateGreetingWithPrompt(ctx, systemPrompt);
+        var greeting = generateGreetingWithPrompt(ctx, systemPrompt, landingSlug);
 
         var session = ChatSession.builder()
                 .id(sessionId)
@@ -133,6 +139,49 @@ public class ChatSessionService {
         return new CreateSessionResult(sessionId, greeting);
     }
 
+    public CreateSessionResult createAgencySession(String contactName, String ip) {
+        checkSessionRateLimit(ip);
+
+        var owner = tenantRepository.findByIsOwnerTrue()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner tenant not configured"));
+        var tenantId    = owner.getId();
+        var tenantIdStr = tenantId.toString();
+
+        var ctx = chatContextRepository.findById(tenantId)
+                .orElseGet(() -> buildDefaultAgencyContext(tenantId));
+
+        var aiCfg = aiConfigRepository.findByTenantId(tenantId).orElse(TenantAIConfig.defaultFor(tenantId));
+        var model = (aiCfg.getPreferredModel() != null && !aiCfg.getPreferredModel().isBlank())
+                ? aiCfg.getPreferredModel() : CHAT_MODEL_DEFAULT;
+
+        var sessionId = UUID.randomUUID().toString();
+        var greeting  = generateGreetingWithPrompt(ctx, ctx.getSystemPrompt(), "agency", model);
+
+        var session = ChatSession.builder()
+                .id(sessionId)
+                .landingSlug("agency")
+                .landingId(tenantIdStr)
+                .tenantId(tenantIdStr)
+                .contactName(contactName)
+                .preferredModel(model)
+                .agendaEnabled(false)
+                .messageCount(0)
+                .build();
+
+        session.getMessages().add(new ChatSession.ChatMessage("assistant", greeting));
+        saveSession(session);
+        incrementRateCounter(RATE_SESS_KEY + ip, 3600);
+        return new CreateSessionResult(sessionId, greeting);
+    }
+
+    private LandingChatContext buildDefaultAgencyContext(UUID tenantId) {
+        return LandingChatContext.builder()
+                .landingId(tenantId)
+                .businessName("AMG Digitalitzacions")
+                .systemPrompt("Ets l'assistent virtual d'AMG Digitalitzacions, una agència digital de Mallorca especialitzada en digitalització de negocis locals. Ajudes els visitants a entendre els serveis (landings, WhatsApp Business, agents IA, automatitzacions) i a demanar informació o pressupost. Respon en l'idioma del visitant (català, castellà, anglès o alemany). Sigues amable, concís i professional.")
+                .build();
+    }
+
     private boolean isAgendaEnabledForTenant(UUID tenantId) {
         return nexeConfigService.get(tenantId, "AGENDA").map(cfg -> {
             try {
@@ -143,14 +192,16 @@ public class ChatSessionService {
         }).orElse(false);
     }
 
-    private String generateGreetingWithPrompt(LandingChatContext ctx, String systemPrompt) {
+    private String generateGreetingWithPrompt(LandingChatContext ctx, String systemPrompt, String landingSlug) {
+        return generateGreetingWithPrompt(ctx, systemPrompt, landingSlug, null);
+    }
+
+    private String generateGreetingWithPrompt(LandingChatContext ctx, String systemPrompt, String landingSlug, String modelOverride) {
         String fallback = "Hola! Sóc l'assistent virtual de " + ctx.getBusinessName() + ". En què puc ajudar-te?";
         try {
-            String apiKey = sysConfig.get("ANTHROPIC_API_KEY");
-            if (apiKey == null || apiKey.isBlank()) return fallback;
-            var result = callAnthropicApi(apiKey,
-                systemPrompt + "\n\nGenera un missatge de benvinguda breu i amigable en català (màx. 2 frases). Presenta't pel nom del negoci i ofereix ajuda.",
-                List.of(), "Hola");
+            String greetingPrompt = systemPrompt +
+                "\n\nGenera un missatge de benvinguda breu i amigable en català (màx. 2 frases). Presenta't pel nom del negoci i ofereix ajuda.";
+            var result = callAI(greetingPrompt, List.of(), "Hola", isDemo(landingSlug), modelOverride);
             return (result != null && !result.isBlank()) ? result : fallback;
         } catch (Exception e) {
             log.warn("Could not generate greeting: {}", e.getMessage());
@@ -254,7 +305,7 @@ public class ChatSessionService {
         }
 
         var history = buildHistory(session);
-        String reply = callClaude(systemPrompt, history, userMessage);
+        String reply = callAI(systemPrompt, history, userMessage, isDemo(session.getLandingSlug()), session.getPreferredModel());
         if (reply == null || reply.isBlank()) {
             reply = "Ho sent, en aquest moment no puc respondre. Torna-ho a provar en uns instants.";
         }
@@ -286,40 +337,78 @@ public class ChatSessionService {
         saveSession(session);
         incrementRateCounter(RATE_MSG_KEY + ip, 3600);
 
-        // Registra l'ús del canal de xat (best-effort, no bloca la resposta)
+        // Registra l'ús del canal de xat (best-effort; agency sessions no tenen landing real)
         try {
-            landingRepository.findById(UUID.fromString(session.getLandingId()))
-                    .ifPresent(l -> channelUsageService.record(l.getTenantId(), ChannelUsageService.CHAT));
+            if (!"agency".equals(session.getLandingSlug())) {
+                landingRepository.findById(UUID.fromString(session.getLandingId()))
+                        .ifPresent(l -> channelUsageService.record(l.getTenantId(), ChannelUsageService.CHAT));
+            }
         } catch (Exception ignored) {}
 
         return new SendMessageResult(sessionId, reply, false);
     }
 
-    // --- Claude ---
+    // --- AI dispatch ---
 
+    private boolean isDemo(String landingSlug) {
+        return landingSlug != null && landingSlug.startsWith("demo-");
+    }
 
-    private String callClaude(String systemPrompt, List<Map<String, String>> history, String userMessage) {
+    /**
+     * Dispatches the AI call to the configured provider.
+     * Demo sessions use DEMO_AI_PROVIDER + DEMO_AI_MODEL from SystemConfig;
+     * non-demo sessions use Anthropic with modelOverride (or CHAT_MODEL_DEFAULT if null).
+     */
+    private String callAI(String systemPrompt, List<Map<String, String>> history,
+                          String userMessage, boolean demo) {
+        return callAI(systemPrompt, history, userMessage, demo, null);
+    }
+
+    private String callAI(String systemPrompt, List<Map<String, String>> history,
+                          String userMessage, boolean demo, String modelOverride) {
         try {
-            String apiKey = sysConfig.get("ANTHROPIC_API_KEY");
-            if (apiKey == null || apiKey.isBlank()) return null;
-            return callAnthropicApi(apiKey, systemPrompt, history, userMessage);
+            if (demo) {
+                String provider = sysConfig.get("DEMO_AI_PROVIDER");
+                String model    = sysConfig.get("DEMO_AI_MODEL");
+                if (provider == null || provider.isBlank()) provider = "anthropic";
+                if (model    == null || model.isBlank())    model    = CHAT_MODEL_DEFAULT;
+
+                if ("deepseek".equalsIgnoreCase(provider)) {
+                    String apiKey = sysConfig.get("DEEPSEEK_API_KEY");
+                    if (apiKey == null || apiKey.isBlank()) {
+                        log.warn("DEEPSEEK_API_KEY not configured, falling back to Anthropic for demo chat");
+                    } else {
+                        return callOpenAICompatibleApi(apiKey, DEEPSEEK_BASE, model,
+                                systemPrompt, history, userMessage);
+                    }
+                }
+                // anthropic (or deepseek fallback)
+                String apiKey = sysConfig.get("ANTHROPIC_API_KEY");
+                if (apiKey == null || apiKey.isBlank()) return null;
+                return callAnthropicApi(apiKey, model, systemPrompt, history, userMessage);
+            } else {
+                String apiKey = sysConfig.get("ANTHROPIC_API_KEY");
+                if (apiKey == null || apiKey.isBlank()) return null;
+                String model = (modelOverride != null && !modelOverride.isBlank()) ? modelOverride : CHAT_MODEL_DEFAULT;
+                return callAnthropicApi(apiKey, model, systemPrompt, history, userMessage);
+            }
         } catch (Exception e) {
-            log.error("Claude API error in chat: {}", e.getMessage());
+            log.error("AI API error in chat (demo={}): {}", demo, e.getMessage());
             return null;
         }
     }
 
-    private String callAnthropicApi(String apiKey, String systemPrompt,
+    private String callAnthropicApi(String apiKey, String model, String systemPrompt,
                                      List<Map<String, String>> history, String userMessage) throws Exception {
         var messages = new ArrayList<>(history);
         messages.add(Map.of("role", "user", "content", userMessage));
         var body = Map.of(
-            "model", CHAT_MODEL,
+            "model",      model,
             "max_tokens", MAX_RESPONSE_TOKENS,
-            "system", systemPrompt,
-            "messages", messages
+            "system",     systemPrompt,
+            "messages",   messages
         );
-        var rc = restClientBuilder.baseUrl(ANTHROPIC_BASE).build();
+        var rc  = restClientBuilder.baseUrl(ANTHROPIC_BASE).build();
         var raw = rc.post()
             .uri("/v1/messages")
             .header("x-api-key", apiKey)
@@ -329,6 +418,31 @@ public class ChatSessionService {
             .retrieve()
             .body(String.class);
         return objectMapper.readTree(raw).path("content").path(0).path("text").asText("");
+    }
+
+    /** OpenAI-compatible API (DeepSeek, OpenAI, etc.) */
+    private String callOpenAICompatibleApi(String apiKey, String baseUrl, String model,
+                                            String systemPrompt, List<Map<String, String>> history,
+                                            String userMessage) throws Exception {
+        var messages = new ArrayList<Map<String, String>>();
+        messages.add(Map.of("role", "system", "content", systemPrompt));
+        messages.addAll(history);
+        messages.add(Map.of("role", "user", "content", userMessage));
+        var body = Map.of(
+            "model",      model,
+            "max_tokens", MAX_RESPONSE_TOKENS,
+            "messages",   messages
+        );
+        var rc  = restClientBuilder.baseUrl(baseUrl).build();
+        var raw = rc.post()
+            .uri("/v1/chat/completions")
+            .header("Authorization", "Bearer " + apiKey)
+            .header("Content-Type", "application/json")
+            .body(objectMapper.writeValueAsString(body))
+            .retrieve()
+            .body(String.class);
+        return objectMapper.readTree(raw)
+                .path("choices").path(0).path("message").path("content").asText("");
     }
 
     private List<Map<String, String>> buildHistory(ChatSession session) {

@@ -16,6 +16,7 @@ public class ChatSession {
     private String contactName;
     private String contactPhone;
     private String leadId;
+    private String preferredModel;
     private boolean agendaEnabled;
     private int messageCount;
     @Builder.Default

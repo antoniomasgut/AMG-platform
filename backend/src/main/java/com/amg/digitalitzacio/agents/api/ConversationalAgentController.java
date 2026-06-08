@@ -12,6 +12,7 @@ import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLink;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.chat.domain.LandingChatContextRepository;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
@@ -47,6 +48,7 @@ public class ConversationalAgentController {
     private final com.amg.digitalitzacio.agents.application.ConversationalAgentService conversationalAgentService;
     private final EmailChannel emailChannel;
     private final TenantRepository tenantRepository;
+    private final LandingChatContextRepository agencyChatContextRepository;
 
     @GetMapping("/{tenantId}/conversations")
     @PreAuthorize("isAuthenticated()")
@@ -580,6 +582,47 @@ public class ConversationalAgentController {
             return ResponseEntity.ok(new PortalChatResponse("L'agent no està actiu o no s'ha configurat encara.", false));
         }
         return ResponseEntity.ok(new PortalChatResponse(reply, true));
+    }
+
+    // --- Agency Chat Widget Config ---
+
+    record AgencyChatConfigResponse(String businessName, String systemPrompt, String preferredModel) {}
+    record AgencyChatConfigRequest(String businessName, String systemPrompt, String preferredModel) {}
+
+    @GetMapping("/{tenantId}/agency-chat")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<AgencyChatConfigResponse> getAgencyChatConfig(@PathVariable UUID tenantId) {
+        var ctx = agencyChatContextRepository.findById(tenantId).orElse(null);
+        var aiCfg = tenantAIConfigRepository.findByTenantId(tenantId).orElse(TenantAIConfig.defaultFor(tenantId));
+        if (ctx == null) {
+            return ResponseEntity.ok(new AgencyChatConfigResponse(
+                "AMG Digitalitzacions",
+                "Ets l'assistent virtual d'AMG Digitalitzacions, una agència digital de Mallorca especialitzada en digitalització de negocis locals. Ajudes els visitants a entendre els serveis (landings, WhatsApp Business, agents IA, automatitzacions) i a demanar informació o pressupost. Respon en l'idioma del visitant (català, castellà, anglès o alemany). Sigues amable, concís i professional.",
+                aiCfg.getPreferredModel()
+            ));
+        }
+        return ResponseEntity.ok(new AgencyChatConfigResponse(ctx.getBusinessName(), ctx.getSystemPrompt(), aiCfg.getPreferredModel()));
+    }
+
+    @PutMapping("/{tenantId}/agency-chat")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<AgencyChatConfigResponse> updateAgencyChatConfig(
+            @PathVariable UUID tenantId,
+            @RequestBody AgencyChatConfigRequest req) {
+        var ctx = agencyChatContextRepository.findById(tenantId)
+                .orElseGet(() -> com.amg.digitalitzacio.chat.domain.LandingChatContext.builder()
+                        .landingId(tenantId).build());
+        if (req.businessName() != null) ctx.setBusinessName(req.businessName());
+        if (req.systemPrompt() != null) ctx.setSystemPrompt(req.systemPrompt());
+        ctx.setUpdatedAt(java.time.Instant.now());
+        agencyChatContextRepository.save(ctx);
+
+        var aiCfg = tenantAIConfigRepository.findByTenantId(tenantId).orElse(TenantAIConfig.defaultFor(tenantId));
+        if (req.preferredModel() != null) {
+            aiCfg.setPreferredModel(req.preferredModel());
+            tenantAIConfigRepository.save(aiCfg);
+        }
+        return ResponseEntity.ok(new AgencyChatConfigResponse(ctx.getBusinessName(), ctx.getSystemPrompt(), aiCfg.getPreferredModel()));
     }
 
     private UserPrincipal getPrincipal() {

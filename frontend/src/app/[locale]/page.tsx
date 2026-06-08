@@ -1,3 +1,4 @@
+import dynamic from 'next/dynamic';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { ProblemSection } from '@/components/landing/ProblemSection';
@@ -8,6 +9,11 @@ import { PortalSection } from '@/components/landing/PortalSection';
 import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { CTASection } from '@/components/landing/CTASection';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+
+const AgencyChatWidget = dynamic(
+  () => import('@/components/landing/AgencyChatWidget').then(m => m.AgencyChatWidget),
+  { ssr: false }
+);
 
 export default function LandingPage() {
   return (
@@ -22,6 +28,7 @@ export default function LandingPage() {
       <TestimonialsSection />
       <CTASection />
       <LandingFooter />
+      <AgencyChatWidget />
     </div>
   );
 }

@@ -1,0 +1,250 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+
+interface Message {
+  role: 'user' | 'assistant';
+  text: string;
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+
+export function AgencyChatWidget() {
+  const [open, setOpen]               = useState(false);
+  const [step, setStep]               = useState<'prechat' | 'chat'>('prechat');
+  const [name, setName]               = useState('');
+  const [messages, setMessages]       = useState<Message[]>([]);
+  const [input, setInput]             = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [sessionId, setSessionId]     = useState<string | null>(null);
+  const endRef                        = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('amg_agency_sid');
+    if (stored) setSessionId(stored);
+  }, []);
+
+  useEffect(() => {
+    if (open && endRef.current) {
+      endRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, open]);
+
+  async function startChat() {
+    if (!name.trim()) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/chat/agency/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contactName: name.trim() }),
+      });
+      if (!res.ok) throw new Error('Error starting chat');
+      const data = await res.json();
+      setSessionId(data.sessionId);
+      localStorage.setItem('amg_agency_sid', data.sessionId);
+      setMessages([{ role: 'assistant', text: data.greeting }]);
+      setStep('chat');
+    } catch {
+      setMessages([{ role: 'assistant', text: 'No s\'ha pogut iniciar el xat. Torna-ho a provar.' }]);
+      setStep('chat');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function sendMessage() {
+    const text = input.trim();
+    if (!text || !sessionId || loading) return;
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', text }]);
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/chat/sessions/${sessionId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setMessages(prev => [...prev, { role: 'assistant', text: data.reply }]);
+      if (data.terminated) {
+        localStorage.removeItem('amg_agency_sid');
+        setSessionId(null);
+      }
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', text: 'Error de connexió. Torna-ho a provar.' }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function reset() {
+    localStorage.removeItem('amg_agency_sid');
+    setSessionId(null);
+    setMessages([]);
+    setStep('prechat');
+    setName('');
+    setInput('');
+  }
+
+  return (
+    <>
+      {/* Floating button */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-label="Xat amb nosaltres"
+        style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+          width: 56, height: 56, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+          color: '#fff', border: 'none', cursor: 'pointer',
+          boxShadow: '0 4px 20px rgba(99,102,241,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 24, transition: 'transform 0.2s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
+        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+      >
+        {open ? '✕' : '💬'}
+      </button>
+
+      {/* Chat panel */}
+      {open && (
+        <div style={{
+          position: 'fixed', bottom: 92, right: 24, zIndex: 9998,
+          width: 340, maxHeight: 500,
+          background: '#fff', borderRadius: 16,
+          boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          fontFamily: "'Inter', sans-serif",
+        }}>
+          {/* Header */}
+          <div style={{
+            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            padding: '14px 16px', color: '#fff',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14 }}>AMG Digitalitzacions</div>
+              <div style={{ fontSize: 11, opacity: 0.85 }}>Assistent virtual · normalment respon en minuts</div>
+            </div>
+            {step === 'chat' && (
+              <button onClick={reset} style={{
+                background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
+                borderRadius: 8, padding: '4px 8px', cursor: 'pointer', fontSize: 11,
+              }}>Nova conversa</button>
+            )}
+          </div>
+
+          {/* Pre-chat form */}
+          {step === 'prechat' && (
+            <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.5 }}>
+                Hola! Sóc l&apos;assistent d&apos;AMG. Com et dic?
+              </p>
+              <input
+                type="text"
+                placeholder="El teu nom"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && startChat()}
+                style={{
+                  padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
+                  fontSize: 14, outline: 'none',
+                }}
+              />
+              <button
+                onClick={startChat}
+                disabled={loading || !name.trim()}
+                style={{
+                  background: loading ? '#a5b4fc' : '#6366f1',
+                  color: '#fff', border: 'none', borderRadius: 8,
+                  padding: '10px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                {loading ? 'Connectant…' : 'Iniciar xat'}
+              </button>
+            </div>
+          )}
+
+          {/* Chat messages */}
+          {step === 'chat' && (
+            <>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px 8px', display: 'flex', flexDirection: 'column', gap: 10, minHeight: 240, maxHeight: 320 }}>
+                {messages.map((m, i) => (
+                  <div key={i} style={{
+                    display: 'flex',
+                    justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start',
+                  }}>
+                    <div style={{
+                      maxWidth: '80%', padding: '9px 13px', borderRadius: 12,
+                      background: m.role === 'user' ? '#6366f1' : '#f3f4f6',
+                      color: m.role === 'user' ? '#fff' : '#111827',
+                      fontSize: 13, lineHeight: 1.5,
+                      borderBottomRightRadius: m.role === 'user' ? 2 : 12,
+                      borderBottomLeftRadius: m.role === 'assistant' ? 2 : 12,
+                    }}>
+                      {m.text}
+                    </div>
+                  </div>
+                ))}
+                {loading && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                    <div style={{
+                      background: '#f3f4f6', borderRadius: 12, borderBottomLeftRadius: 2,
+                      padding: '9px 13px', display: 'flex', gap: 4, alignItems: 'center',
+                    }}>
+                      {[0, 1, 2].map(i => (
+                        <span key={i} style={{
+                          width: 7, height: 7, borderRadius: '50%', background: '#9ca3af',
+                          display: 'inline-block',
+                          animation: `bounce 1.2s ${i * 0.2}s infinite`,
+                        }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div ref={endRef} />
+              </div>
+              <div style={{
+                padding: '10px 12px', borderTop: '1px solid #f0f0f0',
+                display: 'flex', gap: 8,
+              }}>
+                <input
+                  type="text"
+                  placeholder="Escriu un missatge…"
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                  maxLength={500}
+                  style={{
+                    flex: 1, padding: '9px 12px', borderRadius: 8,
+                    border: '1px solid #e5e7eb', fontSize: 13, outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={loading || !input.trim()}
+                  style={{
+                    background: loading || !input.trim() ? '#e0e7ff' : '#6366f1',
+                    color: loading || !input.trim() ? '#a5b4fc' : '#fff',
+                    border: 'none', borderRadius: 8, padding: '0 14px',
+                    cursor: loading ? 'default' : 'pointer', fontSize: 16,
+                  }}
+                >→</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-6px); }
+        }
+      `}</style>
+    </>
+  );
+}

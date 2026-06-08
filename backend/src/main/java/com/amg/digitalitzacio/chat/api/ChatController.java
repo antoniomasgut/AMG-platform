@@ -14,9 +14,18 @@ public class ChatController {
     private final ChatSessionService chatSessionService;
 
     record CreateSessionRequest(String landingSlug, String contactName, String contactPhone) {}
+    record CreateAgencySessionRequest(String contactName) {}
     record CreateSessionResponse(String sessionId, String greeting) {}
     record SendMessageRequest(String message) {}
     record SendMessageResponse(String sessionId, String reply, boolean terminated) {}
+
+    @PostMapping("/agency/sessions")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CreateSessionResponse createAgencySession(@RequestBody CreateAgencySessionRequest req,
+                                                     HttpServletRequest httpReq) {
+        var result = chatSessionService.createAgencySession(req.contactName(), extractIp(httpReq));
+        return new CreateSessionResponse(result.sessionId(), result.greeting());
+    }
 
     @PostMapping("/sessions")
     @ResponseStatus(HttpStatus.CREATED)

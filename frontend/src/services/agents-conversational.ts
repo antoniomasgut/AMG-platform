@@ -238,6 +238,23 @@ export const portalChat = (tenantId: string, message: string, sessionId: string)
     body: JSON.stringify({ message, sessionId }),
   });
 
+// --- Agency Chat Widget Config ---
+
+export interface AgencyChatConfig {
+  businessName: string;
+  systemPrompt: string;
+  preferredModel: string;
+}
+
+export const getAgencyChatConfig = (tenantId: string) =>
+  apiFetch<AgencyChatConfig>(`/agents/conversational/${tenantId}/agency-chat`);
+
+export const updateAgencyChatConfig = (tenantId: string, config: Partial<AgencyChatConfig>) =>
+  apiFetch<AgencyChatConfig>(`/agents/conversational/${tenantId}/agency-chat`, {
+    method: 'PUT',
+    body: JSON.stringify(config),
+  });
+
 // --- Usage Stats ---
 
 export interface ChannelUsageStats {
