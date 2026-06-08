@@ -1,6 +1,8 @@
 .PHONY: dev dev-down dev-reset dev-status logs \
         backend frontend backend-build \
         prod prod-down prod-status prod-validate \
+        deploy deploy-backend deploy-frontend \
+        logs-prod ssh-prod \
         shell-postgres shell-redis shell-n8n \
         env-check seed pre-deploy flyway-repair schema-check
 
@@ -113,6 +115,25 @@ seed:
 	  -d $$(grep ^POSTGRES_DB $(ENV_FILE) | cut -d= -f2) \
 	  -f /dev/stdin < infra/postgres/seed.sql
 	@echo "Seed completat ✓"
+
+# ═══════════════════════════════════════
+#  DEPLOY A PRODUCCIÓ (amgdl.com)
+# ═══════════════════════════════════════
+
+deploy:
+	@infra/scripts/deploy.sh
+
+deploy-backend:
+	@infra/scripts/deploy.sh --no-frontend
+
+deploy-frontend:
+	@infra/scripts/deploy.sh --no-backend
+
+logs-prod:
+	@ssh root@65.108.148.62 'docker logs amg-backend --tail=100 -f'
+
+ssh-prod:
+	@ssh root@65.108.148.62
 
 # ───────────────────────────────────────────
 #  DEPLOY & VALIDATION (prod)
