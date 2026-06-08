@@ -119,8 +119,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - websites_data:/data/websites
     networks:
-      - amg_net
-      - amg-network
+      amg_net: {}
+      amg-network: {}
+      coolify:
+        aliases:
+          - amg-backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`api.${APP_DOMAIN}`)"
@@ -203,4 +206,6 @@ networks:
   amg_net:
     driver: bridge
   amg-network:
+    external: true
+  coolify:
     external: true
