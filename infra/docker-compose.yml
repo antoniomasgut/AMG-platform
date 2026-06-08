@@ -27,6 +27,7 @@ services:
     image: postgres:16-alpine
     container_name: amg_postgres
     restart: unless-stopped
+    profiles: ["infra"]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-amg_platform}
       POSTGRES_USER: ${POSTGRES_USER:-amg}
@@ -44,8 +45,9 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: amg_redis
+    container_name: amg_redis_compose
     restart: unless-stopped
+    profiles: ["infra"]
     command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
@@ -95,10 +97,10 @@ services:
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-amg_platform}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST:-amg-postgres}:5432/${POSTGRES_DB:-amg}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-amg}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
-      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-amg-redis}
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD required}
       MINIO_ENDPOINT: http://minio:9000
@@ -116,13 +118,9 @@ services:
       # (crea contenidors Nginx per landings). Migrar a docker-java SDK per eliminar-lo.
       - /var/run/docker.sock:/var/run/docker.sock
       - websites_data:/data/websites
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     networks:
       - amg_net
+      - amg-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`api.${APP_DOMAIN}`)"
@@ -204,3 +202,5 @@ volumes:
 networks:
   amg_net:
     driver: bridge
+  amg-network:
+    external: true
