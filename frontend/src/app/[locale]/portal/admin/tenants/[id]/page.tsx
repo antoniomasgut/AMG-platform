@@ -306,6 +306,7 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
   const hasNexePhases = (contractedPhases?.length ?? 0) > 0;
   const { toast } = useToast();
   const router = useRouter();
+  const { locale } = useParams<{ locale: string }>();
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [removingPhase, setRemovingPhase] = useState<string | null>(null);
 
@@ -405,7 +406,7 @@ function SetupSection({ setup, tenantId, contractedPhases, activePhases, onRefre
             <div className="f-mono text-label uppercase tracking-widest text-ink-3 text-[10px]">Fases NexeLocal contractades</div>
             <button
               type="button"
-              onClick={() => router.push(`/portal/admin/tenants/${tenantId}/activate`)}
+              onClick={() => router.push(`/${locale}/portal/admin/tenants/${tenantId}/setup`)}
               className="flex items-center gap-1.5 px-3 py-1 f-mono text-xs font-semibold text-accent-light border border-[rgba(255,107,0,0.5)] bg-[rgba(255,107,0,0.06)] hover:bg-[rgba(255,107,0,0.15)] rounded transition"
             >
               <IconSet.Zap size={11} /> Posar en marxa →

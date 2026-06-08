@@ -1,9 +1,14 @@
 package com.amg.digitalitzacio.vault.application;
 
+import com.amg.digitalitzacio.agents.domain.NexeServiceConfigRepository;
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
+import com.amg.digitalitzacio.engine.domain.LandingRepository;
+import com.amg.digitalitzacio.google.domain.GoogleConnectionRepository;
 import com.amg.digitalitzacio.shared.exception.ConflictException;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.vault.api.dto.*;
 import com.amg.digitalitzacio.vault.domain.*;
+import com.amg.digitalitzacio.whatsapp.domain.WhatsAppWabaConfigRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,6 +39,11 @@ public class TenantVaultService implements VaultService {
     private final VaultEncryption encryption;
     private final InvoiceService invoiceService;
     private final PaymentService paymentService;
+    private final TenantRepository tenantRepository;
+    private final NexeServiceConfigRepository nexeServiceConfigRepository;
+    private final WhatsAppWabaConfigRepository whatsAppWabaConfigRepository;
+    private final GoogleConnectionRepository googleConnectionRepository;
+    private final LandingRepository landingRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -841,5 +851,108 @@ public class TenantVaultService implements VaultService {
                             ts.getOutdatedAt()
                     );
                 }).toList();
+    }
+
+    // ── NexeLocal phase toggle ────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public boolean toggleContractedPhase(UUID tenantId, String phase) {
+        var tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found: " + tenantId));
+
+        var contracted = parseCommaSeparated(tenant.getContractedPhases());
+        if (!contracted.contains(phase)) {
+            throw new IllegalArgumentException("Phase " + phase + " not contracted for tenant " + tenantId);
+        }
+
+        // activePhases null = totes les contractades actives
+        var active = new TreeSet<>(tenant.getActivePhases() != null
+                ? parseCommaSeparated(tenant.getActivePhases())
+                : contracted);
+
+        boolean willBeActive;
+        if (active.contains(phase)) {
+            active.remove(phase);
+            willBeActive = false;
+        } else {
+            active.add(phase);
+            willBeActive = true;
+        }
+
+        // Si active == contracted, tornem a null (estat per defecte)
+        if (active.equals(new TreeSet<>(contracted))) {
+            tenant.setActivePhases(null);
+        } else {
+            tenant.setActivePhases(String.join(",", active));
+        }
+        tenantRepository.save(tenant);
+        log.info("Tenant {} phase {} toggled to {}", tenantId, phase, willBeActive);
+        return willBeActive;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public NexeSetupResponse getNexeSetup(UUID tenantId) {
+        var tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found: " + tenantId));
+
+        var contracted = parseCommaSeparated(tenant.getContractedPhases());
+        var active = new HashSet<>(tenant.getActivePhases() != null
+                ? parseCommaSeparated(tenant.getActivePhases())
+                : contracted);
+
+        // Configuració per fase (AGENDA, PRESSUPOSTOS, FIDELITZACIO, EQUIP)
+        var configs = nexeServiceConfigRepository.findByTenantId(tenantId);
+        var configuredKeys = new HashSet<String>();
+        for (var cfg : configs) {
+            var val = cfg.getConfigJson();
+            if (val != null && !val.isBlank() && !val.equals("{}") && !val.equals("null")) {
+                configuredKeys.add(cfg.getServiceKey());
+            }
+        }
+
+        // F1 configurada si hi ha almenys una landing publicada o URL web externa
+        boolean f1Configured = landingRepository.countByTenantId(tenantId) > 0
+                || (tenant.getAgentSystemPrompt() != null && !tenant.getAgentSystemPrompt().isBlank());
+
+        var phases = contracted.stream().sorted().map(key -> {
+            boolean isConfigured = switch (key) {
+                case "F1" -> f1Configured;
+                case "F2" -> configuredKeys.contains("AGENDA");
+                case "F3" -> configuredKeys.contains("PRESSUPOSTOS");
+                case "F4" -> configuredKeys.contains("FIDELITZACIO");
+                case "F5" -> configuredKeys.contains("EQUIP");
+                default   -> false;
+            };
+            return new NexeSetupResponse.PhaseStatus(key, active.contains(key), isConfigured);
+        }).toList();
+
+        // Prerequisits
+        var waConfig = whatsAppWabaConfigRepository.findByTenantId(tenantId);
+        var googleConnected = googleConnectionRepository.existsByTenantIdAndActiveTrue(tenantId);
+        var equipConfig = configs.stream()
+                .filter(c -> "EQUIP".equals(c.getServiceKey()))
+                .findFirst();
+        boolean telegramConfigured = equipConfig.map(c -> {
+            var val = c.getConfigJson();
+            return val != null && val.contains("telegram_group_id");
+        }).orElse(false);
+
+        var prerequisites = new NexeSetupResponse.Prerequisites(
+                waConfig.isPresent(),
+                waConfig.map(w -> w.getPhoneNumberId()).orElse(null),
+                tenant.getAgentSystemPrompt() != null && !tenant.getAgentSystemPrompt().isBlank(),
+                landingRepository.countByTenantId(tenantId),
+                googleConnected,
+                telegramConfigured
+        );
+
+        return new NexeSetupResponse(new ArrayList<>(contracted), phases, prerequisites);
+    }
+
+    private List<String> parseCommaSeparated(String value) {
+        if (value == null || value.isBlank()) return new ArrayList<>();
+        return new ArrayList<>(Arrays.asList(value.split(",")));
     }
 }

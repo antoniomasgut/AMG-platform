@@ -22,6 +22,7 @@ public record TenantResponse(
         String agentSystemPrompt,
         boolean isActive,
         boolean isFree,
+        boolean isOwner,
         LocalDate billingStartDate,
         Instant implementationDeliveredAt,
         Instant onboardingCompletedAt,

@@ -13,6 +13,8 @@ import java.util.UUID;
 public interface TenantRepository extends JpaRepository<Tenant, UUID> {
     Optional<Tenant> findBySlug(String slug);
     boolean existsBySlug(String slug);
+    Optional<Tenant> findByIsOwnerTrue();
+    boolean existsByIsOwnerTrue();
 
     @Query("SELECT t FROM Tenant t WHERE t.contractedPhases LIKE %:phase%")
     List<Tenant> findByContractedPhasesContaining(@Param("phase") String phase);
@@ -24,6 +26,7 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
                OR lower(t.slug) LIKE '%' || lower(CAST(:search AS text)) || '%')
           AND (CAST(:isActive AS boolean) IS NULL OR t.is_active = CAST(:isActive AS boolean))
           AND (CAST(:isFree AS boolean) IS NULL OR t.is_free = CAST(:isFree AS boolean))
+          AND (t.is_owner IS NULL OR t.is_owner = false)
         ORDER BY t.created_at DESC
         """,
         countQuery = """
@@ -33,6 +36,7 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
                OR lower(t.slug) LIKE '%' || lower(CAST(:search AS text)) || '%')
           AND (CAST(:isActive AS boolean) IS NULL OR t.is_active = CAST(:isActive AS boolean))
           AND (CAST(:isFree AS boolean) IS NULL OR t.is_free = CAST(:isFree AS boolean))
+          AND (t.is_owner IS NULL OR t.is_owner = false)
         """,
         nativeQuery = true)
     Page<Tenant> findFiltered(

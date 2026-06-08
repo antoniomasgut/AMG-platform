@@ -37,4 +37,8 @@ public interface VaultService {
     void bumpCatalogVersion(UUID serviceId);
     void acknowledgeOutdated(UUID tenantId, UUID serviceId);
     List<OutdatedServiceResponse> listOutdatedServices();
+
+    // NexeLocal phase toggle
+    boolean toggleContractedPhase(UUID tenantId, String phase);
+    NexeSetupResponse getNexeSetup(UUID tenantId);
 }

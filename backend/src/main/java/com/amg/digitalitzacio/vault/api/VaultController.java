@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.vault.api;
 
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import com.amg.digitalitzacio.vault.api.dto.*;
+import com.amg.digitalitzacio.vault.api.dto.NexeSetupResponse;
 import com.amg.digitalitzacio.vault.api.dto.UpdateServicePriceRequest;
 import com.amg.digitalitzacio.vault.application.*;
 import com.amg.digitalitzacio.vault.domain.ImplementationStatus;
@@ -285,6 +286,22 @@ public class VaultController {
                                               @RequestBody ConfirmPhaseRequest request,
                                               @AuthenticationPrincipal UserPrincipal principal) {
         return vaultService.confirmPhase(tenantId, profileId, request);
+    }
+
+    // --- NexeLocal phase setup ---
+
+    @GetMapping("/tenants/{tenantId}/nexe-setup")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public NexeSetupResponse getNexeSetup(@PathVariable UUID tenantId) {
+        return vaultService.getNexeSetup(tenantId);
+    }
+
+    @PatchMapping("/tenants/{tenantId}/contracted-phases/{phase}/toggle")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<java.util.Map<String, Object>> toggleContractedPhase(
+            @PathVariable UUID tenantId, @PathVariable String phase) {
+        boolean isActive = vaultService.toggleContractedPhase(tenantId, phase);
+        return ResponseEntity.ok(java.util.Map.of("phase", phase, "isActive", isActive));
     }
 
     // --- Setup & Monitoring ---

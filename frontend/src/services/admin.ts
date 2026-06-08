@@ -17,7 +17,7 @@ export interface TenantResponse {
   contractedPhases: string[] | null;
   activePhases: string[] | null;
   agentSystemPrompt: string | null;
-  isActive: boolean; isFree: boolean;
+  isActive: boolean; isFree: boolean; isOwner: boolean;
   billingStartDate: string | null;
   implementationDeliveredAt: string | null;
   onboardingCompletedAt: string | null;
@@ -92,6 +92,9 @@ export const listTenants = (params: { page?: number; size?: number; search?: str
 
 export const getTenant = (id: string) =>
   apiFetch<TenantResponse>(`/tenants/${id}`);
+
+export const getOwnerTenant = () =>
+  apiFetch<TenantResponse>('/tenants/owner');
 
 export const createTenant = (data: CreateTenantRequest) =>
   apiFetch<TenantResponse>('/tenants', { method: 'POST', body: JSON.stringify(data) });
@@ -232,6 +235,7 @@ export const getAvailableModels = () =>
 export interface CatalogProfileResponse {
   id: string; name: string; slug: string;
   description: string; isActive: boolean;
+  sector?: string | null;
   directServices: CatalogServiceDetail[];
   phases: CatalogPhaseResponse[];
   createdAt: string; updatedAt: string;
@@ -239,7 +243,10 @@ export interface CatalogProfileResponse {
 
 export interface CatalogPhaseResponse {
   id: string; name: string; description: string;
-  sortOrder: number; services: CatalogServiceDetail[];
+  sortOrder: number;
+  sectorPhaseNumber?: number | null;
+  nexeMonthlyPrice?: number | null;
+  services: CatalogServiceDetail[];
 }
 
 export interface CatalogServiceDetail {
@@ -249,19 +256,19 @@ export interface CatalogServiceDetail {
 }
 
 export interface CreateCatalogProfileRequest {
-  name: string; slug: string; description?: string;
+  name: string; slug: string; description?: string; sector?: string;
 }
 
 export interface UpdateCatalogProfileRequest {
-  name?: string; slug?: string; description?: string;
+  name?: string; slug?: string; description?: string; sector?: string;
 }
 
 export interface CreateCatalogPhaseRequest {
-  name: string; description?: string; sortOrder?: number;
+  name: string; description?: string; sortOrder?: number; sectorPhaseNumber?: number;
 }
 
 export interface UpdateCatalogPhaseRequest {
-  name?: string; description?: string; sortOrder?: number;
+  name?: string; description?: string; sortOrder?: number; sectorPhaseNumber?: number;
 }
 
 export interface CreateCatalogServiceRequest {
@@ -585,3 +592,40 @@ export const checkTenantDeletion = (id: string) =>
 
 export const deleteTenant = (id: string) =>
   apiFetch<void>(`/tenants/${id}`, { method: 'DELETE' });
+
+// ─── NexeLocal Setup ──────────────────────────────────────────────────────────
+
+export interface NexeSetupPhaseStatus {
+  key: string;
+  isActive: boolean;
+  isConfigured: boolean;
+}
+
+export interface NexeSetupPrerequisites {
+  whatsappConnected: boolean;
+  whatsappPhone: string | null;
+  agentConfigured: boolean;
+  landingCount: number;
+  googleCalendarConnected: boolean;
+  telegramConfigured: boolean;
+}
+
+export interface NexeSetupResponse {
+  contractedPhases: string[];
+  phases: NexeSetupPhaseStatus[];
+  prerequisites: NexeSetupPrerequisites;
+}
+
+export const getNexeSetup = (tenantId: string) =>
+  apiFetch<NexeSetupResponse>(`/vault/tenants/${tenantId}/nexe-setup`);
+
+export const toggleContractedPhase = (tenantId: string, phase: string) =>
+  apiFetch<{ phase: string; isActive: boolean }>(`/vault/tenants/${tenantId}/contracted-phases/${phase}/toggle`, { method: 'PATCH' });
+
+export const sendCommTemplate = (data: {
+  channel: string; to: string; action: string;
+  sector?: string; language?: string; variables: Record<string, string>;
+}) => apiFetch<{ sent: boolean; renderedBody: string }>('/admin/comm/send', {
+  method: 'POST',
+  body: JSON.stringify(data),
+});

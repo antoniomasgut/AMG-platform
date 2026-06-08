@@ -356,7 +356,7 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
                     variant="primary"
                     onClick={() => {
                       onClose();
-                      router.push(`/${locale}/portal/admin/tenants/${budget.tenantId}/activate`);
+                      router.push(`/${locale}/portal/admin/tenants/${budget.tenantId}/setup`);
                     }}
                   >
                     Posar en marxa →

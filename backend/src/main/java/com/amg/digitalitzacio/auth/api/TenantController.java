@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -39,6 +40,14 @@ public class TenantController {
         // Native query with explicit ORDER BY — force unsorted pageable to avoid camelCase column translation
         Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
         return ResponseEntity.ok(tenantService.listTenants(unsorted, search, isActive, isFree));
+    }
+
+    @GetMapping("/owner")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<TenantResponse> getOwnerTenant() {
+        Optional<TenantResponse> owner = tenantService.getOwnerTenant();
+        if (owner.isPresent()) return ResponseEntity.ok(owner.get());
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/{id}")

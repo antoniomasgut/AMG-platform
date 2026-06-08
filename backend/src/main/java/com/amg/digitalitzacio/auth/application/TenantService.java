@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -170,6 +171,11 @@ public class TenantService {
         return toResponse(tenant);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<TenantResponse> getOwnerTenant() {
+        return tenantRepository.findByIsOwnerTrue().map(this::toResponse);
+    }
+
     private Tenant getTenantOrThrow(UUID id) {
         return tenantRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant no trobat"));
@@ -271,6 +277,7 @@ public class TenantService {
                 fromPhaseString(tenant.getActivePhases()),
                 tenant.getAgentSystemPrompt(),
                 Boolean.TRUE.equals(tenant.getIsActive()), Boolean.TRUE.equals(tenant.getIsFree()),
+                Boolean.TRUE.equals(tenant.getIsOwner()),
                 tenant.getBillingStartDate(),
                 tenant.getImplementationDeliveredAt(),
                 tenant.getOnboardingCompletedAt(),

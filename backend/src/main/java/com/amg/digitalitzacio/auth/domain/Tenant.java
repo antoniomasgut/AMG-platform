@@ -83,6 +83,10 @@ public class Tenant {
     @Builder.Default
     private Boolean isFree = false;
 
+    @Column(name = "is_owner", nullable = false)
+    @Builder.Default
+    private Boolean isOwner = false;
+
     @Column(name = "billing_start_date")
     private LocalDate billingStartDate;
 
