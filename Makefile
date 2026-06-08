@@ -130,7 +130,7 @@ deploy-frontend:
 	@infra/scripts/deploy.sh --no-backend
 
 logs-prod:
-	@ssh root@65.108.148.62 'docker logs amg-backend --tail=100 -f'
+	@ssh root@65.108.148.62 'docker logs amg_backend --tail=100 -f'
 
 ssh-prod:
 	@ssh root@65.108.148.62
