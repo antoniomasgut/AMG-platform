@@ -147,7 +147,10 @@ services:
     depends_on:
       - backend
     networks:
-      - amg_net
+      amg_net: {}
+      coolify:
+        aliases:
+          - amg-frontend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`${APP_DOMAIN}`) || Host(`www.${APP_DOMAIN}`)"
