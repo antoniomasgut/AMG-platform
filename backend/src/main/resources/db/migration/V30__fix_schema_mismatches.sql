@@ -47,3 +47,7 @@ ALTER TABLE leads ALTER COLUMN notes TYPE TEXT USING (notes::TEXT);
 
 -- message_templates: sector
 ALTER TABLE message_templates ADD COLUMN IF NOT EXISTS sector VARCHAR(50);
+
+-- prospect_campaigns: repeat scheduling
+ALTER TABLE prospect_campaigns ADD COLUMN IF NOT EXISTS scheduled_next_run TIMESTAMPTZ;
+ALTER TABLE prospect_campaigns ADD COLUMN IF NOT EXISTS repeat_interval_days INTEGER;
