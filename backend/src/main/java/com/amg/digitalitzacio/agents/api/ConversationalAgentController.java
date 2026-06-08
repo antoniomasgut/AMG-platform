@@ -44,6 +44,7 @@ public class ConversationalAgentController {
     private final TelegramBotClient telegramBotClient;
     private final SystemConfigService systemConfigService;
     private final com.amg.digitalitzacio.agents.application.AgentHealthService agentHealthService;
+    private final com.amg.digitalitzacio.agents.application.ConversationalAgentService conversationalAgentService;
     private final EmailChannel emailChannel;
     private final TenantRepository tenantRepository;
 
@@ -560,6 +561,25 @@ public class ConversationalAgentController {
                            ". Comprova que BREVO_API_KEY està configurada a Admin → API Keys del Sistema."
             ));
         }
+    }
+
+    record PortalChatRequest(String message, String sessionId) {}
+    record PortalChatResponse(String reply, boolean agentActive) {}
+
+    @PostMapping("/{tenantId}/portal-chat")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<PortalChatResponse> portalChat(
+            @PathVariable UUID tenantId,
+            @RequestBody PortalChatRequest req) {
+        if (req.message() == null || req.message().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        String sessionId = req.sessionId() != null ? req.sessionId() : UUID.randomUUID().toString();
+        String reply = conversationalAgentService.processWidgetMessage(tenantId, "portal:" + sessionId, req.message());
+        if (reply == null) {
+            return ResponseEntity.ok(new PortalChatResponse("L'agent no està actiu o no s'ha configurat encara.", false));
+        }
+        return ResponseEntity.ok(new PortalChatResponse(reply, true));
     }
 
     private UserPrincipal getPrincipal() {

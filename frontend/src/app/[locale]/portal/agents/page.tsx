@@ -35,12 +35,14 @@ import {
   testKnowledgeResponse,
   type KnowledgeBase,
 } from '@/services/knowledge';
-import { listContacts, clearContactMemory, testTenantEmail } from '@/services/agents-conversational';
+import { listContacts, clearContactMemory, testTenantEmail, portalChat } from '@/services/agents-conversational';
+import { useRef } from 'react';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
 import { IconSet } from '@/components/ui/icons';
 
-type Tab = 'agent' | 'pending' | 'conversations' | 'coneixement' | 'ia';
+type Tab = 'agent' | 'pending' | 'conversations' | 'coneixement' | 'ia' | 'xat';
+type ChatMsg = { role: 'user' | 'agent'; text: string };
 
 const PROVIDER_LABELS: Record<string, string> = {
   anthropic: 'Anthropic',
@@ -88,6 +90,12 @@ export default function AgentsPage() {
   const [kbTestResult, setKbTestResult] = useState<string | null>(null);
   const [kbTestError, setKbTestError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatSessionId = useRef(crypto.randomUUID());
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const { data: status } = useQuery({
     queryKey: ['agent-status', tenantId],
@@ -299,6 +307,7 @@ export default function AgentsPage() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'agent', label: 'Agent' },
+    { key: 'xat', label: '💬 Xat' },
     { key: 'pending', label: `Pendents (${pending.length})` },
     { key: 'conversations', label: 'Converses' },
     ...(isAdmin ? [{ key: 'coneixement' as Tab, label: 'Coneixement' }] : []),
@@ -723,6 +732,115 @@ export default function AgentsPage() {
                   Configura almenys un canal per activar el bot.
                 </p>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Xat Tab */}
+        {activeTab === 'xat' && (
+          <div className="flex flex-col h-[calc(100vh-260px)] min-h-[400px]">
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-4" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
+              {chatMessages.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-12">
+                  <IconSet.Bot size={36} className="text-ink-3" />
+                  <p className="text-ink-3 text-sm">Escriu un missatge per parlar amb l&apos;agent</p>
+                  <p className="text-ink-3 text-xs f-mono">El xat usa la mateixa IA i coneixement configurat</p>
+                </div>
+              )}
+              {chatMessages.map((msg, i) => (
+                <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.role === 'agent' && (
+                    <div className="w-7 h-7 rounded-full bg-accent flex items-center justify-center shrink-0 mt-0.5">
+                      <IconSet.Bot size={14} className="text-white" />
+                    </div>
+                  )}
+                  <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap ${
+                    msg.role === 'user'
+                      ? 'bg-accent text-white rounded-br-sm'
+                      : 'bg-bg-1 border border-border-base text-ink-1 rounded-bl-sm'
+                  }`}>
+                    {msg.text}
+                  </div>
+                  {msg.role === 'user' && (
+                    <div className="w-7 h-7 rounded-full bg-bg-1 border border-border-base flex items-center justify-center shrink-0 mt-0.5">
+                      <IconSet.Users size={14} className="text-ink-2" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex gap-3 justify-start">
+                  <div className="w-7 h-7 rounded-full bg-accent flex items-center justify-center shrink-0">
+                    <IconSet.Bot size={14} className="text-white" />
+                  </div>
+                  <div className="px-4 py-3 bg-bg-1 border border-border-base rounded-2xl rounded-bl-sm">
+                    <div className="flex gap-1 items-center">
+                      <span className="w-1.5 h-1.5 bg-ink-3 rounded-full animate-bounce [animation-delay:0ms]" />
+                      <span className="w-1.5 h-1.5 bg-ink-3 rounded-full animate-bounce [animation-delay:150ms]" />
+                      <span className="w-1.5 h-1.5 bg-ink-3 rounded-full animate-bounce [animation-delay:300ms]" />
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            <div className="border-t border-border-base pt-3 flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && chatInput.trim() && !chatLoading) {
+                    e.preventDefault();
+                    const msg = chatInput.trim();
+                    setChatInput('');
+                    setChatMessages(prev => [...prev, { role: 'user', text: msg }]);
+                    setChatLoading(true);
+                    try {
+                      const res = await portalChat(tenantId!, msg, chatSessionId.current);
+                      setChatMessages(prev => [...prev, { role: 'agent', text: res.reply }]);
+                    } catch {
+                      setChatMessages(prev => [...prev, { role: 'agent', text: 'Error connectant amb l\'agent.' }]);
+                    } finally {
+                      setChatLoading(false);
+                      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+                    }
+                  }
+                }}
+                placeholder="Escriu un missatge… (Enter per enviar)"
+                className="flex-1 px-4 py-2.5 bg-bg-1 border border-border-base rounded-xl text-sm focus:outline-none focus:border-accent"
+                disabled={chatLoading}
+              />
+              <button
+                onClick={async () => {
+                  const msg = chatInput.trim();
+                  if (!msg || chatLoading) return;
+                  setChatInput('');
+                  setChatMessages(prev => [...prev, { role: 'user', text: msg }]);
+                  setChatLoading(true);
+                  try {
+                    const res = await portalChat(tenantId!, msg, chatSessionId.current);
+                    setChatMessages(prev => [...prev, { role: 'agent', text: res.reply }]);
+                  } catch {
+                    setChatMessages(prev => [...prev, { role: 'agent', text: 'Error connectant amb l\'agent.' }]);
+                  } finally {
+                    setChatLoading(false);
+                    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+                  }
+                }}
+                disabled={chatLoading || !chatInput.trim()}
+                className="px-4 py-2.5 bg-accent text-white rounded-xl hover:opacity-90 disabled:opacity-40 shrink-0"
+              >
+                <IconSet.Zap size={16} />
+              </button>
+              <button
+                onClick={() => { setChatMessages([]); chatSessionId.current = crypto.randomUUID(); }}
+                className="px-3 py-2.5 border border-border-base rounded-xl text-ink-3 hover:text-ink-1 hover:border-accent transition shrink-0"
+                title="Reiniciar conversa"
+              >
+                <IconSet.Refresh size={14} />
+              </button>
             </div>
           </div>
         )}

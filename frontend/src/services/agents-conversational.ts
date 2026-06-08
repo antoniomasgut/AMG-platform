@@ -232,6 +232,12 @@ export const clearContactMemory = (tenantId: string, contactId: string) =>
 export const testTenantEmail = (tenantId: string) =>
   apiFetch<{ ok: boolean; message: string }>(`/agents/conversational/${tenantId}/email/test`, { method: 'POST' });
 
+export const portalChat = (tenantId: string, message: string, sessionId: string) =>
+  apiFetch<{ reply: string; agentActive: boolean }>(`/agents/conversational/${tenantId}/portal-chat`, {
+    method: 'POST',
+    body: JSON.stringify({ message, sessionId }),
+  });
+
 // --- Usage Stats ---
 
 export interface ChannelUsageStats {
