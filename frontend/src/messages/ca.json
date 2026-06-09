@@ -1294,7 +1294,8 @@
           "QUALIFIED": "Qualificat",
           "PROPOSAL": "Proposta",
           "NEGOTIATION": "Negociació",
-          "WON": "Tancat"
+          "WON": "Tancat",
+          "NURTURING": "Nurturing"
         }
       },
       "resources": {
@@ -1320,6 +1321,12 @@
         "tenants": "Tenants",
         "apiKeys": "Claus API",
         "backup": "Backup"
+      },
+      "payments": {
+        "section": "Pagaments",
+        "title": "Resum de pagaments",
+        "pending": "Pendents",
+        "completed": "Completats"
       }
     },
     "client": {
@@ -1348,6 +1355,13 @@
       },
       "myServices": {
         "title": "Els meus serveis"
+      },
+      "invoiceStatus": {
+        "PAID": "Pagada",
+        "PENDING": "Pendent",
+        "OVERDUE": "Vençuda",
+        "DRAFT": "Esborrany",
+        "CANCELLED": "Cancel·lada"
       }
     }
   }

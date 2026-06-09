@@ -98,7 +98,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
     : 'default';
 
   const t = useTranslations('portalDashboard');
-  const STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON'];
+  const STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'NURTURING', 'WON'];
 
   if (loading) {
     return (
@@ -222,9 +222,32 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
             )}
           </div>
         ) : (
-          /* ADMIN: placeholder fins que hi hagi resum de factures */
-          <div className="amg-card card-clip p-4 sm:p-5 flex items-center justify-center">
-            <p className="f-mono text-[10px] uppercase text-ink-3">{t('admin.invoicesSummaryComingSoon')}</p>
+          <div className="amg-card card-clip p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('admin.payments.section')}</div>
+                <div className="f-display font-bold text-sm mt-0.5">{t('admin.payments.title')}</div>
+              </div>
+              <a href="/portal/payments" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('seeAll')}</a>
+            </div>
+            {payments ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-bg-1 border border-border-base p-3">
+                    <div className="f-mono text-[9px] uppercase text-ink-3">{t('admin.payments.pending')}</div>
+                    <div className={`f-display font-bold text-2xl mt-1 ${payments.pendingCount > 0 ? 'text-warning' : 'text-ink-0'}`}>
+                      {payments.pendingCount}
+                    </div>
+                  </div>
+                  <div className="bg-bg-1 border border-border-base p-3">
+                    <div className="f-mono text-[9px] uppercase text-ink-3">{t('admin.payments.completed')}</div>
+                    <div className="f-display font-bold text-2xl mt-1 text-success">{payments.completedCount}</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-6 text-center f-mono text-[10px] uppercase text-ink-3">{t('noData')}</div>
+            )}
           </div>
         )}
       </div>
@@ -494,7 +517,7 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
                 className="grid grid-cols-[1fr_80px_80px_20px] gap-3 h-10 items-center border-b border-[rgba(226,232,240,0.04)] last:border-0">
                 <span className="f-mono text-[11px] text-ink-1">{formatDate(inv.createdAt)}</span>
                 <span className="f-mono text-[11px] font-bold">{formatEur(inv.amount)}</span>
-                <AMGBadge tone={BADGE_TONE[inv.status] || 'accent'}>{inv.status}</AMGBadge>
+                <AMGBadge tone={BADGE_TONE[inv.status] || 'accent'}>{t(`client.invoiceStatus.${inv.status}` as any) || inv.status}</AMGBadge>
                 <a href={inv.invoicePdfUrl || '#'} target="_blank" rel="noopener"
                   className={`text-ink-2 hover:text-accent-light ${!inv.invoicePdfUrl ? 'opacity-30 pointer-events-none' : ''}`}>
                   <IconSet.Download size={12} />

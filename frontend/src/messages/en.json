@@ -1294,7 +1294,8 @@
           "QUALIFIED": "Qualified",
           "PROPOSAL": "Proposal",
           "NEGOTIATION": "Negotiation",
-          "WON": "Won"
+          "WON": "Won",
+          "NURTURING": "Nurturing"
         }
       },
       "resources": {
@@ -1320,6 +1321,12 @@
         "tenants": "Tenants",
         "apiKeys": "API keys",
         "backup": "Backup"
+      },
+      "payments": {
+        "section": "Payments",
+        "title": "Payment summary",
+        "pending": "Pending",
+        "completed": "Completed"
       }
     },
     "client": {
@@ -1348,6 +1355,13 @@
       },
       "myServices": {
         "title": "My services"
+      },
+      "invoiceStatus": {
+        "PAID": "Paid",
+        "PENDING": "Pending",
+        "OVERDUE": "Overdue",
+        "DRAFT": "Draft",
+        "CANCELLED": "Cancelled"
       }
     }
   }

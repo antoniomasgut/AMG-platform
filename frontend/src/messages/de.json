@@ -1294,7 +1294,8 @@
           "QUALIFIED": "Qualifiziert",
           "PROPOSAL": "Angebot",
           "NEGOTIATION": "Verhandlung",
-          "WON": "Gewonnen"
+          "WON": "Gewonnen",
+          "NURTURING": "Nurturing"
         }
       },
       "resources": {
@@ -1320,6 +1321,12 @@
         "tenants": "Tenants",
         "apiKeys": "API-Schlüssel",
         "backup": "Backup"
+      },
+      "payments": {
+        "section": "Zahlungen",
+        "title": "Zahlungsübersicht",
+        "pending": "Ausstehend",
+        "completed": "Abgeschlossen"
       }
     },
     "client": {
@@ -1348,6 +1355,13 @@
       },
       "myServices": {
         "title": "Meine Dienste"
+      },
+      "invoiceStatus": {
+        "PAID": "Bezahlt",
+        "PENDING": "Ausstehend",
+        "OVERDUE": "Überfällig",
+        "DRAFT": "Entwurf",
+        "CANCELLED": "Storniert"
       }
     }
   }
