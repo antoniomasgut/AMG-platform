@@ -57,6 +57,9 @@ export interface CreateActivityRequest {
 export const getLeads = () =>
   apiFetch<{ content: Lead[] }>('/leads?size=200').then(r => r.content);
 
+export const searchLeads = (query: string) =>
+  apiFetch<{ content: Lead[] }>(`/leads?search=${encodeURIComponent(query)}&size=5`).then(r => r.content);
+
 export const getLead = (id: string) =>
   apiFetch<Lead>(`/leads/${id}`);
 
