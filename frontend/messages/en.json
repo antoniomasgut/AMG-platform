@@ -8,7 +8,11 @@
     "cancel": "Cancel",
     "loading": "Loading...",
     "error": "Error",
-    "success": "Done"
+    "success": "Done",
+    "siteName": "AMG Digitalitzacions",
+    "learnMore": "LEARN MORE",
+    "cta": "REQUEST DEMO",
+    "seeServices": "VIEW SERVICES"
   },
   "nav": {
     "services": "Services",
@@ -16,7 +20,12 @@
     "howItWorks": "The process",
     "contact": "Contact",
     "login": "Sign in",
-    "portal": "My portal"
+    "portal": "My portal",
+    "iniciarSessio": "SIGN IN",
+    "preus": "Pricing",
+    "comFunciona": "How it works",
+    "contacte": "Contact",
+    "serveis": "Services"
   },
   "landing": {
     "hero": {
@@ -306,7 +315,16 @@
         "loginError": "Login error",
         "sendError": "Error sending the link",
         "emailRequired": "Please enter your email first"
-      }
+      },
+      "resent": "RESEND LINK",
+      "errorGeneral": "Login error",
+      "errorInvalidCredentials": "Invalid credentials",
+      "sentDesc": "We've sent an access link to",
+      "sentExpiry": "The link expires in {minutes} min. Check your spam folder if you don't see it.",
+      "sentTitle": "CHECK YOUR EMAIL",
+      "errorTooManyAttempts": "Too many attempts. Try again in a few minutes.",
+      "errorBlocked": "Account blocked. Try again later or reset your password.",
+      "orPassword": "or with password"
     },
     "forgotPassword": {
       "badge": "Reset password",
@@ -322,7 +340,10 @@
       "minutes": "30 min",
       "checkSpam": "Check your spam folder if you don't see it.",
       "backToLogin": "← BACK TO LOGIN",
-      "error": "Error sending the request"
+      "error": "Error sending the request",
+      "sentTitle": "CHECK YOUR EMAIL",
+      "sentDesc": "If the email exists, you'll receive a recovery link at",
+      "sentExpiry": "The link expires in {minutes} min. Check your spam folder if you don't see it."
     },
     "resetPassword": {
       "badge": "New password",
@@ -343,7 +364,14 @@
         "minLength": "Password must be at least 4 characters",
         "mismatch": "Passwords do not match",
         "generic": "Error resetting password"
-      }
+      },
+      "invalidLinkTitle": "INVALID LINK",
+      "invalidLinkDesc": "This recovery link is invalid or has expired.",
+      "successDesc": "Redirecting to login...",
+      "errorGeneral": "Error resetting password",
+      "errorInvalidToken": "Invalid or expired recovery link",
+      "errorMismatch": "Passwords don't match",
+      "errorMinLength": "Password must be at least 4 characters"
     }
   },
   "portal": {
@@ -356,7 +384,17 @@
         "billing": "Billing",
         "settings": "Settings"
       },
-      "logout": "Sign out"
+      "logout": "Sign out",
+      "admin": "Administration",
+      "publicLanding": "Public Landing",
+      "invoices": "Invoices",
+      "tenants": "Tenants",
+      "myAccount": "My account",
+      "dashboard": "Dashboard",
+      "services": "Services",
+      "settings": "Settings",
+      "support": "Support",
+      "users": "Users"
     },
     "dashboard": {
       "welcome": "Good morning",
@@ -384,7 +422,37 @@
         },
         "empty": "No invoices"
       }
-    }
+    },
+    "subscription": {
+      "plan": "PLAN {name}",
+      "monthlyAmount": "Monthly amount",
+      "cycle": "Cycle {start} → {end}",
+      "upToDate": "UP TO DATE",
+      "active": "Active",
+      "role": "Role",
+      "badge": "Active subscription",
+      "nextBilling": "Next billing"
+    },
+    "help": {
+      "description": "Your assigned technician is available to answer your questions.",
+      "viewTutorials": "VIEW TUTORIALS",
+      "title": "NEED HELP?",
+      "contactTeam": "CONTACT TEAM"
+    },
+    "services": {
+      "manage": "MANAGE",
+      "eyebrow": "Monthly usage",
+      "title": "Active services",
+      "operational": "OPERATIONAL"
+    },
+    "invoices": {
+      "eyebrow": "History",
+      "title": "Latest invoices",
+      "viewAll": "VIEW ALL"
+    },
+    "logout": "SIGN OUT",
+    "greeting": "Good morning, {name}",
+    "loggingOut": "SIGNING OUT..."
   },
   "onboarding": {
     "title": "Welcome, {name}! Let's get started.",
@@ -411,13 +479,33 @@
       "billing_title": "Generate your first quote",
       "billing_desc": "Create a custom quote and send it to your client as a PDF.",
       "billing_cta": "GET STARTED"
-    }
+    },
+    "eyebrow": "GETTING STARTED"
   },
   "legal": {
     "avisLegal": "Legal Notice",
     "privacitat": "Privacy Policy",
     "cookies": "Cookie Policy",
-    "termes": "Terms of Service"
+    "termes": "Terms of Service",
+    "avis": {
+      "lastUpdated": "Last updated",
+      "sections": {
+        "ownership": {
+          "content": "AMG Digitalitzacions is a trademark of Antonio Más Gutiérrez, with tax ID 12345678A and registered address in Mallorca, Balearic Islands. For any enquiries, contact us at info@amgdl.com.",
+          "title": "1. Owner details"
+        },
+        "purpose": {
+          "content": "This website aims to provide information about digital automation, web development and artificial intelligence services offered by AMG Digitalitzacions to small and medium businesses in Mallorca.",
+          "title": "2. Website purpose"
+        },
+        "terms": {
+          "content": "The user agrees to use the content and services appropriately and not to engage in any unlawful activities or activities contrary to good faith.",
+          "title": "3. Terms of use"
+        }
+      },
+      "backToHome": "← Back to home",
+      "title": "Legal Notice"
+    }
   },
   "cookies": {
     "message": "We use technical cookies necessary for the portal to function.",
@@ -759,7 +847,8 @@
       },
       "field": {
         "api_key": "Chat API Key",
-        "widget_id": "Widget ID (optional)"
+        "widget_id": "Widget ID (optional)",
+        "widget_id_placeholder": "E.g.: widget_abc123"
       }
     },
     "formulari": {
@@ -975,7 +1064,10 @@
       "services": "3. Services",
       "operations": "4. Operations",
       "clients": "Clients",
-      "system": "System"
+      "system": "System",
+      "agentsAI": "Agents & AI",
+      "platform": "AMG Platform",
+      "webServices": "Web Services"
     },
     "items": {
       "dashboard": "Dashboard",
@@ -1007,7 +1099,16 @@
       "documentTemplates": "Document templates",
       "generatedDocs": "Generated documents",
       "google": "Google Workspace",
-      "knowledge": "Knowledge Base"
+      "knowledge": "Knowledge Base",
+      "meetings": "Meetings",
+      "serveis": "Services",
+      "integrations": "Integrations",
+      "analytics": "Analytics",
+      "hosting": "Web Hosting",
+      "platformSummary": "Platform summary",
+      "metaAds": "Meta Ads AMG",
+      "config": "Configuration",
+      "myBusiness": "My business"
     }
   },
   "knowledge": {
@@ -1065,7 +1166,8 @@
           "QUALIFIED": "Qualified",
           "PROPOSAL": "Proposal",
           "NEGOTIATION": "Negotiation",
-          "WON": "Won"
+          "WON": "Won",
+          "NURTURING": "Nurturing"
         }
       },
       "resources": {
@@ -1084,7 +1186,20 @@
         "apiKeys": "API KEYS",
         "backup": "BACKUP"
       },
-      "invoicesSummaryComingSoon": "Invoice summary — coming soon"
+      "invoicesSummaryComingSoon": "Invoice summary — coming soon",
+      "payments": {
+        "title": "Payment summary",
+        "completed": "Completed",
+        "section": "Payments",
+        "pending": "Pending"
+      },
+      "channels": {
+        "title": "Channel activity",
+        "byTenant": "By tenant →",
+        "noData": "No data",
+        "tokensAI": "AI tokens",
+        "period": "Last 30 days"
+      }
     },
     "client": {
       "billing": {
@@ -1109,7 +1224,468 @@
         "title": "NEED HELP?",
         "subtitle": "Your assigned technician is available to answer your questions.",
         "contact": "CONTACT"
+      },
+      "invoiceStatus": {
+        "OVERDUE": "Overdue",
+        "DRAFT": "Draft",
+        "PENDING": "Pending",
+        "CANCELLED": "Cancelled",
+        "PAID": "Paid"
+      },
+      "myServices": {
+        "title": "My services"
       }
     }
+  },
+  "guides": {
+    "domain": {
+      "faq_ssl_q": "How is the SSL certificate generated?",
+      "setup_step_2": "Change the nameservers to the ones in the DNS section",
+      "faq_not_visible_a": "Check that the nameservers are correctly configured at your registrar. If they are, contact your technician.",
+      "setup_step_3": "Wait for propagation to complete (24-72h)",
+      "faq_not_visible_q": "My website is not showing after 72h",
+      "faq_ssl_a": "The SSL certificate is automatically generated once the domain points to our servers. It can take up to 15 minutes.",
+      "propagation_text": "DNS propagation can take between 24 and 72 hours to complete worldwide. During this time, your domain may be accessible from some locations but not others.",
+      "faq_time_a": "Usually between 24 and 48 hours, but it can take up to 72 hours in extreme cases.",
+      "faq_time_q": "How long does domain propagation take?",
+      "verify_link": "https://dnschecker.org",
+      "setup_step_1": "Access your domain registrar's panel"
+    },
+    "service_titles": {
+      "DOMAIN": "Domain",
+      "AUTOMATION": "n8n Automation",
+      "WHATSAPP": "WhatsApp Business",
+      "BOT_IA": "Basic AI Bot",
+      "LANDING": "Landing Page",
+      "SMTP": "Corporate SMTP"
+    },
+    "view_all": "View all services",
+    "landing": {
+      "faq_colors_q": "How do I change the color of my landing?",
+      "faq_domain_q": "How do I connect my domain?",
+      "faq_sections_q": "How do I add a new section?",
+      "edit_step_1": "Go to the portal and navigate to Landings",
+      "edit_step_3": "Use the visual editor to modify content",
+      "publish_step_2": "Preview changes before publishing",
+      "access_link": "https://{domain}",
+      "faq_seo_a": "The editor includes basic SEO options: title, description, and keywords. For advanced improvements, contact your technician.",
+      "publish_step_3": "Click Publish to go live",
+      "publish_step_1": "Edit your landing content",
+      "edit_step_4": "Click Save to keep your changes",
+      "faq_colors_a": "In the visual editor, go to the customization tab. You'll find options to change colors, fonts, and styles.",
+      "edit_step_2": "Select the landing you want to edit",
+      "faq_sections_a": "From the editor, click \"Add section\" and choose from the available templates.",
+      "faq_domain_a": "In the landing settings panel, go to the domain section and follow the instructions to configure the nameservers.",
+      "domains_text": "You can use a custom domain for your landing. If you manage the domain yourself, you'll need to point the nameservers to our servers.",
+      "faq_seo_q": "How do I improve my landing's SEO?"
+    },
+    "bot_ia": {
+      "faq_add_info_q": "How do I add more information to the bot?",
+      "faq_bad_response_q": "Why isn't the bot responding correctly?",
+      "faq_bad_response_a": "Check that the knowledge base has sufficient and up-to-date information. If the problem persists, adjust the bot's tone and instructions.",
+      "faq_add_info_a": "From the knowledge management panel, you can upload PDF, TXT, or DOCX documents for the bot to learn from.",
+      "access_link": "https://chat.amg.cat/{slug}",
+      "manage_link": "/portal/admin/knowledge",
+      "faq_integration_a": "Yes, the bot can be integrated with WhatsApp Business, Telegram, and the web chat. Manage integrations from the agents panel.",
+      "how_it_works": "The AI bot automatically responds to your customers' messages 24/7. You can customize responses and tone from the management panel.",
+      "faq_integration_q": "Can it be integrated with WhatsApp?"
+    },
+    "no_guides": "Guide not available for this service",
+    "subtitle": "Usage guides for your active services",
+    "status_pending": "Pending",
+    "smtp": {
+      "faq_port_a": "Port 587 with TLS (recommended) or port 465 with SSL. Port 25 is not available for security reasons.",
+      "faq_port_q": "Which port should I use?",
+      "thunderbird_step_1": "Open Thunderbird and go to File > New > Mail",
+      "gmail_step_3": "Add an email account from Accounts and Import",
+      "thunderbird_step_3": "Enter the SMTP server details",
+      "gmail_step_2": "Go to \"See all settings\"",
+      "outlook_title": "Outlook Setup",
+      "gmail_step_4": "Select \"Add a mail account\" and enter the SMTP details",
+      "thunderbird_step_2": "Select Manual configuration",
+      "faq_send_a": "Verify that your email client uses the correct port (587 with TLS or 465 with SSL). Check that the password is correct.",
+      "outlook_step_2": "Add an email account and select Manual setup",
+      "thunderbird_title": "Thunderbird Setup",
+      "test_link": "/portal/admin/config",
+      "gmail_step_1": "Open Gmail Settings",
+      "thunderbird_step_4": "Click Re-test and then Done",
+      "outlook_step_3": "Enter the SMTP credentials (server, port, username, password) with TLS",
+      "outlook_step_1": "Open Outlook and go to Settings",
+      "faq_send_q": "Why can't I send emails?",
+      "faq_auth_a": "Make sure you have checked \"Remember password\" in your email client. If the issue persists, generate an app password.",
+      "gmail_title": "Gmail Setup",
+      "faq_auth_q": "Why does it keep asking me for authentication?"
+    },
+    "service_descriptions": {
+      "SMTP": "Corporate email for your domain. Configure it in your email client.",
+      "LANDING": "Your professional website. Learn how to edit and publish it.",
+      "BOT_IA": "AI virtual assistant that automatically replies to your customers.",
+      "DOMAIN": "Manage your domain and DNS configuration.",
+      "WHATSAPP": "WhatsApp Business messaging integrated into your portal.",
+      "AUTOMATION": "n8n automations for your business."
+    },
+    "section_howto_publish": "How to publish",
+    "view_guide": "View guide",
+    "automation": {
+      "faq_monitoring_a": "n8n shows the status of each workflow (active, inactive, error). You can also configure alert notifications via email or Telegram.",
+      "faq_monitoring_q": "How do I know if workflows are running?",
+      "access_link": "https://n8n.amg.cat",
+      "manage_step_1": "Access n8n from the access link",
+      "faq_failed_q": "The workflow failed, what do I do?",
+      "workflows_text": "Workflows automate repetitive tasks in your business. Each workflow has a specific function: sending emails, managing leads, updating data, etc.",
+      "faq_failed_a": "Check the error log in n8n. It is usually a connection issue with an external API. If you can't resolve it, contact your technician.",
+      "manage_step_2": "Sign in with your credentials",
+      "faq_new_automations_q": "Can I add new automations?",
+      "manage_step_3": "From the panel, you can activate, deactivate, or modify workflows",
+      "faq_new_automations_a": "Yes, you can create new workflows from the n8n panel. If you need help, ask your assigned technician."
+    },
+    "section_howto_edit": "How to edit",
+    "whatsapp": {
+      "access_text": "The WhatsApp Business API service is integrated into your portal. You can manage conversations from the inbox.",
+      "faq_change_number_a": "You need to configure a new number from the Meta Business panel and update the credentials in your portal.",
+      "faq_change_number_q": "How do I change the WhatsApp number?",
+      "faq_no_messages_q": "Why am I not receiving messages?",
+      "faq_template_a": "WhatsApp Business templates are managed from the Meta Business panel. They will need Meta approval before use.",
+      "faq_template_q": "How do I create message templates?",
+      "faq_no_messages_a": "Check that the phone number is verified in Meta and that the webhook is correctly configured.",
+      "how_it_works": "When a customer sends a message from the web form, it is automatically received in your WhatsApp Business. You can reply directly from the portal.",
+      "test_link": "https://wa.me/{phone}"
+    },
+    "section_access": "Access",
+    "section_setup": "Setup",
+    "section_howto_manage": "How to manage",
+    "status": "Status",
+    "section_test": "Test connection",
+    "new_services_cta": "View guides",
+    "status_configuring": "Configuring",
+    "section_propagation": "Propagation time",
+    "no_services_desc": "Once you have active services, their guides will appear here.",
+    "guide": "Guide",
+    "configure_service": "Configure service",
+    "service_ready": "Ready!",
+    "section_troubleshoot": "Troubleshooting",
+    "dismiss": "Got it",
+    "section_manage_responses": "Manage responses",
+    "section_workflows": "Active workflows",
+    "section_credentials": "Credentials",
+    "new_services_title": "You have new active services!",
+    "status_ready": "Active",
+    "section_domains": "Domains",
+    "section_dns": "DNS",
+    "section_verify": "Verification",
+    "no_credentials": "Credentials not configured",
+    "title": "Services",
+    "faq_title": "Frequently asked questions",
+    "no_services": "You don't have any active services yet",
+    "service_not_found": "Service not found",
+    "no_guides_desc": "This service type does not have a usage guide available.",
+    "back_to_list": "Back to list",
+    "section_howto": "How to use"
+  },
+  "admin": {
+    "config": {
+      "validation": {
+        "boolean": "Must be 'true' or 'false'.",
+        "number": "Must be a valid number.",
+        "secret": "Minimum 8 characters for secret keys.",
+        "minLength": "Minimum {n} characters.",
+        "maxLength": "Maximum {n} characters.",
+        "pattern": "Value does not match the required format.",
+        "json": "Must be valid JSON.",
+        "numberMax": "Maximum value is {max}.",
+        "url": "Must be a valid URL (http:// or https://).",
+        "numberMin": "Minimum value is {min}."
+      },
+      "placeholderNumber": "Enter a number...",
+      "infoEnvPriority": "Environment variables take precedence over DB keys.",
+      "types": {
+        "number": "Number",
+        "string": "Text",
+        "boolean": "Boolean",
+        "url": "URL",
+        "json": "JSON",
+        "secret": "Secret key"
+      },
+      "loadingTest": "…",
+      "confirmDelete": "Delete key {key}?",
+      "categories": {
+        "AGENTS": "AI Agents",
+        "INFRAOPS": "InfraOps",
+        "PAYMENTS": "Payments",
+        "MAINTENANCE": "Maintenance & Branding",
+        "FINOPS": "FinOps",
+        "GENERAL": "General",
+        "BACKUP": "Backup",
+        "META_ADS": "Meta Ads",
+        "EMAIL_INBOUND": "Email Inbound",
+        "PROSPECTING": "Prospecting",
+        "AUTOMATIONS": "Automations",
+        "IMAGE_GEN": "Image Generation",
+        "STORAGE": "Storage",
+        "AI_MODELS": "AI Models",
+        "CALENDAR": "Calendar"
+      },
+      "placeholderJson": "Paste JSON here...",
+      "missing": "{n} to configure",
+      "envRead": "Read from env",
+      "btnTest": "Test",
+      "allConfigured": "All configured",
+      "defaultSource": "Default value",
+      "infoNoRestart": "Changing a key here does not require restarting the server.",
+      "search": "Search by key, name or description...",
+      "toastDeleteError": "Error deleting key",
+      "breadcrumbDisplay": "/ portal / admin / config /",
+      "auditTitle": "Change history",
+      "btnSave": "Save",
+      "toastSaveError": "Error saving key",
+      "missingSource": "Not configured",
+      "btnCancel": "Cancel",
+      "toggleActive": "Active",
+      "btnEdit": "Edit",
+      "title": "System Configuration",
+      "count": "{filtered} of {total} keys",
+      "btnDelete": "Delete",
+      "infoEncrypted": "Keys are stored encrypted (AES-256) in the database.",
+      "envSource": "Environment variable",
+      "testError": "Error connecting to the server.",
+      "toggleInactive": "Inactive",
+      "toastDeleted": "Key {key} deleted",
+      "placeholderValue": "Enter {label}…",
+      "dbSource": "Configured (DB)",
+      "btnConfigure": "Configure",
+      "toastSaved": "Key {key} saved successfully",
+      "breadcrumb": "admin / config"
+    },
+    "sidebar": {
+      "tenants": "Tenants",
+      "users": "Users",
+      "admin": "Administration"
+    },
+    "users": {
+      "created": "User created successfully",
+      "title": "Users",
+      "updated": "User updated successfully",
+      "search": "Search users...",
+      "fields": {
+        "role": "Role",
+        "email": "Email",
+        "password": "Password",
+        "name": "Name",
+        "isActive": "Active",
+        "tenant": "Tenant"
+      },
+      "unlock": "Unlock",
+      "new": "New user",
+      "lastLogin": "Last login",
+      "roles": {
+        "SUPER_ADMIN": "Super Admin",
+        "CLIENT": "Client",
+        "ADMIN": "Admin"
+      },
+      "status": {
+        "blocked": "Blocked",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "delete": "Delete user",
+      "deleted": "User deleted successfully",
+      "unlockSuccess": "User unlocked successfully",
+      "edit": "Edit user",
+      "deleteConfirm": "Are you sure you want to delete this user? This will deactivate their account.",
+      "noResults": "No users found",
+      "never": "Never"
+    },
+    "tenants": {
+      "search": "Search tenants...",
+      "fields": {
+        "name": "Name",
+        "phone": "Phone",
+        "isActive": "Active",
+        "slug": "Slug",
+        "address": "Address",
+        "email": "Email"
+      },
+      "created": "Tenant created successfully",
+      "noResults": "No tenants found",
+      "title": "Tenants",
+      "updated": "Tenant updated successfully",
+      "new": "New tenant",
+      "edit": "Edit tenant"
+    },
+    "save": "Save",
+    "loading": "Loading...",
+    "title": "Administration",
+    "cancel": "Cancel"
+  },
+  "footer": {
+    "contacte": "Contact",
+    "termes": "Terms of Service",
+    "copyright": "AMG Digitalitzacions. All rights reserved.",
+    "avisLegal": "Legal Notice",
+    "services": "Services",
+    "description": "Digital automation for small businesses in Mallorca. Websites, AI bots, CRM and more.",
+    "privacitat": "Privacy Policy",
+    "legal": "Legal"
+  },
+  "cta": {
+    "buttonSecondary": "ACCESS PORTAL",
+    "formSuccess": "Message sent!",
+    "formSuccessDesc": "We'll get back to you within 24 hours.",
+    "formSubmit": "SEND MESSAGE",
+    "button": "BOOK A FREE DEMO",
+    "formEmail": "Your email",
+    "formTitle": "Or send us a message",
+    "subtitle": "In less than 48 hours your business can be running automations that will save you hours every week.",
+    "title": "READY TO DIGITALISE YOUR BUSINESS?",
+    "formError": "Failed to send. Try via WhatsApp.",
+    "formName": "Your name",
+    "formMessage": "How can we help you?"
+  },
+  "hero": {
+    "title": "STOP LOSING CUSTOMERS",
+    "titleAccent": "BY NOT REPLYING ON WHATSAPP",
+    "subtitle": "Turn your WhatsApp into an organised lead-generation machine. No tech skills required.",
+    "cta": "BOOK A DEMO",
+    "scrollDown": "SCROLL TO LEARN MORE"
+  },
+  "problem": {
+    "title": "IS YOUR BUSINESS CONTROLLING YOU?",
+    "items": [
+      "Customers who message you and wait hours (or days).",
+      "Non-urgent questions that interrupt your workflow.",
+      "The chaos of managing appointments via phone calls.",
+      "Business opportunities lost due to lack of follow-up."
+    ]
+  },
+  "pricing": {
+    "plans": [
+      {
+        "name": "Basic",
+        "price": "29€",
+        "period": "/mo",
+        "features": [
+          "Landing page",
+          "WhatsApp Business",
+          "Corporate SMTP",
+          "Domain + SSL",
+          "Email support"
+        ],
+        "cta": "START"
+      },
+      {
+        "name": "Intermediate",
+        "price": "49€",
+        "period": "/mo",
+        "features": [
+          "Everything in Basic",
+          "Premium Landing",
+          "Online booking",
+          "CRM + Pipeline",
+          "Priority support"
+        ],
+        "cta": "START",
+        "highlighted": true
+      },
+      {
+        "name": "Advanced",
+        "price": "99€",
+        "period": "/mo",
+        "features": [
+          "Everything in Intermediate",
+          "Full AI Assistant",
+          "Automated workflows",
+          "Digital invoicing",
+          "Dedicated support"
+        ],
+        "cta": "START"
+      }
+    ],
+    "title": "FLAT RATES, NO SURPRISES"
+  },
+  "services": {
+    "title": "TAILORED SOLUTIONS FOR YOUR BUSINESS",
+    "subtitle": "Whether you need a simple website or a full AI system, we have the perfect plan.",
+    "profiles": [
+      {
+        "name": "Basic Web",
+        "tagline": "Essential digital presence",
+        "price": "from 29€/mo",
+        "features": [
+          "Responsive landing page",
+          "Contact form",
+          "WhatsApp Business",
+          "Corporate SMTP",
+          "Domain + DNS + SSL"
+        ]
+      },
+      {
+        "name": "Premium Landing",
+        "tagline": "Your digital business card",
+        "price": "from 49€/mo",
+        "features": [
+          "Pro Landing with photos",
+          "Image gallery",
+          "Online booking",
+          "24h WhatsApp reminder",
+          "Integrated web chat"
+        ]
+      },
+      {
+        "name": "Automation",
+        "tagline": "Processes that run themselves",
+        "price": "from 49€/mo",
+        "features": [
+          "CRM + Sales Pipeline",
+          "Budget calculator",
+          "Auto re-engagement",
+          "Auto Google review request",
+          "Card payments"
+        ]
+      },
+      {
+        "name": "AI Assistant",
+        "tagline": "Artificial intelligence for your business",
+        "price": "from 99€/mo",
+        "features": [
+          "Conversational AI Bot",
+          "RAG (answers from documents)",
+          "Auto query classification",
+          "24/7 instant response",
+          "Smart history"
+        ]
+      },
+      {
+        "name": "Digital Transformation",
+        "tagline": "Your business, fully digitised",
+        "price": "contact us",
+        "features": [
+          "All previous services",
+          "E-invoicing",
+          "Custom n8n workflows",
+          "Financial dashboard",
+          "Training & support"
+        ]
+      }
+    ]
+  },
+  "howItWorks": {
+    "steps": [
+      {
+        "number": "1",
+        "title": "We audit your business",
+        "desc": "We analyse your current processes and identify automation opportunities."
+      },
+      {
+        "number": "2",
+        "title": "We launch in 48h",
+        "desc": "We set up the entire system: web, WhatsApp, booking, AI. No technical hassle for you."
+      },
+      {
+        "number": "3",
+        "title": "Results start flowing",
+        "desc": "Your business runs itself. More customers, less work, more control."
+      }
+    ],
+    "title": "HOW IT WORKS"
   }
 }

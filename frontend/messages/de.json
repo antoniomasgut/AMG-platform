@@ -8,7 +8,11 @@
     "cancel": "Abbrechen",
     "loading": "Laden...",
     "error": "Fehler",
-    "success": "Fertig"
+    "success": "Fertig",
+    "siteName": "AMG Digitalitzacions",
+    "learnMore": "MEHR ERFAHREN",
+    "cta": "DEMO ANFORDERN",
+    "seeServices": "DIENSTLEISTUNGEN"
   },
   "nav": {
     "services": "Leistungen",
@@ -16,7 +20,12 @@
     "howItWorks": "Der Prozess",
     "contact": "Kontakt",
     "login": "Anmelden",
-    "portal": "Mein Portal"
+    "portal": "Mein Portal",
+    "iniciarSessio": "ANMELDEN",
+    "preus": "Preise",
+    "comFunciona": "So funktioniert's",
+    "contacte": "Kontakt",
+    "serveis": "Dienstleistungen"
   },
   "landing": {
     "hero": {
@@ -33,7 +42,8 @@
         "clientsLabel": "Aktive KMU",
         "automationsValue": "< 4h",
         "automationsLabel": "Reaktionszeit"
-      }
+      },
+      "sectors": "['Kliniken', 'Renovierungen', 'Anwälte', 'Geschäfte', 'Restaurants', 'Friseure', 'Beratungsunternehmen']"
     },
     "problem": {
       "badge": "Das echte Problem",
@@ -297,7 +307,16 @@
         "loginError": "Anmeldefehler",
         "sendError": "Fehler beim Senden des Links",
         "emailRequired": "Bitte geben Sie zuerst Ihre E-Mail ein"
-      }
+      },
+      "resent": "LINK ERNEUT SENDEN",
+      "errorGeneral": "Anmeldefehler",
+      "errorInvalidCredentials": "Ungültige Anmeldedaten",
+      "sentDesc": "Wir haben einen Zugangslink gesendet an",
+      "sentExpiry": "Der Link läuft in {minutes} Min. ab. Prüfen Sie Ihren Spam-Ordner.",
+      "sentTitle": "PRÜFEN SIE IHRE E-MAIL",
+      "errorTooManyAttempts": "Zu viele Versuche. Versuchen Sie es in ein paar Minuten erneut.",
+      "errorBlocked": "Konto gesperrt. Versuchen Sie es später erneut oder setzen Sie Ihr Passwort zurück.",
+      "orPassword": "oder mit Passwort"
     },
     "forgotPassword": {
       "badge": "Passwort zurücksetzen",
@@ -313,7 +332,10 @@
       "minutes": "30 Min.",
       "checkSpam": "Prüfen Sie Ihren Spam-Ordner, falls Sie ihn nicht sehen.",
       "backToLogin": "← ZURÜCK ZUM LOGIN",
-      "error": "Fehler beim Senden der Anfrage"
+      "error": "Fehler beim Senden der Anfrage",
+      "sentTitle": "PRÜFEN SIE IHRE E-MAIL",
+      "sentDesc": "Wenn die E-Mail existiert, erhalten Sie einen Wiederherstellungslink an",
+      "sentExpiry": "Der Link läuft in {minutes} Min. ab. Prüfen Sie Ihren Spam-Ordner."
     },
     "resetPassword": {
       "badge": "Neues Passwort",
@@ -334,7 +356,14 @@
         "minLength": "Das Passwort muss mindestens 4 Zeichen lang sein",
         "mismatch": "Passwörter stimmen nicht überein",
         "generic": "Fehler beim Zurücksetzen des Passworts"
-      }
+      },
+      "invalidLinkTitle": "UNGÜLTIGER LINK",
+      "invalidLinkDesc": "Dieser Wiederherstellungslink ist ungültig oder abgelaufen.",
+      "successDesc": "Weiterleitung zum Login...",
+      "errorGeneral": "Fehler beim Zurücksetzen des Passworts",
+      "errorInvalidToken": "Ungültiger oder abgelaufener Wiederherstellungslink",
+      "errorMismatch": "Passwörter stimmen nicht überein",
+      "errorMinLength": "Das Passwort muss mindestens 4 Zeichen lang sein"
     }
   },
   "portal": {
@@ -347,7 +376,17 @@
         "billing": "Abrechnung",
         "settings": "Einstellungen"
       },
-      "logout": "Abmelden"
+      "logout": "Abmelden",
+      "admin": "Verwaltung",
+      "publicLanding": "Öffentliche Landingpage",
+      "invoices": "Rechnungen",
+      "tenants": "Tenants",
+      "myAccount": "Mein Konto",
+      "dashboard": "Dashboard",
+      "services": "Dienste",
+      "settings": "Einstellungen",
+      "support": "Support",
+      "users": "Benutzer"
     },
     "dashboard": {
       "welcome": "Guten Morgen",
@@ -375,7 +414,37 @@
         },
         "empty": "Keine Rechnungen"
       }
-    }
+    },
+    "subscription": {
+      "plan": "PLAN {name}",
+      "monthlyAmount": "Monatsbeitrag",
+      "cycle": "Zyklus {start} → {end}",
+      "upToDate": "AUF DEM NEUESTEN STAND",
+      "active": "Aktiv",
+      "role": "Rolle",
+      "badge": "Aktives Abonnement",
+      "nextBilling": "Nächste Abrechnung"
+    },
+    "help": {
+      "description": "Ihr zugewiesener Techniker steht zur Verfügung, um Ihre Fragen zu beantworten.",
+      "viewTutorials": "TUTORIALS ANSEHEN",
+      "title": "BRAUCHEN SIE HILFE?",
+      "contactTeam": "TEAM KONTAKTIEREN"
+    },
+    "services": {
+      "manage": "VERWALTEN",
+      "eyebrow": "Monatliche Nutzung",
+      "title": "Aktive Dienste",
+      "operational": "BETRIEBSBEREIT"
+    },
+    "invoices": {
+      "eyebrow": "Verlauf",
+      "title": "Letzte Rechnungen",
+      "viewAll": "ALLE ANZEIGEN"
+    },
+    "logout": "ABMELDEN",
+    "greeting": "Guten Morgen, {name}",
+    "loggingOut": "ABMELDUNG..."
   },
   "onboarding": {
     "title": "Willkommen, {name}! Los geht's.",
@@ -402,13 +471,33 @@
       "billing_title": "Erstellen Sie Ihr erstes Angebot",
       "billing_desc": "Erstellen Sie ein individuelles Angebot und senden Sie es als PDF an den Kunden.",
       "billing_cta": "LOS GEHT'S"
-    }
+    },
+    "eyebrow": "ERSTE SCHRITTE"
   },
   "legal": {
     "avisLegal": "Impressum",
     "privacitat": "Datenschutzrichtlinie",
     "cookies": "Cookie-Richtlinie",
-    "termes": "Nutzungsbedingungen"
+    "termes": "Nutzungsbedingungen",
+    "avis": {
+      "lastUpdated": "Letzte Aktualisierung",
+      "sections": {
+        "ownership": {
+          "content": "AMG Digitalitzacions ist eine Handelsmarke von Antonio Más Gutiérrez, mit Steuer-ID 12345678A und Sitz in Mallorca, Balearische Inseln. Kontakt: info@amgdl.com.",
+          "title": "1. Verantwortlicher"
+        },
+        "purpose": {
+          "content": "Diese Website dient der Information über digitale Automatisierungs-, Webentwicklungs- und KI-Dienstleistungen von AMG Digitalitzacions.",
+          "title": "2. Zweck der Website"
+        },
+        "terms": {
+          "content": "Der Nutzer verpflichtet sich, die Inhalte und Dienste angemessen zu nutzen und keine rechtswidrigen Handlungen vorzunehmen.",
+          "title": "3. Nutzungsbedingungen"
+        }
+      },
+      "backToHome": "← Zurück zur Startseite",
+      "title": "Impressum"
+    }
   },
   "cookies": {
     "message": "Wir verwenden technische Cookies, die für den Betrieb des Portals erforderlich sind.",
@@ -750,7 +839,8 @@
       },
       "field": {
         "api_key": "Chat API-Schlüssel",
-        "widget_id": "Widget ID (optional)"
+        "widget_id": "Widget ID (optional)",
+        "widget_id_placeholder": "z.B.: widget_abc123"
       }
     },
     "formulari": {
@@ -966,7 +1056,10 @@
       "services": "3. Dienste",
       "operations": "4. Betrieb",
       "clients": "Kunden",
-      "system": "System"
+      "system": "System",
+      "agentsAI": "Agenten & KI",
+      "platform": "AMG-Plattform",
+      "webServices": "Webdienste"
     },
     "items": {
       "dashboard": "Dashboard",
@@ -998,7 +1091,16 @@
       "documentTemplates": "Dokumentvorlagen",
       "generatedDocs": "Generierte Dokumente",
       "google": "Google Workspace",
-      "knowledge": "Wissensbasis"
+      "knowledge": "Wissensbasis",
+      "meetings": "Besprechungen",
+      "serveis": "Dienstleistungen",
+      "integrations": "Integrationen",
+      "analytics": "Analytik",
+      "hosting": "Web Hosting",
+      "platformSummary": "Plattformübersicht",
+      "metaAds": "Meta Ads AMG",
+      "config": "Konfiguration",
+      "myBusiness": "Mein Unternehmen"
     }
   },
   "knowledge": {
@@ -1056,7 +1158,8 @@
           "QUALIFIED": "Qualifiziert",
           "PROPOSAL": "Angebot",
           "NEGOTIATION": "Verhandlung",
-          "WON": "Gewonnen"
+          "WON": "Gewonnen",
+          "NURTURING": "Nurturing"
         }
       },
       "resources": {
@@ -1075,7 +1178,20 @@
         "apiKeys": "API KEYS",
         "backup": "BACKUP"
       },
-      "invoicesSummaryComingSoon": "Rechnungsübersicht — demnächst"
+      "invoicesSummaryComingSoon": "Rechnungsübersicht — demnächst",
+      "payments": {
+        "title": "Zahlungsübersicht",
+        "completed": "Abgeschlossen",
+        "section": "Zahlungen",
+        "pending": "Ausstehend"
+      },
+      "channels": {
+        "title": "Kanalaktivität",
+        "byTenant": "Nach Tenant →",
+        "noData": "Keine Daten",
+        "tokensAI": "KI-Token",
+        "period": "Letzte 30 Tage"
+      }
     },
     "client": {
       "billing": {
@@ -1100,7 +1216,468 @@
         "title": "BRAUCHEN SIE HILFE?",
         "subtitle": "Ihr zugewiesener Techniker steht zur Beantwortung Ihrer Fragen zur Verfügung.",
         "contact": "KONTAKT"
+      },
+      "invoiceStatus": {
+        "OVERDUE": "Überfällig",
+        "DRAFT": "Entwurf",
+        "PENDING": "Ausstehend",
+        "CANCELLED": "Storniert",
+        "PAID": "Bezahlt"
+      },
+      "myServices": {
+        "title": "Meine Dienste"
       }
     }
+  },
+  "guides": {
+    "domain": {
+      "faq_ssl_q": "Wie wird das SSL-Zertifikat generiert?",
+      "setup_step_2": "Ändern Sie die Nameserver zu denen im DNS-Bereich",
+      "faq_not_visible_a": "Überprüfen Sie, ob die Nameserver bei Ihrem Registrar korrekt konfiguriert sind. Wenn ja, kontaktieren Sie Ihren Techniker.",
+      "setup_step_3": "Warten Sie auf die vollständige Propagation (24-72h)",
+      "faq_not_visible_q": "Meine Website wird nach 72h nicht angezeigt",
+      "faq_ssl_a": "Das SSL-Zertifikat wird automatisch generiert, sobald die Domain auf unsere Server zeigt. Es kann bis zu 15 Minuten dauern.",
+      "propagation_text": "Die DNS-Propagation kann weltweit zwischen 24 und 72 Stunden dauern. Während dieser Zeit kann Ihre Domain von einigen Standorten aus zugänglich sein, von anderen nicht.",
+      "faq_time_a": "Normalerweise zwischen 24 und 48 Stunden, in extremen Fällen kann es bis zu 72 Stunden dauern.",
+      "faq_time_q": "Wie lange dauert die Domain-Propagation?",
+      "verify_link": "https://dnschecker.org",
+      "setup_step_1": "Greifen Sie auf das Panel Ihres Domain-Registrars zu"
+    },
+    "service_titles": {
+      "DOMAIN": "Domain",
+      "AUTOMATION": "n8n-Automatisierung",
+      "WHATSAPP": "WhatsApp Business",
+      "BOT_IA": "Basis-KI-Bot",
+      "LANDING": "Landing Page",
+      "SMTP": "Corporate SMTP"
+    },
+    "view_all": "Alle Dienste anzeigen",
+    "landing": {
+      "faq_colors_q": "Wie ändere ich die Farbe meiner Landing?",
+      "faq_domain_q": "Wie verbinde ich meine Domain?",
+      "faq_sections_q": "Wie füge ich einen neuen Abschnitt hinzu?",
+      "edit_step_1": "Gehen Sie zum Portal und navigieren Sie zu Landings",
+      "edit_step_3": "Verwenden Sie den visuellen Editor, um Inhalte zu ändern",
+      "publish_step_2": "Zeigen Sie eine Vorschau an, bevor Sie veröffentlichen",
+      "access_link": "https://{domain}",
+      "faq_seo_a": "Der Editor enthält grundlegende SEO-Optionen: Titel, Beschreibung und Schlüsselwörter. Für fortgeschrittene Verbesserungen kontaktieren Sie Ihren Techniker.",
+      "publish_step_3": "Klicken Sie auf Veröffentlichen, um live zu gehen",
+      "publish_step_1": "Bearbeiten Sie den Inhalt Ihrer Landing",
+      "edit_step_4": "Klicken Sie auf Speichern, um Ihre Änderungen zu übernehmen",
+      "faq_colors_a": "Gehen Sie im visuellen Editor zur Registerkarte Anpassung. Dort finden Sie Optionen zum Ändern von Farben, Schriftarten und Stilen.",
+      "edit_step_2": "Wählen Sie die Landing, die Sie bearbeiten möchten",
+      "faq_sections_a": "Klicken Sie im Editor auf \"Abschnitt hinzufügen\" und wählen Sie aus den verfügbaren Vorlagen.",
+      "faq_domain_a": "Gehen Sie im Landing-Konfigurationspanel zum Domain-Bereich und folgen Sie den Anweisungen zur Nameserver-Konfiguration.",
+      "domains_text": "Sie können eine benutzerdefinierte Domain für Ihre Landing verwenden. Wenn Sie die Domain selbst verwalten, müssen Sie die Nameserver auf unsere Server umleiten.",
+      "faq_seo_q": "Wie verbessere ich das SEO meiner Landing?"
+    },
+    "bot_ia": {
+      "faq_add_info_q": "Wie füge ich dem Bot weitere Informationen hinzu?",
+      "faq_bad_response_q": "Warum antwortet der Bot nicht richtig?",
+      "faq_bad_response_a": "Überprüfen Sie, ob die Wissensdatenbank ausreichende und aktuelle Informationen enthält. Wenn das Problem bestehen bleibt, passen Sie den Ton und die Anweisungen des Bots an.",
+      "faq_add_info_a": "Über das Wissensverwaltungspanel können Sie PDF-, TXT- oder DOCX-Dokumente hochladen, damit der Bot daraus lernen kann.",
+      "access_link": "https://chat.amg.cat/{slug}",
+      "manage_link": "/portal/admin/knowledge",
+      "faq_integration_a": "Ja, der Bot kann mit WhatsApp Business, Telegram und dem Web-Chat integriert werden. Verwalten Sie die Integrationen über das Agenten-Panel.",
+      "how_it_works": "Der KI-Bot antwortet automatisch 24/7 auf Nachrichten Ihrer Kunden. Sie können Antworten und Tonfall über das Verwaltungspanel anpassen.",
+      "faq_integration_q": "Kann er mit WhatsApp integriert werden?"
+    },
+    "no_guides": "Anleitung für diesen Dienst nicht verfügbar",
+    "subtitle": "Anleitungen zu Ihren aktiven Diensten",
+    "status_pending": "Ausstehend",
+    "smtp": {
+      "faq_port_a": "Port 587 mit TLS (empfohlen) oder Port 465 mit SSL. Port 25 ist aus Sicherheitsgründen nicht verfügbar.",
+      "faq_port_q": "Welchen Port soll ich verwenden?",
+      "thunderbird_step_1": "Öffnen Sie Thunderbird und gehen Sie zu Datei > Neu > Mail",
+      "gmail_step_3": "Fügen Sie ein E-Mail-Konto unter Konten und Import hinzu",
+      "thunderbird_step_3": "Geben Sie die SMTP-Serverdaten ein",
+      "gmail_step_2": "Gehen Sie zu \"Alle Einstellungen anzeigen\"",
+      "outlook_title": "Outlook Einrichtung",
+      "gmail_step_4": "Wählen Sie \"E-Mail-Konto hinzufügen\" und geben Sie die SMTP-Daten ein",
+      "thunderbird_step_2": "Wählen Sie Manuelle Konfiguration",
+      "faq_send_a": "Überprüfen Sie, ob Ihr E-Mail-Client den richtigen Port verwendet (587 mit TLS oder 465 mit SSL). Stellen Sie sicher, dass das Passwort korrekt ist.",
+      "outlook_step_2": "Fügen Sie ein E-Mail-Konto hinzu und wählen Sie Manuelle Einrichtung",
+      "thunderbird_title": "Thunderbird Einrichtung",
+      "test_link": "/portal/admin/config",
+      "gmail_step_1": "Öffnen Sie die Gmail-Einstellungen",
+      "thunderbird_step_4": "Klicken Sie auf Erneut prüfen und dann auf Fertig",
+      "outlook_step_3": "Geben Sie die SMTP-Anmeldedaten (Server, Port, Benutzername, Passwort) mit TLS ein",
+      "outlook_step_1": "Öffnen Sie Outlook und gehen Sie zu Einstellungen",
+      "faq_send_q": "Warum kann ich keine E-Mails senden?",
+      "faq_auth_a": "Stellen Sie sicher, dass Sie \"Passwort speichern\" in Ihrem E-Mail-Client aktiviert haben. Wenn das Problem weiterhin besteht, generieren Sie ein App-Passwort.",
+      "gmail_title": "Gmail Einrichtung",
+      "faq_auth_q": "Warum werde ich ständig zur Authentifizierung aufgefordert?"
+    },
+    "service_descriptions": {
+      "SMTP": "Unternehmens-E-Mail für Ihre Domain. Richten Sie sie in Ihrem E-Mail-Client ein.",
+      "LANDING": "Ihre professionelle Website. Erfahren Sie, wie Sie sie bearbeiten und veröffentlichen.",
+      "BOT_IA": "KI-gestützter virtueller Assistent, der automatisch auf Ihre Kunden antwortet.",
+      "DOMAIN": "Verwalten Sie Ihre Domain und DNS-Konfiguration.",
+      "WHATSAPP": "WhatsApp Business Messaging in Ihr Portal integriert.",
+      "AUTOMATION": "n8n-Automatisierungen für Ihr Unternehmen."
+    },
+    "section_howto_publish": "Wie veröffentlichen",
+    "view_guide": "Anleitung anzeigen",
+    "automation": {
+      "faq_monitoring_a": "n8n zeigt den Status jedes Workflows an (aktiv, inaktiv, Fehler). Sie können auch Benachrichtigungen per E-Mail oder Telegram konfigurieren.",
+      "faq_monitoring_q": "Wie weiß ich, ob die Workflows laufen?",
+      "access_link": "https://n8n.amg.cat",
+      "manage_step_1": "Greifen Sie über den Zugriffslink auf n8n zu",
+      "faq_failed_q": "Der Workflow ist fehlgeschlagen, was tun?",
+      "workflows_text": "Workflows automatisieren wiederkehrende Aufgaben in Ihrem Unternehmen. Jeder Workflow hat eine spezifische Funktion: E-Mails senden, Leads verwalten, Daten aktualisieren usw.",
+      "faq_failed_a": "Überprüfen Sie das Fehlerprotokoll in n8n. Meistens handelt es sich um ein Verbindungsproblem mit einer externen API. Wenn Sie es nicht lösen können, kontaktieren Sie Ihren Techniker.",
+      "manage_step_2": "Melden Sie sich mit Ihren Anmeldedaten an",
+      "faq_new_automations_q": "Kann ich neue Automatisierungen hinzufügen?",
+      "manage_step_3": "Über das Panel können Sie Workflows aktivieren, deaktivieren oder ändern",
+      "faq_new_automations_a": "Ja, Sie können über das n8n-Panel neue Workflows erstellen. Wenn Sie Hilfe benötigen, fragen Sie Ihren zugewiesenen Techniker."
+    },
+    "section_howto_edit": "Wie bearbeiten",
+    "whatsapp": {
+      "access_text": "Der WhatsApp Business API-Dienst ist in Ihr Portal integriert. Sie können Konversationen im Posteingang verwalten.",
+      "faq_change_number_a": "Sie müssen eine neue Nummer über das Meta Business-Panel konfigurieren und die Anmeldedaten in Ihrem Portal aktualisieren.",
+      "faq_change_number_q": "Wie ändere ich die WhatsApp-Nummer?",
+      "faq_no_messages_q": "Warum erhalte ich keine Nachrichten?",
+      "faq_template_a": "WhatsApp Business-Vorlagen werden über das Meta Business-Panel verwaltet. Sie müssen vor der Verwendung von Meta genehmigt werden.",
+      "faq_template_q": "Wie erstelle ich Nachrichtenvorlagen?",
+      "faq_no_messages_a": "Überprüfen Sie, ob die Telefonnummer bei Meta verifiziert und der Webhook korrekt konfiguriert ist.",
+      "how_it_works": "Wenn ein Kunde eine Nachricht über das Webformular sendet, wird sie automatisch in Ihrem WhatsApp Business empfangen. Sie können direkt vom Portal aus antworten.",
+      "test_link": "https://wa.me/{phone}"
+    },
+    "section_access": "Zugriff",
+    "section_setup": "Einrichtung",
+    "section_howto_manage": "Wie verwalten",
+    "status": "Status",
+    "section_test": "Verbindung testen",
+    "new_services_cta": "Anleitungen anzeigen",
+    "status_configuring": "In Konfiguration",
+    "section_propagation": "Propagationszeit",
+    "no_services_desc": "Sobald Sie aktive Dienste haben, werden die Anleitungen hier angezeigt.",
+    "guide": "Anleitung",
+    "configure_service": "Dienst konfigurieren",
+    "service_ready": "Bereit!",
+    "section_troubleshoot": "Fehlerbehebung",
+    "dismiss": "Verstanden",
+    "section_manage_responses": "Antworten verwalten",
+    "section_workflows": "Aktive Workflows",
+    "section_credentials": "Anmeldedaten",
+    "new_services_title": "Sie haben neue aktive Dienste!",
+    "status_ready": "Aktiv",
+    "section_domains": "Domains",
+    "section_dns": "DNS",
+    "section_verify": "Überprüfung",
+    "no_credentials": "Anmeldedaten nicht konfiguriert",
+    "title": "Dienstleistungen",
+    "faq_title": "Häufig gestellte Fragen",
+    "no_services": "Sie haben noch keine aktiven Dienste",
+    "service_not_found": "Dienst nicht gefunden",
+    "no_guides_desc": "Für diese Art von Dienst ist keine Anleitung verfügbar.",
+    "back_to_list": "Zurück zur Liste",
+    "section_howto": "Wie man es benutzt"
+  },
+  "admin": {
+    "config": {
+      "validation": {
+        "boolean": "Muss 'true' oder 'false' sein.",
+        "number": "Muss eine gültige Zahl sein.",
+        "secret": "Mindestens 8 Zeichen für geheime Schlüssel.",
+        "minLength": "Mindestens {n} Zeichen.",
+        "maxLength": "Maximal {n} Zeichen.",
+        "pattern": "Wert entspricht nicht dem erforderlichen Format.",
+        "json": "Muss gültiges JSON sein.",
+        "numberMax": "Höchstwert ist {max}.",
+        "url": "Muss eine gültige URL sein (http:// oder https://).",
+        "numberMin": "Mindestwert ist {min}."
+      },
+      "placeholderNumber": "Zahl eingeben...",
+      "infoEnvPriority": "Umgebungsvariablen haben Vorrang vor DB-Schlüsseln.",
+      "types": {
+        "number": "Zahl",
+        "string": "Text",
+        "boolean": "Boolesch",
+        "url": "URL",
+        "json": "JSON",
+        "secret": "Geheimer Schlüssel"
+      },
+      "loadingTest": "…",
+      "confirmDelete": "Schlüssel {key} löschen?",
+      "categories": {
+        "AGENTS": "KI-Agenten",
+        "INFRAOPS": "InfraOps",
+        "PAYMENTS": "Zahlungen",
+        "MAINTENANCE": "Wartung & Marke",
+        "FINOPS": "FinOps",
+        "GENERAL": "Allgemein",
+        "BACKUP": "Backup",
+        "META_ADS": "Meta Ads",
+        "EMAIL_INBOUND": "E-Mail-Eingang",
+        "PROSPECTING": "Prospektion",
+        "AUTOMATIONS": "Automatisierungen",
+        "IMAGE_GEN": "Bildgenerierung",
+        "STORAGE": "Speicher",
+        "AI_MODELS": "KI-Modelle",
+        "CALENDAR": "Kalender"
+      },
+      "placeholderJson": "JSON hier einfügen...",
+      "missing": "{n} zu konfigurieren",
+      "envRead": "Aus Umgebung gelesen",
+      "btnTest": "Testen",
+      "allConfigured": "Alles konfiguriert",
+      "defaultSource": "Standardwert",
+      "infoNoRestart": "Eine Änderung hier erfordert keinen Server-Neustart.",
+      "search": "Suche nach Schlüssel, Name oder Beschreibung...",
+      "toastDeleteError": "Fehler beim Löschen des Schlüssels",
+      "breadcrumbDisplay": "/ portal / admin / config /",
+      "auditTitle": "Änderungsverlauf",
+      "btnSave": "Speichern",
+      "toastSaveError": "Fehler beim Speichern des Schlüssels",
+      "missingSource": "Nicht konfiguriert",
+      "btnCancel": "Abbrechen",
+      "toggleActive": "Aktiv",
+      "btnEdit": "Bearbeiten",
+      "title": "Systemkonfiguration",
+      "count": "{filtered} von {total} Schlüsseln",
+      "btnDelete": "Löschen",
+      "infoEncrypted": "Schlüssel werden verschlüsselt (AES-256) in der Datenbank gespeichert.",
+      "envSource": "Umgebungsvariable",
+      "testError": "Fehler bei der Verbindung zum Server.",
+      "toggleInactive": "Inaktiv",
+      "toastDeleted": "Schlüssel {key} gelöscht",
+      "placeholderValue": "{label} eingeben…",
+      "dbSource": "Konfiguriert (DB)",
+      "btnConfigure": "Konfigurieren",
+      "toastSaved": "Schlüssel {key} erfolgreich gespeichert",
+      "breadcrumb": "admin / config"
+    },
+    "sidebar": {
+      "tenants": "Tenants",
+      "users": "Benutzer",
+      "admin": "Verwaltung"
+    },
+    "users": {
+      "created": "Benutzer erfolgreich erstellt",
+      "title": "Benutzer",
+      "updated": "Benutzer erfolgreich aktualisiert",
+      "search": "Benutzer suchen...",
+      "fields": {
+        "role": "Rolle",
+        "email": "E-Mail",
+        "password": "Passwort",
+        "name": "Name",
+        "isActive": "Aktiv",
+        "tenant": "Tenant"
+      },
+      "unlock": "Entsperren",
+      "new": "Neuer Benutzer",
+      "lastLogin": "Letzte Anmeldung",
+      "roles": {
+        "SUPER_ADMIN": "Super Admin",
+        "CLIENT": "Kunde",
+        "ADMIN": "Admin"
+      },
+      "status": {
+        "blocked": "Gesperrt",
+        "active": "Aktiv",
+        "inactive": "Inaktiv"
+      },
+      "delete": "Benutzer löschen",
+      "deleted": "Benutzer erfolgreich gelöscht",
+      "unlockSuccess": "Benutzer erfolgreich entsperrt",
+      "edit": "Benutzer bearbeiten",
+      "deleteConfirm": "Sind Sie sicher, dass Sie diesen Benutzer löschen möchten? Dies wird sein Konto deaktivieren.",
+      "noResults": "Keine Benutzer gefunden",
+      "never": "Nie"
+    },
+    "tenants": {
+      "search": "Tenants suchen...",
+      "fields": {
+        "name": "Name",
+        "phone": "Telefon",
+        "isActive": "Aktiv",
+        "slug": "Slug",
+        "address": "Adresse",
+        "email": "E-Mail"
+      },
+      "created": "Tenant erfolgreich erstellt",
+      "noResults": "Keine Tenants gefunden",
+      "title": "Tenants",
+      "updated": "Tenant erfolgreich aktualisiert",
+      "new": "Neuer Tenant",
+      "edit": "Tenant bearbeiten"
+    },
+    "save": "Speichern",
+    "loading": "Laden...",
+    "title": "Verwaltung",
+    "cancel": "Abbrechen"
+  },
+  "footer": {
+    "contacte": "Kontakt",
+    "termes": "AGB",
+    "copyright": "AMG Digitalitzacions. Alle Rechte vorbehalten.",
+    "avisLegal": "Impressum",
+    "services": "Dienstleistungen",
+    "description": "Digitale Automatisierung für KMU auf Mallorca. Websites, KI-Bots, CRM und mehr.",
+    "privacitat": "Datenschutz",
+    "legal": "Rechtliches"
+  },
+  "cta": {
+    "buttonSecondary": "PORTAL ZUGREIFEN",
+    "formSuccess": "Nachricht gesendet!",
+    "formSuccessDesc": "Wir antworten innerhalb von 24 Stunden.",
+    "formSubmit": "NACHRICHT SENDEN",
+    "button": "KOSTENLOSE DEMO VEREINBAREN",
+    "formEmail": "Ihre E-Mail",
+    "formTitle": "Oder schreib uns eine Nachricht",
+    "subtitle": "In weniger als 48 Stunden kann Ihr Unternehmen mit Automatisierungen laufen, die Ihnen jede Menge Zeit sparen.",
+    "title": "BEREIT FÜR DIE DIGITALISIERUNG IHRES UNTERNEHMENS?",
+    "formError": "Fehler beim Senden. Versuchen Sie es über WhatsApp.",
+    "formName": "Ihr Name",
+    "formMessage": "Wie können wir Ihnen helfen?"
+  },
+  "hero": {
+    "title": "HÖREN SIE AUF, KUNDEN ZU VERLIEREN",
+    "titleAccent": "WEIL SIE NICHT AUF WHATSAPP ANTWORTEN",
+    "subtitle": "Verwandeln Sie Ihr WhatsApp in eine Maschine für organisierte Arbeit. Kein Technik-Jargon, keine Komplikationen.",
+    "cta": "DEMO VEREINBAREN",
+    "scrollDown": "SCROLLEN SIE FÜR MEHR INFORMATIONEN"
+  },
+  "problem": {
+    "title": "KONTROLLIERT IHR UNTERNEHMEN SIE?",
+    "items": [
+      "Kunden, die schreiben und stundenlang warten.",
+      "Nicht dringende Anfragen, die Ihre Arbeit unterbrechen.",
+      "Das Chaos der Terminverwaltung per Telefon.",
+      "Geschäftschancen, die durch mangelnde Nachverfolgung verloren gehen."
+    ]
+  },
+  "pricing": {
+    "plans": [
+      {
+        "name": "Basis",
+        "price": "29€",
+        "period": "/Monat",
+        "features": [
+          "Landing Page",
+          "WhatsApp Business",
+          "Unternehmens-SMTP",
+          "Domain + SSL",
+          "E-Mail-Support"
+        ],
+        "cta": "STARTEN"
+      },
+      {
+        "name": "Mittel",
+        "price": "49€",
+        "period": "/Monat",
+        "features": [
+          "Alles aus Basis",
+          "Premium Landing",
+          "Online-Terminbuchung",
+          "CRM + Pipeline",
+          "Prioritäts-Support"
+        ],
+        "cta": "STARTEN",
+        "highlighted": true
+      },
+      {
+        "name": "Fortgeschritten",
+        "price": "99€",
+        "period": "/Monat",
+        "features": [
+          "Alles aus Mittel",
+          "Vollständiger KI-Assistent",
+          "Automatisierte Workflows",
+          "Digitale Rechnungsstellung",
+          "Dedizierte Betreuung"
+        ],
+        "cta": "STARTEN"
+      }
+    ],
+    "title": "FESTPREISE, OHNE ÜBERRASCHUNGEN"
+  },
+  "services": {
+    "title": "MASSGESCHNEIDERTE LÖSUNGEN FÜR IHR UNTERNEHMEN",
+    "subtitle": "Ob Sie eine einfache Website oder ein vollständiges KI-System brauchen – wir haben den perfekten Plan.",
+    "profiles": [
+      {
+        "name": "Basis-Web",
+        "tagline": "Essenzielle digitale Präsenz",
+        "price": "ab 29€/Monat",
+        "features": [
+          "Responsive Landing Page",
+          "Kontaktformular",
+          "WhatsApp Business",
+          "Unternehmens-SMTP",
+          "Domain + DNS + SSL"
+        ]
+      },
+      {
+        "name": "Premium Landing",
+        "tagline": "Ihre digitale Visitenkarte",
+        "price": "ab 49€/Monat",
+        "features": [
+          "Pro Landing mit Fotos",
+          "Bildergalerie",
+          "Online-Terminbuchung",
+          "24h WhatsApp-Erinnerung",
+          "Integrierter Web-Chat"
+        ]
+      },
+      {
+        "name": "Automatisierung",
+        "tagline": "Prozesse, die von selbst laufen",
+        "price": "ab 49€/Monat",
+        "features": [
+          "CRM + Verkaufspipeline",
+          "Angebotsrechner",
+          "Automatisches Re-Engagement",
+          "Automatische Google-Bewertung",
+          "Kartenzahlungen"
+        ]
+      },
+      {
+        "name": "KI-Assistent",
+        "tagline": "Künstliche Intelligenz für Ihr Unternehmen",
+        "price": "ab 99€/Monat",
+        "features": [
+          "Konversations-KI-Bot",
+          "RAG (Antworten aus Dokumenten)",
+          "Automatische Anfragenklassifizierung",
+          "24/7 Sofortantwort",
+          "Intelligenter Verlauf"
+        ]
+      },
+      {
+        "name": "Digitale Transformation",
+        "tagline": "Ihr Unternehmen, vollständig digitalisiert",
+        "price": "auf Anfrage",
+        "features": [
+          "Alle vorherigen Dienste",
+          "E-Rechnung",
+          "Benutzerdefinierte n8n-Workflows",
+          "Finanz-Dashboard",
+          "Schulung und Begleitung"
+        ]
+      }
+    ]
+  },
+  "howItWorks": {
+    "steps": [
+      {
+        "number": "1",
+        "title": "Wir analysieren Ihr Unternehmen",
+        "desc": "Wir analysieren Ihre aktuellen Prozesse und identifizieren Automatisierungsmöglichkeiten."
+      },
+      {
+        "number": "2",
+        "title": "Inbetriebnahme in 48h",
+        "desc": "Wir richten das gesamte System ein: Web, WhatsApp, Terminbuchung, KI. Keine technischen Hürden für Sie."
+      },
+      {
+        "number": "3",
+        "title": "Die Ergebnisse kommen",
+        "desc": "Ihr Unternehmen läuft von selbst. Mehr Kunden, weniger Arbeit, mehr Kontrolle."
+      }
+    ],
+    "title": "SO FUNKTIONIERT'S"
   }
 }

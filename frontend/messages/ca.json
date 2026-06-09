@@ -8,7 +8,11 @@
     "cancel": "Cancel·lar",
     "loading": "Carregant...",
     "error": "Error",
-    "success": "Fet"
+    "success": "Fet",
+    "siteName": "AMG Digitalitzacions",
+    "learnMore": "SABER-NE MÉS",
+    "cta": "SOL·LICITAR DEMO",
+    "seeServices": "VEURE SERVEIS"
   },
   "nav": {
     "services": "Serveis",
@@ -16,7 +20,12 @@
     "howItWorks": "El procés",
     "contact": "Contacte",
     "login": "Accedir",
-    "portal": "El meu portal"
+    "portal": "El meu portal",
+    "iniciarSessio": "INICIAR SESSIÓ",
+    "preus": "Preus",
+    "comFunciona": "Com funciona",
+    "contacte": "Contacte",
+    "serveis": "Serveis"
   },
   "landing": {
     "hero": {
@@ -33,7 +42,8 @@
         "clientsLabel": "Pimes actives",
         "automationsValue": "< 4h",
         "automationsLabel": "Temps de resposta"
-      }
+      },
+      "sectors": "Perruqueries, tallers, clíniques, restaurants i més..."
     },
     "problem": {
       "badge": "El problema real",
@@ -297,7 +307,16 @@
         "loginError": "Error d'inici de sessió",
         "sendError": "Error en enviar l'enllaç",
         "emailRequired": "Introdueix primer el teu email"
-      }
+      },
+      "resent": "REENVIAR ENLLAÇ",
+      "errorGeneral": "Error d'inici de sessió",
+      "errorInvalidCredentials": "Credencials incorrectes",
+      "sentDesc": "Hem enviat un enllaç d'accés a",
+      "sentExpiry": "L'enllaç caduca en {minutes} min. Revisa la carpeta de spam si no el veus.",
+      "sentTitle": "COMPROVA EL TEU EMAIL",
+      "errorTooManyAttempts": "Massa intents. Torna-ho a provar en uns minuts.",
+      "errorBlocked": "Compte blocat. Intenta-ho més tard o recupera la contrasenya.",
+      "orPassword": "o amb contrasenya"
     },
     "forgotPassword": {
       "badge": "Recuperar contrasenya",
@@ -313,7 +332,10 @@
       "minutes": "30 min",
       "checkSpam": "Revisa la carpeta de spam si no el veus.",
       "backToLogin": "← TORNAR AL LOGIN",
-      "error": "Error en enviar la sol·licitud"
+      "error": "Error en enviar la sol·licitud",
+      "sentTitle": "COMPROVA EL TEU EMAIL",
+      "sentDesc": "Si el correu existeix, rebràs un enllaç de recuperació a",
+      "sentExpiry": "L'enllaç caduca en {minutes} min. Revisa la carpeta de spam si no el veus."
     },
     "resetPassword": {
       "badge": "Nova contrasenya",
@@ -334,7 +356,14 @@
         "minLength": "La contrasenya ha de tenir almenys 4 caràcters",
         "mismatch": "Les contrasenyes no coincideixen",
         "generic": "Error en restablir la contrasenya"
-      }
+      },
+      "invalidLinkTitle": "ENLLAÇ INVÀLID",
+      "invalidLinkDesc": "Aquest enllaç de recuperació és invàlid o ha expirat.",
+      "successDesc": "Redirigint al login...",
+      "errorGeneral": "Error en restablir la contrasenya",
+      "errorInvalidToken": "Enllaç de recuperació invàlid o expirat",
+      "errorMismatch": "Les contrasenyes no coincideixen",
+      "errorMinLength": "La contrasenya ha de tenir almenys 4 caràcters"
     }
   },
   "portal": {
@@ -347,7 +376,17 @@
         "billing": "Facturació",
         "settings": "Configuració"
       },
-      "logout": "Tancar sessió"
+      "logout": "Tancar sessió",
+      "admin": "Administració",
+      "publicLanding": "Landing pública",
+      "invoices": "Factures",
+      "tenants": "Tenants",
+      "myAccount": "El meu compte",
+      "dashboard": "Dashboard",
+      "services": "Serveis",
+      "settings": "Configuració",
+      "support": "Suport",
+      "users": "Usuaris"
     },
     "dashboard": {
       "welcome": "Bon dia",
@@ -375,7 +414,37 @@
         },
         "empty": "Cap factura"
       }
-    }
+    },
+    "subscription": {
+      "plan": "PLA {name}",
+      "monthlyAmount": "Import mensual",
+      "cycle": "Cicle {start} → {end}",
+      "upToDate": "AL DIA",
+      "active": "En actiu",
+      "role": "Rol",
+      "badge": "Subscripció activa",
+      "nextBilling": "Pròxim cobrament"
+    },
+    "help": {
+      "description": "El teu tècnic assignat està disponible per respondre els teus dubtes.",
+      "viewTutorials": "VEURE TUTORIALS",
+      "title": "NECESSITES AJUDA?",
+      "contactTeam": "ESCRIURE A L'EQUIP"
+    },
+    "services": {
+      "manage": "GESTIONAR",
+      "eyebrow": "Ús del mes",
+      "title": "Serveis actius",
+      "operational": "OPERATIU"
+    },
+    "invoices": {
+      "eyebrow": "Historial",
+      "title": "Últimes factures",
+      "viewAll": "VEURE TOTES"
+    },
+    "logout": "TANCAR SESSIÓ",
+    "greeting": "Bon dia, {name}",
+    "loggingOut": "SORTINT..."
   },
   "onboarding": {
     "title": "Benvingut, {name}! Comencem.",
@@ -402,13 +471,33 @@
       "billing_title": "Genera el teu primer pressupost",
       "billing_desc": "Crea un pressupost personalitzat i envia'l al client en PDF.",
       "billing_cta": "COMENÇA"
-    }
+    },
+    "eyebrow": "PRIMERS PASSOS"
   },
   "legal": {
     "avisLegal": "Avís Legal",
     "privacitat": "Política de Privacitat",
     "cookies": "Política de Cookies",
-    "termes": "Termes del Servei"
+    "termes": "Termes del Servei",
+    "avis": {
+      "lastUpdated": "Darrera actualització",
+      "sections": {
+        "ownership": {
+          "content": "AMG Digitalitzacions és una marca comercial de Antonio Más Gutiérrez, amb NIF 12345678A i domicili a Mallorca, Illes Balears. Aquest web és operat per Antonio Más Gutiérrez. Per a qualsevol consulta, pots contactar a través del correu electrònic info@amgdl.com.",
+          "title": "1. Dades del titular"
+        },
+        "purpose": {
+          "content": "El present web té com a finalitat principal oferir informació sobre els serveis d'automatització digital, desenvolupament web i intel·ligència artificial oferts per AMG Digitalitzacions a petites i mitjanes empreses de Mallorca. Així mateix, permet als usuaris sol·licitar pressupostos i contractar els serveis oferts.",
+          "title": "2. Finalitat del web"
+        },
+        "terms": {
+          "content": "L'usuari es compromet a fer un ús adequat dels continguts i serveis oferts, i a no emprar-los per a activitats il·lícites o contràries a la bona fe. L'usuari es compromet a no realitzar cap acció que pugui danyar el funcionament del web.",
+          "title": "3. Condicions d'ús"
+        }
+      },
+      "backToHome": "← Tornar a l'inici",
+      "title": "Avís Legal"
+    }
   },
   "cookies": {
     "message": "Fem servir galetes tècniques necessàries per al funcionament del portal.",
@@ -750,7 +839,8 @@
       },
       "field": {
         "api_key": "API Key del xat",
-        "widget_id": "Widget ID (opcional)"
+        "widget_id": "Widget ID (opcional)",
+        "widget_id_placeholder": "Ex: widget_abc123"
       }
     },
     "formulari": {
@@ -966,7 +1056,10 @@
       "services": "3. Serveis",
       "operations": "4. Operacions",
       "clients": "Clients",
-      "system": "Sistema"
+      "system": "Sistema",
+      "agentsAI": "Agents & IA",
+      "platform": "Plataforma AMG",
+      "webServices": "Serveis Web"
     },
     "items": {
       "dashboard": "Dashboard",
@@ -998,7 +1091,16 @@
       "documentTemplates": "Plantilles documents",
       "generatedDocs": "Documents generats",
       "google": "Google Workspace",
-      "knowledge": "Coneixement"
+      "knowledge": "Coneixement",
+      "meetings": "Reunions",
+      "serveis": "Serveis",
+      "integrations": "Integracions",
+      "analytics": "Analítica",
+      "hosting": "Web Hosting",
+      "platformSummary": "Resum plataforma",
+      "metaAds": "Meta Ads AMG",
+      "config": "Configuració",
+      "myBusiness": "El meu negoci"
     }
   },
   "knowledge": {
@@ -1056,7 +1158,8 @@
           "QUALIFIED": "Qualificat",
           "PROPOSAL": "Proposta",
           "NEGOTIATION": "Negociació",
-          "WON": "Guanyat"
+          "WON": "Guanyat",
+          "NURTURING": "Nurturing"
         }
       },
       "resources": {
@@ -1075,7 +1178,20 @@
         "apiKeys": "API KEYS",
         "backup": "BACKUP"
       },
-      "invoicesSummaryComingSoon": "Resum de factures — pròximament"
+      "invoicesSummaryComingSoon": "Resum de factures — pròximament",
+      "payments": {
+        "title": "Resum de pagaments",
+        "completed": "Completats",
+        "section": "Pagaments",
+        "pending": "Pendents"
+      },
+      "channels": {
+        "title": "Activitat de canals",
+        "byTenant": "Per tenant →",
+        "noData": "Sense dades",
+        "tokensAI": "Tokens IA",
+        "period": "Últims 30 dies"
+      }
     },
     "client": {
       "billing": {
@@ -1100,7 +1216,468 @@
         "title": "NECESSITES AJUDA?",
         "subtitle": "El teu tècnic assignat està disponible per respondre els teus dubtes.",
         "contact": "CONTACTE"
+      },
+      "invoiceStatus": {
+        "OVERDUE": "Vençuda",
+        "DRAFT": "Esborrany",
+        "PENDING": "Pendent",
+        "CANCELLED": "Cancel·lada",
+        "PAID": "Pagada"
+      },
+      "myServices": {
+        "title": "Els meus serveis"
       }
     }
+  },
+  "guides": {
+    "domain": {
+      "faq_ssl_q": "Com es genera el certificat SSL?",
+      "setup_step_2": "Canvia els nameservers pels que tens a l'apartat DNS",
+      "faq_not_visible_a": "Comprova que els nameservers estiguin correctament configurats al teu registrador. Si ho estan, contacta amb el teu tècnic.",
+      "setup_step_3": "Espera que la propagació es completi (24-72h)",
+      "faq_not_visible_q": "El meu web no es veu després de 72h",
+      "faq_ssl_a": "El certificat SSL es genera automàticament un cop el domini apunta als nostres servidors. Pot trigar fins a 15 minuts.",
+      "propagation_text": "La propagació DNS pot trigar entre 24 i 72 hores a completar-se mundialment. Durant aquest temps, el teu domini pot ser accessible des d'unes ubicacions i des d'altres no.",
+      "faq_time_a": "Normalment entre 24 i 48 hores, però pot trigar fins a 72 hores en casos extrems.",
+      "faq_time_q": "Quant triga la propagació del domini?",
+      "verify_link": "https://dnschecker.org",
+      "setup_step_1": "Accedeix al panell del teu registrador de dominis"
+    },
+    "service_titles": {
+      "DOMAIN": "Domini",
+      "AUTOMATION": "Automatització n8n",
+      "WHATSAPP": "WhatsApp Business",
+      "BOT_IA": "Bot IA Bàsic",
+      "LANDING": "Landing Page",
+      "SMTP": "SMTP Corporatiu"
+    },
+    "view_all": "Veure tots els serveis",
+    "landing": {
+      "faq_colors_q": "Com canvio el color de la meva landing?",
+      "faq_domain_q": "Com connecto el meu domini?",
+      "faq_sections_q": "Com afegeixo una secció nova?",
+      "edit_step_1": "Accedeix al portal i ves a l'apartat Landings",
+      "edit_step_3": "Utilitza l'editor visual per modificar el contingut",
+      "publish_step_2": "Previsualitza els canvis abans de publicar",
+      "access_link": "https://{domain}",
+      "faq_seo_a": "L'editor inclou opcions de SEO bàsic: títol, descripció i paraules clau. Per a millores avançades, contacta amb el teu tècnic.",
+      "publish_step_3": "Fes clic a Publica per posar-la en línia",
+      "publish_step_1": "Edita el contingut de la teva landing",
+      "edit_step_4": "Fes clic a Desa per guardar els canvis",
+      "faq_colors_a": "A l'editor visual, ves a la pestanya de personalització. Hi trobaràs opcions per canviar colors, fonts i estils.",
+      "edit_step_2": "Selecciona la landing que vols editar",
+      "faq_sections_a": "Des de l'editor, fes clic al botó \"Afegeix secció\" i tria entre les plantilles disponibles.",
+      "faq_domain_a": "Al panell de configuració de la landing, ves a l'apartat de domini i segueix les instruccions per configurar els nameservers.",
+      "domains_text": "Pots utilitzar un domini personalitzat per a la teva landing. Si el domini el gestiones tu, hauràs de configurar els nameservers apuntant als nostres servidors.",
+      "faq_seo_q": "Com milloro el SEO de la meva landing?"
+    },
+    "bot_ia": {
+      "faq_add_info_q": "Com afegeixo més informació al bot?",
+      "faq_bad_response_q": "Per què el bot no respon bé?",
+      "faq_bad_response_a": "Revisa que la base de coneixement tingui informació suficient i actualitzada. Si el problema persisteix, ajusta el to i les instruccions del bot.",
+      "faq_add_info_a": "Des del panell de gestió de coneixement, pots pujar documents en PDF, TXT o DOCX perquè el bot aprengui.",
+      "access_link": "https://chat.amg.cat/{slug}",
+      "manage_link": "/portal/admin/knowledge",
+      "faq_integration_a": "Sí, el bot es pot integrar amb WhatsApp Business, Telegram i el xat web. Gestiona-ho des del panell d'agents.",
+      "how_it_works": "El bot IA respon automàticament als missatges dels teus clients les 24 hores del dia. Pots personalitzar les respostes i el to de veu des del panell de gestió.",
+      "faq_integration_q": "Es pot integrar amb WhatsApp?"
+    },
+    "no_guides": "Guia no disponible per a aquest servei",
+    "subtitle": "Guies d'ús dels teus serveis actius",
+    "status_pending": "Pendent",
+    "smtp": {
+      "faq_port_a": "Port 587 amb TLS (recomanat) o port 465 amb SSL. El port 25 no està disponible per seguretat.",
+      "faq_port_q": "Quin port he d'usar?",
+      "thunderbird_step_1": "Obre Thunderbird i ves a Fitxer > Nou > Correu",
+      "gmail_step_3": "Afegeix un compte de correu des de l'apartat Comptes i importació",
+      "thunderbird_step_3": "Introdueix les dades del servidor SMTP",
+      "gmail_step_2": "Ves a \"Veure totes les configuracions\"",
+      "outlook_title": "Configuració Outlook",
+      "gmail_step_4": "Selecciona \"Afegeix un compte de correu\" i introdueix les dades SMTP",
+      "thunderbird_step_2": "Selecciona Configuració manual",
+      "faq_send_a": "Verifica que el teu client de correu utilitzi el port correcte (587 amb TLS o 465 amb SSL). Comprova que la contrasenya sigui correcta.",
+      "outlook_step_2": "Afegeix un compte de correu i selecciona Configuració manual",
+      "thunderbird_title": "Configuració Thunderbird",
+      "test_link": "/portal/admin/config",
+      "gmail_step_1": "Obre Configuració de Gmail",
+      "thunderbird_step_4": "Fes clic a Re-prova i després a Fet",
+      "outlook_step_3": "Introdueix les credencials SMTP (servidor, port, usuari, contrasenya) amb TLS",
+      "outlook_step_1": "Obre Outlook i ves a Configuració",
+      "faq_send_q": "Per què no puc enviar correus?",
+      "faq_auth_a": "Assegura't d'haver marcat l'opció \"Recorda contrasenya\" al teu client de correu. Si el problema persisteix, genera una contrasenya d'aplicació.",
+      "gmail_title": "Configuració Gmail",
+      "faq_auth_q": "Per què em demana autenticació constantment?"
+    },
+    "service_descriptions": {
+      "SMTP": "Correu corporatiu per al teu domini. Configura'l al teu client de correu.",
+      "LANDING": "La teva pàgina web professional. Aprèn a editar-la i publicar-la.",
+      "BOT_IA": "Assistent virtual amb IA que respon automàticament als teus clients.",
+      "DOMAIN": "Gestiona el teu domini i configuració DNS.",
+      "WHATSAPP": "Missatgeria WhatsApp Business integrada al teu portal.",
+      "AUTOMATION": "Automatitzacions amb n8n per al teu negoci."
+    },
+    "section_howto_publish": "Com publicar",
+    "view_guide": "Veure guia",
+    "automation": {
+      "faq_monitoring_a": "n8n mostra l'estat de cada workflow (actiu, inactiu, error). També pots configurar notificacions d'alerta per email o Telegram.",
+      "faq_monitoring_q": "Com sé si els workflows funcionen?",
+      "access_link": "https://n8n.amg.cat",
+      "manage_step_1": "Accedeix a n8n des de l'enllaç d'accés",
+      "faq_failed_q": "El workflow ha fallat, què faig?",
+      "workflows_text": "Els workflows automatitzen tasques repetitives del teu negoci. Cada workflow fa una funció específica: enviar emails, gestionar leads, actualizar dades, etc.",
+      "faq_failed_a": "Revisa el log d'errors a n8n. Normalment és un problema de connexió amb alguna API externa. Si no pots resoldre-ho, contacta amb el teu tècnic.",
+      "manage_step_2": "Inicia sessió amb les teves credencials",
+      "faq_new_automations_q": "Puc afegir noves automatitzacions?",
+      "manage_step_3": "Des del panell, pots activar, desactivar o modificar workflows",
+      "faq_new_automations_a": "Sí, des del panell de n8n pots crear nous workflows. Si necessites ajuda, demana-ho al teu tècnic assignat."
+    },
+    "section_howto_edit": "Com editar",
+    "whatsapp": {
+      "access_text": "El servei WhatsApp Business API està integrat al vostre portal. Pots gestionar les converses des de la safata d'entrada.",
+      "faq_change_number_a": "Has de configurar un nou número des del panell de Meta Business i actualitzar les credencials al teu portal.",
+      "faq_change_number_q": "Com canvio el número de WhatsApp?",
+      "faq_no_messages_q": "Per què no rebo missatges?",
+      "faq_template_a": "Les plantilles de WhatsApp Business es gestionen des del panell de Meta Business. Necessitaran aprovació de Meta abans d'usar-se.",
+      "faq_template_q": "Com creo plantilles de missatges?",
+      "faq_no_messages_a": "Comprova que el número de telèfon estigui verificat a Meta i que el webhook estigui correctament configurat.",
+      "how_it_works": "Quan un client envia un missatge des del formulari web, aquest es rep automàticament al vostre WhatsApp Business. Podeu respondre directament des del portal.",
+      "test_link": "https://wa.me/{phone}"
+    },
+    "section_access": "Accés",
+    "section_setup": "Configuració",
+    "section_howto_manage": "Com gestionar",
+    "status": "Estat",
+    "section_test": "Provar connexió",
+    "new_services_cta": "Veure guies",
+    "status_configuring": "En configuració",
+    "section_propagation": "Temps de propagació",
+    "no_services_desc": "Quan tinguis serveis actius, veuràs les guies aquí.",
+    "guide": "Guia",
+    "configure_service": "Configurar servei",
+    "service_ready": "Llest!",
+    "section_troubleshoot": "Resolució de problemes",
+    "dismiss": "D'acord",
+    "section_manage_responses": "Gestionar respostes",
+    "section_workflows": "Workflows actius",
+    "section_credentials": "Credencials",
+    "new_services_title": "Tens nous serveis actius!",
+    "status_ready": "Actiu",
+    "section_domains": "Dominis",
+    "section_dns": "DNS",
+    "section_verify": "Verificació",
+    "no_credentials": "Credencials no configurades",
+    "title": "Serveis",
+    "faq_title": "Preguntes freqüents",
+    "no_services": "Encara no tens serveis actius",
+    "service_not_found": "Servei no trobat",
+    "no_guides_desc": "Aquest tipus de servei no té una guia d'ús disponible.",
+    "back_to_list": "Tornar al llistat",
+    "section_howto": "Com utilitzar-ho"
+  },
+  "admin": {
+    "config": {
+      "validation": {
+        "boolean": "Ha de ser 'true' o 'false'.",
+        "number": "Ha de ser un número vàlid.",
+        "secret": "Mínim 8 caràcters per a claus secretes.",
+        "minLength": "Mínim {n} caràcters.",
+        "maxLength": "Màxim {n} caràcters.",
+        "pattern": "El valor no compleix el format requerit.",
+        "json": "Ha de ser un JSON vàlid.",
+        "numberMax": "El valor màxim és {max}.",
+        "url": "Ha de ser una URL vàlida (http:// o https://).",
+        "numberMin": "El valor mínim és {min}."
+      },
+      "placeholderNumber": "Introdueix un número...",
+      "infoEnvPriority": "Les variables d'entorn tenen prioritat sobre les claus de la BD.",
+      "types": {
+        "number": "Número",
+        "string": "Text",
+        "boolean": "Booleà",
+        "url": "URL",
+        "json": "JSON",
+        "secret": "Clau secreta"
+      },
+      "loadingTest": "…",
+      "confirmDelete": "Eliminar la clau {key}?",
+      "categories": {
+        "AGENTS": "Agents IA",
+        "INFRAOPS": "InfraOps",
+        "PAYMENTS": "Pagaments",
+        "MAINTENANCE": "Manteniment i Marca",
+        "FINOPS": "FinOps",
+        "GENERAL": "General",
+        "BACKUP": "Backup",
+        "META_ADS": "Meta Ads",
+        "EMAIL_INBOUND": "Email Inbound",
+        "PROSPECTING": "Prospecció",
+        "AUTOMATIONS": "Automatitzacions",
+        "IMAGE_GEN": "Generació d'imatges",
+        "STORAGE": "Emmagatzematge",
+        "AI_MODELS": "Models IA",
+        "CALENDAR": "Calendari"
+      },
+      "placeholderJson": "Enganxa el JSON aquí...",
+      "missing": "{n} per configurar",
+      "envRead": "Llegida d'entorn",
+      "btnTest": "Provar",
+      "allConfigured": "Tot configurat",
+      "defaultSource": "Valor per defecte",
+      "infoNoRestart": "Canviar una clau aquí no requereix reiniciar el servidor.",
+      "search": "Cerca per clau, nom o descripció...",
+      "toastDeleteError": "Error eliminant la clau",
+      "breadcrumbDisplay": "/ portal / admin / config /",
+      "auditTitle": "Històric de canvis",
+      "btnSave": "Desar",
+      "toastSaveError": "Error desant la clau",
+      "missingSource": "No configurat",
+      "btnCancel": "Cancel·lar",
+      "toggleActive": "Actiu",
+      "btnEdit": "Editar",
+      "title": "Configuració del Sistema",
+      "count": "{filtered} de {total} claus",
+      "btnDelete": "Eliminar",
+      "infoEncrypted": "Les claus s'emmagatzemen xifrades (AES-256) a la base de dades.",
+      "envSource": "Variable d'entorn",
+      "testError": "Error connectant amb el servidor.",
+      "toggleInactive": "Inactiu",
+      "toastDeleted": "Clau {key} eliminada",
+      "placeholderValue": "Introdueix {label}…",
+      "dbSource": "Configurat (DB)",
+      "btnConfigure": "Configurar",
+      "toastSaved": "Clau {key} desada correctament",
+      "breadcrumb": "admin / config"
+    },
+    "sidebar": {
+      "tenants": "Tenants",
+      "users": "Usuaris",
+      "admin": "Administració"
+    },
+    "users": {
+      "created": "Usuari creat correctament",
+      "title": "Usuaris",
+      "updated": "Usuari actualitzat correctament",
+      "search": "Cercar usuaris...",
+      "fields": {
+        "role": "Rol",
+        "email": "Email",
+        "password": "Contrasenya",
+        "name": "Nom",
+        "isActive": "Actiu",
+        "tenant": "Tenant"
+      },
+      "unlock": "Desbloquejar",
+      "new": "Nou usuari",
+      "lastLogin": "Última connexió",
+      "roles": {
+        "SUPER_ADMIN": "Super Admin",
+        "CLIENT": "Client",
+        "ADMIN": "Admin"
+      },
+      "status": {
+        "blocked": "Blocat",
+        "active": "Actiu",
+        "inactive": "Inactiu"
+      },
+      "delete": "Eliminar usuari",
+      "deleted": "Usuari eliminat correctament",
+      "unlockSuccess": "Usuari desblocat correctament",
+      "edit": "Editar usuari",
+      "deleteConfirm": "Estàs segur d'eliminar aquest usuari? Aquesta acció desactivarà el seu compte.",
+      "noResults": "No s'han trobat usuaris",
+      "never": "Mai"
+    },
+    "tenants": {
+      "search": "Cercar tenants...",
+      "fields": {
+        "name": "Nom",
+        "phone": "Telèfon",
+        "isActive": "Actiu",
+        "slug": "Slug",
+        "address": "Adreça",
+        "email": "Email"
+      },
+      "created": "Tenant creat correctament",
+      "noResults": "No s'han trobat tenants",
+      "title": "Tenants",
+      "updated": "Tenant actualitzat correctament",
+      "new": "Nou tenant",
+      "edit": "Editar tenant"
+    },
+    "save": "Desar",
+    "loading": "Carregant...",
+    "title": "Administració",
+    "cancel": "Cancel·lar"
+  },
+  "footer": {
+    "contacte": "Contacte",
+    "termes": "Termes del Servei",
+    "copyright": "AMG Digitalitzacions. Tots els drets reservats.",
+    "avisLegal": "Avís Legal",
+    "services": "Serveis",
+    "description": "Automatització digital per a pimes de Mallorca. Webs, bots IA, CRM i molt més.",
+    "privacitat": "Política de Privacitat",
+    "legal": "Legal"
+  },
+  "cta": {
+    "buttonSecondary": "ACCEDIR AL PORTAL",
+    "formSuccess": "Missatge enviat!",
+    "formSuccessDesc": "Et respondrem en menys de 24 hores.",
+    "formSubmit": "ENVIAR MISSATGE",
+    "button": "DEMANA UNA DEMO GRATUÏTA",
+    "formEmail": "El teu email",
+    "formTitle": "O envia'ns un missatge",
+    "subtitle": "En menys de 48 hores el teu negoci pot estar funcionant amb automatitzacions que et faran estalviar hores cada setmana.",
+    "title": "LLEST PER DIGITALITZAR EL TEU NEGOCI?",
+    "formError": "Error en enviar. Prova-ho per WhatsApp.",
+    "formName": "El teu nom",
+    "formMessage": "En què et podem ajudar?"
+  },
+  "hero": {
+    "title": "DEIXA DE PERDRE CLIENTS",
+    "titleAccent": "PER NO RESPONDRE AL WHATSAPP",
+    "subtitle": "Converteix el teu WhatsApp en una màquina de generar feina organitzada. Sense tecnicismes, sense complicacions.",
+    "cta": "DEMANA UNA DEMO",
+    "scrollDown": "DESPLAÇA'T PER SABER-NE MÉS"
+  },
+  "problem": {
+    "title": "EL TEU NEGOCI ET CONTROLA A TU?",
+    "items": [
+      "Clients que t'escriuen i esperen hores (o dies).",
+      "Consultes que no són urgents i t'interrompen la feina.",
+      "El caos de gestionar l'agenda a base de trucades.",
+      "Oportunitats de negoci que es perden per falta de seguiment."
+    ]
+  },
+  "pricing": {
+    "plans": [
+      {
+        "name": "Bàsic",
+        "price": "29€",
+        "period": "/mes",
+        "features": [
+          "Landing page",
+          "WhatsApp Business",
+          "SMTP corporatiu",
+          "Domini + SSL",
+          "Suport per email"
+        ],
+        "cta": "COMENÇAR"
+      },
+      {
+        "name": "Intermedi",
+        "price": "49€",
+        "period": "/mes",
+        "features": [
+          "Tot del pla Bàsic",
+          "Landing Premium",
+          "Agenda online",
+          "CRM + Pipeline",
+          "Suport prioritari"
+        ],
+        "cta": "COMENÇAR",
+        "highlighted": true
+      },
+      {
+        "name": "Avançat",
+        "price": "99€",
+        "period": "/mes",
+        "features": [
+          "Tot del pla Intermedi",
+          "Assistant IA complet",
+          "Workflows automàtics",
+          "Facturació digital",
+          "Acompanyament dedicat"
+        ],
+        "cta": "COMENÇAR"
+      }
+    ],
+    "title": "TARIFES PLANES, SENSE SORPRESES"
+  },
+  "services": {
+    "title": "SOLUCIONS A MIDA PER AL TEU NEGOCI",
+    "subtitle": "Tant si necessites una web senzilla com un sistema d'IA complet, tenim el pla perfecte.",
+    "profiles": [
+      {
+        "name": "Web Bàsica",
+        "tagline": "Presència digital essencial",
+        "price": "des de 29€/mes",
+        "features": [
+          "Landing page responsiva",
+          "Formulari de contacte",
+          "WhatsApp Business",
+          "SMTP corporatiu",
+          "Domini + DNS + SSL"
+        ]
+      },
+      {
+        "name": "Landing Premium",
+        "tagline": "La teva targeta de visita digital",
+        "price": "des de 49€/mes",
+        "features": [
+          "Landing Pro amb fotos",
+          "Galeria d'imatges",
+          "Agenda online",
+          "Recordatori 24h WhatsApp",
+          "Xat web integrat"
+        ]
+      },
+      {
+        "name": "Automatització",
+        "tagline": "Processos que funcionen sols",
+        "price": "des de 49€/mes",
+        "features": [
+          "CRM + Pipeline de vendes",
+          "Calculadora de pressupost",
+          "Reenganxament automàtic",
+          "Ressenya Google automàtica",
+          "Cobrament amb targeta"
+        ]
+      },
+      {
+        "name": "Assistent IA",
+        "tagline": "Intel·ligència artificial per al teu negoci",
+        "price": "des de 99€/mes",
+        "features": [
+          "Bot IA conversacional",
+          "RAG (respostes des de documents)",
+          "Classificació automàtica de consultes",
+          "Resposta immediata 24/7",
+          "Historial intel·ligent"
+        ]
+      },
+      {
+        "name": "Transformació Digital",
+        "tagline": "El teu negoci, totalment digitalitzat",
+        "price": "consultar",
+        "features": [
+          "Tots els serveis anteriors",
+          "Facturació electrònica",
+          "Workflows personalitzats n8n",
+          "Dashboard financer",
+          "Formació i acompanyament"
+        ]
+      }
+    ]
+  },
+  "howItWorks": {
+    "steps": [
+      {
+        "number": "1",
+        "title": "Auditem el teu negoci",
+        "desc": "Analitzem els teus processos actuals i identifiquem oportunitats d'automatització."
+      },
+      {
+        "number": "2",
+        "title": "Ho posem en marxa en 48h",
+        "desc": "Configurem tot el sistema: web, WhatsApp, agenda, IA. Sense complicacions tècniques per a tu."
+      },
+      {
+        "number": "3",
+        "title": "Comencen els resultats",
+        "desc": "El teu negoci funciona sol. Més clients, menys feina, més control."
+      }
+    ],
+    "title": "COM FUNCIONA"
   }
 }
