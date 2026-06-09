@@ -181,6 +181,24 @@ public class LeadController {
         return ResponseEntity.ok(activityService.completeActivity(leadId, activityId, principal));
     }
 
+    @PutMapping("/{leadId}/activities/{activityId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ActivityResponse> updateActivity(@PathVariable UUID leadId,
+                                                           @PathVariable UUID activityId,
+                                                           @Valid @RequestBody ActivityRequest request,
+                                                           @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(activityService.updateActivity(leadId, activityId, request, principal));
+    }
+
+    @DeleteMapping("/{leadId}/activities/{activityId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteActivity(@PathVariable UUID leadId,
+                                               @PathVariable UUID activityId,
+                                               @AuthenticationPrincipal UserPrincipal principal) {
+        activityService.deleteActivity(leadId, activityId, principal);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{leadId}/convert")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<ConvertLeadResult> convertToClient(

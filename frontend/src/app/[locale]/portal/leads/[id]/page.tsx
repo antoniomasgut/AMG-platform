@@ -6,7 +6,8 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import {
   getLead, getActivities, changeStage, createActivity, setWhatsapp, updateLead, deleteLead,
-  completeActivity, analyzeNotes, type AnalyzeNotesResponse, type Activity,
+  completeActivity, updateActivity, deleteActivity,
+  analyzeNotes, type AnalyzeNotesResponse, type Activity,
 } from '@/services/leads';
 import { createBookingToken, getTokensForLead, type BookingToken } from '@/services/booking';
 import dynamic from 'next/dynamic';
@@ -128,6 +129,10 @@ export default function LeadDetailPage() {
     name: '', email: '', phone: '', notes: '', estimatedValue: '', source: '',
   });
 
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+  const [editActivityData, setEditActivityData] = useState({ type: 'CALL', description: '', dueDate: '' });
+  const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
+
   const { data: lead, isLoading: loadingLead } = useQuery({
     queryKey: ['lead', id],
     queryFn: () => getLead(id),
@@ -201,6 +206,30 @@ export default function LeadDetailPage() {
       qc.invalidateQueries({ queryKey: ['lead-activities', id] });
     },
     onError: () => toast('error', 'Error completant activitat'),
+  });
+
+  const { mutate: doUpdateActivity, isPending: updatingActivity } = useMutation({
+    mutationFn: (activityId: string) => updateActivity(id, activityId, {
+      type: editActivityData.type,
+      description: editActivityData.description,
+      dueDate: editActivityData.dueDate || undefined,
+    }),
+    onSuccess: () => {
+      toast('success', 'Activitat actualitzada');
+      setEditingActivityId(null);
+      qc.invalidateQueries({ queryKey: ['lead-activities', id] });
+    },
+    onError: () => toast('error', 'Error actualitzant activitat'),
+  });
+
+  const { mutate: doDeleteActivity } = useMutation({
+    mutationFn: (activityId: string) => deleteActivity(id, activityId),
+    onSuccess: () => {
+      toast('success', 'Activitat esborrada');
+      setDeletingActivityId(null);
+      qc.invalidateQueries({ queryKey: ['lead-activities', id] });
+    },
+    onError: () => toast('error', 'Error esborrant activitat'),
   });
 
   const { mutate: doSaveMeetingNote, isPending: savingNote } = useMutation({
@@ -687,32 +716,95 @@ export default function LeadDetailPage() {
             </div>
           ) : (
             <div className="divide-y divide-border-base">
-              {(activities as Activity[]).map(act => (
-                <div key={act.id} className={`px-4 sm:px-5 py-3 flex items-start gap-3 ${act.completedAt ? 'opacity-60' : ''}`}>
-                  <AMGBadge tone={act.completedAt ? 'success' : 'neutral'}>{act.type}</AMGBadge>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm text-ink-1 ${act.completedAt ? 'line-through' : ''}`}>{act.description}</p>
-                    {act.dueDate && (
-                      <span className="f-mono text-label text-ink-3">{fmtDate(act.dueDate)}</span>
-                    )}
-                    {act.completedAt && (
-                      <div className="f-mono text-[10px] text-success mt-0.5">Completada {fmtDate(act.completedAt)}</div>
+              {(activities as Activity[]).map(act => {
+                const isEditing = editingActivityId === act.id;
+                const isConfirmDelete = deletingActivityId === act.id;
+                return (
+                  <div key={act.id} className={`px-4 sm:px-5 py-3 ${act.completedAt ? 'opacity-60' : ''}`}>
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <select
+                            value={editActivityData.type}
+                            onChange={e => setEditActivityData(d => ({ ...d, type: e.target.value }))}
+                            className="bg-bg-1 border border-border-base text-ink-0 px-2 h-8 f-mono text-xs focus:outline-none focus:border-accent"
+                          >
+                            {['CALL', 'EMAIL', 'MEETING', 'NOTE', 'TASK'].map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                          <input
+                            type="date" value={editActivityData.dueDate}
+                            onChange={e => setEditActivityData(d => ({ ...d, dueDate: e.target.value }))}
+                            className="bg-bg-1 border border-border-base text-ink-0 px-2 h-8 f-mono text-xs focus:outline-none focus:border-accent"
+                          />
+                        </div>
+                        <textarea
+                          value={editActivityData.description}
+                          onChange={e => setEditActivityData(d => ({ ...d, description: e.target.value }))}
+                          rows={2}
+                          className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 py-1.5 f-mono text-xs focus:outline-none focus:border-accent resize-none"
+                        />
+                        <div className="flex gap-2">
+                          <AMGButton size="sm" loading={updatingActivity} onClick={() => doUpdateActivity(act.id)}>Desar</AMGButton>
+                          <AMGButton size="sm" variant="ghost" onClick={() => setEditingActivityId(null)}>Cancel·lar</AMGButton>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-3">
+                        <AMGBadge tone={act.completedAt ? 'success' : 'neutral'}>{act.type}</AMGBadge>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm text-ink-1 ${act.completedAt ? 'line-through' : ''}`}>{act.description}</p>
+                          {act.dueDate && <span className="f-mono text-label text-ink-3">{fmtDate(act.dueDate)}</span>}
+                          {act.completedAt && (
+                            <div className="f-mono text-[10px] text-success mt-0.5">Completada {fmtDate(act.completedAt)}</div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {!act.completedAt && (
+                            <button
+                              onClick={() => doCompleteActivity(act.id)}
+                              className="f-mono text-[10px] text-ink-3 hover:text-success border border-border-base hover:border-success px-2 py-0.5 transition-colors"
+                            >
+                              ✓ Fet
+                            </button>
+                          )}
+                          {!act.completedAt && (
+                            <button
+                              onClick={() => {
+                                setEditingActivityId(act.id);
+                                setEditActivityData({
+                                  type: act.type as string,
+                                  description: act.description,
+                                  dueDate: act.dueDate ? new Date(act.dueDate).toISOString().split('T')[0] : '',
+                                });
+                              }}
+                              className="p-1 text-ink-3 hover:text-accent-light transition-colors"
+                              title="Editar"
+                            >
+                              <IconSet.Edit size={11} />
+                            </button>
+                          )}
+                          {isConfirmDelete ? (
+                            <div className="flex items-center gap-1">
+                              <span className="f-mono text-[9px] text-ink-3">Segur?</span>
+                              <button onClick={() => doDeleteActivity(act.id)} className="f-mono text-[9px] text-danger-light hover:underline">Sí</button>
+                              <button onClick={() => setDeletingActivityId(null)} className="f-mono text-[9px] text-ink-3 hover:underline">No</button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setDeletingActivityId(act.id)}
+                              className="p-1 text-ink-3 hover:text-danger-light transition-colors"
+                              title="Esborrar"
+                            >
+                              <IconSet.Trash size={11} />
+                            </button>
+                          )}
+                          <span className="f-mono text-label text-ink-3">{fmtDate(act.createdAt)}</span>
+                        </div>
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {!act.completedAt && (
-                      <button
-                        onClick={() => doCompleteActivity(act.id)}
-                        className="f-mono text-[10px] text-ink-3 hover:text-success border border-border-base hover:border-success px-2 py-0.5 transition-colors"
-                        title="Marcar com a completada"
-                      >
-                        ✓ Fet
-                      </button>
-                    )}
-                    <span className="f-mono text-label text-ink-3">{fmtDate(act.createdAt)}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -62,6 +62,30 @@ public class ActivityService {
         return toActivityResponse(activity);
     }
 
+    public ActivityResponse updateActivity(UUID leadId, UUID activityId, ActivityRequest request, UserPrincipal principal) {
+        verifyLeadAccess(leadId, principal);
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new ResourceNotFoundException("Activity not found: " + activityId));
+        if (!activity.getLeadId().equals(leadId)) {
+            throw new ResourceNotFoundException("Activity not found for lead: " + leadId);
+        }
+        activity.setType(request.type());
+        activity.setDescription(request.description());
+        activity.setDueDate(request.dueDate());
+        activity = activityRepository.save(activity);
+        return toActivityResponse(activity);
+    }
+
+    public void deleteActivity(UUID leadId, UUID activityId, UserPrincipal principal) {
+        verifyLeadAccess(leadId, principal);
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new ResourceNotFoundException("Activity not found: " + activityId));
+        if (!activity.getLeadId().equals(leadId)) {
+            throw new ResourceNotFoundException("Activity not found for lead: " + leadId);
+        }
+        activityRepository.delete(activity);
+    }
+
     private void verifyLeadAccess(UUID leadId, UserPrincipal principal) {
         Lead lead = leadRepository.findById(leadId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found: " + leadId));

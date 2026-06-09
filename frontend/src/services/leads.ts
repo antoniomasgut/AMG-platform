@@ -104,6 +104,21 @@ export const createActivity = (leadId: string, data: CreateActivityRequest) =>
 export const completeActivity = (leadId: string, activityId: string) =>
   apiFetch<Activity>(`/leads/${leadId}/activities/${activityId}/complete`, { method: 'PATCH' });
 
+export interface UpdateActivityRequest {
+  type: string;
+  description: string;
+  dueDate?: string;
+}
+
+export const updateActivity = (leadId: string, activityId: string, data: UpdateActivityRequest) =>
+  apiFetch<Activity>(`/leads/${leadId}/activities/${activityId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
+export const deleteActivity = (leadId: string, activityId: string) =>
+  apiFetch<void>(`/leads/${leadId}/activities/${activityId}`, { method: 'DELETE' });
+
 export interface ConvertLeadRequest {
   tenantName: string;
   billingEmail: string;

@@ -44,12 +44,10 @@ He vist el negoci {{nom}} i he creat una demo de com podríeu tenir una presènc
 
 Podeu veure-la aquí: {{demoUrl}}
 
-M'agradaria comentar-vos com podria ajudar al vostre negoci. Esteu disponibles per a una reunió breu presencial o per videoconferència?
+M'agradaria comentar-vos com podria ajudar al vostre negoci. Esteu disponibles per a una reunió breu?
 
 Salutacions,
-Antonio
-AMG Digitalització
-Tel: 654 048 164`,
+AMG Digitalització`,
   },
   es: {
     subject: '{{nom}} — Hemos creado una demo digital para su negocio',
@@ -59,12 +57,10 @@ He visto el negocio {{nom}} y he creado una demo de cómo podrían tener una pre
 
 Pueden verla aquí: {{demoUrl}}
 
-Me gustaría comentarles cómo podría ayudar a su negocio. ¿Están disponibles para una reunión breve presencial o por videoconferencia?
+Me gustaría comentarles cómo podría ayudar a su negocio. ¿Están disponibles para una reunión breve?
 
 Saludos,
-Antonio
-AMG Digitalització
-Tel: 654 048 164`,
+AMG Digitalització`,
   },
 };
 
@@ -708,6 +704,7 @@ export default function LeadsPage() {
   const [showTemplateSend, setShowTemplateSend] = useState(false);
   const [demoLead, setDemoLead] = useState<Lead | null>(null);
   const [lostLead, setLostLead] = useState<Lead | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('ALL');
   const [sourceFilter, setSourceFilter] = useState<string>('ALL');
@@ -772,6 +769,7 @@ export default function LeadsPage() {
   });
 
   const filteredLeads = (leads as Lead[]).filter(l => {
+    if (!showArchived && l.isActive === false) return false;
     if (stageFilter !== 'ALL' && l.stage !== stageFilter) return false;
     if (sourceFilter !== 'ALL' && l.source !== sourceFilter) return false;
     if (searchTerm) {
@@ -858,6 +856,12 @@ export default function LeadsPage() {
               Netejar filtres
             </button>
           )}
+          <button
+            onClick={() => setShowArchived(v => !v)}
+            className={`f-mono text-[10px] px-2 py-1 border transition-colors ${showArchived ? 'border-accent text-accent-light bg-accent-muted' : 'border-border-base text-ink-3 hover:border-accent/40'}`}
+          >
+            {showArchived ? 'Ocultar arxivats' : 'Mostrar arxivats'}
+          </button>
           <span className="f-mono text-[10px] text-ink-3 ml-auto">
             {filteredLeads.length} / {leads.length} leads
           </span>
