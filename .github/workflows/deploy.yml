@@ -16,7 +16,8 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: root
           key: ${{ secrets.SERVER_SSH_KEY }}
-          timeout: 15m
+          timeout: 30s
+          command_timeout: 20m
           script: |
             set -e
 
@@ -38,6 +39,11 @@ jobs:
               if [ "$STATUS" = "healthy" ]; then
                 echo "Backend healthy"
                 break
+              fi
+              if [ "$i" = "24" ]; then
+                echo "ERROR: Backend no ha arrencat en 120s" >&2
+                docker logs --tail 50 amg_backend >&2
+                exit 1
               fi
               sleep 5
             done
