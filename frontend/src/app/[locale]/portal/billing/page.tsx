@@ -11,7 +11,7 @@ import {
   sendBudget, cancelBudget, updateBudget, createBudget,
   type BudgetResponse, type CreateBudgetRequest,
 } from '@/services/billing';
-import { getTenantSetup, type TenantSetup } from '@/services/admin';
+import { getTenantSetup, listTenants, type TenantSetup, type TenantResponse } from '@/services/admin';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
@@ -426,11 +426,17 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
+const PAGE_SIZE = 20;
+
 export default function BillingPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(0);
+  const [tenantFilter, setTenantFilter] = useState<string>('');
+  const [tenantSearch, setTenantSearch] = useState('');
+  const [tenantDropdown, setTenantDropdown] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState<BudgetResponse | null>(null);
 
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
@@ -442,11 +448,17 @@ export default function BillingPage() {
     enabled: !!tenantId && !isAdmin,
   });
 
-  const { data: budgets = [], isLoading, refetch: refetchBudgets } = useQuery({
-    queryKey: isAdmin ? ['budgets-all', statusFilter] : ['budgets', tenantId, statusFilter],
+  const { data: tenants } = useQuery({
+    queryKey: ['tenants-search', tenantSearch],
+    queryFn: () => listTenants({ search: tenantSearch || undefined, size: 30 }),
+    enabled: isAdmin,
+  });
+
+  const { data: budgetPage, isLoading, refetch: refetchBudgets } = useQuery({
+    queryKey: isAdmin ? ['budgets-all', statusFilter, tenantFilter, page] : ['budgets', tenantId, statusFilter, page],
     queryFn: () => isAdmin
-      ? listAllBudgets(statusFilter || undefined)
-      : listBudgets(tenantId, statusFilter || undefined),
+      ? listAllBudgets(statusFilter || undefined, tenantFilter || undefined, page, PAGE_SIZE)
+      : listBudgets(tenantId, statusFilter || undefined, page, PAGE_SIZE),
     enabled: isAdmin || !!tenantId,
   });
 
@@ -455,7 +467,10 @@ export default function BillingPage() {
     qc.invalidateQueries({ queryKey: ['billing-dashboard'] });
   };
 
-  const filtered = budgets as BudgetResponse[];
+  const filtered = budgetPage?.content ?? [];
+  const totalPages = budgetPage?.totalPages ?? 1;
+
+  const selectedTenantName = tenants?.content?.find((t: TenantResponse) => t.id === tenantFilter)?.name ?? tenantSearch;
 
   return (
     <PortalShell breadcrumb="billing">
@@ -483,9 +498,43 @@ export default function BillingPage() {
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base flex flex-wrap items-center gap-3">
             <AMGSectionTitle eyebrow={isAdmin ? 'Tots els tenants' : 'Historial'} title="Pressupostos" />
-            <div className="flex gap-2 ml-auto flex-wrap">
+            <div className="flex gap-2 ml-auto flex-wrap items-center">
+              {isAdmin && (
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Cerca client..."
+                    value={tenantFilter ? (selectedTenantName || tenantSearch) : tenantSearch}
+                    onChange={e => {
+                      setTenantSearch(e.target.value);
+                      setTenantFilter('');
+                      setTenantDropdown(true);
+                      setPage(0);
+                    }}
+                    onFocus={() => setTenantDropdown(true)}
+                    onBlur={() => setTimeout(() => setTenantDropdown(false), 150)}
+                    className="h-7 px-2 text-xs f-mono border border-border-base bg-transparent text-ink-1 placeholder-ink-3 focus:outline-none focus:border-[#FF6B00] w-36"
+                  />
+                  {tenantFilter && (
+                    <button onClick={() => { setTenantFilter(''); setTenantSearch(''); setPage(0); }}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink-1">
+                      <IconSet.X size={10} />
+                    </button>
+                  )}
+                  {tenantDropdown && tenants && tenants.content.length > 0 && (
+                    <div className="absolute top-8 left-0 z-20 w-56 bg-bg-0 border border-border-base shadow-xl">
+                      {tenants.content.map((t: TenantResponse) => (
+                        <button key={t.id} onMouseDown={() => { setTenantFilter(t.id); setTenantSearch(t.name); setTenantDropdown(false); setPage(0); }}
+                          className="w-full text-left px-3 py-2 text-xs text-ink-1 hover:bg-accent-muted truncate block">
+                          {t.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               {STATUS_FILTERS.map((s) => (
-                <button key={s} onClick={() => setStatusFilter(s)}
+                <button key={s} onClick={() => { setStatusFilter(s); setPage(0); }}
                   className={`f-mono text-label uppercase px-3 h-7 border transition-colors ${
                     statusFilter === s
                       ? 'border-[#FF6B00] text-accent-light bg-accent-muted'
@@ -510,41 +559,54 @@ export default function BillingPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px]">
-                <thead>
-                  <tr className="border-b border-border-base">
-                    {(isAdmin
-                      ? ['Client', 'Número', 'Estat', 'Total', 'Vàlid fins']
-                      : ['Número', 'Estat', 'Total', 'Vàlid fins']
-                    ).map((h) => (
-                      <th key={h} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((b) => (
-                    <tr key={b.id}
-                      onClick={() => setSelectedBudget(b)}
-                      className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,107,0,0.04)] hover:border-[rgba(255,107,0,0.2)] transition-colors cursor-pointer">
-                      {isAdmin && (
-                        <td className="px-4 sm:px-5 py-3 text-xs text-ink-2 max-w-[140px] truncate">
-                          {b.tenantName ?? '—'}
-                        </td>
-                      )}
-                      <td className="px-4 sm:px-5 py-3 f-mono text-accent-light text-xs">{b.budgetNumber}</td>
-                      <td className="px-4 sm:px-5 py-3">
-                        <AMGBadge tone={BADGE_TONE[b.status] ?? 'neutral'}>{LABEL[b.status] ?? b.status}</AMGBadge>
-                      </td>
-                      <td className="px-4 sm:px-5 py-3 f-display font-bold">{fmt(b.total)}</td>
-                      <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{fmtDate(b.validUntil)}</td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px]">
+                  <thead>
+                    <tr className="border-b border-border-base">
+                      {(isAdmin
+                        ? ['Client', 'Número', 'Estat', 'Total', 'Vàlid fins']
+                        : ['Número', 'Estat', 'Total', 'Vàlid fins']
+                      ).map((h) => (
+                        <th key={h} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal">
+                          {h}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filtered.map((b) => (
+                      <tr key={b.id}
+                        onClick={() => setSelectedBudget(b)}
+                        className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,107,0,0.04)] hover:border-[rgba(255,107,0,0.2)] transition-colors cursor-pointer">
+                        {isAdmin && (
+                          <td className="px-4 sm:px-5 py-3 text-xs text-ink-2 max-w-[140px] truncate">
+                            {b.tenantName ?? '—'}
+                          </td>
+                        )}
+                        <td className="px-4 sm:px-5 py-3 f-mono text-accent-light text-xs">{b.budgetNumber}</td>
+                        <td className="px-4 sm:px-5 py-3">
+                          <AMGBadge tone={BADGE_TONE[b.status] ?? 'neutral'}>{LABEL[b.status] ?? b.status}</AMGBadge>
+                        </td>
+                        <td className="px-4 sm:px-5 py-3 f-display font-bold">{fmt(b.total)}</td>
+                        <td className="px-4 sm:px-5 py-3 f-mono text-xs text-ink-1">{fmtDate(b.validUntil)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 1 && (
+                <div className="p-4 flex items-center justify-center gap-3 border-t border-border-base">
+                  <AMGButton size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                    ← Anterior
+                  </AMGButton>
+                  <span className="f-mono text-label text-ink-2">{page + 1} / {totalPages}</span>
+                  <AMGButton size="sm" variant="outline" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                    Següent →
+                  </AMGButton>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

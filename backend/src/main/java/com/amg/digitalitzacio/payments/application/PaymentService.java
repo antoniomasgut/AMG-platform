@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.payments.application;
 
 import com.amg.digitalitzacio.gocardless.api.dto.ProviderSummaryResponse;
 import com.amg.digitalitzacio.payments.api.dto.*;
+import org.springframework.lang.Nullable;
 import org.springframework.data.domain.Page;
 
 import java.util.UUID;
@@ -17,4 +18,10 @@ public interface PaymentService {
     PaymentDashboardResponse getDashboard(@org.springframework.lang.Nullable UUID tenantId);
     WebhookResponse processWebhook(WebhookRequest request);
     ProviderSummaryResponse getProviders(UUID tenantId);
+
+    // Pagament automàtic via Stripe
+    SetupSessionResponse createSetupSession(UUID tenantId, String tenantEmail, String successUrl, String cancelUrl);
+    SavedPaymentMethodResponse completeSetup(UUID tenantId, String sessionId);
+    @Nullable SavedPaymentMethodResponse getSavedPaymentMethod(UUID tenantId);
+    void removeSavedPaymentMethod(UUID tenantId);
 }

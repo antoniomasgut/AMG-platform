@@ -3182,7 +3182,7 @@ export default function TenantDetailPage() {
     telegram:  (tgConfig?.status === 'CONNECTED' ? 'active' : tgConfig ? 'warning' : 'neutral') as SectionStatus,
     whatsapp:  (waConfig?.status === 'CONNECTED' ? 'active' : waConfig ? 'warning' : 'neutral') as SectionStatus,
     gocardless:(gcConfig?.isActive ? 'active' : 'neutral') as SectionStatus,
-    budgets:   ((budgets?.length ?? 0) > 0 ? 'active' : 'neutral') as SectionStatus,
+    budgets:   ((budgets?.content.length ?? 0) > 0 ? 'active' : 'neutral') as SectionStatus,
     lifecycle: 'neutral' as SectionStatus,
   };
 
@@ -3563,14 +3563,14 @@ export default function TenantDetailPage() {
             </AMGButton>
           </div>
           <div className="p-5">
-            {!budgets || budgets.length === 0 ? (
+            {!budgets || budgets.content.length === 0 ? (
               <div className="text-center py-6">
                 <IconSet.Receipt size={28} stroke="#64748b" className="mx-auto mb-3" />
                 <p className="text-sm text-ink-2">Cap pressupost generat per aquest tenant.</p>
               </div>
             ) : (
               <div className="space-y-2">
-                {budgets.map((b) => (
+                {budgets.content.map((b) => (
                   <button
                     key={b.id}
                     type="button"

@@ -35,6 +35,22 @@ public class StripeConfig {
     @Builder.Default
     private Boolean isActive = true;
 
+    // Mètode de pagament guardat per a càrrecs automàtics
+    @Column(length = 100)
+    private String stripeCustomerId;
+
+    @Column(length = 100)
+    private String stripePaymentMethodId;
+
+    @Column(length = 10)
+    private String pmLastFour;
+
+    @Column(length = 30)
+    private String pmBrand;
+
+    private Integer pmExpMonth;
+    private Integer pmExpYear;
+
     @CreatedDate
     @Column(updatable = false)
     private Instant createdAt;

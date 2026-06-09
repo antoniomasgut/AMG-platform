@@ -33,10 +33,12 @@ export interface DiscountResponse {
 export const getBillingDashboard = (tenantId: string) =>
   apiFetch<BillingDashboard>(`/billing/tenants/${tenantId}/dashboard`);
 
+export interface BudgetPage { content: BudgetResponse[]; totalPages: number; totalElements: number; }
+
 export const listBudgets = (tenantId: string, status?: string, page = 0, size = 20) => {
   const params = new URLSearchParams({ page: String(page), size: String(size) });
   if (status) params.set('status', status);
-  return apiFetch<BudgetResponse[]>(`/billing/tenants/${tenantId}/budgets?${params}`);
+  return apiFetch<BudgetPage>(`/billing/tenants/${tenantId}/budgets?${params}`);
 };
 
 export const getBudget = (tenantId: string, id: string) =>
@@ -82,10 +84,11 @@ export const updateBudget = (id: string, data: CreateBudgetRequest) =>
     body: JSON.stringify(data),
   });
 
-export const listAllBudgets = (status?: string, page = 0, size = 50) => {
+export const listAllBudgets = (status?: string, tenantId?: string, page = 0, size = 20) => {
   const params = new URLSearchParams({ page: String(page), size: String(size) });
   if (status) params.set('status', status);
-  return apiFetch<BudgetResponse[]>(`/billing/budgets?${params}`);
+  if (tenantId) params.set('tenantId', tenantId);
+  return apiFetch<BudgetPage>(`/billing/budgets?${params}`);
 };
 
 // Públic (sense auth) — per a la pàgina d'acceptació del client

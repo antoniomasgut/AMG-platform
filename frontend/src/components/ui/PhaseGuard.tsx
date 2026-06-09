@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { Link } from '@/i18n/navigation';
 import { IconSet } from './icons';
 
 interface PhaseGuardProps {
@@ -37,9 +38,9 @@ export function PhaseGuard({ allowed, loading, phaseName, phaseLabel, descriptio
             <div className="text-xs text-ink-3 mt-1">{description}</div>
           )}
         </div>
-        <a href="/portal" className="text-xs text-accent-light hover:underline">
+        <Link href="/portal" className="text-xs text-accent-light hover:underline">
           Tornar al portal
-        </a>
+        </Link>
       </div>
     );
   }

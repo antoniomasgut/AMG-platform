@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useTenantFeatures } from '@/lib/tenant-features';
 import { useTheme } from '@/lib/theme-context';
 import { usePathname } from 'next/navigation';
+import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { IconSet } from '@/components/ui/icons';
@@ -21,9 +22,8 @@ type T = ReturnType<typeof useTranslations<'portalNav'>>;
 // ─────────────────────────────────────────────────────────────────────────────
 // CLIENT: veu els seus serveis i el seu compte
 // ─────────────────────────────────────────────────────────────────────────────
-function clientGroups(t: T, features: { canAccessAnalytics: boolean; canAccessDocuments: boolean; isLoading: boolean }): NavGroup[] {
+function clientGroups(t: T, features: { canAccessAnalytics: boolean; isLoading: boolean }): NavGroup[] {
   const analyticsLocked  = !features.isLoading && !features.canAccessAnalytics;
-  const documentsLocked  = !features.isLoading && !features.canAccessDocuments;
 
   return [
     {
@@ -49,7 +49,6 @@ function clientGroups(t: T, features: { canAccessAnalytics: boolean; canAccessDo
       items: [
         { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads' },
         { label: t('items.analytics'), icon: IconSet.Trending, href: '/portal/analytics', locked: analyticsLocked },
-        { label: t('items.documents'), icon: IconSet.FileText, href: '/portal/documents', locked: documentsLocked },
       ],
     },
     {
@@ -81,7 +80,6 @@ function adminGroups(t: T): NavGroup[] {
         { label: t('items.prospecting'), icon: IconSet.Search, href: '/portal/prospecting' },
         { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads' },
         { label: t('items.analytics'), icon: IconSet.Trending, href: '/portal/analytics' },
-        { label: t('items.documents'), icon: IconSet.FileText, href: '/portal/documents' },
       ],
     },
     {
@@ -140,7 +138,6 @@ function superAdminGroups(t: T): NavGroup[] {
         { label: t('items.prospecting'), icon: IconSet.Search, href: '/portal/prospecting' },
         { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads' },
         { label: t('items.analytics'), icon: IconSet.Trending, href: '/portal/analytics' },
-        { label: t('items.documents'), icon: IconSet.FileText, href: '/portal/documents' },
       ],
     },
     {
@@ -256,9 +253,9 @@ export function PortalShell({ children, breadcrumb, backHref }: { children: Reac
   const NavContent = () => (
     <>
       <div className="h-14 border-b border-border-base flex items-center px-4 shrink-0">
-        <a href="/portal" onClick={() => setMobileOpen(false)}>
+        <Link href="/portal" onClick={() => setMobileOpen(false)}>
           <AMGLogo className="h-8 w-auto" />
-        </a>
+        </Link>
       </div>
 
       <nav aria-label="Menú principal" className="flex-1 py-2 overflow-y-auto">
@@ -270,7 +267,7 @@ export function PortalShell({ children, breadcrumb, backHref }: { children: Reac
             {group.items.map(({ label, icon: Icon, href, locked }) => {
               const active = isActive(href);
               return (
-                <a
+                <Link
                   key={href}
                   href={href}
                   onClick={() => setMobileOpen(false)}
@@ -291,7 +288,7 @@ export function PortalShell({ children, breadcrumb, backHref }: { children: Reac
                     </span>
                   )}
                   {locked && <IconSet.Lock size={12} className="shrink-0" />}
-                </a>
+                </Link>
               );
             })}
           </div>

@@ -9,6 +9,7 @@ import com.amg.digitalitzacio.vault.application.PaymentService;
 import com.amg.digitalitzacio.vault.application.ProfileService;
 import com.amg.digitalitzacio.vault.application.VaultService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -142,22 +143,31 @@ public class BillingOrchestrator implements BillingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BudgetResponse> listBudgets(UUID tenantId, String status, int page, int size) {
+    public Page<BudgetResponse> listBudgets(UUID tenantId, String status, int page, int size) {
         var pageable = PageRequest.of(page, size);
         var budgetPage = (status != null && !status.isBlank())
-                ? budgetRepository.findByTenantIdAndStatus(tenantId, BudgetStatus.valueOf(status), pageable)
-                : budgetRepository.findByTenantId(tenantId, pageable);
-        return budgetPage.stream().map(b -> toBudgetResponse(b)).toList();
+                ? budgetRepository.findByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, BudgetStatus.valueOf(status), pageable)
+                : budgetRepository.findByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
+        return budgetPage.map(this::toBudgetResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<BudgetResponse> listAllBudgets(String status, int page, int size) {
+    public Page<BudgetResponse> listAllBudgets(String status, UUID tenantId, int page, int size) {
         var pageable = PageRequest.of(page, size);
-        var budgetPage = (status != null && !status.isBlank())
-                ? budgetRepository.findByStatusOrderByCreatedAtDesc(BudgetStatus.valueOf(status), pageable)
-                : budgetRepository.findAllByOrderByCreatedAtDesc(pageable);
-        return budgetPage.stream().map(b -> toBudgetResponse(b)).toList();
+        boolean hasStatus = status != null && !status.isBlank();
+        boolean hasTenant = tenantId != null;
+        Page<Budget> budgetPage;
+        if (hasTenant && hasStatus) {
+            budgetPage = budgetRepository.findByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, BudgetStatus.valueOf(status), pageable);
+        } else if (hasTenant) {
+            budgetPage = budgetRepository.findByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
+        } else if (hasStatus) {
+            budgetPage = budgetRepository.findByStatusOrderByCreatedAtDesc(BudgetStatus.valueOf(status), pageable);
+        } else {
+            budgetPage = budgetRepository.findAllByOrderByCreatedAtDesc(pageable);
+        }
+        return budgetPage.map(this::toBudgetResponse);
     }
 
     @Override

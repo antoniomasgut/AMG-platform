@@ -238,6 +238,60 @@ public class PaymentOrchestrator implements PaymentService {
                 new ProviderSummaryResponse.RecurringProviders(recurringProvider, sepaMandateActive, gcMandateActive, gcMandateStatus));
     }
 
+    @Override
+    @Transactional
+    public SetupSessionResponse createSetupSession(UUID tenantId, String tenantEmail, String successUrl, String cancelUrl) {
+        var config = findConfig(tenantId);
+        var customerId = config.getStripeCustomerId();
+        if (customerId == null) {
+            customerId = stripeClient.createOrGetCustomer(tenantId, tenantEmail);
+            config.setStripeCustomerId(customerId);
+            stripeConfigRepository.save(config);
+        }
+        var url = stripeClient.createSetupSession(customerId, successUrl, cancelUrl);
+        return new SetupSessionResponse(url);
+    }
+
+    @Override
+    @Transactional
+    public SavedPaymentMethodResponse completeSetup(UUID tenantId, String sessionId) {
+        var config = findConfig(tenantId);
+        var pm = stripeClient.getPaymentMethodFromSession(sessionId);
+        config.setStripePaymentMethodId(pm.paymentMethodId());
+        config.setPmBrand(pm.brand());
+        config.setPmLastFour(pm.lastFour());
+        config.setPmExpMonth(pm.expMonth());
+        config.setPmExpYear(pm.expYear());
+        stripeConfigRepository.save(config);
+        return new SavedPaymentMethodResponse(pm.paymentMethodId(), pm.brand(), pm.lastFour(), pm.expMonth(), pm.expYear());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SavedPaymentMethodResponse getSavedPaymentMethod(UUID tenantId) {
+        return stripeConfigRepository.findByTenantId(tenantId)
+                .filter(c -> c.getStripePaymentMethodId() != null)
+                .map(c -> new SavedPaymentMethodResponse(
+                        c.getStripePaymentMethodId(), c.getPmBrand(), c.getPmLastFour(),
+                        c.getPmExpMonth(), c.getPmExpYear()))
+                .orElse(null);
+    }
+
+    @Override
+    @Transactional
+    public void removeSavedPaymentMethod(UUID tenantId) {
+        var config = findConfig(tenantId);
+        if (config.getStripePaymentMethodId() != null) {
+            stripeClient.detachPaymentMethod(config.getStripePaymentMethodId());
+        }
+        config.setStripePaymentMethodId(null);
+        config.setPmBrand(null);
+        config.setPmLastFour(null);
+        config.setPmExpMonth(null);
+        config.setPmExpYear(null);
+        stripeConfigRepository.save(config);
+    }
+
     private StripeConfig findConfig(UUID tenantId) {
         return stripeConfigRepository.findByTenantId(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Stripe not configured for tenant: " + tenantId));

@@ -231,6 +231,7 @@ Hibernate a producció usa `ddl-auto: validate` — les taules noves **cal crear
 | `google_connections` | V22 | `(id UUID PK, tenant_id UUID, google_account_email VARCHAR, google_user_id VARCHAR, encrypted_access_token TEXT, encrypted_refresh_token TEXT, token_expires_at TIMESTAMPTZ, is_active BOOLEAN)` |
 | `google_module_configs` | V22 | `(tenant_id UUID PK, drive_enabled BOOLEAN, gmail_enabled BOOLEAN, calendar_enabled BOOLEAN, sheets_enabled BOOLEAN, drive_folder_id VARCHAR)` |
 | `oauth_states` | V22 | `(id UUID PK, tenant_id UUID, state_token VARCHAR(64) UNIQUE, redirect_uri VARCHAR(500), requested_scopes TEXT, expires_at TIMESTAMPTZ)` |
+| `stripe_configs` (ALTER) | 2026-06-09 | `ALTER TABLE stripe_configs ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(100), ADD COLUMN IF NOT EXISTS stripe_payment_method_id VARCHAR(100), ADD COLUMN IF NOT EXISTS pm_last_four VARCHAR(10), ADD COLUMN IF NOT EXISTS pm_brand VARCHAR(30), ADD COLUMN IF NOT EXISTS pm_exp_month INTEGER, ADD COLUMN IF NOT EXISTS pm_exp_year INTEGER;` |
 
 **NexeLocal Service Configs** (`nexe_service_configs`):
 - Service keys: `AGENDA`, `PRESSUPOSTOS`, `FIDELITZACIO`, `EQUIP`

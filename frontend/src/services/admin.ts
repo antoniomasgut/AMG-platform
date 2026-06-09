@@ -506,6 +506,9 @@ export const initiateGoCardlessMandate = (tenantId: string, successReturnUrl?: s
   return apiFetch<InitiateMandateResponse>(`/gocardless/tenants/${tenantId}/mandate/initiate${params}`, { method: 'POST' });
 };
 
+export const completeGoCardlessMandate = (tenantId: string, redirectFlowId: string) =>
+  apiFetch<GoCardlessMandate>(`/gocardless/tenants/${tenantId}/mandate/complete?redirect_flow_id=${encodeURIComponent(redirectFlowId)}`, { method: 'POST' });
+
 export const cancelGoCardlessMandate = (tenantId: string) =>
   apiFetch<void>(`/gocardless/tenants/${tenantId}/mandate`, { method: 'DELETE' });
 

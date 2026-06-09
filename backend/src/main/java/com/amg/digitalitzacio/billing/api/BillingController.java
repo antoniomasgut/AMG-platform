@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
+import org.springframework.data.domain.Page;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,7 +34,7 @@ public class BillingController {
 
     @GetMapping("/tenants/{tenantId}/budgets")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
-    public List<BudgetResponse> listBudgets(@PathVariable UUID tenantId,
+    public Page<BudgetResponse> listBudgets(@PathVariable UUID tenantId,
                                              @RequestParam(required = false) String status,
                                              @RequestParam(defaultValue = "0") int page,
                                              @RequestParam(defaultValue = "20") int size,
@@ -43,10 +44,11 @@ public class BillingController {
 
     @GetMapping("/budgets")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public List<BudgetResponse> listAllBudgets(@RequestParam(required = false) String status,
+    public Page<BudgetResponse> listAllBudgets(@RequestParam(required = false) String status,
+                                                @RequestParam(required = false) UUID tenantId,
                                                 @RequestParam(defaultValue = "0") int page,
-                                                @RequestParam(defaultValue = "50") int size) {
-        return billingService.listAllBudgets(status, page, size);
+                                                @RequestParam(defaultValue = "20") int size) {
+        return billingService.listAllBudgets(status, tenantId, page, size);
     }
 
     @GetMapping("/tenants/{tenantId}/budgets/{id}")

@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/i18n/navigation';
 
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -281,7 +282,7 @@ function AgendaForm({ tenantId, sector }: { tenantId: string; sector?: string | 
                     <p className="f-mono text-xs text-ink-2">
                       Crea un Google Calendar "Cites — {'{nom del tenant}'}" i el comparteix amb l'email del tenant.
                       Requereix que <code className="bg-surface-base px-1 rounded text-[10px]">GOOGLE_CALENDAR_SA_JSON</code> estigui configurat a{' '}
-                      <a href="/portal/admin/config" className="text-accent-light underline">Configuració del sistema</a>.
+                      <Link href="/portal/admin/config" className="text-accent-light underline">Configuració del sistema</Link>.
                     </p>
                     <AMGButton type="button" variant="secondary" size="sm"
                       loading={provisioning}

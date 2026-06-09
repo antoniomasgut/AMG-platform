@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/i18n/navigation';
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -283,12 +284,12 @@ export default function AdminTenantsPage() {
 
         {/* Admin sub-nav */}
         <div className="flex gap-3 border-b border-border-base pb-3">
-          <a href="/portal/admin/users" className="f-mono text-label uppercase text-ink-2 hover:text-ink-0 pb-2">
+          <Link href="/portal/admin/users" className="f-mono text-label uppercase text-ink-2 hover:text-ink-0 pb-2">
             Usuaris
-          </a>
-          <a href="/portal/admin/tenants" className="f-mono text-label uppercase text-accent-light border-b-2 border-[#FF6B00] pb-2">
+            </Link>
+          <Link href="/portal/admin/tenants" className="f-mono text-label uppercase text-accent-light border-b-2 border-[#FF6B00] pb-2">
             Tenants
-          </a>
+            </Link>
         </div>
 
         {/* Pestanyes de vista */}

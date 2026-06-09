@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/auth';
 import { listLandings, getLandingStats } from '@/services/factory';

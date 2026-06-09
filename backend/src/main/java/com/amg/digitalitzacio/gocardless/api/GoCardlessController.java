@@ -9,7 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.crypto.Mac;
@@ -51,23 +53,28 @@ public class GoCardlessController {
     }
 
     @PostMapping("/tenants/{tenantId}/mandate/initiate")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     public InitiateMandateResponse initiateMandate(
             @PathVariable UUID tenantId,
-            @RequestParam(required = false) String successReturnUrl) {
+            @RequestParam(required = false) String successReturnUrl,
+            @AuthenticationPrincipal UserPrincipal principal) {
         return goCardlessService.initiateMandate(tenantId, successReturnUrl);
     }
 
-    @GetMapping("/tenants/{tenantId}/mandate/complete")
+    @PostMapping("/tenants/{tenantId}/mandate/complete")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     public GoCardlessMandateResponse completeMandate(
             @PathVariable UUID tenantId,
-            @RequestParam("redirect_flow_id") String redirectFlowId) {
+            @RequestParam("redirect_flow_id") String redirectFlowId,
+            @AuthenticationPrincipal UserPrincipal principal) {
         return goCardlessService.completeMandate(tenantId, redirectFlowId);
     }
 
     @GetMapping("/tenants/{tenantId}/mandate")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public GoCardlessMandateResponse getMandate(@PathVariable UUID tenantId) {
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public GoCardlessMandateResponse getMandate(
+            @PathVariable UUID tenantId,
+            @AuthenticationPrincipal UserPrincipal principal) {
         return goCardlessService.getMandate(tenantId);
     }
 

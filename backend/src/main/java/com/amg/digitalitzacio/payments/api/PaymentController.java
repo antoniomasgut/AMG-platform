@@ -87,4 +87,43 @@ public class PaymentController {
     public ProviderSummaryResponse getProviders(@PathVariable UUID tenantId) {
         return paymentService.getProviders(tenantId);
     }
+
+    // ── Pagament automàtic (Setup Intent) ────────────────────────────────────
+
+    @PostMapping("/tenants/{tenantId}/setup")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public SetupSessionResponse createSetupSession(
+            @PathVariable UUID tenantId,
+            @RequestParam String successUrl,
+            @RequestParam(required = false, defaultValue = "") String cancelUrl,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        var email = principal != null ? principal.getEmail() : null;
+        return paymentService.createSetupSession(tenantId, email, successUrl, cancelUrl);
+    }
+
+    @PostMapping("/tenants/{tenantId}/setup/complete")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public SavedPaymentMethodResponse completeSetup(
+            @PathVariable UUID tenantId,
+            @RequestParam("session_id") String sessionId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return paymentService.completeSetup(tenantId, sessionId);
+    }
+
+    @GetMapping("/tenants/{tenantId}/payment-method")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public SavedPaymentMethodResponse getSavedPaymentMethod(
+            @PathVariable UUID tenantId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return paymentService.getSavedPaymentMethod(tenantId);
+    }
+
+    @DeleteMapping("/tenants/{tenantId}/payment-method")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public void removeSavedPaymentMethod(
+            @PathVariable UUID tenantId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        paymentService.removeSavedPaymentMethod(tenantId);
+    }
 }

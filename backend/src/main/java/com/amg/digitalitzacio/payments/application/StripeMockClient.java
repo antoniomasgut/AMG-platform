@@ -34,4 +34,28 @@ public class StripeMockClient implements StripeClient {
     public boolean isConnected() {
         return true;
     }
+
+    @Override
+    public String createOrGetCustomer(UUID tenantId, String email) {
+        return "cus_mock_" + tenantId.toString().substring(0, 8);
+    }
+
+    @Override
+    public String createSetupSession(String customerId, String successUrl, String cancelUrl) {
+        return "https://mock.stripe.com/setup/" + UUID.randomUUID();
+    }
+
+    @Override
+    public SavedPaymentMethod getPaymentMethodFromSession(String sessionId) {
+        return new SavedPaymentMethod("pm_mock_" + UUID.randomUUID(), "visa", "4242", 12, 2027);
+    }
+
+    @Override
+    public String chargeCustomer(String customerId, String paymentMethodId, long amountCents,
+                                  String currency, String description) {
+        return "pi_mock_" + UUID.randomUUID();
+    }
+
+    @Override
+    public void detachPaymentMethod(String paymentMethodId) {}
 }

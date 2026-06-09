@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useApiErrorHandler } from '@/lib/use-api-error';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -17,6 +18,7 @@ import { getLeadStats, type LeadStats } from '@/services/leads';
 import { getOpsDashboard, type OpsDashboard } from '@/services/ops';
 import { getInfraStatus, type InfraStatus } from '@/services/infraops';
 import { getPaymentDashboard, type PaymentDashboard } from '@/services/payments';
+import { getGlobalFinOpsDashboard, type FinOpsGlobalDashboard } from '@/services/finops';
 import { getGlobalChannelUsageStats, type ChannelUsageStats } from '@/services/agents-conversational';
 import { OnboardingGuide } from '@/components/portal/OnboardingGuide';
 import { GuidesSection } from '@/components/guides/GuidesSection';
@@ -56,7 +58,7 @@ function KpiCard({ label, value, sub, tone = 'default', icon: Icon, href }: {
       {sub && <div className="f-mono text-[10px] text-ink-2 mt-1 uppercase">{sub}</div>}
     </div>
   );
-  if (href) return <a href={href}>{content}</a>;
+  if (href) return <Link href={href}>{content}</Link>;
   return content;
 }
 
@@ -86,10 +88,11 @@ interface AdminData {
   infra: InfraStatus | null;
   payments: PaymentDashboard | null;
   channelStats: ChannelUsageStats | null;
+  finops: FinOpsGlobalDashboard | null;
 }
 
 function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; loading: boolean; isSuperAdmin: boolean }) {
-  const { leads, ops, infra, totalTenants, payments, channelStats } = data;
+  const { leads, ops, infra, totalTenants, payments, channelStats, finops } = data;
 
   const sysOk = ops ? ops.currentStatus.up === ops.currentStatus.services && ops.openIncidents === 0 : null;
   const infraTone = infra
@@ -112,6 +115,26 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
+
+      {/* Alerta factures vençudes */}
+      {finops && finops.totalOverdue > 0 && (
+        <div className="rounded border border-red-500/40 bg-red-500/10 p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <IconSet.AlertCircle size={18} stroke="#f85149" />
+            <div>
+              <span className="f-display font-bold text-sm text-red-400">
+                {finops.overdueCount} factura{finops.overdueCount !== 1 ? 'es' : ''} vençuda{finops.overdueCount !== 1 ? 'es' : ''}
+              </span>
+              <span className="f-mono text-xs text-ink-2 ml-2">
+                · {new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(finops.totalOverdue)} sense cobrar
+              </span>
+            </div>
+          </div>
+          <Link href="/portal/finops?status=OVERDUE">
+            <AMGButton size="sm" variant="outline">Veure factures →</AMGButton>
+          </Link>
+        </div>
+      )}
 
       {/* KPIs principals */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -168,7 +191,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
               <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('admin.pipeline.section')}</div>
               <div className="f-display font-bold text-sm mt-0.5">{t('admin.pipeline.title')}</div>
             </div>
-            <a href="/portal/leads" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('seeAll')}</a>
+            <Link href="/portal/leads" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('seeAll')}</Link>
           </div>
           {leads ? (
             <div className="space-y-2">
@@ -202,7 +225,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
                 <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('admin.resources.section')}</div>
                 <div className="f-display font-bold text-sm mt-0.5">{t('admin.resources.title')}</div>
               </div>
-              <a href="/portal/admin/infraops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('detail')}</a>
+              <Link href="/portal/admin/infraops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('detail')}</Link>
             </div>
             {infra ? (
               <div className="space-y-4">
@@ -228,7 +251,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
                 <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('admin.payments.section')}</div>
                 <div className="f-display font-bold text-sm mt-0.5">{t('admin.payments.title')}</div>
               </div>
-              <a href="/portal/payments" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('seeAll')}</a>
+              <Link href="/portal/payments" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('seeAll')}</Link>
             </div>
             {payments ? (
               <div className="space-y-3">
@@ -260,7 +283,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
               <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('admin.channels.period')}</div>
               <div className="f-display font-bold text-sm mt-0.5">{t('admin.channels.title')}</div>
             </div>
-            <a href="/portal/admin/tenants?tab=canals" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('admin.channels.byTenant')}</a>
+            <Link href="/portal/admin/tenants?tab=canals" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('admin.channels.byTenant')}</Link>
           </div>
           {channelStats ? (
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -289,23 +312,23 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
       <div className="amg-card card-clip p-4 sm:p-5">
         <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-3">{t('admin.actions.title')}</div>
         <div className="flex flex-wrap gap-2">
-          <a href="/portal/process">
+          <Link href="/portal/process">
             <AMGButton size="sm" icon={IconSet.Flow}>{t('admin.actions.process')}</AMGButton>
-          </a>
-          <a href="/portal/leads/new">
+          </Link>
+          <Link href="/portal/leads/new">
             <AMGButton size="sm" variant="outline" icon={IconSet.Plus}>{t('admin.actions.newLead')}</AMGButton>
-          </a>
+          </Link>
           {isSuperAdmin && (
             <>
-              <a href="/portal/admin/tenants">
+              <Link href="/portal/admin/tenants">
                 <AMGButton size="sm" variant="outline" icon={IconSet.Building}>{t('admin.actions.tenants')}</AMGButton>
-              </a>
-              <a href="/portal/admin/config">
+              </Link>
+              <Link href="/portal/admin/config">
                 <AMGButton size="sm" variant="outline" icon={IconSet.Key}>{t('admin.actions.apiKeys')}</AMGButton>
-              </a>
-              <a href="/portal/admin/backup">
+              </Link>
+              <Link href="/portal/admin/backup">
                 <AMGButton size="sm" variant="outline" icon={IconSet.Database}>{t('admin.actions.backup')}</AMGButton>
-              </a>
+              </Link>
             </>
           )}
         </div>
@@ -465,6 +488,31 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
 
       {tenantId && <GuidesSection tenantId={tenantId} />}
 
+      {/* Alerta factures vençudes */}
+      {(() => {
+        const overdue = invoices.filter(i => i.status === 'OVERDUE');
+        if (overdue.length === 0) return null;
+        const totalOverdue = overdue.reduce((sum, i) => sum + i.amount, 0);
+        return (
+          <div className="rounded border border-red-500/40 bg-red-500/10 p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <IconSet.AlertCircle size={18} stroke="#f85149" />
+              <div>
+                <span className="f-display font-bold text-sm text-red-400">
+                  Tens {overdue.length} factura{overdue.length !== 1 ? 'es' : ''} vençuda{overdue.length !== 1 ? 'es' : ''}
+                </span>
+                <span className="f-mono text-xs text-ink-2 ml-2">
+                  · {new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(totalOverdue)} pendents de pagament
+                </span>
+              </div>
+            </div>
+            <Link href="/portal/finops">
+              <AMGButton size="sm" variant="outline">Veure factures →</AMGButton>
+            </Link>
+          </div>
+        );
+      })()}
+
       {/* Hero billing */}
       <div className="amg-card card-clip p-4 sm:p-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[3px] h-16 bg-[#FF6B00]" />
@@ -503,7 +551,7 @@ function ClientDashboard({ data, loading, userName, tenantId, onboardingSkipped,
             <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('client.invoices.section')}</div>
             <div className="f-display font-bold text-sm mt-0.5">{t('client.invoices.title')}</div>
           </div>
-          <a href="/portal/finops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('client.invoices.seeAll')}</a>
+          <Link href="/portal/finops" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('client.invoices.seeAll')}</Link>
         </div>
         {invoices.length === 0 ? (
           <div className="py-8 text-center">
@@ -559,7 +607,7 @@ export default function PortalPage() {
 
   // Admin data
   const [adminData, setAdminData] = useState<AdminData>({
-    totalTenants: 0, leads: null, ops: null, infra: null, payments: null, channelStats: null,
+    totalTenants: 0, leads: null, ops: null, infra: null, payments: null, channelStats: null, finops: null,
   });
 
   // Client data
@@ -582,13 +630,14 @@ export default function PortalPage() {
     setLoadError(null);
     try {
       if (isStaff) {
-        const [tenants, leads, ops, infra, payments, channelStats] = await Promise.all([
+        const [tenants, leads, ops, infra, payments, channelStats, finops] = await Promise.all([
           listTenants({ size: 1 }).catch(() => ({ totalElements: 0 })),
           getLeadStats().catch(() => null),
           getOpsDashboard().catch(() => null),
           isSuperAdmin ? getInfraStatus().catch(() => null) : Promise.resolve(null),
           !isSuperAdmin ? getPaymentDashboard().catch(() => null) : Promise.resolve(null),
           isSuperAdmin ? getGlobalChannelUsageStats().catch(() => null) : Promise.resolve(null),
+          isSuperAdmin ? getGlobalFinOpsDashboard().catch(() => null) : Promise.resolve(null),
         ]);
         setAdminData({
           totalTenants: (tenants as { totalElements: number }).totalElements,
@@ -597,6 +646,7 @@ export default function PortalPage() {
           infra,
           payments,
           channelStats,
+          finops,
         });
       } else {
         const tid = user.tenantId;

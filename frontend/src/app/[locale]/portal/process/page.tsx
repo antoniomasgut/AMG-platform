@@ -121,7 +121,7 @@ export default function ProcessPage() {
       { queryKey: ['lead-stats'],       queryFn: getLeadStats,                                              enabled: !!user },
       { queryKey: ['campaigns'],        queryFn: () => getCampaigns({ size: 100 }),                         enabled: !!user && isSuperAdmin },
       { queryKey: ['tenants-process'],  queryFn: () => listTenants({ page: 0, size: 100, isActive: true }), enabled: !!user && isSuperAdmin },
-      { queryKey: ['all-budgets'],      queryFn: () => listAllBudgets(undefined, 0, 100),                   enabled: !!user && isSuperAdmin },
+      { queryKey: ['all-budgets'],      queryFn: () => listAllBudgets(undefined, undefined, 0, 100),        enabled: !!user && isSuperAdmin },
       { queryKey: ['ops-dashboard'],    queryFn: getOpsDashboard,                                           enabled: !!user && isSuperAdmin },
       { queryKey: ['infra-status'],     queryFn: getInfraStatus, refetchInterval: 30000,                    enabled: !!user && isSuperAdmin },
       { queryKey: ['backup-dashboard'], queryFn: getBackupDashboard,                                        enabled: !!user && isSuperAdmin },
@@ -161,7 +161,7 @@ export default function ProcessPage() {
   const nurturingLeads = leadStats?.byStage?.NURTURING ?? 0;
 
   // ── step 4: pressupost ────────────────────────────────────────────────────
-  const allBudgets  = (budgetsR.data as any[] | undefined) ?? [];
+  const allBudgets  = (budgetsR.data as any)?.content ?? [];
   const bDraft      = allBudgets.filter((b: any) => b.status === 'DRAFT').length;
   const bSent       = allBudgets.filter((b: any) => b.status === 'SENT').length;
   const bAccepted   = allBudgets.filter((b: any) => b.status === 'ACCEPTED').length;

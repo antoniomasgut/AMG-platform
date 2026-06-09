@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/i18n/navigation';
 
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -45,12 +46,12 @@ export default function GeneratedDocumentsPage() {
         </div>
 
         <div className="flex gap-3 border-b border-border-base pb-3">
-          <a href="/portal/admin/documents" className="f-mono text-label uppercase text-ink-2 hover:text-ink-0 pb-2">
+          <Link href="/portal/admin/documents" className="f-mono text-label uppercase text-ink-2 hover:text-ink-0 pb-2">
             Plantilles
-          </a>
-          <a href="/portal/admin/documents/list" className="f-mono text-label uppercase text-accent-light border-b-2 border-[#FF6B00] pb-2">
+            </Link>
+          <Link href="/portal/admin/documents/list" className="f-mono text-label uppercase text-accent-light border-b-2 border-[#FF6B00] pb-2">
             Documents generats
-          </a>
+            </Link>
         </div>
 
         <div className="amg-card card-clip">

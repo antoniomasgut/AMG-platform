@@ -1,4 +1,5 @@
 'use client';
+import { Link } from '@/i18n/navigation';
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -341,9 +342,9 @@ export default function AdminVaultPage() {
 
         {/* Admin sub-nav */}
         <div className="flex gap-3 border-b border-border-base pb-3 flex-wrap">
-          <a href="/portal/admin/users" className="f-mono text-label uppercase text-ink-2 hover:text-ink-0 pb-2">Usuaris</a>
-          <a href="/portal/admin/tenants" className="f-mono text-label uppercase text-ink-2 hover:text-ink-0 pb-2">Tenants</a>
-          <a href="/portal/admin/vault" className="f-mono text-label uppercase text-accent-light border-b-2 border-[#FF6B00] pb-2">Catàleg</a>
+          <Link href="/portal/admin/users" className="f-mono text-label uppercase text-ink-2 hover:text-ink-0 pb-2">Usuaris</Link>
+          <Link href="/portal/admin/tenants" className="f-mono text-label uppercase text-ink-2 hover:text-ink-0 pb-2">Tenants</Link>
+          <Link href="/portal/admin/vault" className="f-mono text-label uppercase text-accent-light border-b-2 border-[#FF6B00] pb-2">Catàleg</Link>
         </div>
 
         {/* Tabs */}

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
@@ -40,8 +41,14 @@ export default function FinOpsPage() {
   const { user, isSuperAdmin } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState('');
+  const searchParams = useSearchParams();
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') ?? '');
   const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    const s = searchParams.get('status');
+    if (s) setStatusFilter(s);
+  }, [searchParams]);
 
   const tenantId = user?.tenantId ?? '';
 

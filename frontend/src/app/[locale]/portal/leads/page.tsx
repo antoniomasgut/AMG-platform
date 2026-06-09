@@ -808,6 +808,9 @@ export default function LeadsPage() {
             <AMGButton variant="secondary" onClick={() => router.push(`/${locale}/portal/leads/templates`)}>
               Plantilles
             </AMGButton>
+            <AMGButton variant="secondary" icon={IconSet.FileText} onClick={() => router.push(`/${locale}/portal/documents`)}>
+              Importar
+            </AMGButton>
             <AMGButton variant="secondary" icon={IconSet.Mail} onClick={() => setShowOutreach(true)}>
               Enviar demo
             </AMGButton>
