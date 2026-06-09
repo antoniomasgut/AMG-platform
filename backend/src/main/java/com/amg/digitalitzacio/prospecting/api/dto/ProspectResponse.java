@@ -13,5 +13,5 @@ public record ProspectResponse(
         Boolean hasWebsite, Boolean hasInstagram, Boolean hasWhatsapp,
         String status, String source, String externalId, UUID leadId,
         String notes, Instant createdAt, Instant updatedAt, Integer score,
-        List<String> reviews
+        List<String> reviews, List<ProspectSignal> signals
 ) {}

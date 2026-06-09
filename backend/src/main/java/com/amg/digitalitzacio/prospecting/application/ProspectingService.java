@@ -29,4 +29,5 @@ public interface ProspectingService {
     Map<String, Integer> exportQualifiedProspects(UUID campaignId);
     CampaignResponse scheduleCampaign(UUID campaignId, Instant nextRun, int repeatDays);
     CampaignResponse unscheduleCampaign(UUID campaignId);
+    String generateOutreach(UUID prospectId, String channel);
 }

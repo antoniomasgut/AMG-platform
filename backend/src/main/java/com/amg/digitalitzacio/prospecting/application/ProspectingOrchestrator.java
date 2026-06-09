@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.prospecting.application;
 import com.amg.digitalitzacio.auth.domain.UserRepository;
 import com.amg.digitalitzacio.prospecting.api.dto.*;
 import com.amg.digitalitzacio.prospecting.domain.*;
+import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.amg.digitalitzacio.shared.exception.ConflictException;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -30,6 +31,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     private final LeadService leadService;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final AIProviderRouter aiProviderRouter;
 
     @Override
     @Transactional
@@ -482,6 +484,55 @@ public class ProspectingOrchestrator implements ProspectingService {
                 c.getScheduledNextRun(), c.getRepeatIntervalDays());
     }
 
+    @Override
+    public String generateOutreach(UUID prospectId, String channel) {
+        var p = prospectRepository.findById(prospectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
+        var signals = detectSignals(p);
+
+        var signalsText = signals.isEmpty() ? "Cap senyal específic detectat." :
+            signals.stream().map(s -> "- " + s.label() + " → Proposta: " + s.pitch()).reduce("", (a, b) -> a + "\n" + b);
+
+        boolean isWhatsapp = "whatsapp".equalsIgnoreCase(channel);
+
+        String systemPrompt = isWhatsapp ? """
+            Ets un agent comercial de l'agència AMG Digitalització (Mallorca).
+            Escriu un missatge de WhatsApp breu i directe (màx 3 paràgrafs curts) en CATALÀ per a un negoci local.
+            Tono proper i professional. Comença sense "Hola" genèric — usa el nom del negoci.
+            Menciona 1-2 problemes concrets que tens detectats. NO llistes de punts. Acaba amb una pregunta oberta senzilla.
+            Retorna NOMÉS el text del missatge, sense explicacions ni metadades.
+            """ : """
+            Ets un agent comercial de l'agència AMG Digitalització (Mallorca).
+            Escriu un email de prospecció en CATALÀ per a un negoci local. Assumpte inclòs al principi (línia "Assumpte: ...").
+            Tono professional però proper. Màx 4 paràgrafs. Menciona els problemes concrets detectats i les solucions que ofereixes.
+            Signatura: AMG Digitalització | Toni Mas | amgdl.com
+            Retorna NOMÉS el text de l'email (assumpte + cos), sense explicacions ni metadades.
+            """;
+
+        String userMessage = String.format("""
+            Negoci: %s
+            Sector: %s
+            Municipi: %s
+            Puntuació Google: %s (%s ressenyes)
+            Té web: %s | Té WhatsApp: %s | Té Instagram: %s
+
+            Senyals d'oportunitat detectats:
+            %s
+            """,
+            p.getName(),
+            p.getSector() != null ? p.getSector() : "no especificat",
+            p.getCity() != null ? p.getCity() : "Mallorca",
+            p.getGoogleRating() != null ? p.getGoogleRating() + "★" : "desconegut",
+            p.getGoogleReviews() != null ? p.getGoogleReviews() : "0",
+            Boolean.TRUE.equals(p.getHasWebsite()) ? "Sí" : "No",
+            Boolean.TRUE.equals(p.getHasWhatsapp()) ? "Sí" : "No",
+            Boolean.TRUE.equals(p.getHasInstagram()) ? "Sí" : "No",
+            signalsText);
+
+        var aiProvider = aiProviderRouter.forModel(aiProviderRouter.defaultModel());
+        return aiProvider.chat(systemPrompt, List.of(), userMessage);
+    }
+
     private ProspectResponse toProspectResponse(Prospect p) {
         List<String> reviews = List.of();
         if (p.getReviewsJson() != null) {
@@ -493,6 +544,54 @@ public class ProspectingOrchestrator implements ProspectingService {
                 p.getWebsite(), p.getInstagram(), p.getGoogleRating(), p.getGoogleReviews(),
                 p.getGooglePlaceId(), p.getHasWebsite(), p.getHasInstagram(), p.getHasWhatsapp(),
                 p.getStatus().name(), p.getSource().name(), p.getExternalId(), p.getLeadId(),
-                p.getNotes(), p.getCreatedAt(), p.getUpdatedAt(), p.getScore(), reviews);
+                p.getNotes(), p.getCreatedAt(), p.getUpdatedAt(), p.getScore(), reviews, detectSignals(p));
+    }
+
+    private List<com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal> detectSignals(Prospect p) {
+        var signals = new ArrayList<com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal>();
+
+        // Web
+        if (!Boolean.TRUE.equals(p.getHasWebsite())) {
+            signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
+                    "NO_WEBSITE", "Sense web pròpia", "Landing web moderna", "warning"));
+        }
+
+        // Google reviews
+        if (p.getGoogleReviews() != null) {
+            int rev = p.getGoogleReviews();
+            if (rev < 10) {
+                signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
+                        "LOW_REVIEWS", "Molt pocs reviews", "Bot de recollida de ressenyes", "opportunity"));
+            } else if (rev < 30) {
+                signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
+                        "FEW_REVIEWS", "Poca activitat Google", "Campanya de reviews", "info"));
+            }
+        }
+
+        // Google rating
+        if (p.getGoogleRating() != null) {
+            double r = p.getGoogleRating().doubleValue();
+            if (r < 3.5) {
+                signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
+                        "LOW_RATING", "Rating Google baix (" + p.getGoogleRating() + "★)", "Gestió de reputació digital", "danger"));
+            } else if (r < 4.3) {
+                signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
+                        "MIXED_RATING", "Rating millorable (" + p.getGoogleRating() + "★)", "Automatització de fidelització", "info"));
+            }
+        }
+
+        // WhatsApp
+        if (p.getPhone() != null && !p.getPhone().isBlank() && !Boolean.TRUE.equals(p.getHasWhatsapp())) {
+            signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
+                    "NO_WHATSAPP", "Sense WhatsApp Business", "Canal directe amb clients", "opportunity"));
+        }
+
+        // Instagram
+        if (!Boolean.TRUE.equals(p.getHasInstagram())) {
+            signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
+                    "NO_INSTAGRAM", "Sense Instagram detectat", "Presència a xarxes socials", "neutral"));
+        }
+
+        return signals;
     }
 }

@@ -101,6 +101,13 @@ public class ProspectingController {
         return service.exportProspect(id);
     }
 
+    @PostMapping("/prospects/{id}/generate-outreach")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, String> generateOutreach(@PathVariable UUID id,
+                                                @RequestParam(defaultValue = "email") String channel) {
+        return Map.of("message", service.generateOutreach(id, channel));
+    }
+
     @PostMapping("/campaigns/{id}/export-all")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public int exportAll(@PathVariable UUID id) {

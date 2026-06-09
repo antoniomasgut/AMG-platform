@@ -8,7 +8,7 @@ import { useToast } from '@/lib/toast-context';
 import {
   getCampaign, getCampaignProspects, exportProspect, enrichAllProspects, enrichProspect,
   exportContactableProspects, scoreProspects, qualifyByMinScore,
-  updateProspect, exportQualifiedProspects,
+  updateProspect, exportQualifiedProspects, generateOutreach,
   scheduleCampaign, unscheduleCampaign,
   type Campaign, type Prospect, type UpdateProspectPayload,
 } from '@/services/prospecting';
@@ -167,6 +167,20 @@ function ProspectDrawer({
     city: prospect.city ?? '',
     notes: prospect.notes ?? '',
   });
+  const [outreachChannel, setOutreachChannel] = useState<'email' | 'whatsapp'>('email');
+  const [outreachText, setOutreachText] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const { mutate: doGenerateOutreach, isPending: generatingOutreach } = useMutation({
+    mutationFn: (channel: 'email' | 'whatsapp') => generateOutreach(prospect.id, channel),
+    onSuccess: (data) => setOutreachText(data.message),
+  });
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(outreachText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleSave = () => {
     onSave(prospect.id, draft);
@@ -301,6 +315,32 @@ function ProspectDrawer({
                 </section>
               )}
 
+              {prospect.signals && prospect.signals.length > 0 && (
+                <section>
+                  <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Oportunitats detectades</div>
+                  <div className="space-y-1.5">
+                    {prospect.signals.map(sig => (
+                      <div key={sig.code} className={`p-2 border ${
+                        sig.tone === 'danger'      ? 'border-danger/30 bg-danger/5' :
+                        sig.tone === 'warning'     ? 'border-warning/30 bg-warning/5' :
+                        sig.tone === 'opportunity' ? 'border-success/30 bg-success/5' :
+                        sig.tone === 'info'        ? 'border-accent/30 bg-accent/5' :
+                                                     'border-border-base bg-bg-1'
+                      }`}>
+                        <div className={`f-mono text-[10px] font-bold ${
+                          sig.tone === 'danger'      ? 'text-danger' :
+                          sig.tone === 'warning'     ? 'text-warning' :
+                          sig.tone === 'opportunity' ? 'text-success' :
+                          sig.tone === 'info'        ? 'text-accent-light' :
+                                                       'text-ink-2'
+                        }`}>{sig.label}</div>
+                        <div className="f-mono text-[10px] text-ink-3 mt-0.5">→ {sig.pitch}</div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               {prospect.score != null && (
                 <section>
                   <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Puntuació</div>
@@ -312,6 +352,49 @@ function ProspectDrawer({
                   </div>
                 </section>
               )}
+
+              <section>
+                <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Generar missatge</div>
+                <div className="flex gap-1.5 mb-2">
+                  {(['email', 'whatsapp'] as const).map(ch => (
+                    <button
+                      key={ch}
+                      onClick={() => { setOutreachChannel(ch); setOutreachText(''); }}
+                      className={`f-mono text-[10px] uppercase tracking-wider px-2.5 py-1 border transition-colors ${
+                        outreachChannel === ch
+                          ? 'border-accent bg-accent/10 text-accent-light'
+                          : 'border-border-base text-ink-3 hover:text-ink-0'
+                      }`}
+                    >
+                      {ch === 'email' ? 'Email' : 'WhatsApp'}
+                    </button>
+                  ))}
+                  <AMGButton
+                    size="sm"
+                    loading={generatingOutreach}
+                    onClick={() => doGenerateOutreach(outreachChannel)}
+                    icon={IconSet.Sparkles}
+                  >
+                    Generar
+                  </AMGButton>
+                </div>
+                {outreachText && (
+                  <div className="relative">
+                    <textarea
+                      readOnly
+                      value={outreachText}
+                      rows={10}
+                      className="w-full bg-bg-1 border border-border-base text-ink-1 px-3 py-2 f-mono text-[11px] leading-relaxed resize-none focus:outline-none"
+                    />
+                    <button
+                      onClick={handleCopy}
+                      className="absolute top-2 right-2 f-mono text-[9px] uppercase tracking-wider px-2 py-1 bg-bg-2 border border-border-base text-ink-2 hover:text-ink-0 transition-colors"
+                    >
+                      {copied ? 'Copiat!' : 'Copiar'}
+                    </button>
+                  </div>
+                )}
+              </section>
             </>
           )}
         </div>
@@ -685,7 +768,17 @@ export default function CampaignDetailPage() {
                           )}
                         </td>
                         <td className="px-4 sm:px-5 py-2.5">
-                          <span className={`f-mono text-xs font-bold ${scoreColor}`}>{scored ? p.score : '—'}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`f-mono text-xs font-bold ${scoreColor}`}>{scored ? p.score : '—'}</span>
+                            {p.signals && p.signals.length > 0 && (
+                              <span
+                                title={p.signals.map(s => s.label).join(' · ')}
+                                className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-warning/20 text-warning f-mono text-[9px] font-bold leading-none"
+                              >
+                                {p.signals.filter(s => s.tone !== 'neutral').length}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 sm:px-5 py-2.5">
                           <AMGBadge tone={PROSPECT_STATUS_TONE[p.status] ?? 'neutral'}>

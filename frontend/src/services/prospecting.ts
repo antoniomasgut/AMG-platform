@@ -14,6 +14,13 @@ export interface Campaign {
   repeatIntervalDays?: number | null;
 }
 
+export interface ProspectSignal {
+  code: string;
+  label: string;
+  pitch: string;
+  tone: 'warning' | 'danger' | 'opportunity' | 'info' | 'neutral';
+}
+
 export interface Prospect {
   id: string;
   campaignId: string;
@@ -39,6 +46,7 @@ export interface Prospect {
   createdAt?: string;
   score?: number | null;
   reviews?: string[];
+  signals?: ProspectSignal[];
 }
 
 export type ProspectSource = 'GOOGLE_MAPS' | 'INSTAGRAM' | 'PAGINAS_AMARILLAS' | 'MANUAL';
@@ -119,6 +127,9 @@ export const updateProspect = (id: string, payload: UpdateProspectPayload) =>
 
 export const exportQualifiedProspects = (id: string) =>
   apiFetch<{ exported: number; skipped: number }>(`/prospecting/campaigns/${id}/export-qualified`, { method: 'POST' });
+
+export const generateOutreach = (id: string, channel: 'email' | 'whatsapp') =>
+  apiFetch<{ message: string }>(`/prospecting/prospects/${id}/generate-outreach?channel=${channel}`, { method: 'POST' });
 
 export const scoreProspects = (id: string) =>
   apiFetch<Prospect[]>(`/prospecting/campaigns/${id}/score`, { method: 'POST' });
