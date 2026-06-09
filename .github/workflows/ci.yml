@@ -13,6 +13,21 @@ jobs:
       run:
         working-directory: backend
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: amg_test
+          POSTGRES_USER: amg
+          POSTGRES_PASSWORD: devpassword123
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - uses: actions/checkout@v4
 
@@ -23,6 +38,8 @@ jobs:
           cache: maven
 
       - run: mvn test --batch-mode
+        env:
+          VAULT_MASTER_KEY: 4ZGtPqTicuZpUdYJiMgFSCo5DITnY5lEoA8QAFTV4jI=
 
   frontend-test:
     runs-on: ubuntu-latest
