@@ -14,7 +14,7 @@ import { listTenants } from '@/services/admin';
 import { getBackupDashboard } from '@/services/backup';
 import { getOpsDashboard } from '@/services/ops';
 import { getInfraStatus } from '@/services/infraops';
-import { getGlobalChannelUsageStats } from '@/services/agents-conversational';
+import { listAllBudgets } from '@/services/billing';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -34,17 +34,15 @@ interface StepCard {
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function statusColor(s: StepStatus) {
-  if (s === 'ok') return { bar: 'bg-success', badge: 'success' as const, dot: '#39d353' };
-  if (s === 'attention') return { bar: 'bg-warning', badge: 'warning' as const, dot: '#f0b429' };
-  if (s === 'blocked') return { bar: 'bg-danger', badge: 'danger' as const, dot: '#ff4444' };
-  return { bar: 'bg-ink-3', badge: 'neutral' as const, dot: '#64748b' };
+  if (s === 'ok')        return { bar: 'bg-success',  badge: 'success' as const, dot: '#39d353' };
+  if (s === 'attention') return { bar: 'bg-warning',  badge: 'warning' as const, dot: '#f0b429' };
+  if (s === 'blocked')   return { bar: 'bg-danger',   badge: 'danger'  as const, dot: '#ff4444' };
+  return                        { bar: 'bg-ink-3',    badge: 'neutral' as const, dot: '#64748b' };
 }
 
 function StatusDot({ status }: { status: StepStatus }) {
   const c = statusColor(status);
-  return (
-    <span className="w-2 h-2 rounded-full shrink-0 mt-1" style={{ background: c.dot }} />
-  );
+  return <span className="w-2 h-2 rounded-full shrink-0 mt-1" style={{ background: c.dot }} />;
 }
 
 function StepCard({ step, locale }: { step: StepCard; locale: string }) {
@@ -74,7 +72,7 @@ function StepCard({ step, locale }: { step: StepCard; locale: string }) {
         <div className="space-y-1 mb-4">
           {step.items.map((item) => (
             <div key={item.label} className="flex items-center gap-2">
-              <StatusDot status={item.ok === false ? 'blocked' : item.ok === true ? 'ok' : 'ok'} />
+              <StatusDot status={item.ok === false ? 'blocked' : 'ok'} />
               <span className="f-mono text-label text-ink-2 text-xs">{item.label}:</span>
               <span className={`f-mono text-label text-xs font-semibold ${item.ok === false ? 'text-danger' : 'text-ink-0'}`}>
                 {item.value}
@@ -114,224 +112,204 @@ export default function ProcessPage() {
 
   const results = useQueries({
     queries: [
-      { queryKey: ['system-config'], queryFn: getSystemConfig, enabled: !!user && isSuperAdmin },
-      { queryKey: ['lead-stats'], queryFn: getLeadStats, enabled: !!user },
-      { queryKey: ['campaigns'], queryFn: getCampaigns, enabled: !!user && isSuperAdmin },
-      { queryKey: ['tenants-all'], queryFn: () => listTenants({ page: 0, size: 100, isActive: true }), enabled: !!user && isSuperAdmin },
-      { queryKey: ['backup-dashboard'], queryFn: getBackupDashboard, enabled: !!user && isSuperAdmin },
-      { queryKey: ['ops-dashboard'], queryFn: getOpsDashboard, enabled: !!user && isSuperAdmin },
-      { queryKey: ['infra-status'], queryFn: getInfraStatus, enabled: !!user && isSuperAdmin, refetchInterval: 30000 },
-      { queryKey: ['global-channel-stats'], queryFn: () => getGlobalChannelUsageStats(), enabled: !!user && isSuperAdmin, staleTime: 5 * 60 * 1000 },
+      { queryKey: ['system-config'],    queryFn: getSystemConfig,                                                    enabled: !!user && isSuperAdmin },
+      { queryKey: ['lead-stats'],       queryFn: getLeadStats,                                                       enabled: !!user },
+      { queryKey: ['campaigns'],        queryFn: getCampaigns,                                                       enabled: !!user && isSuperAdmin },
+      { queryKey: ['tenants-process'],  queryFn: () => listTenants({ page: 0, size: 100, isActive: true }),          enabled: !!user && isSuperAdmin },
+      { queryKey: ['all-budgets'],      queryFn: () => listAllBudgets(undefined, 0, 100),                            enabled: !!user && isSuperAdmin },
+      { queryKey: ['ops-dashboard'],    queryFn: getOpsDashboard,                                                    enabled: !!user && isSuperAdmin },
+      { queryKey: ['infra-status'],     queryFn: getInfraStatus,    refetchInterval: 30000,                          enabled: !!user && isSuperAdmin },
+      { queryKey: ['backup-dashboard'], queryFn: getBackupDashboard,                                                 enabled: !!user && isSuperAdmin },
     ],
   });
 
   if (!user) return null;
 
-  const [cfgR, leadsR, campR, tenantsR, backupR, opsR, infraR, channelR] = results;
+  const [cfgR, leadsR, campR, tenantsR, budgetsR, opsR, infraR, backupR] = results;
   const loading = results.some((r) => r.isLoading);
 
-  // ── derived data ──────────────────────────────────────────────────────────
-  const cfgList = (cfgR.data as any[] | undefined) ?? [];
-  const missingKeys = cfgList.filter((c: any) => !c.configured).length;
-  const configuredKeys = cfgList.filter((c: any) => c.configured).length;
+  // ── step 1: configuració ──────────────────────────────────────────────────
+  const cfgList   = (cfgR.data as any[] | undefined) ?? [];
+  const missingKeys     = cfgList.filter((c: any) => !c.configured).length;
+  const configuredKeys  = cfgList.filter((c: any) => c.configured).length;
 
-  const leadStats = leadsR.data as any;
-  const totalLeads = leadStats?.total ?? 0;
-  const newLeads = leadStats?.byStage?.NEW ?? 0;
-  const proposalLeads = (leadStats?.byStage?.PROPOSAL ?? 0) + (leadStats?.byStage?.NEGOTIATION ?? 0);
-  const wonLeads = leadStats?.byStage?.WON ?? 0;
-
-  const campaigns = (campR.data as any[] | undefined) ?? [];
-  const activeCamps = campaigns.filter((c: any) => c.status === 'RUNNING').length;
+  // ── step 2: captació ──────────────────────────────────────────────────────
+  const campaigns      = (campR.data as any[] | undefined) ?? [];
+  const activeCamps    = campaigns.filter((c: any) => c.status === 'RUNNING').length;
   const completedCamps = campaigns.filter((c: any) => c.status === 'COMPLETED').length;
   const totalProspects = campaigns.reduce((sum: number, c: any) => sum + (c.totalFound ?? 0), 0);
 
-  const allTenants = ((tenantsR.data as any)?.content ?? []) as import('@/services/admin').TenantResponse[];
-  const tenantsTotal = (tenantsR.data as any)?.totalElements ?? allTenants.length;
+  // ── step 3: qualificació ──────────────────────────────────────────────────
+  const leadStats     = leadsR.data as any;
+  const totalLeads    = leadStats?.total ?? 0;
+  const newLeads      = leadStats?.byStage?.NEW ?? 0;
+  const contactedLeads= leadStats?.byStage?.CONTACTED ?? 0;
+  const proposalLeads = (leadStats?.byStage?.PROPOSAL ?? 0) + (leadStats?.byStage?.NEGOTIATION ?? 0);
+  const wonLeads      = leadStats?.byStage?.WON ?? 0;
+
+  // ── step 4: pressupost ────────────────────────────────────────────────────
+  const allBudgets  = (budgetsR.data as any[] | undefined) ?? [];
+  const bDraft      = allBudgets.filter((b: any) => b.status === 'DRAFT').length;
+  const bSent       = allBudgets.filter((b: any) => b.status === 'SENT').length;
+  const bAccepted   = allBudgets.filter((b: any) => b.status === 'ACCEPTED').length;
+  const bRejected   = allBudgets.filter((b: any) => ['REJECTED', 'CANCELLED'].includes(b.status)).length;
+
+  // ── step 5: implementació ─────────────────────────────────────────────────
+  const allTenants       = ((tenantsR.data as any)?.content ?? []) as import('@/services/admin').TenantResponse[];
+  const tenantsTotal     = (tenantsR.data as any)?.totalElements ?? allTenants.length;
   const tenantsWithPhases = allTenants.filter(t => t.contractedPhases && t.contractedPhases.length > 0);
 
-  const backup = backupR.data as any;
+  // ── step 6: monitoratge ───────────────────────────────────────────────────
+  const ops          = opsR.data as any;
+  const servicesUp   = ops?.currentStatus?.up ?? 0;
+  const servicesTotal= ops?.currentStatus?.services ?? 0;
+  const openIncidents= ops?.openIncidents ?? 0;
+
+  const infra  = infraR.data as any;
+  const infraOk= infra?.overallStatus === 'OK';
+
+  const backup       = backupR.data as any;
   const lastBackupOk = backup?.lastBackupStatus === 'COMPLETED';
   const lastBackupDate = backup?.lastBackup
     ? new Date(backup.lastBackup).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short' })
     : 'Mai';
 
-  const ops = opsR.data as any;
-  const servicesUp = ops?.currentStatus?.up ?? 0;
-  const servicesTotal = ops?.currentStatus?.services ?? 0;
-  const openIncidents = ops?.openIncidents ?? 0;
-
-  const infra = infraR.data as any;
-  const infraOk = infra?.overallStatus === 'OK';
-
-  const channelStats = channelR?.data as any;
-  const totalMessages = channelStats
-    ? (channelStats.whatsappMessages ?? 0) + (channelStats.whatsappMetaMessages ?? 0) +
-      (channelStats.telegramMessages ?? 0) + (channelStats.emailMessages ?? 0) +
-      (channelStats.chatMessages ?? 0)
-    : 0;
-  const activeChannels = channelStats
-    ? [channelStats.whatsappMessages > 0 || channelStats.whatsappMetaMessages > 0 ? 'WhatsApp' : null,
-       channelStats.telegramMessages > 0 ? 'Telegram' : null,
-       channelStats.emailMessages > 0 ? 'Email' : null,
-       channelStats.chatMessages > 0 ? 'Chat' : null].filter(Boolean)
-    : [];
-
   // ── step definitions ──────────────────────────────────────────────────────
   const steps: StepCard[] = [
     {
       num: 1,
-      title: 'Configuració inicial',
-      desc: 'Configura les API keys, el catàleg de serveis i les plantilles de landing.',
+      title: 'Configuració del sistema',
+      desc: 'API keys, canals de comunicació i plantilles. Les mancances crítiques bloquegen el funcionament.',
       icon: IconSet.Key,
       status: loading ? 'loading' : missingKeys > 5 ? 'blocked' : missingKeys > 0 ? 'attention' : 'ok',
       items: [
-        { label: 'API Keys', value: `${configuredKeys} / ${cfgList.length} configurades`, ok: missingKeys === 0 },
-        { label: 'Catàleg', value: 'Perfils i serveis', ok: true },
-        { label: 'Plantilles de landing', value: 'Disponibles', ok: true },
+        { label: 'API Keys',    value: `${configuredKeys} / ${cfgList.length} configurades`, ok: missingKeys === 0 },
+        { label: 'Catàleg',     value: 'Sectors, perfils i preus',                           ok: true },
+        { label: 'Plantilles',  value: 'Landings i documents',                               ok: true },
       ],
-      note: missingKeys > 0 ? `${missingKeys} claus pendents. El sistema pot fallar sense elles.` : undefined,
+      note: missingKeys > 0 ? `${missingKeys} claus pendents. Alguns serveis poden no funcionar.` : undefined,
       actions: [
-        { label: 'API Keys', href: '/portal/admin/config', primary: missingKeys > 0 },
-        { label: 'Catàleg', href: '/portal/admin/vault' },
+        { label: 'API Keys',   href: '/portal/admin/config',     primary: missingKeys > 0 },
+        { label: 'Catàleg',    href: '/portal/admin/vault' },
         { label: 'Plantilles', href: '/portal/admin/templates' },
       ],
     },
     {
       num: 2,
-      title: 'Prospecció',
-      desc: 'Cerca empreses per sector i localitat amb Google Maps o Pàgines Grogues.',
+      title: 'Captació de clients',
+      desc: 'Prospecció manual per sector/localitat i campanyes Meta Ads que injecten leads via landing.',
       icon: IconSet.Search,
       status: loading ? 'loading' : campaigns.length === 0 ? 'blocked' : activeCamps > 0 ? 'attention' : 'ok',
       items: [
-        { label: 'Campanyes totals', value: campaigns.length },
-        { label: 'En execució', value: activeCamps },
-        { label: 'Completades', value: completedCamps },
-        { label: 'Prospects trobats', value: totalProspects },
+        { label: 'Campanyes prospecció', value: campaigns.length,  ok: campaigns.length > 0 },
+        { label: 'En execució',          value: activeCamps },
+        { label: 'Completades',          value: completedCamps },
+        { label: 'Prospects trobats',    value: totalProspects,    ok: totalProspects > 0 },
+        { label: 'Meta Ads',             value: 'Configura per tenant → Agents & IA', ok: true },
       ],
-      note: 'Executa una campanya → selecciona prospects → exporta a Leads CRM.',
+      note: campaigns.length === 0 ? 'Inicia una campanya de prospecció o activa Meta Ads per captar leads.' : undefined,
       actions: [
-        { label: 'Nova campanya', href: '/portal/prospecting', primary: campaigns.length === 0 },
-        { label: 'Veure campanyes', href: '/portal/prospecting' },
+        { label: 'Nova campanya',   href: '/portal/prospecting', primary: campaigns.length === 0 },
+        { label: 'Prospecció',      href: '/portal/prospecting' },
+        { label: 'Meta Ads',        href: '/portal/admin/tenants' },
       ],
     },
     {
       num: 3,
-      title: 'Leads CRM',
-      desc: 'Gestiona el pipeline de leads des de Nou fins a Guanyat o Perdut.',
+      title: 'Qualificació del lead',
+      desc: 'Contacta per WhatsApp o email amb una demo del sector, qualifica i agenda reunió.',
       icon: IconSet.Users,
-      status: loading ? 'loading' : totalLeads === 0 ? 'blocked' : proposalLeads > 0 ? 'attention' : 'ok',
+      status: loading ? 'loading' : totalLeads === 0 ? 'blocked' : newLeads > 0 ? 'attention' : 'ok',
       items: [
-        { label: 'Total leads', value: totalLeads },
-        { label: 'Nous (sense contactar)', value: newLeads, ok: newLeads === 0 },
-        { label: 'En proposta / negociació', value: proposalLeads, ok: proposalLeads === 0 },
-        { label: 'Guanyats', value: wonLeads },
+        { label: 'Total leads',              value: totalLeads,       ok: totalLeads > 0 },
+        { label: 'Nous (sense contactar)',   value: newLeads,         ok: newLeads === 0 },
+        { label: 'Contactats',               value: contactedLeads },
+        { label: 'En proposta/negociació',   value: proposalLeads,    ok: proposalLeads === 0 },
+        { label: 'Guanyats',                 value: wonLeads },
       ],
-      note: 'Pipeline: Nou → Contactat → Qualificat → Proposta → Negociació → Guanyat.',
+      note: newLeads > 0
+        ? `${newLeads} lead${newLeads > 1 ? 's' : ''} sense contactar. Envia la demo del sector i agenda reunió.`
+        : undefined,
       actions: [
-        { label: 'Veure leads', href: '/portal/leads', primary: newLeads > 0 },
-        { label: 'Nou lead', href: '/portal/leads/new' },
+        { label: 'Veure leads',  href: '/portal/leads', primary: newLeads > 0 },
+        { label: 'Nou lead',     href: '/portal/leads/new' },
+        { label: 'Demos',        href: '/portal/admin/demos' },
       ],
     },
     {
       num: 4,
-      title: 'Crear Tenant',
-      desc: 'Quan un lead és guanyat, crea el seu compte (tenant) i assigna-li un perfil de serveis.',
-      icon: IconSet.Building,
-      status: loading ? 'loading' : tenantsTotal === 0 ? 'blocked' : 'ok',
+      title: 'Pressupost i tancament',
+      desc: 'Crea el pressupost per fases segons el que ha demanat el client a la reunió i espera l\'acceptació.',
+      icon: IconSet.Receipt,
+      status: loading ? 'loading' : bSent > 0 ? 'attention' : 'ok',
       items: [
-        { label: 'Tenants actius', value: tenantsTotal },
-        { label: 'Pas 1', value: 'Admin → Tenants → Crear nou', ok: true },
-        { label: 'Pas 2', value: 'Obrir tenant → Assignar perfil', ok: true },
-        { label: 'Pas 3', value: 'Crear usuari client i enviar credencials', ok: true },
+        { label: 'Esborranys',              value: bDraft,    ok: bDraft === 0 },
+        { label: 'Enviats (sense resposta)', value: bSent,    ok: bSent === 0 },
+        { label: 'Acceptats',               value: bAccepted, ok: bAccepted > 0 || allBudgets.length === 0 },
+        { label: 'Rebutjats/cancel·lats',   value: bRejected },
       ],
-      note: 'El perfil determina quins serveis i fases es pressupostaran automàticament.',
+      note: bSent > 0
+        ? `${bSent} pressupost${bSent > 1 ? 's' : ''} enviats esperant resposta del client.`
+        : bDraft > 0
+        ? `${bDraft} pressupost${bDraft > 1 ? 's' : ''} en esborrany. Revisa i envia al client.`
+        : undefined,
       actions: [
-        { label: 'Tenants', href: '/portal/admin/tenants', primary: true },
-        { label: 'Crear tenant', href: '/portal/admin/tenants/new' },
+        { label: 'Pressupostos', href: '/portal/billing', primary: bSent > 0 || bDraft > 0 },
+        { label: 'Nou pressupost', href: '/portal/billing' },
       ],
     },
     {
       num: 5,
-      title: 'Pressupost',
-      desc: 'Genera el pressupost per fases, envia\'l al client i espera l\'acceptació.',
-      icon: IconSet.Receipt,
-      status: loading ? 'loading' : 'ok',
+      title: 'Implementació',
+      desc: 'El tenant es crea amb les fases contractades. Configura-les una a una amb el wizard.',
+      icon: IconSet.Layers,
+      status: loading ? 'loading' : tenantsTotal === 0 ? 'blocked' : tenantsWithPhases.length > 0 ? 'attention' : 'ok',
       items: [
-        { label: 'Pas 1', value: 'Tenant → Pressupostos → Crear per perfil', ok: true },
-        { label: 'Pas 2', value: 'Revisar línies i aplicar descomptes', ok: true },
-        { label: 'Pas 3', value: 'Enviar → el client rep email amb link', ok: true },
-        { label: 'Pas 4', value: 'Acceptat → botó "Posar en marxa" al pressupost', ok: true },
+        { label: 'Tenants actius',               value: tenantsTotal,               ok: tenantsTotal > 0 },
+        { label: 'Fases pendents de configurar', value: tenantsWithPhases.length,   ok: tenantsWithPhases.length === 0 },
+        { label: 'Landings',                     value: 'Factory → publicar',        ok: true },
+        { label: 'Agents IA',                    value: 'Canals + base coneixement', ok: true },
       ],
-      note: 'Un cop acceptat, fes clic a "Posar en marxa" per iniciar el wizard d\'activació de fases.',
+      note: tenantsWithPhases.length > 0
+        ? `${tenantsWithPhases.length} tenant${tenantsWithPhases.length > 1 ? 's' : ''} amb fases per configurar. Obre el wizard "Posar en marxa".`
+        : undefined,
       actions: [
-        { label: 'Veure pressupostos', href: '/portal/billing', primary: true },
-        { label: 'Programes comercials', href: '/portal/billing/programs' },
+        { label: 'Tenants',    href: '/portal/admin/tenants', primary: tenantsWithPhases.length > 0 },
+        { label: 'Landings',   href: '/portal/landings' },
+        { label: 'Agents',     href: '/portal/agents' },
       ],
     },
     {
       num: 6,
-      title: 'Implementació de serveis',
-      desc: 'Configura cada fase contractada amb el wizard "Posar en marxa" per tenant.',
-      icon: IconSet.Layers,
-      status: loading ? 'loading' : tenantsWithPhases.length === 0 ? 'ok' : 'attention',
-      items: [
-        { label: 'Tenants amb fases contractades', value: tenantsWithPhases.length, ok: tenantsWithPhases.length === 0 },
-        { label: 'Wizard Captació (F1)', value: 'Landing → Factory → publicar', ok: true },
-        { label: 'Wizard F2–F5', value: 'Agenda, Pressupostos, Seguiment, Alertes & Equip', ok: true },
-        { label: 'Bot IA', value: 'Agents → canals + base de coneixement', ok: true },
-      ],
-      note: 'Obre la fitxa de cada tenant → "Posar en marxa" per veure totes les fases i el seu estat.',
-      actions: [
-        { label: 'Tenants', href: '/portal/admin/tenants', primary: tenantsWithPhases.length > 0 },
-        { label: 'Landings', href: '/portal/landings' },
-        { label: 'Agents', href: '/portal/agents' },
-      ],
-    },
-    {
-      num: 7,
-      title: 'Agents & Automatitzacions',
-      desc: 'Activa els agents de comunicació IA i les automatitzacions n8n.',
-      icon: IconSet.Bot,
-      status: loading ? 'loading' : totalMessages === 0 ? 'attention' : 'ok',
-      items: [
-        { label: 'Missatges (30 dies)', value: totalMessages, ok: totalMessages > 0 },
-        { label: 'Canals actius', value: activeChannels.length > 0 ? activeChannels.join(', ') : 'Cap', ok: activeChannels.length > 0 },
-        { label: 'Tokens IA (30 dies)', value: channelStats ? (channelStats.aiTokens ?? 0).toLocaleString('ca-ES') : '—', ok: true },
-        { label: 'Mode', value: 'AUTO / HYBRID / MANUAL per tenant', ok: true },
-      ],
-      note: totalMessages === 0 ? 'Cap activitat als canals en els últims 30 dies. Activa els agents als tenants.' : undefined,
-      actions: [
-        { label: 'Agents', href: '/portal/agents', primary: true },
-        { label: 'Automatitzacions', href: '/portal/automations' },
-        { label: 'Converses', href: '/portal/agents/inbox' },
-      ],
-    },
-    {
-      num: 8,
-      title: 'Manteniment i monitorització',
-      desc: 'Supervisa serveis, backups i infraestructura. Respon incidents ràpidament.',
+      title: 'Monitoratge i backup',
+      desc: 'Supervisa serveis i infraestructura. Els backups permeten recuperar dades si cal.',
       icon: IconSet.Activity,
-      status: loading ? 'loading' : !infraOk || openIncidents > 0 ? 'attention' : !lastBackupOk ? 'attention' : 'ok',
+      status: loading ? 'loading'
+        : openIncidents > 0 || !infraOk ? 'attention'
+        : !lastBackupOk ? 'attention'
+        : 'ok',
       items: [
         {
           label: 'Serveis',
           value: servicesTotal > 0 ? `${servicesUp}/${servicesTotal} actius` : 'Sense dades',
-          ok: servicesTotal > 0 && servicesUp === servicesTotal,
+          ok: servicesTotal === 0 || servicesUp === servicesTotal,
         },
-        { label: 'Incidents oberts', value: openIncidents, ok: openIncidents === 0 },
-        { label: 'Infraestructura', value: infra?.overallStatus ?? '—', ok: infraOk },
-        { label: 'Últim backup', value: lastBackupDate, ok: lastBackupOk },
+        { label: 'Incidents oberts',  value: openIncidents,             ok: openIncidents === 0 },
+        { label: 'Infraestructura',   value: infra?.overallStatus ?? '—', ok: infraOk },
+        { label: 'Últim backup',      value: lastBackupDate,             ok: lastBackupOk },
       ],
+      note: openIncidents > 0
+        ? `${openIncidents} incident${openIncidents > 1 ? 's' : ''} obert${openIncidents > 1 ? 's' : ''}. Revisa Ops & Health.`
+        : !lastBackupOk && backup ? 'El darrer backup no ha completat correctament.'
+        : undefined,
       actions: [
-        { label: 'Ops & Health', href: '/portal/ops', primary: openIncidents > 0 },
-        { label: 'InfraOps', href: '/portal/admin/infraops' },
-        { label: 'Backup', href: '/portal/admin/backup' },
+        { label: 'Ops & Health', href: '/portal/ops',            primary: openIncidents > 0 },
+        { label: 'InfraOps',     href: '/portal/admin/infraops' },
+        { label: 'Backup',       href: '/portal/admin/backup' },
       ],
     },
   ];
 
-  // ── summary blockers ──────────────────────────────────────────────────────
   const blockers = steps.filter((s) => s.status === 'blocked' || s.status === 'attention');
 
   return (
@@ -343,7 +321,7 @@ export default function ProcessPage() {
           <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / procés /</span>
           <div className="f-display font-bold text-xl mt-1">Flux de treball</div>
           <p className="f-mono text-label text-ink-2 mt-1">
-            Guia pas a pas: des de la configuració inicial fins al manteniment dels clients.
+            Els 6 passos del cicle complet: des de la configuració fins al monitoratge dels clients.
           </p>
         </div>
 
@@ -367,12 +345,12 @@ export default function ProcessPage() {
           <div className="amg-card card-clip p-4 border-l-2 border-l-success bg-success/5">
             <div className="flex items-center gap-2">
               <IconSet.Check size={14} stroke="#39d353" />
-              <span className="f-mono text-label text-xs text-success">Tot el flux de treball operatiu. Cap acció pendent.</span>
+              <span className="f-mono text-label text-xs text-success">Tot el flux operatiu. Cap acció pendent.</span>
             </div>
           </div>
         )}
 
-        {/* Flow diagram (visual) */}
+        {/* Flow diagram */}
         <div className="amg-card card-clip p-4 overflow-x-auto">
           <div className="f-mono text-label text-xs text-ink-2 uppercase tracking-widest mb-3">Cicle complet</div>
           <div className="flex items-center gap-0 min-w-max">
@@ -386,16 +364,17 @@ export default function ProcessPage() {
                       style={{
                         borderColor: c.dot,
                         color: c.dot,
-                        background: s.status === 'ok' ? 'rgba(57,211,83,0.08)' : s.status === 'attention' ? 'rgba(240,180,41,0.08)' : s.status === 'blocked' ? 'rgba(255,68,68,0.08)' : 'rgba(100,116,139,0.08)',
+                        background: s.status === 'ok'        ? 'rgba(57,211,83,0.08)'
+                                  : s.status === 'attention' ? 'rgba(240,180,41,0.08)'
+                                  : s.status === 'blocked'   ? 'rgba(255,68,68,0.08)'
+                                  : 'rgba(100,116,139,0.08)',
                       }}
                     >
                       {s.num}
                     </div>
                     <span className="f-mono text-[9px] text-ink-2 text-center max-w-[56px] leading-tight">{s.title}</span>
                   </div>
-                  {i < steps.length - 1 && (
-                    <div className="w-8 h-px bg-border-base mx-1 shrink-0" />
-                  )}
+                  {i < steps.length - 1 && <div className="w-8 h-px bg-border-base mx-1 shrink-0" />}
                 </div>
               );
             })}
@@ -409,16 +388,16 @@ export default function ProcessPage() {
           ))}
         </div>
 
-        {/* Tenants amb fases contractades */}
+        {/* Tenants amb fases pendents */}
         {isSuperAdmin && tenantsWithPhases.length > 0 && (
           <div className="amg-card card-clip p-5 space-y-4">
             <div className="flex items-center gap-2">
               <IconSet.Zap size={14} className="text-accent-light" />
-              <span className="f-display font-bold text-sm">Fases contractades per activar</span>
+              <span className="f-display font-bold text-sm">Fases pendents de configurar</span>
               <AMGBadge tone="warning">{tenantsWithPhases.length}</AMGBadge>
             </div>
             <p className="f-mono text-label text-xs text-ink-2">
-              Tenants amb fases NexeLocal contractades. Obre el wizard per configurar cada fase.
+              Obriu el wizard &quot;Posar en marxa&quot; per configurar les fases contractades de cada tenant.
             </p>
             <div className="space-y-2">
               {tenantsWithPhases.map((t) => (
