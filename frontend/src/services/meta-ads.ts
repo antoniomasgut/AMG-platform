@@ -1,5 +1,9 @@
 import { apiFetch } from './api';
 
+export interface MetaAdsGlobalSummary { configured: number; enabled: number; }
+export const getMetaAdsGlobalSummary = () =>
+  apiFetch<MetaAdsGlobalSummary>('/meta-ads/global/summary');
+
 export interface MetaAdsConfig {
   tenantId: string;
   adAccountId: string | null;

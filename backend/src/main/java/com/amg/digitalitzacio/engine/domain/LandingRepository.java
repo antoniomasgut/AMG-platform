@@ -15,6 +15,7 @@ public interface LandingRepository extends JpaRepository<Landing, UUID> {
     Optional<Landing> findBySlug(String slug);
     boolean existsByTenantIdAndSlug(UUID tenantId, String slug);
     long countByTenantId(UUID tenantId);
+    long countByStatus(LandingStatus status);
 
     @Query("SELECT l FROM Landing l WHERE l.tenantId = :tenantId AND " +
            "(LOWER(l.title) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(l.slug) LIKE LOWER(CONCAT('%', :search, '%')))")

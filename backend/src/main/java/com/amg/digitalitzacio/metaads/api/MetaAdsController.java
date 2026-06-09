@@ -4,6 +4,7 @@ import com.amg.digitalitzacio.metaads.api.dto.CampaignStatsResponse;
 import com.amg.digitalitzacio.metaads.api.dto.MetaAdsConfigRequest;
 import com.amg.digitalitzacio.metaads.api.dto.MetaAdsConfigResponse;
 import com.amg.digitalitzacio.metaads.application.MetaAdsService;
+import com.amg.digitalitzacio.metaads.domain.MetaAdsConfigRepository;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -20,6 +22,15 @@ import java.util.UUID;
 public class MetaAdsController {
 
     private final MetaAdsService metaAdsService;
+    private final MetaAdsConfigRepository metaAdsConfigRepository;
+
+    @GetMapping("/global/summary")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Map<String, Long>> getGlobalSummary() {
+        long configured = metaAdsConfigRepository.count();
+        long enabled    = metaAdsConfigRepository.findByEnabledTrue().size();
+        return ResponseEntity.ok(Map.of("configured", configured, "enabled", enabled));
+    }
 
     @GetMapping("/tenants/{tenantId}/config")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")

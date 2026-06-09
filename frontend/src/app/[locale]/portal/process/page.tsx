@@ -18,6 +18,8 @@ import { listAllBudgets } from '@/services/billing';
 import { listTemplates } from '@/services/templates';
 import { getGlobalChannelUsageStats } from '@/services/agents-conversational';
 import { SECTOR_KEYS } from '@/services/sector-contexts';
+import { getMetaAdsGlobalSummary } from '@/services/meta-ads';
+import { getLandingsGlobalSummary } from '@/services/factory';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -123,14 +125,16 @@ export default function ProcessPage() {
       { queryKey: ['ops-dashboard'],    queryFn: getOpsDashboard,                                           enabled: !!user && isSuperAdmin },
       { queryKey: ['infra-status'],     queryFn: getInfraStatus, refetchInterval: 30000,                    enabled: !!user && isSuperAdmin },
       { queryKey: ['backup-dashboard'], queryFn: getBackupDashboard,                                        enabled: !!user && isSuperAdmin },
-      { queryKey: ['landing-templates'],queryFn: listTemplates,                                             enabled: !!user && isSuperAdmin },
-      { queryKey: ['global-channels'],  queryFn: () => getGlobalChannelUsageStats(),                        enabled: !!user && isSuperAdmin, staleTime: 5 * 60 * 1000 },
+      { queryKey: ['landing-templates'],  queryFn: listTemplates,                enabled: !!user && isSuperAdmin },
+      { queryKey: ['global-channels'],    queryFn: () => getGlobalChannelUsageStats(), enabled: !!user && isSuperAdmin, staleTime: 5 * 60 * 1000 },
+      { queryKey: ['meta-ads-summary'],   queryFn: getMetaAdsGlobalSummary,     enabled: !!user && isSuperAdmin },
+      { queryKey: ['landings-summary'],   queryFn: getLandingsGlobalSummary,    enabled: !!user && isSuperAdmin },
     ],
   });
 
   if (!user) return null;
 
-  const [cfgR, leadsR, campR, tenantsR, budgetsR, opsR, infraR, backupR, templatesR, channelR] = results;
+  const [cfgR, leadsR, campR, tenantsR, budgetsR, opsR, infraR, backupR, templatesR, channelR, metaAdsR, landingsR] = results;
   const loading = results.some((r) => r.isLoading);
 
   // ── step 1: configuració ──────────────────────────────────────────────────
@@ -144,6 +148,8 @@ export default function ProcessPage() {
   const activeCamps    = campaigns.filter((c: any) => c.status === 'RUNNING').length;
   const completedCamps = campaigns.filter((c: any) => c.status === 'COMPLETED').length;
   const totalProspects = campaigns.reduce((sum: number, c: any) => sum + (c.totalFound ?? 0), 0);
+  const metaAdsSummary = metaAdsR.data as any;
+  const metaAdsEnabled = metaAdsSummary?.enabled ?? 0;
 
   // ── step 3: qualificació ──────────────────────────────────────────────────
   const leadStats     = leadsR.data as any;
@@ -163,8 +169,10 @@ export default function ProcessPage() {
   // ── step 5: implementació ─────────────────────────────────────────────────
   const allTenants        = ((tenantsR.data as any)?.content ?? []) as import('@/services/admin').TenantResponse[];
   const tenantsTotal      = (tenantsR.data as any)?.totalElements ?? allTenants.length;
-  const tenantsWithPhases = allTenants.filter(t => t.contractedPhases && t.contractedPhases.length > 0);
-  const tenantsWithF1     = allTenants.filter(t => t.contractedPhases?.includes('F1'));
+  const tenantsWithPhases  = allTenants.filter(t => t.contractedPhases && t.contractedPhases.length > 0);
+  const landingsSummary    = landingsR.data as any;
+  const landingsPublished  = landingsSummary?.published ?? 0;
+  const landingsTotal      = landingsSummary?.total ?? 0;
 
   const channelStats   = channelR?.data as any;
   const totalMessages  = channelStats
@@ -227,6 +235,7 @@ export default function ProcessPage() {
         { label: 'En execució',          value: activeCamps },
         { label: 'Completades',          value: completedCamps },
         { label: 'Prospects trobats',    value: totalProspects,    ok: totalProspects > 0 },
+        { label: 'Tenants Meta Ads actiu', value: metaAdsEnabled,  ok: metaAdsEnabled > 0 },
       ],
       note: campaigns.length === 0 ? 'Inicia una campanya de prospecció o activa Meta Ads per captar leads.' : undefined,
       actions: [
@@ -286,11 +295,11 @@ export default function ProcessPage() {
       icon: IconSet.Layers,
       status: loading ? 'loading' : tenantsTotal === 0 ? 'blocked' : tenantsWithPhases.length > 0 ? 'attention' : 'ok',
       items: [
-        { label: 'Tenants actius',               value: tenantsTotal,                                            ok: tenantsTotal > 0 },
-        { label: 'Fases pendents de configurar', value: tenantsWithPhases.length,                               ok: tenantsWithPhases.length === 0 },
-        { label: 'Tenants amb landing (F1)',      value: tenantsWithF1.length,                                   ok: tenantsWithF1.length > 0 || tenantsTotal === 0 },
-        { label: 'Canals actius (30d)',           value: activeChannels.length > 0 ? activeChannels.join(', ') : 'Cap', ok: activeChannels.length > 0 || tenantsTotal === 0 },
-        { label: 'Missatges IA (30d)',            value: totalMessages > 0 ? totalMessages.toLocaleString('ca-ES') : '0', ok: totalMessages > 0 || tenantsTotal === 0 },
+        { label: 'Tenants actius',               value: tenantsTotal,                                                   ok: tenantsTotal > 0 },
+        { label: 'Fases pendents de configurar', value: tenantsWithPhases.length,                                      ok: tenantsWithPhases.length === 0 },
+        { label: 'Landings publicades',          value: `${landingsPublished} / ${landingsTotal}`,                     ok: landingsPublished > 0 || tenantsTotal === 0 },
+        { label: 'Canals actius (30d)',          value: activeChannels.length > 0 ? activeChannels.join(', ') : 'Cap', ok: activeChannels.length > 0 || tenantsTotal === 0 },
+        { label: 'Missatges IA (30d)',           value: totalMessages > 0 ? totalMessages.toLocaleString('ca-ES') : '0', ok: totalMessages > 0 || tenantsTotal === 0 },
       ],
       note: tenantsWithPhases.length > 0
         ? `${tenantsWithPhases.length} tenant${tenantsWithPhases.length > 1 ? 's' : ''} amb fases per configurar. Obre el wizard "Posar en marxa".`

@@ -147,6 +147,11 @@ export async function getLandingStats(tenantId: string, landingId: string): Prom
   return apiFetch<LandingStats>(`/engine/tenants/${tenantId}/landings/${landingId}/stats`);
 }
 
+export interface LandingsGlobalSummary { total: number; published: number; }
+export async function getLandingsGlobalSummary(): Promise<LandingsGlobalSummary> {
+  return apiFetch<LandingsGlobalSummary>('/engine/admin/landings/summary');
+}
+
 export async function listLandings(tenantId: string, page = 0, size = 20): Promise<LandingSummary[]> {
   return apiFetch<LandingSummary[]>(`/engine/tenants/${tenantId}/landings?page=${page}&size=${size}`);
 }

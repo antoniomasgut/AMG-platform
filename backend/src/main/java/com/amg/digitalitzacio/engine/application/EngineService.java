@@ -4,6 +4,7 @@ import com.amg.digitalitzacio.engine.api.dto.*;
 import com.amg.digitalitzacio.engine.api.dto.LandingStatsResponse;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface EngineService {
@@ -25,4 +26,5 @@ public interface EngineService {
     String renderSitemap(String slug);
     ContactResponse submitContact(String slug, ContactRequest request);
     LandingStatsResponse getLandingStats(UUID tenantId, UUID landingId);
+    Map<String, Long> getGlobalLandingsSummary();
 }

@@ -24,6 +24,14 @@ public class EngineController {
     private final TemplateService templateService;
     private final LandingGeneratorService landingGeneratorService;
 
+    // --- Admin global summary ---
+
+    @GetMapping("/admin/landings/summary")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public java.util.Map<String, Long> getLandingsSummary() {
+        return engineService.getGlobalLandingsSummary();
+    }
+
     // --- Landings ---
 
     @PostMapping("/tenants/{tenantId}/landings")

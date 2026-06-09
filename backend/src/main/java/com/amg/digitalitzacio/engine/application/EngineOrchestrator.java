@@ -1509,6 +1509,13 @@ public class EngineOrchestrator implements EngineService {
                 .replace("'", "&#39;");
     }
 
+    @Override
+    public Map<String, Long> getGlobalLandingsSummary() {
+        long total     = landingRepository.count();
+        long published = landingRepository.countByStatus(LandingStatus.PUBLISHED);
+        return Map.of("total", total, "published", published);
+    }
+
     private LandingType parseLandingType(String value) {
         if (value == null) return LandingType.MICRO;
         try { return LandingType.valueOf(value.toUpperCase()); }
