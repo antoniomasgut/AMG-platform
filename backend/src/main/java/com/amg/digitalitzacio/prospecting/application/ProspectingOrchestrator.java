@@ -533,44 +533,44 @@ public class ProspectingOrchestrator implements ProspectingService {
         return new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(code, label, pitch, tone, points);
     }
 
-    // Punts màxims possibles:
-    // NO_WEBSITE(5) + LOW_REVIEWS(4) + MIXED_RATING(3) + NO_WHATSAPP(2) + NO_INSTAGRAM(1) = 15 pts
+    // Punts màxims possibles (senyals mútuament excloents inclosos):
+    // NO_WHATSAPP(5) + LOW_REVIEWS(4) + MIXED_RATING(3) + NO_WEBSITE(2) + NO_INSTAGRAM(1) = 15 pts
     private List<com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal> detectSignals(Prospect p) {
         var signals = new ArrayList<com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal>();
 
-        // Sense web → oportunitat màxima (producte estrella AMG)
-        if (!Boolean.TRUE.equals(p.getHasWebsite())) {
-            signals.add(signal("NO_WEBSITE", "Sense web pròpia", "Landing web moderna", "warning", 5));
+        // Sense WhatsApp Business → porta d'entrada a l'agent IA (F1) + WhatsApp Business API
+        if (p.getPhone() != null && !p.getPhone().isBlank() && !Boolean.TRUE.equals(p.getHasWhatsapp())) {
+            signals.add(signal("NO_WHATSAPP", "Sense WhatsApp Business", "Agent IA per WhatsApp + WhatsApp Business API", "warning", 5));
         }
 
-        // Reviews Google → menys ressenyes = més necessitat visible
+        // Reviews Google → menys ressenyes = necessitat clara d'automatització F4
         if (p.getGoogleReviews() != null) {
             int rev = p.getGoogleReviews();
             if (rev < 10) {
-                signals.add(signal("LOW_REVIEWS", "Molt pocs reviews (" + rev + ")", "Bot de recollida de ressenyes", "opportunity", 4));
+                signals.add(signal("LOW_REVIEWS", "Molt pocs reviews (" + rev + ")", "Automatització de recollida de ressenyes (F4)", "opportunity", 4));
             } else if (rev < 30) {
-                signals.add(signal("FEW_REVIEWS", "Poca activitat Google (" + rev + " reviews)", "Campanya de reviews", "info", 2));
+                signals.add(signal("FEW_REVIEWS", "Poca activitat Google (" + rev + " reviews)", "Agent de fidelització + campanya de reviews", "info", 2));
             }
         }
 
-        // Rating Google → sweet spot 3.5-4.3 (marge de millora, sensible al pitch)
+        // Rating Google → marge de millora = pitch d'automatització de fidelització
         if (p.getGoogleRating() != null) {
             double r = p.getGoogleRating().doubleValue();
             if (r < 3.5) {
-                signals.add(signal("LOW_RATING", "Rating baix (" + p.getGoogleRating() + "★)", "Gestió de reputació digital urgent", "danger", 2));
+                signals.add(signal("LOW_RATING", "Rating baix (" + p.getGoogleRating() + "★)", "Agent de resposta a ressenyes + gestió reputació", "danger", 2));
             } else if (r < 4.3) {
-                signals.add(signal("MIXED_RATING", "Rating millorable (" + p.getGoogleRating() + "★)", "Automatització de fidelització", "info", 3));
+                signals.add(signal("MIXED_RATING", "Rating millorable (" + p.getGoogleRating() + "★)", "Agent de fidelització + automatització reviews", "info", 3));
             }
         }
 
-        // Sense WhatsApp Business (i té telèfon verificat)
-        if (p.getPhone() != null && !p.getPhone().isBlank() && !Boolean.TRUE.equals(p.getHasWhatsapp())) {
-            signals.add(signal("NO_WHATSAPP", "Sense WhatsApp Business", "Canal directe amb clients", "opportunity", 2));
+        // Sense web → oportunitat de landing + chat widget de l'agent
+        if (!Boolean.TRUE.equals(p.getHasWebsite())) {
+            signals.add(signal("NO_WEBSITE", "Sense web pròpia", "Landing + agent IA amb chat widget", "neutral", 2));
         }
 
         // Sense Instagram
         if (!Boolean.TRUE.equals(p.getHasInstagram())) {
-            signals.add(signal("NO_INSTAGRAM", "Sense Instagram detectat", "Presència a xarxes socials", "neutral", 1));
+            signals.add(signal("NO_INSTAGRAM", "Sense Instagram detectat", "Presència digital + automatitzacions", "neutral", 1));
         }
 
         return signals;
