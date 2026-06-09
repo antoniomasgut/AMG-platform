@@ -97,7 +97,7 @@ class VaultControllerTest {
     /* ── TC-01: Crear perfil ── */
     @Test
     void tc01_crearPerfil_Returns201() throws Exception {
-        var request = new CreateProfileRequest("Pla Avançat", "pla-avancat", "Perfil complet");
+        var request = new CreateProfileRequest("Pla Avançat", "pla-avancat", "Perfil complet", null);
 
         mockMvc.perform(post("/api/v1/vault/profiles")
                 .header("Authorization", "Bearer " + superAdminToken)
@@ -126,7 +126,7 @@ class VaultControllerTest {
     @Test
     void tc03_crearPerfilAmbFasesIServeis_Returns201() throws Exception {
         // Crear perfil
-        var profileReq = new CreateProfileRequest("Pla Avançat", "pla-avancat", null);
+        var profileReq = new CreateProfileRequest("Pla Avançat", "pla-avancat", null, null);
         var profileJson = mockMvc.perform(post("/api/v1/vault/profiles")
                 .header("Authorization", "Bearer " + superAdminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -136,7 +136,7 @@ class VaultControllerTest {
         var profile = objectMapper.readValue(profileJson, ProfileResponse.class);
 
         // Afegir fase 1
-        var phase1Req = new CreatePhaseRequest("Configuració bàsica", "Primera fase", 1);
+        var phase1Req = new CreatePhaseRequest("Configuració bàsica", "Primera fase", 1, null);
         mockMvc.perform(post("/api/v1/vault/profiles/{profileId}/phases", profile.id())
                 .header("Authorization", "Bearer " + superAdminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -144,7 +144,7 @@ class VaultControllerTest {
                 .andExpect(status().isCreated());
 
         // Afegir fase 2
-        var phase2Req = new CreatePhaseRequest("Automatitzacions", "Segona fase", 2);
+        var phase2Req = new CreatePhaseRequest("Automatitzacions", "Segona fase", 2, null);
         var profileJson2 = mockMvc.perform(post("/api/v1/vault/profiles/{profileId}/phases", profile.id())
                 .header("Authorization", "Bearer " + superAdminToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -314,7 +314,7 @@ class VaultControllerTest {
     /* ── TC-11: CLIENT no pot crear perfils (POST) → 403 ── */
     @Test
     void tc11_clientNoPotCrearPerfil_Returns403() throws Exception {
-        var request = new CreateProfileRequest("Test", "test", null);
+        var request = new CreateProfileRequest("Test", "test", null, null);
         mockMvc.perform(post("/api/v1/vault/profiles")
                 .header("Authorization", "Bearer " + clientToken)
                 .contentType(MediaType.APPLICATION_JSON)
