@@ -1,0 +1,2 @@
+ALTER TABLE service_profiles ADD COLUMN IF NOT EXISTS sector VARCHAR(30);
+ALTER TABLE phases ADD COLUMN IF NOT EXISTS sector_phase_number INTEGER;
