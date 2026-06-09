@@ -17,16 +17,24 @@ import { IconSet } from '@/components/ui/icons';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
-const STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] as const;
+const STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'NURTURING', 'LOST'] as const;
 
 const STAGE_LABEL: Record<string, string> = {
   NEW: 'Nou', CONTACTED: 'Contactat', QUALIFIED: 'Qualificat',
-  PROPOSAL: 'Proposta', NEGOTIATION: 'Negociació', WON: 'Guanyat', LOST: 'Perdut',
+  PROPOSAL: 'Proposta', NEGOTIATION: 'Negociació', WON: 'Guanyat',
+  NURTURING: 'Nurturing', LOST: 'Perdut',
 };
 
 const STAGE_TONE: Record<string, 'neutral' | 'info' | 'accent' | 'warning' | 'success' | 'danger'> = {
   NEW: 'neutral', CONTACTED: 'info', QUALIFIED: 'accent',
-  PROPOSAL: 'warning', NEGOTIATION: 'warning', WON: 'success', LOST: 'danger',
+  PROPOSAL: 'warning', NEGOTIATION: 'warning', WON: 'success',
+  NURTURING: 'info', LOST: 'danger',
+};
+
+// Etapes lineals: avanç automàtic amb "Avançar →"
+const NEXT_STAGE: Partial<Record<string, string>> = {
+  NEW: 'CONTACTED', CONTACTED: 'QUALIFIED', QUALIFIED: 'PROPOSAL',
+  PROPOSAL: 'NEGOTIATION', NEGOTIATION: 'WON',
 };
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -926,17 +934,32 @@ export default function LeadsPage() {
                         )}
                         {stage !== 'WON' && stage !== 'LOST' && (
                           <div className="mt-2 flex gap-2 flex-wrap">
-                            <button
-                              type="button"
-                              className="f-mono text-[9px] uppercase text-accent-light hover:underline"
-                              onClick={e => {
-                                e.stopPropagation();
-                                const next = STAGES[STAGES.indexOf(stage) + 1];
-                                doChangeStage({ id: lead.id, stage: next });
-                              }}
-                            >
-                              {stage === 'NEGOTIATION' ? '✓ Guanyar' : 'Avançar →'}
-                            </button>
+                            {stage === 'NURTURING' ? (
+                              <button
+                                type="button"
+                                className="f-mono text-[9px] uppercase text-accent-light hover:underline"
+                                onClick={e => { e.stopPropagation(); doChangeStage({ id: lead.id, stage: 'CONTACTED' }); }}
+                              >
+                                Reactivar →
+                              </button>
+                            ) : NEXT_STAGE[stage] && (
+                              <button
+                                type="button"
+                                className="f-mono text-[9px] uppercase text-accent-light hover:underline"
+                                onClick={e => { e.stopPropagation(); doChangeStage({ id: lead.id, stage: NEXT_STAGE[stage]! }); }}
+                              >
+                                {stage === 'NEGOTIATION' ? '✓ Guanyar' : 'Avançar →'}
+                              </button>
+                            )}
+                            {stage !== 'NURTURING' && (
+                              <button
+                                type="button"
+                                className="f-mono text-[9px] uppercase text-ink-3 hover:text-info hover:underline"
+                                onClick={e => { e.stopPropagation(); doChangeStage({ id: lead.id, stage: 'NURTURING' }); }}
+                              >
+                                Aparcar
+                              </button>
+                            )}
                             <button
                               type="button"
                               className="f-mono text-[9px] uppercase text-ink-3 hover:text-danger-light hover:underline"

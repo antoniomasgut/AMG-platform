@@ -19,16 +19,18 @@ import { AMGBadge } from '@/components/ui/badge';
 import { IconSet } from '@/components/ui/icons';
 import { useRouter, useParams } from 'next/navigation';
 
-const STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] as const;
+const STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'NURTURING', 'LOST'] as const;
 
 const STAGE_LABEL: Record<string, string> = {
   NEW: 'Nou', CONTACTED: 'Contactat', QUALIFIED: 'Qualificat',
-  PROPOSAL: 'Proposta', NEGOTIATION: 'Negociació', WON: 'Guanyat', LOST: 'Perdut',
+  PROPOSAL: 'Proposta', NEGOTIATION: 'Negociació', WON: 'Guanyat',
+  NURTURING: 'Nurturing', LOST: 'Perdut',
 };
 
 const STAGE_TONE: Record<string, 'neutral' | 'info' | 'accent' | 'warning' | 'success' | 'danger'> = {
   NEW: 'neutral', CONTACTED: 'info', QUALIFIED: 'accent',
-  PROPOSAL: 'warning', NEGOTIATION: 'warning', WON: 'success', LOST: 'danger',
+  PROPOSAL: 'warning', NEGOTIATION: 'warning', WON: 'success',
+  NURTURING: 'info', LOST: 'danger',
 };
 
 const SOURCE_OPTIONS = [
