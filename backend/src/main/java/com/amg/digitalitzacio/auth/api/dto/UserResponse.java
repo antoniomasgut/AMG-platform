@@ -9,6 +9,7 @@ public record UserResponse(
         UUID id,
         String email,
         String name,
+        String position,
         Role role,
         TenantRef tenant,
         boolean isActive,

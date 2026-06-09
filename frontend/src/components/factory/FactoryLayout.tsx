@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, type FC } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useEditorStore } from '@/store/editor';
-import { createVersion, updateVersion, publishLanding } from '@/services/factory';
+import { createVersion, updateVersion, publishLanding, unpublishLanding } from '@/services/factory';
 import { BlockCatalog } from './BlockCatalog';
 import { BlockProperties } from './BlockProperties';
 import { PageStylesPanel } from './PageStylesPanel';
@@ -21,13 +21,8 @@ interface Props {
   landingId: string;
 }
 
-const LOCALES = ['ca', 'es', 'en', 'de'];
-
 export const FactoryLayout: FC<Props> = ({ landingId }) => {
   const router = useRouter();
-  const pathname = usePathname();
-  const locale = LOCALES.find((l) => pathname.startsWith(`/${l}/`)) ?? '';
-  const localePrefix = locale ? `/${locale}` : '';
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('blocks');
   const [statusMsg, setStatusMsg] = useState('');
   const [showPreview, setShowPreview] = useState(false);
@@ -95,6 +90,19 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
     }
   }, [landingId, versionId, content, styles, isDirty, markSaving]);
 
+  const handleUnpublish = useCallback(async () => {
+    markSaving(true);
+    try {
+      await unpublishLanding(landingId);
+      setStatusMsg('Desactivada');
+      setTimeout(() => router.push('/portal/landings'), 1500);
+    } catch {
+      setStatusMsg('Error en desactivar');
+    } finally {
+      markSaving(false);
+    }
+  }, [landingId, markSaving, router]);
+
   const handleAddBlock = useCallback((type: BlockType) => {
     addBlock(type);
     setSidebarTab('properties');
@@ -121,7 +129,7 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
       {/* Topbar */}
       <div className="h-12 shrink-0 bg-[#0d0d1a] border-b border-border-base flex items-center px-4 gap-3">
         <button
-          onClick={() => router.push(`${localePrefix}/portal/landings`)}
+          onClick={() => router.push('/portal/landings')}
           className="flex items-center gap-1 text-ink-2 hover:text-ink-0 transition shrink-0 f-mono text-xs"
           title="Tornar a Landings"
         >
@@ -148,13 +156,23 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
         >
           {isSaving ? 'Guardant...' : isDirty ? 'Guardar' : 'Desat'}
         </button>
-        <button
-          onClick={handlePublish}
-          disabled={isSaving}
-          className="f-mono text-label uppercase px-4 h-8 rounded bg-[#FF6B00] text-black font-semibold hover:bg-[#FF9A3C] disabled:opacity-50 transition"
-        >
-          Publicar
-        </button>
+        {landing?.status === 'PUBLISHED' ? (
+          <button
+            onClick={handleUnpublish}
+            disabled={isSaving}
+            className="f-mono text-label uppercase px-3 h-8 rounded border border-border-base text-ink-1 hover:text-warning hover:border-warning disabled:opacity-50 transition"
+          >
+            Desactivar
+          </button>
+        ) : (
+          <button
+            onClick={handlePublish}
+            disabled={isSaving}
+            className="f-mono text-label uppercase px-4 h-8 rounded bg-[#FF6B00] text-black font-semibold hover:bg-[#FF9A3C] disabled:opacity-50 transition"
+          >
+            Publicar
+          </button>
+        )}
         <button
           onClick={() => setShowPreview(!showPreview)}
           className="f-mono text-label uppercase px-3 h-8 rounded text-ink-1 hover:text-white transition"

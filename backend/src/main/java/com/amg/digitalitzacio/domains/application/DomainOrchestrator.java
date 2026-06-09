@@ -3,6 +3,8 @@ package com.amg.digitalitzacio.domains.application;
 import com.amg.digitalitzacio.domains.api.dto.*;
 import com.amg.digitalitzacio.domains.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
+
+import java.net.InetAddress;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -140,7 +142,10 @@ public class DomainOrchestrator implements DomainService {
         var domain = domainRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Domini no trobat: " + id));
 
-        registrarClient.renewDomain(domain.getProviderDomainId());
+        // Només els dominis OpenProvider es renoven via API de proveïdor
+        if (isOpenProviderScenario(domain) && domain.getProviderDomainId() != null) {
+            registrarClient.renewDomain(domain.getProviderDomainId());
+        }
 
         // Afegeix un any a la data de caducitat
         var currentExpiry = domain.getExpiresAt() != null ? domain.getExpiresAt() : Instant.now();
@@ -184,8 +189,10 @@ public class DomainOrchestrator implements DomainService {
 
         dnsRecordRepository.saveAll(newRecords);
 
-        // Actualitza al proveïdor
-        registrarClient.setDnsRecords(domain.getProviderDomainId(), newRecords);
+        // Propaga al proveïdor només per a dominis OpenProvider
+        if (isOpenProviderScenario(domain) && domain.getProviderDomainId() != null) {
+            registrarClient.setDnsRecords(domain.getProviderDomainId(), newRecords);
+        }
 
         domain.setDnsConfigured(true);
         domain = domainRepository.save(domain);
@@ -200,7 +207,9 @@ public class DomainOrchestrator implements DomainService {
         var domain = domainRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Domini no trobat: " + id));
 
-        registrarClient.cancelDomain(domain.getProviderDomainId());
+        if (isOpenProviderScenario(domain) && domain.getProviderDomainId() != null) {
+            registrarClient.cancelDomain(domain.getProviderDomainId());
+        }
         domain.setStatus(DomainStatus.CANCELLED);
         domainRepository.save(domain);
 
@@ -243,7 +252,132 @@ public class DomainOrchestrator implements DomainService {
                 .collect(Collectors.toList());
     }
 
+    // ── Nous escenaris ──
+
+    @Override
+    @Transactional
+    public ManagedDomainResponse addExternalDomain(AddExternalDomainRequest request) {
+        if (domainRepository.existsByDomainName(request.domainName())) {
+            throw new IllegalArgumentException("El domini ja existeix al sistema: " + request.domainName());
+        }
+        var scenario = DomainScenario.valueOf(request.scenario());
+        var tld = extractTld(request.domainName());
+        var domain = ManagedDomain.builder()
+                .tenantId(request.tenantId())
+                .landingId(request.landingId())
+                .domainName(request.domainName())
+                .tld(tld)
+                .status(DomainStatus.DNS_PENDING)
+                .provider("EXTERNAL")
+                .scenario(scenario)
+                .build();
+        domain = domainRepository.save(domain);
+        log.info("Domini extern {} afegit per tenant {} (escenari {})",
+                domain.getDomainName(), request.tenantId(), scenario);
+        return toResponse(domain);
+    }
+
+    @Override
+    @Transactional
+    public ManagedDomainResponse assignAmgSubdomain(AssignAmgSubdomainRequest request) {
+        var fullDomain = request.subdomain() + ".amgdl.com";
+        if (domainRepository.existsByDomainName(fullDomain)) {
+            throw new IllegalArgumentException("El subdomini ja està en ús: " + fullDomain);
+        }
+        var domain = ManagedDomain.builder()
+                .tenantId(request.tenantId())
+                .landingId(request.landingId())
+                .domainName(fullDomain)
+                .tld("com")
+                .status(DomainStatus.ACTIVE)
+                .provider("AMG")
+                .scenario(DomainScenario.AMG_SUBDOMAIN)
+                .dnsConfigured(true)
+                .build();
+        domain = domainRepository.save(domain);
+
+        // Registres DNS informatius (AMG els gestiona internament via Traefik)
+        var recordA = DomainDnsRecord.builder()
+                .domainId(domain.getId()).type("A").name("@").value(serverIp).ttl(3600).build();
+        dnsRecordRepository.save(recordA);
+
+        log.info("Subdomini AMG {} assignat al tenant {}", fullDomain, request.tenantId());
+        return toResponse(domain);
+    }
+
+    @Override
+    @Transactional
+    public ManagedDomainResponse transferDomain(TransferDomainRequest request) {
+        if (domainRepository.existsByDomainName(request.domainName())) {
+            throw new IllegalArgumentException("El domini ja existeix al sistema: " + request.domainName());
+        }
+        var tld = extractTld(request.domainName());
+        var pricingOpt = tldPricingRepository.findById(tld);
+
+        // Inicia la transferència al proveïdor
+        var providerDomainId = registrarClient.registerDomain(
+                request.domainName(),
+                request.registrantName(),
+                request.registrantEmail(),
+                request.registrantPhone(),
+                request.registrantNif());
+
+        var domain = ManagedDomain.builder()
+                .tenantId(request.tenantId())
+                .landingId(request.landingId())
+                .domainName(request.domainName())
+                .tld(tld)
+                .status(DomainStatus.TRANSFER_IN)
+                .provider("OPEN_PROVIDER")
+                .scenario(DomainScenario.OPENPROVIDER_TRANSFER)
+                .providerDomainId(providerDomainId)
+                .eppCode(request.eppCode())
+                .registrantName(request.registrantName())
+                .registrantEmail(request.registrantEmail())
+                .registrantPhone(request.registrantPhone())
+                .registrantNif(request.registrantNif())
+                .autoRenew(request.autoRenew())
+                .purchasePrice(pricingOpt.map(TldPricing::getCostRenew).orElse(null))
+                .salePrice(pricingOpt.map(TldPricing::getSaleRenew).orElse(null))
+                .build();
+
+        domain = domainRepository.save(domain);
+        log.info("Transferència del domini {} iniciada per tenant {}", request.domainName(), request.tenantId());
+        return toResponse(domain);
+    }
+
+    @Override
+    @Transactional
+    public DnsVerifyResponse verifyDns(UUID id) {
+        var domain = domainRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Domini no trobat: " + id));
+        var now = Instant.now();
+        String resolvedIp = null;
+        boolean verified = false;
+        try {
+            var addr = InetAddress.getByName(domain.getDomainName());
+            resolvedIp = addr.getHostAddress();
+            verified = serverIp.equals(resolvedIp);
+        } catch (Exception e) {
+            log.warn("No s'ha pogut resoldre el DNS de {}: {}", domain.getDomainName(), e.getMessage());
+        }
+        domain.setDnsVerified(verified);
+        domain.setDnsVerifiedAt(now);
+        if (verified && domain.getStatus() == DomainStatus.DNS_PENDING) {
+            domain.setStatus(DomainStatus.ACTIVE);
+            domain.setDnsConfigured(true);
+        }
+        domainRepository.save(domain);
+        log.info("Verificació DNS de {}: verified={}, ip={}", domain.getDomainName(), verified, resolvedIp);
+        return new DnsVerifyResponse(verified, resolvedIp, serverIp, now);
+    }
+
     // ── Helpers privats ──
+
+    private boolean isOpenProviderScenario(ManagedDomain domain) {
+        return domain.getScenario() == DomainScenario.OPENPROVIDER_NEW
+                || domain.getScenario() == DomainScenario.OPENPROVIDER_TRANSFER;
+    }
 
     // Configura els registres DNS bàsics (@ i www apuntant a serverIp) per a un domini
     private ManagedDomain configureDnsInternal(ManagedDomain domain, String ip) {
@@ -297,12 +431,15 @@ public class DomainOrchestrator implements DomainService {
                 domain.getDomainName(),
                 domain.getTld(),
                 domain.getStatus().name(),
+                domain.getScenario().name(),
                 domain.getPurchasePrice(),
                 domain.getSalePrice(),
                 domain.getRegisteredAt(),
                 domain.getExpiresAt(),
                 domain.isAutoRenew(),
                 domain.isDnsConfigured(),
+                domain.isDnsVerified(),
+                domain.getDnsVerifiedAt(),
                 domain.getProvider(),
                 dnsRecords
         );

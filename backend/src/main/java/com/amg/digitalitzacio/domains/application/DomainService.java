@@ -44,4 +44,16 @@ public interface DomainService {
 
     // Llista dominis que caduquen en els propers N dies
     List<ManagedDomainResponse> listExpiring(int daysAhead);
+
+    // Afegeix un domini extern (propi del client o subdomini del seu domini) — Escenaris A i D
+    ManagedDomainResponse addExternalDomain(AddExternalDomainRequest request);
+
+    // Assigna un subdomini de amgdl.com a un tenent — Escenari C
+    ManagedDomainResponse assignAmgSubdomain(AssignAmgSubdomainRequest request);
+
+    // Inicia la transferència d'un domini existent cap a OpenProvider — Escenari E
+    ManagedDomainResponse transferDomain(TransferDomainRequest request);
+
+    // Verifica si el domini ja apunta a la IP del servidor d'AMG
+    DnsVerifyResponse verifyDns(UUID id);
 }

@@ -11,7 +11,7 @@ public record LoginResponse(
         String tokenType,
         UserInfo user
 ) {
-    public record UserInfo(UUID id, String email, String name, Role role, TenantInfo tenant) {}
+    public record UserInfo(UUID id, String email, String name, String position, Role role, TenantInfo tenant) {}
 
     public record TenantInfo(UUID id, String name) {}
 }

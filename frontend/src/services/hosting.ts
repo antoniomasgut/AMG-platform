@@ -80,6 +80,16 @@ export async function requestContainerSite(
   });
 }
 
+export interface WidgetConfig {
+  chatEnabled: boolean;
+  waNumber: string | null;
+  businessName: string;
+}
+
+export async function getWidgetConfig(siteId: string): Promise<WidgetConfig> {
+  return apiFetch<WidgetConfig>(`/widget/${siteId}/config`);
+}
+
 export async function listAllAdminSites(): Promise<WebSiteResponse[]> {
   return apiFetch<WebSiteResponse[]>('/hosting/admin/sites');
 }

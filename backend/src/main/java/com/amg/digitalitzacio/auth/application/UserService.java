@@ -45,6 +45,7 @@ public class UserService {
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .name(request.name())
+                .position(request.position())
                 .role(targetRole)
                 .tenantId(targetRole == Role.CLIENT ? request.tenantId() : null)
                 .isActive(true)
@@ -92,6 +93,7 @@ public class UserService {
             user.setEmail(request.email());
         }
         if (request.name() != null) user.setName(request.name());
+        if (request.position() != null) user.setPosition(request.position());
         if (request.role() != null && callerRole != Role.ADMIN) user.setRole(request.role());
         if (request.tenantId() != null && callerRole != Role.ADMIN) user.setTenantId(request.tenantId());
         if (request.isActive() != null) user.setIsActive(request.isActive());
@@ -125,7 +127,7 @@ public class UserService {
             }
         }
         return new UserResponse(
-                user.getId(), user.getEmail(), user.getName(), user.getRole(),
+                user.getId(), user.getEmail(), user.getName(), user.getPosition(), user.getRole(),
                 tenantRef, user.getIsActive(), user.getIsBlocked(),
                 user.getLastLoginAt(), user.getCreatedAt());
     }

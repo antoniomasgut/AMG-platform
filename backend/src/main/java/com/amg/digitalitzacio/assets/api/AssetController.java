@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.assets.api;
 
 import com.amg.digitalitzacio.assets.api.dto.AssetResponse;
+import com.amg.digitalitzacio.assets.api.dto.AssetStatsResponse;
 import com.amg.digitalitzacio.assets.application.AssetService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,13 @@ public class AssetController {
     public List<AssetResponse> listByTenant(@PathVariable UUID tenantId,
                                             @AuthenticationPrincipal UserPrincipal principal) {
         return assetService.listByTenant(tenantId);
+    }
+
+    @GetMapping("/tenant/{tenantId}/stats")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public AssetStatsResponse getStats(@PathVariable UUID tenantId,
+                                       @AuthenticationPrincipal UserPrincipal principal) {
+        return assetService.getStats(tenantId);
     }
 
     @GetMapping("/{assetId}/file")

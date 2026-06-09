@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
+import { useRouter } from '@/i18n/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import {
@@ -11,6 +12,7 @@ import {
   requestStaticSite,
   updateStaticSite,
   exportSite,
+  getWidgetConfig,
   type WebSiteResponse,
 } from '@/services/hosting';
 
@@ -27,6 +29,64 @@ function fmtSize(bytes: number | null) {
   if (!bytes) return '—';
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function WidgetStatusPanel({ siteId }: { siteId: string }) {
+  const router = useRouter();
+  const { data: cfg } = useQuery({
+    queryKey: ['widget-config', siteId],
+    queryFn: () => getWidgetConfig(siteId),
+  });
+
+  if (!cfg) return null;
+
+  return (
+    <div className="border-t border-border-base pt-4 mt-4">
+      <p className="f-mono text-[10px] uppercase text-ink-2 mb-3">Widgets incrustats a la web</p>
+      <div className="flex gap-3 flex-wrap">
+        <div className={`flex items-center gap-2 px-3 py-2 rounded border text-sm ${
+          cfg.chatEnabled
+            ? 'border-green-500/40 bg-green-500/10 text-green-400'
+            : 'border-border-base text-ink-3'
+        }`}>
+          <span>{cfg.chatEnabled ? '✓' : '○'}</span>
+          <span className="f-mono text-xs">Xat IA</span>
+          {!cfg.chatEnabled && (
+            <button
+              onClick={() => router.push('/portal/admin/agent')}
+              className="text-accent-light underline text-[10px] ml-1"
+            >
+              Configurar
+            </button>
+          )}
+        </div>
+        <div className={`flex items-center gap-2 px-3 py-2 rounded border text-sm ${
+          cfg.waNumber
+            ? 'border-green-500/40 bg-green-500/10 text-green-400'
+            : 'border-border-base text-ink-3'
+        }`}>
+          <span>{cfg.waNumber ? '✓' : '○'}</span>
+          <span className="f-mono text-xs">WhatsApp</span>
+          {cfg.waNumber && (
+            <span className="text-[10px] text-ink-2 ml-1">{cfg.waNumber}</span>
+          )}
+          {!cfg.waNumber && (
+            <button
+              onClick={() => router.push('/portal/admin/contacts')}
+              className="text-accent-light underline text-[10px] ml-1"
+            >
+              Afegir telèfon
+            </button>
+          )}
+        </div>
+      </div>
+      {(!cfg.chatEnabled || !cfg.waNumber) && (
+        <p className="text-[10px] text-ink-3 mt-2">
+          Els widgets es carreguen automàticament. Configura&apos;ls des dels apartats indicats.
+        </p>
+      )}
+    </div>
+  );
 }
 
 export default function HostingPage() {
@@ -82,40 +142,43 @@ export default function HostingPage() {
           <section className="border border-border-base rounded p-5 space-y-4">
             <h2 className="f-display font-bold text-ink-0">La teva web</h2>
             {sites.map(site => (
-              <div key={site.id} className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-                <div className="space-y-0.5">
-                  <p className="text-ui text-ink-0">{site.domain ?? '—'}</p>
-                  <p className={`text-data f-mono ${STATUS_LABEL[site.status]?.color ?? 'text-ink-3'}`}>
-                    {STATUS_LABEL[site.status]?.text ?? site.status}
-                  </p>
-                  {site.reviewNotes && (
-                    <p className="text-caption text-ink-3 italic">Nota AMG: {site.reviewNotes}</p>
-                  )}
-                  <p className="text-caption text-ink-3">Mida: {fmtSize(site.storageBytes)}</p>
+              <div key={site.id} className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                  <div className="space-y-0.5">
+                    <p className="text-ui text-ink-0">{site.domain ?? '—'}</p>
+                    <p className={`text-data f-mono ${STATUS_LABEL[site.status]?.color ?? 'text-ink-3'}`}>
+                      {STATUS_LABEL[site.status]?.text ?? site.status}
+                    </p>
+                    {site.reviewNotes && (
+                      <p className="text-caption text-ink-3 italic">Nota AMG: {site.reviewNotes}</p>
+                    )}
+                    <p className="text-caption text-ink-3">Mida: {fmtSize(site.storageBytes)}</p>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {site.status === 'ACTIVE' && (
+                      <>
+                        <AMGButton
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setUpdatingSiteId(site.id);
+                            updateRef.current?.click();
+                          }}
+                        >
+                          Actualitzar web
+                        </AMGButton>
+                        <AMGButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => exportSite(tenantId, site.id).catch(e => toast('error', e.message))}
+                        >
+                          Descarregar ZIP
+                        </AMGButton>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  {site.status === 'ACTIVE' && (
-                    <>
-                      <AMGButton
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setUpdatingSiteId(site.id);
-                          updateRef.current?.click();
-                        }}
-                      >
-                        Actualitzar web
-                      </AMGButton>
-                      <AMGButton
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => exportSite(tenantId, site.id).catch(e => toast('error', e.message))}
-                      >
-                        Descarregar ZIP
-                      </AMGButton>
-                    </>
-                  )}
-                </div>
+                {site.status === 'ACTIVE' && <WidgetStatusPanel siteId={site.id} />}
               </div>
             ))}
           </section>

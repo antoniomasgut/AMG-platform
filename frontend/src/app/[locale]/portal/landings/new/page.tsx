@@ -1,7 +1,8 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { useRouter, useSearchParams, useParams } from 'next/navigation';
+import { useSearchParams, useParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/auth';
 import { createLanding } from '@/services/factory';

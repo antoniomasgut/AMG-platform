@@ -88,7 +88,7 @@ public class AuthService {
                 jwtProperties.accessTokenExpiration() / 1000,
                 "Bearer",
                 new LoginResponse.UserInfo(
-                        user.getId(), user.getEmail(), user.getName(),
+                        user.getId(), user.getEmail(), user.getName(), user.getPosition(),
                         user.getRole(), tenantInfo));
     }
 
@@ -208,7 +208,7 @@ public class AuthService {
             }
         }
         return new LoginResponse.UserInfo(
-                user.getId(), user.getEmail(), user.getName(),
+                user.getId(), user.getEmail(), user.getName(), user.getPosition(),
                 user.getRole(), tenantInfo);
     }
 

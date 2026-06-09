@@ -98,6 +98,37 @@ public class DomainController {
         domainService.cancelDomain(id);
     }
 
+    // Afegeix un domini extern (propi o subdomini del client) — Escenaris A i D
+    @PostMapping("/external")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ManagedDomainResponse addExternalDomain(@RequestBody @Valid AddExternalDomainRequest request) {
+        return domainService.addExternalDomain(request);
+    }
+
+    // Assigna un subdomini de amgdl.com — Escenari C
+    @PostMapping("/amg-subdomain")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ManagedDomainResponse assignAmgSubdomain(@RequestBody @Valid AssignAmgSubdomainRequest request) {
+        return domainService.assignAmgSubdomain(request);
+    }
+
+    // Inicia la transferència d'un domini cap a OpenProvider — Escenari E
+    @PostMapping("/transfer")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ManagedDomainResponse transferDomain(@RequestBody @Valid TransferDomainRequest request) {
+        return domainService.transferDomain(request);
+    }
+
+    // Verifica si el domini apunta a la IP del servidor d'AMG
+    @GetMapping("/{id}/verify-dns")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public DnsVerifyResponse verifyDns(@PathVariable UUID id) {
+        return domainService.verifyDns(id);
+    }
+
     // Llista les tarifes de tots els TLDs actius — només SUPER_ADMIN
     @GetMapping("/admin/tld-pricing")
     @PreAuthorize("hasRole('SUPER_ADMIN')")

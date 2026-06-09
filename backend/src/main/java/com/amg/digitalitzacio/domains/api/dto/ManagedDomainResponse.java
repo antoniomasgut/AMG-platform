@@ -12,12 +12,15 @@ public record ManagedDomainResponse(
         String domainName,
         String tld,
         String status,
+        String scenario,
         BigDecimal purchasePrice,
         BigDecimal salePrice,
         Instant registeredAt,
         Instant expiresAt,
         boolean autoRenew,
         boolean dnsConfigured,
+        boolean dnsVerified,
+        Instant dnsVerifiedAt,
         String provider,
         List<DnsRecordResponse> dnsRecords
 ) {}

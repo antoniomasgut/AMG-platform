@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/toast-context';

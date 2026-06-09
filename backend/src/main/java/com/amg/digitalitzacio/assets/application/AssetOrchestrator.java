@@ -1,10 +1,12 @@
 package com.amg.digitalitzacio.assets.application;
 
 import com.amg.digitalitzacio.assets.api.dto.AssetResponse;
+import com.amg.digitalitzacio.assets.api.dto.AssetStatsResponse;
 import com.amg.digitalitzacio.assets.config.StorageConfig;
 import com.amg.digitalitzacio.assets.domain.Asset;
 import com.amg.digitalitzacio.assets.domain.AssetRepository;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
@@ -22,7 +24,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -34,19 +35,28 @@ public class AssetOrchestrator implements AssetService {
 
     private final AssetRepository assetRepository;
     private final StorageConfig storageConfig;
+    private final SystemConfigService systemConfig;
+
+    private static final long DEFAULT_QUOTA_BYTES = 500L * 1024 * 1024; // 500 MB
 
     private static final List<String> RASTER_IMAGE_TYPES = List.of(
             "image/jpeg", "image/png", "image/webp", "image/gif"
     );
 
-    private static final List<String> IMAGE_MIME_TYPES = List.of(
-            "image/jpeg", "image/png", "image/webp", "image/avif", "image/gif", "image/svg+xml"
+    private static final List<String> ALLOWED_MIME_TYPES = List.of(
+            "image/jpeg", "image/png", "image/webp", "image/avif", "image/gif", "image/svg+xml",
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
 
     @Override
     @Transactional
     public AssetResponse upload(MultipartFile file, UUID tenantId) {
         validateFile(file);
+        enforceQuota(tenantId, file.getSize());
 
         var assetId = UUID.randomUUID();
         var extension = extractExtension(Objects.requireNonNull(file.getOriginalFilename()));
@@ -184,7 +194,7 @@ public class AssetOrchestrator implements AssetService {
         }
 
         var mimeType = file.getContentType();
-        if (mimeType == null || !IMAGE_MIME_TYPES.contains(mimeType)) {
+        if (mimeType == null || !ALLOWED_MIME_TYPES.contains(mimeType)) {
             throw new IllegalArgumentException("File type not allowed: " + mimeType);
         }
 
@@ -203,6 +213,32 @@ public class AssetOrchestrator implements AssetService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public AssetStatsResponse getStats(UUID tenantId) {
+        long usedBytes = assetRepository.sumSizeByTenantId(tenantId);
+        long fileCount = assetRepository.countByTenantIdAndIsActiveTrue(tenantId);
+        long quotaBytes = resolveQuotaBytes();
+        return new AssetStatsResponse(usedBytes, quotaBytes, fileCount);
+    }
+
+    private void enforceQuota(UUID tenantId, long incomingSize) {
+        long usedBytes = assetRepository.sumSizeByTenantId(tenantId);
+        long quotaBytes = resolveQuotaBytes();
+        if (usedBytes + incomingSize > quotaBytes) {
+            throw new IllegalStateException(
+                "Quota d'emmagatzematge superada. Usats: " + usedBytes + " bytes, quota: " + quotaBytes + " bytes.");
+        }
+    }
+
+    private long resolveQuotaBytes() {
+        var raw = systemConfig.get("ASSETS_QUOTA_MB");
+        if (raw != null && !raw.isBlank()) {
+            try { return Long.parseLong(raw.trim()) * 1024 * 1024; } catch (NumberFormatException ignored) {}
+        }
+        return DEFAULT_QUOTA_BYTES;
+    }
+
     private boolean validateMagicBytes(InputStream is, String mimeType) throws IOException {
         var magicBytes = new byte[8];
         var bytesRead = is.read(magicBytes, 0, 8);
@@ -213,8 +249,17 @@ public class AssetOrchestrator implements AssetService {
             case "image/png" -> bytesRead >= 8 && magicBytes[0] == (byte) 0x89 && magicBytes[1] == 0x50;
             case "image/gif" -> bytesRead >= 6 && magicBytes[0] == 0x47 && magicBytes[1] == 0x49;
             case "image/webp" -> bytesRead >= 4 && magicBytes[0] == 0x52 && magicBytes[1] == 0x49;
-            case "image/avif" -> true; // AVIF has no simple fixed magic bytes check
-            case "image/svg+xml" -> true; // SVG is XML, validated by MIME type
+            case "image/avif" -> true;
+            case "image/svg+xml" -> true;
+            // PDF: %PDF
+            case "application/pdf" -> bytesRead >= 4 && magicBytes[0] == 0x25 && magicBytes[1] == 0x50;
+            // DOCX/XLSX/DOC: ZIP (PK) or OLE2 (D0 CF)
+            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ->
+                     bytesRead >= 2 && magicBytes[0] == 0x50 && magicBytes[1] == 0x4B;
+            case "application/msword", "application/vnd.ms-excel" ->
+                     bytesRead >= 2 && ((magicBytes[0] == (byte) 0xD0 && magicBytes[1] == (byte) 0xCF)
+                             || (magicBytes[0] == 0x50 && magicBytes[1] == 0x4B));
             default -> false;
         };
     }

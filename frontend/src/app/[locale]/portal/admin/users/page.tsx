@@ -32,14 +32,14 @@ const PAGE_SIZE = 20;
 
 function NewUserModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const { toast } = useToast();
-  const [form, setForm] = useState({ email: '', name: '', password: '', role: 'CLIENT' as const });
+  const [form, setForm] = useState({ email: '', name: '', position: '', password: '', role: 'CLIENT' as const });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createUser(form);
+      await createUser({ ...form, position: form.position || undefined });
       toast('success', 'Usuari creat');
       onCreated();
       onClose();
@@ -59,15 +59,16 @@ function NewUserModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {([
-            { key: 'email', label: 'Email', type: 'email', placeholder: 'nom@empresa.com' },
-            { key: 'name', label: 'Nom', type: 'text', placeholder: 'Nom Cognoms' },
-            { key: 'password', label: 'Contrasenya', type: 'password', placeholder: '········' },
-          ] as const).map(({ key, label, type, placeholder }) => (
+            { key: 'email', label: 'Email', type: 'email', placeholder: 'nom@empresa.com', required: true },
+            { key: 'name', label: 'Nom', type: 'text', placeholder: 'Nom Cognoms', required: true },
+            { key: 'position', label: 'Càrrec (opcional)', type: 'text', placeholder: 'p.ex. Propietari, Recepcionist', required: false },
+            { key: 'password', label: 'Contrasenya', type: 'password', placeholder: '········', required: true },
+          ] as const).map(({ key, label, type, placeholder, required }) => (
             <div key={key}>
               <label className="f-mono text-label uppercase text-ink-2 block mb-1">{label}</label>
               <input
                 type={type}
-                required
+                required={required}
                 placeholder={placeholder}
                 value={form[key]}
                 onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
@@ -210,6 +211,7 @@ export default function AdminUsersPage() {
                         <td className="px-4 sm:px-5 py-3">
                           <div className="f-display font-bold text-sm">{u.name || '—'}</div>
                           <div className="f-mono text-label text-ink-2">{u.email}</div>
+                          {u.position && <div className="f-mono text-[10px] text-ink-3">{u.position}</div>}
                         </td>
                         <td className="px-4 sm:px-5 py-3">
                           <AMGBadge tone={ROLE_TONE[u.role] ?? 'neutral'}>{ROLE_LABEL[u.role] ?? u.role}</AMGBadge>

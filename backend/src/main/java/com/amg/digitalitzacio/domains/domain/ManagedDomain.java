@@ -90,6 +90,22 @@ public class ManagedDomain {
     @Builder.Default
     private boolean dnsConfigured = false;
 
+    // Escenari d'incorporació del domini
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30, nullable = false)
+    @Builder.Default
+    private DomainScenario scenario = DomainScenario.OPENPROVIDER_NEW;
+
+    // Codi EPP per a transferències entrants
+    @Column(length = 100)
+    private String eppCode;
+
+    // Verificació real de resolució DNS cap al servidor d'AMG
+    @Builder.Default
+    private boolean dnsVerified = false;
+
+    private Instant dnsVerifiedAt;
+
     @CreatedDate
     @Column(updatable = false)
     private Instant createdAt;

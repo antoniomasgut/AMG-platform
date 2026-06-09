@@ -3,12 +3,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
+import Image from 'next/image';
 import {
   getTemplate, updateTemplate, previewTemplate, listVersions, restoreVersion, applyAiOperations,
   type TemplateResponse, type LayoutBlock, type DocumentType,
   BLOCK_LIBRARY, defaultLayout,
 } from '@/services/documents';
+import { listAssets, type AssetResponse } from '@/services/assets';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
@@ -124,9 +127,64 @@ function VersionHistoryModal({
   );
 }
 
+function ImagePickerModal({
+  open, onClose, onSelect, tenantId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (url: string) => void;
+  tenantId: string;
+}) {
+  const { data: assets = [] } = useQuery({
+    queryKey: ['assets', tenantId],
+    queryFn: () => listAssets(tenantId),
+    enabled: open && !!tenantId,
+  });
+
+  if (!open) return null;
+
+  const images = (assets as AssetResponse[]).filter((a) => a.mimeType.startsWith('image/'));
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="amg-card card-clip w-full max-w-2xl p-6 space-y-4 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between shrink-0">
+          <div className="f-display font-bold text-base">Triar imatge</div>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
+        </div>
+        {images.length === 0 ? (
+          <div className="text-center py-8">
+            <IconSet.Image size={28} stroke="#64748b" className="mx-auto mb-3" />
+            <p className="text-sm text-ink-2">Cap imatge pujada. Ves a Assets per pujar-ne.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 overflow-y-auto flex-1">
+            {images.map((asset) => (
+              <button
+                key={asset.id}
+                onClick={() => { onSelect(asset.url); onClose(); }}
+                className="aspect-square relative rounded overflow-hidden border border-border-base hover:border-accent transition-colors"
+              >
+                <Image
+                  src={asset.thumbnailUrl ?? asset.url}
+                  alt={asset.originalName}
+                  fill
+                  sizes="150px"
+                  style={{ objectFit: 'cover' }}
+                />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function EditDocumentTemplatePage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
   const id = params.id as string;
@@ -137,6 +195,7 @@ export default function EditDocumentTemplatePage() {
   const [dirty, setDirty] = useState(false);
   const [showAi, setShowAi] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
+  const [showImagePicker, setShowImagePicker] = useState(false);
   const [htmlPreview, setHtmlPreview] = useState<string | null>(null);
 
   const { data: template, isLoading } = useQuery({
@@ -440,6 +499,36 @@ export default function EditDocumentTemplatePage() {
                     </div>
                   </div>
 
+                  {selectedBlock.type === 'image' && (
+                    <div className="border-t border-border-base pt-3 space-y-2">
+                      <div className="f-mono text-[10px] uppercase text-ink-2">Imatge</div>
+                      <div className="flex gap-1">
+                        <input
+                          value={(selectedBlock.config.src as string) || ''}
+                          onChange={(e) => updateBlockConfig(selectedBlock.id, { config: { ...selectedBlock.config, src: e.target.value } })}
+                          placeholder="URL de la imatge"
+                          className="flex-1 bg-[#0d0d1a] border border-border-base rounded px-2 py-1 text-xs text-ink-0 placeholder:text-ink-3"
+                        />
+                        <button
+                          onClick={() => setShowImagePicker(true)}
+                          className="px-2 py-1 text-[10px] bg-[rgba(255,107,0,0.1)] text-accent border border-accent/30 rounded hover:bg-[rgba(255,107,0,0.2)] transition-colors"
+                        >
+                          Assets
+                        </button>
+                      </div>
+                      {(selectedBlock.config.src as string) && (
+                        <div className="relative aspect-video bg-[#0d0d1a] rounded overflow-hidden">
+                          <Image
+                            src={selectedBlock.config.src as string}
+                            alt="preview"
+                            fill
+                            style={{ objectFit: 'contain' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="border-t border-border-base pt-3">
                     <div className="f-mono text-[10px] uppercase text-ink-2 mb-2">Data Binding</div>
                     <div>
@@ -567,7 +656,13 @@ export default function EditDocumentTemplatePage() {
                             [{block.type}]
                           </span>
                           <div className="text-xs mt-1" style={{ fontSize: (block.config.style.fontSize as number) || 12 }}>
-                            {renderBlockPlaceholder(block)}
+                            {block.type === 'image' && block.config.src ? (
+                              <img
+                                src={block.config.src as string}
+                                alt="imatge"
+                                style={{ maxWidth: '100%', maxHeight: '80px', objectFit: 'contain' }}
+                              />
+                            ) : renderBlockPlaceholder(block)}
                           </div>
                           <button
                             onClick={(e) => { e.stopPropagation(); removeBlock(block.id); }}
@@ -588,11 +683,23 @@ export default function EditDocumentTemplatePage() {
 
       <AiModal open={showAi} onClose={() => setShowAi(false)} onApply={applyAi} templateId={id} />
       <VersionHistoryModal open={showVersions} onClose={() => setShowVersions(false)} templateId={id} onRestore={(v) => doRestoreVersion(v)} />
+      <ImagePickerModal
+        open={showImagePicker}
+        onClose={() => setShowImagePicker(false)}
+        tenantId={user?.tenantId ?? ''}
+        onSelect={(url) => {
+          if (selectedBlockId) {
+            const block = blocks.find(b => b.id === selectedBlockId);
+            if (block) updateBlockConfig(selectedBlockId, { config: { ...block.config, src: url } });
+          }
+        }}
+      />
     </PortalShell>
   );
 }
 
 function renderBlockPlaceholder(block: LayoutBlock): string {
+  if (block.type === 'image' && block.config.src) return '';
   const map: Record<string, string> = {
     logo: '[Logo empresa]',
     company_info: 'Nom Empresa SL · CIF B-12345678',

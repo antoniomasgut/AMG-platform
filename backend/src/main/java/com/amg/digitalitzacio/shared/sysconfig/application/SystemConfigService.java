@@ -61,6 +61,10 @@ public class SystemConfigService {
         new KnownKey("META_ADS_MANAGEMENT_TOKEN",   "Meta Ads Management Token",          "System User Token de Meta amb permisos ads_management per crear i gestionar campanyes.", "META_ADS", true, "secret", null, null, 40),
         new KnownKey("META_ADS_APP_ID",             "Meta Ads App ID",                    "App ID de la Facebook App per a Meta Ads Management.", "META_ADS", false, "string", null, null, 50),
 
+        // DOMAINS (OpenProvider reseller)
+        new KnownKey("OPENPROVIDER_USERNAME",    "OpenProvider Username",   "Nom d'usuari del compte reseller d'OpenProvider per a registre de dominis.", "DOMAINS", false, "string", null, null, 10),
+        new KnownKey("OPENPROVIDER_PASSWORD",    "OpenProvider Password",   "Contrasenya del compte reseller d'OpenProvider (es xifra a la BD).", "DOMAINS", true, "secret", null, null, 20),
+
         // MAINTENANCE
         new KnownKey("MAINTENANCE_MODE",     "Mode manteniment",          "Bloqueja l'accés a usuaris no-admin.", "MAINTENANCE", false, "boolean", "false", null, 10),
         new KnownKey("MAINTENANCE_MESSAGE",  "Missatge de manteniment",  "Missatge a mostrar durant el manteniment.", "MAINTENANCE", false, "string", null, null, 20),
@@ -89,7 +93,8 @@ public class SystemConfigService {
         new KnownKey("STORAGE_IMAGES",            "Imatges (Assets)",           "On es guarden imatges pujades.", "STORAGE", false, "string", "minio", "{\"pattern\":\"^(minio|google_drive|local)$\"}", 40),
         new KnownKey("STORAGE_BACKUPS",           "Còpies de seguretat",        "On es guarden els backups.", "STORAGE", false, "string", "minio", "{\"pattern\":\"^(minio|local)$\"}", 50),
         new KnownKey("STORAGE_MAX_FILE_SIZE_MB",  "Mida màxima de fitxer (MB)", "Límit de mida per fitxer pujat.", "STORAGE", false, "number", "50", "{\"min\":1,\"max\":500}", 60),
-        new KnownKey("STORAGE_RETENTION_DAYS",    "Retenció (dies)",            "Dies que es conserven els fitxers.", "STORAGE", false, "number", "365", "{\"min\":30,\"max\":3650}", 70)
+        new KnownKey("STORAGE_RETENTION_DAYS",    "Retenció (dies)",            "Dies que es conserven els fitxers.", "STORAGE", false, "number", "365", "{\"min\":30,\"max\":3650}", 70),
+        new KnownKey("ASSETS_QUOTA_MB",           "Quota d'assets per tenant (MB)", "Espai màxim d'emmagatzematge per tenant. Per defecte: 500 MB.", "STORAGE", false, "number", "500", "{\"min\":10,\"max\":10240}", 80)
     );
 
     public String get(String key) {

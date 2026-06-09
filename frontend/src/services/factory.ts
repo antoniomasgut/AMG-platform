@@ -207,6 +207,10 @@ export async function unpublishLanding(landingId: string): Promise<void> {
   return apiFetch<void>(`/engine/landings/${landingId}/unpublish`, { method: 'POST' });
 }
 
+export async function deleteLanding(tenantId: string, landingId: string): Promise<void> {
+  return apiFetch<void>(`/engine/tenants/${tenantId}/landings/${landingId}`, { method: 'DELETE' });
+}
+
 // --- Chat context ---
 
 export interface ChatContext {

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginViaAPI, dismissCookies, apiGet } from './helpers/auth';
+import { loginViaAPI, dismissCookies, apiGet, apiPost, apiDelete } from './helpers/auth';
 
 test.describe('Landings — Editor i Motor (Mòduls 04 i 05)', () => {
   test('pàgina /landings carrega', async ({ page }) => {
@@ -75,6 +75,73 @@ test.describe('Landings — Editor i Motor (Mòduls 04 i 05)', () => {
     await page.waitForTimeout(2000);
 
     await expect(page.locator(`text=${templates[0].name}`).first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test('API eliminar landing → 204', async ({ page }) => {
+    const token = await loginViaAPI(page);
+    const tenantsResp = await apiGet(page, token, '/api/v1/tenants?page=0&size=1');
+    const tenantsData = await tenantsResp.json();
+    const tenants = tenantsData.content ?? tenantsData;
+    if (!tenants || tenants.length === 0) return;
+    const tenantId = tenants[0].id;
+
+    // Crear landing via API
+    const createResp = await apiPost(page, token, `/api/v1/engine/tenants/${tenantId}/landings`, {
+      title: 'Landing test eliminar', slug: `test-delete-${Date.now()}`,
+    });
+    expect(createResp.status()).toBe(200);
+    const landing = await createResp.json();
+
+    // Eliminar
+    const deleteResp = await apiDelete(page, token, `/api/v1/engine/tenants/${tenantId}/landings/${landing.id}`);
+    expect(deleteResp.status()).toBe(204);
+  });
+
+  test('botó Eliminar apareix als cards del llistat', async ({ page }) => {
+    const token = await loginViaAPI(page);
+    const tenantsResp = await apiGet(page, token, '/api/v1/tenants?page=0&size=1');
+    const tenantsData = await tenantsResp.json();
+    const tenants = tenantsData.content ?? tenantsData;
+    if (!tenants || tenants.length === 0) return;
+    const tenantId = tenants[0].id;
+
+    // Crear landing per tenir almenys un card
+    await apiPost(page, token, `/api/v1/engine/tenants/${tenantId}/landings`, {
+      title: 'Landing visible', slug: `test-visible-${Date.now()}`,
+    });
+
+    await loginViaAPI(page);
+    await page.goto('/ca/portal/landings');
+    await page.waitForLoadState('networkidle');
+    await dismissCookies(page);
+    await page.waitForTimeout(1500);
+
+    await expect(page.locator('text=Eliminar').first()).toBeVisible({ timeout: 8000 });
+  });
+
+  test('API despublicar landing → 204 i status DRAFT', async ({ page }) => {
+    const token = await loginViaAPI(page);
+    const tenantsResp = await apiGet(page, token, '/api/v1/tenants?page=0&size=1');
+    const tenantsData = await tenantsResp.json();
+    const tenants = tenantsData.content ?? tenantsData;
+    if (!tenants || tenants.length === 0) return;
+    const tenantId = tenants[0].id;
+
+    // Crear landing
+    const createResp = await apiPost(page, token, `/api/v1/engine/tenants/${tenantId}/landings`, {
+      title: 'Landing test despublicar', slug: `test-unpublish-${Date.now()}`,
+    });
+    const landing = await createResp.json();
+
+    // Publicar
+    await apiPost(page, token, `/api/v1/engine/landings/${landing.id}/publish`, {});
+
+    // Despublicar
+    const unpubResp = await apiPost(page, token, `/api/v1/engine/landings/${landing.id}/unpublish`, {});
+    expect(unpubResp.status()).toBe(204);
+
+    // Netejar
+    await apiDelete(page, token, `/api/v1/engine/tenants/${tenantId}/landings/${landing.id}`);
   });
 
   test('landing pública renderitza sense autenticació', async ({ page }) => {

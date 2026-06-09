@@ -1,19 +1,36 @@
 import { apiFetch } from './api';
 
+export type DomainScenario =
+  | 'OPENPROVIDER_NEW'
+  | 'OPENPROVIDER_TRANSFER'
+  | 'EXTERNAL_OWN'
+  | 'EXTERNAL_SUBDOMAIN'
+  | 'AMG_SUBDOMAIN';
+
 export interface ManagedDomainResponse {
   id: string;
   tenantId: string;
   domainName: string;
   tld: string;
   status: string;
+  scenario: DomainScenario;
   purchasePrice: number | null;
   salePrice: number | null;
   registeredAt: string | null;
   expiresAt: string | null;
   autoRenew: boolean;
   dnsConfigured: boolean;
+  dnsVerified: boolean;
+  dnsVerifiedAt: string | null;
   provider: string;
   dnsRecords: DnsRecordResponse[];
+}
+
+export interface DnsVerifyResponse {
+  verified: boolean;
+  resolvedIp: string | null;
+  expectedIp: string;
+  checkedAt: string;
 }
 
 export interface DnsRecordResponse {
@@ -107,6 +124,62 @@ export const listExpiringDomains = (days = 30) =>
 
 export const listMyDomains = () =>
   apiFetch<ManagedDomainResponse[]>('/domains/my');
+
+export const addExternalDomain = (data: {
+  tenantId: string;
+  domainName: string;
+  landingId?: string;
+  scenario: 'EXTERNAL_OWN' | 'EXTERNAL_SUBDOMAIN';
+}) =>
+  apiFetch<ManagedDomainResponse>('/domains/external', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const assignAmgSubdomain = (data: {
+  tenantId: string;
+  subdomain: string;
+  landingId?: string;
+}) =>
+  apiFetch<ManagedDomainResponse>('/domains/amg-subdomain', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const transferDomain = (data: {
+  tenantId: string;
+  domainName: string;
+  eppCode: string;
+  landingId?: string;
+  autoRenew: boolean;
+  registrantName?: string;
+  registrantEmail?: string;
+  registrantPhone?: string;
+  registrantNif?: string;
+}) =>
+  apiFetch<ManagedDomainResponse>('/domains/transfer', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const verifyDns = (id: string) =>
+  apiFetch<DnsVerifyResponse>(`/domains/${id}/verify-dns`);
+
+export const SCENARIO_LABELS: Record<string, string> = {
+  OPENPROVIDER_NEW:      'Registre OpenProvider',
+  OPENPROVIDER_TRANSFER: 'Transferència OpenProvider',
+  EXTERNAL_OWN:          'Domini propi extern',
+  EXTERNAL_SUBDOMAIN:    'Subdomini propi',
+  AMG_SUBDOMAIN:         'Subdomini AMG',
+};
+
+export const SCENARIO_TONE: Record<string, string> = {
+  OPENPROVIDER_NEW:      'success',
+  OPENPROVIDER_TRANSFER: 'info',
+  EXTERNAL_OWN:          'neutral',
+  EXTERNAL_SUBDOMAIN:    'neutral',
+  AMG_SUBDOMAIN:         'warning',
+};
 
 export const STATUS_LABELS: Record<string, string> = {
   PENDING_PURCHASE: 'Pendent de pagament',

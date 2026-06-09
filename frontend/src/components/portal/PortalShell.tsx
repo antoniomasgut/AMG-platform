@@ -301,9 +301,13 @@ export function PortalShell({ children, breadcrumb, backHref }: { children: Reac
             {initial}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold truncate leading-tight">{user.name ?? ''}</div>
+            <div className="text-xs font-semibold truncate leading-tight">
+              {(!isAdmin && !isSuperAdmin) && user.tenantName ? user.tenantName : user.name ?? ''}
+            </div>
             <div className="f-mono text-[9px] text-ink-3 truncate leading-tight">
-              {isSuperAdmin ? 'Super Admin' : isAdmin ? 'Admin' : 'Client'} · {user.email}
+              {(!isAdmin && !isSuperAdmin) && user.tenantName
+                ? (user.position ? `${user.name} · ${user.position}` : user.name ?? '')
+                : (isSuperAdmin ? 'Super Admin' : isAdmin ? 'Admin' : 'Client')}
             </div>
           </div>
           <ThemeToggleIcon />

@@ -2,16 +2,16 @@ package com.amg.digitalitzacio.domains.application;
 
 import com.amg.digitalitzacio.domains.domain.DomainDnsRecord;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
-// Client mock del proveïdor de registre de dominis per a entorns de desenvolupament i test
+// Client mock del proveïdor de registre de dominis — només actiu en tests
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "app.domains.provider", havingValue = "mock", matchIfMissing = true)
+@Profile("test")
 public class MockDomainRegistrarClient implements DomainRegistrarClient {
 
     @Override

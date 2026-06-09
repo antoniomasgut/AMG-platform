@@ -9,8 +9,10 @@ export interface LoginUser {
   id: string;
   email: string;
   name: string;
+  position: string | null;
   role: string;
   tenantId: string | null;
+  tenantName: string | null;
 }
 
 export interface LoginResponse {
@@ -45,12 +47,16 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
     body: JSON.stringify(data),
     skipAuth: true,
   });
-  // Normalize: backend returns { user: { tenant: {id, name} | null } } but frontend expects tenantId: string | null
+  // Normalize: backend returns { user: { tenant: {id, name} | null } } but frontend expects tenantId/tenantName
   if (res.user && 'tenant' in res.user) {
     const tenant = (res.user as Record<string, unknown>).tenant;
-    (res.user as Record<string, unknown>).tenantId = tenant
-      ? typeof tenant === 'string' ? tenant : (tenant as Record<string, unknown>).id as string
-      : null;
+    if (tenant && typeof tenant === 'object') {
+      (res.user as Record<string, unknown>).tenantId = (tenant as Record<string, unknown>).id as string;
+      (res.user as Record<string, unknown>).tenantName = (tenant as Record<string, unknown>).name as string;
+    } else {
+      (res.user as Record<string, unknown>).tenantId = typeof tenant === 'string' ? tenant : null;
+      (res.user as Record<string, unknown>).tenantName = null;
+    }
   }
   setTokens(res.accessToken, res.refreshToken);
   return res;
@@ -101,12 +107,16 @@ export function getCurrentUser(): LoginResponse['user'] | null {
   const stored = sessionStorage.getItem('user');
   if (!stored) return null;
   const user: LoginResponse['user'] = JSON.parse(stored);
-  // Normalize: backend stores as 'tenant' (string | {id, name} | null), frontend expects 'tenantId' (string | null)
+  // Normalize: backend stores as 'tenant' (string | {id, name} | null), frontend expects 'tenantId'/'tenantName'
   if ('tenant' in user && !('tenantId' in user)) {
     const tenantVal = (user as Record<string, unknown>).tenant;
-    (user as Record<string, unknown>).tenantId = tenantVal
-      ? typeof tenantVal === 'string' ? tenantVal : (tenantVal as Record<string, unknown>).id as string
-      : null;
+    if (tenantVal && typeof tenantVal === 'object') {
+      (user as Record<string, unknown>).tenantId = (tenantVal as Record<string, unknown>).id as string;
+      (user as Record<string, unknown>).tenantName = (tenantVal as Record<string, unknown>).name as string;
+    } else {
+      (user as Record<string, unknown>).tenantId = typeof tenantVal === 'string' ? tenantVal : null;
+      (user as Record<string, unknown>).tenantName = null;
+    }
   }
   return user;
 }

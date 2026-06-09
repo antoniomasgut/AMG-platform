@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.assets.application;
 
 import com.amg.digitalitzacio.assets.api.dto.AssetResponse;
+import com.amg.digitalitzacio.assets.api.dto.AssetStatsResponse;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,6 +13,8 @@ public interface AssetService {
     AssetResponse upload(MultipartFile file, UUID tenantId);
 
     List<AssetResponse> listByTenant(UUID tenantId);
+
+    AssetStatsResponse getStats(UUID tenantId);
 
     Resource serveFile(UUID assetId);
 

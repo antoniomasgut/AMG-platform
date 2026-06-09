@@ -6,7 +6,8 @@ import { getCurrentUser, login as apiLogin, logout as apiLogout } from '@/servic
 import type { LoginRequest, LoginResponse } from '@/services/auth';
 
 interface User {
-  id: string; email: string; name: string; role: string; tenantId: string | null;
+  id: string; email: string; name: string; position: string | null;
+  role: string; tenantId: string | null; tenantName: string | null;
 }
 
 interface AuthContextType {

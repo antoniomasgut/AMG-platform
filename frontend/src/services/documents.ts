@@ -90,6 +90,7 @@ export interface LayoutBlock {
   visible: boolean;
   config: {
     style: Record<string, unknown>;
+    src?: string;
   };
   dataBinding: {
     source: string;

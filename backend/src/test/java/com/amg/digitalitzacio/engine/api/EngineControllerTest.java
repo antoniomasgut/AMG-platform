@@ -444,4 +444,34 @@ class EngineControllerTest {
         assert updated.getCustomDomain() == null : "customDomain hauria de ser null";
         assert updated.getDomainStatus() == DomainStatus.NOT_CONFIGURED : "Hauria d'estar NOT_CONFIGURED";
     }
+
+    /* ── TC-20: SUPER_ADMIN elimina landing del tenant → 204 i desapareix de BD ── */
+    @Test
+    void tc20_eliminarLanding_Returns204() throws Exception {
+        var landing = landingRepository.save(Landing.builder()
+                .tenantId(tenant.getId()).serviceId(landingServiceId)
+                .title("Per eliminar").slug("per-eliminar")
+                .status(LandingStatus.DRAFT).build());
+
+        mockMvc.perform(delete("/api/v1/engine/tenants/{tenantId}/landings/{id}", tenant.getId(), landing.getId())
+                .header("Authorization", "Bearer " + superAdminToken))
+                .andExpect(status().isNoContent());
+
+        assert landingRepository.findById(landing.getId()).isEmpty() : "La landing hauria d'haver estat eliminada";
+    }
+
+    /* ── TC-21: CLIENT no pot eliminar landing d'un altre tenant → 403 ── */
+    @Test
+    void tc21_clientNoEliminaLanding_Returns403() throws Exception {
+        var landing = landingRepository.save(Landing.builder()
+                .tenantId(tenant.getId()).serviceId(landingServiceId)
+                .title("Protegida").slug("protegida")
+                .status(LandingStatus.DRAFT).build());
+
+        mockMvc.perform(delete("/api/v1/engine/tenants/{tenantId}/landings/{id}", tenant.getId(), landing.getId())
+                .header("Authorization", "Bearer " + clientToken))
+                .andExpect(status().isForbidden());
+
+        assert landingRepository.findById(landing.getId()).isPresent() : "La landing no hauria d'haver estat eliminada";
+    }
 }

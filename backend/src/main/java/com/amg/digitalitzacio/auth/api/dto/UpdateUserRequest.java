@@ -7,6 +7,7 @@ import java.util.UUID;
 public record UpdateUserRequest(
         String email,
         String name,
+        String position,
         Role role,
         UUID tenantId,
         Boolean isActive

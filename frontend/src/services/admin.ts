@@ -1,7 +1,7 @@
 import { apiFetch } from './api';
 
 export interface UserResponse {
-  id: string; email: string; name: string | null;
+  id: string; email: string; name: string | null; position: string | null;
   role: 'SUPER_ADMIN' | 'ADMIN' | 'CLIENT';
   tenantId: string | null; tenantName: string | null;
   isActive: boolean; isBlocked: boolean;
@@ -30,12 +30,12 @@ export interface PageResponse<T> {
 }
 
 export interface CreateUserRequest {
-  email: string; password: string; name: string;
+  email: string; password: string; name: string; position?: string;
   role: 'SUPER_ADMIN' | 'ADMIN' | 'CLIENT'; tenantId?: string;
 }
 
 export interface UpdateUserRequest {
-  email?: string; name?: string;
+  email?: string; name?: string; position?: string;
   role?: 'SUPER_ADMIN' | 'ADMIN' | 'CLIENT';
   tenantId?: string; isActive?: boolean;
 }

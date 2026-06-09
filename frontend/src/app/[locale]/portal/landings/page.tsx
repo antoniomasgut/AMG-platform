@@ -1,9 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/auth';
-import { listLandings, getLandingStats } from '@/services/factory';
+import { listLandings, getLandingStats, unpublishLanding, deleteLanding } from '@/services/factory';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { IconSet } from '@/components/ui/icons';
@@ -30,12 +31,27 @@ function LandingStats({ tenantId, landingId }: { tenantId: string; landingId: st
 
 export default function LandingsPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const user = getCurrentUser();
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const { data: landings = [], isLoading } = useQuery({
     queryKey: ['landings', user?.tenantId],
     queryFn: () => user!.tenantId ? listLandings(user!.tenantId!) : [],
     enabled: !!user?.tenantId,
+  });
+
+  const unpublishMutation = useMutation({
+    mutationFn: (landingId: string) => unpublishLanding(landingId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['landings', user?.tenantId] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (landingId: string) => deleteLanding(user!.tenantId!, landingId),
+    onSuccess: () => {
+      setConfirmDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['landings', user?.tenantId] });
+    },
   });
 
   if (!user) {
@@ -86,7 +102,7 @@ export default function LandingsPage() {
               {l.status === 'PUBLISHED' && (
                 <LandingStats tenantId={user.tenantId!} landingId={l.id} />
               )}
-              <div className="flex gap-2 mt-4">
+              <div className="flex flex-wrap gap-2 mt-4">
                 <AMGButton
                   size="sm"
                   variant="secondary"
@@ -96,14 +112,50 @@ export default function LandingsPage() {
                   Editar
                 </AMGButton>
                 {l.status === 'PUBLISHED' && (
-                  <AMGButton
-                    size="sm"
-                    variant="ghost"
-                    icon={IconSet.Globe}
-                    onClick={() => window.open(l.publicUrl, '_blank')}
+                  <>
+                    <AMGButton
+                      size="sm"
+                      variant="ghost"
+                      icon={IconSet.Globe}
+                      onClick={() => window.open(l.publicUrl, '_blank')}
+                    >
+                      Veure
+                    </AMGButton>
+                    <AMGButton
+                      size="sm"
+                      variant="ghost"
+                      loading={unpublishMutation.isPending && unpublishMutation.variables === l.id}
+                      onClick={() => unpublishMutation.mutate(l.id)}
+                    >
+                      Desactivar
+                    </AMGButton>
+                  </>
+                )}
+                {confirmDelete === l.id ? (
+                  <div className="flex gap-1 items-center">
+                    <span className="f-mono text-[10px] text-warning">Segur?</span>
+                    <button
+                      onClick={() => deleteMutation.mutate(l.id)}
+                      disabled={deleteMutation.isPending}
+                      className="f-mono text-[10px] text-warning hover:underline"
+                    >
+                      {deleteMutation.isPending ? 'Eliminant...' : 'Sí'}
+                    </button>
+                    <span className="text-ink-3 text-[10px]">·</span>
+                    <button
+                      onClick={() => setConfirmDelete(null)}
+                      className="f-mono text-[10px] text-ink-2 hover:underline"
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDelete(l.id)}
+                    className="f-mono text-[10px] text-ink-3 hover:text-warning transition"
                   >
-                    Veure
-                  </AMGButton>
+                    Eliminar
+                  </button>
                 )}
               </div>
             </div>

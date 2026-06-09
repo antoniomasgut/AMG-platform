@@ -11,23 +11,53 @@ import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { IconSet } from '@/components/ui/icons';
 
-const CATEGORY_ORDER = [
-  'MAINTENANCE',
-  'AI_MODELS',
-  'STORAGE',
-  'AGENTS',
-  'INFRAOPS',
-  'PROSPECTING',
-  'PAYMENTS',
-  'FINOPS',
-  'BACKUP',
-  'AUTOMATIONS',
-  'CALENDAR',
-  'EMAIL_INBOUND',
-  'META_ADS',
-  'IMAGE_GEN',
-  'GENERAL',
+// Phase-based grouping: each phase lists its categories in order
+const PHASE_GROUPS: { id: string; label: string; description: string; categories: string[] }[] = [
+  { id: 'F0', label: 'Plataforma (base)', description: 'Configuració essencial de la plataforma: identitat, límits, models IA i emmagatzematge.', categories: ['MAINTENANCE', 'GENERAL', 'AI_MODELS', 'STORAGE'] },
+  { id: 'F1', label: 'F1 · Agent IA i canals', description: 'Claus per als agents conversacionals i els canals de comunicació (Telegram, Email, WhatsApp).', categories: ['AGENTS'] },
+  { id: 'F2', label: 'F2 · Agenda', description: 'Integració amb Google Calendar per crear i compartir agendes dels clients.', categories: ['CALENDAR'] },
+  { id: 'F3', label: 'F3 · Pressupostos i Pagaments', description: 'Passerella de pagament Stripe i integració Holded per a facturació.', categories: ['PAYMENTS', 'FINOPS'] },
+  { id: 'F5', label: 'F5 · Infraops i Alertes', description: 'Monitorització del servidor i alertes d\'infraestructura.', categories: ['INFRAOPS', 'BACKUP'] },
+  { id: 'AUT', label: 'Automatitzacions (n8n)', description: 'Connexió amb la instància n8n per a workflows automàtics.', categories: ['AUTOMATIONS'] },
+  { id: 'META', label: 'Meta Ads', description: 'Webhooks de Meta Lead Ads, tokens de pàgina i gestió de campanyes.', categories: ['META_ADS', 'IMAGE_GEN'] },
+  { id: 'PROS', label: 'Prospecció', description: 'Google Places per a cerques de negocis potencials.', categories: ['PROSPECTING'] },
+  { id: 'DOM', label: 'Dominis', description: 'Reseller OpenProvider per a registre i gestió de dominis.', categories: ['DOMAINS'] },
+  { id: 'EMAIL', label: 'Email Inbound', description: 'Cloudflare Email Worker per rebre emails dels agents.', categories: ['EMAIL_INBOUND'] },
 ];
+
+// Importance per key: level + one-liner impact if missing
+type Importance = { level: 'critical' | 'important' | 'optional'; impact: string };
+const KEY_IMPORTANCE: Record<string, Importance> = {
+  ANTHROPIC_API_KEY:         { level: 'critical',  impact: 'Els agents IA no poden respondre' },
+  BREVO_API_KEY:             { level: 'critical',  impact: 'No s\'envien emails (notificacions, reset de contrasenya, demos...)' },
+  TELEGRAM_BOT_TOKEN:        { level: 'critical',  impact: 'No s\'envien notificacions ni alertes via Telegram' },
+  WHATSAPP_WEBHOOK_SECRET:   { level: 'critical',  impact: 'El webhook de WhatsApp no es valida — canal WhatsApp inoperatiu' },
+  META_WEBHOOK_VERIFY_TOKEN: { level: 'critical',  impact: 'El webhook de Meta Lead Ads no es valida — no arriben leads' },
+  STRIPE_API_KEY:            { level: 'critical',  impact: 'El mòdul de pagaments no funciona' },
+  N8N_API_KEY:               { level: 'critical',  impact: 'Les automatitzacions n8n no es poden gestionar' },
+  GOOGLE_CALENDAR_SA_JSON:   { level: 'critical',  impact: 'No es poden crear ni compartir calendaris (F2 Agenda)' },
+  MAINTENANCE_MODE:          { level: 'important', impact: 'Sense configurar, el mode manteniment queda desactivat per defecte' },
+  PLATFORM_TENANT_ID:        { level: 'important', impact: 'Els leads del formulari web no s\'assignen a cap tenant' },
+  DEEPSEEK_API_KEY:          { level: 'important', impact: 'DeepSeek no disponible com a alternativa als models Claude' },
+  TWILIO_ACCOUNT_SID:        { level: 'important', impact: 'Canal WhatsApp via Twilio no disponible' },
+  TWILIO_AUTH_TOKEN:         { level: 'important', impact: 'Canal WhatsApp via Twilio no disponible' },
+  TWILIO_WHATSAPP_FROM:      { level: 'important', impact: 'Canal WhatsApp via Twilio no disponible' },
+  META_PAGE_ACCESS_TOKEN:    { level: 'important', impact: 'Meta Ads sense token de pàgina de fallback' },
+  META_APP_SECRET:           { level: 'important', impact: 'Les signatures HMAC dels webhooks Meta no es verifiquen' },
+  META_ADS_MANAGEMENT_TOKEN: { level: 'important', impact: 'No es poden crear ni gestionar campanyes Meta des del portal' },
+  HOLDED_API_KEY:            { level: 'important', impact: 'Integració FinOps/Holded no disponible' },
+  GCS_PROJECT_ID:            { level: 'important', impact: 'Backups automàtics a Google Cloud Storage no funcionen' },
+  GCS_BUCKET_NAME:           { level: 'important', impact: 'Backups automàtics a Google Cloud Storage no funcionen' },
+  GOOGLE_PLACES_API_KEY:     { level: 'important', impact: 'El mòdul de prospecció de negocis no funciona' },
+  EMAIL_INBOUND_DOMAIN:      { level: 'important', impact: 'Els emails entrants no s\'enruten correctament als agents' },
+  N8N_API_URL:               { level: 'important', impact: 'La instància n8n no és accessible des del portal' },
+  GOOGLE_OAUTH_CLIENT_ID:    { level: 'optional',  impact: 'Els clients no podran connectar el seu propi Google Calendar' },
+  GOOGLE_OAUTH_CLIENT_SECRET:{ level: 'optional',  impact: 'Els clients no podran connectar el seu propi Google Calendar' },
+  OPENAI_API_KEY:            { level: 'optional',  impact: 'Generació d\'imatges DALL·E no disponible per a Meta Ads' },
+  TELEGRAM_CHAT_ID:          { level: 'optional',  impact: 'Alertes d\'infraestructura no s\'envien al Telegram' },
+  OPENPROVIDER_USERNAME:     { level: 'optional',  impact: 'Registre de dominis via OpenProvider no disponible' },
+  OPENPROVIDER_PASSWORD:     { level: 'optional',  impact: 'Registre de dominis via OpenProvider no disponible' },
+};
 
 type HelpStep = { n: number; text: React.ReactNode };
 
@@ -105,6 +135,19 @@ function CategoryHelp({ category }: { category: string }) {
   );
 }
 
+const IMPORTANCE_TONE = { critical: 'danger', important: 'warning', optional: 'neutral' } as const;
+const IMPORTANCE_LABEL = { critical: 'Imprescindible', important: 'Recomanat', optional: 'Opcional' };
+
+function ImportanceBadge({ keyName }: { keyName: string }) {
+  const imp = KEY_IMPORTANCE[keyName];
+  if (!imp) return null;
+  return (
+    <AMGBadge tone={IMPORTANCE_TONE[imp.level]}>
+      {IMPORTANCE_LABEL[imp.level]}
+    </AMGBadge>
+  );
+}
+
 function SourceBadge({ status, t }: { status: ConfigStatus; t: (key: string) => string }) {
   if (status.source === 'ENV') return <AMGBadge tone="success">{t('envSource')}</AMGBadge>;
   if (status.source === 'DB') return <AMGBadge tone="info">{t('dbSource')}</AMGBadge>;
@@ -164,9 +207,15 @@ function KeyRow({ item, onSave, onDelete, t }: {
             <span className="f-display font-bold text-sm">{item.label}</span>
             <TypeBadge type={inputMode} t={t} />
             <SourceBadge status={item} t={t} />
+            <ImportanceBadge keyName={item.key} />
           </div>
           <p className="f-mono text-label text-ink-2 text-xs mt-0.5">{item.description}</p>
           <p className="f-mono text-label text-ink-3 text-xs mt-0.5 opacity-60">{item.key}</p>
+          {!item.configured && KEY_IMPORTANCE[item.key] && KEY_IMPORTANCE[item.key].level !== 'optional' && (
+            <p className="f-mono text-[10px] mt-1 text-danger/80">
+              ⚠ Sense aquesta clau: {KEY_IMPORTANCE[item.key].impact}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-2 shrink-0 flex-wrap justify-end">
@@ -364,10 +413,20 @@ export default function SystemConfigPage() {
     return acc;
   }, {});
 
-  const sortedCategories = Object.keys(byCategory).sort(
-    (a, b) => (CATEGORY_ORDER.indexOf(a) !== -1 ? CATEGORY_ORDER.indexOf(a) : 999) -
-              (CATEGORY_ORDER.indexOf(b) !== -1 ? CATEGORY_ORDER.indexOf(b) : 999)
-  );
+  // Build phase groups with their items (skip empty phases)
+  const allCategoriesInPhases = new Set(PHASE_GROUPS.flatMap(p => p.categories));
+  const orphanCategories = Object.keys(byCategory).filter(c => !allCategoriesInPhases.has(c));
+
+  const phaseGroupsWithItems = [
+    ...PHASE_GROUPS.map(phase => ({
+      ...phase,
+      items: phase.categories.flatMap(cat => byCategory[cat] ?? []),
+    })).filter(p => p.items.length > 0),
+    ...(orphanCategories.length > 0 ? [{
+      id: 'OTHER', label: 'Altres', description: 'Claus no assignades a cap fase.', categories: orphanCategories,
+      items: orphanCategories.flatMap(cat => byCategory[cat] ?? []),
+    }] : []),
+  ];
 
   return (
     <PortalShell breadcrumb="admin / config">
@@ -417,30 +476,58 @@ export default function SystemConfigPage() {
             <span className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          sortedCategories.map((category) => {
-            const items = byCategory[category];
+          phaseGroupsWithItems.map((phase) => {
+            const phaseMissing = phase.items.filter(i => !i.configured && KEY_IMPORTANCE[i.key]?.level === 'critical').length;
+            const phaseConfigured = phase.items.filter(i => i.configured).length;
+            // Group items by category within phase (maintain category sub-headers for help panels)
+            const phaseByCategory: Record<string, ConfigStatus[]> = {};
+            for (const cat of phase.categories) {
+              const catItems = byCategory[cat];
+              if (catItems?.length) phaseByCategory[cat] = catItems;
+            }
             return (
-              <div key={category} className="amg-card card-clip">
-                <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
-                  <div className="f-mono text-label uppercase text-ink-2 tracking-widest">
-                    {t(`categories.${category}`) ?? category}
+              <div key={phase.id} className="space-y-0">
+                {/* Phase header */}
+                <div className="flex items-center gap-3 pt-2 pb-1 px-1">
+                  <span className="f-mono text-xs font-bold text-accent-light bg-accent/10 border border-accent/30 px-2 py-0.5 rounded">
+                    {phase.id}
+                  </span>
+                  <div>
+                    <span className="f-display font-bold text-sm text-ink-0">{phase.label}</span>
+                    <span className="f-mono text-xs text-ink-3 ml-2">{phase.description}</span>
                   </div>
-                  <AMGBadge tone={items.every((i) => i.configured) ? 'success' : 'warning'}>
-                    {items.filter((i) => i.configured).length}/{items.length}
-                  </AMGBadge>
+                  <div className="ml-auto flex gap-2 shrink-0">
+                    {phaseMissing > 0 && (
+                      <AMGBadge tone="danger">{phaseMissing} crític{phaseMissing > 1 ? 's' : ''} sense config</AMGBadge>
+                    )}
+                    <AMGBadge tone={phaseConfigured === phase.items.length ? 'success' : 'neutral'}>
+                      {phaseConfigured}/{phase.items.length}
+                    </AMGBadge>
+                  </div>
                 </div>
-                <div>
-                  <CategoryHelp category={category} />
-                  {items.map((item) => (
-                    <KeyRow
-                      key={item.key}
-                      item={item}
-                      t={t}
-                      onSave={(key, value) => doSave({ key, value })}
-                      onDelete={(key) => doDelete(key)}
-                    />
-                  ))}
-                </div>
+
+                {/* Category cards within phase */}
+                {Object.entries(phaseByCategory).map(([category, items]) => (
+                  <div key={category} className="amg-card card-clip mb-3">
+                    {Object.keys(phaseByCategory).length > 1 && (
+                      <div className="px-4 sm:px-5 py-2 border-b border-border-base">
+                        <span className="f-mono text-[10px] uppercase text-ink-3 tracking-widest">
+                          {t(`categories.${category}`) ?? category}
+                        </span>
+                      </div>
+                    )}
+                    <CategoryHelp category={category} />
+                    {items.map((item) => (
+                      <KeyRow
+                        key={item.key}
+                        item={item}
+                        t={t}
+                        onSave={(key, value) => doSave({ key, value })}
+                        onDelete={(key) => doDelete(key)}
+                      />
+                    ))}
+                  </div>
+                ))}
               </div>
             );
           })
