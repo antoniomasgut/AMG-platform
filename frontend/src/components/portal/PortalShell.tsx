@@ -173,6 +173,7 @@ function superAdminGroups(t: T): NavGroup[] {
         { label: t('items.knowledge'), icon: IconSet.Book, href: '/portal/admin/knowledge' },
         { label: t('items.documentTemplates'), icon: IconSet.FileText, href: '/portal/admin/documents' },
         { label: t('items.generatedDocs'), icon: IconSet.Receipt, href: '/portal/admin/documents/list' },
+        { label: t('items.commTemplates'), icon: IconSet.Mail, href: '/portal/admin/comm-templates' },
         { label: t('items.meetings'), icon: IconSet.Calendar, href: '/portal/admin/booking' },
       ],
     },
