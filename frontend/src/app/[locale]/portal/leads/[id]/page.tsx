@@ -5,8 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import {
-  getLead, getActivities, changeStage, createActivity, setWhatsapp, updateLead,
-  analyzeNotes, type AnalyzeNotesResponse, type Activity,
+  getLead, getActivities, changeStage, createActivity, setWhatsapp, updateLead, deleteLead,
+  completeActivity, analyzeNotes, type AnalyzeNotesResponse, type Activity,
 } from '@/services/leads';
 import { createBookingToken, getTokensForLead, type BookingToken } from '@/services/booking';
 import dynamic from 'next/dynamic';
@@ -30,11 +30,19 @@ const STAGE_TONE: Record<string, 'neutral' | 'info' | 'accent' | 'warning' | 'su
   PROPOSAL: 'warning', NEGOTIATION: 'warning', WON: 'success', LOST: 'danger',
 };
 
-const SOURCE_LABEL: Record<string, string> = {
-  WEBSITE: 'Web', REFERRAL: 'Referit', COLD_CALL: 'Cold Call',
-  SOCIAL_MEDIA: 'RRSS', GOOGLE_MAPS: 'Google Maps', INSTAGRAM: 'Instagram',
-  PAGINAS_AMARILLAS: 'Pàg. Grogues', META_LEAD_ADS: 'Meta Ads', OTHER: 'Altre',
-};
+const SOURCE_OPTIONS = [
+  { value: 'WEBSITE', label: 'Web' },
+  { value: 'REFERRAL', label: 'Referit' },
+  { value: 'COLD_CALL', label: 'Cold Call' },
+  { value: 'SOCIAL_MEDIA', label: 'RRSS' },
+  { value: 'GOOGLE_MAPS', label: 'Google Maps' },
+  { value: 'INSTAGRAM', label: 'Instagram' },
+  { value: 'PAGINAS_AMARILLAS', label: 'Pàg. Grogues' },
+  { value: 'META_LEAD_ADS', label: 'Meta Ads' },
+  { value: 'OTHER', label: 'Altre' },
+];
+
+const SOURCE_LABEL: Record<string, string> = Object.fromEntries(SOURCE_OPTIONS.map(o => [o.value, o.label]));
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -56,11 +64,42 @@ function EditField({ label, value, onChange, type = 'text', placeholder }: {
     <div>
       <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">{label}</label>
       <input
-        type={type} value={value} onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
+        type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
         className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
       />
     </div>
+  );
+}
+
+function LostReasonModal({ onClose, onConfirm, loading }: {
+  onClose: () => void; onConfirm: (reason: string) => void; loading: boolean;
+}) {
+  const [reason, setReason] = useState('');
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-bg-0 border border-border-base w-full max-w-sm shadow-2xl">
+          <div className="flex items-center justify-between p-5 border-b border-border-base">
+            <div className="f-display font-bold text-base">Marcar com a perdut</div>
+            <button onClick={onClose} className="p-1.5 text-ink-3 hover:text-ink-0"><IconSet.X size={16} /></button>
+          </div>
+          <div className="p-5">
+            <label className="f-mono text-[10px] uppercase text-ink-3 tracking-widest block mb-2">Motiu de pèrdua</label>
+            <input
+              type="text" value={reason} onChange={e => setReason(e.target.value)} autoFocus
+              placeholder="Ex: Preu massa alt, ja té proveïdor..."
+              onKeyDown={e => e.key === 'Enter' && onConfirm(reason.trim() || 'No especificat')}
+              className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+            />
+          </div>
+          <div className="p-4 border-t border-border-base flex justify-end gap-2">
+            <AMGButton variant="ghost" onClick={onClose}>Cancel·lar</AMGButton>
+            <AMGButton loading={loading} onClick={() => onConfirm(reason.trim() || 'No especificat')}>Confirmar</AMGButton>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -81,10 +120,12 @@ export default function LeadDetailPage() {
   const [interviewNotes, setInterviewNotes] = useState('');
   const [analysis, setAnalysis] = useState<AnalyzeNotesResponse | null>(null);
   const [showConvertModal, setShowConvertModal] = useState(false);
+  const [showLostModal, setShowLostModal] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState({
-    name: '', email: '', phone: '', notes: '', estimatedValue: '',
+    name: '', email: '', phone: '', notes: '', estimatedValue: '', source: '',
   });
 
   const { data: lead, isLoading: loadingLead } = useQuery({
@@ -106,9 +147,11 @@ export default function LeadDetailPage() {
   });
 
   const { mutate: doChangeStage, isPending: changingStage } = useMutation({
-    mutationFn: (stage: string) => changeStage(id, stage),
+    mutationFn: ({ stage, lostReason }: { stage: string; lostReason?: string }) =>
+      changeStage(id, stage, lostReason),
     onSuccess: () => {
       toast('success', 'Etapa actualitzada');
+      setShowLostModal(false);
       qc.invalidateQueries({ queryKey: ['lead', id] });
       qc.invalidateQueries({ queryKey: ['leads'] });
     },
@@ -130,6 +173,7 @@ export default function LeadDetailPage() {
       email: editData.email || undefined,
       phone: editData.phone || undefined,
       notes: editData.notes || undefined,
+      source: editData.source || undefined,
       estimatedValue: editData.estimatedValue ? Number(editData.estimatedValue) : undefined,
     }),
     onSuccess: () => {
@@ -139,6 +183,24 @@ export default function LeadDetailPage() {
       qc.invalidateQueries({ queryKey: ['leads'] });
     },
     onError: () => toast('error', 'Error actualitzant el lead'),
+  });
+
+  const { mutate: doDeleteLead, isPending: deletingLead } = useMutation({
+    mutationFn: () => deleteLead(id),
+    onSuccess: () => {
+      toast('success', 'Lead arxivat');
+      router.push(`/${locale}/portal/leads`);
+    },
+    onError: () => toast('error', 'Error arxivant el lead'),
+  });
+
+  const { mutate: doCompleteActivity } = useMutation({
+    mutationFn: (activityId: string) => completeActivity(id, activityId),
+    onSuccess: () => {
+      toast('success', 'Activitat completada');
+      qc.invalidateQueries({ queryKey: ['lead-activities', id] });
+    },
+    onError: () => toast('error', 'Error completant activitat'),
   });
 
   const { mutate: doSaveMeetingNote, isPending: savingNote } = useMutation({
@@ -194,6 +256,7 @@ export default function LeadDetailPage() {
       phone: lead.phone ?? '',
       notes: lead.notes ?? '',
       estimatedValue: lead.estimatedValue != null ? String(lead.estimatedValue) : '',
+      source: lead.source ?? '',
     });
     setEditMode(true);
   };
@@ -235,9 +298,26 @@ export default function LeadDetailPage() {
             <IconSet.ArrowRight size={12} className="rotate-180" /> Tornar
           </button>
           <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / leads /</span>
-          <div className="flex items-center gap-3 mt-1">
-            <div className="f-display font-bold text-xl">{lead.name}</div>
-            <AMGBadge tone={STAGE_TONE[lead.stage]}>{STAGE_LABEL[lead.stage]}</AMGBadge>
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center gap-3">
+              <div className="f-display font-bold text-xl">{lead.name}</div>
+              <AMGBadge tone={STAGE_TONE[lead.stage]}>{STAGE_LABEL[lead.stage]}</AMGBadge>
+              {!lead.isActive && <AMGBadge tone="neutral">Arxivat</AMGBadge>}
+            </div>
+            {!showArchiveConfirm ? (
+              <button
+                onClick={() => setShowArchiveConfirm(true)}
+                className="f-mono text-[10px] text-ink-3 hover:text-danger-light transition-colors"
+              >
+                Arxivar lead
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="f-mono text-[10px] text-ink-2">Confirmar?</span>
+                <AMGButton size="sm" variant="ghost" onClick={() => setShowArchiveConfirm(false)}>No</AMGButton>
+                <AMGButton size="sm" loading={deletingLead} onClick={() => doDeleteLead()}>Sí, arxivar</AMGButton>
+              </div>
+            )}
           </div>
         </div>
 
@@ -267,12 +347,22 @@ export default function LeadDetailPage() {
                 <EditField label="Email" value={editData.email} onChange={v => setEditData(d => ({ ...d, email: v }))} type="email" />
                 <EditField label="Telèfon" value={editData.phone} onChange={v => setEditData(d => ({ ...d, phone: v }))} />
                 <EditField label="Valor estimat (€)" value={editData.estimatedValue} onChange={v => setEditData(d => ({ ...d, estimatedValue: v }))} type="number" placeholder="0" />
+                <div className="sm:col-span-2">
+                  <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">Origen</label>
+                  <select
+                    value={editData.source}
+                    onChange={e => setEditData(d => ({ ...d, source: e.target.value }))}
+                    className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+                  >
+                    <option value="">— Selecciona origen —</option>
+                    {SOURCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
               </div>
               <div>
                 <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">Notes</label>
                 <textarea
-                  value={editData.notes}
-                  onChange={e => setEditData(d => ({ ...d, notes: e.target.value }))}
+                  value={editData.notes} onChange={e => setEditData(d => ({ ...d, notes: e.target.value }))}
                   rows={3}
                   className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-none"
                 />
@@ -364,10 +454,15 @@ export default function LeadDetailPage() {
               <button
                 key={stage}
                 disabled={lead.stage === stage || changingStage}
-                onClick={() => doChangeStage(stage)}
+                onClick={() => {
+                  if (stage === 'LOST') { setShowLostModal(true); return; }
+                  doChangeStage({ stage });
+                }}
                 className={`f-mono text-label uppercase px-3 h-8 border transition-colors ${
                   lead.stage === stage
                     ? 'border-accent text-accent-light bg-accent-muted cursor-default'
+                    : stage === 'LOST'
+                    ? 'border-border-base text-ink-3 hover:border-danger hover:text-danger-light'
                     : 'border-border-base text-ink-2 hover:text-ink-0 hover:border-border-strong'
                 } disabled:opacity-40`}
               >
@@ -388,7 +483,7 @@ export default function LeadDetailPage() {
 
           {bookingTokens.length === 0 && (
             <p className="text-sm text-ink-3">
-              Genera un link de reserva per enviar al lead. Podrà triar dia i hora des d'una pàgina pública.
+              Genera un link de reserva per enviar al lead. Podrà triar dia i hora des d&apos;una pàgina pública.
             </p>
           )}
 
@@ -408,11 +503,7 @@ export default function LeadDetailPage() {
                   </div>
                   {!bt.confirmed && !isExpired && (
                     <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(bookingUrl);
-                        setCopiedToken(true);
-                        setTimeout(() => setCopiedToken(false), 2000);
-                      }}
+                      onClick={() => { navigator.clipboard.writeText(bookingUrl); setCopiedToken(true); setTimeout(() => setCopiedToken(false), 2000); }}
                       className="f-mono text-xs text-accent-light hover:underline flex items-center gap-1"
                     >
                       <IconSet.Copy size={11} />
@@ -451,8 +542,7 @@ export default function LeadDetailPage() {
             Escriu les necessitats, problemes i dolors del client durant la videoconferència. La IA les analitzarà per preparar un pressupost.
           </p>
           <textarea
-            value={interviewNotes}
-            onChange={e => setInterviewNotes(e.target.value)}
+            value={interviewNotes} onChange={e => setInterviewNotes(e.target.value)}
             placeholder="Ex: És una perruqueria. El client diu que perd vendes per no tenir web, vol agafar cites online..."
             rows={6}
             className="w-full bg-bg-0 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-[#FF6B00] resize-y"
@@ -481,7 +571,6 @@ export default function LeadDetailPage() {
                     ))}
                   </ul>
                 </div>
-
                 <div className="space-y-3 bg-[rgba(255,255,255,0.02)] p-3 rounded border border-border-base">
                   <div className="flex justify-between items-center pb-2 border-b border-border-base">
                     <span className="f-mono text-[10px] uppercase text-ink-3">Segmentació</span>
@@ -526,8 +615,7 @@ export default function LeadDetailPage() {
             {showMeetingNoteForm && (
               <div className="space-y-2">
                 <textarea
-                  value={meetingNote}
-                  onChange={e => setMeetingNote(e.target.value)}
+                  value={meetingNote} onChange={e => setMeetingNote(e.target.value)}
                   placeholder="Punts tractats, acords, seguiment necessari..."
                   rows={5}
                   className="w-full bg-bg-0 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-none"
@@ -600,15 +688,29 @@ export default function LeadDetailPage() {
           ) : (
             <div className="divide-y divide-border-base">
               {(activities as Activity[]).map(act => (
-                <div key={act.id} className="px-4 sm:px-5 py-3 flex items-start gap-3">
+                <div key={act.id} className={`px-4 sm:px-5 py-3 flex items-start gap-3 ${act.completedAt ? 'opacity-60' : ''}`}>
                   <AMGBadge tone={act.completedAt ? 'success' : 'neutral'}>{act.type}</AMGBadge>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-ink-1">{act.description}</p>
+                    <p className={`text-sm text-ink-1 ${act.completedAt ? 'line-through' : ''}`}>{act.description}</p>
                     {act.dueDate && (
                       <span className="f-mono text-label text-ink-3">{fmtDate(act.dueDate)}</span>
                     )}
+                    {act.completedAt && (
+                      <div className="f-mono text-[10px] text-success mt-0.5">Completada {fmtDate(act.completedAt)}</div>
+                    )}
                   </div>
-                  <span className="f-mono text-label text-ink-3 shrink-0">{fmtDate(act.createdAt)}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {!act.completedAt && (
+                      <button
+                        onClick={() => doCompleteActivity(act.id)}
+                        className="f-mono text-[10px] text-ink-3 hover:text-success border border-border-base hover:border-success px-2 py-0.5 transition-colors"
+                        title="Marcar com a completada"
+                      >
+                        ✓ Fet
+                      </button>
+                    )}
+                    <span className="f-mono text-label text-ink-3">{fmtDate(act.createdAt)}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -627,6 +729,14 @@ export default function LeadDetailPage() {
           initialSetup={analysis?.setupAmount}
           initialMonthly={analysis?.monthlyAmount}
           onClose={() => setShowConvertModal(false)}
+        />
+      )}
+
+      {showLostModal && (
+        <LostReasonModal
+          loading={changingStage}
+          onClose={() => setShowLostModal(false)}
+          onConfirm={reason => doChangeStage({ stage: 'LOST', lostReason: reason })}
         />
       )}
     </PortalShell>

@@ -101,6 +101,9 @@ export const getActivities = (leadId: string) =>
 export const createActivity = (leadId: string, data: CreateActivityRequest) =>
   apiFetch<Activity>(`/leads/${leadId}/activities`, { method: 'POST', body: JSON.stringify(data) });
 
+export const completeActivity = (leadId: string, activityId: string) =>
+  apiFetch<Activity>(`/leads/${leadId}/activities/${activityId}/complete`, { method: 'PATCH' });
+
 export interface ConvertLeadRequest {
   tenantName: string;
   billingEmail: string;
