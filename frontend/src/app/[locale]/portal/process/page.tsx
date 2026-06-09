@@ -152,12 +152,13 @@ export default function ProcessPage() {
   const metaAdsEnabled = metaAdsSummary?.enabled ?? 0;
 
   // ── step 3: qualificació ──────────────────────────────────────────────────
-  const leadStats     = leadsR.data as any;
-  const totalLeads    = leadStats?.total ?? 0;
-  const newLeads      = leadStats?.byStage?.NEW ?? 0;
-  const contactedLeads= leadStats?.byStage?.CONTACTED ?? 0;
-  const proposalLeads = (leadStats?.byStage?.PROPOSAL ?? 0) + (leadStats?.byStage?.NEGOTIATION ?? 0);
-  const wonLeads      = leadStats?.byStage?.WON ?? 0;
+  const leadStats      = leadsR.data as any;
+  const totalLeads     = leadStats?.total ?? 0;
+  const newLeads       = leadStats?.byStage?.NEW ?? 0;
+  const contactedLeads = leadStats?.byStage?.CONTACTED ?? 0;
+  const proposalLeads  = (leadStats?.byStage?.PROPOSAL ?? 0) + (leadStats?.byStage?.NEGOTIATION ?? 0);
+  const wonLeads       = leadStats?.byStage?.WON ?? 0;
+  const nurturingLeads = leadStats?.byStage?.NURTURING ?? 0;
 
   // ── step 4: pressupost ────────────────────────────────────────────────────
   const allBudgets  = (budgetsR.data as any[] | undefined) ?? [];
@@ -249,21 +250,22 @@ export default function ProcessPage() {
       title: 'Qualificació del lead',
       desc: 'Contacta per WhatsApp o email amb una demo del sector, qualifica i agenda reunió.',
       icon: IconSet.Users,
-      status: loading ? 'loading' : totalLeads === 0 ? 'blocked' : newLeads > 0 ? 'attention' : 'ok',
+      status: loading ? 'loading' : totalLeads === 0 ? 'blocked' : newLeads > 5 ? 'attention' : 'ok',
       items: [
-        { label: 'Total leads',              value: totalLeads,       ok: totalLeads > 0 },
-        { label: 'Nous (sense contactar)',   value: newLeads,         ok: newLeads === 0 },
+        { label: 'Total leads',              value: totalLeads,        ok: totalLeads > 0 },
+        { label: 'Nous (sense contactar)',   value: newLeads,          ok: newLeads === 0 },
         { label: 'Contactats',               value: contactedLeads },
-        { label: 'En proposta/negociació',   value: proposalLeads,    ok: proposalLeads === 0 },
+        { label: 'En proposta/negociació',   value: proposalLeads,     ok: proposalLeads === 0 },
+        { label: 'Nurturing (aparcats)',     value: nurturingLeads },
         { label: 'Guanyats',                 value: wonLeads },
       ],
-      note: newLeads > 0
-        ? `${newLeads} lead${newLeads > 1 ? 's' : ''} sense contactar. Envia la demo del sector i agenda reunió.`
+      note: newLeads > 5
+        ? `${newLeads} leads sense contactar. Envia la demo del sector i agenda reunió.`
         : undefined,
       actions: [
         { label: 'Veure leads',  href: '/portal/leads', primary: newLeads > 0 },
         { label: 'Nou lead',     href: '/portal/leads/new' },
-        { label: 'Demos',        href: '/portal/admin/demos' },
+        { label: 'Tenants',      href: '/portal/admin/tenants' },
       ],
     },
     {
