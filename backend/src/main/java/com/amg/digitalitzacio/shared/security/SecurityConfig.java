@@ -90,6 +90,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/whatsapp/webhook").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/chat/sessions").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/chat/sessions/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/chat/agency/status").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/chat/agency/sessions").permitAll()
                         .requestMatchers("/api/v1/widget/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/ops/health").permitAll()

@@ -24,9 +24,22 @@ type Tab = 'profiles' | 'services' | 'outdated';
 
 const SERVICE_TYPE_OPTIONS = ['CREDENTIALS', 'LANDING', 'AUTOMATION', 'BILLING', 'OTHER'];
 
+const SECTOR_OPTIONS = [
+  { value: 'PINTOR', label: 'Pintor / Electricista / Fontaner / Jardiner' },
+  { value: 'FISIOTERAPEUTA', label: 'Fisioterapeuta / Psicòleg / Nutricionista' },
+  { value: 'PERRUQUERIA', label: 'Perruqueria / Estètica' },
+  { value: 'VETERINARI', label: 'Veterinari / Perruqueria canina' },
+  { value: 'RESTAURANTE', label: 'Restaurant / Bar' },
+  { value: 'ACADEMIA', label: 'Acadèmia / Centre de formació' },
+  { value: 'GESTORIA', label: 'Gestoria / Assessoria' },
+  { value: 'INMOBILIARIA', label: 'Immobiliària' },
+  { value: 'AGENCIA_IA', label: 'Agència IA' },
+  { value: 'DENTISTA', label: 'Dentista / Clínica dental' },
+];
+
 function NewProfileModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const { toast } = useToast();
-  const [form, setForm] = useState({ name: '', slug: '', description: '' });
+  const [form, setForm] = useState({ name: '', slug: '', description: '', sector: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
@@ -45,7 +58,11 @@ function NewProfileModal({ onClose, onCreated }: { onClose: () => void; onCreate
     }
     setLoading(true);
     try {
-      await createProfile({ name: form.name, slug: form.slug, description: form.description || undefined });
+      await createProfile({
+        name: form.name, slug: form.slug,
+        description: form.description || undefined,
+        sector: form.sector || undefined,
+      });
       toast('success', 'Perfil creat');
       onCreated();
       onClose();
@@ -70,6 +87,14 @@ function NewProfileModal({ onClose, onCreated }: { onClose: () => void; onCreate
               value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
               className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-[#FF6B00]" />
             <FieldError error={errors.name} />
+          </div>
+          <div>
+            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Sector representatiu</label>
+            <select value={form.sector} onChange={(e) => setForm(f => ({ ...f, sector: e.target.value }))}
+              className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 focus:outline-none focus:border-[#FF6B00]">
+              <option value="">— sense sector (cross-sector) —</option>
+              {SECTOR_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
           </div>
           <div>
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Slug</label>
@@ -216,6 +241,7 @@ function ProfileCard({ profile }: { profile: CatalogProfileResponse }) {
   const router = useRouter();
   const phaseCount = profile.phases?.length ?? 0;
   const serviceCount = profile.phases?.reduce((a, p) => a + (p.services?.length ?? 0), 0) ?? 0;
+  const baseMonthly = profile.phases?.reduce((sum, p) => sum + (p.nexeMonthlyPrice ?? 0), 0) ?? 0;
 
   return (
     <button onClick={() => router.push(`/portal/admin/vault/profiles/${profile.id}`)}
@@ -227,14 +253,28 @@ function ProfileCard({ profile }: { profile: CatalogProfileResponse }) {
           </div>
           <div className="f-mono text-xs text-ink-3 mt-0.5">/{profile.slug}</div>
         </div>
-        {!profile.isActive && <AMGBadge tone="neutral">Inactiu</AMGBadge>}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {profile.sector && (
+            <span className="f-mono text-[9px] uppercase tracking-wider bg-accent-muted text-accent-light px-1.5 py-0.5 rounded border border-accent/20">
+              {profile.sector}
+            </span>
+          )}
+          {!profile.isActive && <AMGBadge tone="neutral">Inactiu</AMGBadge>}
+        </div>
       </div>
       {profile.description && (
         <div className="text-sm text-ink-2 mt-2 line-clamp-2">{profile.description}</div>
       )}
-      <div className="flex gap-3 mt-3 text-xs text-ink-3">
-        <span>{phaseCount} fases</span>
-        <span>{serviceCount} serveis</span>
+      <div className="flex items-center justify-between mt-3">
+        <div className="flex gap-3 text-xs text-ink-3">
+          <span>{phaseCount} fases</span>
+          <span>{serviceCount} serveis</span>
+        </div>
+        {baseMonthly > 0 && (
+          <span className="f-mono text-xs text-accent-light font-bold">
+            des de {baseMonthly}€<span className="text-ink-3 font-normal">/mes</span>
+          </span>
+        )}
       </div>
     </button>
   );

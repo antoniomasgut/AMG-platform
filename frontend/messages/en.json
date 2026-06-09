@@ -426,6 +426,543 @@
     "configure": "Configure",
     "reject": "Reject"
   },
+  "wizard": {
+    "start": "Get Started",
+    "next": "Next",
+    "previous": "Back",
+    "finish": "Finish",
+    "cancel": "Configure later",
+    "step": "Step {current} of {total}",
+    "verify": "Test connection",
+    "verify_success": "Connection successful",
+    "verify_error": "Verification failed",
+    "verify_loading": "Verifying...",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "complete_title": "Setup complete!",
+    "complete_cta": "Back to tenant",
+    "whatsapp": {
+      "title": "Setup: WhatsApp Business",
+      "description": "We will configure the WhatsApp Business API for your client. This service enables sending and receiving WhatsApp messages automatically from the portal.",
+      "prerequisites": "You will need: WhatsApp Business API key, verified phone number, and Meta Developers Account ID.",
+      "step1": {
+        "title": "API Credentials",
+        "description": "Enter your WhatsApp Business API credentials."
+      },
+      "step2": {
+        "title": "Webhook configuration",
+        "description": "Set up the webhook to receive messages automatically."
+      },
+      "step3": {
+        "title": "Verification",
+        "description": "Test the connection to ensure everything is working correctly."
+      },
+      "field": {
+        "api_key": "API Key",
+        "phone": "Phone number",
+        "account_id": "Account ID",
+        "webhook_url": "Webhook URL",
+        "webhook_placeholder": "https://example.com/webhook"
+      }
+    },
+    "smtp": {
+      "title": "Setup: Corporate SMTP",
+      "description": "We will configure the SMTP server for your client's corporate email. This service allows sending emails from any mail client.",
+      "prerequisites": "You will need: SMTP server, port, username, and password from your mail provider.",
+      "step1": {
+        "title": "Server configuration",
+        "description": "Enter the SMTP server details."
+      },
+      "step2": {
+        "title": "Verification",
+        "description": "Send a test email to ensure the server is working correctly."
+      },
+      "field": {
+        "host": "SMTP Server",
+        "host_placeholder": "smtp.example.com",
+        "port": "Port",
+        "port_placeholder": "587",
+        "user": "Username",
+        "user_placeholder": "email@example.com",
+        "password": "Password",
+        "security": "Security"
+      },
+      "security": {
+        "tls": "TLS",
+        "ssl": "SSL",
+        "none": "None"
+      }
+    },
+    "landing": {
+      "title": "Setup: Landing Page",
+      "description": "We will create your client's landing page from a template. You will be able to select the design and customise the content.",
+      "prerequisites": "You will need: client content (texts, images, social networks, opening hours).",
+      "step1": {
+        "title": "Select template",
+        "description": "Choose the template that best fits the client's business."
+      },
+      "step2": {
+        "title": "Fill in the content",
+        "description": "Customise each section with the client's information."
+      },
+      "step3": {
+        "title": "Publish",
+        "description": "Review and publish the landing page."
+      },
+      "field": {
+        "template": "Template"
+      }
+    },
+    "landing_extra": {
+      "description": "Additional landing page for your client. The process is the same as a standard landing page."
+    },
+    "common": {
+      "yes": "Yes",
+      "no": "No"
+    },
+    "agenda": {
+      "title": "Setup: Online Booking",
+      "description": "We will configure an online booking system. Clients will be able to schedule appointments directly from a link.",
+      "prerequisites": "You will need: Google Calendar or Calendly API Key.",
+      "step1": {
+        "title": "Calendar integration",
+        "description": "Connect the calendar where appointments will be created."
+      },
+      "step2": {
+        "title": "Confirmation template",
+        "description": "Configure the confirmation message that will be sent to the client."
+      },
+      "step3": {
+        "title": "Verification",
+        "description": "Test that the booking flow works correctly."
+      },
+      "field": {
+        "calendar_type": "Calendar type",
+        "api_key": "API Key",
+        "api_key_hint": "Google OAuth credentials or Calendly API Key",
+        "confirmation": "Confirmation message",
+        "confirmation_placeholder": "Hello! Your appointment has been confirmed for {{date}}"
+      },
+      "calendar": {
+        "google": "Google Calendar",
+        "calendly": "Calendly"
+      }
+    },
+    "recordatori": {
+      "title": "Setup: 24h Reminder",
+      "description": "We will configure an automatic Telegram reminder before appointments.",
+      "prerequisites": "You will need: Telegram installed on mobile.",
+      "step1": {
+        "title": "Configure message",
+        "description": "Set up the reminder message the client will receive."
+      },
+      "step2": {
+        "title": "Link Telegram",
+        "description": "Share the link code with the client so they can connect to the bot."
+      },
+      "step3": {
+        "title": "Activate",
+        "description": "Activate the reminder service."
+      },
+      "field": {
+        "template": "Reminder template",
+        "template_placeholder": "Hello! You have an appointment tomorrow at {{time}}. Can you confirm?",
+        "hours": "Hours before reminder",
+        "link_code": "Telegram link code"
+      }
+    },
+    "reenganxament": {
+      "title": "Setup: Client Re-engagement",
+      "description": "We will configure a system that automatically sends WhatsApp messages to inactive clients to win them back.",
+      "prerequisites": "You will need: CRM API Key and URL.",
+      "step1": {
+        "title": "Connect CRM",
+        "description": "Connect the CRM to detect inactive clients."
+      },
+      "step2": {
+        "title": "Configuration",
+        "description": "Define the inactivity period and the message."
+      },
+      "step3": {
+        "title": "Activate",
+        "description": "Activate the re-engagement workflow."
+      },
+      "field": {
+        "api_url": "CRM URL",
+        "api_url_placeholder": "https://api.example.com/crm",
+        "api_key": "CRM API Key",
+        "months": "Months of inactivity",
+        "template": "Offer template",
+        "template_placeholder": "We haven't seen you in a while! Get {{discount}} off if you visit us this week."
+      }
+    },
+    "ressenya": {
+      "title": "Setup: Google Review",
+      "description": "We will configure a system that automatically requests Google reviews after each service.",
+      "prerequisites": "You will need: your client's Google Reviews link.",
+      "step1": {
+        "title": "Google Reviews link",
+        "description": "Enter the Google Reviews link."
+      },
+      "step2": {
+        "title": "Automatic trigger",
+        "description": "The workflow will activate automatically when a service is completed in the CRM."
+      },
+      "step3": {
+        "title": "Activate",
+        "description": "Activate the review workflow."
+      },
+      "field": {
+        "url": "Google Reviews link",
+        "url_placeholder": "https://g.page/r/XXXXXXXXX/review"
+      }
+    },
+    "calculadora": {
+      "title": "Setup: Quote Calculator",
+      "description": "We will configure an interactive form that calculates and sends quotes automatically.",
+      "prerequisites": "You will need: the business pricing calculation rules.",
+      "step1": {
+        "title": "Calculation rules",
+        "description": "Define how the quote is calculated based on the form data."
+      },
+      "step2": {
+        "title": "Notification",
+        "description": "Configure the quote template that will be sent to the client."
+      },
+      "step3": {
+        "title": "Activate",
+        "description": "Activate the calculation and sending workflow."
+      },
+      "field": {
+        "rules": "Calculation rules",
+        "rules_placeholder": "E.g.: m2 * 50€ + travel cost",
+        "template": "Quote template",
+        "template_placeholder": "Quote for {{client}}: {{total}}€"
+      }
+    },
+    "crm": {
+      "title": "Setup: CRM + Pipeline",
+      "description": "We will configure the lead tracking system (new → quoted → closed).",
+      "prerequisites": "No external API keys required. The CRM is internal to the portal.",
+      "step1": {
+        "title": "Pipeline stages",
+        "description": "Define the stages of your sales pipeline."
+      },
+      "step2": {
+        "title": "Notifications",
+        "description": "Configure notifications for each stage change."
+      },
+      "step3": {
+        "title": "Activate",
+        "description": "Activate the pipeline."
+      },
+      "field": {
+        "stages": "Stages (comma-separated)",
+        "stages_placeholder": "New, Contacted, Quoted, Closed",
+        "notify_whatsapp": "Notify via WhatsApp?"
+      }
+    },
+    "galeria": {
+      "title": "Setup: Photo Gallery",
+      "description": "We will configure a photo gallery to showcase completed work.",
+      "prerequisites": "You will need: photos of the client's work.",
+      "step1": {
+        "title": "Upload photos",
+        "description": "Upload photos and organise them by category."
+      },
+      "step2": {
+        "title": "Publish",
+        "description": "Publish the gallery."
+      },
+      "field": {
+        "categories": "Categories (comma-separated)",
+        "categories_placeholder": "Renovations, Cleaning, Installations"
+      }
+    },
+    "cobrament": {
+      "title": "Setup: Card Payments",
+      "description": "We will configure the Stripe payment system to accept credit cards.",
+      "prerequisites": "You will need: Stripe API keys (secret key, public key, and webhook secret).",
+      "step1": {
+        "title": "Stripe credentials",
+        "description": "Enter your Stripe API keys."
+      },
+      "step2": {
+        "title": "Stripe Webhook",
+        "description": "Configure the webhook to receive payment notifications."
+      },
+      "step3": {
+        "title": "Verification",
+        "description": "Process a test payment."
+      },
+      "field": {
+        "secret_key": "Stripe Secret Key",
+        "public_key": "Stripe Public Key",
+        "webhook_secret": "Stripe Webhook Secret",
+        "webhook": "Webhook URL (to configure in Stripe)"
+      }
+    },
+    "facturacio": {
+      "title": "Setup: Automatic Invoicing",
+      "description": "We will configure automatic invoice generation and delivery via Holded.",
+      "prerequisites": "You will need: Holded API Key and the client's tax details (VAT number, address).",
+      "step1": {
+        "title": "Holded credentials",
+        "description": "Enter the Holded API Key and the client's tax details."
+      },
+      "step2": {
+        "title": "Billing period",
+        "description": "Select the day of the month for invoice generation."
+      },
+      "step3": {
+        "title": "Verification",
+        "description": "Test the creation of a sample invoice."
+      },
+      "field": {
+        "api_key": "Holded API Key",
+        "vat": "Client VAT number",
+        "vat_placeholder": "12345678A",
+        "address": "Billing address",
+        "address_placeholder": "123 Example St, London, W1A 1AA",
+        "day": "Billing day"
+      }
+    },
+    "analytics": {
+      "title": "Setup: Google Analytics",
+      "description": "We will configure Google Analytics 4 + Search Console for metrics tracking.",
+      "prerequisites": "You will need: GA4 Property ID and Google OAuth credentials.",
+      "step1": {
+        "title": "Google credentials",
+        "description": "Enter the GA4 Property ID and OAuth credentials."
+      },
+      "step2": {
+        "title": "Verification",
+        "description": "Verify that tracking is working correctly."
+      },
+      "field": {
+        "property_id": "GA4 Property ID",
+        "property_id_placeholder": "G-XXXXXXXXXX",
+        "oauth": "Google OAuth Credentials (JSON)"
+      }
+    },
+    "xat": {
+      "title": "Setup: Web Chat",
+      "description": "We will configure a live chat widget for the client's website.",
+      "prerequisites": "You will need: chat service API Key (Tawk.to, Crisp, etc.) or AI Bot.",
+      "step1": {
+        "title": "Chat credentials",
+        "description": "Enter the chat service credentials."
+      },
+      "step2": {
+        "title": "Verification",
+        "description": "Test that the chat is working correctly."
+      },
+      "field": {
+        "api_key": "Chat API Key",
+        "widget_id": "Widget ID (optional)"
+      }
+    },
+    "formulari": {
+      "title": "Setup: Lead Form",
+      "description": "We will configure a contact form that automatically feeds into the CRM.",
+      "prerequisites": "No external API keys required.",
+      "step1": {
+        "title": "Configuration",
+        "description": "Define where lead notifications are sent."
+      },
+      "step2": {
+        "title": "Activate",
+        "description": "Activate the form."
+      },
+      "field": {
+        "email": "Notification email",
+        "email_placeholder": "client@example.com"
+      }
+    },
+    "quest": {
+      "title": "Setup: Health Questionnaire",
+      "description": "We will configure a pre-visit form for healthcare professionals.",
+      "prerequisites": "You will need: the questionnaire questions.",
+      "step1": {
+        "title": "Questions",
+        "description": "Enter the questionnaire questions."
+      },
+      "step2": {
+        "title": "Activate",
+        "description": "Activate the questionnaire."
+      },
+      "field": {
+        "questions": "Questions (comma-separated)",
+        "questions_placeholder": "Age, Allergies, Medication, Reason for visit"
+      }
+    },
+    "historial": {
+      "title": "Setup: Medical History",
+      "description": "We will configure the digital patient record with medical history.",
+      "prerequisites": "No external API keys required.",
+      "step1": {
+        "title": "Record fields",
+        "description": "Define the patient record fields."
+      },
+      "step2": {
+        "title": "Activate",
+        "description": "Activate the medical history module."
+      },
+      "field": {
+        "config": "Record fields (comma-separated)",
+        "config_placeholder": "Name, Phone, Allergies, Notes"
+      }
+    },
+    "telegram": {
+      "title": "Setup: Telegram Bot",
+      "description": "We will configure a Telegram bot for your client. The bot can send notifications, answer queries, and much more.",
+      "prerequisites": "You will need: the Telegram bot token (from @BotFather) and a username for the bot.",
+      "step1": {
+        "title": "Bot credentials",
+        "description": "Enter the Telegram bot token and username."
+      },
+      "step2": {
+        "title": "Webhook",
+        "description": "Configure the webhook to receive messages."
+      },
+      "step3": {
+        "title": "Commands",
+        "description": "Define the commands the bot will understand."
+      },
+      "step4": {
+        "title": "Verification",
+        "description": "Test that the bot responds correctly."
+      },
+      "field": {
+        "token": "Bot Token",
+        "token_hint": "Get it from @BotFather on Telegram",
+        "username": "Bot username",
+        "username_placeholder": "example_bot",
+        "webhook": "Webhook URL (to configure in Telegram)",
+        "commands": "Custom commands",
+        "commands_placeholder": "/start, /help, /prices",
+        "commands_hint": "Separate commands with commas"
+      }
+    },
+    "bot_ia": {
+      "title": "Setup: Basic AI Bot",
+      "description": "We will configure an AI-powered virtual assistant for your client.",
+      "prerequisites": "You will need: AI provider API key and the bot name.",
+      "step1": {
+        "title": "API configuration",
+        "description": "Enter the API key and select the AI model."
+      },
+      "step2": {
+        "title": "Welcome message",
+        "description": "Configure the bot's welcome message."
+      },
+      "step3": {
+        "title": "Verification",
+        "description": "Test that the bot responds correctly."
+      },
+      "field": {
+        "api_key": "API Key",
+        "model": "AI model",
+        "name": "Bot name",
+        "name_placeholder": "E.g.: Virtual Assistant",
+        "welcome": "Welcome message",
+        "welcome_placeholder": "Hello! How can I help you?"
+      },
+      "model": {
+        "sonnet": "Claude Sonnet 4.6",
+        "haiku": "Claude Haiku 4.5",
+        "gpt4o": "GPT-4o"
+      }
+    },
+    "bot_ia_rag": {
+      "title": "Setup: Advanced AI Bot (RAG)",
+      "description": "We will configure a virtual assistant with access to your client's custom documents.",
+      "prerequisites": "You will need: AI provider API key, bot name, and reference documents.",
+      "step1": {
+        "title": "API configuration",
+        "description": "Enter the API key and select the AI model."
+      },
+      "step2": {
+        "title": "Reference documents",
+        "description": "Add document URLs that the bot will use to answer questions."
+      },
+      "step3": {
+        "title": "Verification",
+        "description": "Test that the bot responds based on the documents."
+      },
+      "field": {
+        "api_key": "API Key",
+        "model": "AI model",
+        "name": "Bot name",
+        "name_placeholder": "E.g.: Document Assistant",
+        "documents": "Reference documents",
+        "documents_hint": "Enter comma-separated URLs",
+        "documents_placeholder": "https://example.com/document.pdf, https://..."
+      },
+      "model": {
+        "sonnet": "Claude Sonnet 4.6",
+        "haiku": "Claude Haiku 4.5"
+      }
+    },
+    "automation": {
+      "title": "Setup: n8n Automation",
+      "description": "We will connect the portal with n8n to manage your client's automations.",
+      "prerequisites": "You will need: n8n server URL and API Key.",
+      "step1": {
+        "title": "n8n connection",
+        "description": "Enter the n8n server URL and API key."
+      },
+      "step2": {
+        "title": "Available workflows",
+        "description": "Review the predefined workflows that will be activated."
+      },
+      "step3": {
+        "title": "Verification",
+        "description": "Test the connection to n8n."
+      },
+      "field": {
+        "url": "n8n URL",
+        "url_placeholder": "https://n8n.example.com",
+        "api_key": "API Key"
+      }
+    },
+    "domain": {
+      "title": "Setup: Domain",
+      "description": "We will configure the custom domain for your client.",
+      "prerequisites": "You will need: the domain name and access to your registrar's DNS panel.",
+      "step1": {
+        "title": "Domain name",
+        "description": "Enter the domain name and select the management type."
+      },
+      "step2": {
+        "title": "DNS configuration",
+        "description": "Copy the nameservers to your domain registrar."
+      },
+      "step3": {
+        "title": "Verification",
+        "description": "Wait for DNS propagation and verify the domain."
+      },
+      "field": {
+        "name": "Domain name",
+        "name_placeholder": "example.com",
+        "type": "Management type",
+        "ns1": "Nameserver 1",
+        "ns2": "Nameserver 2"
+      },
+      "type": {
+        "managed": "Managed (included)",
+        "self": "Self-managed"
+      }
+    },
+    "validation": {
+      "phone": "The phone number is not valid",
+      "required": "This field is required",
+      "url": "The URL is not valid",
+      "email": "The email address is not valid",
+      "port": "The port is not valid",
+      "domain": "The domain format is not valid"
+    }
+  },
   "portalNav": {
     "groups": {
       "summary": "Overview",

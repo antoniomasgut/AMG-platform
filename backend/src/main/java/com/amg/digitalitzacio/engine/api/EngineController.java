@@ -92,8 +92,9 @@ public class EngineController {
 
     @PostMapping("/landings/{landingId}/publish")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public PublishResponse publish(@PathVariable UUID landingId) {
-        return engineService.publish(landingId);
+    public PublishResponse publish(@PathVariable UUID landingId,
+                                   @RequestParam(defaultValue = "ca") String locale) {
+        return engineService.publish(landingId, locale);
     }
 
     @PostMapping("/landings/{landingId}/unpublish")
@@ -136,8 +137,16 @@ public class EngineController {
     // --- Render (public) ---
 
     @GetMapping(value = "/render/{slug}", produces = MediaType.TEXT_HTML_VALUE)
-    public String renderLanding(@PathVariable String slug, @RequestHeader(value = "Host", required = false) String host) {
-        return engineService.renderLanding(slug, host);
+    public String renderLanding(@PathVariable String slug,
+                                @RequestHeader(value = "Host", required = false) String host,
+                                @RequestParam(defaultValue = "ca") String lang) {
+        return engineService.renderLanding(slug, host, lang);
+    }
+
+    @GetMapping(value = "/render/{slug}/{locale}", produces = MediaType.TEXT_HTML_VALUE)
+    public String renderLandingLocale(@PathVariable String slug, @PathVariable String locale,
+                                      @RequestHeader(value = "Host", required = false) String host) {
+        return engineService.renderLanding(slug, host, locale);
     }
 
     @GetMapping(value = "/render/{slug}/sitemap.xml", produces = MediaType.APPLICATION_XML_VALUE)

@@ -79,6 +79,8 @@ public class SystemConfigService {
         new KnownKey("AI_MODEL_OCR",            "Model IA — OCR",                 "Model per OCR d'imatges i PDFs.", "AI_MODELS", false, "string", "gemini-2.5-pro", null, 60),
         new KnownKey("AI_MODEL_SUMMARIES",      "Model IA — Resums",              "Model per resums automàtics.", "AI_MODELS", false, "string", "gpt-5-mini", null, 70),
         new KnownKey("AI_MODEL_IMAGE_GEN",      "Model IA — Generació imatges",   "Model per generació d'imatges (DALL·E, Stable Diffusion...).", "AI_MODELS", false, "string", "dall-e-3", null, 80),
+        new KnownKey("DEMO_AI_PROVIDER",        "Model IA — Demo (proveïdor)",    "Proveïdor per al xat de les demos: anthropic o deepseek.", "AI_MODELS", false, "string", "anthropic", "{\"pattern\":\"^(anthropic|deepseek)$\"}", 90),
+        new KnownKey("DEMO_AI_MODEL",           "Model IA — Demo (model)",        "Model concret per al xat de les demos (per defecte: claude-haiku-4-5-20251001).", "AI_MODELS", false, "string", "claude-haiku-4-5-20251001", null, 91),
 
         // STORAGE
         new KnownKey("STORAGE_DEFAULT_PROVIDER",  "Proveïdor per defecte",      "minio, google_drive, o local.", "STORAGE", false, "string", "minio", "{\"pattern\":\"^(minio|google_drive|local)$\"}", 10),

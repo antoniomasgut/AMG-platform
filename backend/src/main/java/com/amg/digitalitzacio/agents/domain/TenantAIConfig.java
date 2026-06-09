@@ -43,6 +43,15 @@ public class TenantAIConfig {
     @Column(name = "reply_to_email", length = 150)
     private String replyToEmail;
 
+    @Column(name = "overage_token_increment")
+    private Integer overageTokenIncrement = 50_000;
+
+    @Column(name = "monthly_message_budget")
+    private Integer monthlyMessageBudget;
+
+    @Column(name = "overage_message_increment")
+    private Integer overageMessageIncrement = 100;
+
     public static TenantAIConfig defaultFor(UUID tenantId) {
         var c = new TenantAIConfig();
         c.tenantId = tenantId;

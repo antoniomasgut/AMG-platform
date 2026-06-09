@@ -12,6 +12,8 @@ public interface DemoSessionRepository extends JpaRepository<DemoSession, UUID> 
 
     Optional<DemoSession> findByToken(UUID token);
 
+    java.util.List<DemoSession> findAllByOrderByCreatedAtDesc();
+
     // Neteja de sessions expirades (ús en scheduler o tasques de manteniment)
     void deleteByExpiresAtBefore(Instant threshold);
 }

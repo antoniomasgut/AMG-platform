@@ -18,7 +18,7 @@ import java.util.UUID;
 public class Landing {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name = "tenant_id", nullable = false) private UUID tenantId;
-    @Column(name = "service_id", nullable = false) private UUID serviceId;
+    @Column(name = "service_id") private UUID serviceId;
     @Column(nullable = false, length = 200) private String title;
     @Column(nullable = false, length = 100) private String slug;
     @Column(length = 300) private String metaDescription;

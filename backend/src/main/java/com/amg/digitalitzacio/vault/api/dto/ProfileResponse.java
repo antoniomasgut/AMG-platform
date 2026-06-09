@@ -9,11 +9,14 @@ import java.util.UUID;
 
 public record ProfileResponse(
     UUID id, String name, String slug, String description, Boolean isActive,
+    String sector,
     List<ServiceResponse> directServices,
     List<PhaseResponse> phases,
     Instant createdAt, Instant updatedAt
 ) {
-    public record PhaseResponse(UUID id, String name, String description, Integer sortOrder, List<ServiceResponse> services) {}
+    public record PhaseResponse(UUID id, String name, String description, Integer sortOrder,
+                                Integer sectorPhaseNumber, BigDecimal nexeMonthlyPrice,
+                                List<ServiceResponse> services) {}
     public record ServiceResponse(UUID id, String name, String slug, String description, ServiceType type, Boolean isAddon,
                                   BigDecimal cost, BigDecimal salePrice, BigDecimal monthlyPrice, Integer version, Integer sortOrder, List<CredentialFieldResponse> fields) {}
     public record CredentialFieldResponse(UUID id, String key, String label, FieldType fieldType, Boolean isRequired,

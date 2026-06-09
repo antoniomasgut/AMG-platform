@@ -585,7 +585,10 @@
       "backup": "Backups",
       "infraOps": "Infrastruktur",
       "apiKeys": "API-Schlüssel",
-      "serveis": "Dienstleistungen"
+      "serveis": "Dienstleistungen",
+      "documentTemplates": "Dok. Vorlagen",
+      "generatedDocs": "Erzeugte Docs",
+      "knowledge": "Wissensdatenbank"
     }
   },
   "wizard": {

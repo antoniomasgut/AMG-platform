@@ -205,7 +205,7 @@ export default function AgentsPage() {
   });
 
   const updateChannelsMutation = useMutation({
-    mutationFn: (data: { whatsappPhoneNumber?: string; whatsappMetaPhoneNumberId?: string; emailAddress?: string }) =>
+    mutationFn: (data: { widgetEnabled?: boolean; whatsappEnabled?: boolean; emailEnabled?: boolean; whatsappPhoneNumber?: string; whatsappMetaPhoneNumberId?: string; emailAddress?: string }) =>
       updateChannels(tenantId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['channels', tenantId] });
@@ -396,7 +396,7 @@ export default function AgentsPage() {
               <span className="f-mono text-label uppercase text-ink-2 tracking-widest">Estat del bot:</span>
               {channels?.isActive ? (
                 <AMGBadge tone="success">ACTIU</AMGBadge>
-              ) : (channels?.telegramLinked || !!channels?.whatsappPhoneNumber) ? (
+              ) : (channels?.telegramLinked || channels?.widgetEnabled || channels?.whatsappEnabled || channels?.emailEnabled) ? (
                 <AMGBadge tone="warning">ATURAT</AMGBadge>
               ) : (
                 <AMGBadge tone="neutral">PENDENT CONFIGURAR</AMGBadge>
@@ -432,6 +432,31 @@ export default function AgentsPage() {
             {/* Channels */}
             <div className="amg-card card-clip p-6 space-y-4">
               <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Canals</div>
+
+              {/* Widget (Xat web) */}
+              <div className="p-4 bg-bg-1 rounded space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <IconSet.Globe size={18} />
+                    <span className="text-sm font-medium">Xat web (widget)</span>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <span className="text-xs text-ink-3">{channels?.widgetEnabled ? 'Habilitat' : 'Deshabilitat'}</span>
+                    <button
+                      role="switch"
+                      aria-checked={!!channels?.widgetEnabled}
+                      onClick={() => updateChannelsMutation.mutate({ widgetEnabled: !channels?.widgetEnabled })}
+                      disabled={updateChannelsMutation.isPending}
+                      className={`relative w-10 h-5 rounded-full transition-colors ${channels?.widgetEnabled ? 'bg-success' : 'bg-border-base'} disabled:opacity-50`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${channels?.widgetEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </label>
+                </div>
+                <p className="text-xs text-ink-3 pl-7">
+                  Mostra el botó de xat a la landing page del negoci. Requereix que l&apos;agent estigui actiu.
+                </p>
+              </div>
 
               {/* Telegram */}
               <div className="p-4 bg-bg-1 rounded space-y-2">
@@ -476,10 +501,22 @@ export default function AgentsPage() {
                   <div className="flex items-center gap-3">
                     <IconSet.Smartphone size={18} />
                     <span className="text-sm font-medium">WhatsApp</span>
+                    <AMGBadge tone={channels?.whatsappPhoneNumber ? 'success' : 'neutral'}>
+                      {channels?.whatsappPhoneNumber ? 'Configurat' : 'Pendent'}
+                    </AMGBadge>
                   </div>
-                  <AMGBadge tone={channels?.whatsappPhoneNumber ? 'success' : 'neutral'}>
-                    {channels?.whatsappPhoneNumber ? 'Configurat' : 'Pendent'}
-                  </AMGBadge>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <span className="text-xs text-ink-3">{channels?.whatsappEnabled ? 'Habilitat' : 'Deshabilitat'}</span>
+                    <button
+                      role="switch"
+                      aria-checked={!!channels?.whatsappEnabled}
+                      onClick={() => updateChannelsMutation.mutate({ whatsappEnabled: !channels?.whatsappEnabled })}
+                      disabled={updateChannelsMutation.isPending || !channels?.whatsappPhoneNumber}
+                      className={`relative w-10 h-5 rounded-full transition-colors ${channels?.whatsappEnabled ? 'bg-success' : 'bg-border-base'} disabled:opacity-40`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${channels?.whatsappEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </label>
                 </div>
                 {channels?.whatsappPhoneNumber && (
                   <p className="text-xs text-ink-3 pl-7">Telèfon: {channels.whatsappPhoneNumber}</p>
@@ -582,10 +619,22 @@ export default function AgentsPage() {
                   <div className="flex items-center gap-3">
                     <IconSet.Mail size={18} />
                     <span className="text-sm font-medium">Email</span>
+                    <AMGBadge tone={channels?.emailAddress ? 'success' : 'warning'}>
+                      {channels?.emailAddress ? 'Configurat' : 'Pendent configurar'}
+                    </AMGBadge>
                   </div>
-                  <AMGBadge tone={channels?.emailAddress ? 'success' : 'warning'}>
-                    {channels?.emailAddress ? 'Configurat' : 'Pendent configurar'}
-                  </AMGBadge>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <span className="text-xs text-ink-3">{channels?.emailEnabled ? 'Habilitat' : 'Deshabilitat'}</span>
+                    <button
+                      role="switch"
+                      aria-checked={!!channels?.emailEnabled}
+                      onClick={() => updateChannelsMutation.mutate({ emailEnabled: !channels?.emailEnabled })}
+                      disabled={updateChannelsMutation.isPending || !channels?.emailAddress}
+                      className={`relative w-10 h-5 rounded-full transition-colors ${channels?.emailEnabled ? 'bg-success' : 'bg-border-base'} disabled:opacity-40`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${channels?.emailEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </label>
                 </div>
                 {channels?.emailAddress && (
                   <p className="text-xs text-ink-3 pl-7">{channels.emailAddress}</p>
@@ -754,7 +803,7 @@ export default function AgentsPage() {
                   onClick={() => activateMutation.mutate()}
                   disabled={
                     activateMutation.isPending ||
-                    (!channels?.telegramLinked && !channels?.whatsappPhoneNumber)
+                    (!channels?.telegramLinked && !channels?.widgetEnabled && !channels?.whatsappEnabled && !channels?.emailEnabled)
                   }
                   className="px-6 py-3 bg-success text-white rounded font-semibold hover:opacity-90 disabled:opacity-40 flex items-center gap-2"
                 >
@@ -770,9 +819,9 @@ export default function AgentsPage() {
                   {deactivateMutation.isPending ? 'Aturant...' : 'ATURAR BOT'}
                 </button>
               )}
-              {!channels?.isActive && !channels?.telegramLinked && !channels?.whatsappPhoneNumber && (
+              {!channels?.isActive && !channels?.telegramLinked && !channels?.widgetEnabled && !channels?.whatsappEnabled && !channels?.emailEnabled && (
                 <p className="text-xs text-ink-3">
-                  Configura almenys un canal per activar el bot.
+                  Habilita almenys un canal per activar el bot.
                 </p>
               )}
             </div>

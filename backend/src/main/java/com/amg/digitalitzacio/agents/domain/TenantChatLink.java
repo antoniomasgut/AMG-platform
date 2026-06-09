@@ -31,7 +31,16 @@ public class TenantChatLink {
     private Instant linkCodeExpiresAt;
 
     @Builder.Default @Column(nullable = false)
-    private Boolean isActive = true;
+    private Boolean isActive = false;
+
+    @Builder.Default @Column(name = "widget_enabled", nullable = false)
+    private Boolean widgetEnabled = false;
+
+    @Builder.Default @Column(name = "whatsapp_enabled", nullable = false)
+    private Boolean whatsappEnabled = false;
+
+    @Builder.Default @Column(name = "email_enabled", nullable = false)
+    private Boolean emailEnabled = false;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)

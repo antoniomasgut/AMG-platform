@@ -585,7 +585,10 @@
       "backup": "Copias de seguridad",
       "infraOps": "Infraestructura",
       "apiKeys": "Claves API",
-      "serveis": "Servicios"
+      "serveis": "Servicios",
+      "documentTemplates": "Plantillas doc.",
+      "generatedDocs": "Docs generados",
+      "knowledge": "Base de conocimiento"
     }
   },
   "wizard": {

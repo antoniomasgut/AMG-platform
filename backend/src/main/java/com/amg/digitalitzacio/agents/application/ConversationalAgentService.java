@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.agents.application;
 import com.amg.digitalitzacio.agents.application.channel.EmailChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
+import com.amg.digitalitzacio.agents.application.tools.AgentToolRegistry;
 import com.amg.digitalitzacio.agents.domain.*;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.amg.digitalitzacio.shared.ai.ChatMessage;
@@ -43,6 +44,7 @@ public class ConversationalAgentService {
     private final AIProviderRouter aiProviderRouter;
     private final TenantNotificationService notificationService;
     private final GoogleCalendarService googleCalendarService;
+    private final AgentToolRegistry toolRegistry;
     private final ObjectMapper objectMapper;
 
     private static final Pattern BOOKING_TAG = Pattern.compile(
@@ -78,7 +80,9 @@ public class ConversationalAgentService {
             // Sense TX: crida HTTP a l'API d'IA (pot trigar 5-30 s)
             String model = prep.preferredModel() != null ? prep.preferredModel() : aiProviderRouter.defaultModel();
             var provider = aiProviderRouter.forModel(model);
-            String aiResponse = provider.chat(systemPrompt, chatHistory, text);
+            var tools = toolRegistry.definitions();
+            String aiResponse = provider.chatWithTools(systemPrompt, chatHistory, text, tools,
+                    toolRegistry.executorFor(tenantId));
             if (aiResponse == null || aiResponse.isBlank()) {
                 log.warn("AI provider '{}' ha retornat resposta buida per tenant {}", provider.providerName(), tenantId);
                 return;
@@ -136,7 +140,10 @@ public class ConversationalAgentService {
                     .toList();
 
             String model = prep.preferredModel() != null ? prep.preferredModel() : aiProviderRouter.defaultModel();
-            String aiResponse = aiProviderRouter.forModel(model).chat(systemPrompt, chatHistory, text);
+            var provider = aiProviderRouter.forModel(model);
+            var tools = toolRegistry.definitions();
+            String aiResponse = provider.chatWithTools(systemPrompt, chatHistory, text, tools,
+                    toolRegistry.executorFor(tenantId));
             if (aiResponse == null || aiResponse.isBlank()) return null;
 
             // Sense TX: booking tag (no hi ha recordatori per WIDGET)

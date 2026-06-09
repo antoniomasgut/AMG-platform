@@ -7,11 +7,26 @@ import { useToast } from '@/lib/toast-context';
 import {
   getProfile, updateProfile,
   addPhaseToProfile, updatePhase, deletePhase,
-  addServiceToPhase, addServiceToProfile, deleteService, listCatalogServices,
+  addServiceToPhase, addServiceToProfile, deleteService, listCatalogServices, listSectorPhases,
   type CatalogProfileResponse,
   type CatalogPhaseResponse,
   type CatalogServiceDetail,
+  type SectorPhaseResponse,
 } from '@/services/admin';
+import { SIZE_FACTORS } from '@/services/pricing';
+
+const SECTOR_OPTIONS = [
+  { value: 'PINTOR', label: 'Pintor / Electricista / Fontaner / Jardiner' },
+  { value: 'FISIOTERAPEUTA', label: 'Fisioterapeuta / Psicòleg / Nutricionista' },
+  { value: 'PERRUQUERIA', label: 'Perruqueria / Estètica' },
+  { value: 'VETERINARI', label: 'Veterinari / Perruqueria canina' },
+  { value: 'RESTAURANTE', label: 'Restaurant / Bar' },
+  { value: 'ACADEMIA', label: 'Acadèmia / Centre de formació' },
+  { value: 'GESTORIA', label: 'Gestoria / Assessoria' },
+  { value: 'INMOBILIARIA', label: 'Immobiliària' },
+  { value: 'AGENCIA_IA', label: 'Agència IA' },
+  { value: 'DENTISTA', label: 'Dentista / Clínica dental' },
+];
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
@@ -23,7 +38,11 @@ const SERVICE_TYPES = ['CREDENTIALS', 'LANDING', 'AUTOMATION', 'BILLING', 'OTHER
 
 function EditProfileModal({ profile, onClose, onUpdated }: { profile: CatalogProfileResponse; onClose: () => void; onUpdated: () => void }) {
   const { toast } = useToast();
-  const [form, setForm] = useState({ name: profile.name, slug: profile.slug, description: profile.description || '' });
+  const [form, setForm] = useState({
+    name: profile.name, slug: profile.slug,
+    description: profile.description || '',
+    sector: profile.sector || '',
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
@@ -42,7 +61,7 @@ function EditProfileModal({ profile, onClose, onUpdated }: { profile: CatalogPro
     }
     setLoading(true);
     try {
-      await updateProfile(profile.id, form);
+      await updateProfile(profile.id, { ...form, sector: form.sector || '' });
       toast('success', 'Perfil actualitzat');
       onUpdated();
       onClose();
@@ -68,6 +87,14 @@ function EditProfileModal({ profile, onClose, onUpdated }: { profile: CatalogPro
             <FieldError error={errors.name} />
           </div>
           <div>
+            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Sector representatiu</label>
+            <select value={form.sector} onChange={(e) => setForm(f => ({ ...f, sector: e.target.value }))}
+              className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 focus:outline-none focus:border-[#FF6B00]">
+              <option value="">— sense sector —</option>
+              {SECTOR_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+          <div>
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Slug</label>
             <input type="text" required value={form.slug} onChange={(e) => setForm(f => ({ ...f, slug: e.target.value }))}
               className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 focus:outline-none focus:border-[#FF6B00]" />
@@ -88,12 +115,29 @@ function EditProfileModal({ profile, onClose, onUpdated }: { profile: CatalogPro
   );
 }
 
-function AddPhaseModal({ profileId, onClose, onCreated }: { profileId: string; onClose: () => void; onCreated: () => void }) {
+function AddPhaseModal({ profileId, sector, onClose, onCreated }: {
+  profileId: string; sector?: string | null; onClose: () => void; onCreated: () => void;
+}) {
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [sortOrder, setSortOrder] = useState('');
+  const [sectorPhaseNumber, setSectorPhaseNumber] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  const { data: sectorPhases } = useQuery({
+    queryKey: ['sector-phases', sector],
+    queryFn: () => listSectorPhases(sector!),
+    enabled: !!sector,
+  });
+
+  const handleSelectSectorPhase = (phaseNum: string) => {
+    setSectorPhaseNumber(phaseNum);
+    if (phaseNum && sectorPhases) {
+      const sp = sectorPhases.find(p => p.phaseNumber === parseInt(phaseNum));
+      if (sp) { setName(sp.name); setSortOrder(phaseNum); }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +150,10 @@ function AddPhaseModal({ profileId, onClose, onCreated }: { profileId: string; o
     if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return; }
     setLoading(true);
     try {
-      await addPhaseToProfile(profileId, { name, sortOrder: sortOrder ? parseInt(sortOrder) : undefined });
+      await addPhaseToProfile(profileId, {
+        name, sortOrder: sortOrder ? parseInt(sortOrder) : undefined,
+        sectorPhaseNumber: sectorPhaseNumber ? parseInt(sectorPhaseNumber) : undefined,
+      });
       toast('success', 'Fase afegida');
       onCreated();
       onClose();
@@ -125,6 +172,21 @@ function AddPhaseModal({ profileId, onClose, onCreated }: { profileId: string; o
           <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {sector && sectorPhases && sectorPhases.length > 0 && (
+            <div>
+              <label className="f-mono text-label uppercase text-ink-2 block mb-1">Fase del sector</label>
+              <select value={sectorPhaseNumber} onChange={(e) => handleSelectSectorPhase(e.target.value)}
+                className="w-full bg-[#0d0d1a] border border-border-base px-3 h-10 text-sm text-ink-0 focus:outline-none focus:border-[#FF6B00]">
+                <option value="">— selecciona fase —</option>
+                {sectorPhases.map(sp => (
+                  <option key={sp.phaseNumber} value={sp.phaseNumber}>
+                    {sp.phaseNumber}. {sp.name} — {sp.monthlyPrice}€/mes
+                  </option>
+                ))}
+              </select>
+              <p className="f-mono text-[10px] text-ink-3 mt-1">Seleccionar omple el nom i l'ordre automàticament</p>
+            </div>
+          )}
           <div>
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Nom de la fase</label>
             <input type="text" required placeholder="Ex: Configuració bàsica"
@@ -478,7 +540,7 @@ function PhaseCard({ phase, profileId, onUpdated, onDeleted, onAddService }: {
     }
   };
 
-  const totalPrice = phase.services?.reduce((sum, s) => sum + (s.salePrice || 0), 0) ?? 0;
+  const nexeMonthly = phase.nexeMonthlyPrice ?? null;
 
   return (
     <div className="border border-border-base rounded">
@@ -505,7 +567,9 @@ function PhaseCard({ phase, profileId, onUpdated, onDeleted, onAddService }: {
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="f-mono text-xs text-ink-2">{totalPrice.toFixed(2)} €</span>
+                {nexeMonthly !== null ? (
+                  <span className="f-mono text-xs text-ink-2">{nexeMonthly}€<span className="text-ink-3">/mes base</span></span>
+                ) : null}
                 <button onClick={() => { setEditing(true); setEditName(phase.name); setEditSort(String(phase.sortOrder ?? '')); }}
                   className="text-ink-2 hover:text-accent-light transition"><IconSet.Edit size={14} /></button>
                 <button onClick={handleDelete} className="text-ink-2 hover:text-danger transition"><IconSet.Trash size={14} /></button>
@@ -561,8 +625,9 @@ export default function ProfileDetailPage() {
   const phaseServiceCount = profile?.phases?.reduce((a, p) => a + (p.services?.length ?? 0), 0) ?? 0;
   const directServiceCount = profile?.directServices?.length ?? 0;
   const totalServiceCount = phaseServiceCount + directServiceCount;
-  const totalPrice = (profile?.phases?.reduce((a, p) => a + (p.services?.reduce((s, sv) => s + (sv.salePrice || 0), 0) ?? 0), 0) ?? 0)
-    + (profile?.directServices?.reduce((s, sv) => s + (sv.salePrice || 0), 0) ?? 0);
+
+  const baseMonthly = (profile?.phases ?? [])
+    .reduce((sum, p) => sum + (p.nexeMonthlyPrice ?? 0), 0);
 
   if (isLoading) {
     return (
@@ -596,6 +661,11 @@ export default function ProfileDetailPage() {
             <div className="flex items-center gap-3 mt-1">
               <div className="f-display font-bold text-xl">{profile.name}</div>
               {!profile.isActive && <AMGBadge tone="neutral">Inactiu</AMGBadge>}
+              {profile.sector && (
+                <span className="f-mono text-[10px] uppercase tracking-wider bg-accent-muted text-accent-light px-2 py-0.5 rounded border border-accent/20">
+                  {profile.sector}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 mt-1 text-sm text-ink-2">
               <span className="f-mono text-xs text-ink-3">/{profile.slug}</span>
@@ -622,8 +692,27 @@ export default function ProfileDetailPage() {
             <div className="f-display font-bold text-2xl text-accent-light mt-2">{totalServiceCount}</div>
           </div>
           <div className="card-clip amg-card p-5">
-            <span className="f-mono uppercase text-label tracking-widest text-ink-3">Preu total</span>
-            <div className="f-display font-bold text-2xl text-accent-light mt-2">{totalPrice.toFixed(2)} €</div>
+            <span className="f-mono uppercase text-label tracking-widest text-ink-3">Preus NexeLocal</span>
+            {baseMonthly > 0 ? (
+              <div className="mt-2 space-y-1.5">
+                {(['AUTONOMO', 'PETIT', 'MITJA'] as const).map(size => (
+                  <div key={size} className="flex items-center justify-between">
+                    <span className="f-mono text-[10px] text-ink-3 uppercase">
+                      {size === 'AUTONOMO' ? 'Autònom' : size === 'PETIT' ? 'Petit' : 'Mitja'}
+                    </span>
+                    <span className="f-mono text-sm text-accent-light font-bold">
+                      {Math.round(baseMonthly * SIZE_FACTORS[size])}€
+                      <span className="text-ink-3 text-[9px]">/mes</span>
+                    </span>
+                  </div>
+                ))}
+                <div className="f-mono text-[9px] text-ink-3 pt-0.5 border-t border-border-base">
+                  OFICIS base · ×1.0–1.8 per sector
+                </div>
+              </div>
+            ) : (
+              <div className="f-mono text-xs text-ink-3 mt-2">Sense fases F1–F5</div>
+            )}
           </div>
         </div>
 
@@ -700,7 +789,7 @@ export default function ProfileDetailPage() {
       </div>
 
       {showEditProfile && <EditProfileModal profile={profile} onClose={() => setShowEditProfile(false)} onUpdated={invalidate} />}
-      {showAddPhase && <AddPhaseModal profileId={profile.id} onClose={() => setShowAddPhase(false)} onCreated={invalidate} />}
+      {showAddPhase && <AddPhaseModal profileId={profile.id} sector={profile.sector} onClose={() => setShowAddPhase(false)} onCreated={invalidate} />}
       {showAddDirectService && <AddDirectServiceModal profileId={profile.id} onClose={() => setShowAddDirectService(false)} onCreated={invalidate} />}
       {addServicePhaseId && (
         <AddServiceToPhaseModal phaseId={addServicePhaseId}

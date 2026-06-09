@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.vault.domain;
 
+import com.amg.digitalitzacio.auth.domain.BusinessSector;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -19,6 +20,7 @@ public class ServiceProfile {
     @Column(nullable = false, length = 60, unique = true) private String slug;
     @Column(length = 255) private String description;
     @Builder.Default @Column(nullable = false) private Boolean isActive = true;
+    @Enumerated(EnumType.STRING) @Column(length = 30) private BusinessSector sector;
     @CreatedDate @Column(updatable = false) private Instant createdAt;
     @LastModifiedDate private Instant updatedAt;
 }

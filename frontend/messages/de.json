@@ -417,6 +417,543 @@
     "configure": "Konfigurieren",
     "reject": "Ablehnen"
   },
+  "wizard": {
+    "start": "Starten",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "finish": "Abschließen",
+    "cancel": "Später konfigurieren",
+    "step": "Schritt {current} von {total}",
+    "verify": "Verbindung testen",
+    "verify_success": "Verbindung erfolgreich",
+    "verify_error": "Überprüfung fehlgeschlagen",
+    "verify_loading": "Wird überprüft...",
+    "copy": "Kopieren",
+    "copied": "Kopiert!",
+    "complete_title": "Einrichtung abgeschlossen!",
+    "complete_cta": "Zurück zum Tenant",
+    "whatsapp": {
+      "title": "Einrichtung: WhatsApp Business",
+      "description": "Wir konfigurieren die WhatsApp Business API für Ihren Kunden. Dieser Dienst ermöglicht das automatische Senden und Empfangen von WhatsApp-Nachrichten über das Portal.",
+      "prerequisites": "Sie benötigen: WhatsApp Business API-Schlüssel, verifizierte Telefonnummer und Meta Developers Account ID.",
+      "step1": {
+        "title": "API-Zugangsdaten",
+        "description": "Geben Sie Ihre WhatsApp Business API-Zugangsdaten ein."
+      },
+      "step2": {
+        "title": "Webhook-Konfiguration",
+        "description": "Richten Sie den Webhook ein, um Nachrichten automatisch zu empfangen."
+      },
+      "step3": {
+        "title": "Überprüfung",
+        "description": "Testen Sie die Verbindung, um sicherzustellen, dass alles korrekt funktioniert."
+      },
+      "field": {
+        "api_key": "API-Schlüssel",
+        "phone": "Telefonnummer",
+        "account_id": "Account ID",
+        "webhook_url": "Webhook-URL",
+        "webhook_placeholder": "https://example.com/webhook"
+      }
+    },
+    "smtp": {
+      "title": "Einrichtung: Unternehmens-SMTP",
+      "description": "Wir konfigurieren den SMTP-Server für die Unternehmens-E-Mail Ihres Kunden. Dieser Dienst ermöglicht das Versenden von E-Mails über beliebige E-Mail-Clients.",
+      "prerequisites": "Sie benötigen: SMTP-Server, Port, Benutzername und Passwort Ihres Mail-Anbieters.",
+      "step1": {
+        "title": "Serverkonfiguration",
+        "description": "Geben Sie die SMTP-Serverdetails ein."
+      },
+      "step2": {
+        "title": "Überprüfung",
+        "description": "Senden Sie eine Test-E-Mail, um sicherzustellen, dass der Server korrekt funktioniert."
+      },
+      "field": {
+        "host": "SMTP-Server",
+        "host_placeholder": "smtp.example.com",
+        "port": "Port",
+        "port_placeholder": "587",
+        "user": "Benutzername",
+        "user_placeholder": "email@example.com",
+        "password": "Passwort",
+        "security": "Sicherheit"
+      },
+      "security": {
+        "tls": "TLS",
+        "ssl": "SSL",
+        "none": "Keine"
+      }
+    },
+    "landing": {
+      "title": "Einrichtung: Landing Page",
+      "description": "Wir erstellen die Landing Page Ihres Kunden auf Basis einer Vorlage. Sie können das Design auswählen und den Inhalt anpassen.",
+      "prerequisites": "Sie benötigen: Kundeninhalte (Texte, Bilder, soziale Netzwerke, Öffnungszeiten).",
+      "step1": {
+        "title": "Vorlage auswählen",
+        "description": "Wählen Sie die Vorlage, die am besten zum Unternehmen des Kunden passt."
+      },
+      "step2": {
+        "title": "Inhalte ausfüllen",
+        "description": "Passen Sie jeden Abschnitt mit den Informationen des Kunden an."
+      },
+      "step3": {
+        "title": "Veröffentlichen",
+        "description": "Überprüfen Sie die Landing Page und veröffentlichen Sie sie."
+      },
+      "field": {
+        "template": "Vorlage"
+      }
+    },
+    "landing_extra": {
+      "description": "Zusätzliche Landing Page für Ihren Kunden. Der Prozess ist identisch mit einer Standard-Landing-Page."
+    },
+    "common": {
+      "yes": "Ja",
+      "no": "Nein"
+    },
+    "agenda": {
+      "title": "Einrichtung: Online-Terminbuchung",
+      "description": "Wir konfigurieren ein Online-Buchungssystem. Kunden können Termine direkt über einen Link buchen.",
+      "prerequisites": "Sie benötigen: Google Calendar oder Calendly API-Schlüssel.",
+      "step1": {
+        "title": "Kalenderintegration",
+        "description": "Verbinden Sie den Kalender, in dem Termine erstellt werden."
+      },
+      "step2": {
+        "title": "Bestätigungsvorlage",
+        "description": "Konfigurieren Sie die Bestätigungsnachricht, die dem Kunden gesendet wird."
+      },
+      "step3": {
+        "title": "Überprüfung",
+        "description": "Testen Sie, ob der Buchungsablauf korrekt funktioniert."
+      },
+      "field": {
+        "calendar_type": "Kalendertyp",
+        "api_key": "API-Schlüssel",
+        "api_key_hint": "Google OAuth-Zugangsdaten oder Calendly API-Schlüssel",
+        "confirmation": "Bestätigungsnachricht",
+        "confirmation_placeholder": "Hallo! Ihr Termin wurde für den {{date}} bestätigt."
+      },
+      "calendar": {
+        "google": "Google Calendar",
+        "calendly": "Calendly"
+      }
+    },
+    "recordatori": {
+      "title": "Einrichtung: 24-Stunden-Erinnerung",
+      "description": "Wir konfigurieren eine automatische Telegram-Erinnerung vor Terminen.",
+      "prerequisites": "Sie benötigen: Telegram auf dem Mobilgerät installiert.",
+      "step1": {
+        "title": "Nachricht konfigurieren",
+        "description": "Legen Sie die Erinnerungsnachricht fest, die der Kunde erhalten wird."
+      },
+      "step2": {
+        "title": "Telegram verknüpfen",
+        "description": "Teilen Sie den Verknüpfungscode mit dem Kunden, damit er sich mit dem Bot verbinden kann."
+      },
+      "step3": {
+        "title": "Aktivieren",
+        "description": "Aktivieren Sie den Erinnerungsdienst."
+      },
+      "field": {
+        "template": "Erinnerungsvorlage",
+        "template_placeholder": "Hallo! Sie haben morgen um {{time}} Uhr einen Termin. Können Sie bestätigen?",
+        "hours": "Stunden vor der Erinnerung",
+        "link_code": "Telegram-Verknüpfungscode"
+      }
+    },
+    "reenganxament": {
+      "title": "Einrichtung: Kundenrückgewinnung",
+      "description": "Wir konfigurieren ein System, das automatisch WhatsApp-Nachrichten an inaktive Kunden sendet, um diese zurückzugewinnen.",
+      "prerequisites": "Sie benötigen: CRM API-Schlüssel und URL.",
+      "step1": {
+        "title": "CRM verbinden",
+        "description": "Verbinden Sie das CRM, um inaktive Kunden zu erkennen."
+      },
+      "step2": {
+        "title": "Konfiguration",
+        "description": "Definieren Sie den Inaktivitätszeitraum und die Nachricht."
+      },
+      "step3": {
+        "title": "Aktivieren",
+        "description": "Aktivieren Sie den Rückgewinnungs-Workflow."
+      },
+      "field": {
+        "api_url": "CRM-URL",
+        "api_url_placeholder": "https://api.example.com/crm",
+        "api_key": "CRM API-Schlüssel",
+        "months": "Monate der Inaktivität",
+        "template": "Angebotsvorlage",
+        "template_placeholder": "Schön, Sie wiederzusehen! Holen Sie sich {{rabatt}} Rabatt bei Ihrem nächsten Besuch diese Woche."
+      }
+    },
+    "ressenya": {
+      "title": "Einrichtung: Google-Bewertung",
+      "description": "Wir konfigurieren ein System, das nach jedem abgeschlossenen Service automatisch Google-Bewertungen anfordert.",
+      "prerequisites": "Sie benötigen: den Google Reviews-Link Ihres Kunden.",
+      "step1": {
+        "title": "Google Reviews-Link",
+        "description": "Geben Sie den Google Reviews-Link ein."
+      },
+      "step2": {
+        "title": "Automatischer Auslöser",
+        "description": "Der Workflow wird automatisch aktiviert, wenn ein Service im CRM abgeschlossen wird."
+      },
+      "step3": {
+        "title": "Aktivieren",
+        "description": "Aktivieren Sie den Bewertungs-Workflow."
+      },
+      "field": {
+        "url": "Google Reviews-Link",
+        "url_placeholder": "https://g.page/r/XXXXXXXXX/review"
+      }
+    },
+    "calculadora": {
+      "title": "Einrichtung: Angebotsrechner",
+      "description": "Wir konfigurieren ein interaktives Formular, das Angebote automatisch berechnet und versendet.",
+      "prerequisites": "Sie benötigen: die Preiskalkulationsregeln des Unternehmens.",
+      "step1": {
+        "title": "Berechnungsregeln",
+        "description": "Definieren Sie, wie das Angebot auf Basis der Formulardaten berechnet wird."
+      },
+      "step2": {
+        "title": "Benachrichtigung",
+        "description": "Konfigurieren Sie die Angebotsvorlage, die dem Kunden gesendet wird."
+      },
+      "step3": {
+        "title": "Aktivieren",
+        "description": "Aktivieren Sie den Berechnungs- und Versand-Workflow."
+      },
+      "field": {
+        "rules": "Berechnungsregeln",
+        "rules_placeholder": "z. B.: m2 * 50€ + Anfahrtskosten",
+        "template": "Angebotsvorlage",
+        "template_placeholder": "Angebot für {{kunde}}: {{gesamt}}€"
+      }
+    },
+    "crm": {
+      "title": "Einrichtung: CRM + Pipeline",
+      "description": "Wir konfigurieren das Lead-Verfolgungssystem (Neu → Angeboten → Abgeschlossen).",
+      "prerequisites": "Keine externen API-Schlüssel erforderlich. Das CRM ist im Portal integriert.",
+      "step1": {
+        "title": "Pipeline-Phasen",
+        "description": "Definieren Sie die Phasen Ihrer Verkaufspipeline."
+      },
+      "step2": {
+        "title": "Benachrichtigungen",
+        "description": "Konfigurieren Sie Benachrichtigungen für jeden Phasenwechsel."
+      },
+      "step3": {
+        "title": "Aktivieren",
+        "description": "Aktivieren Sie die Pipeline."
+      },
+      "field": {
+        "stages": "Phasen (kommagetrennt)",
+        "stages_placeholder": "Neu, Kontaktiert, Angeboten, Abgeschlossen",
+        "notify_whatsapp": "Per WhatsApp benachrichtigen?"
+      }
+    },
+    "galeria": {
+      "title": "Einrichtung: Fotogalerie",
+      "description": "Wir konfigurieren eine Fotogalerie zur Präsentation abgeschlossener Arbeiten.",
+      "prerequisites": "Sie benötigen: Fotos der Arbeiten des Kunden.",
+      "step1": {
+        "title": "Fotos hochladen",
+        "description": "Laden Sie Fotos hoch und organisieren Sie diese nach Kategorien."
+      },
+      "step2": {
+        "title": "Veröffentlichen",
+        "description": "Veröffentlichen Sie die Galerie."
+      },
+      "field": {
+        "categories": "Kategorien (kommagetrennt)",
+        "categories_placeholder": "Renovierungen, Reinigung, Installationen"
+      }
+    },
+    "cobrament": {
+      "title": "Einrichtung: Kartenzahlung",
+      "description": "Wir konfigurieren das Stripe-Zahlungssystem zur Annahme von Kreditkarten.",
+      "prerequisites": "Sie benötigen: Stripe API-Schlüssel (Secret Key, Public Key und Webhook Secret).",
+      "step1": {
+        "title": "Stripe-Zugangsdaten",
+        "description": "Geben Sie Ihre Stripe API-Schlüssel ein."
+      },
+      "step2": {
+        "title": "Stripe-Webhook",
+        "description": "Konfigurieren Sie den Webhook, um Zahlungsbenachrichtigungen zu empfangen."
+      },
+      "step3": {
+        "title": "Überprüfung",
+        "description": "Führen Sie eine Testzahlung durch."
+      },
+      "field": {
+        "secret_key": "Stripe Secret Key",
+        "public_key": "Stripe Public Key",
+        "webhook_secret": "Stripe Webhook Secret",
+        "webhook": "Webhook-URL (in Stripe konfigurieren)"
+      }
+    },
+    "facturacio": {
+      "title": "Einrichtung: Automatische Rechnungsstellung",
+      "description": "Wir konfigurieren die automatische Rechnungserstellung und den Versand über Holded.",
+      "prerequisites": "Sie benötigen: Holded API-Schlüssel und die steuerlichen Daten des Kunden (USt-IdNr., Adresse).",
+      "step1": {
+        "title": "Holded-Zugangsdaten",
+        "description": "Geben Sie den Holded API-Schlüssel und die steuerlichen Daten des Kunden ein."
+      },
+      "step2": {
+        "title": "Abrechnungszeitraum",
+        "description": "Wählen Sie den Tag des Monats für die Rechnungserstellung."
+      },
+      "step3": {
+        "title": "Überprüfung",
+        "description": "Testen Sie die Erstellung einer Musterrechnung."
+      },
+      "field": {
+        "api_key": "Holded API-Schlüssel",
+        "vat": "USt-IdNr. des Kunden",
+        "vat_placeholder": "DE123456789",
+        "address": "Rechnungsadresse",
+        "address_placeholder": "Musterstraße 1, 10115 Berlin",
+        "day": "Rechnungstag"
+      }
+    },
+    "analytics": {
+      "title": "Einrichtung: Google Analytics",
+      "description": "Wir konfigurieren Google Analytics 4 + Search Console für die Messung von Kennzahlen.",
+      "prerequisites": "Sie benötigen: GA4 Property ID und Google OAuth-Zugangsdaten.",
+      "step1": {
+        "title": "Google-Zugangsdaten",
+        "description": "Geben Sie die GA4 Property ID und OAuth-Zugangsdaten ein."
+      },
+      "step2": {
+        "title": "Überprüfung",
+        "description": "Überprüfen Sie, ob das Tracking korrekt funktioniert."
+      },
+      "field": {
+        "property_id": "GA4 Property ID",
+        "property_id_placeholder": "G-XXXXXXXXXX",
+        "oauth": "Google OAuth-Zugangsdaten (JSON)"
+      }
+    },
+    "xat": {
+      "title": "Einrichtung: Web-Chat",
+      "description": "Wir konfigurieren ein Live-Chat-Widget für die Website des Kunden.",
+      "prerequisites": "Sie benötigen: API-Schlüssel des Chat-Dienstes (Tawk.to, Crisp usw.) oder des KI-Bots.",
+      "step1": {
+        "title": "Chat-Zugangsdaten",
+        "description": "Geben Sie die Zugangsdaten des Chat-Dienstes ein."
+      },
+      "step2": {
+        "title": "Überprüfung",
+        "description": "Testen Sie, ob der Chat korrekt funktioniert."
+      },
+      "field": {
+        "api_key": "Chat API-Schlüssel",
+        "widget_id": "Widget ID (optional)"
+      }
+    },
+    "formulari": {
+      "title": "Einrichtung: Lead-Formular",
+      "description": "Wir konfigurieren ein Kontaktformular, das automatisch Daten in das CRM einspeist.",
+      "prerequisites": "Keine externen API-Schlüssel erforderlich.",
+      "step1": {
+        "title": "Konfiguration",
+        "description": "Legen Sie fest, wohin Lead-Benachrichtigungen gesendet werden."
+      },
+      "step2": {
+        "title": "Aktivieren",
+        "description": "Aktivieren Sie das Formular."
+      },
+      "field": {
+        "email": "Benachrichtigungs-E-Mail",
+        "email_placeholder": "kunde@example.com"
+      }
+    },
+    "quest": {
+      "title": "Einrichtung: Gesundheitsfragebogen",
+      "description": "Wir konfigurieren ein Vorbesuchsformular für medizinische Fachkräfte.",
+      "prerequisites": "Sie benötigen: die Fragen des Fragebogens.",
+      "step1": {
+        "title": "Fragen",
+        "description": "Geben Sie die Fragen des Fragebogens ein."
+      },
+      "step2": {
+        "title": "Aktivieren",
+        "description": "Aktivieren Sie den Fragebogen."
+      },
+      "field": {
+        "questions": "Fragen (kommagetrennt)",
+        "questions_placeholder": "Alter, Allergien, Medikamente, Besuchsgrund"
+      }
+    },
+    "historial": {
+      "title": "Einrichtung: Krankenakte",
+      "description": "Wir konfigurieren die digitale Patientenakte mit Krankengeschichte.",
+      "prerequisites": "Keine externen API-Schlüssel erforderlich.",
+      "step1": {
+        "title": "Aktenfelder",
+        "description": "Definieren Sie die Felder der Patientenakte."
+      },
+      "step2": {
+        "title": "Aktivieren",
+        "description": "Aktivieren Sie das Krankenaktenmodul."
+      },
+      "field": {
+        "config": "Aktenfelder (kommagetrennt)",
+        "config_placeholder": "Name, Telefon, Allergien, Notizen"
+      }
+    },
+    "telegram": {
+      "title": "Einrichtung: Telegram-Bot",
+      "description": "Wir konfigurieren einen Telegram-Bot für Ihren Kunden. Der Bot kann Benachrichtigungen senden, Anfragen beantworten und vieles mehr.",
+      "prerequisites": "Sie benötigen: den Telegram-Bot-Token (von @BotFather) und einen Benutzernamen für den Bot.",
+      "step1": {
+        "title": "Bot-Zugangsdaten",
+        "description": "Geben Sie den Telegram-Bot-Token und Benutzernamen ein."
+      },
+      "step2": {
+        "title": "Webhook",
+        "description": "Konfigurieren Sie den Webhook, um Nachrichten zu empfangen."
+      },
+      "step3": {
+        "title": "Befehle",
+        "description": "Definieren Sie die Befehle, die der Bot verstehen soll."
+      },
+      "step4": {
+        "title": "Überprüfung",
+        "description": "Testen Sie, ob der Bot korrekt antwortet."
+      },
+      "field": {
+        "token": "Bot-Token",
+        "token_hint": "Erhalten Sie ihn von @BotFather auf Telegram",
+        "username": "Bot-Benutzername",
+        "username_placeholder": "beispiel_bot",
+        "webhook": "Webhook-URL (in Telegram konfigurieren)",
+        "commands": "Benutzerdefinierte Befehle",
+        "commands_placeholder": "/start, /hilfe, /preise",
+        "commands_hint": "Befehle durch Kommas trennen"
+      }
+    },
+    "bot_ia": {
+      "title": "Einrichtung: Einfacher KI-Bot",
+      "description": "Wir konfigurieren einen KI-gestützten virtuellen Assistenten für Ihren Kunden.",
+      "prerequisites": "Sie benötigen: API-Schlüssel des KI-Anbieters und den Bot-Namen.",
+      "step1": {
+        "title": "API-Konfiguration",
+        "description": "Geben Sie den API-Schlüssel ein und wählen Sie das KI-Modell."
+      },
+      "step2": {
+        "title": "Begrüßungsnachricht",
+        "description": "Konfigurieren Sie die Begrüßungsnachricht des Bots."
+      },
+      "step3": {
+        "title": "Überprüfung",
+        "description": "Testen Sie, ob der Bot korrekt antwortet."
+      },
+      "field": {
+        "api_key": "API-Schlüssel",
+        "model": "KI-Modell",
+        "name": "Bot-Name",
+        "name_placeholder": "z. B.: Virtueller Assistent",
+        "welcome": "Begrüßungsnachricht",
+        "welcome_placeholder": "Hallo! Wie kann ich Ihnen helfen?"
+      },
+      "model": {
+        "sonnet": "Claude Sonnet 4.6",
+        "haiku": "Claude Haiku 4.5",
+        "gpt4o": "GPT-4o"
+      }
+    },
+    "bot_ia_rag": {
+      "title": "Einrichtung: Erweiterter KI-Bot (RAG)",
+      "description": "Wir konfigurieren einen virtuellen Assistenten mit Zugriff auf die benutzerdefinierten Dokumente Ihres Kunden.",
+      "prerequisites": "Sie benötigen: API-Schlüssel des KI-Anbieters, Bot-Name und Referenzdokumente.",
+      "step1": {
+        "title": "API-Konfiguration",
+        "description": "Geben Sie den API-Schlüssel ein und wählen Sie das KI-Modell."
+      },
+      "step2": {
+        "title": "Referenzdokumente",
+        "description": "Fügen Sie Dokument-URLs hinzu, die der Bot zur Beantwortung von Fragen verwenden soll."
+      },
+      "step3": {
+        "title": "Überprüfung",
+        "description": "Testen Sie, ob der Bot auf Basis der Dokumente antwortet."
+      },
+      "field": {
+        "api_key": "API-Schlüssel",
+        "model": "KI-Modell",
+        "name": "Bot-Name",
+        "name_placeholder": "z. B.: Dokumentenassistent",
+        "documents": "Referenzdokumente",
+        "documents_hint": "Kommagetrennte URLs eingeben",
+        "documents_placeholder": "https://example.com/dokument.pdf, https://..."
+      },
+      "model": {
+        "sonnet": "Claude Sonnet 4.6",
+        "haiku": "Claude Haiku 4.5"
+      }
+    },
+    "automation": {
+      "title": "Einrichtung: n8n-Automatisierung",
+      "description": "Wir verbinden das Portal mit n8n, um die Automatisierungen Ihres Kunden zu verwalten.",
+      "prerequisites": "Sie benötigen: n8n-Server-URL und API-Schlüssel.",
+      "step1": {
+        "title": "n8n-Verbindung",
+        "description": "Geben Sie die n8n-Server-URL und den API-Schlüssel ein."
+      },
+      "step2": {
+        "title": "Verfügbare Workflows",
+        "description": "Überprüfen Sie die vordefinierten Workflows, die aktiviert werden."
+      },
+      "step3": {
+        "title": "Überprüfung",
+        "description": "Testen Sie die Verbindung zu n8n."
+      },
+      "field": {
+        "url": "n8n-URL",
+        "url_placeholder": "https://n8n.example.com",
+        "api_key": "API-Schlüssel"
+      }
+    },
+    "domain": {
+      "title": "Einrichtung: Domain",
+      "description": "Wir konfigurieren die benutzerdefinierte Domain für Ihren Kunden.",
+      "prerequisites": "Sie benötigen: den Domainnamen und Zugang zum DNS-Panel Ihres Registrars.",
+      "step1": {
+        "title": "Domainname",
+        "description": "Geben Sie den Domainnamen ein und wählen Sie den Verwaltungstyp."
+      },
+      "step2": {
+        "title": "DNS-Konfiguration",
+        "description": "Kopieren Sie die Nameserver zu Ihrem Domain-Registrar."
+      },
+      "step3": {
+        "title": "Überprüfung",
+        "description": "Warten Sie auf die DNS-Propagierung und überprüfen Sie die Domain."
+      },
+      "field": {
+        "name": "Domainname",
+        "name_placeholder": "beispiel.de",
+        "type": "Verwaltungstyp",
+        "ns1": "Nameserver 1",
+        "ns2": "Nameserver 2"
+      },
+      "type": {
+        "managed": "Verwaltet (inklusive)",
+        "self": "Selbstverwaltet"
+      }
+    },
+    "validation": {
+      "phone": "Die Telefonnummer ist ungültig",
+      "required": "Dieses Feld ist erforderlich",
+      "url": "Die URL ist ungültig",
+      "email": "Die E-Mail-Adresse ist ungültig",
+      "port": "Der Port ist ungültig",
+      "domain": "Das Domainformat ist ungültig"
+    }
+  },
   "portalNav": {
     "groups": {
       "summary": "Übersicht",

@@ -17,7 +17,15 @@ export function AgencyChatWidget() {
   const [input, setInput]             = useState('');
   const [loading, setLoading]         = useState(false);
   const [sessionId, setSessionId]     = useState<string | null>(null);
+  const [enabled, setEnabled]         = useState<boolean | null>(null);
   const endRef                        = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/chat/agency/status`)
+      .then(r => r.json())
+      .then(d => setEnabled(!!d.enabled))
+      .catch(() => setEnabled(false));
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem('amg_agency_sid');
@@ -87,6 +95,8 @@ export function AgencyChatWidget() {
     setName('');
     setInput('');
   }
+
+  if (!enabled) return null;
 
   return (
     <>

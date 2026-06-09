@@ -141,10 +141,12 @@ public class EngineOrchestrator implements EngineService {
             throw new ResourceNotFoundException("Landing not found: " + landingId);
         }
 
-        var versionCount = landingVersionRepository.countByLandingId(landingId);
+        var loc = request.locale() != null && !request.locale().isBlank() ? request.locale() : "ca";
+        var versionCount = landingVersionRepository.countByLandingIdAndLocale(landingId, loc);
         var version = LandingVersion.builder()
                 .landingId(landingId)
                 .versionNumber((int) versionCount + 1)
+                .locale(loc)
                 .status(VersionStatus.DRAFT)
                 .content(toJson(request.content() != null ? request.content() : Map.of("blocks", List.of())))
                 .styles(toJson(request.styles()))
@@ -177,20 +179,22 @@ public class EngineOrchestrator implements EngineService {
 
     @Override
     @Transactional
-    public PublishResponse publish(UUID landingId) {
+    public PublishResponse publish(UUID landingId, String locale) {
         var landing = landingRepository.findById(landingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Landing not found: " + landingId));
+        var loc = locale != null && !locale.isBlank() ? locale : "ca";
 
         var draft = landingVersionRepository
-                .findTopByLandingIdAndStatusOrderByVersionNumberDesc(landingId, VersionStatus.DRAFT)
-                .orElseThrow(() -> new IllegalArgumentException("No DRAFT version to publish"));
+                .findTopByLandingIdAndLocaleAndStatusOrderByVersionNumberDesc(landingId, loc, VersionStatus.DRAFT)
+                .orElseThrow(() -> new IllegalArgumentException("No DRAFT version to publish for locale: " + loc));
 
         draft.setStatus(VersionStatus.PUBLISHED);
         draft.setPublishedAt(Instant.now());
         landingVersionRepository.save(draft);
 
         landing.setStatus(LandingStatus.PUBLISHED);
-        landing.setPublishedVersionId(draft.getId());
+        // published_version_id always tracks the 'ca' version for backward compat
+        if ("ca".equals(loc)) landing.setPublishedVersionId(draft.getId());
         landingRepository.save(landing);
 
         var publicUrl = buildPublicUrl(landing);
@@ -301,16 +305,24 @@ public class EngineOrchestrator implements EngineService {
 
     @Override
     @Transactional(readOnly = true)
-    public String renderLanding(String slug, String host) {
+    public String renderLanding(String slug, String host, String locale) {
         var landing = landingRepository.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Landing not found: " + slug));
 
-        if (landing.getStatus() != LandingStatus.PUBLISHED || landing.getPublishedVersionId() == null) {
+        if (landing.getStatus() != LandingStatus.PUBLISHED) {
             throw new ResourceNotFoundException("Landing not published: " + slug);
         }
 
-        var version = landingVersionRepository.findById(landing.getPublishedVersionId())
-                .orElseThrow(() -> new ResourceNotFoundException("Published version not found"));
+        var loc = locale != null && !locale.isBlank() ? locale : "ca";
+        // Fallback: requested locale → 'ca'
+        var version = landingVersionRepository
+                .findByLandingIdAndLocaleAndStatus(landing.getId(), loc, VersionStatus.PUBLISHED)
+                .or(() -> landingVersionRepository.findByLandingIdAndLocaleAndStatus(landing.getId(), "ca", VersionStatus.PUBLISHED))
+                // legacy fallback: use published_version_id directly
+                .or(() -> landing.getPublishedVersionId() != null
+                        ? landingVersionRepository.findById(landing.getPublishedVersionId())
+                        : Optional.empty())
+                .orElseThrow(() -> new ResourceNotFoundException("Published version not found for locale: " + loc));
 
         // Increment view count
         landing.setViewCount(landing.getViewCount() + 1);
@@ -615,6 +627,7 @@ public class EngineOrchestrator implements EngineService {
         return new VersionResponse(
                 version.getId(),
                 version.getVersionNumber(),
+                version.getLocale() != null ? version.getLocale() : "ca",
                 version.getStatus().name(),
                 fromJson(version.getContent()),
                 fromJson(version.getStyles()),
@@ -701,10 +714,11 @@ public class EngineOrchestrator implements EngineService {
 
         // Schema.org sempre present (nom i URL com a mínim)
         var schemaJson   = buildSchemaOrg(landing.getTitle(), publicUrl, phone.toString(), address.toString(), bizType.toString());
-        var waButton     = buildWhatsAppButton(waNumber);
+        boolean hasChatWidget = chatEnabled || hasChatCta;
+        var waButton     = buildWhatsAppButton(waNumber, hasChatWidget);
         // GA4: s'injecta però s'activa NOMÉS quan l'usuari accepta cookies
         var gaScript     = buildGa4ScriptDeferred(gaId.toString());
-        var chatWidget   = (chatEnabled || hasChatCta) ? buildChatWidget(landing.getSlug(), sv.primary(), chatBizName) : "";
+        var chatWidget   = hasChatWidget ? buildChatWidget(landing.getSlug(), sv.primary(), chatBizName) : "";
         var cookieBanner = buildCookieBanner(sv.primary(), legalBase);
         final String heroPreload = heroImageUrl.isBlank() ? "" :
                 "<link rel=\"preload\" as=\"image\" href=\"" + escapeHtml(heroImageUrl) + "\">";
@@ -770,9 +784,11 @@ public class EngineOrchestrator implements EngineService {
         return sb.toString();
     }
 
-    private String buildWhatsAppButton(String waNumber) {
+    private String buildWhatsAppButton(String waNumber, boolean chatPresent) {
         if (waNumber.isBlank()) return "";
-        return "<a href=\"https://wa.me/" + escapeHtml(waNumber) + "\" target=\"_blank\" rel=\"noopener\" class=\"wa-btn\" aria-label=\"Contacta per WhatsApp\">" +
+        // Quan hi ha widget de xat, pugem el botó de WhatsApp per evitar solapament
+        String waExtraStyle = chatPresent ? " style=\"bottom:96px\"" : "";
+        return "<a href=\"https://wa.me/" + escapeHtml(waNumber) + "\" target=\"_blank\" rel=\"noopener\" class=\"wa-btn\"" + waExtraStyle + " aria-label=\"Contacta per WhatsApp\">" +
                "<svg width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"#fff\">" +
                "<path d=\"M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z\"/>" +
                "<path d=\"M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.117 1.528 5.845L0 24l6.336-1.508A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.804 9.804 0 01-5.003-1.368l-.358-.213-3.722.885.916-3.618-.234-.372A9.807 9.807 0 012.182 12C2.182 6.562 6.562 2.182 12 2.182S21.818 6.562 21.818 12 17.438 21.818 12 21.818z\"/>" +
@@ -807,7 +823,7 @@ public class EngineOrchestrator implements EngineService {
     }
 
     private String buildWhatsAppCss() {
-        return ".wa-btn{position:fixed;bottom:24px;right:24px;z-index:999;background:#25d366;width:56px;height:56px;" +
+        return ".wa-btn{position:fixed;bottom:24px;right:24px;z-index:10000;background:#25d366;width:56px;height:56px;" +
                "border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,.4);" +
                "text-decoration:none;transition:transform .2s,box-shadow .2s}" +
                ".wa-btn:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(37,211,102,.6)}" +
@@ -924,7 +940,7 @@ public class EngineOrchestrator implements EngineService {
         String pc = escapeHtml(primaryColor);
         return "<div id=\"amg-chat-widget\">" +
                "<button id=\"amg-chat-btn\" onclick=\"toggleChatPanel()\" " +
-               "style=\"position:fixed;bottom:24px;right:24px;z-index:1000;width:60px;height:60px;" +
+               "style=\"position:fixed;bottom:24px;right:24px;z-index:10001;width:60px;height:60px;" +
                "border-radius:50%;background:" + pc + ";border:none;cursor:pointer;" +
                "box-shadow:0 4px 20px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;" +
                "transition:transform .2s\" " +
@@ -933,7 +949,7 @@ public class EngineOrchestrator implements EngineService {
                "<path d=\"M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z\"/></svg>" +
                "</button>" +
                "<div id=\"amg-chat-panel\" style=\"display:none;position:fixed;bottom:96px;right:24px;" +
-               "width:340px;height:75vh;max-height:560px;z-index:1000;border-radius:16px;" +
+               "width:340px;height:75vh;max-height:560px;z-index:10001;border-radius:16px;" +
                "box-shadow:0 8px 40px rgba(0,0,0,.2);background:#fff;" +
                "flex-direction:column;overflow:hidden\">" +
                // Capçalera

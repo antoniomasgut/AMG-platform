@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.agents.application;
 
 import com.amg.digitalitzacio.agents.api.dto.ConversationResponse;
 import com.amg.digitalitzacio.agents.domain.*;
+import com.amg.digitalitzacio.demo.application.DemoLandingService;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +28,12 @@ public class DemoInboxService {
     private final ContactIdentifierRepository contactIdentifierRepository;
     private final ConversationRepository conversationRepository;
     private final ConversationalAgentService conversationalAgentService;
+    private final DemoLandingService demoLandingService;
 
     @Value("${app.demo.tenant-id:}")
     private String demoTenantId;
+
+    private static final int DEMO_TTL_HOURS = 24;
 
     // Paraules explícitament bloquejades (CA/ES)
     private static final Set<String> BLOCKED_WORDS = Set.of(
@@ -41,15 +45,68 @@ public class DemoInboxService {
     );
 
     @Transactional
-    public DemoSession createSession(String prospectEmail, String companyName, String agentContext) {
+    public DemoSession createSession(String prospectEmail, String companyName,
+                                     String agentContext, String sector, String locale) {
+        UUID token = UUID.randomUUID();
+        String loc = locale != null && !locale.isBlank() ? locale : "ca";
+
+        // Crea o reutilitza el tenant de demo per al sector i genera la landing
+        var demoTenant = demoLandingService.getOrCreateDemoTenant(sector);
+        String landingSlug = demoLandingService.createAndPublishDemoLanding(
+                demoTenant.getId(), token, sector, companyName, loc);
+
         var session = DemoSession.builder()
-                .token(UUID.randomUUID())
-                .prospectEmail(prospectEmail.toLowerCase())
+                .token(token)
+                .prospectEmail(prospectEmail != null ? prospectEmail.toLowerCase() : "demo@amgdl.com")
                 .companyName(companyName)
                 .agentContext(agentContext)
-                .expiresAt(Instant.now().plus(24, ChronoUnit.HOURS))
+                .sector(sector)
+                .locale(loc)
+                .landingSlug(landingSlug)
+                .isActive(true)
+                .expiresAt(Instant.now().plus(DEMO_TTL_HOURS, ChronoUnit.HOURS))
                 .build();
         return demoSessionRepository.save(session);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DemoSession> listSessions() {
+        return demoSessionRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    /**
+     * Inicia una sessió de chat widget per a la demo.
+     * No requereix siteId: usa DEMO_TENANT_ID directament.
+     */
+    public String startWidgetChat(UUID token) {
+        var session = validateSession(token);
+        UUID tenantId = getDemoTenantId();
+        String sessionId = "demo:" + UUID.randomUUID();
+
+        String greeting = conversationalAgentService.processWidgetMessage(
+                tenantId, sessionId,
+                "[SISTEMA: Visitant nou a la demo de " + (session.getCompanyName() != null
+                        ? session.getCompanyName() : "l'empresa") + ". "
+                + "Saluda'm breument i pregunta en què pots ajudar.]");
+
+        if (greeting == null || greeting.isBlank()) {
+            greeting = "Hola! Sóc el teu assistent virtual. En què et puc ajudar?";
+        }
+        return sessionId + "||" + greeting;
+    }
+
+    /**
+     * Envia un missatge al widget de demo i retorna la resposta de l'agent.
+     */
+    public String sendWidgetMessage(UUID token, String sessionId, String text) {
+        validateSession(token);
+
+        String reason = checkModeration(text);
+        if (reason != null) return "La conversa s'ha tancat per contingut inadequat.";
+
+        UUID tenantId = getDemoTenantId();
+        String reply = conversationalAgentService.processWidgetMessage(tenantId, sessionId, text);
+        return reply != null ? reply : "Ho sent, no puc respondre ara. Torna-ho a provar.";
     }
 
     @Transactional
@@ -61,15 +118,27 @@ public class DemoInboxService {
         return demoSessionRepository.save(session);
     }
 
-    /** Valida token — llança 404 si no existeix, ha expirat o ha estat bloquejada. */
+    /** Valida token — llança 404 si no existeix, ha expirat, ha estat desactivada o bloquejada. */
     @Transactional(readOnly = true)
     public DemoSession validateSession(UUID token) {
         var session = demoSessionRepository.findByToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Demo no disponible"));
+        if (!Boolean.TRUE.equals(session.getIsActive())) {
+            throw new ResourceNotFoundException("Demo no disponible");
+        }
         if (Instant.now().isAfter(session.getExpiresAt())) {
             throw new ResourceNotFoundException("Demo no disponible");
         }
         return session;
+    }
+
+    @Transactional
+    public void deactivateSession(UUID token) {
+        var session = demoSessionRepository.findByToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Demo no disponible"));
+        session.setIsActive(false);
+        demoSessionRepository.save(session);
+        log.info("Demo session {} deactivated", token);
     }
 
     @Transactional(readOnly = true)

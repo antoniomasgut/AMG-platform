@@ -585,7 +585,10 @@
       "backup": "Còpies de seguretat",
       "infraOps": "Infraestructura",
       "apiKeys": "Claus API",
-      "serveis": "Serveis"
+      "serveis": "Serveis",
+      "documentTemplates": "Plantilles doc.",
+      "generatedDocs": "Docs generats",
+      "knowledge": "Base de coneixement"
     }
   },
   "wizard": {

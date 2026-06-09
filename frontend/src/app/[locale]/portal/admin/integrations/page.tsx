@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { getGoogleStatus } from '@/services/google';
+import { getWhatsAppConfig } from '@/services/whatsapp-oauth';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
@@ -29,12 +30,16 @@ export default function IntegrationsPage() {
   const tenantId = user?.tenantId ?? '';
 
   const [googleStatus, setGoogleStatus] = useState<Integration['status']>('loading');
+  const [whatsappStatus, setWhatsappStatus] = useState<Integration['status']>('loading');
 
   useEffect(() => {
     if (!tenantId) return;
     getGoogleStatus(tenantId)
       .then(s => setGoogleStatus(s.connected ? 'connected' : 'disconnected'))
       .catch(() => setGoogleStatus('disconnected'));
+    getWhatsAppConfig(tenantId)
+      .then(c => setWhatsappStatus(c.status === 'CONNECTED' ? 'connected' : 'disconnected'))
+      .catch(() => setWhatsappStatus('disconnected'));
   }, [tenantId]);
 
   const integrations: Integration[] = [
@@ -50,11 +55,11 @@ export default function IntegrationsPage() {
     {
       id: 'whatsapp',
       name: 'WhatsApp Business',
-      desc: 'Canal de comunicació amb clients via WhatsApp',
+      desc: 'Canal de comunicació amb clients via WhatsApp (Meta Cloud API)',
       icon: 'Smartphone',
-      href: `/${locale}/portal/admin/tenants/${tenantId}`,
-      status: 'disconnected',
-      statusLabel: 'Configura',
+      href: `/${locale}/portal/admin/integrations/whatsapp`,
+      status: whatsappStatus,
+      statusLabel: whatsappStatus === 'connected' ? 'Connectat' : whatsappStatus === 'loading' ? '' : 'Connecta',
     },
     {
       id: 'telegram',

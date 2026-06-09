@@ -44,6 +44,10 @@ public class WhatsAppWabaConfig {
 
     private Instant connectedAt;
 
+    /** ID d'usuari Meta — necessari per revocar permisos a disconnect */
+    @Column(length = 50)
+    private String metaUserId;
+
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();

@@ -19,6 +19,7 @@ public class Phase {
     @Column(nullable = false, length = 100) private String name;
     @Column(length = 255) private String description;
     @Column(nullable = false) private Integer sortOrder;
+    @Column private Integer sectorPhaseNumber;
     @CreatedDate @Column(updatable = false) private Instant createdAt;
     @LastModifiedDate private Instant updatedAt;
 }

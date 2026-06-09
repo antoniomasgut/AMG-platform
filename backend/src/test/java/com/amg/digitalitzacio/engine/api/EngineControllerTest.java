@@ -166,7 +166,8 @@ class EngineControllerTest {
 
         var request = new CreateVersionRequest(
                 Map.of("blocks", List.of(Map.of("id", "blk_1", "type", "hero", "props", Map.of("title", "Hola")))),
-                Map.of("primaryColor", "#ff0000")
+                Map.of("primaryColor", "#ff0000"),
+                "ca"
         );
 
         mockMvc.perform(post("/api/v1/engine/landings/{landingId}/versions", landing.getId())
@@ -191,7 +192,8 @@ class EngineControllerTest {
 
         var request = new CreateVersionRequest(
                 Map.of("blocks", List.of(Map.of("id", "blk_1", "type", "text", "props", Map.of("body", "Updated")))),
-                null
+                null,
+                "ca"
         );
 
         mockMvc.perform(put("/api/v1/engine/landings/{landingId}/versions/{versionId}", landing.getId(), version.getId())

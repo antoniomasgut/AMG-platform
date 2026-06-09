@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.agents.application;
 
+import com.amg.digitalitzacio.agents.domain.ChannelUsageLogRepository;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TokenUsageLog;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class TokenBudgetService {
 
     private final TokenUsageLogRepository usageLogRepository;
+    private final ChannelUsageLogRepository channelUsageLogRepository;
     private final TenantAIConfigRepository aiConfigRepository;
     private final TelegramBotClient telegramBotClient;
     private final SystemConfigService sysConfig;
@@ -36,16 +38,59 @@ public class TokenBudgetService {
                 .toInstant();
     }
 
-    /** Comprova si el tenant pot fer una crida d'IA. Retorna false si ha superat el pressupost. */
-    @Transactional(readOnly = true)
+    /**
+     * Comprova si el tenant pot fer una crida d'IA.
+     * Si el pressupost s'ha superat, l'incrementa automàticament en lloc de bloquejar.
+     * Sempre retorna true si hi ha un overageTokenIncrement configurat.
+     */
+    @Transactional
     public boolean canCallAI(UUID tenantId) {
         var config = aiConfigRepository.findById(tenantId).orElse(null);
         if (config == null) return true;
         int budget = config.getMonthlyTokenBudget() == null ? 0 : config.getMonthlyTokenBudget();
-        if (budget <= 0) return true; // il·limitat
+        if (budget <= 0) return true;
 
         long used = usageLogRepository.sumTokensSince(tenantId, startOfMonth());
-        return used < budget;
+        if (used < budget) return true;
+
+        int increment = config.getOverageTokenIncrement() == null ? 0 : config.getOverageTokenIncrement();
+        if (increment <= 0) return false; // sense auto-increment: bloqueja
+
+        int newBudget = budget + increment;
+        config.setMonthlyTokenBudget(newBudget);
+        aiConfigRepository.save(config);
+        log.warn("[TokenBudget] Tenant {} ha superat el pressupost. Auto-increment: {} → {} tokens",
+                tenantId, budget, newBudget);
+        alertAdmin("📈 *Quota de tokens ampliada automàticament*\nTenant: `" + tenantId
+                + "`\nÚs actual: " + used + " tokens\nNou límit: " + newBudget + " tokens");
+        return true;
+    }
+
+    /**
+     * Comprova si el tenant ha superat el pressupost de missatges WhatsApp/mes.
+     * Si s'ha superat, l'incrementa automàticament.
+     */
+    @Transactional
+    public void checkAndAutoIncrementMessages(UUID tenantId, String channel) {
+        var config = aiConfigRepository.findById(tenantId).orElse(null);
+        if (config == null) return;
+        int budget = config.getMonthlyMessageBudget() == null ? 0 : config.getMonthlyMessageBudget();
+        if (budget <= 0) return;
+
+        Instant start = startOfMonth();
+        long used = channelUsageLogRepository.countByTenantAndChannel(tenantId, channel, start, Instant.now());
+        if (used < budget) return;
+
+        int increment = config.getOverageMessageIncrement() == null ? 0 : config.getOverageMessageIncrement();
+        if (increment <= 0) return;
+
+        int newBudget = budget + increment;
+        config.setMonthlyMessageBudget(newBudget);
+        aiConfigRepository.save(config);
+        log.warn("[MsgBudget] Tenant {} ha superat el pressupost de missatges {}. Auto-increment: {} → {}",
+                tenantId, channel, budget, newBudget);
+        alertAdmin("📈 *Quota de missatges " + channel + " ampliada automàticament*\nTenant: `" + tenantId
+                + "`\nÚs actual: " + used + " missatges\nNou límit: " + newBudget + " missatges");
     }
 
     /** Registra l'ús de tokens i envia alerta si s'acosta o supera el límit. */

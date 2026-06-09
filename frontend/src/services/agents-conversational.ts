@@ -177,6 +177,9 @@ export interface ChannelsConfig {
   tenantId: string;
   agentMode: 'AUTO' | 'HYBRID' | 'MANUAL';
   isActive: boolean;
+  widgetEnabled: boolean;
+  whatsappEnabled: boolean;
+  emailEnabled: boolean;
   telegramLinked: boolean;
   telegramChatId: number | null;
   telegramBotLink: string | null;
@@ -200,7 +203,7 @@ export interface ActivationInstructions {
 export const getChannels = (tenantId: string) =>
   apiFetch<ChannelsConfig>(`/agents/conversational/${tenantId}/channels`);
 
-export const updateChannels = (tenantId: string, data: { agentMode?: string; whatsappPhoneNumber?: string; whatsappMetaPhoneNumberId?: string; emailAddress?: string }) =>
+export const updateChannels = (tenantId: string, data: { agentMode?: string; widgetEnabled?: boolean; whatsappEnabled?: boolean; emailEnabled?: boolean; whatsappPhoneNumber?: string; whatsappMetaPhoneNumberId?: string; emailAddress?: string }) =>
   apiFetch<ChannelsConfig>(`/agents/conversational/${tenantId}/channels`, {
     method: 'PUT',
     body: JSON.stringify(data),

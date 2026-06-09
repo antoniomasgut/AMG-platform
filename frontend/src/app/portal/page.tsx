@@ -84,7 +84,11 @@ function PortalSidebar({ userName, userEmail, userRole: _userRole, isSuperAdmin,
           { label: 'Serveis', icon: IconSet.Box, active: false, href: '/portal' },
           { label: 'Factures', icon: IconSet.Receipt, active: false, href: '/portal' },
           { label: 'Suport', icon: IconSet.Bell, active: false, href: '/portal' },
-          ...(isSuperAdmin ? [{ label: 'Admin', icon: IconSet.Settings, active: false, href: '/portal' }] : []),
+          ...(isSuperAdmin ? [
+            { label: 'Demos', icon: IconSet.Play, active: false, href: '/portal/demos' },
+            { label: 'Plantilles', icon: IconSet.Mail, active: false, href: '/portal/comm-templates' },
+            { label: 'Admin', icon: IconSet.Settings, active: false, href: '/portal' },
+          ] : []),
         ] as const).map(({ label, icon: Icon, active, href }) => (
           <a key={label} href={href}
             className={`relative flex items-center gap-3 px-3 h-10 f-mono text-xs uppercase tracking-wider cursor-pointer ${

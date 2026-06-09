@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.agents.application;
 
 import com.amg.digitalitzacio.agents.domain.*;
+import com.amg.digitalitzacio.shared.config.TestAsyncConfig;
 import com.amg.digitalitzacio.shared.config.TestRedisConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,7 @@ import static org.hamcrest.Matchers.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Import(TestRedisConfig.class)
+@Import({TestRedisConfig.class, TestAsyncConfig.class})
 @Transactional
 class ConversationServiceTest {
 

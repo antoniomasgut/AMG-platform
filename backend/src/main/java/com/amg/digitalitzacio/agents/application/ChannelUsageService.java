@@ -6,6 +6,7 @@ import com.amg.digitalitzacio.agents.domain.TokenUsageLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -22,11 +23,15 @@ public class ChannelUsageService {
 
     private final ChannelUsageLogRepository usageLogRepository;
     private final TokenUsageLogRepository   tokenUsageLogRepository;
+    @Lazy private final TokenBudgetService  tokenBudgetService;
 
     @Transactional
     public void record(UUID tenantId, String channel) {
         if (tenantId == null) return;
         usageLogRepository.save(ChannelUsageLog.of(tenantId, channel));
+        if (WHATSAPP.equals(channel) || WHATSAPP_META.equals(channel)) {
+            tokenBudgetService.checkAndAutoIncrementMessages(tenantId, channel);
+        }
     }
 
     @Transactional(readOnly = true)

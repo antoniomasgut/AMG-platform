@@ -18,6 +18,12 @@ public class ChatController {
     record CreateSessionResponse(String sessionId, String greeting) {}
     record SendMessageRequest(String message) {}
     record SendMessageResponse(String sessionId, String reply, boolean terminated) {}
+    record AgencyStatusResponse(boolean enabled) {}
+
+    @GetMapping("/agency/status")
+    public AgencyStatusResponse getAgencyStatus() {
+        return new AgencyStatusResponse(chatSessionService.isAgencyChatEnabled());
+    }
 
     @PostMapping("/agency/sessions")
     @ResponseStatus(HttpStatus.CREATED)

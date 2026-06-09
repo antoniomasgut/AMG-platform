@@ -3,8 +3,8 @@ package com.amg.digitalitzacio.agents.application;
 import com.amg.digitalitzacio.shared.exception.MissingApiKeyException;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import com.amg.digitalitzacio.telegram.application.TenantTelegramService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -13,12 +13,19 @@ import java.util.UUID;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class TelegramBotClient {
 
     private final SystemConfigService sysConfig;
     private final TenantTelegramService tenantTelegramService;
     private final ChannelUsageService channelUsageService;
+
+    public TelegramBotClient(SystemConfigService sysConfig,
+                             TenantTelegramService tenantTelegramService,
+                             @Lazy ChannelUsageService channelUsageService) {
+        this.sysConfig = sysConfig;
+        this.tenantTelegramService = tenantTelegramService;
+        this.channelUsageService = channelUsageService;
+    }
 
     /** Envia missatge usant el bot global de la plataforma */
     public boolean sendMessage(Long chatId, String text) {

@@ -7,6 +7,7 @@ import java.util.UUID;
 public record VersionResponse(
     UUID id,
     Integer versionNumber,
+    String locale,
     String status,
     Map<String, Object> content,
     Map<String, Object> styles,

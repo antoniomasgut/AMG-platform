@@ -276,12 +276,15 @@ public class ConversationalAgentController {
         var chatLink = tenantChatLinkRepository.findByTenantId(tenantId).orElse(null);
         if (chatLink == null) {
             return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
-                    tenantId, "AUTO", false, false, null, telegramBotLink, null, null, null, null));
+                    tenantId, "AUTO", false, false, false, false, false, null, telegramBotLink, null, null, null, null));
         }
         return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
                 tenantId,
                 chatLink.getAgentMode().name(),
                 chatLink.getIsActive(),
+                chatLink.getWidgetEnabled(),
+                chatLink.getWhatsappEnabled(),
+                chatLink.getEmailEnabled(),
                 chatLink.getTelegramChatId() != null,
                 chatLink.getTelegramChatId(),
                 telegramBotLink,
@@ -305,6 +308,12 @@ public class ConversationalAgentController {
             chatLink.setAgentMode(com.amg.digitalitzacio.agents.domain.AgentMode.valueOf(request.agentMode()));
         if (request.isActive() != null)
             chatLink.setIsActive(request.isActive());
+        if (request.widgetEnabled() != null)
+            chatLink.setWidgetEnabled(request.widgetEnabled());
+        if (request.whatsappEnabled() != null)
+            chatLink.setWhatsappEnabled(request.whatsappEnabled());
+        if (request.emailEnabled() != null)
+            chatLink.setEmailEnabled(request.emailEnabled());
         if (request.whatsappPhoneNumber() != null)
             chatLink.setWhatsappPhoneNumber(request.whatsappPhoneNumber().isBlank() ? null : request.whatsappPhoneNumber());
         if (request.whatsappMetaPhoneNumberId() != null)
@@ -322,6 +331,9 @@ public class ConversationalAgentController {
                 tenantId,
                 chatLink.getAgentMode().name(),
                 chatLink.getIsActive(),
+                chatLink.getWidgetEnabled(),
+                chatLink.getWhatsappEnabled(),
+                chatLink.getEmailEnabled(),
                 chatLink.getTelegramChatId() != null,
                 chatLink.getTelegramChatId(),
                 "https://t.me/" + botUsername,
@@ -447,8 +459,9 @@ public class ConversationalAgentController {
                     .orElseGet(() -> TenantChatLink.builder().tenantId(tenantId).build());
 
             boolean hasChannel = chatLink.getTelegramChatId() != null
-                    || (chatLink.getWhatsappPhoneNumber() != null && !chatLink.getWhatsappPhoneNumber().isBlank())
-                    || (chatLink.getEmailAddress() != null && !chatLink.getEmailAddress().isBlank());
+                    || Boolean.TRUE.equals(chatLink.getWidgetEnabled())
+                    || Boolean.TRUE.equals(chatLink.getWhatsappEnabled())
+                    || Boolean.TRUE.equals(chatLink.getEmailEnabled());
 
             if (!hasChannel) {
                 return ResponseEntity.badRequest().build();
@@ -475,6 +488,9 @@ public class ConversationalAgentController {
                     tenantId,
                     chatLink.getAgentMode().name(),
                     chatLink.getIsActive(),
+                    chatLink.getWidgetEnabled(),
+                    chatLink.getWhatsappEnabled(),
+                    chatLink.getEmailEnabled(),
                     chatLink.getTelegramChatId() != null,
                     chatLink.getTelegramChatId(),
                     "https://t.me/" + activateBotUsername,
@@ -507,6 +523,9 @@ public class ConversationalAgentController {
                     tenantId,
                     chatLink.getAgentMode().name(),
                     chatLink.getIsActive(),
+                    chatLink.getWidgetEnabled(),
+                    chatLink.getWhatsappEnabled(),
+                    chatLink.getEmailEnabled(),
                     chatLink.getTelegramChatId() != null,
                     chatLink.getTelegramChatId(),
                     "https://t.me/" + deactivateBotUsername,

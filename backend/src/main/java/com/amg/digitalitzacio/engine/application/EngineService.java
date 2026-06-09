@@ -15,13 +15,13 @@ public interface EngineService {
     void deleteLanding(UUID tenantId, UUID id);
     VersionResponse createVersion(UUID landingId, CreateVersionRequest request, UUID principalTenantId);
     VersionResponse updateVersion(UUID landingId, UUID versionId, CreateVersionRequest request, UUID principalTenantId);
-    PublishResponse publish(UUID landingId);
+    PublishResponse publish(UUID landingId, String locale);
     void unpublish(UUID landingId);
     DomainConfigResponse configureDomain(UUID landingId, DomainConfigRequest request, UUID principalId, String principalRole);
     DomainConfigResponse verifyDomain(UUID landingId);
     DomainConfigResponse updateDomainStatus(UUID landingId, UpdateDomainStatusRequest request);
     void removeDomain(UUID landingId);
-    String renderLanding(String slug, String host);
+    String renderLanding(String slug, String host, String locale);
     String renderSitemap(String slug);
     ContactResponse submitContact(String slug, ContactRequest request);
     LandingStatsResponse getLandingStats(UUID tenantId, UUID landingId);

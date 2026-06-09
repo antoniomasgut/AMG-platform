@@ -75,7 +75,8 @@ public class WidgetChatService {
         var tenant = tenantRepository.findById(site.getTenantId()).orElse(null);
         var chatLink = chatLinkRepository.findByTenantId(site.getTenantId()).orElse(null);
 
-        boolean chatEnabled = chatLink != null && Boolean.TRUE.equals(chatLink.getIsActive())
+        boolean agentRunning = chatLink != null && Boolean.TRUE.equals(chatLink.getIsActive());
+        boolean chatEnabled = agentRunning && Boolean.TRUE.equals(chatLink.getWidgetEnabled())
                 && aiConfigRepository.findByTenantId(site.getTenantId()).isPresent();
 
         String waNumber = resolveWaNumber(site.getTenantId(), tenant, chatLink);

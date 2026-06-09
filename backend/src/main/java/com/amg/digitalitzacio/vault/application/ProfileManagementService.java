@@ -1,5 +1,7 @@
 package com.amg.digitalitzacio.vault.application;
 
+import com.amg.digitalitzacio.auth.domain.BusinessSector;
+import com.amg.digitalitzacio.auth.domain.SectorPhaseRepository;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.vault.api.dto.*;
 import com.amg.digitalitzacio.vault.domain.*;
@@ -21,12 +23,15 @@ public class ProfileManagementService implements ProfileService {
     private final PhaseRepository phaseRepository;
     private final CatalogServiceRepository catalogServiceRepository;
     private final CredentialFieldRepository credentialFieldRepository;
+    private final SectorPhaseRepository sectorPhaseRepository;
 
     @Override
     @Transactional
     public ProfileResponse createProfile(CreateProfileRequest request) {
+        var sector = request.sector() != null ? BusinessSector.valueOf(request.sector()) : null;
         var profile = ServiceProfile.builder()
                 .name(request.name()).slug(request.slug()).description(request.description())
+                .sector(sector)
                 .build();
         profile = serviceProfileRepository.save(profile);
         return toProfileResponse(profile, List.of());
@@ -57,6 +62,8 @@ public class ProfileManagementService implements ProfileService {
         if (request.name() != null) profile.setName(request.name());
         if (request.slug() != null) profile.setSlug(request.slug());
         if (request.description() != null) profile.setDescription(request.description());
+        if (request.sector() != null) profile.setSector(
+            request.sector().isBlank() ? null : BusinessSector.valueOf(request.sector()));
         profile = serviceProfileRepository.save(profile);
         var phases = phaseRepository.findByProfileIdOrderBySortOrder(id);
         return toProfileResponse(profile, phases);
@@ -77,6 +84,7 @@ public class ProfileManagementService implements ProfileService {
         var phase = Phase.builder()
                 .profileId(profileId).name(request.name())
                 .description(request.description()).sortOrder(request.sortOrder())
+                .sectorPhaseNumber(request.sectorPhaseNumber())
                 .build();
         phaseRepository.save(phase);
         return getProfile(profileId);
@@ -93,6 +101,7 @@ public class ProfileManagementService implements ProfileService {
         if (request.name() != null) phase.setName(request.name());
         if (request.description() != null) phase.setDescription(request.description());
         if (request.sortOrder() != null) phase.setSortOrder(request.sortOrder());
+        if (request.sectorPhaseNumber() != null) phase.setSectorPhaseNumber(request.sectorPhaseNumber());
         phaseRepository.save(phase);
         return getProfile(profileId);
     }
@@ -178,7 +187,7 @@ public class ProfileManagementService implements ProfileService {
             return getProfile(phase.getProfileId());
         }
         // Addon — return empty response
-        return new ProfileResponse(null, null, null, null, null, List.of(), List.of(), null, null);
+        return new ProfileResponse(null, null, null, null, null, null, List.of(), List.of(), null, null);
     }
 
     @Override
@@ -204,7 +213,7 @@ public class ProfileManagementService implements ProfileService {
                 .monthlyPrice(request.monthlyPrice() != null ? request.monthlyPrice() : BigDecimal.TEN)
                 .build();
         catalogServiceRepository.save(svc);
-        return new ProfileResponse(null, null, null, null, null, List.of(), List.of(), null, null);
+        return new ProfileResponse(null, null, null, null, null, null, List.of(), List.of(), null, null);
     }
 
     @Override
@@ -292,18 +301,26 @@ public class ProfileManagementService implements ProfileService {
 
     private ProfileResponse toProfileResponse(ServiceProfile profile, List<Phase> phases) {
         var directServices = catalogServiceRepository.findByProfileIdAndPhaseIdIsNull(profile.getId());
+        var sectorStr = profile.getSector() != null ? profile.getSector().name() : null;
         return new ProfileResponse(profile.getId(), profile.getName(), profile.getSlug(),
-                profile.getDescription(), profile.getIsActive(),
+                profile.getDescription(), profile.getIsActive(), sectorStr,
                 directServices.stream().map(s -> toServiceResponse(s,
                         credentialFieldRepository.findByServiceIdOrderBySortOrder(s.getId()))).toList(),
-                phases.stream().map(this::toPhaseResponse).toList(),
+                phases.stream().map(p -> toPhaseResponse(p, profile.getSector())).toList(),
                 profile.getCreatedAt(), profile.getUpdatedAt());
     }
 
-    private ProfileResponse.PhaseResponse toPhaseResponse(Phase phase) {
+    private ProfileResponse.PhaseResponse toPhaseResponse(Phase phase, BusinessSector sector) {
         var services = catalogServiceRepository.findByPhaseIdOrderBySortOrder(phase.getId());
+        BigDecimal nexeMonthly = null;
+        if (sector != null && phase.getSectorPhaseNumber() != null) {
+            nexeMonthly = sectorPhaseRepository
+                    .findBySectorAndPhaseNumber(sector, phase.getSectorPhaseNumber())
+                    .map(sp -> sp.getMonthlyPrice())
+                    .orElse(null);
+        }
         return new ProfileResponse.PhaseResponse(phase.getId(), phase.getName(), phase.getDescription(),
-                phase.getSortOrder(),
+                phase.getSortOrder(), phase.getSectorPhaseNumber(), nexeMonthly,
                 services.stream().map(s -> {
                     var fields = credentialFieldRepository.findByServiceIdOrderBySortOrder(s.getId());
                     return toServiceResponse(s, fields);

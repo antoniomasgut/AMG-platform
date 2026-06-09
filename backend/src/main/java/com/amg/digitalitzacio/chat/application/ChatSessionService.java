@@ -6,6 +6,7 @@ import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.PromptBuilder;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
+import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.chat.domain.ChatSession;
 import com.amg.digitalitzacio.chat.domain.LandingChatContext;
@@ -80,6 +81,7 @@ public class ChatSessionService {
     private final ChannelUsageService channelUsageService;
     private final TenantRepository tenantRepository;
     private final TenantAIConfigRepository aiConfigRepository;
+    private final TenantChatLinkRepository chatLinkRepository;
 
     @Value("${app.landing.base-domain:webs.amgdl.com}")
     private String landingBaseDomain;
@@ -137,6 +139,15 @@ public class ChatSessionService {
         incrementRateCounter(RATE_SESS_KEY + ip, 3600);
 
         return new CreateSessionResult(sessionId, greeting);
+    }
+
+    public boolean isAgencyChatEnabled() {
+        return tenantRepository.findByIsOwnerTrue()
+                .map(owner -> chatLinkRepository.findByTenantId(owner.getId())
+                        .map(link -> Boolean.TRUE.equals(link.getIsActive())
+                                && Boolean.TRUE.equals(link.getWidgetEnabled()))
+                        .orElse(false))
+                .orElse(false);
     }
 
     public CreateSessionResult createAgencySession(String contactName, String ip) {

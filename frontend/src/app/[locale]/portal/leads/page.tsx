@@ -360,10 +360,10 @@ function DemoModal({
     if (!lead.email) return;
     setLoading(true);
     try {
-      const session = await createDemoSession(lead.email, companyName, agentContext);
-      setUrl(session.url);
+      const session = await createDemoSession({ sector: sector || 'PERRUQUERIA', companyName, agentContext, prospectEmail: lead.email });
+      setUrl(session.landingUrl);
       setEditToken(session.token);
-      navigator.clipboard.writeText(session.url).catch(() => {});
+      navigator.clipboard.writeText(session.landingUrl).catch(() => {});
     } finally {
       setLoading(false);
     }

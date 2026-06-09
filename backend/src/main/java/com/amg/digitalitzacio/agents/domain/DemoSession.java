@@ -39,6 +39,21 @@ public class DemoSession {
     @Column(name = "block_reason", length = 255)
     private String blockReason;
 
+    @Column(name = "sector", length = 50)
+    private String sector;
+
+    @Column(name = "landing_slug", length = 100)
+    private String landingSlug;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+
+    /** ca | es | en | de — idioma de la landing i del xat */
+    @Column(name = "locale", length = 5, nullable = false)
+    @Builder.Default
+    private String locale = "ca";
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
