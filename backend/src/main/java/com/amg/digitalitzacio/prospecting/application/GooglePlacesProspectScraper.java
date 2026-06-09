@@ -184,7 +184,8 @@ public class GooglePlacesProspectScraper implements ProspectScraper {
     private static final Set<String> GENERIC_DOMAINS = Set.of(
         "gmail.com", "hotmail.com", "yahoo.com", "outlook.com",
         "icloud.com", "live.com", "msn.com", "yahoo.es", "hotmail.es",
-        "googlemail.com", "me.com"
+        "googlemail.com", "me.com",
+        "example.com", "example.org", "example.net", "test.com"
     );
 
     @Override

@@ -194,6 +194,9 @@ public class ProspectingOrchestrator implements ProspectingService {
             applyDetails(prospect, scraper.fetchDetails(prospect.getGooglePlaceId()));
         }
 
+        // Netejar emails placeholder abans d'enriquir
+        if (isPlaceholderEmail(prospect.getEmail())) prospect.setEmail(null);
+
         // Enriquiment web: extreure email, Instagram
         var enrichment = scraper.enrich(prospect.getName(), prospect.getWebsite(), prospect.getEmail());
         if (enrichment.email() != null && !enrichment.email().isBlank()) prospect.setEmail(enrichment.email());
@@ -275,6 +278,13 @@ public class ProspectingOrchestrator implements ProspectingService {
         }
     }
 
+    private static boolean isPlaceholderEmail(String email) {
+        if (email == null || email.isBlank()) return false;
+        String e = email.toLowerCase();
+        return e.contains("example") || e.contains("noreply") || e.contains("no-reply")
+            || e.contains("@test.") || e.contains("@domain.") || e.contains("@email.");
+    }
+
     private int calculateScore(Prospect p) {
         int score = 0;
         // Rating: sweet spot 3.5-4.2 (té marge de millora, seguidor actiu)
@@ -323,13 +333,20 @@ public class ProspectingOrchestrator implements ProspectingService {
         var prospects = prospectRepository.findByCampaignId(campaignId).stream()
                 .filter(p -> p.getStatus() != ProspectStatus.EXPORTED)
                 .filter(p -> (p.getWebsite() == null || p.getWebsite().isBlank())
-                          || (p.getEmail() == null || p.getEmail().isBlank()))
+                          || (p.getEmail() == null || p.getEmail().isBlank())
+                          || isPlaceholderEmail(p.getEmail()))
                 .toList();
         int enriched = 0;
         for (var prospect : prospects) {
             try {
-                var enrichment = scraper.enrich(prospect.getName(), prospect.getWebsite(), prospect.getEmail());
+                // Netejar emails placeholder abans d'enriquir
                 boolean changed = false;
+                if (isPlaceholderEmail(prospect.getEmail())) {
+                    prospect.setEmail(null);
+                    changed = true;
+                }
+
+                var enrichment = scraper.enrich(prospect.getName(), prospect.getWebsite(), prospect.getEmail());
                 if (enrichment.email() != null && !enrichment.email().isBlank()
                         && (prospect.getEmail() == null || prospect.getEmail().isBlank())) {
                     prospect.setEmail(enrichment.email());
