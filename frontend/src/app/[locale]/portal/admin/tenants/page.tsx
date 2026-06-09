@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/lib/toast-context';
 import {
   listTenants, createTenant, updateTenant, deleteTenant,
   type TenantResponse,
 } from '@/services/admin';
+import { getChannelUsageStats, type ChannelUsageStats } from '@/services/agents-conversational';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
@@ -78,13 +80,105 @@ function NewTenantModal({ onClose, onCreated }: { onClose: () => void; onCreated
   );
 }
 
+function ChannelActivityTab({ tenants }: { tenants: TenantResponse[] }) {
+  const [stats, setStats] = useState<Record<string, ChannelUsageStats | null>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (tenants.length === 0) { setLoading(false); return; }
+    setLoading(true);
+    Promise.all(
+      tenants.map(t =>
+        getChannelUsageStats(t.id)
+          .then(s => ({ id: t.id, s }))
+          .catch(() => ({ id: t.id, s: null }))
+      )
+    ).then(results => {
+      const map: Record<string, ChannelUsageStats | null> = {};
+      results.forEach(({ id, s }) => { map[id] = s; });
+      setStats(map);
+      setLoading(false);
+    });
+  }, [tenants]);
+
+  const cols = [
+    { key: 'whatsappMessages',     label: 'WA Twilio', icon: '📱' },
+    { key: 'whatsappMetaMessages', label: 'WA Meta',   icon: '💚' },
+    { key: 'telegramMessages',     label: 'Telegram',  icon: '✈️' },
+    { key: 'emailMessages',        label: 'Email',     icon: '✉️' },
+    { key: 'chatMessages',         label: 'Xat web',   icon: '💬' },
+    { key: 'aiTokens',             label: 'Tokens IA', icon: '🤖' },
+  ] as const;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <span className="w-4 h-4 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="px-4 sm:px-5 py-3 border-b border-border-base">
+        <span className="f-mono text-[10px] uppercase text-ink-3">Darrers 30 dies · {tenants.length} tenants</span>
+      </div>
+      <table className="w-full min-w-[700px]">
+        <thead>
+          <tr className="border-b border-border-base">
+            <th className="text-left f-mono text-label uppercase text-ink-2 px-5 py-3 font-normal">Tenant</th>
+            {cols.map(c => (
+              <th key={c.key} className="text-right f-mono text-label uppercase text-ink-2 px-4 py-3 font-normal">
+                {c.icon} {c.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {tenants.map(t => {
+            const s = stats[t.id];
+            const total = s ? (s.whatsappMessages + s.whatsappMetaMessages + s.telegramMessages + s.emailMessages + s.chatMessages) : 0;
+            return (
+              <tr key={t.id} className="border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)]">
+                <td className="px-5 py-3">
+                  <div className="f-display font-bold text-sm">{t.name}</div>
+                  {total > 0 && (
+                    <div className="f-mono text-[9px] text-ink-3 mt-0.5">{total} missatges totals</div>
+                  )}
+                </td>
+                {cols.map(c => (
+                  <td key={c.key} className="px-4 py-3 text-right f-mono text-sm">
+                    {s == null ? (
+                      <span className="text-ink-3">—</span>
+                    ) : (
+                      <span className={s[c.key] > 0 ? 'text-ink-0 font-bold' : 'text-ink-3'}>
+                        {c.key === 'aiTokens'
+                          ? s[c.key].toLocaleString('ca-ES')
+                          : s[c.key]}
+                      </span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 type ActiveFilter = 'all' | 'active' | 'inactive';
 type FreeFilter = 'all' | 'free' | 'paying';
 type SortOption = 'name,asc' | 'name,desc' | 'createdAt,desc' | 'createdAt,asc';
 
+type TabView = 'tenants' | 'canals';
+
 export default function AdminTenantsPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<TabView>(searchParams.get('tab') === 'canals' ? 'canals' : 'tenants');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [showNewTenant, setShowNewTenant] = useState(false);
@@ -197,7 +291,32 @@ export default function AdminTenantsPage() {
           </a>
         </div>
 
+        {/* Pestanyes de vista */}
+        <div className="flex gap-1">
+          {([['tenants', 'Llista de tenants'], ['canals', 'Activitat de canals (30d)']] as [TabView, string][]).map(([v, label]) => (
+            <button
+              key={v}
+              onClick={() => setTab(v)}
+              className={`f-mono text-[10px] uppercase tracking-wider px-3 py-1.5 border transition-colors ${
+                tab === v
+                  ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.12)] text-white'
+                  : 'border-border-base text-ink-2 hover:text-ink-0 hover:border-ink-2'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Vista de canals */}
+        {tab === 'canals' && (
+          <div className="amg-card card-clip">
+            <ChannelActivityTab tenants={tenants} />
+          </div>
+        )}
+
         {/* Search + filtres + ordenació */}
+        {tab === 'tenants' && (<>
         <div className="flex flex-wrap gap-3 items-center">
           <div className="relative">
             <IconSet.Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-2" />
@@ -379,6 +498,7 @@ export default function AdminTenantsPage() {
             </>
           )}
         </div>
+        </>)}
       </div>
 
       {showNewTenant && (

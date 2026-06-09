@@ -237,7 +237,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
               <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('admin.channels.period')}</div>
               <div className="f-display font-bold text-sm mt-0.5">{t('admin.channels.title')}</div>
             </div>
-            <a href="/portal/admin/tenants" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('admin.channels.byTenant')}</a>
+            <a href="/portal/admin/tenants?tab=canals" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('admin.channels.byTenant')}</a>
           </div>
           {channelStats ? (
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
