@@ -556,7 +556,10 @@
       "services": "Serveis",
       "operations": "Operacions",
       "clients": "Clients",
-      "system": "Sistema"
+      "system": "Sistema",
+      "webServices": "Serveis Web",
+      "agentsAI": "Agents & IA",
+      "platform": "Plataforma AMG"
     },
     "items": {
       "dashboard": "Dashboard",
@@ -588,7 +591,15 @@
       "serveis": "Serveis",
       "documentTemplates": "Plantilles doc.",
       "generatedDocs": "Docs generats",
-      "knowledge": "Base de coneixement"
+      "knowledge": "Base de coneixement",
+      "analytics": "Analítica",
+      "documents": "Documents",
+      "integrations": "Integracions",
+      "meetings": "Reunions",
+      "platformSummary": "Resum plataforma",
+      "metaAds": "Meta Ads AMG",
+      "config": "Configuració",
+      "myBusiness": "El meu negoci"
     }
   },
   "wizard": {

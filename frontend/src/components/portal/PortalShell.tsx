@@ -48,8 +48,8 @@ function clientGroups(t: T, features: { canAccessAnalytics: boolean; canAccessDo
       label: t('groups.clientsLeads'),
       items: [
         { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads' },
-        { label: 'Analítica',  icon: IconSet.Trending,  href: '/portal/analytics', locked: analyticsLocked },
-        { label: 'Documents',  icon: IconSet.FileText,  href: '/portal/documents', locked: documentsLocked },
+        { label: t('items.analytics'), icon: IconSet.Trending, href: '/portal/analytics', locked: analyticsLocked },
+        { label: t('items.documents'), icon: IconSet.FileText, href: '/portal/documents', locked: documentsLocked },
       ],
     },
     {
@@ -80,8 +80,8 @@ function adminGroups(t: T): NavGroup[] {
       items: [
         { label: t('items.prospecting'), icon: IconSet.Search, href: '/portal/prospecting' },
         { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads' },
-        { label: 'Analítica',           icon: IconSet.Trending, href: '/portal/analytics' },
-        { label: 'Documents',           icon: IconSet.FileText, href: '/portal/documents' },
+        { label: t('items.analytics'), icon: IconSet.Trending, href: '/portal/analytics' },
+        { label: t('items.documents'), icon: IconSet.FileText, href: '/portal/documents' },
       ],
     },
     {
@@ -93,7 +93,7 @@ function adminGroups(t: T): NavGroup[] {
       ],
     },
     {
-      label: 'Serveis Web',
+      label: t('groups.webServices'),
       items: [
         { label: t('items.landings'), icon: IconSet.Globe, href: '/portal/landings' },
         { label: t('items.domains'), icon: IconSet.Link, href: '/portal/admin/domains' },
@@ -101,13 +101,12 @@ function adminGroups(t: T): NavGroup[] {
       ],
     },
     {
-      label: 'Agents & IA',
+      label: t('groups.agentsAI'),
       items: [
-        { label: t('items.automations'), icon: IconSet.Zap, href: '/portal/automations' },
         { label: t('items.agentsAI'), icon: IconSet.Bot, href: '/portal/agents' },
         { label: t('items.inbox'), icon: IconSet.Mail, href: '/portal/agents/inbox' },
-        { label: 'Integracions', icon: IconSet.Key, href: '/portal/admin/integrations' },
-        { label: t('items.serveis'), icon: IconSet.Book, href: '/portal/serveis' },
+        { label: t('items.automations'), icon: IconSet.Zap, href: '/portal/automations' },
+        { label: t('items.integrations'), icon: IconSet.Key, href: '/portal/admin/integrations' },
       ],
     },
     {
@@ -117,6 +116,7 @@ function adminGroups(t: T): NavGroup[] {
         { label: t('items.knowledge'), icon: IconSet.Book, href: '/portal/admin/knowledge' },
         { label: t('items.documentTemplates'), icon: IconSet.FileText, href: '/portal/admin/documents' },
         { label: t('items.generatedDocs'), icon: IconSet.Receipt, href: '/portal/admin/documents/list' },
+        { label: t('items.meetings'), icon: IconSet.Calendar, href: '/portal/admin/booking' },
       ],
     },
   ];
@@ -139,8 +139,8 @@ function superAdminGroups(t: T): NavGroup[] {
       items: [
         { label: t('items.prospecting'), icon: IconSet.Search, href: '/portal/prospecting' },
         { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads' },
-        { label: 'Analítica',           icon: IconSet.Trending, href: '/portal/analytics' },
-        { label: 'Documents',           icon: IconSet.FileText, href: '/portal/documents' },
+        { label: t('items.analytics'), icon: IconSet.Trending, href: '/portal/analytics' },
+        { label: t('items.documents'), icon: IconSet.FileText, href: '/portal/documents' },
       ],
     },
     {
@@ -152,7 +152,7 @@ function superAdminGroups(t: T): NavGroup[] {
       ],
     },
     {
-      label: 'Serveis Web',
+      label: t('groups.webServices'),
       items: [
         { label: t('items.landings'), icon: IconSet.Globe, href: '/portal/landings' },
         { label: t('items.domains'), icon: IconSet.Link, href: '/portal/admin/domains' },
@@ -161,13 +161,12 @@ function superAdminGroups(t: T): NavGroup[] {
       ],
     },
     {
-      label: 'Agents & IA',
+      label: t('groups.agentsAI'),
       items: [
-        { label: t('items.automations'), icon: IconSet.Zap, href: '/portal/automations' },
         { label: t('items.agentsAI'), icon: IconSet.Bot, href: '/portal/agents' },
         { label: t('items.inbox'), icon: IconSet.Mail, href: '/portal/agents/inbox' },
-        { label: 'Integracions', icon: IconSet.Key, href: '/portal/admin/integrations' },
-        { label: t('items.serveis'), icon: IconSet.Book, href: '/portal/serveis' },
+        { label: t('items.automations'), icon: IconSet.Zap, href: '/portal/automations' },
+        { label: t('items.integrations'), icon: IconSet.Key, href: '/portal/admin/integrations' },
       ],
     },
     {
@@ -177,7 +176,7 @@ function superAdminGroups(t: T): NavGroup[] {
         { label: t('items.knowledge'), icon: IconSet.Book, href: '/portal/admin/knowledge' },
         { label: t('items.documentTemplates'), icon: IconSet.FileText, href: '/portal/admin/documents' },
         { label: t('items.generatedDocs'), icon: IconSet.Receipt, href: '/portal/admin/documents/list' },
-        { label: 'Reunions', icon: IconSet.Calendar, href: '/portal/admin/booking' },
+        { label: t('items.meetings'), icon: IconSet.Calendar, href: '/portal/admin/booking' },
       ],
     },
     {
@@ -189,12 +188,12 @@ function superAdminGroups(t: T): NavGroup[] {
       ],
     },
     {
-      label: 'Plataforma AMG',
+      label: t('groups.platform'),
       items: [
-        { label: 'Resum',          icon: IconSet.Zap,       href: '/portal/platform' },
-        { label: 'Meta Ads AMG',   icon: IconSet.Trending,  href: '/portal/platform/meta-ads' },
-        { label: 'Configuració',   icon: IconSet.Settings,  href: '/portal/platform/config' },
-        { label: 'El meu negoci',  icon: IconSet.Briefcase, href: '/portal/my-business' },
+        { label: t('items.platformSummary'), icon: IconSet.Zap,       href: '/portal/platform' },
+        { label: t('items.metaAds'),         icon: IconSet.Trending,  href: '/portal/platform/meta-ads' },
+        { label: t('items.myBusiness'),      icon: IconSet.Briefcase, href: '/portal/my-business' },
+        { label: t('items.config'),          icon: IconSet.Settings,  href: '/portal/platform/config' },
       ],
     },
     {

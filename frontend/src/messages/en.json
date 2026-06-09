@@ -556,7 +556,10 @@
       "services": "Services",
       "operations": "Operations",
       "clients": "Clients",
-      "system": "System"
+      "system": "System",
+      "webServices": "Web Services",
+      "agentsAI": "Agents & AI",
+      "platform": "AMG Platform"
     },
     "items": {
       "dashboard": "Dashboard",
@@ -588,7 +591,15 @@
       "serveis": "Services",
       "documentTemplates": "Doc Templates",
       "generatedDocs": "Generated Docs",
-      "knowledge": "Knowledge Base"
+      "knowledge": "Knowledge Base",
+      "analytics": "Analytics",
+      "documents": "Documents",
+      "integrations": "Integrations",
+      "meetings": "Meetings",
+      "platformSummary": "Platform summary",
+      "metaAds": "Meta Ads AMG",
+      "config": "Configuration",
+      "myBusiness": "My business"
     }
   },
   "wizard": {
