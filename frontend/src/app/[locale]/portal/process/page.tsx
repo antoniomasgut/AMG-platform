@@ -15,6 +15,9 @@ import { getBackupDashboard } from '@/services/backup';
 import { getOpsDashboard } from '@/services/ops';
 import { getInfraStatus } from '@/services/infraops';
 import { listAllBudgets } from '@/services/billing';
+import { listTemplates } from '@/services/templates';
+import { getGlobalChannelUsageStats } from '@/services/agents-conversational';
+import { SECTOR_KEYS } from '@/services/sector-contexts';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -112,26 +115,29 @@ export default function ProcessPage() {
 
   const results = useQueries({
     queries: [
-      { queryKey: ['system-config'],    queryFn: getSystemConfig,                                                    enabled: !!user && isSuperAdmin },
-      { queryKey: ['lead-stats'],       queryFn: getLeadStats,                                                       enabled: !!user },
-      { queryKey: ['campaigns'],        queryFn: getCampaigns,                                                       enabled: !!user && isSuperAdmin },
-      { queryKey: ['tenants-process'],  queryFn: () => listTenants({ page: 0, size: 100, isActive: true }),          enabled: !!user && isSuperAdmin },
-      { queryKey: ['all-budgets'],      queryFn: () => listAllBudgets(undefined, 0, 100),                            enabled: !!user && isSuperAdmin },
-      { queryKey: ['ops-dashboard'],    queryFn: getOpsDashboard,                                                    enabled: !!user && isSuperAdmin },
-      { queryKey: ['infra-status'],     queryFn: getInfraStatus,    refetchInterval: 30000,                          enabled: !!user && isSuperAdmin },
-      { queryKey: ['backup-dashboard'], queryFn: getBackupDashboard,                                                 enabled: !!user && isSuperAdmin },
+      { queryKey: ['system-config'],    queryFn: getSystemConfig,                                           enabled: !!user && isSuperAdmin },
+      { queryKey: ['lead-stats'],       queryFn: getLeadStats,                                              enabled: !!user },
+      { queryKey: ['campaigns'],        queryFn: getCampaigns,                                              enabled: !!user && isSuperAdmin },
+      { queryKey: ['tenants-process'],  queryFn: () => listTenants({ page: 0, size: 100, isActive: true }), enabled: !!user && isSuperAdmin },
+      { queryKey: ['all-budgets'],      queryFn: () => listAllBudgets(undefined, 0, 100),                   enabled: !!user && isSuperAdmin },
+      { queryKey: ['ops-dashboard'],    queryFn: getOpsDashboard,                                           enabled: !!user && isSuperAdmin },
+      { queryKey: ['infra-status'],     queryFn: getInfraStatus, refetchInterval: 30000,                    enabled: !!user && isSuperAdmin },
+      { queryKey: ['backup-dashboard'], queryFn: getBackupDashboard,                                        enabled: !!user && isSuperAdmin },
+      { queryKey: ['landing-templates'],queryFn: listTemplates,                                             enabled: !!user && isSuperAdmin },
+      { queryKey: ['global-channels'],  queryFn: () => getGlobalChannelUsageStats(),                        enabled: !!user && isSuperAdmin, staleTime: 5 * 60 * 1000 },
     ],
   });
 
   if (!user) return null;
 
-  const [cfgR, leadsR, campR, tenantsR, budgetsR, opsR, infraR, backupR] = results;
+  const [cfgR, leadsR, campR, tenantsR, budgetsR, opsR, infraR, backupR, templatesR, channelR] = results;
   const loading = results.some((r) => r.isLoading);
 
   // ── step 1: configuració ──────────────────────────────────────────────────
-  const cfgList   = (cfgR.data as any[] | undefined) ?? [];
-  const missingKeys     = cfgList.filter((c: any) => !c.configured).length;
-  const configuredKeys  = cfgList.filter((c: any) => c.configured).length;
+  const cfgList        = (cfgR.data as any[] | undefined) ?? [];
+  const missingKeys    = cfgList.filter((c: any) => !c.configured).length;
+  const configuredKeys = cfgList.filter((c: any) => c.configured).length;
+  const templates      = (templatesR.data as any[] | undefined) ?? [];
 
   // ── step 2: captació ──────────────────────────────────────────────────────
   const campaigns      = (campR.data as any[] | undefined) ?? [];
@@ -155,9 +161,25 @@ export default function ProcessPage() {
   const bRejected   = allBudgets.filter((b: any) => ['REJECTED', 'CANCELLED'].includes(b.status)).length;
 
   // ── step 5: implementació ─────────────────────────────────────────────────
-  const allTenants       = ((tenantsR.data as any)?.content ?? []) as import('@/services/admin').TenantResponse[];
-  const tenantsTotal     = (tenantsR.data as any)?.totalElements ?? allTenants.length;
+  const allTenants        = ((tenantsR.data as any)?.content ?? []) as import('@/services/admin').TenantResponse[];
+  const tenantsTotal      = (tenantsR.data as any)?.totalElements ?? allTenants.length;
   const tenantsWithPhases = allTenants.filter(t => t.contractedPhases && t.contractedPhases.length > 0);
+  const tenantsWithF1     = allTenants.filter(t => t.contractedPhases?.includes('F1'));
+
+  const channelStats   = channelR?.data as any;
+  const totalMessages  = channelStats
+    ? (channelStats.whatsappMessages ?? 0) + (channelStats.whatsappMetaMessages ?? 0)
+      + (channelStats.telegramMessages ?? 0) + (channelStats.emailMessages ?? 0)
+      + (channelStats.chatMessages ?? 0)
+    : 0;
+  const activeChannels = channelStats
+    ? [
+        (channelStats.whatsappMessages > 0 || channelStats.whatsappMetaMessages > 0) ? 'WhatsApp' : null,
+        channelStats.telegramMessages > 0  ? 'Telegram' : null,
+        channelStats.emailMessages > 0     ? 'Email'    : null,
+        channelStats.chatMessages > 0      ? 'Xat web'  : null,
+      ].filter(Boolean) as string[]
+    : [];
 
   // ── step 6: monitoratge ───────────────────────────────────────────────────
   const ops          = opsR.data as any;
@@ -183,9 +205,9 @@ export default function ProcessPage() {
       icon: IconSet.Key,
       status: loading ? 'loading' : missingKeys > 5 ? 'blocked' : missingKeys > 0 ? 'attention' : 'ok',
       items: [
-        { label: 'API Keys',    value: `${configuredKeys} / ${cfgList.length} configurades`, ok: missingKeys === 0 },
-        { label: 'Catàleg',     value: 'Sectors, perfils i preus',                           ok: true },
-        { label: 'Plantilles',  value: 'Landings i documents',                               ok: true },
+        { label: 'API Keys',            value: `${configuredKeys} / ${cfgList.length} configurades`, ok: missingKeys === 0 },
+        { label: 'Sectors al catàleg',  value: SECTOR_KEYS.length,                                   ok: true },
+        { label: 'Plantilles landing',  value: templates.length > 0 ? `${templates.length} disponibles` : 'Cap plantilla', ok: templates.length > 0 },
       ],
       note: missingKeys > 0 ? `${missingKeys} claus pendents. Alguns serveis poden no funcionar.` : undefined,
       actions: [
@@ -205,7 +227,6 @@ export default function ProcessPage() {
         { label: 'En execució',          value: activeCamps },
         { label: 'Completades',          value: completedCamps },
         { label: 'Prospects trobats',    value: totalProspects,    ok: totalProspects > 0 },
-        { label: 'Meta Ads',             value: 'Configura per tenant → Agents & IA', ok: true },
       ],
       note: campaigns.length === 0 ? 'Inicia una campanya de prospecció o activa Meta Ads per captar leads.' : undefined,
       actions: [
@@ -265,10 +286,11 @@ export default function ProcessPage() {
       icon: IconSet.Layers,
       status: loading ? 'loading' : tenantsTotal === 0 ? 'blocked' : tenantsWithPhases.length > 0 ? 'attention' : 'ok',
       items: [
-        { label: 'Tenants actius',               value: tenantsTotal,               ok: tenantsTotal > 0 },
-        { label: 'Fases pendents de configurar', value: tenantsWithPhases.length,   ok: tenantsWithPhases.length === 0 },
-        { label: 'Landings',                     value: 'Factory → publicar',        ok: true },
-        { label: 'Agents IA',                    value: 'Canals + base coneixement', ok: true },
+        { label: 'Tenants actius',               value: tenantsTotal,                                            ok: tenantsTotal > 0 },
+        { label: 'Fases pendents de configurar', value: tenantsWithPhases.length,                               ok: tenantsWithPhases.length === 0 },
+        { label: 'Tenants amb landing (F1)',      value: tenantsWithF1.length,                                   ok: tenantsWithF1.length > 0 || tenantsTotal === 0 },
+        { label: 'Canals actius (30d)',           value: activeChannels.length > 0 ? activeChannels.join(', ') : 'Cap', ok: activeChannels.length > 0 || tenantsTotal === 0 },
+        { label: 'Missatges IA (30d)',            value: totalMessages > 0 ? totalMessages.toLocaleString('ca-ES') : '0', ok: totalMessages > 0 || tenantsTotal === 0 },
       ],
       note: tenantsWithPhases.length > 0
         ? `${tenantsWithPhases.length} tenant${tenantsWithPhases.length > 1 ? 's' : ''} amb fases per configurar. Obre el wizard "Posar en marxa".`
