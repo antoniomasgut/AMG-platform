@@ -288,26 +288,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     private int calculateScore(Prospect p) {
-        int score = 0;
-        // Rating: sweet spot 3.5-4.2 (té marge de millora, seguidor actiu)
-        if (p.getGoogleRating() != null) {
-            double r = p.getGoogleRating().doubleValue();
-            if (r < 3.5)       score += 3;
-            else if (r < 4.2)  score += 4;
-            else if (r < 4.6)  score += 2;
-            else               score += 1;
-        }
-        // Ressenyes: menys = negoci petit/nou = més fàcil d'arribar
-        if (p.getGoogleReviews() != null) {
-            int rev = p.getGoogleReviews();
-            if (rev < 10)       score += 4;
-            else if (rev < 30)  score += 3;
-            else if (rev < 100) score += 2;
-            else if (rev < 300) score += 1;
-        }
-        // Sense web = target ideal AMG (només comptable si ja hem obtingut els detalls)
-        if (p.getPhone() != null && !Boolean.TRUE.equals(p.getHasWebsite())) score += 5;
-        return score;
+        return detectSignals(p).stream().mapToInt(com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal::points).sum();
     }
 
     @Override
@@ -547,49 +528,49 @@ public class ProspectingOrchestrator implements ProspectingService {
                 p.getNotes(), p.getCreatedAt(), p.getUpdatedAt(), p.getScore(), reviews, detectSignals(p));
     }
 
+    private static com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal signal(
+            String code, String label, String pitch, String tone, int points) {
+        return new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(code, label, pitch, tone, points);
+    }
+
+    // Punts màxims possibles:
+    // NO_WEBSITE(5) + LOW_REVIEWS(4) + MIXED_RATING(3) + NO_WHATSAPP(2) + NO_INSTAGRAM(1) = 15 pts
     private List<com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal> detectSignals(Prospect p) {
         var signals = new ArrayList<com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal>();
 
-        // Web
+        // Sense web → oportunitat màxima (producte estrella AMG)
         if (!Boolean.TRUE.equals(p.getHasWebsite())) {
-            signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
-                    "NO_WEBSITE", "Sense web pròpia", "Landing web moderna", "warning"));
+            signals.add(signal("NO_WEBSITE", "Sense web pròpia", "Landing web moderna", "warning", 5));
         }
 
-        // Google reviews
+        // Reviews Google → menys ressenyes = més necessitat visible
         if (p.getGoogleReviews() != null) {
             int rev = p.getGoogleReviews();
             if (rev < 10) {
-                signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
-                        "LOW_REVIEWS", "Molt pocs reviews", "Bot de recollida de ressenyes", "opportunity"));
+                signals.add(signal("LOW_REVIEWS", "Molt pocs reviews (" + rev + ")", "Bot de recollida de ressenyes", "opportunity", 4));
             } else if (rev < 30) {
-                signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
-                        "FEW_REVIEWS", "Poca activitat Google", "Campanya de reviews", "info"));
+                signals.add(signal("FEW_REVIEWS", "Poca activitat Google (" + rev + " reviews)", "Campanya de reviews", "info", 2));
             }
         }
 
-        // Google rating
+        // Rating Google → sweet spot 3.5-4.3 (marge de millora, sensible al pitch)
         if (p.getGoogleRating() != null) {
             double r = p.getGoogleRating().doubleValue();
             if (r < 3.5) {
-                signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
-                        "LOW_RATING", "Rating Google baix (" + p.getGoogleRating() + "★)", "Gestió de reputació digital", "danger"));
+                signals.add(signal("LOW_RATING", "Rating baix (" + p.getGoogleRating() + "★)", "Gestió de reputació digital urgent", "danger", 2));
             } else if (r < 4.3) {
-                signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
-                        "MIXED_RATING", "Rating millorable (" + p.getGoogleRating() + "★)", "Automatització de fidelització", "info"));
+                signals.add(signal("MIXED_RATING", "Rating millorable (" + p.getGoogleRating() + "★)", "Automatització de fidelització", "info", 3));
             }
         }
 
-        // WhatsApp
+        // Sense WhatsApp Business (i té telèfon verificat)
         if (p.getPhone() != null && !p.getPhone().isBlank() && !Boolean.TRUE.equals(p.getHasWhatsapp())) {
-            signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
-                    "NO_WHATSAPP", "Sense WhatsApp Business", "Canal directe amb clients", "opportunity"));
+            signals.add(signal("NO_WHATSAPP", "Sense WhatsApp Business", "Canal directe amb clients", "opportunity", 2));
         }
 
-        // Instagram
+        // Sense Instagram
         if (!Boolean.TRUE.equals(p.getHasInstagram())) {
-            signals.add(new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(
-                    "NO_INSTAGRAM", "Sense Instagram detectat", "Presència a xarxes socials", "neutral"));
+            signals.add(signal("NO_INSTAGRAM", "Sense Instagram detectat", "Presència a xarxes socials", "neutral", 1));
         }
 
         return signals;

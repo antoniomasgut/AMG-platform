@@ -19,6 +19,7 @@ export interface ProspectSignal {
   label: string;
   pitch: string;
   tone: 'warning' | 'danger' | 'opportunity' | 'info' | 'neutral';
+  points: number;
 }
 
 export interface Prospect {

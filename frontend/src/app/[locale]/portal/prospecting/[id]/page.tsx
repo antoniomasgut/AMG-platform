@@ -44,7 +44,7 @@ function HowItWorks() {
   const steps = [
     {
       n: 1, title: 'Puntuar',
-      desc: 'Calcula una puntuació (0–13 pts) per a cada prospect amb les dades actuals de Google (rating, nombre de ressenyes). Gratuït i instantani. Fes-ho primer per saber en qui invertir les crides de pagament.',
+      desc: 'Calcula una puntuació (0–15 pts) basada en senyals d\'oportunitat: web, reviews, rating, WhatsApp, Instagram. Gratuït i instantani. Fes-ho primer per saber en qui invertir les crides de pagament.',
       tag: 'Gratuït · Instant',
       tagTone: 'success' as const,
     },
@@ -320,21 +320,24 @@ function ProspectDrawer({
                   <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Oportunitats detectades</div>
                   <div className="space-y-1.5">
                     {prospect.signals.map(sig => (
-                      <div key={sig.code} className={`p-2 border ${
+                      <div key={sig.code} className={`p-2 border flex items-start gap-2 ${
                         sig.tone === 'danger'      ? 'border-danger/30 bg-danger/5' :
                         sig.tone === 'warning'     ? 'border-warning/30 bg-warning/5' :
                         sig.tone === 'opportunity' ? 'border-success/30 bg-success/5' :
                         sig.tone === 'info'        ? 'border-accent/30 bg-accent/5' :
                                                      'border-border-base bg-bg-1'
                       }`}>
-                        <div className={`f-mono text-[10px] font-bold ${
-                          sig.tone === 'danger'      ? 'text-danger' :
-                          sig.tone === 'warning'     ? 'text-warning' :
-                          sig.tone === 'opportunity' ? 'text-success' :
-                          sig.tone === 'info'        ? 'text-accent-light' :
-                                                       'text-ink-2'
-                        }`}>{sig.label}</div>
-                        <div className="f-mono text-[10px] text-ink-3 mt-0.5">→ {sig.pitch}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className={`f-mono text-[10px] font-bold ${
+                            sig.tone === 'danger'      ? 'text-danger' :
+                            sig.tone === 'warning'     ? 'text-warning' :
+                            sig.tone === 'opportunity' ? 'text-success' :
+                            sig.tone === 'info'        ? 'text-accent-light' :
+                                                         'text-ink-2'
+                          }`}>{sig.label}</div>
+                          <div className="f-mono text-[10px] text-ink-3 mt-0.5">→ {sig.pitch}</div>
+                        </div>
+                        <span className="f-mono text-[10px] font-bold text-ink-3 shrink-0">+{sig.points}</span>
                       </div>
                     ))}
                   </div>
@@ -348,7 +351,7 @@ function ProspectDrawer({
                     <span className={`f-mono text-2xl font-bold ${prospect.score >= 8 ? 'text-success' : prospect.score >= 5 ? 'text-accent-light' : 'text-ink-2'}`}>
                       {prospect.score}
                     </span>
-                    <span className="f-mono text-xs text-ink-3">/ 13 pts</span>
+                    <span className="f-mono text-xs text-ink-3">/ 15 pts</span>
                   </div>
                 </section>
               )}
