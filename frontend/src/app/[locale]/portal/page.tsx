@@ -234,10 +234,10 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
         <div className="amg-card card-clip p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">Últims 30 dies</div>
-              <div className="f-display font-bold text-sm mt-0.5">Activitat de canals</div>
+              <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3">{t('admin.channels.period')}</div>
+              <div className="f-display font-bold text-sm mt-0.5">{t('admin.channels.title')}</div>
             </div>
-            <a href="/portal/admin/tenants" className="f-mono text-[10px] uppercase text-accent-light hover:underline">Per tenant →</a>
+            <a href="/portal/admin/tenants" className="f-mono text-[10px] uppercase text-accent-light hover:underline">{t('admin.channels.byTenant')}</a>
           </div>
           {channelStats ? (
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -247,7 +247,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
                 { label: 'Telegram',  value: channelStats.telegramMessages,      icon: '✈️' },
                 { label: 'Email',     value: channelStats.emailMessages,         icon: '✉️' },
                 { label: 'Xat web',   value: channelStats.chatMessages,          icon: '💬' },
-                { label: 'Tokens IA', value: channelStats.aiTokens.toLocaleString('ca-ES'), icon: '🤖' },
+                { label: t('admin.channels.tokensAI'), value: channelStats.aiTokens.toLocaleString('ca-ES'), icon: '🤖' },
               ].map(({ label, value, icon }) => (
                 <div key={label} className="bg-[#0d0d1a] border border-border-base rounded p-2.5 text-center">
                   <div className="text-sm mb-1">{icon}</div>
@@ -257,7 +257,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
               ))}
             </div>
           ) : (
-            <div className="py-4 text-center f-mono text-[10px] uppercase text-ink-3">Sense dades</div>
+            <div className="py-4 text-center f-mono text-[10px] uppercase text-ink-3">{t('admin.channels.noData')}</div>
           )}
         </div>
       )}
@@ -296,6 +296,7 @@ function AdminDashboard({ data, loading, isSuperAdmin }: { data: AdminData; load
    Client services toggle section
 ───────────────────────────────────────────── */
 function ClientServicesCard({ tenantId }: { tenantId: string }) {
+  const t = useTranslations('portalDashboard');
   const [setup, setSetup] = useState<TenantSetup | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
 
@@ -332,7 +333,7 @@ function ClientServicesCard({ tenantId }: { tenantId: string }) {
 
   return (
     <div className="amg-card card-clip p-4 sm:p-5">
-      <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-4">Els meus serveis</div>
+      <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-4">{t('client.myServices.title')}</div>
       <div className="space-y-2">
         {allServices.map((svc) => {
           const isLoading = toggling === svc.service.id;

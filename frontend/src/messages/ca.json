@@ -1266,5 +1266,89 @@
       "faq_ssl_q": "Com es genera el certificat SSL?",
       "faq_ssl_a": "El certificat SSL es genera automàticament un cop el domini apunta als nostres servidors. Pot trigar fins a 15 minuts."
     }
+  },
+  "portalDashboard": {
+    "greeting": "Bon dia, {name}",
+    "seeAll": "VEURE TOT",
+    "detail": "DETALL",
+    "noData": "Sense dades",
+    "admin": {
+      "kpi": {
+        "tenantsActive": "Tenants actius",
+        "clients": "clients",
+        "leadsActive": "Leads actius",
+        "convRateSub": "{total} totals · {rate}% conv.",
+        "servicesMonitored": "Serveis monitoritzats",
+        "incidents": "{count} incident(s) obert(s)",
+        "noIncidents": "Tot operatiu",
+        "infra": "Infraestructura",
+        "paymentsPending": "Pagaments pendents",
+        "completed": "{count} completats"
+      },
+      "pipeline": {
+        "section": "Leads",
+        "title": "Pipeline de captació",
+        "stages": {
+          "NEW": "Nou",
+          "CONTACTED": "Contactat",
+          "QUALIFIED": "Qualificat",
+          "PROPOSAL": "Proposta",
+          "NEGOTIATION": "Negociació",
+          "WON": "Tancat"
+        }
+      },
+      "resources": {
+        "section": "Servidor",
+        "title": "Recursos del sistema",
+        "disc": "Disc",
+        "dbConnections": "Connexions DB",
+        "n8nTenants": "Tenants n8n actius",
+        "noData": "Sense dades d'infra"
+      },
+      "channels": {
+        "period": "Últims 30 dies",
+        "title": "Activitat de canals",
+        "byTenant": "Per tenant →",
+        "tokensAI": "Tokens IA",
+        "noData": "Sense dades"
+      },
+      "invoicesSummaryComingSoon": "Resum de factures pròximament",
+      "actions": {
+        "title": "Accions ràpides",
+        "process": "Veure procés",
+        "newLead": "Nou lead",
+        "tenants": "Tenants",
+        "apiKeys": "Claus API",
+        "backup": "Backup"
+      }
+    },
+    "client": {
+      "billing": {
+        "totalInvested": "Total invertit",
+        "pending": "{count} pressupost(os) pendent(s)",
+        "upToDate": "Al dia",
+        "lastQuote": "Últim pressupost",
+        "none": "Cap",
+        "amount": "Import"
+      },
+      "kpi": {
+        "webs": "Webs actives",
+        "total": "{count} totals"
+      },
+      "invoices": {
+        "section": "Factures",
+        "title": "Últimes factures",
+        "seeAll": "VEURE TOTES",
+        "empty": "Sense factures"
+      },
+      "help": {
+        "title": "Necessites ajuda?",
+        "subtitle": "El teu tècnic assignat està disponible per respondre els teus dubtes.",
+        "contact": "Escriure a l'equip"
+      },
+      "myServices": {
+        "title": "Els meus serveis"
+      }
+    }
   }
 }

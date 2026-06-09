@@ -1266,5 +1266,89 @@
       "faq_ssl_q": "How is the SSL certificate generated?",
       "faq_ssl_a": "The SSL certificate is automatically generated once the domain points to our servers. It can take up to 15 minutes."
     }
+  },
+  "portalDashboard": {
+    "greeting": "Good morning, {name}",
+    "seeAll": "SEE ALL",
+    "detail": "DETAIL",
+    "noData": "No data",
+    "admin": {
+      "kpi": {
+        "tenantsActive": "Active tenants",
+        "clients": "clients",
+        "leadsActive": "Active leads",
+        "convRateSub": "{total} total · {rate}% conv.",
+        "servicesMonitored": "Monitored services",
+        "incidents": "{count} open incident(s)",
+        "noIncidents": "All operational",
+        "infra": "Infrastructure",
+        "paymentsPending": "Pending payments",
+        "completed": "{count} completed"
+      },
+      "pipeline": {
+        "section": "Leads",
+        "title": "Acquisition pipeline",
+        "stages": {
+          "NEW": "New",
+          "CONTACTED": "Contacted",
+          "QUALIFIED": "Qualified",
+          "PROPOSAL": "Proposal",
+          "NEGOTIATION": "Negotiation",
+          "WON": "Won"
+        }
+      },
+      "resources": {
+        "section": "Server",
+        "title": "System resources",
+        "disc": "Disk",
+        "dbConnections": "DB connections",
+        "n8nTenants": "Active n8n tenants",
+        "noData": "No infra data"
+      },
+      "channels": {
+        "period": "Last 30 days",
+        "title": "Channel activity",
+        "byTenant": "By tenant →",
+        "tokensAI": "AI tokens",
+        "noData": "No data"
+      },
+      "invoicesSummaryComingSoon": "Invoice summary coming soon",
+      "actions": {
+        "title": "Quick actions",
+        "process": "View process",
+        "newLead": "New lead",
+        "tenants": "Tenants",
+        "apiKeys": "API keys",
+        "backup": "Backup"
+      }
+    },
+    "client": {
+      "billing": {
+        "totalInvested": "Total invested",
+        "pending": "{count} pending budget(s)",
+        "upToDate": "Up to date",
+        "lastQuote": "Last quote",
+        "none": "None",
+        "amount": "Amount"
+      },
+      "kpi": {
+        "webs": "Active websites",
+        "total": "{count} total"
+      },
+      "invoices": {
+        "section": "Invoices",
+        "title": "Latest invoices",
+        "seeAll": "SEE ALL",
+        "empty": "No invoices"
+      },
+      "help": {
+        "title": "Need help?",
+        "subtitle": "Your assigned technician is available to answer your questions.",
+        "contact": "Contact the team"
+      },
+      "myServices": {
+        "title": "My services"
+      }
+    }
   }
 }

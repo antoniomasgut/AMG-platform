@@ -1266,5 +1266,89 @@
       "faq_ssl_q": "¿Cómo se genera el certificado SSL?",
       "faq_ssl_a": "El certificado SSL se genera automáticamente una vez el dominio apunta a nuestros servidores. Puede tardar hasta 15 minutos."
     }
+  },
+  "portalDashboard": {
+    "greeting": "Buenos días, {name}",
+    "seeAll": "VER TODO",
+    "detail": "DETALLE",
+    "noData": "Sin datos",
+    "admin": {
+      "kpi": {
+        "tenantsActive": "Tenants activos",
+        "clients": "clientes",
+        "leadsActive": "Leads activos",
+        "convRateSub": "{total} totales · {rate}% conv.",
+        "servicesMonitored": "Servicios monitorizados",
+        "incidents": "{count} incidente(s) abierto(s)",
+        "noIncidents": "Todo operativo",
+        "infra": "Infraestructura",
+        "paymentsPending": "Pagos pendientes",
+        "completed": "{count} completados"
+      },
+      "pipeline": {
+        "section": "Leads",
+        "title": "Pipeline de captación",
+        "stages": {
+          "NEW": "Nuevo",
+          "CONTACTED": "Contactado",
+          "QUALIFIED": "Cualificado",
+          "PROPOSAL": "Propuesta",
+          "NEGOTIATION": "Negociación",
+          "WON": "Cerrado"
+        }
+      },
+      "resources": {
+        "section": "Servidor",
+        "title": "Recursos del sistema",
+        "disc": "Disco",
+        "dbConnections": "Conexiones DB",
+        "n8nTenants": "Tenants n8n activos",
+        "noData": "Sin datos de infra"
+      },
+      "channels": {
+        "period": "Últimos 30 días",
+        "title": "Actividad de canales",
+        "byTenant": "Por tenant →",
+        "tokensAI": "Tokens IA",
+        "noData": "Sin datos"
+      },
+      "invoicesSummaryComingSoon": "Resumen de facturas próximamente",
+      "actions": {
+        "title": "Acciones rápidas",
+        "process": "Ver proceso",
+        "newLead": "Nuevo lead",
+        "tenants": "Tenants",
+        "apiKeys": "Claves API",
+        "backup": "Backup"
+      }
+    },
+    "client": {
+      "billing": {
+        "totalInvested": "Total invertido",
+        "pending": "{count} presupuesto(s) pendiente(s)",
+        "upToDate": "Al día",
+        "lastQuote": "Último presupuesto",
+        "none": "Ninguno",
+        "amount": "Importe"
+      },
+      "kpi": {
+        "webs": "Webs activas",
+        "total": "{count} totales"
+      },
+      "invoices": {
+        "section": "Facturas",
+        "title": "Últimas facturas",
+        "seeAll": "VER TODAS",
+        "empty": "Sin facturas"
+      },
+      "help": {
+        "title": "¿Necesitas ayuda?",
+        "subtitle": "Tu técnico asignado está disponible para responder tus dudas.",
+        "contact": "Escribir al equipo"
+      },
+      "myServices": {
+        "title": "Mis servicios"
+      }
+    }
   }
 }

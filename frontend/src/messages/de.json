@@ -1266,5 +1266,89 @@
       "faq_ssl_q": "Wie wird das SSL-Zertifikat generiert?",
       "faq_ssl_a": "Das SSL-Zertifikat wird automatisch generiert, sobald die Domain auf unsere Server zeigt. Es kann bis zu 15 Minuten dauern."
     }
+  },
+  "portalDashboard": {
+    "greeting": "Guten Morgen, {name}",
+    "seeAll": "ALLE ANZEIGEN",
+    "detail": "DETAIL",
+    "noData": "Keine Daten",
+    "admin": {
+      "kpi": {
+        "tenantsActive": "Aktive Tenants",
+        "clients": "Kunden",
+        "leadsActive": "Aktive Leads",
+        "convRateSub": "{total} gesamt · {rate}% Konv.",
+        "servicesMonitored": "Überwachte Dienste",
+        "incidents": "{count} offene(r) Vorfall(Vorfälle)",
+        "noIncidents": "Alles betriebsbereit",
+        "infra": "Infrastruktur",
+        "paymentsPending": "Ausstehende Zahlungen",
+        "completed": "{count} abgeschlossen"
+      },
+      "pipeline": {
+        "section": "Leads",
+        "title": "Akquisitions-Pipeline",
+        "stages": {
+          "NEW": "Neu",
+          "CONTACTED": "Kontaktiert",
+          "QUALIFIED": "Qualifiziert",
+          "PROPOSAL": "Angebot",
+          "NEGOTIATION": "Verhandlung",
+          "WON": "Gewonnen"
+        }
+      },
+      "resources": {
+        "section": "Server",
+        "title": "Systemressourcen",
+        "disc": "Festplatte",
+        "dbConnections": "DB-Verbindungen",
+        "n8nTenants": "Aktive n8n-Tenants",
+        "noData": "Keine Infra-Daten"
+      },
+      "channels": {
+        "period": "Letzte 30 Tage",
+        "title": "Kanalaktivität",
+        "byTenant": "Nach Tenant →",
+        "tokensAI": "KI-Token",
+        "noData": "Keine Daten"
+      },
+      "invoicesSummaryComingSoon": "Rechnungsübersicht demnächst",
+      "actions": {
+        "title": "Schnellaktionen",
+        "process": "Prozess anzeigen",
+        "newLead": "Neuer Lead",
+        "tenants": "Tenants",
+        "apiKeys": "API-Schlüssel",
+        "backup": "Backup"
+      }
+    },
+    "client": {
+      "billing": {
+        "totalInvested": "Gesamt investiert",
+        "pending": "{count} ausstehende(s) Budget(s)",
+        "upToDate": "Aktuell",
+        "lastQuote": "Letztes Angebot",
+        "none": "Keines",
+        "amount": "Betrag"
+      },
+      "kpi": {
+        "webs": "Aktive Websites",
+        "total": "{count} gesamt"
+      },
+      "invoices": {
+        "section": "Rechnungen",
+        "title": "Neueste Rechnungen",
+        "seeAll": "ALLE ANZEIGEN",
+        "empty": "Keine Rechnungen"
+      },
+      "help": {
+        "title": "Brauchen Sie Hilfe?",
+        "subtitle": "Ihr zugewiesener Techniker steht für Ihre Fragen zur Verfügung.",
+        "contact": "Team kontaktieren"
+      },
+      "myServices": {
+        "title": "Meine Dienste"
+      }
+    }
   }
 }
