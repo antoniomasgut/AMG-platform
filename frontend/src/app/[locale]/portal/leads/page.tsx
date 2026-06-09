@@ -31,7 +31,8 @@ const STAGE_TONE: Record<string, 'neutral' | 'info' | 'accent' | 'warning' | 'su
 
 const SOURCE_LABEL: Record<string, string> = {
   WEBSITE: 'Web', REFERRAL: 'Referit', COLD_CALL: 'Cold Call',
-  SOCIAL_MEDIA: 'RRSS', GOOGLE_MAPS: 'Google Maps', OTHER: 'Altre',
+  SOCIAL_MEDIA: 'RRSS', GOOGLE_MAPS: 'Google Maps', INSTAGRAM: 'Instagram',
+  PAGINAS_AMARILLAS: 'Pàg. Grogues', META_LEAD_ADS: 'Meta Ads', OTHER: 'Altre',
 };
 
 const TEMPLATES: Record<'ca' | 'es', { subject: string; body: string }> = {
@@ -654,6 +655,43 @@ function OutreachModal({
   );
 }
 
+function LostReasonModal({
+  lead, onClose, onConfirm, loading,
+}: { lead: Lead; onClose: () => void; onConfirm: (reason: string) => void; loading: boolean }) {
+  const [reason, setReason] = useState('');
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-bg-0 border border-border-base w-full max-w-sm shadow-2xl">
+          <div className="flex items-center justify-between p-5 border-b border-border-base">
+            <div>
+              <div className="f-display font-bold text-base">Marcar com a perdut</div>
+              <div className="f-mono text-[10px] text-ink-3 mt-0.5">{lead.name}</div>
+            </div>
+            <button onClick={onClose} className="p-1.5 text-ink-3 hover:text-ink-0"><IconSet.X size={16} /></button>
+          </div>
+          <div className="p-5">
+            <label className="f-mono text-[10px] uppercase text-ink-3 tracking-widest block mb-2">Motiu de pèrdua</label>
+            <input
+              type="text" value={reason} onChange={e => setReason(e.target.value)} autoFocus
+              placeholder="Ex: Preu massa alt, ja té proveïdor..."
+              onKeyDown={e => e.key === 'Enter' && onConfirm(reason.trim() || 'No especificat')}
+              className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+            />
+          </div>
+          <div className="p-4 border-t border-border-base flex justify-end gap-2">
+            <AMGButton variant="ghost" onClick={onClose}>Cancel·lar</AMGButton>
+            <AMGButton loading={loading} onClick={() => onConfirm(reason.trim() || 'No especificat')}>
+              Confirmar
+            </AMGButton>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function fmt(n: number) {
   return `${(n * 100).toFixed(1)}%`;
 }
@@ -669,6 +707,7 @@ export default function LeadsPage() {
   const [showOutreach, setShowOutreach] = useState(false);
   const [showTemplateSend, setShowTemplateSend] = useState(false);
   const [demoLead, setDemoLead] = useState<Lead | null>(null);
+  const [lostLead, setLostLead] = useState<Lead | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('ALL');
   const [sourceFilter, setSourceFilter] = useState<string>('ALL');
@@ -897,11 +936,7 @@ export default function LeadsPage() {
                             <button
                               type="button"
                               className="f-mono text-[9px] uppercase text-ink-3 hover:text-danger-light hover:underline"
-                              onClick={e => {
-                                e.stopPropagation();
-                                const reason = prompt('Motiu de pèrdua:') ?? 'No especificat';
-                                doChangeStage({ id: lead.id, stage: 'LOST', lostReason: reason });
-                              }}
+                              onClick={e => { e.stopPropagation(); setLostLead(lead); }}
                             >
                               Perdut
                             </button>
@@ -957,6 +992,19 @@ export default function LeadsPage() {
           onClose={() => setShowTemplateSend(false)}
           onSend={(templateId, leadIds, channel) => doSendTemplate({ templateId, leadIds, channel })}
           sending={sendingTemplate}
+        />,
+        document.body
+      )}
+
+      {lostLead && typeof document !== 'undefined' && createPortal(
+        <LostReasonModal
+          lead={lostLead}
+          loading={false}
+          onClose={() => setLostLead(null)}
+          onConfirm={reason => {
+            doChangeStage({ id: lostLead.id, stage: 'LOST', lostReason: reason });
+            setLostLead(null);
+          }}
         />,
         document.body
       )}

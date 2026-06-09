@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import {
-  getLead, getActivities, changeStage, createActivity, setWhatsapp,
+  getLead, getActivities, changeStage, createActivity, setWhatsapp, updateLead,
   analyzeNotes, type AnalyzeNotesResponse, type Activity,
 } from '@/services/leads';
 import { createBookingToken, getTokensForLead, type BookingToken } from '@/services/booking';
@@ -30,8 +30,38 @@ const STAGE_TONE: Record<string, 'neutral' | 'info' | 'accent' | 'warning' | 'su
   PROPOSAL: 'warning', NEGOTIATION: 'warning', WON: 'success', LOST: 'danger',
 };
 
+const SOURCE_LABEL: Record<string, string> = {
+  WEBSITE: 'Web', REFERRAL: 'Referit', COLD_CALL: 'Cold Call',
+  SOCIAL_MEDIA: 'RRSS', GOOGLE_MAPS: 'Google Maps', INSTAGRAM: 'Instagram',
+  PAGINAS_AMARILLAS: 'Pàg. Grogues', META_LEAD_ADS: 'Meta Ads', OTHER: 'Altre',
+};
+
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="f-mono text-label text-ink-3 uppercase tracking-wider mb-0.5">{label}</div>
+      <div className="f-display text-sm text-ink-0">{value || '—'}</div>
+    </div>
+  );
+}
+
+function EditField({ label, value, onChange, type = 'text', placeholder }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">{label}</label>
+      <input
+        type={type} value={value} onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+      />
+    </div>
+  );
 }
 
 export default function LeadDetailPage() {
@@ -48,10 +78,14 @@ export default function LeadDetailPage() {
   const [meetingNote, setMeetingNote] = useState('');
   const [showMeetingNoteForm, setShowMeetingNoteForm] = useState(false);
   const [copiedToken, setCopiedToken] = useState(false);
-
   const [interviewNotes, setInterviewNotes] = useState('');
   const [analysis, setAnalysis] = useState<AnalyzeNotesResponse | null>(null);
   const [showConvertModal, setShowConvertModal] = useState(false);
+
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState({
+    name: '', email: '', phone: '', notes: '', estimatedValue: '',
+  });
 
   const { data: lead, isLoading: loadingLead } = useQuery({
     queryKey: ['lead', id],
@@ -62,6 +96,12 @@ export default function LeadDetailPage() {
   const { data: activities = [], isLoading: loadingActivities } = useQuery({
     queryKey: ['lead-activities', id],
     queryFn: () => getActivities(id),
+    enabled: !!user && !!id,
+  });
+
+  const { data: bookingTokens = [] } = useQuery({
+    queryKey: ['booking-tokens', id],
+    queryFn: () => getTokensForLead(id),
     enabled: !!user && !!id,
   });
 
@@ -84,10 +124,21 @@ export default function LeadDetailPage() {
     onError: () => toast('error', 'Error actualitzant WhatsApp'),
   });
 
-  const { data: bookingTokens = [] } = useQuery({
-    queryKey: ['booking-tokens', id],
-    queryFn: () => getTokensForLead(id),
-    enabled: !!user && !!id,
+  const { mutate: doUpdateLead, isPending: updatingLead } = useMutation({
+    mutationFn: () => updateLead(id, {
+      name: editData.name || undefined,
+      email: editData.email || undefined,
+      phone: editData.phone || undefined,
+      notes: editData.notes || undefined,
+      estimatedValue: editData.estimatedValue ? Number(editData.estimatedValue) : undefined,
+    }),
+    onSuccess: () => {
+      toast('success', 'Lead actualitzat');
+      setEditMode(false);
+      qc.invalidateQueries({ queryKey: ['lead', id] });
+      qc.invalidateQueries({ queryKey: ['leads'] });
+    },
+    onError: () => toast('error', 'Error actualitzant el lead'),
   });
 
   const { mutate: doSaveMeetingNote, isPending: savingNote } = useMutation({
@@ -135,6 +186,18 @@ export default function LeadDetailPage() {
     onError: () => toast('error', 'Error registrant activitat'),
   });
 
+  const enterEditMode = () => {
+    if (!lead) return;
+    setEditData({
+      name: lead.name,
+      email: lead.email ?? '',
+      phone: lead.phone ?? '',
+      notes: lead.notes ?? '',
+      estimatedValue: lead.estimatedValue != null ? String(lead.estimatedValue) : '',
+    });
+    setEditMode(true);
+  };
+
   if (!user) return null;
 
   if (loadingLead) {
@@ -159,6 +222,8 @@ export default function LeadDetailPage() {
     );
   }
 
+  const hasUtm = lead.utmSource || lead.utmMedium || lead.utmCampaign;
+
   return (
     <PortalShell breadcrumb={`leads / ${lead.name}`}>
       <div className="p-4 sm:p-8 space-y-6 max-w-3xl">
@@ -178,22 +243,90 @@ export default function LeadDetailPage() {
 
         {/* Informació del lead */}
         <div className="amg-card card-clip p-6">
-          <div className="f-mono text-label uppercase text-ink-2 tracking-widest mb-4">Informació del Lead</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              { label: 'Nom / Empresa', value: lead.name },
-              { label: 'Email', value: lead.email ?? '—' },
-              { label: 'Telèfon', value: lead.phone ?? '—' },
-              { label: 'Origen', value: lead.source },
-              { label: 'Creat', value: fmtDate(lead.createdAt) },
-              { label: 'Actualitzat', value: fmtDate(lead.updatedAt) },
-            ].map(({ label, value }) => (
-              <div key={label}>
-                <div className="f-mono text-label text-ink-3 uppercase tracking-wider mb-0.5">{label}</div>
-                <div className="f-display text-sm text-ink-0">{value}</div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Informació del Lead</div>
+            {!editMode ? (
+              <button
+                onClick={enterEditMode}
+                className="flex items-center gap-1.5 f-mono text-[10px] text-ink-3 hover:text-accent-light transition-colors"
+              >
+                <IconSet.Edit size={12} /> Editar
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <AMGButton size="sm" variant="ghost" onClick={() => setEditMode(false)}>Cancel·lar</AMGButton>
+                <AMGButton size="sm" loading={updatingLead} onClick={() => doUpdateLead()}>Desar</AMGButton>
               </div>
-            ))}
+            )}
           </div>
+
+          {editMode ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <EditField label="Nom / Empresa" value={editData.name} onChange={v => setEditData(d => ({ ...d, name: v }))} />
+                <EditField label="Email" value={editData.email} onChange={v => setEditData(d => ({ ...d, email: v }))} type="email" />
+                <EditField label="Telèfon" value={editData.phone} onChange={v => setEditData(d => ({ ...d, phone: v }))} />
+                <EditField label="Valor estimat (€)" value={editData.estimatedValue} onChange={v => setEditData(d => ({ ...d, estimatedValue: v }))} type="number" placeholder="0" />
+              </div>
+              <div>
+                <label className="f-mono text-[10px] uppercase text-ink-3 tracking-wider block mb-1">Notes</label>
+                <textarea
+                  value={editData.notes}
+                  onChange={e => setEditData(d => ({ ...d, notes: e.target.value }))}
+                  rows={3}
+                  className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-none"
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Nom / Empresa" value={lead.name} />
+                <Field label="Email" value={lead.email ?? ''} />
+                <Field label="Telèfon" value={lead.phone ?? ''} />
+                <Field label="Origen" value={SOURCE_LABEL[lead.source] ?? lead.source} />
+                <Field label="Valor estimat" value={lead.estimatedValue != null ? `${lead.estimatedValue} €` : ''} />
+                <Field label="Creat" value={fmtDate(lead.createdAt)} />
+              </div>
+
+              {lead.notes && (
+                <div className="mt-4 pt-4 border-t border-border-base">
+                  <div className="f-mono text-label text-ink-3 uppercase tracking-wider mb-1">Notes</div>
+                  <p className="text-sm text-ink-1 whitespace-pre-wrap">{lead.notes}</p>
+                </div>
+              )}
+
+              {lead.stage === 'LOST' && lead.lostReason && (
+                <div className="mt-4 pt-4 border-t border-border-base">
+                  <div className="f-mono text-label text-ink-3 uppercase tracking-wider mb-1">Motiu de pèrdua</div>
+                  <p className="text-sm text-danger-light">{lead.lostReason}</p>
+                </div>
+              )}
+
+              {lead.tags && (
+                <div className="mt-4 pt-4 border-t border-border-base">
+                  <div className="f-mono text-label text-ink-3 uppercase tracking-wider mb-2">Etiquetes</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {lead.tags.split(',').map(t => t.trim()).filter(Boolean).map(tag => (
+                      <AMGBadge key={tag} tone="neutral">{tag}</AMGBadge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {hasUtm && (
+                <div className="mt-4 pt-4 border-t border-border-base">
+                  <div className="f-mono text-label text-ink-3 uppercase tracking-wider mb-2">UTM / Origen digital</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {lead.utmSource && <Field label="utm_source" value={lead.utmSource} />}
+                    {lead.utmMedium && <Field label="utm_medium" value={lead.utmMedium} />}
+                    {lead.utmCampaign && <Field label="utm_campaign" value={lead.utmCampaign} />}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           {lead.phone && (
             <div className="mt-4 pt-4 border-t border-border-base">
               <div className="f-mono text-label text-ink-3 uppercase tracking-wider mb-2">WhatsApp</div>
@@ -203,8 +336,7 @@ export default function LeadDetailPage() {
                 </span>
                 <a
                   href={(() => { const d = lead.phone.replace(/\D/g, ''); return `https://wa.me/${d.length === 9 ? '34' + d : d}`; })()}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target="_blank" rel="noopener noreferrer"
                   className="f-mono text-xs border border-border-base text-ink-2 hover:border-success hover:text-success px-2 py-1 transition-colors"
                 >
                   Provar WA →
@@ -220,12 +352,6 @@ export default function LeadDetailPage() {
                   {lead.hasWhatsapp ? 'Desmarcar WA' : 'Marcar WA'}
                 </button>
               </div>
-            </div>
-          )}
-          {lead.notes && (
-            <div className="mt-4 pt-4 border-t border-border-base">
-              <div className="f-mono text-label text-ink-3 uppercase tracking-wider mb-1">Notes</div>
-              <p className="text-sm text-ink-1">{lead.notes}</p>
             </div>
           )}
         </div>
@@ -255,12 +381,7 @@ export default function LeadDetailPage() {
         <div className="amg-card card-clip p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Videoconferència</div>
-            <AMGButton
-              size="sm"
-              icon={IconSet.Calendar}
-              loading={creatingToken}
-              onClick={() => doCreateToken()}
-            >
+            <AMGButton size="sm" icon={IconSet.Calendar} loading={creatingToken} onClick={() => doCreateToken()}>
               Generar link de reserva
             </AMGButton>
           </div>
@@ -309,12 +430,8 @@ export default function LeadDetailPage() {
                       })}
                     </p>
                     {bt.meetLink && (
-                      <a
-                        href={bt.meetLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-accent-light hover:underline flex items-center gap-1"
-                      >
+                      <a href={bt.meetLink} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-accent-light hover:underline flex items-center gap-1">
                         <IconSet.Video size={12} /> Unir-se a Google Meet →
                       </a>
                     )}
@@ -328,7 +445,7 @@ export default function LeadDetailPage() {
         {/* Notes d'Entrevista (IA) */}
         <div className="amg-card card-clip p-6 space-y-4 border-l-4 border-l-[#FF6B00]">
           <div className="f-mono text-label uppercase text-ink-2 tracking-widest flex items-center gap-2">
-            <IconSet.Zap size={14} className="text-[#FF6B00]" /> Notes d'Entrevista (IA)
+            <IconSet.Zap size={14} className="text-[#FF6B00]" /> Notes d&apos;Entrevista (IA)
           </div>
           <p className="text-sm text-ink-3">
             Escriu les necessitats, problemes i dolors del client durant la videoconferència. La IA les analitzarà per preparar un pressupost.
@@ -336,18 +453,12 @@ export default function LeadDetailPage() {
           <textarea
             value={interviewNotes}
             onChange={e => setInterviewNotes(e.target.value)}
-            placeholder="Ex: És una perruqueria. El client diu que perd vendes per no tenir web, està molt enfadat perquè no pot agafar cites online i vol una solució..."
+            placeholder="Ex: És una perruqueria. El client diu que perd vendes per no tenir web, vol agafar cites online..."
             rows={6}
             className="w-full bg-bg-0 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-[#FF6B00] resize-y"
           />
           <div className="flex justify-end">
-            <AMGButton
-              size="sm"
-              icon={IconSet.Zap}
-              loading={analyzingNotes}
-              disabled={!interviewNotes.trim()}
-              onClick={() => doAnalyzeNotes()}
-            >
+            <AMGButton size="sm" icon={IconSet.Zap} loading={analyzingNotes} disabled={!interviewNotes.trim()} onClick={() => doAnalyzeNotes()}>
               Analitzar amb IA
             </AMGButton>
           </div>
@@ -358,7 +469,7 @@ export default function LeadDetailPage() {
                 <IconSet.Check size={16} className="text-success" />
                 <span className="font-semibold text-sm">Anàlisi completat</span>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="f-mono text-[10px] uppercase text-ink-3">Punts de dolor detectats</div>
@@ -370,7 +481,7 @@ export default function LeadDetailPage() {
                     ))}
                   </ul>
                 </div>
-                
+
                 <div className="space-y-3 bg-[rgba(255,255,255,0.02)] p-3 rounded border border-border-base">
                   <div className="flex justify-between items-center pb-2 border-b border-border-base">
                     <span className="f-mono text-[10px] uppercase text-ink-3">Segmentació</span>
@@ -379,7 +490,6 @@ export default function LeadDetailPage() {
                       <AMGBadge tone="neutral">{analysis.recommendedSize}</AMGBadge>
                     </div>
                   </div>
-                  
                   <div className="flex justify-between items-center pb-2 border-b border-border-base">
                     <span className="f-mono text-[10px] uppercase text-ink-3">Pressupost Recomanat</span>
                     <div className="text-right">
@@ -389,17 +499,14 @@ export default function LeadDetailPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-[rgba(255,107,0,0.05)] border border-[#FF6B00]/20 p-3 rounded">
                 <div className="f-mono text-[10px] uppercase text-[#FF6B00] mb-1">Pitch de Venda Suggrit</div>
-                <p className="text-xs text-ink-1 italic">"{analysis.recommendationPitch}"</p>
+                <p className="text-xs text-ink-1 italic">&ldquo;{analysis.recommendationPitch}&rdquo;</p>
               </div>
 
               <div className="pt-2 flex justify-end">
-                <AMGButton
-                  onClick={() => setShowConvertModal(true)}
-                  icon={IconSet.Briefcase}
-                >
+                <AMGButton onClick={() => setShowConvertModal(true)} icon={IconSet.Briefcase}>
                   Convertir a Client amb aquesta proposta
                 </AMGButton>
               </div>
@@ -425,12 +532,7 @@ export default function LeadDetailPage() {
                   rows={5}
                   className="w-full bg-bg-0 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-none"
                 />
-                <AMGButton
-                  size="sm"
-                  loading={savingNote}
-                  disabled={!meetingNote.trim()}
-                  onClick={() => doSaveMeetingNote(meetingNote.trim())}
-                >
+                <AMGButton size="sm" loading={savingNote} disabled={!meetingNote.trim()} onClick={() => doSaveMeetingNote(meetingNote.trim())}>
                   Desar notes
                 </AMGButton>
               </div>
@@ -454,10 +556,10 @@ export default function LeadDetailPage() {
                   <label className="f-mono text-label text-ink-3 uppercase tracking-wider block mb-1">Tipus</label>
                   <select
                     value={newActivity.type}
-                    onChange={(e) => setNewActivity((a) => ({ ...a, type: e.target.value }))}
+                    onChange={e => setNewActivity(a => ({ ...a, type: e.target.value }))}
                     className="w-full bg-bg-0 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
                   >
-                    {['CALL', 'EMAIL', 'MEETING', 'NOTE', 'TASK'].map((t) => (
+                    {['CALL', 'EMAIL', 'MEETING', 'NOTE', 'TASK'].map(t => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </select>
@@ -465,9 +567,8 @@ export default function LeadDetailPage() {
                 <div>
                   <label className="f-mono text-label text-ink-3 uppercase tracking-wider block mb-1">Data prevista</label>
                   <input
-                    type="date"
-                    value={newActivity.dueDate}
-                    onChange={(e) => setNewActivity((a) => ({ ...a, dueDate: e.target.value }))}
+                    type="date" value={newActivity.dueDate}
+                    onChange={e => setNewActivity(a => ({ ...a, dueDate: e.target.value }))}
                     className="w-full bg-bg-0 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
                   />
                 </div>
@@ -476,7 +577,7 @@ export default function LeadDetailPage() {
                 <label className="f-mono text-label text-ink-3 uppercase tracking-wider block mb-1">Descripció</label>
                 <textarea
                   value={newActivity.description}
-                  onChange={(e) => setNewActivity((a) => ({ ...a, description: e.target.value }))}
+                  onChange={e => setNewActivity(a => ({ ...a, description: e.target.value }))}
                   rows={3}
                   className="w-full bg-bg-0 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-none"
                 />
@@ -498,7 +599,7 @@ export default function LeadDetailPage() {
             </div>
           ) : (
             <div className="divide-y divide-border-base">
-              {(activities as Activity[]).map((act) => (
+              {(activities as Activity[]).map(act => (
                 <div key={act.id} className="px-4 sm:px-5 py-3 flex items-start gap-3">
                   <AMGBadge tone={act.completedAt ? 'success' : 'neutral'}>{act.type}</AMGBadge>
                   <div className="flex-1 min-w-0">
