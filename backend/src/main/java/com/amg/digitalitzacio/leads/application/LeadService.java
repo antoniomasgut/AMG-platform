@@ -42,10 +42,38 @@ public class LeadService {
     private final AIProviderRouter aiProviderRouter;
     private final ObjectMapper objectMapper;
 
+    private static final Set<LeadSource> REENGAGEMENT_SOURCES = Set.of(
+            LeadSource.WHATSAPP, LeadSource.WEB, LeadSource.LANDING_FORM,
+            LeadSource.CHAT_WIDGET, LeadSource.FACEBOOK, LeadSource.INSTAGRAM, LeadSource.META_ADS);
+
     public LeadResponse createLead(LeadRequest request, UserPrincipal principal) {
         UUID tenantId = principal.tenantId();
         if (tenantId == null) {
             throw new IllegalArgumentException("Tenant ID is required to create a lead");
+        }
+
+        LeadSource source = request.source() != null ? request.source() : LeadSource.OTHER;
+
+        // Si el canal és de re-engagement (inbound), comprova si ja existeix un lead i reactiva'l
+        if (REENGAGEMENT_SOURCES.contains(source)) {
+            Optional<Lead> existing = Optional.empty();
+            if (request.phone() != null && !request.phone().isBlank()) {
+                existing = leadRepository.findFirstByTenantIdAndPhone(tenantId, request.phone());
+            }
+            if (existing.isEmpty() && request.email() != null && !request.email().isBlank()) {
+                existing = leadRepository.findFirstByTenantIdAndEmail(tenantId, request.email());
+            }
+            if (existing.isPresent()) {
+                Lead lead = existing.get();
+                lead.setIsActive(true);
+                lead.setSource(source);
+                if (lead.getStage() == PipelineStage.LOST || lead.getStage() == PipelineStage.NURTURING) {
+                    lead.setStage(PipelineStage.CONTACTED);
+                }
+                lead = leadRepository.save(lead);
+                log.info("Lead {} reactivated via {} channel", lead.getId(), source);
+                return toLeadResponse(lead);
+            }
         }
 
         Lead lead = new Lead();
@@ -53,7 +81,7 @@ public class LeadService {
         lead.setName(request.name());
         lead.setEmail(request.email());
         lead.setPhone(request.phone());
-        lead.setSource(request.source() != null ? request.source() : LeadSource.OTHER);
+        lead.setSource(source);
         lead.setStage(PipelineStage.NEW);
         lead.setAssignedTo(request.assignedTo());
         lead.setEstimatedValue(request.estimatedValue());

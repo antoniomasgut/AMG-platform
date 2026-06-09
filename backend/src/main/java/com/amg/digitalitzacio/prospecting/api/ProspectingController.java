@@ -123,7 +123,7 @@ public class ProspectingController {
     @PostMapping("/campaigns/{id}/export-contactable")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public Map<String, Integer> exportContactable(@PathVariable UUID id) {
-        return Map.of("exported", service.exportContactableProspects(id));
+        return service.exportContactableProspects(id);
     }
 
     @PostMapping("/campaigns/{id}/score")
@@ -151,7 +151,7 @@ public class ProspectingController {
     @PostMapping("/campaigns/{id}/export-qualified")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public Map<String, Integer> exportQualified(@PathVariable UUID id) {
-        return Map.of("exported", service.exportQualifiedProspects(id));
+        return service.exportQualifiedProspects(id);
     }
 
     @PostMapping("/campaigns/{id}/schedule")

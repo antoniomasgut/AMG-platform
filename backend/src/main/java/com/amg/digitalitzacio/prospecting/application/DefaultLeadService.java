@@ -20,8 +20,23 @@ public class DefaultLeadService implements LeadService {
 
     @Override
     @Transactional
-    public UUID createLead(String name, String email, String phone, String website,
-                           String description, String source, UUID tenantId) {
+    public LeadCreationResult createLead(String name, String email, String phone, String website,
+                                         String description, String source, UUID tenantId) {
+        // Cerca si ja existeix un lead actiu amb el mateix telèfon o email (evitar duplicats)
+        if (phone != null && !phone.isBlank()) {
+            var existing = leadRepository.findFirstByTenantIdAndPhone(tenantId, phone);
+            if (existing.isPresent()) {
+                log.debug("Prospect skipped — existing lead {} matches phone {}", existing.get().getId(), phone);
+                return new LeadCreationResult(existing.get().getId(), false);
+            }
+        }
+        if (email != null && !email.isBlank()) {
+            var existing = leadRepository.findFirstByTenantIdAndEmail(tenantId, email);
+            if (existing.isPresent()) {
+                log.debug("Prospect skipped — existing lead {} matches email {}", existing.get().getId(), email);
+                return new LeadCreationResult(existing.get().getId(), false);
+            }
+        }
         var lead = new Lead();
         lead.setTenantId(tenantId);
         lead.setName(name);
@@ -32,7 +47,7 @@ public class DefaultLeadService implements LeadService {
         lead.setSource(parseSource(source));
         var saved = leadRepository.save(lead);
         log.debug("Created lead {} from prospect export", saved.getId());
-        return saved.getId();
+        return new LeadCreationResult(saved.getId(), true);
     }
 
     private String buildNotes(String website, String description) {

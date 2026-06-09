@@ -386,19 +386,22 @@ public class ProspectingOrchestrator implements ProspectingService {
             tenantId = userRepository.findById(campaign.getCreatedBy())
                     .map(u -> u.getTenantId()).orElse(null);
         }
-        var leadId = leadService.createLead(
+        var result = leadService.createLead(
                 prospect.getName(), prospect.getEmail(), prospect.getPhone(),
                 prospect.getWebsite(), prospect.getDescription(),
                 prospect.getSource().name(), tenantId);
 
-        prospect.setLeadId(leadId);
+        prospect.setLeadId(result.leadId());
         prospect.setStatus(ProspectStatus.EXPORTED);
         prospectRepository.save(prospect);
 
-        campaign.setTotalExported(campaign.getTotalExported() + 1);
-        campaignRepository.save(campaign);
+        if (result.isNew()) {
+            campaign.setTotalExported(campaign.getTotalExported() + 1);
+            campaignRepository.save(campaign);
+        }
 
-        return new LeadExportResponse(prospectId, leadId, "/leads/" + leadId, ProspectStatus.EXPORTED.name());
+        String status = result.isNew() ? ProspectStatus.EXPORTED.name() : "LINKED_EXISTING";
+        return new LeadExportResponse(prospectId, result.leadId(), "/leads/" + result.leadId(), status);
     }
 
     @Override
@@ -416,33 +419,36 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     @Override
-    public int exportQualifiedProspects(UUID campaignId) {
+    public Map<String, Integer> exportQualifiedProspects(UUID campaignId) {
         var prospects = prospectRepository.findByCampaignIdAndStatus(campaignId, ProspectStatus.QUALIFIED);
-        int count = 0;
+        int exported = 0, skipped = 0;
         for (var prospect : prospects) {
-            try { exportProspect(prospect.getId()); count++; } catch (Exception ignored) {}
+            try {
+                var r = exportProspect(prospect.getId());
+                if ("LINKED_EXISTING".equals(r.status())) skipped++; else exported++;
+            } catch (Exception ignored) {}
         }
-        log.info("Exported {} qualified prospects from campaign {}", count, campaignId);
-        return count;
+        log.info("Exported {} / skipped {} qualified prospects from campaign {}", exported, skipped, campaignId);
+        return Map.of("exported", exported, "skipped", skipped);
     }
 
     @Override
-    public int exportContactableProspects(UUID campaignId) {
+    public Map<String, Integer> exportContactableProspects(UUID campaignId) {
         var prospects = prospectRepository.findByCampaignId(campaignId).stream()
                 .filter(p -> p.getStatus() != ProspectStatus.EXPORTED)
                 .filter(p -> (p.getPhone() != null && !p.getPhone().isBlank())
                           || (p.getEmail() != null && !p.getEmail().isBlank()))
                 .toList();
-        int count = 0;
+        int exported = 0, skipped = 0;
         for (var prospect : prospects) {
             try {
-                exportProspect(prospect.getId());
-                count++;
+                var r = exportProspect(prospect.getId());
+                if ("LINKED_EXISTING".equals(r.status())) skipped++; else exported++;
             } catch (Exception ignored) {
             }
         }
-        log.info("Exported {} contactable prospects from campaign {}", count, campaignId);
-        return count;
+        log.info("Exported {} / skipped {} contactable prospects from campaign {}", exported, skipped, campaignId);
+        return Map.of("exported", exported, "skipped", skipped);
     }
 
     @Override

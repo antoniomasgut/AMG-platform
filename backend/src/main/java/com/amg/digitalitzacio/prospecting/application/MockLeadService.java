@@ -11,7 +11,7 @@ import java.util.UUID;
 public class MockLeadService implements LeadService {
 
     @Override
-    public UUID createLead(String name, String email, String phone, String website, String description, String source, UUID tenantId) {
-        return UUID.randomUUID();
+    public LeadCreationResult createLead(String name, String email, String phone, String website, String description, String source, UUID tenantId) {
+        return new LeadCreationResult(UUID.randomUUID(), true);
     }
 }

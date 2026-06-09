@@ -98,7 +98,7 @@ export const enrichProspect = (id: string) =>
   apiFetch<Prospect>(`/prospecting/prospects/${id}/enrich`, { method: 'POST' });
 
 export const exportContactableProspects = (id: string) =>
-  apiFetch<{ exported: number }>(`/prospecting/campaigns/${id}/export-contactable`, { method: 'POST' });
+  apiFetch<{ exported: number; skipped: number }>(`/prospecting/campaigns/${id}/export-contactable`, { method: 'POST' });
 
 export interface UpdateProspectPayload {
   status?: string;
@@ -118,7 +118,7 @@ export const updateProspect = (id: string, payload: UpdateProspectPayload) =>
   });
 
 export const exportQualifiedProspects = (id: string) =>
-  apiFetch<{ exported: number }>(`/prospecting/campaigns/${id}/export-qualified`, { method: 'POST' });
+  apiFetch<{ exported: number; skipped: number }>(`/prospecting/campaigns/${id}/export-qualified`, { method: 'POST' });
 
 export const scoreProspects = (id: string) =>
   apiFetch<Prospect[]>(`/prospecting/campaigns/${id}/score`, { method: 'POST' });

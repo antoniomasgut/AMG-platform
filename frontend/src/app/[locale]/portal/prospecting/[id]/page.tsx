@@ -422,7 +422,8 @@ export default function CampaignDetailPage() {
   const { mutate: doExportContactable, isPending: exportingContactable } = useMutation({
     mutationFn: () => exportContactableProspects(id),
     onSuccess: (data) => {
-      toast('success', `${data.exported} prospect${data.exported !== 1 ? 's' : ''} exportat${data.exported !== 1 ? 's' : ''} a Leads`);
+      const skippedMsg = data.skipped ? `, ${data.skipped} ja existien` : '';
+      toast('success', `${data.exported} nous leads creats${skippedMsg}`);
       invalidateProspects(); invalidateCampaign();
     },
     onError: () => toast('error', 'Error exportant els prospects'),
@@ -467,7 +468,8 @@ export default function CampaignDetailPage() {
   const { mutate: doExportQualified, isPending: exportingQualified } = useMutation({
     mutationFn: () => exportQualifiedProspects(id),
     onSuccess: (data) => {
-      toast('success', `${data.exported} prospect${data.exported !== 1 ? 's' : ''} exportat${data.exported !== 1 ? 's' : ''} a Leads`);
+      const skippedMsg = data.skipped ? `, ${data.skipped} ja existien` : '';
+      toast('success', `${data.exported} nous leads creats${skippedMsg}`);
       invalidateProspects(); invalidateCampaign();
     },
     onError: () => toast('error', 'Error exportant els prospects qualificats'),
