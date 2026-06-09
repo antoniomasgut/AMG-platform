@@ -534,7 +534,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     // Punts màxims possibles (senyals mútuament excloents inclosos):
-    // NO_WHATSAPP(5) + LOW_REVIEWS(4) + MIXED_RATING(3) + NO_WEBSITE(2) + NO_INSTAGRAM(1) = 15 pts
+    // NO_WHATSAPP(5) + LOW_REVIEWS(4) + MIXED_RATING(3) + NO_WEBSITE(3) + NO_INSTAGRAM(1) = 16 pts
     private List<com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal> detectSignals(Prospect p) {
         var signals = new ArrayList<com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal>();
 
@@ -563,9 +563,9 @@ public class ProspectingOrchestrator implements ProspectingService {
             }
         }
 
-        // Sense web → oportunitat de landing + chat widget de l'agent
+        // Sense web → sense web AMG, integrar el chat widget i formularis és molt complex
         if (!Boolean.TRUE.equals(p.getHasWebsite())) {
-            signals.add(signal("NO_WEBSITE", "Sense web pròpia", "Landing + agent IA amb chat widget", "neutral", 2));
+            signals.add(signal("NO_WEBSITE", "Sense web gestionada", "Landing AMG = base per a chat, formularis i Meta Pixel", "warning", 3));
         }
 
         // Sense Instagram

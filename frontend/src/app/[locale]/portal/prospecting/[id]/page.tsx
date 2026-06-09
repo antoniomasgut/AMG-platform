@@ -44,7 +44,7 @@ function HowItWorks() {
   const steps = [
     {
       n: 1, title: 'Puntuar',
-      desc: 'Calcula una puntuació (0–15 pts) basada en senyals d\'oportunitat: web, reviews, rating, WhatsApp, Instagram. Gratuït i instantani. Fes-ho primer per saber en qui invertir les crides de pagament.',
+      desc: 'Calcula una puntuació (0–16 pts) basada en senyals d\'oportunitat: web, WhatsApp, reviews, rating, Instagram. Gratuït i instantani. Fes-ho primer per saber en qui invertir les crides de pagament.',
       tag: 'Gratuït · Instant',
       tagTone: 'success' as const,
     },
@@ -351,7 +351,7 @@ function ProspectDrawer({
                     <span className={`f-mono text-2xl font-bold ${prospect.score >= 8 ? 'text-success' : prospect.score >= 5 ? 'text-accent-light' : 'text-ink-2'}`}>
                       {prospect.score}
                     </span>
-                    <span className="f-mono text-xs text-ink-3">/ 15 pts</span>
+                    <span className="f-mono text-xs text-ink-3">/ 16 pts</span>
                   </div>
                 </section>
               )}
