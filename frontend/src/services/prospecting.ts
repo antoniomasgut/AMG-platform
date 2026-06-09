@@ -100,10 +100,21 @@ export const enrichProspect = (id: string) =>
 export const exportContactableProspects = (id: string) =>
   apiFetch<{ exported: number }>(`/prospecting/campaigns/${id}/export-contactable`, { method: 'POST' });
 
-export const updateProspect = (id: string, status: string) =>
+export interface UpdateProspectPayload {
+  status?: string;
+  notes?: string;
+  name?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  address?: string;
+  city?: string;
+}
+
+export const updateProspect = (id: string, payload: UpdateProspectPayload) =>
   apiFetch<Prospect>(`/prospecting/prospects/${id}`, {
     method: 'PUT',
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(payload),
   });
 
 export const exportQualifiedProspects = (id: string) =>

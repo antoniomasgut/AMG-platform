@@ -168,8 +168,18 @@ public class ProspectingOrchestrator implements ProspectingService {
     public ProspectResponse updateProspect(UUID prospectId, UpdateProspectRequest request) {
         var prospect = prospectRepository.findById(prospectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
-        if (request.status() != null) prospect.setStatus(request.status());
-        if (request.notes() != null) prospect.setNotes(request.notes());
+        if (request.status()  != null) prospect.setStatus(request.status());
+        if (request.notes()   != null) prospect.setNotes(request.notes());
+        if (request.name()    != null && !request.name().isBlank())    prospect.setName(request.name());
+        if (request.phone()   != null) prospect.setPhone(request.phone().isBlank() ? null : request.phone());
+        if (request.email()   != null) prospect.setEmail(request.email().isBlank() ? null : request.email());
+        if (request.website() != null) {
+            prospect.setWebsite(request.website().isBlank() ? null : request.website());
+            prospect.setHasWebsite(!request.website().isBlank());
+        }
+        if (request.address() != null) prospect.setAddress(request.address().isBlank() ? null : request.address());
+        if (request.city()    != null) prospect.setCity(request.city().isBlank() ? null : request.city());
+        prospect.setScore(calculateScore(prospect));
         prospect = prospectRepository.save(prospect);
         return toProspectResponse(prospect);
     }
@@ -332,6 +342,7 @@ public class ProspectingOrchestrator implements ProspectingService {
                     changed = true;
                 }
                 if (changed) {
+                    prospect.setScore(calculateScore(prospect));
                     prospectRepository.save(prospect);
                     enriched++;
                 }

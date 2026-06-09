@@ -10,7 +10,7 @@ import {
   exportContactableProspects, scoreProspects, qualifyByMinScore,
   updateProspect, exportQualifiedProspects,
   scheduleCampaign, unscheduleCampaign,
-  type Campaign, type Prospect,
+  type Campaign, type Prospect, type UpdateProspectPayload,
 } from '@/services/prospecting';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
@@ -19,26 +19,92 @@ import { IconSet } from '@/components/ui/icons';
 import { useRouter, useParams } from 'next/navigation';
 
 const PROSPECT_STATUS_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 'warning'> = {
-  NEW: 'neutral',
-  FOUND: 'neutral',
-  QUALIFIED: 'success',
-  EXPORTED: 'success',
-  DISCARDED: 'danger',
-  CONTACTED: 'info',
+  NEW: 'neutral', FOUND: 'neutral', QUALIFIED: 'success',
+  EXPORTED: 'success', DISCARDED: 'danger', CONTACTED: 'info',
 };
-
 const PROSPECT_STATUS_LABEL: Record<string, string> = {
   NEW: 'Nou', FOUND: 'Trobat', QUALIFIED: 'Qualificat',
   EXPORTED: 'Exportat', DISCARDED: 'Descartat', CONTACTED: 'Contactat',
 };
-
 const CAMPAIGN_STATUS_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 'warning' | 'accent'> = {
   DRAFT: 'neutral', SCHEDULED: 'accent', IN_PROGRESS: 'info', COMPLETED: 'success', FAILED: 'danger',
 };
-
 const CAMPAIGN_STATUS_LABEL: Record<string, string> = {
   DRAFT: 'Pendent', SCHEDULED: 'Programada', IN_PROGRESS: 'En curs', COMPLETED: 'Completada', FAILED: 'Error',
 };
+const SOURCE_LABEL: Record<string, string> = {
+  GOOGLE_MAPS: 'Google Maps', INSTAGRAM: 'Instagram',
+  PAGINAS_AMARILLAS: 'Pàgines Grogues', MANUAL: 'Manual',
+};
+
+// ─── How it works panel ───────────────────────────────────────────────────────
+
+function HowItWorks() {
+  const [open, setOpen] = useState(false);
+  const steps = [
+    {
+      n: 1, title: 'Puntuar',
+      desc: 'Calcula una puntuació (0–13 pts) per a cada prospect amb les dades actuals de Google (rating, nombre de ressenyes). Gratuït i instantani. Fes-ho primer per saber en qui invertir les crides de pagament.',
+      tag: 'Gratuït · Instant',
+      tagTone: 'success' as const,
+    },
+    {
+      n: 2, title: 'Obtenir detalls',
+      desc: 'Consulta Google Places per als prospects amb puntuació ≥ X que encara no tenen telèfon. Obté telèfon, web, descripcions i opinions. Recalcula la puntuació (ara inclou el +5 per "sense web"). Costa crèdits de Google.',
+      tag: 'Google Places · De pagament',
+      tagTone: 'warning' as const,
+    },
+    {
+      n: 3, title: 'Enriquir tots',
+      desc: 'Cerca email i web corporativa via scraping per als prospects que els falten. No usa l\'API de Google. Gratuït però pot ser lent. Recalcula la puntuació si troba nova informació.',
+      tag: 'Scraping · Gratuït',
+      tagTone: 'success' as const,
+    },
+    {
+      n: 4, title: 'Exportar qualificats',
+      desc: 'Envia els prospects amb estat "Qualificat" al CRM de Leads. Des de Leads podràs enviar la demo per WhatsApp/email i gestionar el pipeline fins a tancar el client.',
+      tag: '→ Leads CRM',
+      tagTone: 'info' as const,
+    },
+  ];
+
+  return (
+    <div className="amg-card card-clip">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-bg-1 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <IconSet.AlertCircle size={14} className="text-ink-3" />
+          <span className="f-mono text-[10px] uppercase tracking-widest text-ink-2">Com funciona</span>
+        </div>
+        <span className="text-ink-3 text-xs">{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div className="px-5 pb-5 border-t border-border-base">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            {steps.map(s => (
+              <div key={s.n} className="flex gap-3">
+                <div className="w-6 h-6 shrink-0 flex items-center justify-center bg-accent-muted text-accent-light f-mono font-bold text-xs mt-0.5">
+                  {s.n}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="f-display font-bold text-sm">{s.title}</span>
+                    <AMGBadge tone={s.tagTone}>{s.tag}</AMGBadge>
+                  </div>
+                  <p className="f-mono text-xs text-ink-2 leading-relaxed">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Prospect drawer ──────────────────────────────────────────────────────────
 
 function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);
@@ -53,16 +119,34 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string | React.ReactNode | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-start gap-2">
+      <span className="text-ink-3 mt-0.5 shrink-0">{icon}</span>
+      <span className="f-mono text-[10px] text-ink-3 w-14 shrink-0 pt-0.5">{label}</span>
+      <span className="f-mono text-xs text-ink-1 break-all">{value}</span>
+    </div>
+  );
+}
+
+function EditField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="f-mono text-[10px] text-ink-3 uppercase tracking-wider block mb-0.5">{label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-full bg-bg-1 border border-border-base text-ink-0 px-2 h-8 f-mono text-xs focus:outline-none focus:border-accent"
+      />
+    </div>
+  );
+}
+
 function ProspectDrawer({
-  prospect,
-  onClose,
-  onExport,
-  onEnrich,
-  onQualify,
-  onDiscard,
-  exporting,
-  enriching,
-  updatingStatus,
+  prospect, onClose, onExport, onEnrich, onQualify, onDiscard, onSave,
+  exporting, enriching, updatingStatus, saving,
 }: {
   prospect: Prospect;
   onClose: () => void;
@@ -70,19 +154,29 @@ function ProspectDrawer({
   onEnrich: (id: string) => void;
   onQualify: (id: string) => void;
   onDiscard: (id: string) => void;
-  exporting: boolean;
-  enriching: boolean;
-  updatingStatus: boolean;
+  onSave: (id: string, payload: UpdateProspectPayload) => void;
+  exporting: boolean; enriching: boolean; updatingStatus: boolean; saving: boolean;
 }) {
+  const [editMode, setEditMode] = useState(false);
+  const [draft, setDraft] = useState({
+    name: prospect.name ?? '',
+    phone: prospect.phone ?? '',
+    email: prospect.email ?? '',
+    website: prospect.website ?? '',
+    address: prospect.address ?? '',
+    city: prospect.city ?? '',
+    notes: prospect.notes ?? '',
+  });
+
+  const handleSave = () => {
+    onSave(prospect.id, draft);
+    setEditMode(false);
+  };
+
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/40 z-40"
-        onClick={onClose}
-      />
-      {/* Drawer */}
-      <div className="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-bg-0 border-l border-border-base z-50 flex flex-col shadow-2xl">
+      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+      <div className="fixed top-0 right-0 h-full w-full sm:w-[440px] bg-bg-0 border-l border-border-base z-50 flex flex-col shadow-2xl">
         {/* Header */}
         <div className="flex items-start justify-between p-5 border-b border-border-base">
           <div className="flex-1 min-w-0 pr-3">
@@ -96,9 +190,13 @@ function ProspectDrawer({
               {PROSPECT_STATUS_LABEL[prospect.status] ?? prospect.status}
             </AMGBadge>
             <button
-              onClick={onClose}
-              className="p-1.5 text-ink-3 hover:text-ink-0 hover:bg-bg-2 rounded transition-colors"
+              onClick={() => setEditMode(e => !e)}
+              title={editMode ? 'Veure dades' : 'Editar dades'}
+              className={`p-1.5 rounded transition-colors ${editMode ? 'text-accent-light bg-accent-muted' : 'text-ink-3 hover:text-ink-0 hover:bg-bg-2'}`}
             >
+              <IconSet.Edit size={15} />
+            </button>
+            <button onClick={onClose} className="p-1.5 text-ink-3 hover:text-ink-0 hover:bg-bg-2 rounded transition-colors">
               <IconSet.X size={16} />
             </button>
           </div>
@@ -106,154 +204,163 @@ function ProspectDrawer({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {/* Contact */}
-          <section>
-            <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Contacte</div>
-            <div className="space-y-2">
-              <DetailRow icon={<IconSet.Phone size={13} />} label="Telèfon" value={prospect.phone} />
-              <DetailRow icon={<IconSet.Mail size={13} />} label="Email" value={prospect.email} />
-              <DetailRow
-                icon={<IconSet.Globe size={13} />}
-                label="Web"
-                value={prospect.website
-                  ? <a href={prospect.website} target="_blank" rel="noopener noreferrer"
-                      className="text-accent-light hover:underline truncate block max-w-[250px]">
-                      {prospect.website.replace(/^https?:\/\//, '')}
-                    </a>
-                  : null}
-              />
+          {editMode ? (
+            /* ── Mode edició ── */
+            <div className="space-y-3">
+              <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-1">Editar dades</div>
+              <EditField label="Nom" value={draft.name} onChange={v => setDraft(d => ({ ...d, name: v }))} />
+              <EditField label="Telèfon" value={draft.phone} onChange={v => setDraft(d => ({ ...d, phone: v }))} />
+              <EditField label="Email" value={draft.email} onChange={v => setDraft(d => ({ ...d, email: v }))} />
+              <EditField label="Web" value={draft.website} onChange={v => setDraft(d => ({ ...d, website: v }))} />
+              <EditField label="Adreça" value={draft.address} onChange={v => setDraft(d => ({ ...d, address: v }))} />
+              <EditField label="Municipi" value={draft.city} onChange={v => setDraft(d => ({ ...d, city: v }))} />
+              <div>
+                <label className="f-mono text-[10px] text-ink-3 uppercase tracking-wider block mb-0.5">Notes</label>
+                <textarea
+                  value={draft.notes}
+                  onChange={e => setDraft(d => ({ ...d, notes: e.target.value }))}
+                  rows={3}
+                  className="w-full bg-bg-1 border border-border-base text-ink-0 px-2 py-1.5 f-mono text-xs focus:outline-none focus:border-accent resize-none"
+                />
+              </div>
+              <p className="f-mono text-[10px] text-ink-3">La puntuació es recalcularà automàticament en desar.</p>
             </div>
-          </section>
+          ) : (
+            /* ── Mode visualització ── */
+            <>
+              <section>
+                <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Contacte</div>
+                <div className="space-y-2">
+                  <DetailRow icon={<IconSet.Phone size={13} />} label="Telèfon" value={prospect.phone} />
+                  <DetailRow icon={<IconSet.Mail size={13} />}  label="Email"   value={prospect.email} />
+                  <DetailRow
+                    icon={<IconSet.Globe size={13} />}
+                    label="Web"
+                    value={prospect.website
+                      ? <a href={prospect.website} target="_blank" rel="noopener noreferrer"
+                          className="text-accent-light hover:underline truncate block max-w-[250px]">
+                          {prospect.website.replace(/^https?:\/\//, '')}
+                        </a>
+                      : null}
+                  />
+                </div>
+              </section>
 
-          {/* Location */}
-          <section>
-            <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Ubicació</div>
-            <div className="space-y-2">
-              <DetailRow icon={<IconSet.MapPin size={13} />} label="Adreça" value={prospect.address} />
-              <DetailRow icon={<IconSet.Building size={13} />} label="Municipi" value={
-                [prospect.city, prospect.postalCode].filter(Boolean).join(' · ') || null
-              } />
-            </div>
-          </section>
+              <section>
+                <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Ubicació</div>
+                <div className="space-y-2">
+                  <DetailRow icon={<IconSet.MapPin size={13} />}  label="Adreça"   value={prospect.address} />
+                  <DetailRow icon={<IconSet.Building size={13} />} label="Municipi" value={
+                    [prospect.city, prospect.postalCode].filter(Boolean).join(' · ') || null
+                  } />
+                </div>
+              </section>
 
-          {/* Google */}
-          {(prospect.googleRating || prospect.googleReviews || prospect.description) && (
-            <section>
-              <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Google Places</div>
-              <div className="space-y-2">
-                {prospect.googleRating && (
-                  <div className="flex items-center gap-2">
-                    <span className="f-mono text-[10px] text-ink-3 w-16 shrink-0">Valoració</span>
-                    <StarRating rating={prospect.googleRating} />
-                    {prospect.googleReviews && (
-                      <span className="f-mono text-[10px] text-ink-3">({prospect.googleReviews} ressenyes)</span>
+              {(prospect.googleRating || prospect.googleReviews || prospect.description) && (
+                <section>
+                  <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Google Places</div>
+                  <div className="space-y-2">
+                    {prospect.googleRating && (
+                      <div className="flex items-center gap-2">
+                        <span className="f-mono text-[10px] text-ink-3 w-16 shrink-0">Valoració</span>
+                        <StarRating rating={prospect.googleRating} />
+                        {prospect.googleReviews && (
+                          <span className="f-mono text-[10px] text-ink-3">({prospect.googleReviews} ressenyes)</span>
+                        )}
+                      </div>
+                    )}
+                    {prospect.description && (
+                      <div>
+                        <span className="f-mono text-[10px] text-ink-3 block mb-1">Descripció</span>
+                        <p className="f-mono text-xs text-ink-1 leading-relaxed">{prospect.description}</p>
+                      </div>
                     )}
                   </div>
-                )}
-                {prospect.description && (
-                  <div>
-                    <span className="f-mono text-[10px] text-ink-3 block mb-1">Descripció</span>
-                    <p className="f-mono text-xs text-ink-1 leading-relaxed">{prospect.description}</p>
+                </section>
+              )}
+
+              {prospect.reviews && prospect.reviews.length > 0 && (
+                <section>
+                  <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">
+                    Opinions recents ({prospect.reviews.length})
                   </div>
-                )}
-              </div>
-            </section>
-          )}
+                  <div className="space-y-2">
+                    {prospect.reviews.map((review, i) => (
+                      <blockquote key={i} className="border-l-2 border-border-base pl-3 py-0.5">
+                        <p className="f-mono text-[11px] text-ink-1 leading-relaxed italic">{review}</p>
+                      </blockquote>
+                    ))}
+                  </div>
+                </section>
+              )}
 
-          {/* Opinions */}
-          {prospect.reviews && prospect.reviews.length > 0 && (
-            <section>
-              <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">
-                Opinions recents ({prospect.reviews.length})
-              </div>
-              <div className="space-y-2">
-                {prospect.reviews.map((review, i) => (
-                  <blockquote key={i} className="border-l-2 border-border-base pl-3 py-0.5">
-                    <p className="f-mono text-[11px] text-ink-1 leading-relaxed italic">{review}</p>
-                  </blockquote>
-                ))}
-              </div>
-            </section>
-          )}
+              {prospect.notes && (
+                <section>
+                  <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Notes</div>
+                  <p className="f-mono text-xs text-ink-1">{prospect.notes}</p>
+                </section>
+              )}
 
-          {/* Notes */}
-          {prospect.notes && (
-            <section>
-              <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Notes</div>
-              <p className="f-mono text-xs text-ink-1">{prospect.notes}</p>
-            </section>
+              {prospect.score != null && (
+                <section>
+                  <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Puntuació</div>
+                  <div className="flex items-center gap-2">
+                    <span className={`f-mono text-2xl font-bold ${prospect.score >= 8 ? 'text-success' : prospect.score >= 5 ? 'text-accent-light' : 'text-ink-2'}`}>
+                      {prospect.score}
+                    </span>
+                    <span className="f-mono text-xs text-ink-3">/ 13 pts</span>
+                  </div>
+                </section>
+              )}
+            </>
           )}
         </div>
 
         {/* Actions */}
         <div className="p-4 border-t border-border-base flex flex-col gap-2">
-          {prospect.status === 'QUALIFIED' && (
-            <AMGButton
-              icon={IconSet.ArrowRight}
-              loading={exporting}
-              onClick={() => onExport(prospect.id)}
-              className="w-full justify-center"
-            >
-              Exportar a Lead
-            </AMGButton>
-          )}
-          {prospect.status !== 'EXPORTED' && prospect.status !== 'QUALIFIED' && prospect.status !== 'DISCARDED' && (
+          {editMode ? (
             <div className="flex gap-2">
-              <AMGButton
-                icon={IconSet.Check}
-                loading={updatingStatus}
-                onClick={() => onQualify(prospect.id)}
-                className="flex-1 justify-center bg-success/10 border-success/30 text-success hover:bg-success/20"
-              >
-                Qualificar
+              <AMGButton loading={saving} onClick={handleSave} className="flex-1 justify-center">
+                Desar canvis
               </AMGButton>
-              <AMGButton
-                variant="secondary"
-                icon={IconSet.X}
-                loading={updatingStatus}
-                onClick={() => onDiscard(prospect.id)}
-                className="flex-1 justify-center text-danger hover:bg-danger/10"
-              >
-                Descartar
-              </AMGButton>
+              <AMGButton variant="outline" onClick={() => setEditMode(false)}>Cancel·lar</AMGButton>
             </div>
+          ) : (
+            <>
+              {prospect.status === 'QUALIFIED' && (
+                <AMGButton icon={IconSet.ArrowRight} loading={exporting} onClick={() => onExport(prospect.id)} className="w-full justify-center">
+                  Exportar a Lead
+                </AMGButton>
+              )}
+              {prospect.status !== 'EXPORTED' && prospect.status !== 'QUALIFIED' && prospect.status !== 'DISCARDED' && (
+                <div className="flex gap-2">
+                  <AMGButton icon={IconSet.Check} loading={updatingStatus} onClick={() => onQualify(prospect.id)}
+                    className="flex-1 justify-center bg-success/10 border-success/30 text-success hover:bg-success/20">
+                    Qualificar
+                  </AMGButton>
+                  <AMGButton variant="secondary" icon={IconSet.X} loading={updatingStatus} onClick={() => onDiscard(prospect.id)}
+                    className="flex-1 justify-center text-danger hover:bg-danger/10">
+                    Descartar
+                  </AMGButton>
+                </div>
+              )}
+              {prospect.status === 'DISCARDED' && (
+                <AMGButton variant="secondary" icon={IconSet.Refresh} loading={updatingStatus} onClick={() => onQualify(prospect.id)} className="w-full justify-center">
+                  Recuperar
+                </AMGButton>
+              )}
+              <AMGButton variant="secondary" icon={IconSet.Refresh} loading={enriching} onClick={() => onEnrich(prospect.id)} className="w-full justify-center">
+                Enriquir dades
+              </AMGButton>
+            </>
           )}
-          {prospect.status === 'DISCARDED' && (
-            <AMGButton
-              variant="secondary"
-              icon={IconSet.Refresh}
-              loading={updatingStatus}
-              onClick={() => onQualify(prospect.id)}
-              className="w-full justify-center"
-            >
-              Recuperar
-            </AMGButton>
-          )}
-          <AMGButton
-            variant="secondary"
-            icon={IconSet.Refresh}
-            loading={enriching}
-            onClick={() => onEnrich(prospect.id)}
-            className="w-full justify-center"
-          >
-            Enriquir dades
-          </AMGButton>
         </div>
       </div>
     </>
   );
 }
 
-function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string | React.ReactNode | null }) {
-  if (!value) return null;
-  return (
-    <div className="flex items-start gap-2">
-      <span className="text-ink-3 mt-0.5 shrink-0">{icon}</span>
-      <span className="f-mono text-[10px] text-ink-3 w-14 shrink-0 pt-0.5">{label}</span>
-      <span className="f-mono text-xs text-ink-1 break-all">{value}</span>
-    </div>
-  );
-}
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CampaignDetailPage() {
   const { user, isAdmin } = useAuth();
@@ -280,14 +387,15 @@ export default function CampaignDetailPage() {
     enabled: !!user && isAdmin && !!id,
   });
 
+  const invalidateProspects = () => qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
+  const invalidateCampaign  = () => qc.invalidateQueries({ queryKey: ['campaign', id] });
+
   const { mutate: doExport, isPending: exporting, variables: exportingId } = useMutation({
     mutationFn: (prospectId: string) => exportProspect(prospectId),
-    onSuccess: (_, prospectId) => {
+    onSuccess: (_, pid) => {
       toast('success', 'Prospect exportat a Leads');
-      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
-      qc.invalidateQueries({ queryKey: ['campaign', id] });
-      // Update selected prospect status
-      setSelectedProspect(prev => prev?.id === prospectId ? { ...prev, status: 'EXPORTED' } : prev);
+      invalidateProspects(); invalidateCampaign();
+      setSelectedProspect(prev => prev?.id === pid ? { ...prev, status: 'EXPORTED' } : prev);
     },
     onError: () => toast('error', 'Error exportant el prospect'),
   });
@@ -296,7 +404,7 @@ export default function CampaignDetailPage() {
     mutationFn: (prospectId: string) => enrichProspect(prospectId),
     onSuccess: (updated) => {
       toast('success', 'Dades actualitzades');
-      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
+      invalidateProspects();
       setSelectedProspect(updated as Prospect);
     },
     onError: () => toast('error', 'Error enriquint el prospect'),
@@ -306,7 +414,7 @@ export default function CampaignDetailPage() {
     mutationFn: () => enrichAllProspects(id),
     onSuccess: (data) => {
       toast('success', `${data.enriched} prospect${data.enriched !== 1 ? 's' : ''} enriquit${data.enriched !== 1 ? 's' : ''}`);
-      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
+      invalidateProspects();
     },
     onError: () => toast('error', 'Error enriquint els prospects'),
   });
@@ -315,65 +423,65 @@ export default function CampaignDetailPage() {
     mutationFn: () => exportContactableProspects(id),
     onSuccess: (data) => {
       toast('success', `${data.exported} prospect${data.exported !== 1 ? 's' : ''} exportat${data.exported !== 1 ? 's' : ''} a Leads`);
-      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
-      qc.invalidateQueries({ queryKey: ['campaign', id] });
+      invalidateProspects(); invalidateCampaign();
     },
     onError: () => toast('error', 'Error exportant els prospects'),
   });
 
   const { mutate: doScore, isPending: scoring } = useMutation({
     mutationFn: () => scoreProspects(id),
-    onSuccess: () => {
-      toast('success', 'Prospects puntuats');
-      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
-    },
+    onSuccess: () => { toast('success', 'Prospects puntuats'); invalidateProspects(); },
     onError: () => toast('error', 'Error puntant els prospects'),
   });
 
   const { mutate: doQualify, isPending: qualifying } = useMutation({
     mutationFn: () => qualifyByMinScore(id, minScoreFilter),
     onSuccess: (data) => {
-      toast('success', `${data.qualified} prospect${data.qualified !== 1 ? 's' : ''} qualificat${data.qualified !== 1 ? 's' : ''} (telèfon obtingut)`);
-      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
+      toast('success', `${data.qualified} prospect${data.qualified !== 1 ? 's' : ''} qualificat${data.qualified !== 1 ? 's' : ''}`);
+      invalidateProspects();
     },
     onError: () => toast('error', 'Error obtenint els detalls'),
   });
 
   const { mutate: doUpdateStatus, isPending: updatingStatus } = useMutation({
     mutationFn: ({ prospectId, status }: { prospectId: string; status: string }) =>
-      updateProspect(prospectId, status),
+      updateProspect(prospectId, { status }),
     onSuccess: (updated) => {
-      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
+      invalidateProspects();
       setSelectedProspect(updated as Prospect);
     },
     onError: () => toast('error', 'Error actualitzant el prospect'),
+  });
+
+  const { mutate: doSave, isPending: saving } = useMutation({
+    mutationFn: ({ prospectId, payload }: { prospectId: string; payload: UpdateProspectPayload }) =>
+      updateProspect(prospectId, payload),
+    onSuccess: (updated) => {
+      toast('success', 'Dades desades');
+      invalidateProspects();
+      setSelectedProspect(updated as Prospect);
+    },
+    onError: () => toast('error', 'Error desant les dades'),
   });
 
   const { mutate: doExportQualified, isPending: exportingQualified } = useMutation({
     mutationFn: () => exportQualifiedProspects(id),
     onSuccess: (data) => {
       toast('success', `${data.exported} prospect${data.exported !== 1 ? 's' : ''} exportat${data.exported !== 1 ? 's' : ''} a Leads`);
-      qc.invalidateQueries({ queryKey: ['campaign-prospects', id] });
-      qc.invalidateQueries({ queryKey: ['campaign', id] });
+      invalidateProspects(); invalidateCampaign();
     },
     onError: () => toast('error', 'Error exportant els prospects qualificats'),
   });
 
   const { mutate: doSchedule, isPending: scheduling } = useMutation({
     mutationFn: () => scheduleCampaign(id, new Date(Date.now() + 86400000).toISOString(), 7),
-    onSuccess: () => {
-      toast('success', 'Campanya programada cada 7 dies');
-      qc.invalidateQueries({ queryKey: ['campaign', id] });
-    },
+    onSuccess: () => { toast('success', 'Campanya programada'); invalidateCampaign(); },
     onError: () => toast('error', 'Error programant la campanya'),
   });
 
   const { mutate: doUnschedule } = useMutation({
     mutationFn: () => unscheduleCampaign(id),
-    onSuccess: () => {
-      toast('success', 'Programació cancel·lada');
-      qc.invalidateQueries({ queryKey: ['campaign', id] });
-    },
+    onSuccess: () => { toast('success', 'Programació cancel·lada'); invalidateCampaign(); },
     onError: () => toast('error', 'Error cancel·lant la programació'),
   });
 
@@ -418,13 +526,16 @@ export default function CampaignDetailPage() {
           </div>
         </div>
 
+        {/* Com funciona */}
+        <HowItWorks />
+
         {/* Campaign info */}
         <div className="amg-card card-clip p-5 space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: 'Sector', value: c.sector },
+              { label: 'Sector',    value: c.sector },
               { label: 'Localitat', value: c.location },
-              { label: 'Font', value: c.source },
+              { label: 'Font',      value: SOURCE_LABEL[c.source] ?? c.source },
               { label: 'Prospects', value: String(prospectList.length) },
             ].map(({ label, value }) => (
               <div key={label}>
@@ -450,7 +561,7 @@ export default function CampaignDetailPage() {
           </div>
         </div>
 
-        {/* Prospects table */}
+        {/* Prospects */}
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
             <div className="f-mono text-label uppercase text-ink-2 tracking-widest">
@@ -459,13 +570,7 @@ export default function CampaignDetailPage() {
             </div>
             {prospectList.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap justify-end">
-                <AMGButton
-                  size="sm"
-                  variant="secondary"
-                  icon={IconSet.Sparkles}
-                  loading={scoring}
-                  onClick={() => doScore()}
-                >
+                <AMGButton size="sm" variant="secondary" icon={IconSet.Sparkles} loading={scoring} onClick={() => doScore()}>
                   Puntuar
                 </AMGButton>
                 {prospectList.some(p => p.score != null) && (
@@ -480,10 +585,7 @@ export default function CampaignDetailPage() {
                       ))}
                     </select>
                     <AMGButton
-                      size="sm"
-                      variant="secondary"
-                      icon={IconSet.Phone}
-                      loading={qualifying}
+                      size="sm" variant="secondary" icon={IconSet.Phone} loading={qualifying}
                       onClick={() => {
                         const count = prospectList.filter(p => (p.score ?? 0) >= minScoreFilter && !p.phone).length;
                         if (confirm(`Obtenir telèfon i web per ${count} prospect${count !== 1 ? 's' : ''} (puntuació ≥ ${minScoreFilter})?`)) {
@@ -495,20 +597,12 @@ export default function CampaignDetailPage() {
                     </AMGButton>
                   </div>
                 )}
-                <AMGButton
-                  size="sm"
-                  variant="secondary"
-                  icon={IconSet.Refresh}
-                  loading={enrichingAll}
-                  onClick={() => doEnrichAll()}
-                >
+                <AMGButton size="sm" variant="secondary" icon={IconSet.Refresh} loading={enrichingAll} onClick={() => doEnrichAll()}>
                   Enriquir tots
                 </AMGButton>
                 {prospectList.some(p => p.status === 'QUALIFIED') && (
                   <AMGButton
-                    size="sm"
-                    icon={IconSet.ArrowRight}
-                    loading={exportingQualified}
+                    size="sm" icon={IconSet.ArrowRight} loading={exportingQualified}
                     onClick={() => {
                       const count = prospectList.filter(p => p.status === 'QUALIFIED').length;
                       if (confirm(`Exportar ${count} prospect${count !== 1 ? 's' : ''} qualificat${count !== 1 ? 's' : ''} a Leads?`)) {
@@ -546,9 +640,7 @@ export default function CampaignDetailPage() {
               <thead>
                 <tr className="border-b border-border-base">
                   {['', 'Empresa', 'Telèfon', 'Punts', 'Estat', ''].map((h, i) => (
-                    <th key={i} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal first:px-4 first:w-6">
-                      {h}
-                    </th>
+                    <th key={i} className="text-left f-mono text-label uppercase text-ink-2 px-4 sm:px-5 py-3 font-normal first:px-4 first:w-6">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -556,7 +648,6 @@ export default function CampaignDetailPage() {
                 {[...prospectList]
                   .filter(p => showDiscarded || p.status !== 'DISCARDED')
                   .sort((a, b) => {
-                    // QUALIFIED primer, DISCARDED al final
                     const order = (s: string) => s === 'QUALIFIED' ? 0 : s === 'DISCARDED' ? 2 : 1;
                     const od = order(a.status) - order(b.status);
                     if (od !== 0) return od;
@@ -574,10 +665,7 @@ export default function CampaignDetailPage() {
                       ? 'border-b border-[rgba(226,232,240,0.04)] opacity-40 hover:opacity-60'
                       : 'border-b border-[rgba(226,232,240,0.04)] hover:bg-[rgba(255,255,255,0.02)]';
                     return (
-                      <tr
-                        key={p.id}
-                        className={`transition-colors ${rowClass}`}
-                      >
+                      <tr key={p.id} className={`transition-colors ${rowClass}`}>
                         <td className="pl-4 pr-0 py-2.5 w-6">
                           <span
                             title={hasContact ? 'Té dades de contacte' : 'Sense telèfon ni email'}
@@ -595,9 +683,7 @@ export default function CampaignDetailPage() {
                           )}
                         </td>
                         <td className="px-4 sm:px-5 py-2.5">
-                          <span className={`f-mono text-xs font-bold ${scoreColor}`}>
-                            {scored ? p.score : '—'}
-                          </span>
+                          <span className={`f-mono text-xs font-bold ${scoreColor}`}>{scored ? p.score : '—'}</span>
                         </td>
                         <td className="px-4 sm:px-5 py-2.5">
                           <AMGBadge tone={PROSPECT_STATUS_TONE[p.status] ?? 'neutral'}>
@@ -605,12 +691,7 @@ export default function CampaignDetailPage() {
                           </AMGBadge>
                         </td>
                         <td className="px-4 sm:px-5 py-2.5 text-right">
-                          <AMGButton
-                            size="sm"
-                            variant="ghost"
-                            icon={IconSet.Eye}
-                            onClick={() => setSelectedProspect(p)}
-                          >
+                          <AMGButton size="sm" variant="ghost" icon={IconSet.Eye} onClick={() => setSelectedProspect(p)}>
                             Veure
                           </AMGButton>
                         </td>
@@ -622,8 +703,8 @@ export default function CampaignDetailPage() {
           )}
         </div>
       </div>
-
     </PortalShell>
+
     {selectedProspect && typeof document !== 'undefined' && createPortal(
       <ProspectDrawer
         prospect={selectedProspect}
@@ -632,9 +713,11 @@ export default function CampaignDetailPage() {
         onEnrich={(pid) => doEnrich(pid)}
         onQualify={(pid) => doUpdateStatus({ prospectId: pid, status: 'QUALIFIED' })}
         onDiscard={(pid) => doUpdateStatus({ prospectId: pid, status: 'DISCARDED' })}
+        onSave={(pid, payload) => doSave({ prospectId: pid, payload })}
         exporting={exporting && exportingId === selectedProspect.id}
         enriching={enriching && enrichingId === selectedProspect.id}
         updatingStatus={updatingStatus}
+        saving={saving}
       />,
       document.body
     )}
