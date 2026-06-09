@@ -52,8 +52,23 @@ export interface CreateCampaignRequest {
   notes?: string;
 }
 
-export const getCampaigns = () =>
-  apiFetch<Campaign[]>('/prospecting/campaigns');
+export interface CampaignsPage {
+  content: Campaign[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export const getCampaigns = (params?: { sector?: string; location?: string; status?: string; page?: number; size?: number }) => {
+  const q = new URLSearchParams();
+  if (params?.sector)   q.set('sector', params.sector);
+  if (params?.location) q.set('location', params.location);
+  if (params?.status)   q.set('status', params.status);
+  if (params?.page != null) q.set('page', String(params.page));
+  if (params?.size != null) q.set('size', String(params.size));
+  return apiFetch<CampaignsPage>(`/prospecting/campaigns${q.toString() ? `?${q}` : ''}`);
+};
 
 export const getCampaign = (id: string) =>
   apiFetch<Campaign>(`/prospecting/campaigns/${id}`);

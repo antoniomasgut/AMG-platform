@@ -9,6 +9,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,18 +59,14 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     @Override
-    public List<CampaignResponse> listCampaigns(String sector, String location) {
-        List<ProspectCampaign> campaigns;
-        if (sector != null && location != null) {
-            campaigns = campaignRepository.findBySectorAndLocation(sector, location);
-        } else if (sector != null) {
-            campaigns = campaignRepository.findAll().stream()
-                    .filter(c -> sector.equals(c.getSector()))
-                    .toList();
-        } else {
-            campaigns = campaignRepository.findAll();
+    public Page<CampaignResponse> listCampaigns(String sector, String location, String status, int page, int size) {
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        CampaignStatus statusEnum = null;
+        if (status != null) {
+            try { statusEnum = CampaignStatus.valueOf(status.toUpperCase()); } catch (IllegalArgumentException ignored) {}
         }
-        return campaigns.stream().map(this::toCampaignResponse).collect(Collectors.toList());
+        return campaignRepository.findFiltered(sector, location, statusEnum, pageable)
+                .map(this::toCampaignResponse);
     }
 
     @Override

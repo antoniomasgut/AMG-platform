@@ -10,6 +10,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -33,10 +35,13 @@ public class ProspectingController {
 
     @GetMapping("/campaigns")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
-    public List<CampaignResponse> listCampaigns(
+    public Page<CampaignResponse> listCampaigns(
             @RequestParam(required = false) String sector,
-            @RequestParam(required = false) String location) {
-        return service.listCampaigns(sector, location);
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return service.listCampaigns(sector, location, status, page, Math.min(size, 100));
     }
 
     @GetMapping("/campaigns/{id}")

@@ -119,7 +119,7 @@ export default function ProcessPage() {
     queries: [
       { queryKey: ['system-config'],    queryFn: getSystemConfig,                                           enabled: !!user && isSuperAdmin },
       { queryKey: ['lead-stats'],       queryFn: getLeadStats,                                              enabled: !!user },
-      { queryKey: ['campaigns'],        queryFn: getCampaigns,                                              enabled: !!user && isSuperAdmin },
+      { queryKey: ['campaigns'],        queryFn: () => getCampaigns({ size: 100 }),                         enabled: !!user && isSuperAdmin },
       { queryKey: ['tenants-process'],  queryFn: () => listTenants({ page: 0, size: 100, isActive: true }), enabled: !!user && isSuperAdmin },
       { queryKey: ['all-budgets'],      queryFn: () => listAllBudgets(undefined, 0, 100),                   enabled: !!user && isSuperAdmin },
       { queryKey: ['ops-dashboard'],    queryFn: getOpsDashboard,                                           enabled: !!user && isSuperAdmin },
@@ -144,8 +144,8 @@ export default function ProcessPage() {
   const templates      = (templatesR.data as any[] | undefined) ?? [];
 
   // ── step 2: captació ──────────────────────────────────────────────────────
-  const campaigns      = (campR.data as any[] | undefined) ?? [];
-  const activeCamps    = campaigns.filter((c: any) => c.status === 'RUNNING').length;
+  const campaigns      = (campR.data as any)?.content ?? [];
+  const activeCamps    = campaigns.filter((c: any) => c.status === 'IN_PROGRESS').length;
   const completedCamps = campaigns.filter((c: any) => c.status === 'COMPLETED').length;
   const totalProspects = campaigns.reduce((sum: number, c: any) => sum + (c.totalFound ?? 0), 0);
   const metaAdsSummary = metaAdsR.data as any;
