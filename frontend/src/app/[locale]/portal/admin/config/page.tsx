@@ -15,6 +15,21 @@ import { IconSet } from '@/components/ui/icons';
 // Claus que esperen un UUID de tenant — mostren un select en comptes d'un input de text
 const TENANT_UUID_KEYS = new Set(['PLATFORM_TENANT_ID']);
 
+// Claus amb opcions fixes — mostren un select en comptes d'un input de text
+const KEY_OPTIONS: Record<string, { value: string; label: string }[]> = {
+  DEFAULT_LOCALE: [
+    { value: 'ca', label: 'Català (ca)' },
+    { value: 'es', label: 'Español (es)' },
+    { value: 'en', label: 'English (en)' },
+    { value: 'de', label: 'Deutsch (de)' },
+  ],
+  DEFAULT_CURRENCY: [
+    { value: 'EUR', label: 'EUR — Euro €' },
+    { value: 'USD', label: 'USD — Dòlar $' },
+    { value: 'GBP', label: 'GBP — Lliura £' },
+  ],
+};
+
 // Phase-based grouping: each phase lists its categories in order
 const PHASE_GROUPS: { id: string; label: string; description: string; categories: string[] }[] = [
   { id: 'F0', label: 'Plataforma (base)', description: 'Configuració essencial de la plataforma: identitat, límits, models IA i emmagatzematge.', categories: ['MAINTENANCE', 'GENERAL', 'AI_MODELS', 'STORAGE'] },
@@ -346,6 +361,26 @@ function KeyRow({ item, onSave, onDelete, t }: {
                 autoFocus
               />
               <AMGButton size="sm" icon={IconSet.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); }}>
+                {t('btnSave')}
+              </AMGButton>
+              <AMGButton size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(''); }}>
+                {t('btnCancel')}
+              </AMGButton>
+            </div>
+          ) : KEY_OPTIONS[item.key] ? (
+            <div className="flex gap-2 items-start">
+              <select
+                value={value}
+                onChange={e => setValue(e.target.value)}
+                className="flex-1 bg-bg-1 border border-accent text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none"
+                autoFocus
+              >
+                <option value="">— Selecciona —</option>
+                {KEY_OPTIONS[item.key].map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              <AMGButton size="sm" icon={IconSet.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); setValue(''); }}>
                 {t('btnSave')}
               </AMGButton>
               <AMGButton size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(''); }}>
