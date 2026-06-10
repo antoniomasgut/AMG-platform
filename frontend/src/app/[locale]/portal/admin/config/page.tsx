@@ -6,10 +6,14 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { useTranslations } from 'next-intl';
 import { getSystemConfig, setSystemConfig, deleteSystemConfig, testSystemConfig, getAuditLog, TESTABLE_KEYS, type ConfigStatus } from '@/services/sysconfig';
+import { listTenants } from '@/services/admin';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { IconSet } from '@/components/ui/icons';
+
+// Claus que esperen un UUID de tenant — mostren un select en comptes d'un input de text
+const TENANT_UUID_KEYS = new Set(['PLATFORM_TENANT_ID']);
 
 // Phase-based grouping: each phase lists its categories in order
 const PHASE_GROUPS: { id: string; label: string; description: string; categories: string[] }[] = [
@@ -145,6 +149,29 @@ function ImportanceBadge({ keyName }: { keyName: string }) {
     <AMGBadge tone={IMPORTANCE_TONE[imp.level]}>
       {IMPORTANCE_LABEL[imp.level]}
     </AMGBadge>
+  );
+}
+
+function TenantSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { data } = useQuery({
+    queryKey: ['tenants-all'],
+    queryFn: () => listTenants({ size: 200, sort: 'name,asc' }),
+  });
+  const tenants = data?.content ?? [];
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="flex-1 bg-bg-1 border border-accent text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none"
+      autoFocus
+    >
+      <option value="">— Selecciona un tenant —</option>
+      {tenants.map(t => (
+        <option key={t.id} value={t.id}>
+          {t.name} {t.isOwner ? '(propietari)' : ''}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -319,6 +346,16 @@ function KeyRow({ item, onSave, onDelete, t }: {
                 autoFocus
               />
               <AMGButton size="sm" icon={IconSet.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); }}>
+                {t('btnSave')}
+              </AMGButton>
+              <AMGButton size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(''); }}>
+                {t('btnCancel')}
+              </AMGButton>
+            </div>
+          ) : TENANT_UUID_KEYS.has(item.key) ? (
+            <div className="flex gap-2 items-start">
+              <TenantSelect value={value} onChange={setValue} />
+              <AMGButton size="sm" icon={IconSet.Check} disabled={!value.trim()} onClick={() => { onSave(item.key, value.trim()); setEditing(false); setValue(''); }}>
                 {t('btnSave')}
               </AMGButton>
               <AMGButton size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(''); }}>
