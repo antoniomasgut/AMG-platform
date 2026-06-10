@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/lib/toast-context';
 import {
   createTemplate, defaultLayout,
@@ -16,6 +17,8 @@ import { IconSet } from '@/components/ui/icons';
 export default function NewDocumentTemplatePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const forTenantId = searchParams.get('tenantId') ?? undefined;
   const [name, setName] = useState('');
   const [docType, setDocType] = useState<DocumentType>('quote');
   const [loading, setLoading] = useState(false);
@@ -39,7 +42,7 @@ export default function NewDocumentTemplatePage() {
         layout: JSON.stringify(defaultLayout()),
         dataBindings: '{}',
         styles: '{}',
-      });
+      }, forTenantId);
       toast('success', 'Plantilla creada');
       router.push(`/portal/admin/documents/${result.id}/edit`);
     } catch (err: any) {

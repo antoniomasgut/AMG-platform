@@ -182,16 +182,18 @@ export function defaultLayout(): LayoutBlock[] {
   ];
 }
 
-export async function listTemplates(): Promise<TemplateResponse[]> {
-  return apiFetch<TemplateResponse[]>('/documents/templates');
+export async function listTemplates(tenantId?: string): Promise<TemplateResponse[]> {
+  const qs = tenantId ? `?tenantId=${tenantId}` : '';
+  return apiFetch<TemplateResponse[]>(`/documents/templates${qs}`);
 }
 
 export async function getTemplate(id: string): Promise<TemplateResponse> {
   return apiFetch<TemplateResponse>(`/documents/templates/${id}`);
 }
 
-export async function createTemplate(data: TemplateRequest): Promise<TemplateResponse> {
-  return apiFetch<TemplateResponse>('/documents/templates', {
+export async function createTemplate(data: TemplateRequest, tenantId?: string): Promise<TemplateResponse> {
+  const qs = tenantId ? `?tenantId=${tenantId}` : '';
+  return apiFetch<TemplateResponse>(`/documents/templates${qs}`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -242,8 +244,9 @@ export async function generatePdf(data: GenerateRequest): Promise<DocumentRespon
   });
 }
 
-export async function listDocuments(): Promise<DocumentResponse[]> {
-  return apiFetch<DocumentResponse[]>('/documents/list');
+export async function listDocuments(tenantId?: string): Promise<DocumentResponse[]> {
+  const qs = tenantId ? `?tenantId=${tenantId}` : '';
+  return apiFetch<DocumentResponse[]>(`/documents/list${qs}`);
 }
 
 export async function getDocument(id: string): Promise<DocumentResponse> {

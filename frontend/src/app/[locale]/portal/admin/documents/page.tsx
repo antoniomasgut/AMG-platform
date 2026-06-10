@@ -2,6 +2,7 @@
 import { Link } from '@/i18n/navigation';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/lib/toast-context';
 import {
@@ -55,14 +56,16 @@ function ConfirmDeleteModal({
 export default function AdminDocumentsPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const searchParams = useSearchParams();
+  const forTenantId = searchParams.get('tenantId') ?? undefined;
   const [deleteTarget, setDeleteTarget] = useState<TemplateResponse | null>(null);
 
   const { data: templates, isLoading } = useQuery({
-    queryKey: ['document-templates'],
-    queryFn: () => listTemplates(),
+    queryKey: ['document-templates', forTenantId],
+    queryFn: () => listTemplates(forTenantId),
   });
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ['document-templates'] });
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['document-templates', forTenantId] });
 
   const { mutate: doDelete, isPending: deleting } = useMutation({
     mutationFn: (id: string) => deleteTemplate(id),
@@ -91,7 +94,7 @@ export default function AdminDocumentsPage() {
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / admin / documents /</span>
             <div className="f-display font-bold text-xl mt-1">Plantilles de documents</div>
           </div>
-          <AMGButton size="sm" icon={IconSet.Plus} onClick={() => window.location.href = '/portal/admin/documents/new'}>
+          <AMGButton size="sm" icon={IconSet.Plus} onClick={() => window.location.href = `/portal/admin/documents/new${forTenantId ? `?tenantId=${forTenantId}` : ''}`}>
             Nova plantilla
           </AMGButton>
         </div>
@@ -119,7 +122,7 @@ export default function AdminDocumentsPage() {
               <IconSet.FileText size={28} stroke="#64748b" className="mx-auto mb-3" />
               <div className="f-display font-bold text-sm mb-1">Cap plantilla</div>
               <p className="f-mono text-xs text-ink-2 mb-4">Crea la primera plantilla de document per començar</p>
-              <AMGButton size="sm" onClick={() => window.location.href = '/portal/admin/documents/new'}>
+              <AMGButton size="sm" onClick={() => window.location.href = `/portal/admin/documents/new${forTenantId ? `?tenantId=${forTenantId}` : ''}`}>
                 Crear plantilla
               </AMGButton>
             </div>
@@ -156,14 +159,14 @@ export default function AdminDocumentsPage() {
                           <AMGButton
                             size="sm"
                             variant="secondary"
-                            onClick={() => window.location.href = `/portal/admin/documents/${t.id}/edit`}
+                            onClick={() => window.location.href = `/portal/admin/documents/${t.id}/edit${forTenantId ? `?tenantId=${forTenantId}` : ''}`}
                           >
                             Editar
                           </AMGButton>
                           <AMGButton
                             size="sm"
                             variant="secondary"
-                            onClick={() => window.location.href = `/portal/admin/documents/generate/${t.id}`}
+                            onClick={() => window.location.href = `/portal/admin/documents/generate/${t.id}${forTenantId ? `?tenantId=${forTenantId}` : ''}`}
                           >
                             Generar
                           </AMGButton>

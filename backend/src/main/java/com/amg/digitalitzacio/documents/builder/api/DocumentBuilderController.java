@@ -23,19 +23,23 @@ public class DocumentBuilderController {
     private final DocumentBuilderService service;
 
     @GetMapping("/templates")
-    public ResponseEntity<List<TemplateResponse>> listTemplates(@AuthenticationPrincipal UserPrincipal user) {
-        return ResponseEntity.ok(service.listTemplates(user.tenantId()));
+    public ResponseEntity<List<TemplateResponse>> listTemplates(
+            @AuthenticationPrincipal UserPrincipal user,
+            @RequestParam(required = false) UUID tenantId) {
+        return ResponseEntity.ok(service.listTemplates(resolveTenantId(user, tenantId)));
     }
 
     @PostMapping("/templates")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<TemplateResponse> createTemplate(
             @AuthenticationPrincipal UserPrincipal user,
+            @RequestParam(required = false) UUID tenantId,
             @Valid @RequestBody TemplateRequest req) {
         if (req.name() == null || req.name().isBlank()) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.createTemplate(user.tenantId(), req));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(service.createTemplate(resolveTenantId(user, tenantId), req));
     }
 
     @GetMapping("/templates/{id}")
@@ -88,23 +92,27 @@ public class DocumentBuilderController {
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<DocumentResponse> generateDocument(
             @AuthenticationPrincipal UserPrincipal user,
+            @RequestParam(required = false) UUID tenantId,
             @Valid @RequestBody GenerateRequest req) {
         if (req.templateId() == null) return ResponseEntity.badRequest().build();
-        return ResponseEntity.ok(service.generateDocument(user.tenantId(), req));
+        return ResponseEntity.ok(service.generateDocument(resolveTenantId(user, tenantId), req));
     }
 
     @PostMapping("/generate/pdf")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<DocumentResponse> generatePdf(
             @AuthenticationPrincipal UserPrincipal user,
+            @RequestParam(required = false) UUID tenantId,
             @Valid @RequestBody GenerateRequest req) {
         if (req.templateId() == null) return ResponseEntity.badRequest().build();
-        return ResponseEntity.ok(service.generatePdf(user.tenantId(), req));
+        return ResponseEntity.ok(service.generatePdf(resolveTenantId(user, tenantId), req));
     }
 
     @GetMapping("/list")
-    public ResponseEntity<List<DocumentResponse>> listDocuments(@AuthenticationPrincipal UserPrincipal user) {
-        return ResponseEntity.ok(service.listDocuments(user.tenantId()));
+    public ResponseEntity<List<DocumentResponse>> listDocuments(
+            @AuthenticationPrincipal UserPrincipal user,
+            @RequestParam(required = false) UUID tenantId) {
+        return ResponseEntity.ok(service.listDocuments(resolveTenantId(user, tenantId)));
     }
 
     @GetMapping("/{id}")
@@ -120,6 +128,13 @@ public class DocumentBuilderController {
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(service.applyAiOperations(req.templateId(), req.prompt()));
+    }
+
+    private UUID resolveTenantId(UserPrincipal user, UUID requestedTenantId) {
+        if ("SUPER_ADMIN".equals(user.role()) && requestedTenantId != null) {
+            return requestedTenantId;
+        }
+        return user.tenantId();
     }
 
     @ExceptionHandler(NoSuchElementException.class)

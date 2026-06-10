@@ -3292,6 +3292,39 @@ export default function TenantDetailPage() {
         </div>
         </CollapsibleSection>
 
+        {/* Plantilles de documents */}
+        <CollapsibleSection
+          eyebrow="Documents" title="Plantilles de documents"
+          status="neutral"
+          collapsed={!!secCollapsed['doc-templates']} onToggle={() => toggleSec('doc-templates')}
+        >
+          <div className="amg-card card-clip p-5 space-y-3">
+            <p className="f-mono text-xs text-ink-2">
+              Crea plantilles de factura, pressupost, albarà, etc. perquè el tenant les usi per generar documents pels seus clients.
+            </p>
+            <div className="flex gap-3 flex-wrap">
+              <a
+                href={`/${locale}/portal/admin/documents?tenantId=${id}`}
+                className="inline-flex items-center gap-2 px-3 py-1.5 border border-border-base text-xs f-mono text-ink-1 hover:border-[#FF6B00] hover:text-accent-light transition-colors"
+              >
+                Veure plantilles
+              </a>
+              <a
+                href={`/${locale}/portal/admin/documents/new?tenantId=${id}`}
+                className="inline-flex items-center gap-2 px-3 py-1.5 border border-[#FF6B00] bg-accent-muted text-xs f-mono text-accent-light hover:bg-[rgba(255,107,0,0.15)] transition-colors"
+              >
+                + Nova plantilla
+              </a>
+              <a
+                href={`/${locale}/portal/admin/documents/list?tenantId=${id}`}
+                className="inline-flex items-center gap-2 px-3 py-1.5 border border-border-base text-xs f-mono text-ink-1 hover:border-[#FF6B00] hover:text-accent-light transition-colors"
+              >
+                Documents generats
+              </a>
+            </div>
+          </div>
+        </CollapsibleSection>
+
         {/* Ús de canals */}
         <CollapsibleSection
           eyebrow="Últims 30 dies" title="Activitat de canals"
