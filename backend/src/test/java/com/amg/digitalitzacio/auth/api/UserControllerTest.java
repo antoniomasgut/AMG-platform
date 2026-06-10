@@ -99,7 +99,7 @@ class UserControllerTest {
     void tc15_createClientUserAsSuperAdmin_Returns201() throws Exception {
         var request = new CreateUserRequest(
                 "newclient@test.com", "pass1234", "New Client",
-                Role.CLIENT, tenant.getId());
+                null, Role.CLIENT, tenant.getId());
 
         mockMvc.perform(post("/api/v1/users")
                 .header("Authorization", "Bearer " + adminToken)
@@ -118,7 +118,7 @@ class UserControllerTest {
     void tc16_createClientUserWithoutTenant_Returns400() throws Exception {
         var request = new CreateUserRequest(
                 "noclient@test.com", "pass1234", "No Tenant",
-                Role.CLIENT, null);
+                null, Role.CLIENT, null);
 
         mockMvc.perform(post("/api/v1/users")
                 .header("Authorization", "Bearer " + adminToken)
@@ -132,7 +132,7 @@ class UserControllerTest {
     void tc17_clientTriesToCreateUser_Returns403() throws Exception {
         var request = new CreateUserRequest(
                 "another@test.com", "pass1234", "Another",
-                Role.CLIENT, tenant.getId());
+                null, Role.CLIENT, tenant.getId());
 
         mockMvc.perform(post("/api/v1/users")
                 .header("Authorization", "Bearer " + clientToken)
@@ -188,7 +188,7 @@ class UserControllerTest {
     void tc23_adminCreatesAdminUser_ForcesClientRole() throws Exception {
         var request = new CreateUserRequest(
                 "newuser@test.com", "pass1234", "New User",
-                Role.ADMIN, tenant.getId());
+                null, Role.ADMIN, tenant.getId());
 
         mockMvc.perform(post("/api/v1/users")
                 .header("Authorization", "Bearer " + operatorToken)

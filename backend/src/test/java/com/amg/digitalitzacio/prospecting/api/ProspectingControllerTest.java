@@ -162,7 +162,8 @@ class ProspectingControllerTest {
         var prospectId = objectMapper.readTree(prospectsJson).get(0).get("id").asText();
 
         var updateReq = new com.amg.digitalitzacio.prospecting.api.dto.UpdateProspectRequest(
-                com.amg.digitalitzacio.prospecting.domain.ProspectStatus.CONTACTED, "Called client");
+                com.amg.digitalitzacio.prospecting.domain.ProspectStatus.CONTACTED, "Called client",
+                null, null, null, null, null, null);
 
         mockMvc.perform(put("/api/v1/prospecting/prospects/{id}", prospectId)
                         .header("Authorization", "Bearer " + adminToken)
