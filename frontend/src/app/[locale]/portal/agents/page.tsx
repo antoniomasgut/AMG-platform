@@ -85,7 +85,7 @@ export default function AgentsPage() {
   const { user, isAdmin, isSuperAdmin } = useAuth();
   const tenantId = user?.tenantId;
   const [activeTab, setActiveTab] = useState<Tab>('estat');
-  const [openConfigSections, setOpenConfigSections] = useState<Set<string>>(new Set(['canals']));
+  const [openConfigSections, setOpenConfigSections] = useState<Set<string>>(new Set(['canals', 'coneixement']));
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState<string>('');
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
