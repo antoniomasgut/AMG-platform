@@ -1416,7 +1416,8 @@
         "IMAGE_GEN": "Generació d'imatges",
         "STORAGE": "Emmagatzematge",
         "AI_MODELS": "Models IA",
-        "CALENDAR": "Calendari"
+        "CALENDAR": "Calendari",
+        "DOMAINS": "Dominis"
       },
       "placeholderJson": "Enganxa el JSON aquí...",
       "missing": "{n} per configurar",
@@ -1496,7 +1497,8 @@
         "isActive": "Actiu",
         "slug": "Slug",
         "address": "Adreça",
-        "email": "Email"
+        "email": "Email",
+        "city": "Ciutat"
       },
       "created": "Tenant creat correctament",
       "noResults": "No s'han trobat tenants",

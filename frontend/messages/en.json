@@ -1424,7 +1424,8 @@
         "IMAGE_GEN": "Image Generation",
         "STORAGE": "Storage",
         "AI_MODELS": "AI Models",
-        "CALENDAR": "Calendar"
+        "CALENDAR": "Calendar",
+        "DOMAINS": "Domains"
       },
       "placeholderJson": "Paste JSON here...",
       "missing": "{n} to configure",
@@ -1504,7 +1505,8 @@
         "isActive": "Active",
         "slug": "Slug",
         "address": "Address",
-        "email": "Email"
+        "email": "Email",
+        "city": "City"
       },
       "created": "Tenant created successfully",
       "noResults": "No tenants found",

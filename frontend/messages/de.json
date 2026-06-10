@@ -1416,7 +1416,8 @@
         "IMAGE_GEN": "Bildgenerierung",
         "STORAGE": "Speicher",
         "AI_MODELS": "KI-Modelle",
-        "CALENDAR": "Kalender"
+        "CALENDAR": "Kalender",
+        "DOMAINS": "Domains"
       },
       "placeholderJson": "JSON hier einfügen...",
       "missing": "{n} zu konfigurieren",
@@ -1496,7 +1497,8 @@
         "isActive": "Aktiv",
         "slug": "Slug",
         "address": "Adresse",
-        "email": "E-Mail"
+        "email": "E-Mail",
+        "city": "Stadt"
       },
       "created": "Tenant erfolgreich erstellt",
       "noResults": "Keine Tenants gefunden",
