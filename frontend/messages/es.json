@@ -476,9 +476,83 @@
   },
   "legal": {
     "avisLegal": "Aviso Legal",
-    "privacitat": "Política de Privacidad",
-    "cookies": "Política de Cookies",
-    "termes": "Términos del Servicio",
+    "privacitat": {
+      "title": "Política de Privacidad",
+      "sections": {
+        "controller": {
+          "title": "1. Responsable del tratamiento",
+          "content": "El responsable del tratamiento de los datos personales recogidos en este web es Antonio Más Gutiérrez (AMG Digitalitzacions)."
+        },
+        "dataCollected": {
+          "title": "2. Datos recogidos",
+          "content": "Se recogen los siguientes datos: nombre y apellidos, dirección de correo electrónico, número de teléfono, e información de facturación cuando se contratan servicios."
+        },
+        "purpose": {
+          "title": "3. Finalidad del tratamiento",
+          "content": "Los datos se tratan con las siguientes finalidades: gestionar la solicitud de presupuestos, prestar los servicios contratados, enviar comunicaciones comerciales (con consentimiento previo), y cumplir con obligaciones legales."
+        },
+        "legalBasis": {
+          "title": "4. Base legal",
+          "content": "La base legal para el tratamiento de datos es: la ejecución de un contrato de servicios, el consentimiento del interesado, y el cumplimiento de obligaciones legales."
+        },
+        "rights": {
+          "title": "5. Derechos del interesado",
+          "content": "El usuario puede ejercer los derechos de acceso, rectificación, supresión, limitación, portabilidad y oposición enviando un email a info@amgdl.com."
+        },
+        "security": {
+          "title": "6. Medidas de seguridad",
+          "content": "Se aplican medidas de seguridad técnicas y organizativas adecuadas para proteger los datos personales, incluyendo cifrado AES-256 para datos sensibles y acceso restringido por roles."
+        },
+        "subprocessors": {
+          "title": "7. Subencargados del tratamiento",
+          "content": "Para prestar los servicios, AMG Digitalitzacions utiliza los siguientes proveedores externos (subencargados): Brevo SAS (envío de emails transaccionales, sede en la UE); Twilio Inc. (mensajería WhatsApp y SMS, sede en EE.UU.); Anthropic PBC (procesamiento de texto para agentes de inteligencia artificial, sede en EE.UU.); GoCardless Ltd (domiciliación SEPA, sede en Reino Unido); Hetzner Online GmbH (servidores y alojamiento, sede en Alemania). Cada proveedor ha firmado las garantías contractuales adecuadas."
+        },
+        "internationalTransfers": {
+          "title": "8. Transferencias internacionales",
+          "content": "Algunos proveedores (Twilio, Anthropic) están ubicados en Estados Unidos. Estas transferencias se realizan con las garantías adecuadas previstas en el Art. 46 RGPD, concretamente mediante Cláusulas Contractuales Tipo (CCT) aprobadas por la Comisión Europea. Los datos procesados por los agentes IA (Anthropic) se limitan al contenido de las conversaciones necesario para generar respuestas y no se utilizan para entrenar modelos."
+        },
+        "retention": {
+          "title": "9. Plazos de conservación",
+          "content": "Los datos de contacto (leads del CRM) se conservan mientras exista una relación comercial activa y hasta 3 años desde el último contacto. Los datos de facturación se conservan 7 años por obligación fiscal. Las conversaciones de los agentes se conservan 12 meses. Al ejercer el derecho de supresión, los datos personales identificativos se anonimizan en un plazo máximo de 30 días."
+        },
+        "automatedProcessing": {
+          "title": "10. Tratamiento automatizado y agentes IA",
+          "content": "La plataforma incorpora agentes de inteligencia artificial que pueden responder automáticamente a mensajes de WhatsApp, Telegram o email en nombre del tenant. Estas respuestas automatizadas se producen únicamente cuando el cliente final ha iniciado la conversación. No se toman decisiones automatizadas con efectos jurídicos significativos. Puede solicitar que sus consultas sean atendidas por una persona enviando un email a info@amgdl.com."
+        }
+      },
+      "backToHome": "← Volver al inicio",
+      "lastUpdated": "Última actualización"
+    },
+    "cookies": {
+      "title": "Esta web utiliza cookies",
+      "description": "Utilizamos cookies propias y de terceros para mejorar tu experiencia y analizar el tráfico.",
+      "acceptAll": "Aceptar todas",
+      "configure": "Configurar",
+      "accept": "DE ACUERDO"
+    },
+    "termes": {
+      "title": "Términos del Servicio",
+      "sections": {
+        "object": {
+          "title": "1. Objeto",
+          "content": "Estos Términos del Servicio regulan la contratación de los servicios de automatización digital, desarrollo web e inteligencia artificial ofrecidos por AMG Digitalitzacions."
+        },
+        "services": {
+          "title": "2. Servicios",
+          "content": "AMG ofrece: desarrollo de páginas web, automatización de procesos con n8n, chatbots de inteligencia artificial, integración de WhatsApp Business, gestión de dominios y SSL, y consultoría digital."
+        },
+        "pricing": {
+          "title": "3. Precios y facturación",
+          "content": "Los precios se fijan según el presupuesto acordado con el cliente. La facturación se realiza mensualmente o según el calendario acordado en el contrato."
+        },
+        "obligations": {
+          "title": "4. Obligaciones del cliente",
+          "content": "El cliente se compromete a proporcionar la información necesaria para la prestación de los servicios, a pagar las facturas dentro del plazo acordado, y a no hacer un uso indebido de los servicios contratados."
+        }
+      },
+      "backToHome": "← Volver al inicio",
+      "lastUpdated": "Última actualización"
+    },
     "avis": {
       "lastUpdated": "Última actualización",
       "sections": {

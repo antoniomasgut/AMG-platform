@@ -476,9 +476,83 @@
   },
   "legal": {
     "avisLegal": "Impressum",
-    "privacitat": "Datenschutzrichtlinie",
-    "cookies": "Cookie-Richtlinie",
-    "termes": "Nutzungsbedingungen",
+    "privacitat": {
+      "title": "Datenschutzerklärung",
+      "sections": {
+        "controller": {
+          "title": "1. Verantwortlicher",
+          "content": "Der Verantwortliche für die Verarbeitung personenbezogener Daten auf dieser Website ist Antonio Más Gutiérrez (AMG Digitalitzacions)."
+        },
+        "dataCollected": {
+          "title": "2. Erhobene Daten",
+          "content": "Wir erheben: Vor- und Nachname, E-Mail-Adresse, Telefonnummer und Rechnungsinformationen bei Vertragsabschluss."
+        },
+        "purpose": {
+          "title": "3. Zweck der Verarbeitung",
+          "content": "Die Daten werden verarbeitet für: Angebotsanfragen, Erbringung vertraglicher Dienstleistungen, Werbung (mit Einwilligung) und Erfüllung gesetzlicher Pflichten."
+        },
+        "legalBasis": {
+          "title": "4. Rechtsgrundlage",
+          "content": "Die Rechtsgrundlage ist: Erfüllung eines Dienstleistungsvertrags, Einwilligung der betroffenen Person und Erfüllung gesetzlicher Pflichten."
+        },
+        "rights": {
+          "title": "5. Betroffenenrechte",
+          "content": "Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch per E-Mail an info@amgdl.com."
+        },
+        "security": {
+          "title": "6. Sicherheitsmaßnahmen",
+          "content": "Wir wenden geeignete technische und organisatorische Sicherheitsmaßnahmen an, einschließlich AES-256-Verschlüsselung für sensible Daten."
+        },
+        "subprocessors": {
+          "title": "7. Unterauftragsverarbeiter",
+          "content": "Zur Erbringung der Dienstleistungen nutzt AMG Digitalitzacions folgende Unterauftragsverarbeiter: Brevo SAS (transaktionale E-Mails, EU-Sitz); Twilio Inc. (WhatsApp- und SMS-Nachrichten, US-Sitz); Anthropic PBC (Textverarbeitung für KI-Agenten, US-Sitz); GoCardless Ltd (SEPA-Lastschrift, UK-Sitz); Hetzner Online GmbH (Server und Hosting, Deutschland). Jeder Anbieter hat geeignete Vertragsgarantien unterzeichnet."
+        },
+        "internationalTransfers": {
+          "title": "8. Internationale Übermittlungen",
+          "content": "Einige Anbieter (Twilio, Anthropic) sind in den USA ansässig. Diese Übermittlungen erfolgen mit geeigneten Garantien gemäß Art. 46 DSGVO, konkret durch von der Europäischen Kommission genehmigte Standardvertragsklauseln (SCC). Von KI-Agenten (Anthropic) verarbeitete Daten beschränken sich auf den zur Antwortgenerierung erforderlichen Gesprächsinhalt und werden nicht zum Trainieren von Modellen verwendet."
+        },
+        "retention": {
+          "title": "9. Speicherfristen",
+          "content": "Kontaktdaten (CRM-Leads) werden gespeichert, solange eine aktive Geschäftsbeziehung besteht, und bis zu 3 Jahre nach dem letzten Kontakt. Abrechnungsdaten werden 7 Jahre gemäß Steuerrecht aufbewahrt. Gesprächsprotokolle der Agenten werden 12 Monate gespeichert. Bei Ausübung des Löschrechts werden personenbezogene Daten innerhalb von maximal 30 Tagen anonymisiert."
+        },
+        "automatedProcessing": {
+          "title": "10. Automatisierte Verarbeitung und KI-Agenten",
+          "content": "Die Plattform umfasst KI-Agenten, die automatisch auf WhatsApp-, Telegram- oder E-Mail-Nachrichten im Namen des Mandanten antworten können. Diese automatisierten Antworten erfolgen nur, wenn der Endkunde das Gespräch initiiert hat. Es werden keine automatisierten Entscheidungen mit erheblichen rechtlichen Auswirkungen getroffen. Sie können beantragen, dass Ihre Anfragen von einem Menschen bearbeitet werden, indem Sie eine E-Mail an info@amgdl.com senden."
+        }
+      },
+      "backToHome": "← Zurück zur Startseite",
+      "lastUpdated": "Letzte Aktualisierung"
+    },
+    "cookies": {
+      "title": "Diese Website verwendet Cookies",
+      "description": "Wir verwenden eigene und Drittanbieter-Cookies, um Ihre Erfahrung zu verbessern und den Verkehr zu analysieren.",
+      "acceptAll": "Alle akzeptieren",
+      "configure": "Konfigurieren",
+      "accept": "AKZEPTIEREN"
+    },
+    "termes": {
+      "title": "AGB",
+      "sections": {
+        "object": {
+          "title": "1. Gegenstand",
+          "content": "Diese AGB regeln die Beauftragung von digitalen Automatisierungs-, Webentwicklungs- und KI-Dienstleistungen durch AMG Digitalitzacions."
+        },
+        "services": {
+          "title": "2. Dienstleistungen",
+          "content": "AMG bietet: Website-Entwicklung, n8n-Prozessautomatisierung, KI-Chatbots, WhatsApp Business-Integration, Domain- und SSL-Verwaltung und Digitalberatung."
+        },
+        "pricing": {
+          "title": "3. Preise und Abrechnung",
+          "content": "Die Preise richten sich nach dem vereinbarten Angebot. Die Abrechnung erfolgt monatlich oder nach dem im Vertrag festgelegten Zeitplan."
+        },
+        "obligations": {
+          "title": "4. Kundenpflichten",
+          "content": "Der Kunde verpflichtet sich, die erforderlichen Informationen bereitzustellen, Rechnungen fristgerecht zu bezahlen und die Dienste nicht missbräuchlich zu nutzen."
+        }
+      },
+      "backToHome": "← Zurück zur Startseite",
+      "lastUpdated": "Letzte Aktualisierung"
+    },
     "avis": {
       "lastUpdated": "Letzte Aktualisierung",
       "sections": {

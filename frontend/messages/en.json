@@ -484,9 +484,83 @@
   },
   "legal": {
     "avisLegal": "Legal Notice",
-    "privacitat": "Privacy Policy",
-    "cookies": "Cookie Policy",
-    "termes": "Terms of Service",
+    "privacitat": {
+      "title": "Privacy Policy",
+      "sections": {
+        "controller": {
+          "title": "1. Data controller",
+          "content": "The data controller for personal data collected on this website is Antonio Más Gutiérrez (AMG Digitalitzacions)."
+        },
+        "dataCollected": {
+          "title": "2. Data collected",
+          "content": "We collect: name and surname, email address, phone number, and billing information when services are contracted."
+        },
+        "purpose": {
+          "title": "3. Purpose of processing",
+          "content": "Data is processed for: managing quote requests, providing contracted services, sending commercial communications (with prior consent), and complying with legal obligations."
+        },
+        "legalBasis": {
+          "title": "4. Legal basis",
+          "content": "The legal basis for data processing is: execution of a service contract, consent of the data subject, and compliance with legal obligations."
+        },
+        "rights": {
+          "title": "5. Data subject rights",
+          "content": "Users may exercise their rights of access, rectification, deletion, restriction, portability and objection by emailing info@amgdl.com."
+        },
+        "security": {
+          "title": "6. Security measures",
+          "content": "We apply appropriate technical and organisational security measures to protect personal data, including AES-256 encryption for sensitive data and role-based access control."
+        },
+        "subprocessors": {
+          "title": "7. Sub-processors",
+          "content": "To provide services, AMG Digitalitzacions uses the following sub-processors: Brevo SAS (transactional email, EU-based); Twilio Inc. (WhatsApp and SMS messaging, US-based); Anthropic PBC (text processing for AI agents, US-based); GoCardless Ltd (SEPA direct debit, UK-based); Hetzner Online GmbH (servers and hosting, Germany-based). Each provider has signed appropriate contractual guarantees."
+        },
+        "internationalTransfers": {
+          "title": "8. International transfers",
+          "content": "Some providers (Twilio, Anthropic) are based in the United States. These transfers are carried out with the appropriate safeguards under Art. 46 GDPR, specifically Standard Contractual Clauses (SCCs) approved by the European Commission. Data processed by AI agents (Anthropic) is limited to the conversation content necessary to generate responses and is not used to train models."
+        },
+        "retention": {
+          "title": "9. Retention periods",
+          "content": "Contact data (CRM leads) is retained while an active commercial relationship exists and up to 3 years from the last contact. Billing data is retained for 7 years as required by tax law. Agent conversation logs are retained for 12 months. Upon exercising the right to erasure, personal identifying data is anonymised within a maximum of 30 days."
+        },
+        "automatedProcessing": {
+          "title": "10. Automated processing and AI agents",
+          "content": "The platform includes AI agents that can automatically respond to WhatsApp, Telegram or email messages on behalf of the tenant. These automated responses only occur when the end customer has initiated the conversation. No automated decisions with significant legal effects are made. You may request that your queries be handled by a human by emailing info@amgdl.com."
+        }
+      },
+      "backToHome": "← Back to home",
+      "lastUpdated": "Last updated"
+    },
+    "cookies": {
+      "title": "This website uses cookies",
+      "description": "We use own and third-party cookies to improve your experience and analyse traffic.",
+      "acceptAll": "Accept all",
+      "configure": "Configure",
+      "accept": "ACCEPT"
+    },
+    "termes": {
+      "title": "Terms of Service",
+      "sections": {
+        "object": {
+          "title": "1. Purpose",
+          "content": "These Terms of Service govern the contracting of digital automation, web development and artificial intelligence services offered by AMG Digitalitzacions."
+        },
+        "services": {
+          "title": "2. Services",
+          "content": "AMG offers: website development, n8n process automation, AI chatbots, WhatsApp Business integration, domain and SSL management, and digital consulting."
+        },
+        "pricing": {
+          "title": "3. Pricing and billing",
+          "content": "Prices are set according to the agreed budget with the client. Billing is monthly or according to the schedule agreed in the contract."
+        },
+        "obligations": {
+          "title": "4. Client obligations",
+          "content": "The client agrees to provide the necessary information for service delivery, pay invoices within the agreed period, and not misuse the contracted services."
+        }
+      },
+      "backToHome": "← Back to home",
+      "lastUpdated": "Last updated"
+    },
     "avis": {
       "lastUpdated": "Last updated",
       "sections": {
