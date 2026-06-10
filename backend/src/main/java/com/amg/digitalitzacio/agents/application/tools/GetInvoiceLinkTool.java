@@ -4,7 +4,6 @@ import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -37,12 +36,12 @@ public class GetInvoiceLinkTool implements AgentTool {
 
     @Override
     public String execute(UUID tenantId, Map<String, Object> input) {
-        var page = budgetRepository.findByTenantIdAndStatus(tenantId, BudgetStatus.SENT,
-            PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "sentAt")));
+        var page = budgetRepository.findByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, BudgetStatus.SENT,
+            PageRequest.of(0, 1));
 
         if (page.isEmpty()) {
-            var any = budgetRepository.findByTenantId(tenantId,
-                PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "createdAt")));
+            var any = budgetRepository.findByTenantIdOrderByCreatedAtDesc(tenantId,
+                PageRequest.of(0, 1));
             if (any.isEmpty()) return "No hi ha cap pressupost disponible.";
             var b = any.getContent().get(0);
             return "El pressupost #" + b.getBudgetNumber() + " no s'ha enviat encara (estat: " + b.getStatus() + ").";

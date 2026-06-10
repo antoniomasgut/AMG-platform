@@ -393,14 +393,14 @@ public class BillingOrchestrator implements BillingService {
     public DashboardResponse getDashboard(UUID tenantId) {
         var pending = budgetRepository.countByTenantIdAndStatus(tenantId, BudgetStatus.SENT);
 
-        var budgets = budgetRepository.findByTenantId(tenantId, PageRequest.of(0, 1));
+        var budgets = budgetRepository.findByTenantIdOrderByCreatedAtDesc(tenantId, PageRequest.of(0, 1));
         var lastBudget = budgets.stream().findFirst().map(b ->
                 new DashboardResponse.BudgetSummary(b.getId(), b.getBudgetNumber(), b.getTotal(),
                         b.getStatus().name(), b.getSentAt())).orElse(null);
 
         var totalSpent = BigDecimal.ZERO;
         // Simple calculation from accepted budgets
-        var allBudgets = budgetRepository.findByTenantIdAndStatus(tenantId, BudgetStatus.ACCEPTED, PageRequest.of(0, 100));
+        var allBudgets = budgetRepository.findByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, BudgetStatus.ACCEPTED, PageRequest.of(0, 100));
         for (var b : allBudgets) {
             totalSpent = totalSpent.add(b.getTotal());
         }

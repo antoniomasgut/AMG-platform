@@ -4,7 +4,6 @@ import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -43,9 +42,9 @@ public class GetLastQuoteTool implements AgentTool {
 
         Object statusInput = input.get("status");
         var page = statusInput != null && !statusInput.toString().isBlank()
-            ? budgetRepository.findByTenantIdAndStatus(tenantId,
+            ? budgetRepository.findByTenantIdAndStatusOrderByCreatedAtDesc(tenantId,
                 BudgetStatus.valueOf(statusInput.toString().toUpperCase()), pageable)
-            : budgetRepository.findByTenantId(tenantId, pageable);
+            : budgetRepository.findByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
 
         if (page.isEmpty()) return "No s'ha trobat cap pressupost.";
 

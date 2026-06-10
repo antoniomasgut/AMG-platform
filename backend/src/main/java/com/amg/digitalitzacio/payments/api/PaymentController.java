@@ -97,7 +97,7 @@ public class PaymentController {
             @RequestParam String successUrl,
             @RequestParam(required = false, defaultValue = "") String cancelUrl,
             @AuthenticationPrincipal UserPrincipal principal) {
-        var email = principal != null ? principal.getEmail() : null;
+        var email = principal != null ? principal.email() : null;
         return paymentService.createSetupSession(tenantId, email, successUrl, cancelUrl);
     }
 
