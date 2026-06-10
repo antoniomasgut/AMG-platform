@@ -1,0 +1,24 @@
+#!/bin/bash
+# Comprova que el backend compila (main + tests) abans del push
+# Instal·la'l amb: infra/scripts/install-hooks.sh
+
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+BACKEND="$ROOT/backend"
+
+if [ ! -f "$BACKEND/pom.xml" ]; then
+  exit 0
+fi
+
+echo "🔍 Comprovant compilació backend (main + tests)..."
+cd "$BACKEND"
+
+if mvn test-compile -B -q 2>/dev/null; then
+  echo "✅ Compilació OK"
+else
+  echo ""
+  echo "❌ ERROR: El backend no compila. Corregeix els errors abans de fer push."
+  echo "   Executa: cd backend && mvn test-compile para veure els detalls."
+  exit 1
+fi
