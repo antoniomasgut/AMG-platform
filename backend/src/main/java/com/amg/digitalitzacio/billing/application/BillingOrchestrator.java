@@ -50,7 +50,22 @@ public class BillingOrchestrator implements BillingService {
         var subtotal = BigDecimal.ZERO;
         var lines = new ArrayList<BudgetLine>();
 
-        if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
+        if (request.customLines() != null && !request.customLines().isEmpty()) {
+            // Mode lliure: línies personalitzades (sense catàleg)
+            for (int i = 0; i < request.customLines().size(); i++) {
+                var cl  = request.customLines().get(i);
+                var qty = cl.quantity() != null ? cl.quantity() : 1;
+                var lineTotal = cl.unitPrice().multiply(BigDecimal.valueOf(qty));
+                subtotal = subtotal.add(lineTotal);
+                lines.add(BudgetLine.builder()
+                        .serviceName(cl.description())
+                        .quantity(qty)
+                        .unitPrice(cl.unitPrice()).total(lineTotal)
+                        .monthlyPrice(cl.monthlyPrice() != null ? cl.monthlyPrice() : BigDecimal.ZERO)
+                        .sortOrder(i)
+                        .build());
+            }
+        } else if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
             // Mode NexeLocal: fórmula Σfases × factor_sector × factor_mida
             var sector = resolveSector(tenantId, request.sector());
             var size   = resolveSize(tenantId, request.businessSize());
@@ -191,7 +206,22 @@ public class BillingOrchestrator implements BillingService {
         var subtotal = BigDecimal.ZERO;
         var lines = new ArrayList<BudgetLine>();
 
-        if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
+        if (request.customLines() != null && !request.customLines().isEmpty()) {
+            // Mode lliure: línies personalitzades
+            for (int i = 0; i < request.customLines().size(); i++) {
+                var cl  = request.customLines().get(i);
+                var qty = cl.quantity() != null ? cl.quantity() : 1;
+                var lineTotal = cl.unitPrice().multiply(BigDecimal.valueOf(qty));
+                subtotal = subtotal.add(lineTotal);
+                lines.add(BudgetLine.builder().budgetId(budgetId)
+                        .serviceName(cl.description())
+                        .quantity(qty)
+                        .unitPrice(cl.unitPrice()).total(lineTotal)
+                        .monthlyPrice(cl.monthlyPrice() != null ? cl.monthlyPrice() : BigDecimal.ZERO)
+                        .sortOrder(i)
+                        .build());
+            }
+        } else if (request.phaseNumbers() != null && !request.phaseNumbers().isEmpty()) {
             var sector = resolveSector(budget.getTenantId(), request.sector());
             var size   = resolveSize(budget.getTenantId(), request.businessSize());
             var sortedPhases = request.phaseNumbers().stream().sorted().toList();
@@ -519,7 +549,23 @@ public class BillingOrchestrator implements BillingService {
             } catch (Exception ignored) {}
         }
 
-        var addonLines = lines.stream().filter(l -> l.getPhaseId() == null && l.getPhaseNumber() == null).toList();
+        // Línies lliures (serviceId == null && phaseId == null && phaseNumber == null)
+        var freeLines = lines.stream()
+                .filter(l -> l.getPhaseId() == null && l.getPhaseNumber() == null && l.getServiceId() == null)
+                .toList();
+        var customLinesList = freeLines.stream()
+                .map(l -> new BudgetResponse.CustomLine(
+                        l.getServiceName(),
+                        l.getQuantity() != null ? l.getQuantity() : 1,
+                        l.getUnitPrice(),
+                        l.getMonthlyPrice() != null ? l.getMonthlyPrice() : BigDecimal.ZERO,
+                        l.getTotal()))
+                .toList();
+
+        // Addons del catàleg (serviceId != null, phaseId == null, phaseNumber == null)
+        var addonLines = lines.stream()
+                .filter(l -> l.getPhaseId() == null && l.getPhaseNumber() == null && l.getServiceId() != null)
+                .toList();
         for (var line : addonLines) {
             addons.add(new BudgetResponse.BudgetAddon(line.getServiceName(), line.getUnitPrice()));
         }
@@ -567,6 +613,7 @@ public class BillingOrchestrator implements BillingService {
                 budget.getTenantId(), tenantName,
                 budget.getRecommendation(), recPhaseIds,
                 phaseNumbers.isEmpty() ? null : phaseNumbers,
-                budget.getSector(), budget.getBusinessSize());
+                budget.getSector(), budget.getBusinessSize(),
+                customLinesList.isEmpty() ? null : customLinesList);
     }
 }

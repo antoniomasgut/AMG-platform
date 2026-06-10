@@ -9,4 +9,5 @@ public record UpdateBudgetRequest(UUID profileId, List<UUID> phaseIds, List<UUID
                                    LocalDate validUntil,
                                    String recommendation, List<UUID> recommendedPhaseIds,
                                    List<Integer> phaseNumbers,
-                                   String sector, String businessSize) {}
+                                   String sector, String businessSize,
+                                   List<CreateBudgetRequest.CustomLineRequest> customLines) {}

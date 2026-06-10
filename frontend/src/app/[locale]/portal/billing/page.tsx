@@ -9,7 +9,7 @@ import { useToast } from '@/lib/toast-context';
 import {
   listBudgets, listAllBudgets, getBillingDashboard,
   sendBudget, cancelBudget, updateBudget, createBudget,
-  type BudgetResponse, type CreateBudgetRequest,
+  type BudgetResponse, type CreateBudgetRequest, type CustomLineRequest,
 } from '@/services/billing';
 import { getTenantSetup, listTenants, type TenantSetup, type TenantResponse } from '@/services/admin';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -38,6 +38,176 @@ function fmtDate(d: string | null) {
 }
 
 const STATUS_FILTERS = ['', 'DRAFT', 'SENT', 'ACCEPTED', 'REJECTED'];
+
+// ── Create budget modal (línies lliures) ───────────────────────────────────────
+
+interface LineItem { description: string; quantity: string; unitPrice: string; monthlyPrice: string; }
+
+function CreateBudgetModal({ onClose, onCreated, isSuperAdmin, defaultTenantId }: {
+  onClose: () => void;
+  onCreated: () => void;
+  isSuperAdmin: boolean;
+  defaultTenantId?: string;
+}) {
+  const { toast } = useToast();
+  const [tenantId, setTenantId] = useState(defaultTenantId ?? '');
+  const [tenantSearch, setTenantSearch] = useState('');
+  const [tenantDropdown, setTenantDropdown] = useState(false);
+  const [tenantName, setTenantName] = useState('');
+  const [notes, setNotes] = useState('');
+  const [clientNotes, setClientNotes] = useState('');
+  const [validUntil, setValidUntil] = useState('');
+  const [lines, setLines] = useState<LineItem[]>([
+    { description: '', quantity: '1', unitPrice: '', monthlyPrice: '' },
+  ]);
+  const [saving, setSaving] = useState(false);
+
+  const { data: tenants } = useQuery({
+    queryKey: ['tenants-search-create', tenantSearch],
+    queryFn: () => listTenants({ search: tenantSearch || undefined, size: 30 }),
+    enabled: isSuperAdmin,
+  });
+
+  const addLine = () => setLines(prev => [...prev, { description: '', quantity: '1', unitPrice: '', monthlyPrice: '' }]);
+  const removeLine = (i: number) => setLines(prev => prev.filter((_, idx) => idx !== i));
+  const updateLine = (i: number, field: keyof LineItem, val: string) =>
+    setLines(prev => prev.map((l, idx) => idx === i ? { ...l, [field]: val } : l));
+
+  const subtotal = lines.reduce((sum, l) => {
+    const qty = parseFloat(l.quantity) || 1;
+    const up = parseFloat(l.unitPrice) || 0;
+    return sum + qty * up;
+  }, 0);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validLines = lines.filter(l => l.description.trim() && l.unitPrice.trim());
+    if (validLines.length === 0) { toast('error', 'Afegeix almenys una línia'); return; }
+    if (isSuperAdmin && !tenantId) { toast('error', 'Selecciona un client'); return; }
+    setSaving(true);
+    try {
+      const customLines: CustomLineRequest[] = validLines.map(l => ({
+        description: l.description.trim(),
+        quantity: parseInt(l.quantity) || 1,
+        unitPrice: parseFloat(l.unitPrice),
+        monthlyPrice: l.monthlyPrice ? parseFloat(l.monthlyPrice) : undefined,
+      }));
+      await createBudget(tenantId, {
+        customLines,
+        notes: notes || undefined,
+        clientNotes: clientNotes || undefined,
+        validUntil: validUntil || undefined,
+      } as CreateBudgetRequest);
+      toast('success', 'Pressupost creat');
+      onCreated();
+      onClose();
+    } catch {
+      toast('error', 'Error creant el pressupost');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const labelCls = 'block f-mono text-label uppercase text-ink-2 text-xs mb-1';
+  const inputCls = 'w-full px-3 py-2 text-sm bg-transparent border border-border-base text-ink-1 focus:outline-none focus:border-[#FF6B00]';
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="amg-card card-clip w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <form onSubmit={handleSubmit}>
+          <div className="p-5 border-b border-border-base flex items-center justify-between">
+            <div className="f-display font-bold text-base">Nou pressupost</div>
+            <button type="button" onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
+          </div>
+          <div className="p-5 space-y-5">
+            {isSuperAdmin && (
+              <div>
+                <label className={labelCls}>Client *</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Cerca tenant..."
+                    value={tenantName || tenantSearch}
+                    onChange={e => { setTenantSearch(e.target.value); setTenantId(''); setTenantName(''); setTenantDropdown(true); }}
+                    onFocus={() => setTenantDropdown(true)}
+                    onBlur={() => setTimeout(() => setTenantDropdown(false), 150)}
+                    className={inputCls}
+                  />
+                  {tenantDropdown && tenants && tenants.content.length > 0 && (
+                    <div className="absolute top-full left-0 z-20 w-full bg-bg-0 border border-border-base shadow-xl max-h-40 overflow-y-auto">
+                      {tenants.content.map((t: TenantResponse) => (
+                        <button key={t.id} type="button" onMouseDown={() => { setTenantId(t.id); setTenantName(t.name); setTenantSearch(''); setTenantDropdown(false); }}
+                          className="w-full text-left px-3 py-2 text-xs text-ink-1 hover:bg-accent-muted truncate block">
+                          {t.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className={labelCls}>Línies *</label>
+                <button type="button" onClick={addLine} className="f-mono text-label text-xs text-accent-light hover:underline">+ Afegir línia</button>
+              </div>
+              <div className="space-y-2">
+                <div className="grid grid-cols-12 gap-2 f-mono text-label text-xs text-ink-3 uppercase px-1">
+                  <span className="col-span-5">Descripció</span>
+                  <span className="col-span-2 text-right">Qtty</span>
+                  <span className="col-span-2 text-right">Preu setup</span>
+                  <span className="col-span-2 text-right">Preu/mes</span>
+                  <span className="col-span-1" />
+                </div>
+                {lines.map((line, i) => (
+                  <div key={i} className="grid grid-cols-12 gap-2">
+                    <input value={line.description} onChange={e => updateLine(i, 'description', e.target.value)}
+                      placeholder="Descripció del servei" className={`col-span-5 ${inputCls}`} />
+                    <input value={line.quantity} onChange={e => updateLine(i, 'quantity', e.target.value)}
+                      type="number" min="1" className={`col-span-2 ${inputCls} text-right`} />
+                    <input value={line.unitPrice} onChange={e => updateLine(i, 'unitPrice', e.target.value)}
+                      type="number" min="0" step="0.01" placeholder="0.00" className={`col-span-2 ${inputCls} text-right`} />
+                    <input value={line.monthlyPrice} onChange={e => updateLine(i, 'monthlyPrice', e.target.value)}
+                      type="number" min="0" step="0.01" placeholder="0.00" className={`col-span-2 ${inputCls} text-right`} />
+                    <button type="button" onClick={() => removeLine(i)} disabled={lines.length === 1}
+                      className="col-span-1 flex items-center justify-center text-ink-3 hover:text-red-400 disabled:opacity-30">
+                      <IconSet.X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 text-right f-mono text-sm">
+                <span className="text-ink-2">Subtotal: </span>
+                <span className="font-bold text-ink-0">{fmt(subtotal)}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Notes internes</label>
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className={`${inputCls} resize-none`} />
+              </div>
+              <div>
+                <label className={labelCls}>Notes per al client</label>
+                <textarea value={clientNotes} onChange={e => setClientNotes(e.target.value)} rows={2} className={`${inputCls} resize-none`} />
+              </div>
+            </div>
+
+            <div>
+              <label className={labelCls}>Vàlid fins</label>
+              <input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} className={inputCls} />
+            </div>
+          </div>
+          <div className="p-5 border-t border-border-base flex gap-3">
+            <AMGButton type="submit" disabled={saving} loading={saving} className="flex-1 justify-center">Crear pressupost</AMGButton>
+            <AMGButton type="button" variant="outline" onClick={onClose}>Cancel·lar</AMGButton>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 // ── Budget detail / edit modal ────────────────────────────────────────────────
 
@@ -330,6 +500,32 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
                 </div>
               )}
 
+              {budget.customLines && budget.customLines.length > 0 && (
+                <div className="space-y-2">
+                  <div className="f-display font-bold text-xs text-ink-3 uppercase tracking-wider">Línies</div>
+                  <div className="rounded border border-border-base overflow-hidden">
+                    <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-[rgba(255,255,255,0.04)] f-mono text-label text-xs text-ink-3 uppercase">
+                      <span className="col-span-5">Descripció</span>
+                      <span className="col-span-1 text-right">Qty</span>
+                      <span className="col-span-2 text-right">Preu u.</span>
+                      <span className="col-span-2 text-right">Mensual</span>
+                      <span className="col-span-2 text-right">Total</span>
+                    </div>
+                    <div className="divide-y divide-border-base">
+                      {budget.customLines.map((cl, i) => (
+                        <div key={i} className="grid grid-cols-12 gap-2 px-4 py-2">
+                          <span className="col-span-5 text-xs text-ink-1">{cl.description}</span>
+                          <span className="col-span-1 text-xs f-mono text-ink-2 text-right">{cl.quantity}</span>
+                          <span className="col-span-2 text-xs f-mono text-ink-2 text-right">{cl.unitPrice.toFixed(2)} €</span>
+                          <span className="col-span-2 text-xs f-mono text-ink-2 text-right">{cl.monthlyPrice > 0 ? `${cl.monthlyPrice.toFixed(2)} €` : '—'}</span>
+                          <span className="col-span-2 text-xs f-mono text-white font-bold text-right">{cl.total.toFixed(2)} €</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="rounded border border-border-base p-4 bg-[rgba(255,255,255,0.02)] space-y-0">
                 {row('Setup (únic)', `${budget.subtotal.toFixed(2)} €`)}
                 {budget.discountTotal > 0 && row('Descompte', `-${budget.discountTotal.toFixed(2)} €`)}
@@ -438,8 +634,10 @@ export default function BillingPage() {
   const [tenantSearch, setTenantSearch] = useState('');
   const [tenantDropdown, setTenantDropdown] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState<BudgetResponse | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const tenantId = user?.tenantId ?? '';
 
   const { data: dashboard } = useQuery({
@@ -499,6 +697,11 @@ export default function BillingPage() {
           <div className="p-4 sm:p-5 border-b border-border-base flex flex-wrap items-center gap-3">
             <AMGSectionTitle eyebrow={isAdmin ? 'Tots els tenants' : 'Historial'} title="Pressupostos" />
             <div className="flex gap-2 ml-auto flex-wrap items-center">
+              {isAdmin && (
+                <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setShowCreate(true)}>
+                  Nou pressupost
+                </AMGButton>
+              )}
               {isAdmin && (
                 <div className="relative">
                   <input
@@ -616,6 +819,15 @@ export default function BillingPage() {
           budget={selectedBudget}
           onClose={() => setSelectedBudget(null)}
           onRefresh={() => { handleRefresh(); setSelectedBudget(null); }}
+        />
+      )}
+
+      {showCreate && (
+        <CreateBudgetModal
+          isSuperAdmin={isSuperAdmin}
+          defaultTenantId={!isSuperAdmin ? tenantId : undefined}
+          onClose={() => setShowCreate(false)}
+          onCreated={() => { handleRefresh(); setShowCreate(false); }}
         />
       )}
     </PortalShell>

@@ -3,6 +3,7 @@ import { apiFetch } from './api';
 export interface BudgetLine { serviceName: string; setupPrice: number; monthlyPrice: number; }
 export interface BudgetPhase { name: string; sortOrder: number; lines: BudgetLine[]; phaseTotal: number; phaseMonthlyTotal: number; phaseId: string | null; phaseKey: string | null; }
 export interface BudgetAddon { serviceName: string; unitPrice: number; }
+export interface BudgetCustomLine { description: string; quantity: number; unitPrice: number; monthlyPrice: number; total: number; }
 export interface BudgetResponse {
   id: string; budgetNumber: string; status: string;
   phases: BudgetPhase[]; addons: BudgetAddon[];
@@ -14,6 +15,7 @@ export interface BudgetResponse {
   recommendation: string | null; recommendedPhaseIds: string[];
   phaseNumbers: number[] | null;
   sector: string | null; businessSize: string | null;
+  customLines: BudgetCustomLine[] | null;
 }
 
 export interface BudgetSummary { id: string; budgetNumber: string; total: number; status: string; sentAt: string | null; }
@@ -57,6 +59,13 @@ export const listDiscounts = (tenantId?: string, isActive?: boolean) => {
   return apiFetch<DiscountResponse[]>(`/billing/discounts?${params}`);
 };
 
+export interface CustomLineRequest {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  monthlyPrice?: number;
+}
+
 export interface CreateBudgetRequest {
   profileId?: string;
   phaseIds?: string[];
@@ -70,6 +79,7 @@ export interface CreateBudgetRequest {
   phaseNumbers?: number[];
   sector?: string;
   businessSize?: string;
+  customLines?: CustomLineRequest[];
 }
 
 export const createBudget = (tenantId: string, data: CreateBudgetRequest) =>

@@ -9,4 +9,9 @@ public record CreateBudgetRequest(UUID profileId, List<UUID> phaseIds, List<UUID
                                    LocalDate validUntil,
                                    String recommendation, List<UUID> recommendedPhaseIds,
                                    List<Integer> phaseNumbers,
-                                   String sector, String businessSize) {}
+                                   String sector, String businessSize,
+                                   List<CustomLineRequest> customLines) {
+    public record CustomLineRequest(String description, Integer quantity,
+                                    java.math.BigDecimal unitPrice,
+                                    java.math.BigDecimal monthlyPrice) {}
+}
