@@ -139,20 +139,20 @@ public class ContactService {
     }
 
     /**
-     * Extreu telèfon/email del missatge de l'usuari i fusiona el contacte widget
-     * amb un contacte existent que tingui el mateix telèfon/email.
-     * Ignorat per sessions de prova del portal admin (identifier conté "portal:").
+     * Extreu telèfon/email del missatge i fusiona el contacte amb un d'existent
+     * que tingui el mateix telèfon/email (cross-channel deduplication).
+     * Ignorat per sessions de prova del portal admin (WIDGET amb "portal:" a l'identifier).
      */
     @Transactional
-    public void extractAndLinkContact(UUID tenantId, String widgetIdentifier, String userMessage) {
-        if (widgetIdentifier.contains("portal:")) return;
+    public void extractAndLinkContact(UUID tenantId, ConversationChannel channel, String widgetIdentifier, String userMessage) {
+        if (channel == ConversationChannel.WIDGET && widgetIdentifier.contains("portal:")) return;
 
         String email = extractEmail(userMessage);
         String phone = extractPhone(userMessage);
         if (email == null && phone == null) return;
 
         var identifierEntityOpt = contactIdentifierRepository
-            .findByTenantIdAndChannelAndIdentifier(tenantId, ConversationChannel.WIDGET, widgetIdentifier);
+            .findByTenantIdAndChannelAndIdentifier(tenantId, channel, widgetIdentifier);
         if (identifierEntityOpt.isEmpty()) return;
 
         var identifierEntity = identifierEntityOpt.get();
@@ -170,7 +170,7 @@ public class ContactService {
             if (targetContact == null && currentContact.getPhone() == null) {
                 currentContact.setPhone(normalized);
                 contactRepository.save(currentContact);
-                log.info("[Contact] Extracted phone {} from widget session {}", normalized, widgetIdentifier);
+                log.info("[Contact] Extracted phone {} from {} session {}", normalized, channel, widgetIdentifier);
             }
         }
         if (targetContact == null && email != null) {
@@ -181,13 +181,13 @@ public class ContactService {
             if (targetContact == null && currentContact.getEmail() == null) {
                 currentContact.setEmail(normalizedEmail);
                 contactRepository.save(currentContact);
-                log.info("[Contact] Extracted email {} from widget session {}", normalizedEmail, widgetIdentifier);
+                log.info("[Contact] Extracted email {} from {} session {}", normalizedEmail, channel, widgetIdentifier);
             }
         }
 
         if (targetContact != null) {
-            log.info("[Contact] Merging widget contact {} into existing contact {} for tenant {}",
-                currentContactId, targetContact.getId(), tenantId);
+            log.info("[Contact] Merging {} contact {} into existing contact {} for tenant {}",
+                channel, currentContactId, targetContact.getId(), tenantId);
             identifierEntity.setContactId(targetContact.getId());
             contactIdentifierRepository.save(identifierEntity);
             boolean noMore = contactIdentifierRepository.findByContactId(currentContactId).isEmpty();

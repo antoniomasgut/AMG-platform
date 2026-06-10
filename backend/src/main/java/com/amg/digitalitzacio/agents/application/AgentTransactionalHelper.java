@@ -46,6 +46,7 @@ class AgentTransactionalHelper {
         var chatLink = chatLinkOpt.get();
 
         boolean isNewContact = contactService.findOrCreate(tenantId, channel, identifier);
+        contactService.extractAndLinkContact(tenantId, channel, identifier, text);
         touchLeadContactAt(tenantId, channel, identifier);
         conversationService.save(tenantId, identifier, channel, ConversationRole.USER, text, false);
 
@@ -81,7 +82,7 @@ class AgentTransactionalHelper {
         var chatLink = chatLinkOpt.get();
 
         contactService.findOrCreate(tenantId, ConversationChannel.WIDGET, identifier);
-        contactService.extractAndLinkContact(tenantId, identifier, text);
+        contactService.extractAndLinkContact(tenantId, ConversationChannel.WIDGET, identifier, text);
         conversationService.save(tenantId, identifier, ConversationChannel.WIDGET,
                 ConversationRole.USER, text, false);
 

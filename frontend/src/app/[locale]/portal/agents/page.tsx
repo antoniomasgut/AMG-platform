@@ -1136,17 +1136,19 @@ export default function AgentsPage() {
 
           const selectedContact = contacts.find(c => c.contactId === selectedContactId);
 
+          const isIntern = (c: typeof contacts[0]) =>
+            c.channels.some(ch => !CLIENT_CHANNELS.includes(ch.channel));
+
           const visibleContacts = contacts.filter(c => {
-            if (!c.lastChannel) return true;
-            if (convFilter === 'clients') return CLIENT_CHANNELS.includes(c.lastChannel);
-            if (convFilter === 'intern') return !CLIENT_CHANNELS.includes(c.lastChannel);
+            if (convFilter === 'clients') return !isIntern(c);
+            if (convFilter === 'intern') return isIntern(c);
             return true;
           });
 
           return (
             <div className="space-y-3">
               {/* Filter pills — only shown on contact list */}
-              {!selectedContactId && contacts.some(c => !CLIENT_CHANNELS.includes(c.lastChannel ?? '')) && (
+              {!selectedContactId && contacts.some(c => c.channels.some(ch => !CLIENT_CHANNELS.includes(ch.channel))) && (
                 <div className="flex gap-2">
                   {(['all', 'clients', 'intern'] as const).map(f => (
                     <button
@@ -1310,7 +1312,7 @@ export default function AgentsPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
                               <span className="text-sm font-medium text-ink-1 truncate">{contact.displayName}</span>
-                              {contact.lastChannel && !CLIENT_CHANNELS.includes(contact.lastChannel) && (
+                              {isIntern(contact) && (
                                 <span className="text-[9px] f-mono border border-border-base px-1 py-0.5 rounded text-ink-3 shrink-0">intern</span>
                               )}
                               {contact.phone && (
