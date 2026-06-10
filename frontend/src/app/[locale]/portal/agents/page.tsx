@@ -37,7 +37,7 @@ import {
   testKnowledgeResponse,
   type KnowledgeBase,
 } from '@/services/knowledge';
-import { listContacts, clearContactMemory, testTenantEmail, portalChat, getUsageSummary, getBudgetDefaults, applyBudgetDefaults } from '@/services/agents-conversational';
+import { listContacts, getContactThread, clearContactMemory, testTenantEmail, portalChat, getUsageSummary, getBudgetDefaults, applyBudgetDefaults, renameContact, type ContactSummary } from '@/services/agents-conversational';
 import { useRef } from 'react';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
@@ -118,8 +118,9 @@ export default function AgentsPage() {
   const chatSessionId = useRef(crypto.randomUUID());
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const [expandedThread, setExpandedThread] = useState<string | null>(null);
-  const [channelFilter, setChannelFilter] = useState<string>('ALL');
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [renamingContactId, setRenamingContactId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState('');
 
   const [widgetBusinessName, setWidgetBusinessName] = useState('');
   const [widgetSystemPrompt, setWidgetSystemPrompt] = useState('');
@@ -328,7 +329,23 @@ export default function AgentsPage() {
   const { data: contacts = [], isLoading: loadingContacts } = useQuery({
     queryKey: ['contacts', tenantId],
     queryFn: () => listContacts(tenantId!),
-    enabled: !!tenantId && activeTab === 'coneixement' && isAdmin,
+    enabled: !!tenantId && (activeTab === 'conversations' || (activeTab === 'coneixement' && isAdmin)),
+  });
+
+  const { data: contactThread = [], isLoading: loadingThread } = useQuery({
+    queryKey: ['contact-thread', tenantId, selectedContactId],
+    queryFn: () => getContactThread(tenantId!, selectedContactId!),
+    enabled: !!tenantId && !!selectedContactId,
+  });
+
+  const renameContactMutation = useMutation({
+    mutationFn: ({ contactId, name }: { contactId: string; name: string }) =>
+      renameContact(tenantId!, contactId, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts', tenantId] });
+      setRenamingContactId(null);
+      setRenameDraft('');
+    },
   });
 
   const kbTestMutation = useMutation({
@@ -350,10 +367,21 @@ export default function AgentsPage() {
 
   useEffect(() => {
     if (activeTab === 'conversations' && tenantId) {
-      queryClient.invalidateQueries({ queryKey: ['conversations', tenantId] });
-      setExpandedThread(null);
+      queryClient.invalidateQueries({ queryKey: ['contacts', tenantId] });
+      setSelectedContactId(null);
     }
   }, [activeTab, tenantId, queryClient]);
+
+  useEffect(() => {
+    if (!tenantId) return;
+    const key = `portal-xat-session-${tenantId}`;
+    let id = localStorage.getItem(key);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(key, id);
+    }
+    chatSessionId.current = id;
+  }, [tenantId]);
 
   const updateEntriesMutation = useMutation({
     mutationFn: ({ category, content }: { category: string; content: string }) => {
@@ -978,9 +1006,14 @@ export default function AgentsPage() {
                 <IconSet.Zap size={16} />
               </button>
               <button
-                onClick={() => { setChatMessages([]); chatSessionId.current = crypto.randomUUID(); }}
+                onClick={() => {
+                  const newId = crypto.randomUUID();
+                  chatSessionId.current = newId;
+                  if (tenantId) localStorage.setItem(`portal-xat-session-${tenantId}`, newId);
+                  setChatMessages([]);
+                }}
                 className="px-3 py-2.5 border border-border-base rounded-xl text-ink-3 hover:text-ink-1 hover:border-accent transition shrink-0"
-                title="Reiniciar conversa"
+                title="Nova conversa"
               >
                 <IconSet.Refresh size={14} />
               </button>
@@ -1089,133 +1122,198 @@ export default function AgentsPage() {
           </div>
         )}
 
-        {/* Conversations Tab */}
+        {/* Conversations Tab — contact-based */}
         {activeTab === 'conversations' && (() => {
-          const CHANNEL_LABELS: Record<string, string> = {
-            WHATSAPP: 'WhatsApp', WHATSAPP_META: 'WhatsApp', TELEGRAM: 'Telegram',
-            EMAIL: 'Email', WIDGET: 'Widget',
+          const CHANNEL_ICON: Record<string, string> = {
+            WIDGET: '💬', WHATSAPP: '📱', WHATSAPP_META: '📱', TELEGRAM: '✈', EMAIL: '✉',
           };
-          const getDisplayName = (id: string) => {
-            if (id.startsWith('wgt:portal:')) return 'Portal · Xat web';
-            if (id.startsWith('wgt:')) return `Widget · ${id.substring(4, 12)}…`;
-            return id;
+          const CHANNEL_LABEL: Record<string, string> = {
+            WIDGET: 'Widget', WHATSAPP: 'WhatsApp', WHATSAPP_META: 'WhatsApp',
+            TELEGRAM: 'Telegram', EMAIL: 'Email',
           };
 
-          const filtered = channelFilter === 'ALL' ? conversations
-            : conversations.filter(m => m.channel === channelFilter);
-
-          const threads = Object.entries(
-            filtered.reduce<Record<string, typeof conversations>>((acc, msg) => {
-              if (!acc[msg.customerIdentifier]) acc[msg.customerIdentifier] = [];
-              acc[msg.customerIdentifier].push(msg);
-              return acc;
-            }, {})
-          ).sort(([, a], [, b]) => new Date(b[0].createdAt).getTime() - new Date(a[0].createdAt).getTime());
-
-          const channels = Array.from(new Set(conversations.map(m => m.channel)));
+          const selectedContact = contacts.find(c => c.contactId === selectedContactId);
 
           return (
-            <div className="space-y-4">
-              {/* Channel filter */}
-              {channels.length > 1 && (
-                <div className="flex gap-2 flex-wrap">
-                  {['ALL', ...channels].map(ch => (
-                    <button
-                      key={ch}
-                      onClick={() => setChannelFilter(ch)}
-                      className={`px-3 py-1 rounded-full f-mono text-xs transition ${
-                        channelFilter === ch
-                          ? 'bg-accent text-white'
-                          : 'border border-border-base text-ink-2 hover:border-accent hover:text-accent'
-                      }`}
-                    >
-                      {ch === 'ALL' ? 'Tots' : CHANNEL_LABELS[ch] ?? ch}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Thread detail */}
-              {expandedThread ? (
+            <div className="space-y-3">
+              {selectedContactId ? (
+                /* Thread detail */
                 <div className="space-y-3">
-                  <button
-                    onClick={() => setExpandedThread(null)}
-                    className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink-1 transition"
-                  >
-                    ← Totes les converses
-                  </button>
-                  <div className="amg-card card-clip p-3 sm:p-4">
-                    <p className="f-mono text-[10px] uppercase text-ink-3 mb-3">{expandedThread}</p>
-                    <div className="space-y-2">
-                      {conversations
-                        .filter(m => m.customerIdentifier === expandedThread)
-                        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-                        .map((msg) => (
-                          <div key={msg.id} className={`flex gap-2 ${msg.role === 'USER' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
-                              msg.role === 'USER'
-                                ? 'bg-accent text-white rounded-br-sm'
-                                : 'bg-bg-1 border border-border-base text-ink-1 rounded-bl-sm'
-                            }`}>
-                              <p className="whitespace-pre-wrap">{msg.content}</p>
-                              <p className={`text-[10px] mt-1 ${msg.role === 'USER' ? 'text-white/60' : 'text-ink-3'}`}>
-                                {new Date(msg.createdAt).toLocaleString('ca-ES', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
-                              </p>
-                            </div>
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => setSelectedContactId(null)}
+                      className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink-1 transition"
+                    >
+                      ← Tots els contactes
+                    </button>
+                    {selectedContact && (
+                      <div className="flex items-center gap-3">
+                        {renamingContactId === selectedContactId ? (
+                          <form
+                            className="flex gap-2"
+                            onSubmit={e => {
+                              e.preventDefault();
+                              if (renameDraft.trim())
+                                renameContactMutation.mutate({ contactId: selectedContactId, name: renameDraft.trim() });
+                            }}
+                          >
+                            <input
+                              autoFocus
+                              value={renameDraft}
+                              onChange={e => setRenameDraft(e.target.value)}
+                              className="px-2 py-1 text-xs bg-bg-1 border border-border-base rounded focus:outline-none focus:border-accent"
+                              placeholder={selectedContact.displayName}
+                            />
+                            <button type="submit" className="text-xs text-accent hover:opacity-80" disabled={renameContactMutation.isPending}>
+                              Desar
+                            </button>
+                            <button type="button" onClick={() => setRenamingContactId(null)} className="text-xs text-ink-3">
+                              ×
+                            </button>
+                          </form>
+                        ) : (
+                          <button
+                            onClick={() => { setRenamingContactId(selectedContactId); setRenameDraft(selectedContact.displayName); }}
+                            className="text-xs text-ink-3 hover:text-accent transition"
+                          >
+                            Canviar nom
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedContact && (
+                    <div className="amg-card card-clip p-4 flex flex-wrap gap-4 text-sm">
+                      <div>
+                        <div className="text-xs text-ink-3 mb-0.5">Nom</div>
+                        <div className="font-medium text-ink-1">{selectedContact.displayName}</div>
+                      </div>
+                      {selectedContact.phone && (
+                        <div>
+                          <div className="text-xs text-ink-3 mb-0.5">Telèfon</div>
+                          <div className="f-mono text-ink-1">{selectedContact.phone}</div>
+                        </div>
+                      )}
+                      {selectedContact.email && (
+                        <div>
+                          <div className="text-xs text-ink-3 mb-0.5">Email</div>
+                          <div className="f-mono text-ink-1">{selectedContact.email}</div>
+                        </div>
+                      )}
+                      {selectedContact.channels.length > 0 && (
+                        <div>
+                          <div className="text-xs text-ink-3 mb-0.5">Canals</div>
+                          <div className="flex gap-1 flex-wrap">
+                            {selectedContact.channels.map((ch, i) => (
+                              <span key={i} className="text-xs f-mono border border-border-base px-1.5 py-0.5 rounded text-ink-2">
+                                {CHANNEL_ICON[ch.channel] ?? ''} {CHANNEL_LABEL[ch.channel] ?? ch.channel}
+                              </span>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-xs text-ink-3 mb-0.5">Missatges</div>
+                        <div className="text-ink-1">{selectedContact.totalMessageCount}</div>
+                      </div>
                     </div>
+                  )}
+
+                  <div className="amg-card card-clip p-3 sm:p-4">
+                    {loadingThread ? (
+                      <p className="text-xs text-ink-3 text-center py-4">Carregant historial…</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {[...contactThread]
+                          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                          .map((msg) => (
+                            <div key={msg.id} className={`flex gap-2 ${msg.role === 'USER' ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
+                                msg.role === 'USER'
+                                  ? 'bg-accent text-white rounded-br-sm'
+                                  : 'bg-bg-1 border border-border-base text-ink-1 rounded-bl-sm'
+                              }`}>
+                                {selectedContact && selectedContact.channels.length > 1 && (
+                                  <p className={`text-[9px] mb-1 ${msg.role === 'USER' ? 'text-white/50' : 'text-ink-3'}`}>
+                                    {CHANNEL_ICON[msg.channel] ?? ''} {msg.customerIdentifier}
+                                  </p>
+                                )}
+                                <p className="whitespace-pre-wrap">{msg.content}</p>
+                                <p className={`text-[10px] mt-1 ${msg.role === 'USER' ? 'text-white/60' : 'text-ink-3'}`}>
+                                  {new Date(msg.createdAt).toLocaleString('ca-ES', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              ) : threads.length === 0 ? (
+              ) : loadingContacts ? (
+                <div className="text-sm text-ink-3 py-4">Carregant contactes…</div>
+              ) : contacts.length === 0 ? (
                 <div className="amg-card card-clip p-12 text-center">
                   <IconSet.Bot size={32} stroke="#6366f1" className="mx-auto mb-3" />
                   <div className="f-display font-bold text-sm mb-1 text-accent">Sense converses</div>
                   <p className="f-mono text-label text-ink-2">Quan els clients escribin, apareixeran aquí</p>
                 </div>
               ) : (
-                /* Thread list */
+                /* Contact list */
                 <div className="space-y-2">
-                  {threads.map(([identifier, messages]) => {
-                    const last = messages[0];
-                    return (
+                  {contacts
+                    .slice()
+                    .sort((a, b) => new Date(b.lastMessageAt ?? 0).getTime() - new Date(a.lastMessageAt ?? 0).getTime())
+                    .map(contact => (
                       <button
-                        key={identifier}
-                        onClick={() => setExpandedThread(identifier)}
+                        key={contact.contactId}
+                        onClick={() => setSelectedContactId(contact.contactId)}
                         className="w-full text-left amg-card card-clip p-4 hover:border-accent transition-colors"
                       >
                         <div className="flex items-start gap-3">
-                          <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 ${
-                            last.channel === 'WIDGET' ? 'bg-accent/20 text-accent' :
-                            last.channel === 'WHATSAPP' || last.channel === 'WHATSAPP_META' ? 'bg-green-500/20 text-green-400' :
-                            last.channel === 'TELEGRAM' ? 'bg-blue-500/20 text-blue-400' :
+                          <div className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold mt-0.5 ${
+                            contact.lastChannel === 'WIDGET' ? 'bg-accent/20 text-accent' :
+                            contact.lastChannel === 'WHATSAPP' || contact.lastChannel === 'WHATSAPP_META' ? 'bg-green-500/20 text-green-400' :
+                            contact.lastChannel === 'TELEGRAM' ? 'bg-blue-500/20 text-blue-400' :
                             'bg-bg-2 text-ink-2'
                           }`}>
-                            {last.channel === 'WIDGET' ? '💬' :
-                             last.channel === 'WHATSAPP' || last.channel === 'WHATSAPP_META' ? '📱' :
-                             last.channel === 'TELEGRAM' ? '✈' : '✉'}
+                            {contact.displayName.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-sm font-medium text-ink-1 truncate">{getDisplayName(identifier)}</span>
-                              <span className="text-[10px] f-mono text-ink-3 border border-border-base px-1.5 py-0.5 rounded shrink-0">
-                                {CHANNEL_LABELS[last.channel] ?? last.channel}
-                              </span>
-                              <span className="text-[10px] text-ink-3 shrink-0 ml-auto">
-                                {messages.length} msg
+                              <span className="text-sm font-medium text-ink-1 truncate">{contact.displayName}</span>
+                              {contact.phone && (
+                                <span className="text-[10px] f-mono text-ink-3 shrink-0">{contact.phone}</span>
+                              )}
+                              {contact.email && !contact.phone && (
+                                <span className="text-[10px] f-mono text-ink-3 truncate">{contact.email}</span>
+                              )}
+                              {contact.pendingCount > 0 && (
+                                <span className="ml-auto shrink-0 w-4 h-4 rounded-full bg-warning text-white text-[9px] flex items-center justify-center font-bold">
+                                  {contact.pendingCount}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {contact.lastChannel && (
+                                <span className="text-[10px] text-ink-3">{CHANNEL_ICON[contact.lastChannel] ?? ''}</span>
+                              )}
+                              <p className="text-xs text-ink-3 truncate flex-1">
+                                {contact.lastMessageRole === 'ASSISTANT' ? 'Agent: ' : ''}{contact.lastMessage ?? '—'}
+                              </p>
+                              <span className="text-[10px] text-ink-3 shrink-0">
+                                {contact.totalMessageCount} msg
                               </span>
                             </div>
-                            <p className="text-xs text-ink-3 truncate">
-                              {last.role === 'ASSISTANT' ? 'Agent: ' : ''}{last.content}
-                            </p>
                           </div>
-                          <span className="text-[10px] text-ink-3 shrink-0">
-                            {new Date(last.createdAt).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit' })}
-                          </span>
+                          {contact.lastMessageAt && (
+                            <span className="text-[10px] text-ink-3 shrink-0">
+                              {new Date(contact.lastMessageAt).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit' })}
+                            </span>
+                          )}
                         </div>
                       </button>
-                    );
-                  })}
+                    ))}
                 </div>
               )}
             </div>

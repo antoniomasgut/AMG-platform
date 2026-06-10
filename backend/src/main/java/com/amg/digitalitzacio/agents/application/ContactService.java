@@ -138,6 +138,92 @@ public class ContactService {
             ConversationRole.ASSISTANT, text, false);
     }
 
+    /**
+     * Extreu telèfon/email del missatge de l'usuari i fusiona el contacte widget
+     * amb un contacte existent que tingui el mateix telèfon/email.
+     * Ignorat per sessions de prova del portal admin (identifier conté "portal:").
+     */
+    @Transactional
+    public void extractAndLinkContact(UUID tenantId, String widgetIdentifier, String userMessage) {
+        if (widgetIdentifier.contains("portal:")) return;
+
+        String email = extractEmail(userMessage);
+        String phone = extractPhone(userMessage);
+        if (email == null && phone == null) return;
+
+        var identifierEntityOpt = contactIdentifierRepository
+            .findByTenantIdAndChannelAndIdentifier(tenantId, ConversationChannel.WIDGET, widgetIdentifier);
+        if (identifierEntityOpt.isEmpty()) return;
+
+        var identifierEntity = identifierEntityOpt.get();
+        UUID currentContactId = identifierEntity.getContactId();
+        var currentContact = contactRepository.findById(currentContactId).orElse(null);
+        if (currentContact == null) return;
+
+        Contact targetContact = null;
+
+        if (phone != null) {
+            String normalized = normalizePhone(phone);
+            targetContact = contactRepository.findByTenantIdAndPhone(tenantId, normalized)
+                .filter(c -> !c.getId().equals(currentContactId))
+                .orElse(null);
+            if (targetContact == null && currentContact.getPhone() == null) {
+                currentContact.setPhone(normalized);
+                contactRepository.save(currentContact);
+                log.info("[Contact] Extracted phone {} from widget session {}", normalized, widgetIdentifier);
+            }
+        }
+        if (targetContact == null && email != null) {
+            String normalizedEmail = email.trim().toLowerCase();
+            targetContact = contactRepository.findByTenantIdAndEmail(tenantId, normalizedEmail)
+                .filter(c -> !c.getId().equals(currentContactId))
+                .orElse(null);
+            if (targetContact == null && currentContact.getEmail() == null) {
+                currentContact.setEmail(normalizedEmail);
+                contactRepository.save(currentContact);
+                log.info("[Contact] Extracted email {} from widget session {}", normalizedEmail, widgetIdentifier);
+            }
+        }
+
+        if (targetContact != null) {
+            log.info("[Contact] Merging widget contact {} into existing contact {} for tenant {}",
+                currentContactId, targetContact.getId(), tenantId);
+            identifierEntity.setContactId(targetContact.getId());
+            contactIdentifierRepository.save(identifierEntity);
+            boolean noMore = contactIdentifierRepository.findByContactId(currentContactId).isEmpty();
+            if (noMore) {
+                contactRepository.deleteById(currentContactId);
+            }
+        }
+    }
+
+    private String extractEmail(String text) {
+        var m = java.util.regex.Pattern.compile(
+            "[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}").matcher(text);
+        return m.find() ? m.group() : null;
+    }
+
+    private String extractPhone(String text) {
+        // International format (+34612345678)
+        var intl = java.util.regex.Pattern.compile("\\+[1-9][\\d\\s\\-\\.]{7,14}").matcher(text);
+        if (intl.find()) return intl.group().replaceAll("[\\s\\-\\.]", "");
+
+        // Keyword hint: phone-related word followed by digit sequence
+        var hinted = java.util.regex.Pattern.compile(
+            "(?i)(?:tel[eè]fon|tel[eè]phone|phone|m[oò]bil|whatsapp|n[úu]mero|tel)\\s*[:\\-]?\\s*([6789][\\d\\s\\-\\.]{8,})",
+            java.util.regex.Pattern.CASE_INSENSITIVE).matcher(text);
+        if (hinted.find()) {
+            String raw = hinted.group(1).replaceAll("[\\s\\-\\.]", "");
+            if (raw.length() >= 9) return raw;
+        }
+
+        // Standalone 9-digit Spanish mobile (starts with 6, 7, 8, 9)
+        var standalone = java.util.regex.Pattern.compile("(?<!\\d)[6789]\\d{8}(?!\\d)").matcher(text);
+        if (standalone.find()) return standalone.group();
+
+        return null;
+    }
+
     @Transactional
     public void renameContact(UUID tenantId, UUID contactId, String displayName) {
         var contact = assertContactBelongsToTenant(tenantId, contactId);

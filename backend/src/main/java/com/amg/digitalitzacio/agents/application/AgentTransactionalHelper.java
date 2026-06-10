@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.agents.application;
 
 import com.amg.digitalitzacio.agents.domain.*;
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,7 @@ class AgentTransactionalHelper {
     private final ContactService contactService;
     private final TenantChatLinkRepository tenantChatLinkRepository;
     private final TenantAIConfigRepository tenantAIConfigRepository;
+    private final TenantRepository tenantRepository;
     private final LeadRepository leadRepository;
     private final ChannelUsageService channelUsageService;
     private final ScheduledAgentTaskRepository taskRepository;
@@ -49,6 +51,10 @@ class AgentTransactionalHelper {
 
         var context = conversationService.loadCustomerContext(tenantId, identifier, channel);
         var aiConfig = tenantAIConfigRepository.findById(tenantId).orElse(TenantAIConfig.defaultFor(tenantId));
+        var tenant   = tenantRepository.findById(tenantId).orElse(null);
+        String notifChannel = (tenant != null && tenant.getPreferredChannel() != null)
+                ? tenant.getPreferredChannel().name() : "TELEGRAM";
+        String operatorPhone = tenant != null ? tenant.getContactPhone() : null;
 
         return Optional.of(new IncomingPreparation(
             chatLink.getAgentMode(),
@@ -57,8 +63,11 @@ class AgentTransactionalHelper {
             chatLink.getWhatsappMetaPhoneNumberId(),
             aiConfig.getSenderEmail(), aiConfig.getSenderName(), aiConfig.getReplyToEmail(),
             context,
-            aiConfig.getPreferredModel(),
-            isNewContact
+            resolveChannelModel(aiConfig, channel),
+            aiConfig.getFallbackModel(),
+            isNewContact,
+            notifChannel,
+            operatorPhone
         ));
     }
 
@@ -72,19 +81,27 @@ class AgentTransactionalHelper {
         var chatLink = chatLinkOpt.get();
 
         contactService.findOrCreate(tenantId, ConversationChannel.WIDGET, identifier);
+        contactService.extractAndLinkContact(tenantId, identifier, text);
         conversationService.save(tenantId, identifier, ConversationChannel.WIDGET,
                 ConversationRole.USER, text, false);
 
         var context = conversationService.loadCustomerContext(tenantId, identifier, ConversationChannel.WIDGET);
         var aiConfig = tenantAIConfigRepository.findById(tenantId).orElse(TenantAIConfig.defaultFor(tenantId));
+        var tenant   = tenantRepository.findById(tenantId).orElse(null);
+        String notifChannel = (tenant != null && tenant.getPreferredChannel() != null)
+                ? tenant.getPreferredChannel().name() : "TELEGRAM";
+        String operatorPhone = tenant != null ? tenant.getContactPhone() : null;
 
         return Optional.of(new IncomingPreparation(
             chatLink.getAgentMode(),
             chatLink.getTelegramChatId(),
             null, null, null, null, null,
             context,
-            aiConfig.getPreferredModel(),
-            false
+            aiConfig.getChatModel() != null ? aiConfig.getChatModel() : aiConfig.getPreferredModel(),
+            aiConfig.getFallbackModel(),
+            false,
+            notifChannel,
+            operatorPhone
         ));
     }
 
@@ -97,6 +114,16 @@ class AgentTransactionalHelper {
         if (reminderTask != null) {
             taskRepository.save(reminderTask);
         }
+    }
+
+    private String resolveChannelModel(TenantAIConfig cfg, ConversationChannel channel) {
+        String channelSpecific = switch (channel) {
+            case WIDGET                              -> cfg.getChatModel();
+            case WHATSAPP, WHATSAPP_META            -> cfg.getWhatsappModel();
+            case EMAIL                              -> cfg.getEmailModel();
+            default                                 -> null;
+        };
+        return channelSpecific != null ? channelSpecific : cfg.getPreferredModel();
     }
 
     private void touchLeadContactAt(UUID tenantId, ConversationChannel channel, String identifier) {
