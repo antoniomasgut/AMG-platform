@@ -1252,7 +1252,7 @@ export default function AgentsPage() {
                 </div>
               ) : loadingContacts ? (
                 <div className="text-sm text-ink-3 py-4">Carregant contactes…</div>
-              ) : contacts.length === 0 ? (
+              ) : contacts.filter(c => c.lastChannel !== 'TELEGRAM').length === 0 ? (
                 <div className="amg-card card-clip p-12 text-center">
                   <IconSet.Bot size={32} stroke="#6366f1" className="mx-auto mb-3" />
                   <div className="f-display font-bold text-sm mb-1 text-accent">Sense converses</div>
@@ -1262,6 +1262,7 @@ export default function AgentsPage() {
                 /* Contact list */
                 <div className="space-y-2">
                   {contacts
+                    .filter(c => c.lastChannel !== 'TELEGRAM')
                     .slice()
                     .sort((a, b) => new Date(b.lastMessageAt ?? 0).getTime() - new Date(a.lastMessageAt ?? 0).getTime())
                     .map(contact => (
