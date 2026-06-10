@@ -158,6 +158,9 @@ export interface ChannelsConfig {
   tenantId: string;
   agentMode: 'AUTO' | 'HYBRID' | 'MANUAL';
   isActive: boolean;
+  widgetEnabled: boolean;
+  whatsappEnabled: boolean;
+  emailEnabled: boolean;
   telegramLinked: boolean;
   telegramChatId: number | null;
   whatsappPhoneNumber: string | null;

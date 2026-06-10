@@ -5,7 +5,10 @@ import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
 import com.amg.digitalitzacio.agents.application.tools.AgentToolRegistry;
 import com.amg.digitalitzacio.agents.domain.*;
+import com.amg.digitalitzacio.shared.ai.AIProvider;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
+import com.amg.digitalitzacio.shared.ai.ToolCall;
+import com.amg.digitalitzacio.shared.ai.ToolDefinition;
 import com.amg.digitalitzacio.shared.ai.ChatMessage;
 import com.amg.digitalitzacio.shared.notification.NotificationEvent;
 import com.amg.digitalitzacio.shared.notification.TenantNotificationService;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -45,6 +49,8 @@ public class ConversationalAgentService {
     private final TenantNotificationService notificationService;
     private final GoogleCalendarService googleCalendarService;
     private final AgentToolRegistry toolRegistry;
+    private final TokenBudgetService tokenBudgetService;
+    private final ChannelUsageService channelUsageService;
     private final ObjectMapper objectMapper;
 
     private static final Pattern BOOKING_TAG = Pattern.compile(
@@ -78,13 +84,9 @@ public class ConversationalAgentService {
                     .toList();
 
             // Sense TX: crida HTTP a l'API d'IA (pot trigar 5-30 s)
-            String model = prep.preferredModel() != null ? prep.preferredModel() : aiProviderRouter.defaultModel();
-            var provider = aiProviderRouter.forModel(model);
-            var tools = toolRegistry.definitions();
-            String aiResponse = provider.chatWithTools(systemPrompt, chatHistory, text, tools,
-                    toolRegistry.executorFor(tenantId));
+            String aiResponse = callAI(tenantId, prep, systemPrompt, chatHistory, text);
             if (aiResponse == null || aiResponse.isBlank()) {
-                log.warn("AI provider '{}' ha retornat resposta buida per tenant {}", provider.providerName(), tenantId);
+                log.warn("Cap provider ha retornat resposta per tenant {}", tenantId);
                 return;
             }
 
@@ -108,10 +110,8 @@ public class ConversationalAgentService {
                     sendViaChannel(senderId, identifier, channel, booking.cleanedResponse(),
                             prep.senderEmail(), prep.senderName(), prep.replyToEmail());
                 }
-                case HYBRID -> notifyTenantViaInternalTelegram(
-                        prep.telegramChatId(), identifier, text, booking.cleanedResponse());
-                case MANUAL -> notifyTenantViaInternalTelegram(
-                        prep.telegramChatId(), identifier, text, null);
+                case HYBRID -> notifyOperator(tenantId, prep, identifier, text, booking.cleanedResponse());
+                case MANUAL -> notifyOperator(tenantId, prep, identifier, text, null);
                 default -> log.warn("Agent mode desconegut: {}", prep.agentMode());
             }
 
@@ -130,7 +130,10 @@ public class ConversationalAgentService {
 
             // TX 1
             var prepOpt = helper.prepareWidgetMessage(tenantId, identifier, text);
-            if (prepOpt.isEmpty()) return null;
+            if (prepOpt.isEmpty()) {
+                log.warn("[PortalChat] Tenant {} — agent no actiu o sense TenantChatLink", tenantId);
+                return null;
+            }
             var prep = prepOpt.get();
 
             // Sense TX: prompt + IA
@@ -139,12 +142,14 @@ public class ConversationalAgentService {
                     .map(c -> new ChatMessage(c.getRole().name(), c.getContent()))
                     .toList();
 
-            String model = prep.preferredModel() != null ? prep.preferredModel() : aiProviderRouter.defaultModel();
-            var provider = aiProviderRouter.forModel(model);
-            var tools = toolRegistry.definitions();
-            String aiResponse = provider.chatWithTools(systemPrompt, chatHistory, text, tools,
-                    toolRegistry.executorFor(tenantId));
-            if (aiResponse == null || aiResponse.isBlank()) return null;
+            log.info("[PortalChat] Tenant {} — model={} mode={} historial={} missatges",
+                    tenantId, prep.preferredModel(), prep.agentMode(), chatHistory.size());
+
+            String aiResponse = callAI(tenantId, prep, systemPrompt, chatHistory, text);
+            if (aiResponse == null || aiResponse.isBlank()) {
+                log.warn("[PortalChat] Tenant {} — callAI ha retornat null/buit", tenantId);
+                return null;
+            }
 
             // Sense TX: booking tag (no hi ha recordatori per WIDGET)
             var booking = processBookingTag(aiResponse, tenantId, identifier, ConversationChannel.WIDGET);
@@ -159,15 +164,65 @@ public class ConversationalAgentService {
 
             // Sense TX: notificació interna
             if (prep.agentMode() == AgentMode.HYBRID) {
-                notifyTenantViaInternalTelegram(prep.telegramChatId(), identifier, text, booking.cleanedResponse());
+                notifyOperator(tenantId, prep, identifier, text, booking.cleanedResponse());
             } else if (prep.agentMode() == AgentMode.MANUAL) {
-                notifyTenantViaInternalTelegram(prep.telegramChatId(), identifier, text, null);
+                notifyOperator(tenantId, prep, identifier, text, null);
             }
 
             return booking.cleanedResponse();
 
         } catch (Exception e) {
             log.error("Error processing widget message for tenantId={}", tenantId, e);
+            return null;
+        }
+    }
+
+    // ── Crida a la IA amb budget check i fallback ─────────────────────────────
+
+    private String callAI(UUID tenantId, IncomingPreparation prep,
+                          String systemPrompt, List<ChatMessage> history, String text) {
+        boolean budgetOk = tokenBudgetService.canCallAI(tenantId);
+        String primaryModel  = prep.preferredModel() != null ? prep.preferredModel() : aiProviderRouter.defaultModel();
+        String fallbackModel = prep.fallbackModel();
+
+        if (!budgetOk && fallbackModel == null) {
+            log.warn("[Budget] Tenant {} sense pressupost ni fallback — missatge ignorat", tenantId);
+            return null;
+        }
+
+        String modelToUse = budgetOk ? primaryModel : fallbackModel;
+        if (!budgetOk) log.info("[Budget] Tenant {} usant fallback model '{}'", tenantId, modelToUse);
+
+        var tools = toolRegistry.definitions();
+        var executor = toolRegistry.executorFor(tenantId);
+
+        var response = tryCallAI(modelToUse, systemPrompt, history, text, tools, executor);
+        if (response != null && response.text() != null) {
+            tokenBudgetService.record(tenantId, modelToUse, "chat", response);
+            return response.text();
+        }
+
+        log.warn("[AI] Tenant {} — model '{}' ha retornat null/buit (tools={})",
+                tenantId, modelToUse, tools.size());
+
+        if (fallbackModel != null && !fallbackModel.equals(modelToUse)) {
+            log.info("[AI] Reintentant amb fallback model '{}' per tenant {}", fallbackModel, tenantId);
+            var fallbackResponse = tryCallAI(fallbackModel, systemPrompt, history, text, tools, executor);
+            if (fallbackResponse != null && fallbackResponse.text() != null) {
+                tokenBudgetService.record(tenantId, fallbackModel, "chat-fallback", fallbackResponse);
+                return fallbackResponse.text();
+            }
+        }
+        return null;
+    }
+
+    private AIProvider.AIResponse tryCallAI(String model, String systemPrompt, List<ChatMessage> history,
+                                             String text, List<ToolDefinition> tools,
+                                             java.util.function.Function<ToolCall, String> executor) {
+        try {
+            return aiProviderRouter.forModel(model).chatWithToolsTracked(systemPrompt, history, text, tools, executor);
+        } catch (Exception e) {
+            log.warn("[AI] Error amb model '{}': {}", model, e.getMessage());
             return null;
         }
     }
@@ -193,17 +248,24 @@ public class ConversationalAgentService {
         }
     }
 
-    private void notifyTenantViaInternalTelegram(Long telegramChatId, String identifier,
-                                                  String customerMessage, String suggestedResponse) {
-        if (telegramChatId == null) return;
+    private void notifyOperator(UUID tenantId, IncomingPreparation prep, String identifier,
+                                 String customerMessage, String suggestedResponse) {
+        String msg = suggestedResponse != null
+            ? "🤖 Missatge de %s:\n\n%s\n\n✍️ Resposta suggerida:\n%s\n\nAccepta o edita al portal."
+                .formatted(identifier, customerMessage, suggestedResponse)
+            : "📬 Missatge de %s:\n\n%s".formatted(identifier, customerMessage);
         try {
-            String msg = suggestedResponse != null
-                ? "🤖 Missatge de %s:\n\n%s\n\n✍️ Resposta suggerida:\n%s\n\nAccepta o edita al portal."
-                    .formatted(identifier, customerMessage, suggestedResponse)
-                : "📬 Missatge de %s:\n\n%s".formatted(identifier, customerMessage);
-            telegramBotClient.sendMessage(telegramChatId, msg);
+            if ("WHATSAPP".equals(prep.notificationChannel()) && prep.operatorPhone() != null) {
+                String fromNumber = prep.whatsappPhoneNumber() != null ? prep.whatsappPhoneNumber() : "";
+                whatsAppChannel.sendMessage(fromNumber, prep.operatorPhone(), msg);
+                // Notificació WA a l'operador compta al budget igual que qualsevol missatge sortint
+                channelUsageService.record(tenantId, ChannelUsageService.WHATSAPP);
+            } else if (prep.telegramChatId() != null) {
+                telegramBotClient.sendMessage(prep.telegramChatId(), msg);
+                // Telegram és gratuït — no compta al budget WA
+            }
         } catch (Exception e) {
-            log.error("Error notificant tenant via Telegram intern: {}", e.getMessage());
+            log.error("Error notificant operador: {}", e.getMessage());
         }
     }
 

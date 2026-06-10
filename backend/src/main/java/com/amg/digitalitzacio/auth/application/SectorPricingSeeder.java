@@ -46,7 +46,7 @@ public class SectorPricingSeeder implements CommandLineRunner {
             entry(BusinessSector.FONTANER,           BusinessSize.AUTONOMO, 150,  59, 20, 20, 15, 15),
             entry(BusinessSector.JARDINER,           BusinessSize.AUTONOMO, 150,  59, 20, 20, 15, 15),
             entry(BusinessSector.NETEJA,             BusinessSize.AUTONOMO, 150,  59, 20, 20, 15, 15),
-            entry(BusinessSector.NETEJA,             BusinessSize.MITJA,    300,  89, 30, 30, 15, 15),
+            entry(BusinessSector.NETEJA,             BusinessSize.MITJA,    350, 119, 30, 30, 15, 15),
             // Salut i benestar
             entry(BusinessSector.FISIOTERAPEUTA,     BusinessSize.AUTONOMO, 175,  69, 20, 20, 15, 15),
             entry(BusinessSector.FISIOTERAPEUTA,     BusinessSize.PETIT,    275,  99, 30, 40, 15, 15),
@@ -65,11 +65,24 @@ public class SectorPricingSeeder implements CommandLineRunner {
             entry(BusinessSector.ACADEMIA,           BusinessSize.AUTONOMO, 175,  59, 20, 20, 15, 15),
             entry(BusinessSector.ACADEMIA,           BusinessSize.MITJA,    300,  99, 40, 30, 20, 20),
             // Automoció i mascotes
-            entry(BusinessSector.TALLER_MECANIC,     BusinessSize.PETIT,    150,  59, 20, 20, 15, 15),
-            entry(BusinessSector.TALLER_MECANIC,     BusinessSize.MITJA,    275,  89, 30, 30, 15, 15),
+            entry(BusinessSector.TALLER_MECANIC,     BusinessSize.AUTONOMO, 125,  55, 20, 20, 15, 15),
+            entry(BusinessSector.TALLER_MECANIC,     BusinessSize.PETIT,    200,  79, 20, 30, 15, 15),
+            entry(BusinessSector.TALLER_MECANIC,     BusinessSize.MITJA,    325, 109, 30, 30, 15, 15),
             entry(BusinessSector.VETERINARI,         BusinessSize.AUTONOMO, 175,  69, 20, 20, 15, 15),
             entry(BusinessSector.VETERINARI,         BusinessSize.PETIT,    325, 109, 40, 40, 20, 20),
-            entry(BusinessSector.PERRUQUERIA_CANINA, BusinessSize.AUTONOMO, 150,  49, 20, 20, 15, 15)
+            entry(BusinessSector.PERRUQUERIA_CANINA, BusinessSize.AUTONOMO, 150,  49, 20, 20, 15, 15),
+            // Restauració
+            entry(BusinessSector.RESTAURANTE,        BusinessSize.AUTONOMO, 150,  64, 20, 20, 15, 15),
+            entry(BusinessSector.RESTAURANTE,        BusinessSize.PETIT,    275, 104, 20, 30, 15, 15),
+            entry(BusinessSector.RESTAURANTE,        BusinessSize.MITJA,    375, 139, 30, 30, 15, 15),
+            // Immobiliaria
+            entry(BusinessSector.INMOBILIARIA,       BusinessSize.AUTONOMO, 175,  79, 20, 20, 15, 15),
+            entry(BusinessSector.INMOBILIARIA,       BusinessSize.PETIT,    300, 119, 30, 30, 15, 15),
+            entry(BusinessSector.INMOBILIARIA,       BusinessSize.MITJA,    450, 154, 40, 40, 20, 20),
+            // Agència IA / Consultoria
+            entry(BusinessSector.AGENCIA_IA,         BusinessSize.AUTONOMO, 200,  89, 20, 20, 15, 15),
+            entry(BusinessSector.AGENCIA_IA,         BusinessSize.PETIT,    350, 129, 30, 30, 15, 15),
+            entry(BusinessSector.AGENCIA_IA,         BusinessSize.MITJA,    500, 164, 40, 40, 20, 20)
         ));
     }
 
