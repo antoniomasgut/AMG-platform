@@ -43,7 +43,7 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
 import { IconSet } from '@/components/ui/icons';
 
-type Tab = 'agent' | 'pending' | 'conversations' | 'coneixement' | 'ia' | 'xat' | 'widget';
+type Tab = 'estat' | 'xat' | 'conversations' | 'pending' | 'config' | 'widget';
 type ChatMsg = { role: 'user' | 'agent'; text: string };
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -84,7 +84,8 @@ const AGENCY_CHAT_TEMPLATES = [
 export default function AgentsPage() {
   const { user, isAdmin, isSuperAdmin } = useAuth();
   const tenantId = user?.tenantId;
-  const [activeTab, setActiveTab] = useState<Tab>('agent');
+  const [activeTab, setActiveTab] = useState<Tab>('estat');
+  const [openConfigSections, setOpenConfigSections] = useState<Set<string>>(new Set(['canals']));
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState<string>('');
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
@@ -138,7 +139,7 @@ export default function AgentsPage() {
   const { data: channels } = useQuery({
     queryKey: ['channels', tenantId],
     queryFn: () => getChannels(tenantId!),
-    enabled: !!user && !!tenantId && activeTab === 'agent',
+    enabled: !!user && !!tenantId && (activeTab === 'estat' || activeTab === 'config'),
   });
 
   const { data: activationInstructions } = useQuery({
@@ -163,19 +164,19 @@ export default function AgentsPage() {
   const { data: models = [] } = useQuery({
     queryKey: ['available-models'],
     queryFn: () => getAvailableModels(),
-    enabled: !!user && isAdmin && activeTab === 'ia',
+    enabled: !!user && isAdmin && activeTab === 'config',
   });
 
   const { data: aiConfig } = useQuery({
     queryKey: ['ai-config', tenantId],
     queryFn: () => getAIConfig(tenantId!),
-    enabled: !!user && !!tenantId && isAdmin && activeTab === 'ia',
+    enabled: !!user && !!tenantId && isAdmin && activeTab === 'config',
   });
 
   const { data: usageSummary } = useQuery({
     queryKey: ['usage-summary', tenantId],
     queryFn: () => getUsageSummary(tenantId!),
-    enabled: !!user && !!tenantId && isAdmin && activeTab === 'ia',
+    enabled: !!user && !!tenantId && isAdmin && activeTab === 'config',
   });
 
   const [budgetDraft, setBudgetDraft] = useState<string>('');
@@ -191,7 +192,7 @@ export default function AgentsPage() {
   const { data: budgetDefaults } = useQuery({
     queryKey: ['budget-defaults', tenantId],
     queryFn: () => getBudgetDefaults(tenantId!),
-    enabled: !!user && !!tenantId && isAdmin && activeTab === 'ia',
+    enabled: !!user && !!tenantId && isAdmin && activeTab === 'config',
   });
 
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -324,13 +325,13 @@ export default function AgentsPage() {
   const { data: knowledge } = useQuery({
     queryKey: ['knowledge', tenantId],
     queryFn: () => getKnowledge(tenantId!),
-    enabled: !!tenantId && activeTab === 'coneixement',
+    enabled: !!tenantId && activeTab === 'config',
   });
 
   const { data: contacts = [], isLoading: loadingContacts } = useQuery({
     queryKey: ['contacts', tenantId],
     queryFn: () => listContacts(tenantId!),
-    enabled: !!tenantId && (activeTab === 'conversations' || (activeTab === 'coneixement' && isAdmin)),
+    enabled: !!tenantId && (activeTab === 'conversations' || (activeTab === 'config' && isAdmin)),
   });
 
   const { data: contactThread = [], isLoading: loadingThread } = useQuery({
@@ -426,13 +427,12 @@ export default function AgentsPage() {
   }, {});
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: 'agent', label: 'Agent' },
+    { key: 'estat', label: 'Estat' },
     { key: 'xat', label: '💬 Xat' },
-    { key: 'pending', label: `Pendents (${pending.length})` },
     { key: 'conversations', label: 'Converses' },
-    ...(isAdmin ? [{ key: 'coneixement' as Tab, label: 'Coneixement' }] : []),
-    ...(isAdmin ? [{ key: 'ia' as Tab, label: 'Model IA' }] : []),
-    ...(isSuperAdmin ? [{ key: 'widget' as Tab, label: '🌐 Widget web' }] : []),
+    { key: 'pending', label: `Pendents${pending.length > 0 ? ` (${pending.length})` : ''}` },
+    ...(isAdmin ? [{ key: 'config' as Tab, label: 'Configuració' }] : []),
+    ...(isSuperAdmin ? [{ key: 'widget' as Tab, label: '🌐 Widget' }] : []),
   ];
 
   return (
@@ -465,51 +465,142 @@ export default function AgentsPage() {
           ))}
         </div>
 
-        {/* Agent Tab */}
-        {activeTab === 'agent' && (
-          <div className="space-y-6">
+        {/* Estat Tab */}
+        {activeTab === 'estat' && (
+          <div className="space-y-4">
 
-            {/* Status */}
-            <div className="flex items-center gap-3">
-              <span className="f-mono text-label uppercase text-ink-2 tracking-widest">Estat del bot:</span>
-              {channels?.isActive ? (
-                <AMGBadge tone="success">ACTIU</AMGBadge>
-              ) : (channels?.telegramLinked || channels?.widgetEnabled || channels?.whatsappEnabled || channels?.emailEnabled) ? (
-                <AMGBadge tone="warning">ATURAT</AMGBadge>
-              ) : (
-                <AMGBadge tone="neutral">PENDENT CONFIGURAR</AMGBadge>
-              )}
+            {/* Status + Activate/Deactivate at top */}
+            <div className="amg-card card-clip p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1.5">
+                  <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Estat del bot</div>
+                  <div className="flex items-center gap-2">
+                    {channels?.isActive ? (
+                      <AMGBadge tone="success">ACTIU</AMGBadge>
+                    ) : (channels?.telegramLinked || channels?.widgetEnabled || channels?.whatsappEnabled || channels?.emailEnabled) ? (
+                      <AMGBadge tone="warning">ATURAT</AMGBadge>
+                    ) : (
+                      <AMGBadge tone="neutral">PENDENT CONFIGURAR</AMGBadge>
+                    )}
+                  </div>
+                  {!channels?.isActive && !channels?.telegramLinked && !channels?.widgetEnabled && !channels?.whatsappEnabled && !channels?.emailEnabled && isAdmin && (
+                    <p className="text-xs text-ink-3">
+                      Configura almenys un canal a{' '}
+                      <button onClick={() => setActiveTab('config')} className="text-accent hover:underline">Configuració</button>
+                      {' '}per activar el bot.
+                    </p>
+                  )}
+                </div>
+                <div className="shrink-0">
+                  {!channels?.isActive ? (
+                    <button
+                      onClick={() => activateMutation.mutate()}
+                      disabled={
+                        activateMutation.isPending ||
+                        (!channels?.telegramLinked && !channels?.widgetEnabled && !channels?.whatsappEnabled && !channels?.emailEnabled)
+                      }
+                      className="px-5 py-2.5 bg-success text-white rounded font-semibold hover:opacity-90 disabled:opacity-40 flex items-center gap-2 text-sm"
+                    >
+                      <IconSet.Bot size={15} />
+                      {activateMutation.isPending ? 'Activant...' : 'Activar bot'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => deactivateMutation.mutate()}
+                      disabled={deactivateMutation.isPending}
+                      className="px-5 py-2.5 bg-danger text-white rounded font-semibold hover:opacity-90 disabled:opacity-40 text-sm"
+                    >
+                      {deactivateMutation.isPending ? 'Aturant...' : 'Aturar bot'}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Mode selector */}
-            <div className="amg-card card-clip p-6 space-y-4">
+            <div className="amg-card card-clip p-5 space-y-3">
               <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Mode de funcionament</div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {modes.map((mode) => (
+                {[
+                  { key: 'AUTO',   label: 'Automàtic', desc: "L'agent respon directament als clients" },
+                  { key: 'HYBRID', label: 'Supervisat', desc: "Tu aproves cada resposta abans d'enviar" },
+                  { key: 'MANUAL', label: 'Manual',     desc: 'Atenció manual, el bot no respon' },
+                ].map(({ key: mode, label, desc }) => (
                   <button
                     key={mode}
-                    onClick={() => updateModeMutation.mutate(mode)}
+                    onClick={() => updateModeMutation.mutate(mode as 'AUTO' | 'HYBRID' | 'MANUAL')}
                     disabled={updateModeMutation.isPending}
-                    className={`p-4 rounded border-2 transition text-center ${
+                    className={`p-4 rounded border-2 transition text-left ${
                       currentMode === mode
                         ? 'border-accent bg-accent/10'
                         : 'border-border-base hover:border-accent'
                     } ${updateModeMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <div className="f-mono text-label font-semibold mb-2">{mode}</div>
-                    <p className="text-xs text-ink-2">
-                      {mode === 'AUTO' && 'Respostes automàtiques'}
-                      {mode === 'HYBRID' && 'Aprova antes d\'enviar'}
-                      {mode === 'MANUAL' && 'Resposta manual'}
-                    </p>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="f-mono text-label font-semibold">{label}</div>
+                      {currentMode === mode && <AMGBadge tone="success">Actiu</AMGBadge>}
+                    </div>
+                    <p className="text-xs text-ink-2">{desc}</p>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Channels */}
-            <div className="amg-card card-clip p-6 space-y-4">
-              <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Canals</div>
+            {/* Channel status overview — compact, no guides */}
+            <div className="amg-card card-clip p-5 space-y-1">
+              <div className="flex items-center justify-between mb-2">
+                <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Canals</div>
+                {isAdmin && (
+                  <button
+                    onClick={() => { setActiveTab('config'); setOpenConfigSections(new Set(['canals'])); }}
+                    className="text-xs text-accent hover:opacity-80 f-mono"
+                  >
+                    Configurar →
+                  </button>
+                )}
+              </div>
+              <div className="divide-y divide-border-base">
+                <div className="flex items-center justify-between py-2.5">
+                  <div className="flex items-center gap-2 text-sm"><IconSet.Globe size={15} className="text-ink-3" /><span>Xat web</span></div>
+                  <AMGBadge tone={channels?.widgetEnabled ? 'success' : 'neutral'}>{channels?.widgetEnabled ? 'Actiu' : 'Inactiu'}</AMGBadge>
+                </div>
+                <div className="flex items-center justify-between py-2.5">
+                  <div className="flex items-center gap-2 text-sm"><IconSet.Bell size={15} className="text-ink-3" /><span>Telegram</span></div>
+                  <AMGBadge tone={channels?.telegramLinked ? 'success' : 'warning'}>{channels?.telegramLinked ? 'Vinculat' : 'Pendent'}</AMGBadge>
+                </div>
+                <div className="flex items-center justify-between py-2.5">
+                  <div className="flex items-center gap-2 text-sm"><IconSet.Smartphone size={15} className="text-ink-3" /><span>WhatsApp</span></div>
+                  <AMGBadge tone={channels?.whatsappEnabled ? 'success' : channels?.whatsappPhoneNumber ? 'warning' : 'neutral'}>
+                    {channels?.whatsappEnabled ? 'Actiu' : channels?.whatsappPhoneNumber ? 'Configurat' : 'No configurat'}
+                  </AMGBadge>
+                </div>
+                <div className="flex items-center justify-between py-2.5">
+                  <div className="flex items-center gap-2 text-sm"><IconSet.Mail size={15} className="text-ink-3" /><span>Email</span></div>
+                  <AMGBadge tone={channels?.emailEnabled ? 'success' : channels?.emailAddress ? 'warning' : 'neutral'}>
+                    {channels?.emailEnabled ? 'Actiu' : channels?.emailAddress ? 'Configurat' : 'No configurat'}
+                  </AMGBadge>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Configuració — Canals */}
+        {activeTab === 'config' && isAdmin && (
+          <div className="amg-card card-clip overflow-hidden">
+            <button
+              onClick={() => setOpenConfigSections(prev => { const n = new Set(prev); n.has('canals') ? n.delete('canals') : n.add('canals'); return n; })}
+              className="w-full flex items-center justify-between p-5 text-left hover:bg-bg-1 transition"
+            >
+              <div>
+                <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Canals</div>
+                <p className="text-xs text-ink-3 mt-0.5">Activa i configura els canals de comunicació</p>
+              </div>
+              <span className="text-ink-3 text-sm f-mono">{openConfigSections.has('canals') ? '▲' : '▼'}</span>
+            </button>
+            {openConfigSections.has('canals') && (
+              <div className="px-5 pb-5 pt-4 space-y-4 border-t border-border-base">
+                <div className="f-mono text-label uppercase text-ink-2 tracking-widest sr-only">Canals</div>
 
               {/* Widget (Xat web) */}
               <div className="p-4 bg-bg-1 rounded space-y-2">
@@ -873,36 +964,7 @@ export default function AgentsPage() {
                 </div>
               </div>
             </div>
-
-            {/* Activate / Deactivate */}
-            <div className="flex items-center gap-4">
-              {!channels?.isActive ? (
-                <button
-                  onClick={() => activateMutation.mutate()}
-                  disabled={
-                    activateMutation.isPending ||
-                    (!channels?.telegramLinked && !channels?.widgetEnabled && !channels?.whatsappEnabled && !channels?.emailEnabled)
-                  }
-                  className="px-6 py-3 bg-success text-white rounded font-semibold hover:opacity-90 disabled:opacity-40 flex items-center gap-2"
-                >
-                  <IconSet.Bot size={16} />
-                  {activateMutation.isPending ? 'Activant...' : 'ACTIVAR BOT'}
-                </button>
-              ) : (
-                <button
-                  onClick={() => deactivateMutation.mutate()}
-                  disabled={deactivateMutation.isPending}
-                  className="px-6 py-3 bg-danger text-white rounded font-semibold hover:opacity-90 disabled:opacity-40"
-                >
-                  {deactivateMutation.isPending ? 'Aturant...' : 'ATURAR BOT'}
-                </button>
-              )}
-              {!channels?.isActive && !channels?.telegramLinked && !channels?.widgetEnabled && !channels?.whatsappEnabled && !channels?.emailEnabled && (
-                <p className="text-xs text-ink-3">
-                  Habilita almenys un canal per activar el bot.
-                </p>
-              )}
-            </div>
+            )}
           </div>
         )}
 
@@ -1353,9 +1415,21 @@ export default function AgentsPage() {
           );
         })()}
 
-        {/* Coneixement Tab */}
-        {activeTab === 'coneixement' && isAdmin && (
-          <div className="space-y-6">
+        {/* Configuració — Coneixement */}
+        {activeTab === 'config' && isAdmin && (
+          <div className="amg-card card-clip overflow-hidden">
+            <button
+              onClick={() => setOpenConfigSections(prev => { const n = new Set(prev); n.has('coneixement') ? n.delete('coneixement') : n.add('coneixement'); return n; })}
+              className="w-full flex items-center justify-between p-5 text-left hover:bg-bg-1 transition"
+            >
+              <div>
+                <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Coneixement</div>
+                <p className="text-xs text-ink-3 mt-0.5">Base de coneixement, documents i memòria dels clients</p>
+              </div>
+              <span className="text-ink-3 text-sm f-mono">{openConfigSections.has('coneixement') ? '▲' : '▼'}</span>
+            </button>
+            {openConfigSections.has('coneixement') && (
+              <div className="px-5 pb-5 pt-4 space-y-6 border-t border-border-base">
 
             {/* Header row */}
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1607,12 +1681,26 @@ export default function AgentsPage() {
                 </div>
               )}
             </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Model IA Tab (ADMIN / SUPER_ADMIN only) */}
-        {activeTab === 'ia' && isAdmin && (
-          <div className="space-y-6">
+        {/* Configuració — Model IA */}
+        {activeTab === 'config' && isAdmin && (
+          <div className="amg-card card-clip overflow-hidden">
+            <button
+              onClick={() => setOpenConfigSections(prev => { const n = new Set(prev); n.has('ia') ? n.delete('ia') : n.add('ia'); return n; })}
+              className="w-full flex items-center justify-between p-5 text-left hover:bg-bg-1 transition"
+            >
+              <div>
+                <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Model IA</div>
+                <p className="text-xs text-ink-3 mt-0.5">Model, pressupost mensual, idioma i tests</p>
+              </div>
+              <span className="text-ink-3 text-sm f-mono">{openConfigSections.has('ia') ? '▲' : '▼'}</span>
+            </button>
+            {openConfigSections.has('ia') && (
+              <div className="px-5 pb-5 pt-4 space-y-6 border-t border-border-base">
 
             {/* Current model */}
             <div className="amg-card card-clip p-6 space-y-4">
@@ -1955,6 +2043,8 @@ export default function AgentsPage() {
                 </div>
               )}
             </div>
+              </div>
+            )}
           </div>
         )}
       </div>
