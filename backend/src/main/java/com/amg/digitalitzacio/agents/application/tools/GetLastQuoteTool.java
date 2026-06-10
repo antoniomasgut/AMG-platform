@@ -38,7 +38,7 @@ public class GetLastQuoteTool implements AgentTool {
 
     @Override
     public String execute(UUID tenantId, Map<String, Object> input) {
-        var pageable = PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var pageable = PageRequest.of(0, 1);
 
         Object statusInput = input.get("status");
         var page = statusInput != null && !statusInput.toString().isBlank()
