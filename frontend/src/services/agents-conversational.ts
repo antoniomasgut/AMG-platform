@@ -3,7 +3,7 @@ import { apiFetch } from './api';
 export interface ConversationResponse {
   id: number;
   customerIdentifier: string;
-  channel: 'WHATSAPP' | 'TELEGRAM' | 'EMAIL';
+  channel: 'WHATSAPP' | 'WHATSAPP_META' | 'TELEGRAM' | 'EMAIL' | 'WIDGET';
   role: 'USER' | 'ASSISTANT';
   content: string;
   pendingApproval: boolean;
@@ -13,7 +13,7 @@ export interface ConversationResponse {
 export interface PendingResponseDto {
   id: number;
   customerIdentifier: string;
-  channel: 'WHATSAPP' | 'TELEGRAM' | 'EMAIL';
+  channel: 'WHATSAPP' | 'WHATSAPP_META' | 'TELEGRAM' | 'EMAIL' | 'WIDGET';
   customerMessage: string;
   suggestedResponse: string;
   createdAt: string;
@@ -80,6 +80,31 @@ export interface TenantAIConfig {
   senderEmail?: string | null;
   senderName?: string | null;
   replyToEmail?: string | null;
+  responseLanguage?: string | null;
+  chatModel?: string | null;
+  whatsappModel?: string | null;
+  emailModel?: string | null;
+  fallbackModel?: string | null;
+  monthlyCostBudgetEurCents?: number | null;
+  monthlyWhatsappBudgetEurCents?: number | null;
+}
+
+export interface TokenUsageSummary {
+  usedTokens: number;
+  usedCostMicros: number;
+  budgetMicros: number;
+  budgetPercent: number;
+  preferredModel: string;
+  alertThreshold: number | null;
+  monthlyCostBudgetEurCents: number | null;
+  usedCostEur: number;
+  budgetEur: number;
+  usedWhatsappCostMicros: number;
+  whatsappBudgetMicros: number;
+  whatsappBudgetPercent: number;
+  monthlyWhatsappBudgetEurCents: number | null;
+  usedWhatsappCostEur: number;
+  whatsappBudgetEur: number;
 }
 
 export interface AIConfigRequest {
@@ -92,7 +117,17 @@ export interface AIConfigRequest {
   senderEmail?: string;
   senderName?: string;
   replyToEmail?: string;
+  responseLanguage?: string;
+  chatModel?: string;
+  whatsappModel?: string;
+  emailModel?: string;
+  fallbackModel?: string;
+  monthlyCostBudgetEurCents?: number;
+  monthlyWhatsappBudgetEurCents?: number;
 }
+
+export const getUsageSummary = (tenantId: string) =>
+  apiFetch<TokenUsageSummary>(`/agents/conversational/${tenantId}/ai-config/usage`);
 
 export interface AIModelTestRequest {
   model: string;
@@ -286,3 +321,33 @@ export const getGlobalChannelUsageStats = (from?: string, to?: string) => {
   const qs = params.toString();
   return apiFetch<ChannelUsageStats>(`/agents/usage-stats/global${qs ? `?${qs}` : ''}`);
 };
+
+export interface ModelPricing {
+  modelName: string;
+  provider: string;
+  inputCostMicros: number;
+  outputCostMicros: number;
+  markupPercent: number;
+  clientInputMicros: number;
+  clientOutputMicros: number;
+  updatedAt: string;
+}
+
+export interface BudgetDefaults {
+  costBudgetEurCents: number;
+  messageBudget: number;
+  whatsappBudgetEurCents: number;
+  breakdown: string;
+}
+
+export const getBudgetDefaults = (tenantId: string) =>
+  apiFetch<BudgetDefaults>(`/agents/conversational/${tenantId}/ai-config/budget-defaults`);
+
+export const applyBudgetDefaults = (tenantId: string) =>
+  apiFetch<BudgetDefaults>(`/agents/conversational/${tenantId}/ai-config/apply-defaults`, { method: 'POST' });
+
+export const getModelPrices = () =>
+  apiFetch<ModelPricing[]>('/agents/conversational/model-prices');
+
+export const recalculateModelPrices = (markup: number) =>
+  apiFetch<ModelPricing[]>(`/agents/conversational/model-prices/recalculate?markup=${markup}`, { method: 'POST' });

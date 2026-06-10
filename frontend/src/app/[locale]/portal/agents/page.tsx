@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
@@ -37,7 +37,7 @@ import {
   testKnowledgeResponse,
   type KnowledgeBase,
 } from '@/services/knowledge';
-import { listContacts, clearContactMemory, testTenantEmail, portalChat } from '@/services/agents-conversational';
+import { listContacts, clearContactMemory, testTenantEmail, portalChat, getUsageSummary, getBudgetDefaults, applyBudgetDefaults } from '@/services/agents-conversational';
 import { useRef } from 'react';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
@@ -118,6 +118,9 @@ export default function AgentsPage() {
   const chatSessionId = useRef(crypto.randomUUID());
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const [expandedThread, setExpandedThread] = useState<string | null>(null);
+  const [channelFilter, setChannelFilter] = useState<string>('ALL');
+
   const [widgetBusinessName, setWidgetBusinessName] = useState('');
   const [widgetSystemPrompt, setWidgetSystemPrompt] = useState('');
   const [widgetModel, setWidgetModel] = useState('');
@@ -165,6 +168,38 @@ export default function AgentsPage() {
     queryKey: ['ai-config', tenantId],
     queryFn: () => getAIConfig(tenantId!),
     enabled: !!user && !!tenantId && isAdmin && activeTab === 'ia',
+  });
+
+  const { data: usageSummary } = useQuery({
+    queryKey: ['usage-summary', tenantId],
+    queryFn: () => getUsageSummary(tenantId!),
+    enabled: !!user && !!tenantId && isAdmin && activeTab === 'ia',
+  });
+
+  const [budgetDraft, setBudgetDraft] = useState<string>('');
+  const updateBudgetMutation = useMutation({
+    mutationFn: (cents: number) => updateAIConfig(tenantId!, { monthlyCostBudgetEurCents: cents }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-config', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['usage-summary', tenantId] });
+      setBudgetDraft('');
+    },
+  });
+
+  const { data: budgetDefaults } = useQuery({
+    queryKey: ['budget-defaults', tenantId],
+    queryFn: () => getBudgetDefaults(tenantId!),
+    enabled: !!user && !!tenantId && isAdmin && activeTab === 'ia',
+  });
+
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const applyDefaultsMutation = useMutation({
+    mutationFn: () => applyBudgetDefaults(tenantId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-config', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['usage-summary', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['budget-defaults', tenantId] });
+    },
   });
 
   const { data: widgetConfig } = useQuery({
@@ -228,6 +263,13 @@ export default function AgentsPage() {
       queryClient.invalidateQueries({ queryKey: ['ai-config', tenantId] });
       setSenderEmailDraft('');
       setSenderNameDraft('');
+    },
+  });
+
+  const updateLanguageMutation = useMutation({
+    mutationFn: (lang: string) => updateAIConfig(tenantId!, { responseLanguage: lang }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-config', tenantId] });
     },
   });
 
@@ -305,6 +347,13 @@ export default function AgentsPage() {
     queryFn: () => previewPromptBlock(tenantId!),
     enabled: !!tenantId && showPreview,
   });
+
+  useEffect(() => {
+    if (activeTab === 'conversations' && tenantId) {
+      queryClient.invalidateQueries({ queryKey: ['conversations', tenantId] });
+      setExpandedThread(null);
+    }
+  }, [activeTab, tenantId, queryClient]);
 
   const updateEntriesMutation = useMutation({
     mutationFn: ({ category, content }: { category: string; content: string }) => {
@@ -892,6 +941,7 @@ export default function AgentsPage() {
                     try {
                       const res = await portalChat(tenantId!, msg, chatSessionId.current);
                       setChatMessages(prev => [...prev, { role: 'agent', text: res.reply }]);
+                      queryClient.invalidateQueries({ queryKey: ['conversations', tenantId] });
                     } catch {
                       setChatMessages(prev => [...prev, { role: 'agent', text: 'Error connectant amb l\'agent.' }]);
                     } finally {
@@ -914,6 +964,7 @@ export default function AgentsPage() {
                   try {
                     const res = await portalChat(tenantId!, msg, chatSessionId.current);
                     setChatMessages(prev => [...prev, { role: 'agent', text: res.reply }]);
+                    queryClient.invalidateQueries({ queryKey: ['conversations', tenantId] });
                   } catch {
                     setChatMessages(prev => [...prev, { role: 'agent', text: 'Error connectant amb l\'agent.' }]);
                   } finally {
@@ -1039,43 +1090,137 @@ export default function AgentsPage() {
         )}
 
         {/* Conversations Tab */}
-        {activeTab === 'conversations' && (
-          <div>
-            {conversations.length === 0 ? (
-              <div className="amg-card card-clip p-12 text-center">
-                <IconSet.Bot size={32} stroke="#6366f1" className="mx-auto mb-3" />
-                <div className="f-display font-bold text-sm mb-1 text-accent">Sense converses</div>
-                <p className="f-mono text-label text-ink-2">Quan els clients escribin, apareixeran aquí</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {conversations.map((msg) => (
-                  <div key={msg.id} className={`amg-card card-clip p-4 sm:p-5 ${msg.role === 'USER' ? 'bg-bg-1' : ''}`}>
-                    <div className="flex items-start gap-3">
-                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                        msg.role === 'USER' ? 'bg-accent text-white' : 'bg-success text-white'
-                      }`}>
-                        {msg.role === 'USER' ? 'C' : 'A'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <AMGBadge tone={msg.role === 'USER' ? 'neutral' : 'success'}>
-                            {msg.role === 'USER' ? 'Client' : 'Agent'}
-                          </AMGBadge>
-                          <span className="text-xs text-ink-3">{msg.customerIdentifier}</span>
-                          <span className="text-xs text-ink-3">
-                            {new Date(msg.createdAt).toLocaleString('ca-ES')}
-                          </span>
-                        </div>
-                        <p className="text-sm text-ink-1">{msg.content}</p>
-                      </div>
+        {activeTab === 'conversations' && (() => {
+          const CHANNEL_LABELS: Record<string, string> = {
+            WHATSAPP: 'WhatsApp', WHATSAPP_META: 'WhatsApp', TELEGRAM: 'Telegram',
+            EMAIL: 'Email', WIDGET: 'Widget',
+          };
+          const getDisplayName = (id: string) => {
+            if (id.startsWith('wgt:portal:')) return 'Portal · Xat web';
+            if (id.startsWith('wgt:')) return `Widget · ${id.substring(4, 12)}…`;
+            return id;
+          };
+
+          const filtered = channelFilter === 'ALL' ? conversations
+            : conversations.filter(m => m.channel === channelFilter);
+
+          const threads = Object.entries(
+            filtered.reduce<Record<string, typeof conversations>>((acc, msg) => {
+              if (!acc[msg.customerIdentifier]) acc[msg.customerIdentifier] = [];
+              acc[msg.customerIdentifier].push(msg);
+              return acc;
+            }, {})
+          ).sort(([, a], [, b]) => new Date(b[0].createdAt).getTime() - new Date(a[0].createdAt).getTime());
+
+          const channels = Array.from(new Set(conversations.map(m => m.channel)));
+
+          return (
+            <div className="space-y-4">
+              {/* Channel filter */}
+              {channels.length > 1 && (
+                <div className="flex gap-2 flex-wrap">
+                  {['ALL', ...channels].map(ch => (
+                    <button
+                      key={ch}
+                      onClick={() => setChannelFilter(ch)}
+                      className={`px-3 py-1 rounded-full f-mono text-xs transition ${
+                        channelFilter === ch
+                          ? 'bg-accent text-white'
+                          : 'border border-border-base text-ink-2 hover:border-accent hover:text-accent'
+                      }`}
+                    >
+                      {ch === 'ALL' ? 'Tots' : CHANNEL_LABELS[ch] ?? ch}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Thread detail */}
+              {expandedThread ? (
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setExpandedThread(null)}
+                    className="flex items-center gap-2 text-sm text-ink-2 hover:text-ink-1 transition"
+                  >
+                    ← Totes les converses
+                  </button>
+                  <div className="amg-card card-clip p-3 sm:p-4">
+                    <p className="f-mono text-[10px] uppercase text-ink-3 mb-3">{expandedThread}</p>
+                    <div className="space-y-2">
+                      {conversations
+                        .filter(m => m.customerIdentifier === expandedThread)
+                        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                        .map((msg) => (
+                          <div key={msg.id} className={`flex gap-2 ${msg.role === 'USER' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
+                              msg.role === 'USER'
+                                ? 'bg-accent text-white rounded-br-sm'
+                                : 'bg-bg-1 border border-border-base text-ink-1 rounded-bl-sm'
+                            }`}>
+                              <p className="whitespace-pre-wrap">{msg.content}</p>
+                              <p className={`text-[10px] mt-1 ${msg.role === 'USER' ? 'text-white/60' : 'text-ink-3'}`}>
+                                {new Date(msg.createdAt).toLocaleString('ca-ES', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                </div>
+              ) : threads.length === 0 ? (
+                <div className="amg-card card-clip p-12 text-center">
+                  <IconSet.Bot size={32} stroke="#6366f1" className="mx-auto mb-3" />
+                  <div className="f-display font-bold text-sm mb-1 text-accent">Sense converses</div>
+                  <p className="f-mono text-label text-ink-2">Quan els clients escribin, apareixeran aquí</p>
+                </div>
+              ) : (
+                /* Thread list */
+                <div className="space-y-2">
+                  {threads.map(([identifier, messages]) => {
+                    const last = messages[0];
+                    return (
+                      <button
+                        key={identifier}
+                        onClick={() => setExpandedThread(identifier)}
+                        className="w-full text-left amg-card card-clip p-4 hover:border-accent transition-colors"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mt-0.5 ${
+                            last.channel === 'WIDGET' ? 'bg-accent/20 text-accent' :
+                            last.channel === 'WHATSAPP' || last.channel === 'WHATSAPP_META' ? 'bg-green-500/20 text-green-400' :
+                            last.channel === 'TELEGRAM' ? 'bg-blue-500/20 text-blue-400' :
+                            'bg-bg-2 text-ink-2'
+                          }`}>
+                            {last.channel === 'WIDGET' ? '💬' :
+                             last.channel === 'WHATSAPP' || last.channel === 'WHATSAPP_META' ? '📱' :
+                             last.channel === 'TELEGRAM' ? '✈' : '✉'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-sm font-medium text-ink-1 truncate">{getDisplayName(identifier)}</span>
+                              <span className="text-[10px] f-mono text-ink-3 border border-border-base px-1.5 py-0.5 rounded shrink-0">
+                                {CHANNEL_LABELS[last.channel] ?? last.channel}
+                              </span>
+                              <span className="text-[10px] text-ink-3 shrink-0 ml-auto">
+                                {messages.length} msg
+                              </span>
+                            </div>
+                            <p className="text-xs text-ink-3 truncate">
+                              {last.role === 'ASSISTANT' ? 'Agent: ' : ''}{last.content}
+                            </p>
+                          </div>
+                          <span className="text-[10px] text-ink-3 shrink-0">
+                            {new Date(last.createdAt).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit' })}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Coneixement Tab */}
         {activeTab === 'coneixement' && isAdmin && (
@@ -1340,16 +1485,39 @@ export default function AgentsPage() {
 
             {/* Current model */}
             <div className="amg-card card-clip p-6 space-y-4">
-              <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Model actiu</div>
+              <div>
+                <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Model per canal</div>
+                <div className="text-xs text-ink-3 mt-0.5">Pots usar un model diferent per a cada canal. Si no n&apos;especifiques cap, s&apos;usa el model principal.</div>
+              </div>
               {aiConfig ? (
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="font-semibold text-ink-1">{aiConfig.preferredModel}</div>
-                    <div className="text-xs text-ink-2 mt-1">
-                      max_tokens: {aiConfig.maxTokens} · temperatura: {aiConfig.temperature}
-                    </div>
-                  </div>
-                  <AMGBadge tone="success">Actiu</AMGBadge>
+                <div className="space-y-3">
+                  {[
+                    { key: 'chatModel' as const,     label: 'Chat / Widget',  hint: 'landing page i xat portal' },
+                    { key: 'whatsappModel' as const, label: 'WhatsApp',       hint: 'Twilio i Meta Cloud API' },
+                    { key: 'emailModel' as const,    label: 'Correu',         hint: 'canal email' },
+                  ].map(({ key, label, hint }) => {
+                    const current = aiConfig[key] ?? '';
+                    return (
+                      <div key={key} className="flex items-center gap-3">
+                        <div className="w-32 shrink-0">
+                          <div className="text-sm font-medium text-ink-1">{label}</div>
+                          <div className="text-xs text-ink-3">{hint}</div>
+                        </div>
+                        <select
+                          value={current}
+                          onChange={(e) => updateAIConfig(tenantId!, { [key]: e.target.value || '' }).then(() =>
+                            queryClient.invalidateQueries({ queryKey: ['ai-config', tenantId] })
+                          )}
+                          className="flex-1 p-2 bg-bg-1 border border-border-base rounded text-sm text-ink-1"
+                        >
+                          <option value="">Per defecte ({aiConfig.preferredModel})</option>
+                          {models.map((m) => (
+                            <option key={m.id} value={m.id}>{m.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-sm text-ink-2">Carregant configuració...</div>
@@ -1396,6 +1564,185 @@ export default function AgentsPage() {
                   </div>
                 ))
               )}
+            </div>
+
+            {/* Pressupost mensual */}
+            <div className="amg-card card-clip p-6 space-y-4">
+              <div>
+                <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Pressupost mensual d&apos;IA</div>
+                <div className="text-xs text-ink-3 mt-0.5">Cost real calculat per model. Quan s&apos;esgota s&apos;activa el model de backup.</div>
+              </div>
+
+              {usageSummary && (
+                <div className="space-y-2">
+                  <div className="flex items-end justify-between">
+                    <span className="text-2xl font-bold text-ink-1">
+                      €{usageSummary.usedCostEur.toFixed(4)}
+                    </span>
+                    <span className="text-sm text-ink-2">
+                      {usageSummary.budgetMicros > 0
+                        ? `de €${usageSummary.budgetEur.toFixed(2)}`
+                        : 'sense límit'}
+                    </span>
+                  </div>
+                  {usageSummary.budgetMicros > 0 && (
+                    <div className="w-full bg-bg-2 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full transition-all ${
+                          usageSummary.budgetPercent >= 100 ? 'bg-danger' :
+                          usageSummary.budgetPercent >= 80  ? 'bg-warning' : 'bg-success'
+                        }`}
+                        style={{ width: `${usageSummary.budgetPercent}%` }}
+                      />
+                    </div>
+                  )}
+                  <div className="text-xs text-ink-3">{usageSummary.usedTokens.toLocaleString()} tokens usats aquest mes</div>
+
+                  {/* WhatsApp cost budget */}
+                  {usageSummary.whatsappBudgetMicros > 0 && (
+                    <div className="mt-3 pt-3 border-t border-border-base space-y-1">
+                      <div className="flex items-end justify-between text-sm">
+                        <span className="text-ink-2">WhatsApp</span>
+                        <span className="text-ink-1 font-medium">
+                          €{usageSummary.usedWhatsappCostEur.toFixed(4)}
+                          <span className="text-ink-3 font-normal ml-1">de €{usageSummary.whatsappBudgetEur.toFixed(2)}</span>
+                        </span>
+                      </div>
+                      <div className="w-full bg-bg-2 rounded-full h-1.5">
+                        <div
+                          className={`h-1.5 rounded-full transition-all ${
+                            usageSummary.whatsappBudgetPercent >= 100 ? 'bg-danger' :
+                            usageSummary.whatsappBudgetPercent >= 80  ? 'bg-warning' : 'bg-success'
+                          }`}
+                          style={{ width: `${usageSummary.whatsappBudgetPercent}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Pressupost recomanat pel sistema */}
+              {budgetDefaults && (
+                <div className="rounded border border-border-base bg-bg-1 text-xs">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-border-base">
+                    <span className="f-mono text-ink-3 uppercase tracking-widest text-[10px]">Recomanat pel sistema</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowBreakdown(v => !v)}
+                        className="text-ink-3 hover:text-ink-1 transition f-mono text-[10px]"
+                      >
+                        {showBreakdown ? '▲ amaga detall' : '▼ veure detall'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyDefaultsMutation.mutate()}
+                        disabled={applyDefaultsMutation.isPending}
+                        className="px-2.5 py-1 bg-accent/10 text-accent border border-accent/30 rounded text-[10px] f-mono hover:bg-accent/20 transition disabled:opacity-50"
+                      >
+                        {applyDefaultsMutation.isPending ? '…' : 'Aplicar'}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="px-3 py-2 flex gap-4 text-ink-2">
+                    <span>IA: <span className="text-ink-1 font-medium">€{(budgetDefaults.costBudgetEurCents / 100).toFixed(2)}/mes</span></span>
+                    <span>WA: <span className="text-ink-1 font-medium">{budgetDefaults.messageBudget} msg · €{(budgetDefaults.whatsappBudgetEurCents / 100).toFixed(2)}/mes</span></span>
+                  </div>
+                  {showBreakdown && (
+                    <div className="px-3 pb-3">
+                      <pre className="f-mono text-[10px] text-ink-3 whitespace-pre-wrap leading-relaxed border-t border-border-base pt-2">
+                        {budgetDefaults.breakdown}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-2 items-center">
+                <span className="text-sm text-ink-2 shrink-0">€</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={budgetDraft !== '' ? budgetDraft : (aiConfig?.monthlyCostBudgetEurCents != null ? (aiConfig.monthlyCostBudgetEurCents / 100).toFixed(2) : '')}
+                  onChange={(e) => setBudgetDraft(e.target.value)}
+                  placeholder="Sense límit"
+                  className="flex-1 p-2 bg-bg-1 border border-border-base rounded text-sm text-ink-1 placeholder:text-ink-3"
+                />
+                <button
+                  onClick={() => {
+                    const eur = parseFloat(budgetDraft);
+                    updateBudgetMutation.mutate(isNaN(eur) || eur <= 0 ? 0 : Math.round(eur * 100));
+                  }}
+                  disabled={updateBudgetMutation.isPending || budgetDraft === ''}
+                  className="px-4 py-2 bg-accent text-white rounded text-sm hover:opacity-90 disabled:opacity-50"
+                >
+                  Desar
+                </button>
+              </div>
+            </div>
+
+            {/* Model de backup */}
+            <div className="amg-card card-clip p-6 space-y-4">
+              <div>
+                <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Model de backup</div>
+                <div className="text-xs text-ink-3 mt-0.5">S&apos;activa automàticament si el pressupost de tokens s&apos;esgota o si el provider principal falla.</div>
+              </div>
+              {aiConfig ? (
+                <select
+                  value={aiConfig.fallbackModel ?? ''}
+                  onChange={(e) => updateAIConfig(tenantId!, { fallbackModel: e.target.value || '' }).then(() =>
+                    queryClient.invalidateQueries({ queryKey: ['ai-config', tenantId] })
+                  )}
+                  className="w-full p-2 bg-bg-1 border border-border-base rounded text-sm text-ink-1"
+                >
+                  <option value="">Cap (l&apos;agent es bloqueja si el principal falla)</option>
+                  {models.map((m) => (
+                    <option key={m.id} value={m.id}>{m.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="text-sm text-ink-2">Carregant...</div>
+              )}
+            </div>
+
+            {/* Idioma de resposta */}
+            <div className="amg-card card-clip p-6 space-y-4">
+              <div>
+                <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Idioma de resposta</div>
+                <div className="text-xs text-ink-3 mt-0.5">Fixa l&apos;idioma en el qual l&apos;agent respon als clients, o deixa-ho en automàtic per detectar l&apos;idioma del missatge.</div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {[
+                  { value: 'auto', label: 'Automàtic', hint: 'Detecta l\'idioma del client' },
+                  { value: 'ca', label: 'Català', hint: 'Sempre en català' },
+                  { value: 'es', label: 'Espanyol', hint: 'Siempre en español' },
+                  { value: 'en', label: 'Anglès', hint: 'Always in English' },
+                  { value: 'de', label: 'Alemany', hint: 'Immer auf Deutsch' },
+                ].map((opt) => {
+                  const current = aiConfig?.responseLanguage ?? 'auto';
+                  const isActive = current === opt.value || (opt.value === 'auto' && !current);
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => updateLanguageMutation.mutate(opt.value)}
+                      disabled={updateLanguageMutation.isPending || isActive}
+                      className={`p-3 rounded border-2 text-left transition ${
+                        isActive
+                          ? 'border-accent bg-accent/10 cursor-default'
+                          : 'border-border-base hover:border-accent'
+                      } ${updateLanguageMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium text-ink-1">{opt.label}</div>
+                        {isActive && <AMGBadge tone="success">Actiu</AMGBadge>}
+                      </div>
+                      <div className="text-xs text-ink-3 mt-1">{opt.hint}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Test model */}
