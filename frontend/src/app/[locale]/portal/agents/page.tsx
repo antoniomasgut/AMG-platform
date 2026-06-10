@@ -121,6 +121,7 @@ export default function AgentsPage() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [renamingContactId, setRenamingContactId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
+  const [convFilter, setConvFilter] = useState<'all' | 'clients' | 'intern'>('all');
 
   const [widgetBusinessName, setWidgetBusinessName] = useState('');
   const [widgetSystemPrompt, setWidgetSystemPrompt] = useState('');
@@ -1131,11 +1132,38 @@ export default function AgentsPage() {
             WIDGET: 'Widget', WHATSAPP: 'WhatsApp', WHATSAPP_META: 'WhatsApp',
             TELEGRAM: 'Telegram', EMAIL: 'Email',
           };
+          const CLIENT_CHANNELS = ['WHATSAPP', 'WHATSAPP_META', 'EMAIL', 'WIDGET'];
 
           const selectedContact = contacts.find(c => c.contactId === selectedContactId);
 
+          const visibleContacts = contacts.filter(c => {
+            if (!c.lastChannel) return true;
+            if (convFilter === 'clients') return CLIENT_CHANNELS.includes(c.lastChannel);
+            if (convFilter === 'intern') return !CLIENT_CHANNELS.includes(c.lastChannel);
+            return true;
+          });
+
           return (
             <div className="space-y-3">
+              {/* Filter pills — only shown on contact list */}
+              {!selectedContactId && contacts.some(c => !CLIENT_CHANNELS.includes(c.lastChannel ?? '')) && (
+                <div className="flex gap-2">
+                  {(['all', 'clients', 'intern'] as const).map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setConvFilter(f)}
+                      className={`px-3 py-1 rounded-full f-mono text-xs transition ${
+                        convFilter === f
+                          ? 'bg-accent text-white'
+                          : 'border border-border-base text-ink-2 hover:border-accent hover:text-accent'
+                      }`}
+                    >
+                      {f === 'all' ? 'Tots' : f === 'clients' ? '👤 Clients' : '🏢 Intern'}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {selectedContactId ? (
                 /* Thread detail */
                 <div className="space-y-3">
@@ -1252,7 +1280,7 @@ export default function AgentsPage() {
                 </div>
               ) : loadingContacts ? (
                 <div className="text-sm text-ink-3 py-4">Carregant contactes…</div>
-              ) : contacts.filter(c => c.lastChannel !== 'TELEGRAM').length === 0 ? (
+              ) : visibleContacts.length === 0 ? (
                 <div className="amg-card card-clip p-12 text-center">
                   <IconSet.Bot size={32} stroke="#6366f1" className="mx-auto mb-3" />
                   <div className="f-display font-bold text-sm mb-1 text-accent">Sense converses</div>
@@ -1261,8 +1289,7 @@ export default function AgentsPage() {
               ) : (
                 /* Contact list */
                 <div className="space-y-2">
-                  {contacts
-                    .filter(c => c.lastChannel !== 'TELEGRAM')
+                  {visibleContacts
                     .slice()
                     .sort((a, b) => new Date(b.lastMessageAt ?? 0).getTime() - new Date(a.lastMessageAt ?? 0).getTime())
                     .map(contact => (
@@ -1283,6 +1310,9 @@ export default function AgentsPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
                               <span className="text-sm font-medium text-ink-1 truncate">{contact.displayName}</span>
+                              {contact.lastChannel && !CLIENT_CHANNELS.includes(contact.lastChannel) && (
+                                <span className="text-[9px] f-mono border border-border-base px-1 py-0.5 rounded text-ink-3 shrink-0">intern</span>
+                              )}
                               {contact.phone && (
                                 <span className="text-[10px] f-mono text-ink-3 shrink-0">{contact.phone}</span>
                               )}
