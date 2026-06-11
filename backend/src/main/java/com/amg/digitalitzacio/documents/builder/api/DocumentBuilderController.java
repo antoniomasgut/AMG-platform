@@ -50,21 +50,26 @@ public class DocumentBuilderController {
     @PutMapping("/templates/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<TemplateResponse> updateTemplate(
+            @AuthenticationPrincipal UserPrincipal user,
             @PathVariable UUID id, @Valid @RequestBody TemplateRequest req) {
-        return ResponseEntity.ok(service.updateTemplate(id, req));
+        return ResponseEntity.ok(service.updateTemplate(id, req, user));
     }
 
     @DeleteMapping("/templates/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<Void> deleteTemplate(@PathVariable UUID id) {
-        service.deleteTemplate(id);
+    public ResponseEntity<Void> deleteTemplate(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable UUID id) {
+        service.deleteTemplate(id, user);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/templates/{id}/duplicate")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<TemplateResponse> duplicateTemplate(@PathVariable UUID id) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.duplicateTemplate(id));
+    public ResponseEntity<TemplateResponse> duplicateTemplate(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable UUID id) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.duplicateTemplate(id, user));
     }
 
     @GetMapping("/templates/{id}/versions")
@@ -79,8 +84,10 @@ public class DocumentBuilderController {
 
     @PostMapping("/templates/{id}/restore/{version}")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<TemplateResponse> restoreVersion(@PathVariable UUID id, @PathVariable Integer version) {
-        return ResponseEntity.ok(service.restoreVersion(id, version));
+    public ResponseEntity<TemplateResponse> restoreVersion(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable UUID id, @PathVariable Integer version) {
+        return ResponseEntity.ok(service.restoreVersion(id, version, user));
     }
 
     @GetMapping("/templates/{id}/preview")
@@ -140,5 +147,10 @@ public class DocumentBuilderController {
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<Void> handleNotFound() {
         return ResponseEntity.notFound().build();
+    }
+
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<Void> handleForbidden() {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 }

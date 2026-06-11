@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.documents.builder.application;
 
 import com.amg.digitalitzacio.documents.builder.api.dto.*;
 import com.amg.digitalitzacio.documents.builder.domain.*;
+import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import com.amg.digitalitzacio.shared.storage.StorageProviderRouter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,9 +65,10 @@ public class DocumentBuilderService {
     }
 
     @Transactional
-    public TemplateResponse updateTemplate(UUID id, TemplateRequest req) {
+    public TemplateResponse updateTemplate(UUID id, TemplateRequest req, UserPrincipal user) {
         var t = templateRepo.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Template not found: " + id));
+        assertOwner(t, user);
         if (req.name() != null) t.setName(req.name());
         if (req.layout() != null) t.setLayout(req.layout());
         if (req.dataBindings() != null) t.setDataBindings(req.dataBindings());
@@ -79,19 +81,21 @@ public class DocumentBuilderService {
     }
 
     @Transactional
-    public void deleteTemplate(UUID id) {
+    public void deleteTemplate(UUID id, UserPrincipal user) {
         var t = templateRepo.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Template not found: " + id));
+        assertOwner(t, user);
         t.setActive(false);
         templateRepo.save(t);
     }
 
     @Transactional
-    public TemplateResponse duplicateTemplate(UUID id) {
+    public TemplateResponse duplicateTemplate(UUID id, UserPrincipal user) {
         var t = templateRepo.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Template not found: " + id));
+        assertOwner(t, user);
         var dup = new DocumentTemplate();
-        dup.setTenantId(t.getTenantId());
+        dup.setTenantId(user.tenantId() != null ? user.tenantId() : t.getTenantId());
         dup.setName(t.getName() + " (còpia)");
         dup.setDocumentType(t.getDocumentType());
         dup.setLayout(t.getLayout());
@@ -117,11 +121,12 @@ public class DocumentBuilderService {
     }
 
     @Transactional
-    public TemplateResponse restoreVersion(UUID templateId, Integer version) {
+    public TemplateResponse restoreVersion(UUID templateId, Integer version, UserPrincipal user) {
         var v = versionRepo.findByTemplateIdAndVersion(templateId, version)
             .orElseThrow(() -> new NoSuchElementException("Version not found"));
         var t = templateRepo.findById(templateId)
             .orElseThrow(() -> new NoSuchElementException("Template not found"));
+        assertOwner(t, user);
         t.setLayout(v.getLayout());
         t.setDataBindings(v.getDataBindings());
         t.setStyles(v.getStyles());
@@ -341,6 +346,12 @@ public class DocumentBuilderService {
             "total", fmt.format(total),
             "totalRaw", total
         );
+    }
+
+    private void assertOwner(DocumentTemplate t, UserPrincipal user) {
+        if (!"SUPER_ADMIN".equals(user.role()) && !t.getTenantId().equals(user.tenantId())) {
+            throw new SecurityException("Access denied to template " + t.getId());
+        }
     }
 
     private String renderHtml(String layoutJson, Map<String, Object> ctx, String stylesJson) {
