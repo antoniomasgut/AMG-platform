@@ -96,6 +96,7 @@ function adminGroups(t: T): NavGroup[] {
       label: t('groups.webServices'),
       items: [
         { label: t('items.landings'), icon: IconSet.Globe, href: '/portal/landings' },
+        { label: t('items.hosting'), icon: IconSet.Server, href: '/portal/hosting' },
         { label: t('items.domains'), icon: IconSet.Link, href: '/portal/admin/domains' },
         { label: t('items.assets'), icon: IconSet.Image, href: '/portal/assets' },
       ],
