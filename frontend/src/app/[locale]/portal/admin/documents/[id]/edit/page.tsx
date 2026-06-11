@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
@@ -183,7 +183,6 @@ function ImagePickerModal({
 
 export default function EditDocumentTemplatePage() {
   const params = useParams();
-  const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();

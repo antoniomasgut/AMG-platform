@@ -220,12 +220,17 @@ public class DocumentBuilderService {
     }
 
     private byte[] renderPdf(String html) throws Exception {
-        var os = new ByteArrayOutputStream();
-        var renderer = new ITextRenderer();
-        renderer.setDocumentFromString(html);
-        renderer.layout();
-        renderer.createPDF(os);
-        return os.toByteArray();
+        try {
+            var os = new ByteArrayOutputStream();
+            var renderer = new ITextRenderer();
+            renderer.setDocumentFromString(html);
+            renderer.layout();
+            renderer.createPDF(os);
+            return os.toByteArray();
+        } catch (Exception e) {
+            log.error("PDF rendering failed — {}: {}", e.getClass().getSimpleName(), e.getMessage(), e);
+            throw e;
+        }
     }
 
     public List<DocumentResponse> listDocuments(UUID tenantId) {
@@ -309,8 +314,14 @@ public class DocumentBuilderService {
 
         double discount = 0;
         if (variables.containsKey("hours")) {
-            Number hours = (Number) variables.get("hours");
-            if (hours.doubleValue() > 20) discount = 10;
+            Object hoursObj = variables.get("hours");
+            double hoursVal = 0;
+            if (hoursObj instanceof Number n) {
+                hoursVal = n.doubleValue();
+            } else if (hoursObj != null) {
+                try { hoursVal = Double.parseDouble(hoursObj.toString()); } catch (NumberFormatException ignore) {}
+            }
+            if (hoursVal > 20) discount = 10;
         }
 
         double taxRate = 21;
@@ -417,7 +428,14 @@ public class DocumentBuilderService {
             case "rich_text" -> "<div class=\"" + alignClass + "\">" + resolveHtml(ctx, config.path("html").asText("")) + "</div>";
             case "separator" -> "<hr>";
             case "terms" -> "<div class=\"footer\"><p><strong>Termes i condicions:</strong> " + resolvePlaceholder(config, "text", "") + "</p></div>";
+            case "conditions" -> "<div class=\"footer\"><p><strong>Condicions generals:</strong> " + resolvePlaceholder(config, "text", "") + "</p></div>";
             case "signature" -> "<div class=\"" + alignClass + "\" style=\"margin-top: 40px;\"><p>_________________________</p><p>Signatura</p></div>";
+            case "logo" -> renderLogo(ctx, config, alignClass);
+            case "image" -> renderImage(config, alignClass);
+            case "page_break" -> "<div style=\"page-break-before: always;\"></div>";
+            case "qr_code" -> renderPlaceholderBlock(alignClass, "QR" + (config.path("value").asText("").isBlank() ? "" : ": " + esc(config.path("value").asText(""))));
+            case "barcode" -> renderPlaceholderBlock(alignClass, "Codi barres" + (config.path("value").asText("").isBlank() ? "" : ": " + esc(config.path("value").asText(""))));
+            case "payment_link" -> "<p class=\"" + alignClass + "\"><a href=\"" + esc(config.path("url").asText("#")) + "\" style=\"color: #FF6B00; text-decoration: underline;\">" + esc(config.path("text").asText("Pagar en línia")) + "</a></p>";
             default -> "";
         };
     }
@@ -462,6 +480,30 @@ public class DocumentBuilderService {
         }
         sb.append("</tbody></table>");
         return sb.toString();
+    }
+
+    private String renderLogo(Map<String, Object> ctx, com.fasterxml.jackson.databind.JsonNode config, String alignClass) {
+        String src = config.path("src").asText("");
+        if (src.isBlank()) {
+            @SuppressWarnings("unchecked")
+            var company = (Map<String, Object>) ctx.getOrDefault("company", Map.of());
+            src = company.getOrDefault("logo", "").toString();
+        }
+        if (src.isBlank()) {
+            return "<p class=\"" + alignClass + "\" style=\"font-size: 10px; color: #aaa; border: 1px dashed #ddd; padding: 8px; display: inline-block; min-width: 100px; text-align: center;\">[Logo]</p>";
+        }
+        return "<div class=\"" + alignClass + "\"><img src=\"" + esc(src) + "\" style=\"max-height: 80px; max-width: 200px;\" alt=\"Logo\" /></div>";
+    }
+
+    private String renderImage(com.fasterxml.jackson.databind.JsonNode config, String alignClass) {
+        String src = config.path("src").asText("");
+        if (src.isBlank()) return "";
+        String alt = esc(config.path("alt").asText(""));
+        return "<div class=\"" + alignClass + "\"><img src=\"" + esc(src) + "\" style=\"max-width: 100%;\" alt=\"" + alt + "\" /></div>";
+    }
+
+    private String renderPlaceholderBlock(String alignClass, String label) {
+        return "<p class=\"" + alignClass + "\" style=\"font-size: 10px; color: #888; border: 1px dashed #ccc; padding: 4px 8px; display: inline-block;\">[" + label + "]</p>";
     }
 
     @SuppressWarnings("unchecked")

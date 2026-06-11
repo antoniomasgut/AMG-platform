@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useToast } from '@/lib/toast-context';
 import {
@@ -30,32 +31,44 @@ export default function GenerateDocumentPage() {
     enabled: !!id,
   });
 
-  const { mutate: doGenerate, isPending: generating } = useMutation({
-    mutationFn: () => generateDocument({
+  const buildPayload = () => {
+    const filledArticles = articles.filter(a => a.description.trim());
+    if (filledArticles.length === 0) {
+      toast('error', 'Afegeix almenys un article o servei amb descripció');
+      return null;
+    }
+    return {
       templateId: id,
-      customerData: Object.fromEntries(Object.entries(customerData).filter(([_, v]) => v)),
-      variables: Object.fromEntries(Object.entries(variables).filter(([_, v]) => v)),
-      articles: articles.filter(a => a.description.trim()),
-    }),
+      customerData: Object.fromEntries(Object.entries(customerData).filter(([, v]) => v)),
+      variables: Object.fromEntries(Object.entries(variables).filter(([, v]) => v)),
+      articles: filledArticles,
+    };
+  };
+
+  const { mutate: doGenerate, isPending: generating } = useMutation({
+    mutationFn: () => {
+      const payload = buildPayload();
+      if (!payload) return Promise.reject(new Error('validation'));
+      return generateDocument(payload);
+    },
     onSuccess: (doc) => {
       toast('success', `Document ${doc.number} generat`);
       setResultId(doc.id);
     },
-    onError: () => toast('error', 'Error generant el document'),
+    onError: (e) => { if ((e as Error).message !== 'validation') toast('error', 'Error generant el document'); },
   });
 
   const { mutate: doGeneratePdf, isPending: generatingPdf } = useMutation({
-    mutationFn: () => generatePdf({
-      templateId: id,
-      customerData: Object.fromEntries(Object.entries(customerData).filter(([_, v]) => v)),
-      variables: Object.fromEntries(Object.entries(variables).filter(([_, v]) => v)),
-      articles: articles.filter(a => a.description.trim()),
-    }),
+    mutationFn: () => {
+      const payload = buildPayload();
+      if (!payload) return Promise.reject(new Error('validation'));
+      return generatePdf(payload);
+    },
     onSuccess: (doc) => {
       toast('success', `PDF generat: ${doc.number}`);
       setResultId(doc.id);
     },
-    onError: () => toast('error', 'Error generant el PDF'),
+    onError: (e) => { if ((e as Error).message !== 'validation') toast('error', 'Error generant el PDF'); },
   });
 
   const updateArticle = (idx: number, field: keyof ArticleLine, value: string | number) => {
