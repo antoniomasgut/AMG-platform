@@ -88,6 +88,8 @@ function adminGroups(t: T): NavGroup[] {
         { label: t('items.quotes'), icon: IconSet.Receipt, href: '/portal/billing' },
         { label: t('items.payments'), icon: IconSet.CreditCard, href: '/portal/payments' },
         { label: t('items.invoices'), icon: IconSet.Trending, href: '/portal/finops' },
+        { label: t('items.documentTemplates'), icon: IconSet.FileText, href: '/portal/admin/documents' },
+        { label: t('items.generatedDocs'), icon: IconSet.FileText, href: '/portal/admin/documents/list' },
       ],
     },
     {
@@ -112,8 +114,6 @@ function adminGroups(t: T): NavGroup[] {
       items: [
         { label: t('items.opsHealth'), icon: IconSet.Activity, href: '/portal/ops' },
         { label: t('items.knowledge'), icon: IconSet.Book, href: '/portal/admin/knowledge' },
-        { label: t('items.documentTemplates'), icon: IconSet.FileText, href: '/portal/admin/documents' },
-        { label: t('items.generatedDocs'), icon: IconSet.Receipt, href: '/portal/admin/documents/list' },
         { label: t('items.meetings'), icon: IconSet.Calendar, href: '/portal/admin/booking' },
       ],
     },
@@ -146,6 +146,8 @@ function superAdminGroups(t: T): NavGroup[] {
         { label: t('items.quotes'), icon: IconSet.Receipt, href: '/portal/billing' },
         { label: t('items.payments'), icon: IconSet.CreditCard, href: '/portal/payments' },
         { label: t('items.invoices'), icon: IconSet.Trending, href: '/portal/finops' },
+        { label: t('items.documentTemplates'), icon: IconSet.FileText, href: '/portal/admin/documents' },
+        { label: t('items.generatedDocs'), icon: IconSet.FileText, href: '/portal/admin/documents/list' },
       ],
     },
     {
@@ -171,8 +173,6 @@ function superAdminGroups(t: T): NavGroup[] {
       items: [
         { label: t('items.opsHealth'), icon: IconSet.Activity, href: '/portal/ops' },
         { label: t('items.knowledge'), icon: IconSet.Book, href: '/portal/admin/knowledge' },
-        { label: t('items.documentTemplates'), icon: IconSet.FileText, href: '/portal/admin/documents' },
-        { label: t('items.generatedDocs'), icon: IconSet.Receipt, href: '/portal/admin/documents/list' },
         { label: t('items.commTemplates'), icon: IconSet.Mail, href: '/portal/admin/comm-templates' },
         { label: t('items.meetings'), icon: IconSet.Calendar, href: '/portal/admin/booking' },
       ],
