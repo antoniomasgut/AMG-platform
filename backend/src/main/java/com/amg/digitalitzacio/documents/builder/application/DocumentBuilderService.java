@@ -341,15 +341,34 @@ public class DocumentBuilderService {
             sb.append("""
                 <!DOCTYPE html><html><head><meta charset="UTF-8">
                 <style>
-                  body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
-                  table { width: 100%%; border-collapse: collapse; margin: 16px 0; }
-                  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd; }
-                  th { background: #f5f5f5; font-weight: 600; }
-                  .text-right { text-align: right; }
-                  .text-center { text-align: center; }
-                  .total-row { font-weight: bold; font-size: 1.1em; }
-                  .header { border-bottom: 2px solid #333; padding-bottom: 16px; margin-bottom: 24px; }
-                  .footer { border-top: 2px solid #333; padding-top: 16px; margin-top: 24px; font-size: 0.85em; color: #666; }
+                  @page { margin: 0; }
+                  * { box-sizing: border-box; }
+                  body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 48px 56px; color: #1a1a1a; font-size: 13px; line-height: 1.5; background: #fff; }
+                  table { width: 100%%; border-collapse: collapse; margin: 0; }
+                  th { padding: 8px 12px; text-align: left; background: #f0f0f0; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; border-bottom: 2px solid #ddd; }
+                  td { padding: 9px 12px; text-align: left; border-bottom: 1px solid #ebebeb; color: #333; }
+                  tr:last-child td { border-bottom: none; }
+                  .text-right { text-align: right !important; }
+                  .text-center { text-align: center !important; }
+                  .total-row td { font-weight: 700; font-size: 15px; border-top: 2px solid #1a1a1a; border-bottom: none; padding-top: 12px; }
+                  .subtotal-section { margin-top: 16px; }
+                  .subtotal-section p { margin: 4px 0; text-align: right; }
+                  .header-accent { border-bottom: 3px solid #FF6B00; padding-bottom: 20px; margin-bottom: 24px; }
+                  .section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 4px; }
+                  .footer { border-top: 1px solid #ddd; padding-top: 16px; margin-top: 32px; font-size: 11px; color: #888; line-height: 1.6; }
+                  hr { border: none; border-top: 1px solid #e5e5e5; margin: 20px 0; }
+                  h1 { font-size: 26px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #1a1a1a; margin: 0; }
+                  h2 { font-size: 16px; font-weight: 700; color: #1a1a1a; margin: 0 0 4px 0; }
+                  h3 { font-size: 13px; font-weight: 600; margin: 0 0 6px 0; color: #1a1a1a; }
+                  p { margin: 2px 0; }
+                  .accent { color: #FF6B00; }
+                  .totals-table { width: auto; margin-left: auto; min-width: 260px; }
+                  .totals-table td { padding: 5px 12px; border: none; font-size: 13px; }
+                  .totals-table .label { color: #666; }
+                  .totals-table .value { text-align: right; font-weight: 600; }
+                  .totals-table .grand-total td { font-size: 16px; font-weight: 700; border-top: 2px solid #1a1a1a; padding-top: 10px; }
+                  .sig-block { margin-top: 48px; display: inline-block; min-width: 200px; }
+                  .sig-line { border-top: 1px solid #999; padding-top: 6px; font-size: 11px; color: #888; }
                 </style>
                 </head><body>
                 """);
@@ -395,7 +414,7 @@ public class DocumentBuilderService {
             case "tax" -> "<p class=\"" + alignClass + "\"><strong>IVA (" + resolveCtx(ctx, "calculated", "taxRate") + "%):</strong> " + resolveCtx(ctx, "calculated", "tax") + "</p>";
             case "total" -> "<p class=\"" + alignClass + " total-row\"><strong>Total:</strong> " + resolveCtx(ctx, "calculated", "total") + "</p>";
             case "text" -> "<p class=\"" + alignClass + "\">" + resolvePlaceholder(config, "text", "") + "</p>";
-            case "rich_text" -> "<div class=\"" + alignClass + "\">" + resolvePlaceholder(config, "html", "") + "</div>";
+            case "rich_text" -> "<div class=\"" + alignClass + "\">" + resolveHtml(ctx, config.path("html").asText("")) + "</div>";
             case "separator" -> "<hr>";
             case "terms" -> "<div class=\"footer\"><p><strong>Termes i condicions:</strong> " + resolvePlaceholder(config, "text", "") + "</p></div>";
             case "signature" -> "<div class=\"" + alignClass + "\" style=\"margin-top: 40px;\"><p>_________________________</p><p>Signatura</p></div>";
@@ -462,6 +481,19 @@ public class DocumentBuilderService {
         }
         m.appendTail(sb);
         return esc(sb.toString());
+    }
+
+    private String resolveHtml(Map<String, Object> ctx, String html) {
+        if (html == null || html.isBlank()) return "";
+        Pattern p = Pattern.compile("\\{\\{(\\w+)\\.(\\w+)\\}}");
+        Matcher m = p.matcher(html);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            String value = resolveCtx(ctx, m.group(1), m.group(2));
+            m.appendReplacement(sb, Matcher.quoteReplacement(value));
+        }
+        m.appendTail(sb);
+        return sb.toString();
     }
 
     private String formatPrice(Number n) {

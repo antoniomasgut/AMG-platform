@@ -5,7 +5,7 @@ import { useRouter } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/lib/toast-context';
 import {
-  createTemplate, defaultLayout,
+  createTemplate, defaultLayout, amgQuoteLayout,
   type DocumentType,
   DOCUMENT_TYPES,
 } from '@/services/documents';
@@ -21,6 +21,7 @@ export default function NewDocumentTemplatePage() {
   const forTenantId = searchParams.get('tenantId') ?? undefined;
   const [name, setName] = useState('');
   const [docType, setDocType] = useState<DocumentType>('quote');
+  const [useAmgPreset, setUseAmgPreset] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -36,10 +37,11 @@ export default function NewDocumentTemplatePage() {
     if (!validate()) return;
     setLoading(true);
     try {
+      const layout = docType === 'quote' && useAmgPreset ? amgQuoteLayout() : defaultLayout();
       const result = await createTemplate({
         name: name.trim(),
         documentType: docType,
-        layout: JSON.stringify(defaultLayout()),
+        layout: JSON.stringify(layout),
         dataBindings: '{}',
         styles: '{}',
       }, forTenantId);
@@ -88,6 +90,21 @@ export default function NewDocumentTemplatePage() {
               ))}
             </div>
           </div>
+
+          {docType === 'quote' && (
+            <div
+              className="flex items-center gap-3 p-3 rounded border border-[rgba(255,107,0,0.3)] bg-[rgba(255,107,0,0.05)] cursor-pointer"
+              onClick={() => setUseAmgPreset(!useAmgPreset)}
+            >
+              <div className={`w-8 h-5 rounded-full transition-colors shrink-0 ${useAmgPreset ? 'bg-[#FF6B00]' : 'bg-ink-3'}`}>
+                <div className={`w-3.5 h-3.5 bg-white rounded-full mt-0.5 transition-transform ${useAmgPreset ? 'translate-x-4' : 'translate-x-0.5'}`} />
+              </div>
+              <div>
+                <div className="f-mono text-xs text-accent-light font-semibold">Plantilla AMG Pressupost</div>
+                <div className="text-[11px] text-ink-2 mt-0.5">Capçalera empresa + client + taula serveis + totals IVA + condicions pagament + signatures</div>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3 pt-4">
             <AMGButton type="submit" disabled={loading} icon={IconSet.Plus}>

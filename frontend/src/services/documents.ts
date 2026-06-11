@@ -91,6 +91,8 @@ export interface LayoutBlock {
   config: {
     style: Record<string, unknown>;
     src?: string;
+    text?: string;
+    html?: string;
   };
   dataBinding: {
     source: string;
@@ -179,6 +181,144 @@ export function defaultLayout(): LayoutBlock[] {
     { id: 'total', type: 'total', x: 0, y: 12, w: 6, h: 1, visible: true, config: { style: { fontSize: 16, fontWeight: 'bold' } }, dataBinding: { source: 'calculated', field: 'total' } },
     { id: 'terms', type: 'terms', x: 0, y: 13, w: 12, h: 2, visible: true, config: { style: { fontSize: 10 } }, dataBinding: null },
     { id: 'signature', type: 'signature', x: 0, y: 15, w: 6, h: 2, visible: true, config: { style: {} }, dataBinding: null },
+  ];
+}
+
+export function amgQuoteLayout(): LayoutBlock[] {
+  return [
+    {
+      id: 'document_title', type: 'document_title',
+      x: 0, y: 0, w: 7, h: 2, visible: true,
+      config: { style: { fontSize: 28, fontWeight: 'bold' }, text: 'PRESSUPOST' },
+      dataBinding: null,
+    },
+    {
+      id: 'company_info', type: 'company_info',
+      x: 7, y: 0, w: 5, h: 3, visible: true,
+      config: { style: { alignment: 'right', fontSize: 11 } },
+      dataBinding: { source: 'company', field: 'name' },
+    },
+    {
+      id: 'sep1', type: 'separator',
+      x: 0, y: 3, w: 12, h: 1, visible: true,
+      config: { style: {} }, dataBinding: null,
+    },
+    {
+      id: 'document_number', type: 'document_number',
+      x: 0, y: 4, w: 4, h: 1, visible: true,
+      config: { style: { fontSize: 12 } },
+      dataBinding: { source: 'document', field: 'number' },
+    },
+    {
+      id: 'document_date', type: 'document_date',
+      x: 4, y: 4, w: 4, h: 1, visible: true,
+      config: { style: { fontSize: 12 } },
+      dataBinding: { source: 'document', field: 'date' },
+    },
+    {
+      id: 'document_validity', type: 'document_validity',
+      x: 8, y: 4, w: 4, h: 1, visible: true,
+      config: { style: { alignment: 'right', fontSize: 12 } },
+      dataBinding: { source: 'document', field: 'validUntil' },
+    },
+    {
+      id: 'customer_info', type: 'customer_info',
+      x: 0, y: 5, w: 6, h: 3, visible: true,
+      config: { style: { fontSize: 12 } },
+      dataBinding: { source: 'customer', field: 'name' },
+    },
+    {
+      id: 'intro_text', type: 'rich_text',
+      x: 6, y: 5, w: 6, h: 3, visible: true,
+      config: {
+        style: { fontSize: 11 },
+        html: '<p style="text-align:right;color:#888;font-size:11px;">Benvolgut/da client,</p><p style="text-align:right;color:#888;font-size:11px;">A continuació trobareu el detall dels serveis de digitalització sol·licitats. No dubteu a contactar-nos per a qualsevol consulta.</p>',
+      },
+      dataBinding: null,
+    },
+    {
+      id: 'sep2', type: 'separator',
+      x: 0, y: 8, w: 12, h: 1, visible: true,
+      config: { style: {} }, dataBinding: null,
+    },
+    {
+      id: 'services_label', type: 'rich_text',
+      x: 0, y: 9, w: 12, h: 1, visible: true,
+      config: {
+        style: {},
+        html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;margin:4px 0;">Detall de serveis</p>',
+      },
+      dataBinding: null,
+    },
+    {
+      id: 'services_table', type: 'services_table',
+      x: 0, y: 10, w: 12, h: 5, visible: true,
+      config: { style: {} }, dataBinding: null,
+    },
+    {
+      id: 'sep3', type: 'separator',
+      x: 0, y: 15, w: 12, h: 1, visible: true,
+      config: { style: {} }, dataBinding: null,
+    },
+    {
+      id: 'subtotal', type: 'subtotal',
+      x: 6, y: 16, w: 6, h: 1, visible: true,
+      config: { style: { alignment: 'right', fontSize: 13 } },
+      dataBinding: { source: 'calculated', field: 'subtotal' },
+    },
+    {
+      id: 'tax', type: 'tax',
+      x: 6, y: 17, w: 6, h: 1, visible: true,
+      config: { style: { alignment: 'right', fontSize: 13 } },
+      dataBinding: { source: 'calculated', field: 'tax' },
+    },
+    {
+      id: 'total', type: 'total',
+      x: 6, y: 18, w: 6, h: 1, visible: true,
+      config: { style: { alignment: 'right', fontSize: 16, fontWeight: 'bold' } },
+      dataBinding: { source: 'calculated', field: 'total' },
+    },
+    {
+      id: 'sep4', type: 'separator',
+      x: 0, y: 19, w: 12, h: 1, visible: true,
+      config: { style: {} }, dataBinding: null,
+    },
+    {
+      id: 'payment_text', type: 'rich_text',
+      x: 0, y: 20, w: 12, h: 2, visible: true,
+      config: {
+        style: { fontSize: 11 },
+        html: '<p><strong>Condicions de pagament:</strong> 50% a la signatura del pressupost · 50% a l\'entrega del projecte. Transferència bancària o targeta de crèdit.</p><p><strong>Termini d\'execució:</strong> S\'especificarà per escrit a la confirmació de la comanda.</p>',
+      },
+      dataBinding: null,
+    },
+    {
+      id: 'terms', type: 'terms',
+      x: 0, y: 22, w: 12, h: 2, visible: true,
+      config: {
+        style: { fontSize: 10 },
+        text: 'Els preus no inclouen IVA (21%). Pressupost vàlid 30 dies. Qualsevol modificació de l\'abast acordada durant el projecte es pressupostarà de forma addicional. La signatura implica l\'acceptació de les Condicions Generals disponibles a amgdigitalitzacio.com/condicions.',
+      },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_client', type: 'rich_text',
+      x: 0, y: 24, w: 5, h: 2, visible: true,
+      config: {
+        style: {},
+        html: '<div style="margin-top:24px;"><p>_________________________</p><p style="font-size:11px;color:#888;">Signatura del client · Data</p></div>',
+      },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_amg', type: 'rich_text',
+      x: 7, y: 24, w: 5, h: 2, visible: true,
+      config: {
+        style: {},
+        html: '<div style="margin-top:24px;text-align:right;"><p>_________________________</p><p style="font-size:11px;color:#888;">AMG Digitalització</p></div>',
+      },
+      dataBinding: null,
+    },
   ];
 }
 
