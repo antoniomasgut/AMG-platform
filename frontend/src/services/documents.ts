@@ -322,6 +322,468 @@ export function amgQuoteLayout(): LayoutBlock[] {
   ];
 }
 
+export function amgInvoiceLayout(): LayoutBlock[] {
+  return [
+    {
+      id: 'document_title', type: 'document_title',
+      x: 0, y: 0, w: 7, h: 2, visible: true,
+      config: { style: { fontSize: 28, fontWeight: 'bold' }, text: 'FACTURA' },
+      dataBinding: null,
+    },
+    {
+      id: 'company_info', type: 'company_info',
+      x: 7, y: 0, w: 5, h: 3, visible: true,
+      config: { style: { alignment: 'right', fontSize: 11 } },
+      dataBinding: { source: 'company', field: 'name' },
+    },
+    { id: 'sep1', type: 'separator', x: 0, y: 3, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'document_number', type: 'document_number',
+      x: 0, y: 4, w: 3, h: 1, visible: true,
+      config: { style: { fontSize: 12 } },
+      dataBinding: { source: 'document', field: 'number' },
+    },
+    {
+      id: 'document_date', type: 'document_date',
+      x: 3, y: 4, w: 3, h: 1, visible: true,
+      config: { style: { fontSize: 12 } },
+      dataBinding: { source: 'document', field: 'date' },
+    },
+    {
+      id: 'due_date', type: 'document_validity',
+      x: 6, y: 4, w: 3, h: 1, visible: true,
+      config: { style: { fontSize: 12 } },
+      dataBinding: { source: 'document', field: 'validUntil' },
+    },
+    {
+      id: 'payment_method', type: 'rich_text',
+      x: 9, y: 4, w: 3, h: 1, visible: true,
+      config: { style: { alignment: 'right' }, html: '<p style="font-size:11px;color:#555;text-align:right;"><strong>Forma de pagament:</strong> Transferència bancària</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'customer_info', type: 'customer_info',
+      x: 0, y: 5, w: 6, h: 3, visible: true,
+      config: { style: { fontSize: 12 } },
+      dataBinding: { source: 'customer', field: 'name' },
+    },
+    {
+      id: 'bank_info', type: 'rich_text',
+      x: 6, y: 5, w: 6, h: 3, visible: true,
+      config: {
+        style: { alignment: 'right' },
+        html: '<p style="text-align:right;font-size:11px;color:#555;"><strong>Compte bancari:</strong></p><p style="text-align:right;font-size:11px;color:#555;">IBAN: ES00 0000 0000 0000 0000 0000</p><p style="text-align:right;font-size:11px;color:#555;">BIC/SWIFT: XXXXXXXX</p>',
+      },
+      dataBinding: null,
+    },
+    { id: 'sep2', type: 'separator', x: 0, y: 8, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'services_label', type: 'rich_text',
+      x: 0, y: 9, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;margin:4px 0;">Detall de serveis facturats</p>' },
+      dataBinding: null,
+    },
+    { id: 'services_table', type: 'services_table', x: 0, y: 10, w: 12, h: 5, visible: true, config: { style: {} }, dataBinding: null },
+    { id: 'sep3', type: 'separator', x: 0, y: 15, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    { id: 'subtotal', type: 'subtotal', x: 6, y: 16, w: 6, h: 1, visible: true, config: { style: { alignment: 'right', fontSize: 13 } }, dataBinding: { source: 'calculated', field: 'subtotal' } },
+    { id: 'tax', type: 'tax', x: 6, y: 17, w: 6, h: 1, visible: true, config: { style: { alignment: 'right', fontSize: 13 } }, dataBinding: { source: 'calculated', field: 'tax' } },
+    { id: 'total', type: 'total', x: 6, y: 18, w: 6, h: 1, visible: true, config: { style: { alignment: 'right', fontSize: 16, fontWeight: 'bold' } }, dataBinding: { source: 'calculated', field: 'total' } },
+    { id: 'sep4', type: 'separator', x: 0, y: 19, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'terms', type: 'terms',
+      x: 0, y: 20, w: 12, h: 2, visible: true,
+      config: {
+        style: { fontSize: 10 },
+        text: 'Factura emesa d\'acord amb la Llei 37/1992 de l\'IVA. Els preus inclouen l\'IVA indicat. En cas de retard en el pagament s\'aplicaran interessos de demora. Reclamacions en un termini de 15 dies des de la recepció.',
+      },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_client', type: 'rich_text',
+      x: 0, y: 22, w: 5, h: 2, visible: true,
+      config: { style: {}, html: '<div style="margin-top:24px;"><p>_________________________</p><p style="font-size:11px;color:#888;">Rebut conforme · Data</p></div>' },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_amg', type: 'rich_text',
+      x: 7, y: 22, w: 5, h: 2, visible: true,
+      config: { style: {}, html: '<div style="margin-top:24px;text-align:right;"><p>_________________________</p><p style="font-size:11px;color:#888;">AMG Digitalització</p></div>' },
+      dataBinding: null,
+    },
+  ];
+}
+
+export function amgDeliveryNoteLayout(): LayoutBlock[] {
+  return [
+    {
+      id: 'document_title', type: 'document_title',
+      x: 0, y: 0, w: 7, h: 2, visible: true,
+      config: { style: { fontSize: 28, fontWeight: 'bold' }, text: 'ALBARÀ' },
+      dataBinding: null,
+    },
+    {
+      id: 'company_info', type: 'company_info',
+      x: 7, y: 0, w: 5, h: 3, visible: true,
+      config: { style: { alignment: 'right', fontSize: 11 } },
+      dataBinding: { source: 'company', field: 'name' },
+    },
+    { id: 'sep1', type: 'separator', x: 0, y: 3, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'document_number', type: 'document_number',
+      x: 0, y: 4, w: 4, h: 1, visible: true,
+      config: { style: { fontSize: 12 } },
+      dataBinding: { source: 'document', field: 'number' },
+    },
+    {
+      id: 'document_date', type: 'document_date',
+      x: 4, y: 4, w: 4, h: 1, visible: true,
+      config: { style: { fontSize: 12 } },
+      dataBinding: { source: 'document', field: 'date' },
+    },
+    {
+      id: 'customer_info', type: 'customer_info',
+      x: 0, y: 5, w: 6, h: 3, visible: true,
+      config: { style: { fontSize: 12 } },
+      dataBinding: { source: 'customer', field: 'name' },
+    },
+    {
+      id: 'delivery_address', type: 'rich_text',
+      x: 6, y: 5, w: 6, h: 3, visible: true,
+      config: {
+        style: { alignment: 'right' },
+        html: '<p style="text-align:right;font-size:11px;"><strong>Adreça de lliurament:</strong></p><p style="text-align:right;font-size:11px;color:#555;">(mateixa adreça del client)</p>',
+      },
+      dataBinding: null,
+    },
+    { id: 'sep2', type: 'separator', x: 0, y: 8, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'items_label', type: 'rich_text',
+      x: 0, y: 9, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;margin:4px 0;">Detall de lliurament</p>' },
+      dataBinding: null,
+    },
+    { id: 'services_table', type: 'services_table', x: 0, y: 10, w: 12, h: 6, visible: true, config: { style: {} }, dataBinding: null },
+    { id: 'sep3', type: 'separator', x: 0, y: 16, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'note', type: 'rich_text',
+      x: 0, y: 17, w: 12, h: 2, visible: true,
+      config: {
+        style: {},
+        html: '<p style="font-size:11px;color:#555;"><strong>Nota:</strong> La signatura d\'aquest albarà implica la conformitat amb els articles lliurats. Qualsevol discrepància ha de comunicar-se en un termini de 48 hores.</p>',
+      },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_client', type: 'rich_text',
+      x: 0, y: 19, w: 5, h: 2, visible: true,
+      config: { style: {}, html: '<div style="margin-top:24px;"><p>_________________________</p><p style="font-size:11px;color:#888;">Signatura del receptor · Data</p></div>' },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_amg', type: 'rich_text',
+      x: 7, y: 19, w: 5, h: 2, visible: true,
+      config: { style: {}, html: '<div style="margin-top:24px;text-align:right;"><p>_________________________</p><p style="font-size:11px;color:#888;">AMG Digitalització · Transportista</p></div>' },
+      dataBinding: null,
+    },
+  ];
+}
+
+export function amgContractLayout(): LayoutBlock[] {
+  return [
+    {
+      id: 'document_title', type: 'document_title',
+      x: 0, y: 0, w: 12, h: 2, visible: true,
+      config: { style: { fontSize: 22, fontWeight: 'bold', alignment: 'center' }, text: 'CONTRACTE DE SERVEIS DE DIGITALITZACIÓ' },
+      dataBinding: null,
+    },
+    {
+      id: 'contract_date', type: 'rich_text',
+      x: 0, y: 2, w: 12, h: 1, visible: true,
+      config: { style: { alignment: 'center' }, html: '<p style="text-align:center;font-size:11px;color:#555;">Palma de Mallorca, a __ de ________ de 2026</p>' },
+      dataBinding: null,
+    },
+    { id: 'sep1', type: 'separator', x: 0, y: 3, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'parties_label', type: 'rich_text',
+      x: 0, y: 4, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;">Les parts</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'company_info', type: 'company_info',
+      x: 0, y: 5, w: 5, h: 3, visible: true,
+      config: { style: { fontSize: 11 } },
+      dataBinding: { source: 'company', field: 'name' },
+    },
+    {
+      id: 'party_label', type: 'rich_text',
+      x: 5, y: 5, w: 2, h: 3, visible: true,
+      config: { style: { alignment: 'center' }, html: '<p style="text-align:center;font-size:11px;color:#aaa;padding-top:12px;">(Prestador)</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'customer_info', type: 'customer_info',
+      x: 7, y: 5, w: 5, h: 3, visible: true,
+      config: { style: { alignment: 'right', fontSize: 11 } },
+      dataBinding: { source: 'customer', field: 'name' },
+    },
+    { id: 'sep2', type: 'separator', x: 0, y: 8, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'object_label', type: 'rich_text',
+      x: 0, y: 9, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;">1. Objecte del contracte</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'object_text', type: 'rich_text',
+      x: 0, y: 10, w: 12, h: 3, visible: true,
+      config: {
+        style: {},
+        html: '<p style="font-size:11px;color:#333;">El prestador es compromet a prestar els serveis de digitalització descrits a l\'annex de serveis, d\'acord amb les condicions establertes en el present contracte.</p>',
+      },
+      dataBinding: null,
+    },
+    { id: 'sep3', type: 'separator', x: 0, y: 13, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'services_label', type: 'rich_text',
+      x: 0, y: 14, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;">2. Serveis contractats</p>' },
+      dataBinding: null,
+    },
+    { id: 'services_table', type: 'services_table', x: 0, y: 15, w: 12, h: 4, visible: true, config: { style: {} }, dataBinding: null },
+    { id: 'sep4', type: 'separator', x: 0, y: 19, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'economic_label', type: 'rich_text',
+      x: 0, y: 20, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;">3. Condicions econòmiques</p>' },
+      dataBinding: null,
+    },
+    { id: 'subtotal', type: 'subtotal', x: 6, y: 21, w: 6, h: 1, visible: true, config: { style: { alignment: 'right' } }, dataBinding: { source: 'calculated', field: 'subtotal' } },
+    { id: 'tax', type: 'tax', x: 6, y: 22, w: 6, h: 1, visible: true, config: { style: { alignment: 'right' } }, dataBinding: { source: 'calculated', field: 'tax' } },
+    { id: 'total', type: 'total', x: 6, y: 23, w: 6, h: 1, visible: true, config: { style: { alignment: 'right', fontSize: 14, fontWeight: 'bold' } }, dataBinding: { source: 'calculated', field: 'total' } },
+    {
+      id: 'payment_cond', type: 'rich_text',
+      x: 0, y: 21, w: 6, h: 3, visible: true,
+      config: {
+        style: {},
+        html: '<p style="font-size:11px;"><strong>Forma de pagament:</strong> 50% inici · 50% lliurament.</p><p style="font-size:11px;"><strong>Durada:</strong> Fins a la finalització del projecte.</p>',
+      },
+      dataBinding: null,
+    },
+    { id: 'sep5', type: 'separator', x: 0, y: 24, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'terms', type: 'terms',
+      x: 0, y: 25, w: 12, h: 2, visible: true,
+      config: {
+        style: { fontSize: 10 },
+        text: '4. Condicions generals — El prestador no serà responsable de retards causats per força major. La propietat intel·lectual dels lliurables es transfereix al client en el moment del pagament íntegre. Llei aplicable: dret espanyol. Jurisdicció: Jutjats de Palma de Mallorca.',
+      },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_client', type: 'rich_text',
+      x: 0, y: 27, w: 5, h: 2, visible: true,
+      config: { style: {}, html: '<div style="margin-top:24px;"><p>_________________________</p><p style="font-size:11px;color:#888;">Client · NIF · Data</p></div>' },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_amg', type: 'rich_text',
+      x: 7, y: 27, w: 5, h: 2, visible: true,
+      config: { style: {}, html: '<div style="margin-top:24px;text-align:right;"><p>_________________________</p><p style="font-size:11px;color:#888;">AMG Digitalització · Data</p></div>' },
+      dataBinding: null,
+    },
+  ];
+}
+
+export function amgReportLayout(): LayoutBlock[] {
+  return [
+    {
+      id: 'company_info', type: 'company_info',
+      x: 7, y: 0, w: 5, h: 3, visible: true,
+      config: { style: { alignment: 'right', fontSize: 11 } },
+      dataBinding: { source: 'company', field: 'name' },
+    },
+    {
+      id: 'document_title', type: 'document_title',
+      x: 0, y: 0, w: 7, h: 2, visible: true,
+      config: { style: { fontSize: 26, fontWeight: 'bold' }, text: 'INFORME' },
+      dataBinding: null,
+    },
+    { id: 'sep1', type: 'separator', x: 0, y: 3, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'document_number', type: 'document_number',
+      x: 0, y: 4, w: 4, h: 1, visible: true,
+      config: { style: { fontSize: 11 } },
+      dataBinding: { source: 'document', field: 'number' },
+    },
+    {
+      id: 'document_date', type: 'document_date',
+      x: 4, y: 4, w: 4, h: 1, visible: true,
+      config: { style: { fontSize: 11 } },
+      dataBinding: { source: 'document', field: 'date' },
+    },
+    {
+      id: 'customer_info', type: 'customer_info',
+      x: 8, y: 4, w: 4, h: 2, visible: true,
+      config: { style: { alignment: 'right', fontSize: 11 } },
+      dataBinding: { source: 'customer', field: 'name' },
+    },
+    { id: 'sep2', type: 'separator', x: 0, y: 6, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'summary_label', type: 'rich_text',
+      x: 0, y: 7, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;">Resum executiu</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'summary_text', type: 'rich_text',
+      x: 0, y: 8, w: 12, h: 4, visible: true,
+      config: {
+        style: {},
+        html: '<p style="font-size:12px;color:#333;line-height:1.7;">Introduïu aquí el resum executiu de l\'informe. Descriviu els objectius, el context i els principals resultats obtinguts de forma breu i clara.</p>',
+      },
+      dataBinding: null,
+    },
+    { id: 'sep3', type: 'separator', x: 0, y: 12, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'content_label', type: 'rich_text',
+      x: 0, y: 13, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;">Contingut de l\'informe</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'content_text', type: 'rich_text',
+      x: 0, y: 14, w: 12, h: 6, visible: true,
+      config: {
+        style: {},
+        html: '<p style="font-size:12px;color:#333;line-height:1.7;">Desenvolupeu aquí el contingut principal de l\'informe. Podeu afegir seccions, taules de dades, anàlisis i qualsevol informació rellevant per al client.</p>',
+      },
+      dataBinding: null,
+    },
+    { id: 'sep4', type: 'separator', x: 0, y: 20, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'conclusions_label', type: 'rich_text',
+      x: 0, y: 21, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;">Conclusions i recomanacions</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'conclusions_text', type: 'rich_text',
+      x: 0, y: 22, w: 12, h: 3, visible: true,
+      config: {
+        style: {},
+        html: '<p style="font-size:12px;color:#333;line-height:1.7;">Introduïu aquí les principals conclusions de l\'anàlisi i les recomanacions per a l\'empresa client.</p>',
+      },
+      dataBinding: null,
+    },
+    { id: 'sep5', type: 'separator', x: 0, y: 25, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'sig_amg', type: 'rich_text',
+      x: 7, y: 26, w: 5, h: 2, visible: true,
+      config: { style: {}, html: '<div style="margin-top:24px;text-align:right;"><p>_________________________</p><p style="font-size:11px;color:#888;">AMG Digitalització · Data</p></div>' },
+      dataBinding: null,
+    },
+  ];
+}
+
+export function amgProposalLayout(): LayoutBlock[] {
+  return [
+    {
+      id: 'document_title', type: 'document_title',
+      x: 0, y: 0, w: 7, h: 2, visible: true,
+      config: { style: { fontSize: 24, fontWeight: 'bold' }, text: 'PROPOSTA COMERCIAL' },
+      dataBinding: null,
+    },
+    {
+      id: 'company_info', type: 'company_info',
+      x: 7, y: 0, w: 5, h: 3, visible: true,
+      config: { style: { alignment: 'right', fontSize: 11 } },
+      dataBinding: { source: 'company', field: 'name' },
+    },
+    { id: 'sep1', type: 'separator', x: 0, y: 3, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'customer_info', type: 'customer_info',
+      x: 0, y: 4, w: 6, h: 3, visible: true,
+      config: { style: { fontSize: 12 } },
+      dataBinding: { source: 'customer', field: 'name' },
+    },
+    {
+      id: 'proposal_meta', type: 'rich_text',
+      x: 6, y: 4, w: 6, h: 3, visible: true,
+      config: {
+        style: { alignment: 'right' },
+        html: '<p style="text-align:right;font-size:11px;color:#555;"><strong>Data proposta:</strong> {{document.date}}</p><p style="text-align:right;font-size:11px;color:#555;"><strong>Referència:</strong> {{document.number}}</p><p style="text-align:right;font-size:11px;color:#555;"><strong>Validesa:</strong> 30 dies</p>',
+      },
+      dataBinding: null,
+    },
+    { id: 'sep2', type: 'separator', x: 0, y: 7, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'intro_label', type: 'rich_text',
+      x: 0, y: 8, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;">Introducció</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'intro_text', type: 'rich_text',
+      x: 0, y: 9, w: 12, h: 3, visible: true,
+      config: {
+        style: {},
+        html: '<p style="font-size:12px;color:#333;line-height:1.7;">Estimat client, presentem a continuació la nostra proposta per impulsar la digitalització del vostre negoci. Hem analitzat les vostres necessitats i dissenyat una solució adaptada que us permetrà créixer, automatitzar i captar més clients.</p>',
+      },
+      dataBinding: null,
+    },
+    { id: 'sep3', type: 'separator', x: 0, y: 12, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'services_label', type: 'rich_text',
+      x: 0, y: 13, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;">Solució proposada</p>' },
+      dataBinding: null,
+    },
+    { id: 'services_table', type: 'services_table', x: 0, y: 14, w: 12, h: 5, visible: true, config: { style: {} }, dataBinding: null },
+    { id: 'sep4', type: 'separator', x: 0, y: 19, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    { id: 'subtotal', type: 'subtotal', x: 6, y: 20, w: 6, h: 1, visible: true, config: { style: { alignment: 'right', fontSize: 13 } }, dataBinding: { source: 'calculated', field: 'subtotal' } },
+    { id: 'tax', type: 'tax', x: 6, y: 21, w: 6, h: 1, visible: true, config: { style: { alignment: 'right', fontSize: 13 } }, dataBinding: { source: 'calculated', field: 'tax' } },
+    { id: 'total', type: 'total', x: 6, y: 22, w: 6, h: 1, visible: true, config: { style: { alignment: 'right', fontSize: 16, fontWeight: 'bold' } }, dataBinding: { source: 'calculated', field: 'total' } },
+    { id: 'sep5', type: 'separator', x: 0, y: 23, w: 12, h: 1, visible: true, config: { style: {} }, dataBinding: null },
+    {
+      id: 'next_steps_label', type: 'rich_text',
+      x: 0, y: 24, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;">Propers passos</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'next_steps', type: 'rich_text',
+      x: 0, y: 25, w: 12, h: 2, visible: true,
+      config: {
+        style: {},
+        html: '<p style="font-size:11px;color:#333;">1. Confirmació de la proposta · 2. Signatura del contracte · 3. Pagament del 50% inicial · 4. Inici del projecte en un termini de 5 dies hàbils.</p>',
+      },
+      dataBinding: null,
+    },
+    {
+      id: 'terms', type: 'terms',
+      x: 0, y: 27, w: 12, h: 2, visible: true,
+      config: {
+        style: { fontSize: 10 },
+        text: 'Proposta vàlida 30 dies. Els preus no inclouen IVA (21%). L\'acceptació d\'aquesta proposta implica l\'acceptació de les Condicions Generals disponibles a amgdigitalitzacio.com/condicions.',
+      },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_client', type: 'rich_text',
+      x: 0, y: 29, w: 5, h: 2, visible: true,
+      config: { style: {}, html: '<div style="margin-top:24px;"><p>_________________________</p><p style="font-size:11px;color:#888;">Acceptació client · Data</p></div>' },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_amg', type: 'rich_text',
+      x: 7, y: 29, w: 5, h: 2, visible: true,
+      config: { style: {}, html: '<div style="margin-top:24px;text-align:right;"><p>_________________________</p><p style="font-size:11px;color:#888;">AMG Digitalització</p></div>' },
+      dataBinding: null,
+    },
+  ];
+}
+
 export async function listTemplates(tenantId?: string): Promise<TemplateResponse[]> {
   const qs = tenantId ? `?tenantId=${tenantId}` : '';
   return apiFetch<TemplateResponse[]>(`/documents/templates${qs}`);

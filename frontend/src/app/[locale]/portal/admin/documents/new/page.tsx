@@ -5,14 +5,26 @@ import { useRouter } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/lib/toast-context';
 import {
-  createTemplate, defaultLayout, amgQuoteLayout,
+  createTemplate, defaultLayout,
+  amgQuoteLayout, amgInvoiceLayout, amgDeliveryNoteLayout,
+  amgContractLayout, amgReportLayout, amgProposalLayout,
   type DocumentType,
   DOCUMENT_TYPES,
 } from '@/services/documents';
+
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGInput } from '@/components/ui/input';
 import { IconSet } from '@/components/ui/icons';
+
+const AMG_PRESETS: Partial<Record<DocumentType, { title: string; description: string; layout: () => ReturnType<typeof defaultLayout> }>> = {
+  quote:         { title: 'Plantilla AMG Pressupost',         description: 'Capçalera empresa + client + taula serveis + totals IVA + condicions pagament + signatures', layout: amgQuoteLayout },
+  invoice:       { title: 'Plantilla AMG Factura',            description: 'Capçalera empresa + dades bancàries + taula serveis + IVA + condicions + signatures', layout: amgInvoiceLayout },
+  delivery_note: { title: 'Plantilla AMG Albarà',             description: 'Empresa + adreça entrega + taula articles + nota + signatures receptor/emissor', layout: amgDeliveryNoteLayout },
+  contract:      { title: 'Plantilla AMG Contracte',          description: 'Parts (empresa + client) + objecte + serveis + condicions econòmiques + signatures', layout: amgContractLayout },
+  report:        { title: 'Plantilla AMG Informe',            description: 'Capçalera empresa + resum executiu + contingut + conclusions + firma', layout: amgReportLayout },
+  proposal:      { title: 'Plantilla AMG Proposta comercial', description: 'Empresa + client + introducció + serveis + totals + propers passos + condicions', layout: amgProposalLayout },
+};
 
 export default function NewDocumentTemplatePage() {
   const router = useRouter();
@@ -37,7 +49,8 @@ export default function NewDocumentTemplatePage() {
     if (!validate()) return;
     setLoading(true);
     try {
-      const layout = docType === 'quote' && useAmgPreset ? amgQuoteLayout() : defaultLayout();
+      const preset = AMG_PRESETS[docType];
+      const layout = preset && useAmgPreset ? preset.layout() : defaultLayout();
       const result = await createTemplate({
         name: name.trim(),
         documentType: docType,
@@ -91,7 +104,7 @@ export default function NewDocumentTemplatePage() {
             </div>
           </div>
 
-          {docType === 'quote' && (
+          {AMG_PRESETS[docType] && (
             <div
               className="flex items-center gap-3 p-3 rounded border border-[rgba(255,107,0,0.3)] bg-[rgba(255,107,0,0.05)] cursor-pointer"
               onClick={() => setUseAmgPreset(!useAmgPreset)}
@@ -100,8 +113,8 @@ export default function NewDocumentTemplatePage() {
                 <div className={`w-3.5 h-3.5 bg-white rounded-full mt-0.5 transition-transform ${useAmgPreset ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </div>
               <div>
-                <div className="f-mono text-xs text-accent-light font-semibold">Plantilla AMG Pressupost</div>
-                <div className="text-[11px] text-ink-2 mt-0.5">Capçalera empresa + client + taula serveis + totals IVA + condicions pagament + signatures</div>
+                <div className="f-mono text-xs text-accent-light font-semibold">{AMG_PRESETS[docType]!.title}</div>
+                <div className="text-[11px] text-ink-2 mt-0.5">{AMG_PRESETS[docType]!.description}</div>
               </div>
             </div>
           )}
