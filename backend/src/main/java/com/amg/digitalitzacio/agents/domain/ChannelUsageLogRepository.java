@@ -15,4 +15,7 @@ public interface ChannelUsageLogRepository extends JpaRepository<ChannelUsageLog
 
     @Query("SELECT COUNT(l) FROM ChannelUsageLog l WHERE l.channel = ?1 AND l.createdAt BETWEEN ?2 AND ?3")
     long countByChannel(String channel, Instant from, Instant to);
+
+    @Query("SELECT COALESCE(SUM(l.costEurMicros), 0) FROM ChannelUsageLog l WHERE l.tenantId = ?1 AND l.channel IN ('WHATSAPP','WHATSAPP_META') AND l.createdAt BETWEEN ?2 AND ?3")
+    long sumWhatsappCostBetween(UUID tenantId, Instant from, Instant to);
 }

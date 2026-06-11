@@ -22,6 +22,7 @@ export default function NewTenantPage() {
   const [form, setForm] = useState({
     name: '', slug: '', email: '', phone: '', address: '', city: '',
     sector: '', businessSize: '',
+    preferredChannel: 'TELEGRAM',
     agentSystemPrompt: '',
   });
   const [selectedPhases, setSelectedPhases] = useState<string[]>([]);
@@ -96,6 +97,7 @@ export default function NewTenantPage() {
         email: form.email || undefined, phone: form.phone || undefined, address: form.address || undefined, city: form.city || undefined,
         sector: form.sector || undefined, businessSize: form.businessSize || undefined,
         contractedPhases: selectedPhases.length > 0 ? selectedPhases : undefined,
+        preferredChannel: form.preferredChannel || undefined,
         isFree,
       });
       router.push('/portal/admin/tenants');
@@ -236,6 +238,24 @@ export default function NewTenantPage() {
               No hi ha preu definit per a {SECTOR_LABELS[form.sector]} + {form.businessSize}
             </div>
           )}
+        </div>
+
+        {/* Canal de notificació de l'operador */}
+        <div className="space-y-3">
+          <div className="f-mono text-label uppercase tracking-widest text-ink-3">Canal de notificació</div>
+          <p className="text-xs text-ink-3">Com rebrà l&apos;operador les alertes del sistema (nous missatges, avisos de pressupost, etc.)</p>
+          <div className="flex gap-2 flex-wrap">
+            {(['TELEGRAM', 'WHATSAPP', 'EMAIL'] as const).map((ch) => (
+              <button key={ch} type="button" onClick={() => setForm(p => ({ ...p, preferredChannel: ch }))}
+                className={`px-4 py-2 border rounded text-sm transition ${
+                  form.preferredChannel === ch
+                    ? 'border-[#FF6B00] bg-[rgba(255,107,0,0.12)] text-white'
+                    : 'border-border-base hover:border-ink-2 text-ink-2'
+                }`}>
+                {ch === 'TELEGRAM' ? 'Telegram (per defecte)' : ch === 'WHATSAPP' ? 'WhatsApp' : 'Email'}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Prompt agent IA */}

@@ -28,10 +28,11 @@ public class ChannelUsageService {
     @Transactional
     public void record(UUID tenantId, String channel) {
         if (tenantId == null) return;
-        usageLogRepository.save(ChannelUsageLog.of(tenantId, channel));
+        long costMicros = 0;
         if (WHATSAPP.equals(channel) || WHATSAPP_META.equals(channel)) {
-            tokenBudgetService.checkAndAutoIncrementMessages(tenantId, channel);
+            costMicros = tokenBudgetService.whatsappCostMicros(channel);
         }
+        usageLogRepository.save(ChannelUsageLog.of(tenantId, channel, costMicros));
     }
 
     @Transactional(readOnly = true)

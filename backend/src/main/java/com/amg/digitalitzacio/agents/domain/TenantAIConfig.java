@@ -52,6 +52,32 @@ public class TenantAIConfig {
     @Column(name = "overage_message_increment")
     private Integer overageMessageIncrement = 100;
 
+    // null o "auto" = detecta l'idioma del client; "ca"/"es"/"en"/"de" = sempre en aquest idioma
+    @Column(name = "response_language", length = 10)
+    private String responseLanguage;
+
+    // null = usa preferredModel; valor = model específic per a aquest canal
+    @Column(name = "chat_model")
+    private String chatModel;
+
+    @Column(name = "whatsapp_model")
+    private String whatsappModel;
+
+    @Column(name = "email_model")
+    private String emailModel;
+
+    // model de backup: s'usa si el budget s'esgota o si el provider principal falla
+    @Column(name = "fallback_model")
+    private String fallbackModel;
+
+    // pressupost mensual IA en cèntims d'euro (p.ex. 500 = €5.00); null = sense límit
+    @Column(name = "monthly_cost_budget_eur_cents")
+    private Integer monthlyCostBudgetEurCents;
+
+    // pressupost mensual WhatsApp en cèntims d'euro; null = sense límit
+    @Column(name = "monthly_whatsapp_budget_eur_cents")
+    private Integer monthlyWhatsappBudgetEurCents;
+
     public static TenantAIConfig defaultFor(UUID tenantId) {
         var c = new TenantAIConfig();
         c.tenantId = tenantId;

@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.agents.application;
 
 import com.amg.digitalitzacio.agents.domain.ConversationRole;
+import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,34 +19,57 @@ import java.util.function.Function;
 @Slf4j
 public class PromptBuilder {
 
+    private static final Map<String, String> LANGUAGE_NAMES = Map.of(
+        "ca", "català",
+        "es", "espanyol (castellà)",
+        "en", "anglès",
+        "de", "alemany"
+    );
+
     private final KnowledgeBaseService knowledgeBaseService;
     private final NexeServiceConfigService nexeServiceConfigService;
     private final TenantRepository tenantRepository;
+    private final TenantAIConfigRepository tenantAIConfigRepository;
     private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
     public String build(UUID tenantId, CustomerContext context) {
-        String basePrompt = resolveTenantSystemPrompt(tenantId);
-        String knowledgeBlock = knowledgeBaseService.buildKnowledgeBlock(tenantId);
-        String languageOverride = extractLanguageInstruction(knowledgeBlock);
-        String nexeBlock = buildNexeBlock(tenantId);
-        String historyBlock = buildHistoryBlock(context);
+        String responseLanguage = resolveResponseLanguage(tenantId);
+        String languageRule     = buildLanguageRule(responseLanguage);
+        String basePrompt       = resolveTenantSystemPrompt(tenantId);
+        String knowledgeBlock   = knowledgeBaseService.buildKnowledgeBlock(tenantId);
+        String nexeBlock        = buildNexeBlock(tenantId);
+        String historyBlock     = buildHistoryBlock(context);
 
-        String prompt = basePrompt + knowledgeBlock + nexeBlock + historyBlock;
-        if (!languageOverride.isBlank()) {
-            prompt = prompt + "\n\nREGLA D'IDIOMA (màxima prioritat): " + languageOverride;
-        }
-        return prompt;
+        return languageRule
+            + "<business_context>\n" + basePrompt + knowledgeBlock + "\n</business_context>\n"
+            + "<services>\n" + nexeBlock + "\n</services>\n"
+            + "<history>\n" + historyBlock + "\n</history>";
     }
 
-    private String extractLanguageInstruction(String knowledgeBlock) {
-        if (knowledgeBlock == null || knowledgeBlock.isBlank()) return "";
-        for (String line : knowledgeBlock.split("\n")) {
-            if (line.startsWith("Instrucció d'idioma:")) {
-                return line.substring("Instrucció d'idioma:".length()).trim();
-            }
+    private String resolveResponseLanguage(UUID tenantId) {
+        return tenantAIConfigRepository.findByTenantId(tenantId)
+            .map(c -> c.getResponseLanguage())
+            .filter(l -> l != null && !l.isBlank() && !l.equals("auto"))
+            .orElse(null);
+    }
+
+    private String buildLanguageRule(String responseLanguage) {
+        if (responseLanguage != null) {
+            String langName = LANGUAGE_NAMES.getOrDefault(responseLanguage, responseLanguage);
+            return String.format("""
+                <language_rule>
+                IMPORTANT: Respon SEMPRE en %s (%s), independentment de l'idioma en el qual escrigui el client.
+                El context intern (<business_context>, <services>) està en català per organització; no influeix en l'idioma de resposta.
+                </language_rule>
+                %n""", langName, responseLanguage);
         }
-        return "";
+        return """
+            <language_rule>
+            Detecta l'idioma en el qual escriu el client i respon SEMPRE en aquell idioma.
+            El context intern (<business_context>, <services>) està en català per organització; no influeix en l'idioma de resposta.
+            </language_rule>
+            %n""".formatted();
     }
 
     private String resolveTenantSystemPrompt(UUID tenantId) {

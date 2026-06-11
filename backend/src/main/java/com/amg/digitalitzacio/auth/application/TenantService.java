@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.auth.application;
 
 import com.amg.digitalitzacio.agents.application.SectorKnowledgeSeedService;
+import com.amg.digitalitzacio.agents.application.TenantBudgetDefaultsService;
 import com.amg.digitalitzacio.agents.domain.KnowledgeBaseRepository;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
@@ -55,6 +56,7 @@ public class TenantService {
     private final WhatsAppWabaConfigRepository whatsAppWabaConfigRepository;
     private final TenantTelegramConfigRepository tenantTelegramConfigRepository;
     private final SectorKnowledgeSeedService sectorKnowledgeSeedService;
+    private final TenantBudgetDefaultsService tenantBudgetDefaultsService;
 
     @Transactional
     public TenantResponse createTenant(@Valid CreateTenantRequest request) {
@@ -86,6 +88,10 @@ public class TenantService {
 
         tenant = tenantRepository.save(tenant);
         sectorKnowledgeSeedService.seed(tenant.getId(), sector, tenant.getName(), tenant.getCity());
+        // Auto-assigna pressupostos d'IA si té mida i fases configurades
+        if (tenant.getBusinessSize() != null && tenant.getContractedPhases() != null) {
+            tenantBudgetDefaultsService.applyDefaults(tenant.getId());
+        }
         // Auto-set billing start date if has contracted phases and is not free
         if (request.contractedPhases() != null && !request.contractedPhases().isEmpty()
                 && !Boolean.TRUE.equals(request.isFree())) {

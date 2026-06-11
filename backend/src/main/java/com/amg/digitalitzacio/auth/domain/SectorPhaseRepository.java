@@ -9,5 +9,6 @@ import java.util.UUID;
 public interface SectorPhaseRepository extends JpaRepository<SectorPhase, UUID> {
     List<SectorPhase> findBySectorOrderByPhaseNumber(BusinessSector sector);
     Optional<SectorPhase> findBySectorAndPhaseNumber(BusinessSector sector, int phaseNumber);
+    List<SectorPhase> findBySectorAndPhaseNumberIn(BusinessSector sector, List<Integer> phaseNumbers);
     long countBySector(BusinessSector sector);
 }

@@ -28,10 +28,19 @@ public class ChannelUsageLog {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
+    @Column(name = "cost_eur_micros", nullable = false)
+    private long costEurMicros = 0;
+
     public static ChannelUsageLog of(UUID tenantId, String channel) {
         var log = new ChannelUsageLog();
         log.tenantId = tenantId;
         log.channel = channel;
+        return log;
+    }
+
+    public static ChannelUsageLog of(UUID tenantId, String channel, long costEurMicros) {
+        var log = of(tenantId, channel);
+        log.costEurMicros = costEurMicros;
         return log;
     }
 }

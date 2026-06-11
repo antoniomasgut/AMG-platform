@@ -7,6 +7,7 @@ import { useToast } from '@/lib/toast-context';
 import { useTranslations } from 'next-intl';
 import { getSystemConfig, setSystemConfig, deleteSystemConfig, testSystemConfig, getAuditLog, TESTABLE_KEYS, type ConfigStatus } from '@/services/sysconfig';
 import { listTenants } from '@/services/admin';
+import { getModelPrices, recalculateModelPrices } from '@/services/agents-conversational';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
@@ -432,6 +433,108 @@ function KeyRow({ item, onSave, onDelete, t }: {
   );
 }
 
+function ModelPricingSection({ queryClient }: { queryClient: ReturnType<typeof useQueryClient> }) {
+  const [markup, setMarkup] = useState(20);
+
+  const { data: prices = [], isLoading } = useQuery({
+    queryKey: ['model-prices'],
+    queryFn: getModelPrices,
+  });
+
+  const recalcMutation = useMutation({
+    mutationFn: () => recalculateModelPrices(markup),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['model-prices'] }),
+  });
+
+  const fmtEur = (micros: number) => `€${(micros / 1_000_000).toFixed(6)}`;
+  const fmtMTok = (micros: number) => `€${(micros / 10_000).toFixed(4)}/MTok`;
+
+  return (
+    <div className="mt-10 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="f-display font-bold text-ink-1">Taula de preus IA</h2>
+          <p className="text-xs text-ink-3 mt-0.5">Cost base (Anthropic/DeepSeek) + markup → preu client. Recàlcul automàtic el dia 1 de cada mes.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-ink-2">Markup</span>
+          <input
+            type="number"
+            min={0}
+            max={500}
+            value={markup}
+            onChange={e => setMarkup(parseInt(e.target.value) || 0)}
+            className="w-20 p-2 bg-bg-1 border border-border-base rounded text-sm text-ink-1 text-center"
+          />
+          <span className="text-sm text-ink-2">%</span>
+          <AMGButton
+            onClick={() => recalcMutation.mutate()}
+            disabled={recalcMutation.isPending}
+            size="sm"
+          >
+            {recalcMutation.isPending ? 'Calculant...' : 'Recalcular i desar'}
+          </AMGButton>
+        </div>
+      </div>
+
+      {isLoading && <p className="text-sm text-ink-3">Carregant...</p>}
+      {!isLoading && prices.length === 0 && (
+        <div className="amg-card card-clip p-6 text-center text-sm text-ink-3">
+          Cap preu configurat. Prem &ldquo;Recalcular i desar&rdquo; per inicialitzar.
+        </div>
+      )}
+      {prices.length > 0 && (
+        <div className="amg-card card-clip overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border-base text-left">
+                <th className="px-4 py-3 f-mono text-xs uppercase text-ink-3 tracking-wider">Model</th>
+                <th className="px-4 py-3 f-mono text-xs uppercase text-ink-3 tracking-wider">Proveïdor</th>
+                <th className="px-4 py-3 f-mono text-xs uppercase text-ink-3 tracking-wider text-right">Cost input</th>
+                <th className="px-4 py-3 f-mono text-xs uppercase text-ink-3 tracking-wider text-right">Cost output</th>
+                <th className="px-4 py-3 f-mono text-xs uppercase text-ink-3 tracking-wider text-center">Markup</th>
+                <th className="px-4 py-3 f-mono text-xs uppercase text-ink-3 tracking-wider text-right">Preu client input</th>
+                <th className="px-4 py-3 f-mono text-xs uppercase text-ink-3 tracking-wider text-right">Preu client output</th>
+                <th className="px-4 py-3 f-mono text-xs uppercase text-ink-3 tracking-wider text-right">Actualitzat</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border-base">
+              {prices.map(p => (
+                <tr key={p.modelName} className="hover:bg-bg-1">
+                  <td className="px-4 py-3 font-medium text-ink-1 f-mono text-xs">{p.modelName}</td>
+                  <td className="px-4 py-3 text-ink-2">{p.provider}</td>
+                  <td className="px-4 py-3 text-right text-ink-2 f-mono text-xs">
+                    <div>{fmtEur(p.inputCostMicros)}</div>
+                    <div className="text-ink-3">{fmtMTok(p.inputCostMicros)}</div>
+                  </td>
+                  <td className="px-4 py-3 text-right text-ink-2 f-mono text-xs">
+                    <div>{fmtEur(p.outputCostMicros)}</div>
+                    <div className="text-ink-3">{fmtMTok(p.outputCostMicros)}</div>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <AMGBadge tone="neutral">+{p.markupPercent}%</AMGBadge>
+                  </td>
+                  <td className="px-4 py-3 text-right text-ink-1 font-medium f-mono text-xs">
+                    <div>{fmtEur(p.clientInputMicros)}</div>
+                    <div className="text-ink-3">{fmtMTok(p.clientInputMicros)}</div>
+                  </td>
+                  <td className="px-4 py-3 text-right text-ink-1 font-medium f-mono text-xs">
+                    <div>{fmtEur(p.clientOutputMicros)}</div>
+                    <div className="text-ink-3">{fmtMTok(p.clientOutputMicros)}</div>
+                  </td>
+                  <td className="px-4 py-3 text-right text-ink-3 text-xs">
+                    {new Date(p.updatedAt).toLocaleDateString('ca-ES')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SystemConfigPage() {
   const { user, isSuperAdmin } = useAuth();
   const { toast } = useToast();
@@ -605,6 +708,8 @@ export default function SystemConfigPage() {
           })
         )}
       </div>
+      {/* Taula de preus IA */}
+      <ModelPricingSection queryClient={qc} />
     </PortalShell>
   );
 }

@@ -49,6 +49,9 @@ public class ConversationalAgentController {
     private final EmailChannel emailChannel;
     private final TenantRepository tenantRepository;
     private final LandingChatContextRepository agencyChatContextRepository;
+    private final com.amg.digitalitzacio.agents.application.TokenBudgetService tokenBudgetService;
+    private final com.amg.digitalitzacio.agents.application.ModelPricingService modelPricingService;
+    private final com.amg.digitalitzacio.agents.application.TenantBudgetDefaultsService tenantBudgetDefaultsService;
 
     @GetMapping("/{tenantId}/conversations")
     @PreAuthorize("isAuthenticated()")
@@ -386,7 +389,60 @@ public class ConversationalAgentController {
             config.setSenderName(request.senderName().isBlank() ? null : request.senderName());
         if (request.replyToEmail() != null)
             config.setReplyToEmail(request.replyToEmail().isBlank() ? null : request.replyToEmail());
+        if (request.responseLanguage() != null)
+            config.setResponseLanguage(request.responseLanguage().isBlank() || "auto".equals(request.responseLanguage()) ? null : request.responseLanguage());
+        if (request.chatModel() != null)
+            config.setChatModel(request.chatModel().isBlank() ? null : request.chatModel());
+        if (request.whatsappModel() != null)
+            config.setWhatsappModel(request.whatsappModel().isBlank() ? null : request.whatsappModel());
+        if (request.emailModel() != null)
+            config.setEmailModel(request.emailModel().isBlank() ? null : request.emailModel());
+        if (request.fallbackModel() != null)
+            config.setFallbackModel(request.fallbackModel().isBlank() ? null : request.fallbackModel());
+        if (request.monthlyCostBudgetEurCents() != null)
+            config.setMonthlyCostBudgetEurCents(request.monthlyCostBudgetEurCents() <= 0 ? null : request.monthlyCostBudgetEurCents());
+        if (request.monthlyWhatsappBudgetEurCents() != null)
+            config.setMonthlyWhatsappBudgetEurCents(request.monthlyWhatsappBudgetEurCents() <= 0 ? null : request.monthlyWhatsappBudgetEurCents());
         return ResponseEntity.ok(tenantAIConfigRepository.save(config));
+    }
+
+    /** Pressupostos recomanats per al tenant (sense aplicar) */
+    @GetMapping("/{tenantId}/ai-config/budget-defaults")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<com.amg.digitalitzacio.agents.application.TenantBudgetDefaultsService.BudgetDefaults> getBudgetDefaults(
+            @PathVariable UUID tenantId) {
+        return ResponseEntity.ok(tenantBudgetDefaultsService.getDefaults(tenantId));
+    }
+
+    /** Aplica els pressupostos recomanats al tenant (sobreescriu els actuals) */
+    @PostMapping("/{tenantId}/ai-config/apply-defaults")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
+    public ResponseEntity<com.amg.digitalitzacio.agents.application.TenantBudgetDefaultsService.BudgetDefaults> applyBudgetDefaults(
+            @PathVariable UUID tenantId) {
+        return ResponseEntity.ok(tenantBudgetDefaultsService.applyDefaults(tenantId));
+    }
+
+    /** Resum d'ús i cost del mes actual */
+    @GetMapping("/{tenantId}/ai-config/usage")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<com.amg.digitalitzacio.agents.application.TokenBudgetService.TokenUsageSummary> getUsageSummary(
+            @PathVariable UUID tenantId) {
+        return ResponseEntity.ok(tokenBudgetService.summary(tenantId));
+    }
+
+    /** Taula de preus per model (llegeix de BD) */
+    @GetMapping("/model-prices")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
+    public ResponseEntity<java.util.List<com.amg.digitalitzacio.agents.domain.ModelPricing>> getModelPrices() {
+        return ResponseEntity.ok(modelPricingService.getAll());
+    }
+
+    /** Recalcula els preus aplicant el markup indicat i desa a BD */
+    @PostMapping("/model-prices/recalculate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
+    public ResponseEntity<java.util.List<com.amg.digitalitzacio.agents.domain.ModelPricing>> recalculatePrices(
+            @RequestParam(defaultValue = "20") int markup) {
+        return ResponseEntity.ok(modelPricingService.recalculate(markup));
     }
 
     /** Test directe d'un model: envia un missatge i retorna la resposta */

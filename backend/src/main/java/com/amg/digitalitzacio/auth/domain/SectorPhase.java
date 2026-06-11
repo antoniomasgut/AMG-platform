@@ -43,4 +43,12 @@ public class SectorPhase {
 
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal monthlyPrice;
+
+    // Pressupost mensual IA en cèntims d'€ (500 = €5)
+    @Column(nullable = false)
+    private Integer aiBudgetEurCents = 0;
+
+    // Pressupost mensual de missatges WhatsApp
+    @Column(nullable = false)
+    private Integer whatsappMessageBudget = 0;
 }

@@ -27,6 +27,7 @@ export interface CreateTenantRequest {
   sector?: string;
   businessSize?: string;
   contractedPhases?: string[];
+  preferredChannel?: string;
   isFree?: boolean;
 }
 
@@ -40,6 +41,7 @@ export interface UpdateTenantRequest {
   sector?: string;
   businessSize?: string;
   contractedPhases?: string[];
+  preferredChannel?: string;
   isFree?: boolean;
 }
 

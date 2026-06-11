@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { useRouter } from '@/i18n/navigation';
+import { useRouter, Link } from '@/i18n/navigation';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import {
@@ -310,17 +310,20 @@ export default function HostingPage() {
         )}
 
         {/* Pro hosting CTA */}
-        <section className="border border-border-subtle rounded p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <section className="border border-accent/20 bg-accent/5 rounded p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <p className="f-mono text-label uppercase tracking-widest text-accent-light mb-1">Allotjament Pro</p>
-            <p className="text-data text-ink-2">Tens una aplicació web amb Docker? Pujar un <code className="bg-bg-3 px-1 rounded text-ink-2">docker-compose.yml</code> i et desplegarem en un contenidor dedicat.</p>
+            <p className="f-mono text-label uppercase tracking-widest text-accent-light mb-1">Allotjament Pro — Web amb Docker</p>
+            <p className="text-data text-ink-2">
+              Tens una aplicació web amb Docker (WordPress, Node.js, Laravel…)?
+              Puja un <code className="bg-bg-3 px-1 rounded text-ink-2">docker-compose.yml</code> i AMG la desplegarà en un contenidor dedicat amb SSL automàtic.
+            </p>
           </div>
-          <a
+          <Link
             href="/portal/hosting/pro"
-            className="f-mono text-xs uppercase text-accent-light border border-accent/30 hover:border-accent px-4 h-9 flex items-center shrink-0 transition-colors"
+            className="f-mono text-xs uppercase text-accent-light border border-accent/40 hover:border-accent hover:bg-accent/10 px-5 h-9 flex items-center shrink-0 transition-colors rounded whitespace-nowrap"
           >
-            Veure Import Pro →
-          </a>
+            Import Pro →
+          </Link>
         </section>
       </div>
     </PortalShell>

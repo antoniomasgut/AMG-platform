@@ -16,5 +16,8 @@ record IncomingPreparation(
     String replyToEmail,
     CustomerContext context,
     String preferredModel,
-    boolean isNewContact
+    String fallbackModel,
+    boolean isNewContact,
+    String notificationChannel,  // TELEGRAM / WHATSAPP / EMAIL — com notificar l'operador
+    String operatorPhone         // telèfon de contacte de l'operador per a notificacions WA
 ) {}

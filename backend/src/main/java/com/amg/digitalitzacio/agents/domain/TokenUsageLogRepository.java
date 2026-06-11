@@ -18,4 +18,10 @@ public interface TokenUsageLogRepository extends JpaRepository<TokenUsageLog, Lo
 
     @Query("SELECT COALESCE(SUM(t.inputTokens + t.outputTokens), 0) FROM TokenUsageLog t WHERE t.tenantId = ?1 AND t.createdAt BETWEEN ?2 AND ?3")
     long sumTokensBetween(UUID tenantId, Instant from, Instant to);
+
+    @Query("SELECT COALESCE(SUM(t.costEurMicros), 0) FROM TokenUsageLog t WHERE t.tenantId = ?1 AND t.createdAt >= ?2")
+    long sumCostSince(UUID tenantId, Instant since);
+
+    @Query("SELECT COALESCE(SUM(t.costEurMicros), 0) FROM TokenUsageLog t WHERE t.tenantId = ?1 AND t.createdAt BETWEEN ?2 AND ?3")
+    long sumCostBetween(UUID tenantId, Instant from, Instant to);
 }

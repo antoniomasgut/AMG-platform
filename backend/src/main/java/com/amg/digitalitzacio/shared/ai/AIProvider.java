@@ -16,6 +16,17 @@ public interface AIProvider {
         return chat(systemPrompt, history, userMessage);
     }
 
+    /**
+     * Com chatWithTools però retorna AIResponse amb el recompte de tokens.
+     * Per defecte envoltchat sense comptabilitzar (tokens = 0).
+     * Els providers que retornen usage han de sobreescriure aquest mètode.
+     */
+    default AIResponse chatWithToolsTracked(String systemPrompt, List<ChatMessage> history, String userMessage,
+                                             List<ToolDefinition> tools, Function<ToolCall, String> toolExecutor) {
+        String text = chatWithTools(systemPrompt, history, userMessage, tools, toolExecutor);
+        return new AIResponse(text, 0, 0);
+    }
+
     record AIResponse(String text, int inputTokens, int outputTokens) {
         public int totalTokens() { return inputTokens + outputTokens; }
     }

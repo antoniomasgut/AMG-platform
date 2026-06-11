@@ -233,12 +233,41 @@ public class SectorPhaseSeeder implements ApplicationRunner {
 
     private SectorPhase phase(BusinessSector sector, int number, String name, String description,
                                PhaseDepType depType, String requiredPhases, int setup, int monthly) {
+        return phase(sector, number, name, description, depType, requiredPhases, setup, monthly, aiCents(number), waMsgs(number));
+    }
+
+    private SectorPhase phase(BusinessSector sector, int number, String name, String description,
+                               PhaseDepType depType, String requiredPhases, int setup, int monthly,
+                               int aiCents, int waMsgs) {
         return SectorPhase.builder()
                 .sector(sector).phaseNumber(number)
                 .name(name).description(description)
                 .dependencyType(depType).requiredPhases(requiredPhases)
                 .setupPrice(BigDecimal.valueOf(setup))
                 .monthlyPrice(BigDecimal.valueOf(monthly))
+                .aiBudgetEurCents(aiCents)
+                .whatsappMessageBudget(waMsgs)
                 .build();
+    }
+
+    // Pressupostos per defecte per número de fase (admin pot ajustar per sector)
+    private static int aiCents(int phaseNumber) {
+        return switch (phaseNumber) {
+            case 1 -> 500;
+            case 2 -> 200;
+            case 3 -> 100;
+            case 4 ->  50;
+            default ->  50;
+        };
+    }
+
+    private static int waMsgs(int phaseNumber) {
+        return switch (phaseNumber) {
+            case 1 -> 200;
+            case 2 -> 100;
+            case 3 ->  50;
+            case 4 ->  30;
+            default ->   0;
+        };
     }
 }

@@ -37,13 +37,17 @@ public class TokenUsageLog {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
-    public static TokenUsageLog of(UUID tenantId, String model, String taskType, int input, int output) {
+    @Column(name = "cost_eur_micros", nullable = false)
+    private long costEurMicros = 0;
+
+    public static TokenUsageLog of(UUID tenantId, String model, String taskType, int input, int output, long costEurMicros) {
         var log = new TokenUsageLog();
         log.tenantId = tenantId;
         log.model = model;
         log.taskType = taskType;
         log.inputTokens = input;
         log.outputTokens = output;
+        log.costEurMicros = costEurMicros;
         return log;
     }
 }
