@@ -10,6 +10,7 @@ import { AMGButton } from '@/components/ui/button';
 import {
   listSites,
   requestStaticSite,
+  requestExternalSite,
   updateStaticSite,
   exportSite,
   getWidgetConfig,
@@ -150,6 +151,164 @@ function ActivationGuide({ site }: { site: WebSiteResponse }) {
       <Step status="done" title="Actualitzar la web">
         <p>Per modificar el contingut, prepara un nou ZIP amb els canvis i puja&apos;l amb el botó <strong className="text-ink-1">Actualitzar web</strong>. Els widgets es reinjjectaran automàticament.</p>
       </Step>
+    </section>
+  );
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+
+function SnippetBox({ label, code }: { label: string; code: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <p className="f-mono text-[10px] uppercase tracking-widest text-ink-3">{label}</p>
+        <button
+          onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+          className="f-mono text-[10px] uppercase px-2 py-0.5 border border-border-base rounded text-ink-2 hover:text-ink-0 transition-colors"
+        >
+          {copied ? 'Copiat!' : 'Copiar'}
+        </button>
+      </div>
+      <pre className="bg-bg-2 border border-border-subtle rounded p-3 text-[11px] text-accent-light f-mono overflow-x-auto whitespace-pre-wrap break-all leading-5">{code}</pre>
+    </div>
+  );
+}
+
+function ExternalSiteEmbed({ tenantId, existingSite }: { tenantId: string; existingSite?: WebSiteResponse }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [domain, setDomain] = useState('');
+  const [redirectUrl, setRedirectUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [site, setSite] = useState<WebSiteResponse | undefined>(existingSite);
+
+  const { data: cfg } = useQuery({
+    queryKey: ['widget-config', site?.id],
+    queryFn: () => getWidgetConfig(site!.id),
+    enabled: !!site?.id,
+  });
+
+  async function handleRegister() {
+    if (!domain.trim()) return;
+    setLoading(true);
+    try {
+      const result = await requestExternalSite(tenantId, domain.trim(), redirectUrl.trim() || undefined);
+      setSite(result);
+      qc.invalidateQueries({ queryKey: ['sites', tenantId] });
+      toast('success', 'Domini registrat. Aquí tens els teus snippets.');
+    } catch {
+      toast('error', 'Error registrant el domini');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const widgetSnippet = site
+    ? `<!-- Widget AMG: xat IA + botó WhatsApp (afegeix just abans de </body>) -->
+<script src="${API_URL}/api/v1/widget/${site.id}/loader" defer></script>`
+    : '';
+
+  const formSnippet = site
+    ? `<!-- Formulari de contacte AMG (personalitza l'estil lliurement) -->
+<form action="${API_URL}/api/v1/widget/${site.id}/contact" method="POST">
+  <input type="text"  name="name"    placeholder="Nom"      required />
+  <input type="email" name="email"   placeholder="Email"    required />
+  <input type="tel"   name="phone"   placeholder="Telèfon"           />
+  <textarea           name="message" placeholder="Missatge" required></textarea>
+  <button type="submit">Enviar</button>
+</form>`
+    : '';
+
+  const waSnippet = cfg?.waNumber
+    ? `<!-- Botó WhatsApp flotant (alternativa al widget si prefereixes un botó simple) -->
+<a href="https://wa.me/${cfg.waNumber.replace(/\D/g, '')}"
+   target="_blank"
+   style="position:fixed;bottom:24px;right:24px;z-index:9999;
+          background:#25D366;color:#fff;border-radius:50px;
+          padding:12px 20px;font-family:sans-serif;font-size:14px;
+          text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.2)">
+  💬 WhatsApp
+</a>`
+    : null;
+
+  return (
+    <section className="border border-border-base rounded p-5 space-y-5">
+      <div>
+        <p className="f-mono text-[10px] uppercase tracking-widest text-accent-light mb-1">Ja tinc la meva pròpia web</p>
+        <h2 className="f-display font-bold text-ink-0">Integra el xat i els formularis</h2>
+        <p className="text-sm text-ink-2 mt-1">
+          Si la teva web ja existeix en un altre servidor, pots afegir el widget de xat IA, el botó de WhatsApp
+          i un formulari de contacte amb un sol snippet de codi.
+        </p>
+      </div>
+
+      {!site ? (
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <label className="f-mono text-[10px] uppercase tracking-widest text-ink-3">Domini de la teva web</label>
+            <input
+              type="text" placeholder="exemple.com" value={domain}
+              onChange={e => setDomain(e.target.value)}
+              className="w-full bg-bg-2 border border-border-base rounded px-3 py-2 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-accent"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="f-mono text-[10px] uppercase tracking-widest text-ink-3">
+              URL de gràcies (opcional)
+            </label>
+            <input
+              type="text" placeholder="https://exemple.com/gracies" value={redirectUrl}
+              onChange={e => setRedirectUrl(e.target.value)}
+              className="w-full bg-bg-2 border border-border-base rounded px-3 py-2 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-accent"
+            />
+            <p className="text-[11px] text-ink-3">On redirigir l'usuari després d'enviar el formulari de contacte</p>
+          </div>
+          <AMGButton size="sm" disabled={!domain.trim() || loading} loading={loading} onClick={handleRegister}>
+            Obtenir snippets
+          </AMGButton>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded">
+            <span className="text-green-400 text-sm">✓</span>
+            <span className="text-sm text-ink-1">Domini registrat: <strong className="text-ink-0">{site.domain}</strong></span>
+          </div>
+
+          <SnippetBox
+            label="1 · Widget de xat IA + botó WhatsApp (recomanat)"
+            code={widgetSnippet}
+          />
+          <p className="text-[11px] text-ink-3 -mt-2">
+            Afegeix aquest únic script just abans de <code className="bg-bg-3 px-1 rounded">&lt;/body&gt;</code>.
+            El xat IA i el botó de WhatsApp apareixeran automàticament si estan configurats.
+          </p>
+
+          <SnippetBox
+            label="2 · Formulari de contacte (envia leads directament al bot)"
+            code={formSnippet}
+          />
+          <p className="text-[11px] text-ink-3 -mt-2">
+            Quan un visitant envia el formulari, el missatge arriba al bot conversacional com a nou lead.
+            Personalitza l'HTML i el CSS lliurement — no modifiquis l'<code className="bg-bg-3 px-1 rounded">action</code> ni els <code className="bg-bg-3 px-1 rounded">name</code> dels camps.
+          </p>
+
+          {waSnippet && (
+            <>
+              <SnippetBox label="3 · Botó WhatsApp flotant (alternativa al widget)" code={waSnippet} />
+              <p className="text-[11px] text-ink-3 -mt-2">
+                Usa'l si prefereixes un botó simple sense el xat IA. No afegeixis els dos alhora.
+              </p>
+            </>
+          )}
+
+          {!cfg?.chatEnabled && (
+            <div className="p-3 border border-yellow-500/30 bg-yellow-500/5 rounded text-xs text-yellow-400">
+              L'agent IA no està activat. Configura'l a <strong>Agents IA</strong> perquè el widget de xat aparegui.
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -363,6 +522,14 @@ export default function HostingPage() {
 
         {isLoading && (
           <p className="text-data text-ink-3">Carregant…</p>
+        )}
+
+        {/* Integració web externa */}
+        {!isLoading && (
+          <ExternalSiteEmbed
+            tenantId={tenantId}
+            existingSite={sites.find(s => s.type === 'EXTERNAL')}
+          />
         )}
 
         {/* Pro hosting CTA */}

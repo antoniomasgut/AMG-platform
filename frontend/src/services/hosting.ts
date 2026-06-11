@@ -90,6 +90,16 @@ export async function getWidgetConfig(siteId: string): Promise<WidgetConfig> {
   return apiFetch<WidgetConfig>(`/widget/${siteId}/config`);
 }
 
+export async function requestExternalSite(
+  tenantId: string,
+  domain: string,
+  contactRedirectUrl?: string,
+): Promise<WebSiteResponse> {
+  const params = new URLSearchParams({ domain });
+  if (contactRedirectUrl) params.set('contactRedirectUrl', contactRedirectUrl);
+  return apiFetch<WebSiteResponse>(`/hosting/tenants/${tenantId}/sites/external?${params}`, { method: 'POST' });
+}
+
 export async function listAllAdminSites(): Promise<WebSiteResponse[]> {
   return apiFetch<WebSiteResponse[]>('/hosting/admin/sites');
 }
