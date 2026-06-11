@@ -31,61 +31,126 @@ function fmtSize(bytes: number | null) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function WidgetStatusPanel({ siteId }: { siteId: string }) {
+const AMG_SERVER_IP = '65.108.148.62';
+
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      className="f-mono text-[10px] uppercase px-2 py-0.5 border border-border-base rounded text-ink-2 hover:text-ink-0 hover:border-ink-1 transition-colors shrink-0"
+    >
+      {copied ? 'Copiat!' : 'Copiar'}
+    </button>
+  );
+}
+
+type StepStatus = 'done' | 'pending' | 'optional';
+
+function Step({ status, title, children }: { status: StepStatus; title: string; children: React.ReactNode }) {
+  const dot = status === 'done'
+    ? 'bg-green-500'
+    : status === 'pending'
+    ? 'bg-yellow-400 animate-pulse'
+    : 'bg-border-base';
+  return (
+    <div className="flex gap-3">
+      <div className="flex flex-col items-center">
+        <div className={`w-3 h-3 rounded-full mt-1 shrink-0 ${dot}`} />
+        <div className="w-px flex-1 bg-border-base mt-1" />
+      </div>
+      <div className="pb-5 flex-1 min-w-0">
+        <p className={`text-sm font-semibold mb-1 ${status === 'done' ? 'text-ink-0' : status === 'pending' ? 'text-yellow-400' : 'text-ink-2'}`}>{title}</p>
+        <div className="text-xs text-ink-2 space-y-1.5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function ActivationGuide({ site }: { site: WebSiteResponse }) {
   const router = useRouter();
   const { data: cfg } = useQuery({
-    queryKey: ['widget-config', siteId],
-    queryFn: () => getWidgetConfig(siteId),
+    queryKey: ['widget-config', site.id],
+    queryFn: () => getWidgetConfig(site.id),
   });
 
-  if (!cfg) return null;
+  const isActive = site.status === 'ACTIVE';
+  const domain = site.domain ?? '';
+  const isSubdomain = domain.split('.').length > 2;
 
   return (
-    <div className="border-t border-border-base pt-4 mt-4">
-      <p className="f-mono text-[10px] uppercase text-ink-2 mb-3">Widgets incrustats a la web</p>
-      <div className="flex gap-3 flex-wrap">
-        <div className={`flex items-center gap-2 px-3 py-2 rounded border text-sm ${
-          cfg.chatEnabled
-            ? 'border-green-500/40 bg-green-500/10 text-green-400'
-            : 'border-border-base text-ink-3'
-        }`}>
-          <span>{cfg.chatEnabled ? '✓' : '○'}</span>
-          <span className="f-mono text-xs">Xat IA</span>
-          {!cfg.chatEnabled && (
-            <button
-              onClick={() => router.push('/portal/admin/agent')}
-              className="text-accent-light underline text-[10px] ml-1"
-            >
-              Configurar
-            </button>
+    <section className="border border-border-base rounded p-5">
+      <p className="f-mono text-[10px] uppercase tracking-widest text-accent-light mb-5">Guia de posada en marxa</p>
+
+      <Step status={isActive ? 'done' : 'pending'} title="Web desplegada">
+        {isActive
+          ? <p>La web és activa i accessible. Per actualitzar el contingut, puja un nou ZIP.</p>
+          : <p>En curs — AMG està revisant i desplegant la web. Sol tardar menys de 24 hores.</p>
+        }
+      </Step>
+
+      <Step status={isActive ? 'pending' : 'optional'} title="Apunta el domini al servidor">
+        <p>Al panell del teu registrador de dominis (GoDaddy, Namecheap, 1&1…) afegeix el registre DNS:</p>
+        <div className="mt-2 bg-bg-2 border border-border-subtle rounded p-3 space-y-2">
+          <div className="grid grid-cols-[80px_1fr_auto] gap-2 items-center f-mono text-[11px]">
+            <span className="text-ink-3 uppercase">Tipus</span>
+            <span className="text-ink-3 uppercase">Valor</span>
+            <span />
+          </div>
+          {isSubdomain ? (
+            <>
+              <div className="grid grid-cols-[80px_1fr_auto] gap-2 items-center f-mono text-[11px]">
+                <span className="text-accent-light">CNAME</span>
+                <span className="text-ink-0 truncate">amgdl.com.</span>
+                <CopyButton value="amgdl.com." />
+              </div>
+              <p className="text-ink-3 text-[10px]">Si el teu proveïdor no admet CNAME, usa un registre A apuntant a {AMG_SERVER_IP}</p>
+            </>
+          ) : (
+            <div className="grid grid-cols-[80px_1fr_auto] gap-2 items-center f-mono text-[11px]">
+              <span className="text-accent-light">A</span>
+              <span className="text-ink-0">{AMG_SERVER_IP}</span>
+              <CopyButton value={AMG_SERVER_IP} />
+            </div>
           )}
         </div>
-        <div className={`flex items-center gap-2 px-3 py-2 rounded border text-sm ${
-          cfg.waNumber
-            ? 'border-green-500/40 bg-green-500/10 text-green-400'
-            : 'border-border-base text-ink-3'
-        }`}>
-          <span>{cfg.waNumber ? '✓' : '○'}</span>
-          <span className="f-mono text-xs">WhatsApp</span>
-          {cfg.waNumber && (
-            <span className="text-[10px] text-ink-2 ml-1">{cfg.waNumber}</span>
-          )}
-          {!cfg.waNumber && (
-            <button
-              onClick={() => router.push('/portal/admin/contacts')}
-              className="text-accent-light underline text-[10px] ml-1"
-            >
-              Afegir telèfon
+        <p className="mt-1.5 text-ink-3">La propagació DNS pot trigar fins a 24–48 hores. L'SSL s'activa automàticament un cop propagat.</p>
+      </Step>
+
+      <Step status="done" title="SSL automàtic (HTTPS)">
+        <p>El certificat SSL es genera automàticament via Let&apos;s Encrypt quan el domini apunta al servidor. No cal fer res.</p>
+      </Step>
+
+      <Step status={cfg?.chatEnabled ? 'done' : 'optional'} title="Widget de xat IA">
+        {cfg?.chatEnabled ? (
+          <p>El widget de xat IA ja és actiu i s'injecta automàticament a totes les pàgines de la web.</p>
+        ) : (
+          <>
+            <p>El widget de xat IA s'injectarà automàticament un cop activis i configuris l'agent.</p>
+            <button onClick={() => router.push('/portal/agents')} className="text-accent-light underline">
+              Configurar l'agent IA →
             </button>
-          )}
-        </div>
-      </div>
-      {(!cfg.chatEnabled || !cfg.waNumber) && (
-        <p className="text-[10px] text-ink-3 mt-2">
-          Els widgets es carreguen automàticament. Configura&apos;ls des dels apartats indicats.
-        </p>
-      )}
-    </div>
+          </>
+        )}
+      </Step>
+
+      <Step status={cfg?.waNumber ? 'done' : 'optional'} title="Botó de WhatsApp">
+        {cfg?.waNumber ? (
+          <p>El botó de WhatsApp <span className="text-ink-0 font-medium">{cfg.waNumber}</span> ja apareix a la web.</p>
+        ) : (
+          <>
+            <p>Pots afegir un botó flotant de WhatsApp a la web configurant el número de contacte.</p>
+            <button onClick={() => router.push('/portal/agents')} className="text-accent-light underline">
+              Configurar canals →
+            </button>
+          </>
+        )}
+      </Step>
+
+      <Step status="done" title="Actualitzar la web">
+        <p>Per modificar el contingut, prepara un nou ZIP amb els canvis i puja&apos;l amb el botó <strong className="text-ink-1">Actualitzar web</strong>. Els widgets es reinjjectaran automàticament.</p>
+      </Step>
+    </section>
   );
 }
 
@@ -142,46 +207,37 @@ export default function HostingPage() {
           <section className="border border-border-base rounded p-5 space-y-4">
             <h2 className="f-display font-bold text-ink-0">La teva web</h2>
             {sites.map(site => (
-              <div key={site.id} className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-                  <div className="space-y-0.5">
-                    <p className="text-ui text-ink-0">{site.domain ?? '—'}</p>
-                    <p className={`text-data f-mono ${STATUS_LABEL[site.status]?.color ?? 'text-ink-3'}`}>
-                      {STATUS_LABEL[site.status]?.text ?? site.status}
-                    </p>
-                    {site.reviewNotes && (
-                      <p className="text-caption text-ink-3 italic">Nota AMG: {site.reviewNotes}</p>
-                    )}
-                    <p className="text-caption text-ink-3">Mida: {fmtSize(site.storageBytes)}</p>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {site.status === 'ACTIVE' && (
-                      <>
-                        <AMGButton
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => {
-                            setUpdatingSiteId(site.id);
-                            updateRef.current?.click();
-                          }}
-                        >
-                          Actualitzar web
-                        </AMGButton>
-                        <AMGButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => exportSite(tenantId, site.id).catch(e => toast('error', e.message))}
-                        >
-                          Descarregar ZIP
-                        </AMGButton>
-                      </>
-                    )}
-                  </div>
+              <div key={site.id} className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                <div className="space-y-0.5">
+                  <p className="text-ui text-ink-0 font-medium">{site.domain ?? '—'}</p>
+                  <p className={`text-data f-mono text-sm ${STATUS_LABEL[site.status]?.color ?? 'text-ink-3'}`}>
+                    {STATUS_LABEL[site.status]?.text ?? site.status}
+                  </p>
+                  {site.reviewNotes && (
+                    <p className="text-caption text-ink-3 italic">Nota AMG: {site.reviewNotes}</p>
+                  )}
+                  <p className="text-caption text-ink-3">Mida: {fmtSize(site.storageBytes)}</p>
                 </div>
-                {site.status === 'ACTIVE' && <WidgetStatusPanel siteId={site.id} />}
+                {site.status === 'ACTIVE' && (
+                  <div className="flex gap-2 flex-wrap shrink-0">
+                    <AMGButton variant="secondary" size="sm"
+                      onClick={() => { setUpdatingSiteId(site.id); updateRef.current?.click(); }}>
+                      Actualitzar web
+                    </AMGButton>
+                    <AMGButton variant="ghost" size="sm"
+                      onClick={() => exportSite(tenantId, site.id).catch(e => toast('error', e.message))}>
+                      Descarregar ZIP
+                    </AMGButton>
+                  </div>
+                )}
               </div>
             ))}
           </section>
+        )}
+
+        {/* Guia d'activació */}
+        {activeSite && activeSite.status !== 'REJECTED' && (
+          <ActivationGuide site={activeSite} />
         )}
 
         {/* Input ocult per actualitzar */}
