@@ -30,6 +30,17 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DocumentBuilderService {
 
+    private static final Map<String, String> DOC_PREFIXES = Map.of(
+        "invoice",       "F",
+        "quote",         "P",
+        "delivery_note", "A",
+        "contract",      "C",
+        "report",        "I",
+        "proposal",      "PR",
+        "image_release", "CD",
+        "custom",        "DOC"
+    );
+
     private final DocumentTemplateRepository templateRepo;
     private final DocumentTemplateVersionRepository versionRepo;
     private final GeneratedDocumentRepository documentRepo;
@@ -161,14 +172,8 @@ public class DocumentBuilderService {
         var t = templateRepo.findById(req.templateId())
             .orElseThrow(() -> new NoSuchElementException("Template not found"));
 
-        var seq = seqRepo.findById(tenantId).orElseGet(() -> {
-            var s = new DocumentNumberSequence();
-            s.setTenantId(tenantId);
-            return seqRepo.save(s);
-        });
-        String number = seq.getPrefix() + "-" + String.format("%04d", seq.getNextNumber());
-        seq.setNextNumber(seq.getNextNumber() + 1);
-        seqRepo.save(seq);
+        String docTypeStr = t.getDocumentType() != null ? t.getDocumentType().name() : "custom";
+        String number = nextDocNumber(tenantId, docTypeStr);
 
         Map<String, Object> variables = req.variables() != null ? req.variables() : new HashMap<>();
         List<GenerateRequest.ArticleLine> articles = req.articles() != null ? req.articles() : List.of();
@@ -346,6 +351,17 @@ public class DocumentBuilderService {
             "total", fmt.format(total),
             "totalRaw", total
         );
+    }
+
+    private String nextDocNumber(UUID tenantId, String docType) {
+        int year = LocalDate.now().getYear();
+        String prefix = DOC_PREFIXES.getOrDefault(docType, "DOC");
+        seqRepo.initIfAbsent(tenantId, docType, year);
+        var seq = seqRepo.findForUpdate(tenantId, docType, year).orElseThrow();
+        String number = prefix + "-" + year + "-" + String.format("%03d", seq.getNextNumber());
+        seq.setNextNumber(seq.getNextNumber() + 1);
+        seqRepo.save(seq);
+        return number;
     }
 
     private void assertOwner(DocumentTemplate t, UserPrincipal user) {

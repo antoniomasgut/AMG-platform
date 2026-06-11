@@ -7,7 +7,7 @@ import { useToast } from '@/lib/toast-context';
 import {
   createTemplate, defaultLayout,
   amgQuoteLayout, amgInvoiceLayout, amgDeliveryNoteLayout,
-  amgContractLayout, amgReportLayout, amgProposalLayout,
+  amgContractLayout, amgReportLayout, amgProposalLayout, amgImageReleaseLayout,
   type DocumentType,
   DOCUMENT_TYPES,
 } from '@/services/documents';
@@ -24,6 +24,7 @@ const AMG_PRESETS: Partial<Record<DocumentType, { title: string; description: st
   contract:      { title: 'Plantilla AMG Contracte',          description: 'Parts (empresa + client) + objecte + serveis + condicions econòmiques + signatures', layout: amgContractLayout },
   report:        { title: 'Plantilla AMG Informe',            description: 'Capçalera empresa + resum executiu + contingut + conclusions + firma', layout: amgReportLayout },
   proposal:      { title: 'Plantilla AMG Proposta comercial', description: 'Empresa + client + introducció + serveis + totals + propers passos + condicions', layout: amgProposalLayout },
+  image_release: { title: 'Plantilla AMG Cessió de drets d\'imatge', description: 'Parts + objecte + finalitat + durada + revocació + clàusula RGPD + signatures', layout: amgImageReleaseLayout },
 };
 
 export default function NewDocumentTemplatePage() {

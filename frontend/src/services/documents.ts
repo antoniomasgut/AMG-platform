@@ -2,7 +2,7 @@
 
 import { apiFetch } from './api';
 
-export type DocumentType = 'quote' | 'invoice' | 'delivery_note' | 'contract' | 'report' | 'proposal' | 'custom';
+export type DocumentType = 'quote' | 'invoice' | 'delivery_note' | 'contract' | 'report' | 'proposal' | 'image_release' | 'custom';
 export type DocumentStatus = 'DRAFT' | 'FINALIZED' | 'SENT' | 'PAID' | 'CANCELLED';
 
 export interface TemplateResponse {
@@ -107,6 +107,7 @@ export const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
   { value: 'contract', label: 'Contracte' },
   { value: 'report', label: 'Informe' },
   { value: 'proposal', label: 'Proposta' },
+  { value: 'image_release', label: 'Cessió imatge' },
   { value: 'custom', label: 'Personalitzat' },
 ];
 
@@ -779,6 +780,102 @@ export function amgProposalLayout(): LayoutBlock[] {
       id: 'sig_amg', type: 'rich_text',
       x: 7, y: 29, w: 5, h: 2, visible: true,
       config: { style: {}, html: '<div style="margin-top:24px;text-align:right;"><p>_________________________</p><p style="font-size:11px;color:#888;">AMG Digitalització</p></div>' },
+      dataBinding: null,
+    },
+  ];
+}
+
+export function amgImageReleaseLayout(): LayoutBlock[] {
+  return [
+    {
+      id: 'title', type: 'document_title',
+      x: 0, y: 0, w: 12, h: 1, visible: true,
+      config: { text: 'CESSIÓ DE DRETS D\'IMATGE', style: { alignment: 'center' } },
+      dataBinding: null,
+    },
+    {
+      id: 'sep0', type: 'separator',
+      x: 0, y: 1, w: 12, h: 0.5, visible: true,
+      config: { style: {} }, dataBinding: null,
+    },
+    {
+      id: 'parties_intro', type: 'rich_text',
+      x: 0, y: 2, w: 12, h: 2, visible: true,
+      config: { style: {}, html: '<p>D\'una banda, <strong>{{company.name}}</strong>, amb CIF <strong>{{company.taxId}}</strong> i domicili a <strong>{{company.address}}</strong> (d\'ara en endavant, el <em>Cessionari</em>).</p><p style="margin-top:8px;">De l\'altra, <strong>{{customer.name}}</strong>, amb NIF <strong>{{customer.taxId}}</strong> i domicili a <strong>{{customer.address}}</strong> (d\'ara en endavant, el <em>Cedent</em>).</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'sep1', type: 'separator',
+      x: 0, y: 4, w: 12, h: 0.5, visible: true,
+      config: { style: {} }, dataBinding: null,
+    },
+    {
+      id: 'object_title', type: 'text',
+      x: 0, y: 5, w: 12, h: 1, visible: true,
+      config: { text: 'OBJECTE', style: { fontWeight: 'bold', fontSize: 13 } },
+      dataBinding: null,
+    },
+    {
+      id: 'object_body', type: 'rich_text',
+      x: 0, y: 6, w: 12, h: 3, visible: true,
+      config: { style: {}, html: '<p>El Cedent autoritza expressament al Cessionari a capturar, reproduir, distribuir i comunicar públicament la seva imatge (fotografia i/o vídeo) obtinguda durant la prestació dels serveis contractats, exclusivament per als fins indicats a continuació.</p><p style="margin-top:8px;"><strong>Finalitat:</strong> Ús en xarxes socials, web corporativa i material de màrqueting del Cessionari.</p><p style="margin-top:8px;"><strong>Àmbit territorial:</strong> Sense limitació geogràfica, incloent-hi suports digitals internacionals.</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'sep2', type: 'separator',
+      x: 0, y: 9, w: 12, h: 0.5, visible: true,
+      config: { style: {} }, dataBinding: null,
+    },
+    {
+      id: 'duration_title', type: 'text',
+      x: 0, y: 10, w: 12, h: 1, visible: true,
+      config: { text: 'DURADA I REVOCACIÓ', style: { fontWeight: 'bold', fontSize: 13 } },
+      dataBinding: null,
+    },
+    {
+      id: 'duration_body', type: 'rich_text',
+      x: 0, y: 11, w: 12, h: 2, visible: true,
+      config: { style: {}, html: '<p>Aquesta cessió té caràcter indefinit. El Cedent pot revocar el seu consentiment en qualsevol moment mitjançant comunicació escrita al Cessionari. La revocació no afectarà els usos ja realitzats amb anterioritat a la notificació.</p><p style="margin-top:8px;"><strong>Compensació:</strong> La present cessió es realitza a títol gratuït, en el marc de la relació comercial entre les parts.</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'sep3', type: 'separator',
+      x: 0, y: 13, w: 12, h: 0.5, visible: true,
+      config: { style: {} }, dataBinding: null,
+    },
+    {
+      id: 'rgpd_title', type: 'text',
+      x: 0, y: 14, w: 12, h: 1, visible: true,
+      config: { text: 'PROTECCIÓ DE DADES (RGPD)', style: { fontWeight: 'bold', fontSize: 13 } },
+      dataBinding: null,
+    },
+    {
+      id: 'rgpd_body', type: 'rich_text',
+      x: 0, y: 15, w: 12, h: 2, visible: true,
+      config: { style: {}, html: '<p>Les dades personals i la imatge del Cedent seran tractades per <strong>{{company.name}}</strong> com a responsable del tractament, amb la finalitat de gestió de la relació comercial i accions de màrqueting, conforme al Reglament (UE) 2016/679 (RGPD) i la LOPDGDD. Podeu exercir els drets d\'accés, rectificació, supressió i portabilitat dirigint-vos a <strong>{{company.email}}</strong>.</p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'sep4', type: 'separator',
+      x: 0, y: 17, w: 12, h: 0.5, visible: true,
+      config: { style: {} }, dataBinding: null,
+    },
+    {
+      id: 'date_loc', type: 'rich_text',
+      x: 0, y: 18, w: 12, h: 1, visible: true,
+      config: { style: {}, html: '<p>A Palma, a data de <strong>{{document.date}}</strong></p>' },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_company', type: 'rich_text',
+      x: 0, y: 20, w: 5, h: 3, visible: true,
+      config: { style: {}, html: '<div style="margin-top:16px;"><p>_________________________</p><p style="font-size:11px;color:#888;">El Cessionari</p><p style="font-size:12px;font-weight:600;margin-top:4px;">{{company.name}}</p></div>' },
+      dataBinding: null,
+    },
+    {
+      id: 'sig_customer', type: 'rich_text',
+      x: 7, y: 20, w: 5, h: 3, visible: true,
+      config: { style: {}, html: '<div style="margin-top:16px;"><p>_________________________</p><p style="font-size:11px;color:#888;">El Cedent</p><p style="font-size:12px;font-weight:600;margin-top:4px;">{{customer.name}}</p><p style="font-size:11px;color:#888;">NIF: {{customer.taxId}}</p></div>' },
       dataBinding: null,
     },
   ];
