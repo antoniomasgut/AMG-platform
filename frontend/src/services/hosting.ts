@@ -121,3 +121,7 @@ export async function rejectSite(siteId: string, notes: string): Promise<WebSite
     body: JSON.stringify({ notes }),
   });
 }
+
+export async function sendSnippetsEmail(siteId: string): Promise<void> {
+  await apiFetch<void>(`/hosting/admin/sites/${siteId}/send-snippets`, { method: 'POST' });
+}

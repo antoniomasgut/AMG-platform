@@ -32,6 +32,7 @@ import { SECTOR_CONTEXTS, getSectorContext } from '@/services/sector-contexts';
 import { listLandings } from '@/services/factory';
 import {
   listSites, requestStaticSite, updateStaticSite, approveSite, exportSite,
+  sendSnippetsEmail, requestExternalSite, getWidgetConfig,
   type WebSiteResponse, type WebsiteStatus,
 } from '@/services/hosting';
 import { getWizardConfig } from '@/config/service-wizards';
@@ -142,7 +143,80 @@ const WEB_STATUS_TONE: Record<WebsiteStatus, 'warning' | 'success' | 'info' | 'd
   ACTIVE: 'success', SUSPENDED: 'neutral', REJECTED: 'danger',
 };
 
-function TenantWebSection({ tenantId }: { tenantId: string }) {
+const ADMIN_API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+
+function TenantWebSnippets({ site, tenantEmail }: { site: WebSiteResponse; tenantEmail: string }) {
+  const { toast } = useToast();
+  const [sending, setSending] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const { data: cfg } = useQuery({
+    queryKey: ['widget-config', site.id],
+    queryFn: () => getWidgetConfig(site.id),
+  });
+
+  function copy(key: string, value: string) {
+    navigator.clipboard.writeText(value);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  }
+
+  async function handleSendEmail() {
+    setSending(true);
+    try {
+      await sendSnippetsEmail(site.id);
+      toast('success', `Snippets enviats a ${tenantEmail}`);
+    } catch {
+      toast('error', 'Error enviant el correu');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const widgetCode = `<script src="${ADMIN_API_URL}/api/v1/widget/${site.id}/loader" defer></script>`;
+  const formCode = `<form action="${ADMIN_API_URL}/api/v1/widget/${site.id}/contact" method="POST">
+  <input type="text"  name="name"    placeholder="Nom"      required />
+  <input type="email" name="email"   placeholder="Email"    required />
+  <input type="tel"   name="phone"   placeholder="Telèfon" />
+  <textarea           name="message" placeholder="Missatge" required></textarea>
+  <button type="submit">Enviar</button>
+</form>`;
+
+  const snippets = [
+    { key: 'widget', label: 'Widget (xat IA + WhatsApp)', code: widgetCode },
+    { key: 'form',   label: 'Formulari de contacte',      code: formCode   },
+  ];
+
+  return (
+    <div className="space-y-3 mt-3">
+      <div className="flex items-center justify-between">
+        <p className="f-mono text-xs uppercase text-ink-2 tracking-widest">Snippets d'integració</p>
+        <AMGButton size="sm" variant="secondary" disabled={sending} onClick={handleSendEmail}>
+          {sending ? 'Enviant…' : `Enviar per email a ${tenantEmail}`}
+        </AMGButton>
+      </div>
+      {snippets.map(({ key, label, code }) => (
+        <div key={key} className="space-y-1">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-ink-3">{label}</p>
+            <button
+              onClick={() => copy(key, code)}
+              className="f-mono text-[10px] uppercase px-2 py-0.5 border border-border-base rounded text-ink-2 hover:text-ink-0 transition-colors"
+            >
+              {copiedKey === key ? 'Copiat!' : 'Copiar'}
+            </button>
+          </div>
+          <pre className="bg-bg-2 border border-border-subtle rounded p-2.5 text-[10px] text-accent-light f-mono overflow-x-auto whitespace-pre-wrap break-all leading-4">{code}</pre>
+        </div>
+      ))}
+      {!cfg?.chatEnabled && (
+        <p className="text-[11px] text-yellow-400">⚠ L'agent IA no està activat — el widget de xat no apareixerà fins que s'activi.</p>
+      )}
+    </div>
+  );
+}
+
+function TenantWebSection({ tenantId, tenantEmail }: { tenantId: string; tenantEmail: string }) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -151,6 +225,9 @@ function TenantWebSection({ tenantId }: { tenantId: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [updatingSiteId, setUpdatingSiteId] = useState<string | null>(null);
+  const [extDomain, setExtDomain] = useState('');
+  const [extRedirect, setExtRedirect] = useState('');
+  const [creatingExt, setCreatingExt] = useState(false);
 
   const { data: sites = [], isLoading } = useQuery({
     queryKey: ['tenant-sites', tenantId],
@@ -159,7 +236,8 @@ function TenantWebSection({ tenantId }: { tenantId: string }) {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['tenant-sites', tenantId] });
 
-  const activeSite = sites.find(s => ['ACTIVE','PENDING_REVIEW','APPROVED','DEPLOYING'].includes(s.status));
+  const hostedSite = sites.find(s => s.type !== 'EXTERNAL' && ['ACTIVE','PENDING_REVIEW','APPROVED','DEPLOYING'].includes(s.status));
+  const externalSite = sites.find(s => s.type === 'EXTERNAL');
 
   async function handleUpload() {
     if (!file || !domain.trim()) return;
@@ -167,15 +245,11 @@ function TenantWebSection({ tenantId }: { tenantId: string }) {
     try {
       const site = await requestStaticSite(tenantId, file, domain.trim());
       await approveSite(site.id);
-      toast('success', 'Web pujada i aprovada correctament');
-      setFile(null);
-      setDomain('');
+      toast('success', 'Web pujada i aprovada');
+      setFile(null); setDomain('');
       invalidate();
-    } catch {
-      toast('error', 'Error pujant la web');
-    } finally {
-      setUploading(false);
-    }
+    } catch { toast('error', 'Error pujant la web'); }
+    finally { setUploading(false); }
   }
 
   async function handleUpdate(siteId: string, f: File) {
@@ -183,9 +257,19 @@ function TenantWebSection({ tenantId }: { tenantId: string }) {
       await updateStaticSite(tenantId, siteId, f);
       toast('success', 'Web actualitzada');
       invalidate();
-    } catch {
-      toast('error', 'Error actualitzant la web');
-    }
+    } catch { toast('error', 'Error actualitzant'); }
+  }
+
+  async function handleCreateExternal() {
+    if (!extDomain.trim()) return;
+    setCreatingExt(true);
+    try {
+      await requestExternalSite(tenantId, extDomain.trim(), extRedirect.trim() || undefined);
+      toast('success', 'Domini extern registrat');
+      setExtDomain(''); setExtRedirect('');
+      invalidate();
+    } catch { toast('error', 'Error registrant el domini'); }
+    finally { setCreatingExt(false); }
   }
 
   return (
@@ -193,60 +277,81 @@ function TenantWebSection({ tenantId }: { tenantId: string }) {
       <div className="p-4 sm:p-5 border-b border-border-base">
         <AMGSectionTitle eyebrow="Web" title="Allotjament web" />
       </div>
-      <div className="p-4 sm:p-5 space-y-4">
+      <div className="p-4 sm:p-5 space-y-5">
         {isLoading ? (
           <div className="flex justify-center py-6"><span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>
-        ) : sites.length > 0 ? (
-          <div className="space-y-3">
-            {sites.map(site => (
-              <div key={site.id} className="flex items-center justify-between gap-4 p-3 border border-border-base rounded">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <AMGBadge tone={WEB_STATUS_TONE[site.status]}>{WEB_STATUS_LABEL[site.status]}</AMGBadge>
-                    <span className="f-mono text-xs text-ink-3">{site.type}</span>
-                  </div>
-                  <p className="text-sm font-medium">{site.domain ?? '—'}</p>
-                  {site.reviewNotes && <p className="text-xs text-ink-3 italic mt-0.5">{site.reviewNotes}</p>}
-                  {site.deployedAt && <p className="text-xs text-ink-3 mt-0.5">Desplegat: {fmtDate(site.deployedAt)}</p>}
-                </div>
-                {site.status === 'ACTIVE' && (
-                  <div className="flex gap-2 shrink-0">
-                    <AMGButton size="sm" variant="secondary" onClick={() => { setUpdatingSiteId(site.id); updateRef.current?.click(); }}>
-                      Actualitzar
-                    </AMGButton>
-                    <AMGButton size="sm" variant="ghost" onClick={() => exportSite(tenantId, site.id).catch(() => toast('error', 'Error descarregant'))}>
-                      ZIP
-                    </AMGButton>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
         ) : (
-          <p className="text-sm text-ink-3">Cap web allotjada per aquest tenant.</p>
-        )}
+          <>
+            {/* Webs allotjades */}
+            {sites.filter(s => s.type !== 'EXTERNAL').length > 0 && (
+              <div className="space-y-2">
+                <p className="f-mono text-xs uppercase text-ink-3 tracking-widest">Web allotjada per AMG</p>
+                {sites.filter(s => s.type !== 'EXTERNAL').map(site => (
+                  <div key={site.id} className="flex items-center justify-between gap-4 p-3 border border-border-base rounded">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <AMGBadge tone={WEB_STATUS_TONE[site.status]}>{WEB_STATUS_LABEL[site.status]}</AMGBadge>
+                        <span className="f-mono text-xs text-ink-3">{site.type}</span>
+                      </div>
+                      <p className="text-sm font-medium">{site.domain ?? '—'}</p>
+                      {site.reviewNotes && <p className="text-xs text-ink-3 italic mt-0.5">{site.reviewNotes}</p>}
+                    </div>
+                    {site.status === 'ACTIVE' && (
+                      <div className="flex gap-2 shrink-0">
+                        <AMGButton size="sm" variant="secondary" onClick={() => { setUpdatingSiteId(site.id); updateRef.current?.click(); }}>Actualitzar</AMGButton>
+                        <AMGButton size="sm" variant="ghost" onClick={() => exportSite(tenantId, site.id).catch(() => toast('error', 'Error'))}>ZIP</AMGButton>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
-        <input ref={updateRef} type="file" accept=".zip" className="hidden"
-          onChange={e => { const f = e.target.files?.[0]; if (f && updatingSiteId) handleUpdate(updatingSiteId, f); e.target.value = ''; }} />
+            <input ref={updateRef} type="file" accept=".zip" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f && updatingSiteId) handleUpdate(updatingSiteId, f); e.target.value = ''; }} />
 
-        {!activeSite && (
-          <div className="border border-border-base rounded p-4 space-y-3">
-            <p className="f-mono text-xs uppercase text-ink-2 tracking-widest">Pujar nova web (ZIP estàtic)</p>
-            <div className="flex gap-3">
-              <input
-                type="text" placeholder="domini.com" value={domain}
-                onChange={e => setDomain(e.target.value)}
-                className="flex-1 bg-bg-2 border border-border-base rounded px-3 py-1.5 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-accent"
-              />
-              <AMGButton size="sm" variant="secondary" onClick={() => fileRef.current?.click()}>
-                {file ? file.name.slice(0, 20) + (file.name.length > 20 ? '…' : '') : 'Seleccionar ZIP'}
-              </AMGButton>
-              <input ref={fileRef} type="file" accept=".zip" className="hidden" onChange={e => setFile(e.target.files?.[0] ?? null)} />
+            {!hostedSite && (
+              <div className="border border-border-base rounded p-4 space-y-3">
+                <p className="f-mono text-xs uppercase text-ink-2 tracking-widest">Pujar nova web (ZIP estàtic)</p>
+                <div className="flex gap-3 flex-wrap">
+                  <input type="text" placeholder="domini.com" value={domain} onChange={e => setDomain(e.target.value)}
+                    className="flex-1 min-w-[140px] bg-bg-2 border border-border-base rounded px-3 py-1.5 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-accent" />
+                  <AMGButton size="sm" variant="secondary" onClick={() => fileRef.current?.click()}>
+                    {file ? file.name.slice(0, 18) + '…' : 'Seleccionar ZIP'}
+                  </AMGButton>
+                  <input ref={fileRef} type="file" accept=".zip" className="hidden" onChange={e => setFile(e.target.files?.[0] ?? null)} />
+                </div>
+                <AMGButton size="sm" disabled={!file || !domain.trim() || uploading} loading={uploading} onClick={handleUpload}>Pujar i activar</AMGButton>
+              </div>
+            )}
+
+            {/* Web externa (snippets) */}
+            <div className="border-t border-border-base pt-4">
+              <p className="f-mono text-xs uppercase text-ink-2 tracking-widest mb-3">Web externa (integració amb snippets)</p>
+              {externalSite ? (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <AMGBadge tone="info">EXTERNAL</AMGBadge>
+                    <span className="text-sm text-ink-1">{externalSite.domain}</span>
+                  </div>
+                  <TenantWebSnippets site={externalSite} tenantEmail={tenantEmail} />
+                </>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-ink-3">Registra el domini extern per generar els snippets d'integració i enviar-los per email.</p>
+                  <div className="flex gap-2 flex-wrap">
+                    <input type="text" placeholder="domini-client.com" value={extDomain} onChange={e => setExtDomain(e.target.value)}
+                      className="flex-1 min-w-[140px] bg-bg-2 border border-border-base rounded px-3 py-1.5 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-accent" />
+                    <input type="text" placeholder="URL de gràcies (opcional)" value={extRedirect} onChange={e => setExtRedirect(e.target.value)}
+                      className="flex-1 min-w-[160px] bg-bg-2 border border-border-base rounded px-3 py-1.5 text-sm text-ink-0 placeholder:text-ink-3 focus:outline-none focus:border-accent" />
+                    <AMGButton size="sm" disabled={!extDomain.trim() || creatingExt} loading={creatingExt} onClick={handleCreateExternal}>
+                      Generar snippets
+                    </AMGButton>
+                  </div>
+                </div>
+              )}
             </div>
-            <AMGButton size="sm" disabled={!file || !domain.trim() || uploading} loading={uploading} onClick={handleUpload}>
-              Pujar i activar
-            </AMGButton>
-          </div>
+          </>
         )}
       </div>
     </div>
@@ -3349,7 +3454,7 @@ export default function TenantDetailPage() {
           status="neutral"
           collapsed={!!secCollapsed['hosting']} onToggle={() => toggleSec('hosting')}
         >
-          <TenantWebSection tenantId={id} />
+          <TenantWebSection tenantId={id} tenantEmail={tenant?.email ?? ''} />
         </CollapsibleSection>
 
         {/* Meta Ads Analytics */}

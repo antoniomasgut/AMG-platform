@@ -7,6 +7,7 @@ import com.amg.digitalitzacio.hosting.domain.WebSite;
 import com.amg.digitalitzacio.hosting.domain.WebSiteRepository;
 import com.amg.digitalitzacio.hosting.domain.WebsiteStatus;
 import com.amg.digitalitzacio.hosting.domain.WebsiteType;
+import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class WebHostingService {
     private final WebSiteRepository webSiteRepository;
     private final TenantRepository tenantRepository;
     private final DockerService dockerService;
+    private final EmailService emailService;
 
     @Value("${app.hosting.data-path:/data/websites}")
     private String dataPath;
@@ -383,6 +385,51 @@ public class WebHostingService {
         site.setDeployedAt(Instant.now());
 
         return toResponse(webSiteRepository.save(site));
+    }
+
+    public void sendSnippetsEmail(UUID siteId) {
+        WebSite site = webSiteRepository.findById(siteId)
+                .orElseThrow(() -> new ResourceNotFoundException("Site not found: " + siteId));
+        Tenant tenant = tenantRepository.findById(site.getTenantId())
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
+
+        String widgetSnippet = "<script src=\"" + apiBaseUrl + "/api/v1/widget/" + siteId + "/loader\" defer></script>";
+        String formSnippet = """
+                <form action="%s/api/v1/widget/%s/contact" method="POST">
+                  <input type="text"  name="name"    placeholder="Nom"      required />
+                  <input type="email" name="email"   placeholder="Email"    required />
+                  <input type="tel"   name="phone"   placeholder="Telèfon"           />
+                  <textarea           name="message" placeholder="Missatge" required></textarea>
+                  <button type="submit">Enviar</button>
+                </form>""".formatted(apiBaseUrl, siteId);
+
+        String html = """
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a">
+                  <h2 style="color:#FF6B00">Integra el xat i els formularis a la teva web</h2>
+                  <p>Hola, et fem arribar els codis d'integració per afegir el xat IA, el botó de WhatsApp i el formulari de contacte a la teva web.</p>
+
+                  <h3>1. Widget de xat IA + botó WhatsApp</h3>
+                  <p>Afegeix aquest codi just abans de <code>&lt;/body&gt;</code> a totes les pàgines on vulguis mostrar el widget:</p>
+                  <pre style="background:#f5f5f5;padding:16px;border-radius:4px;font-size:13px;overflow-x:auto">%s</pre>
+
+                  <h3>2. Formulari de contacte</h3>
+                  <p>Afegeix aquest formulari on vulguis. Quan un visitant l'envia, el missatge arriba directament al bot conversacional. Pots personalitzar l'HTML i el CSS lliurement, però no modifiquis l'<code>action</code> ni els atributs <code>name</code>:</p>
+                  <pre style="background:#f5f5f5;padding:16px;border-radius:4px;font-size:12px;overflow-x:auto">%s</pre>
+
+                  <h3>Notes importants</h3>
+                  <ul>
+                    <li>El widget de xat apareixerà automàticament quan l'agent IA estigui activat.</li>
+                    <li>El botó de WhatsApp apareixerà automàticament si tens el número configurat.</li>
+                    <li>No cal modificar el teu codi de servidor — tot és JavaScript i HTML estàtic.</li>
+                  </ul>
+
+                  <p style="color:#888;font-size:12px;margin-top:32px">AMG Digitalització · <a href="https://amgdl.com" style="color:#FF6B00">amgdl.com</a></p>
+                </div>
+                """.formatted(widgetSnippet, formSnippet);
+
+        String subject = "Integra el xat i els formularis a la teva web — " + (tenant.getBusinessName() != null ? tenant.getBusinessName() : tenant.getEmail());
+        emailService.sendEmail(tenant.getEmail(), subject, html);
+        log.info("Snippets email sent to {} for site {}", tenant.getEmail(), siteId);
     }
 
     private WebSiteResponse toResponse(WebSite site) {

@@ -139,6 +139,13 @@ public class WebHostingController {
         return ResponseEntity.ok(webHostingService.listPendingSites());
     }
 
+    @PostMapping("/admin/sites/{siteId}/send-snippets")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Void> sendSnippetsEmail(@PathVariable UUID siteId) {
+        webHostingService.sendSnippetsEmail(siteId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/admin/sites/{siteId}/approve")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<WebSiteResponse> approveSite(@PathVariable UUID siteId,
