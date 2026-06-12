@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { getSystemConfig, setSystemConfig, deleteSystemConfig, testSystemConfig, getAuditLog, TESTABLE_KEYS, type ConfigStatus } from '@/services/sysconfig';
 import { listTenants } from '@/services/admin';
 import { getModelPrices, recalculateModelPrices } from '@/services/agents-conversational';
+import { getDriveAMGStatus, shareDriveAMGFolder } from '@/services/google';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
@@ -433,6 +434,104 @@ function KeyRow({ item, onSave, onDelete, t }: {
   );
 }
 
+function DriveAMGSection() {
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState<'reader' | 'writer'>('reader');
+  const [loading, setLoading] = useState(false);
+
+  const { data: status } = useQuery({
+    queryKey: ['drive-amg-status'],
+    queryFn: getDriveAMGStatus,
+    retry: false,
+  });
+
+  const handleShare = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setLoading(true);
+    try {
+      const res = await shareDriveAMGFolder(email.trim(), role);
+      toast('success', res.message);
+      setEmail('');
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'body' in err
+        ? (err as { body: { error?: string } }).body?.error ?? 'Error desconegut'
+        : 'Error desconegut';
+      toast('error', msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="amg-card card-clip p-5 mt-6 space-y-4">
+      <div className="flex items-center gap-3 border-b border-border-base pb-3">
+        <IconSet.Database size={16} stroke="#FF6B00" />
+        <div>
+          <div className="f-display font-bold text-sm">Drive AMG — Accés a la carpeta Tenants/</div>
+          <p className="f-mono text-xs text-ink-3 mt-0.5">
+            Comparteix la carpeta centralitzada del Drive d'AMG amb membres de l'equip.
+          </p>
+        </div>
+        <div className="ml-auto">
+          {status?.saConfigured
+            ? <span className="f-mono text-xs text-green-400">SA configurada</span>
+            : <span className="f-mono text-xs text-yellow-400">SA no configurada</span>}
+        </div>
+      </div>
+
+      {!status?.saConfigured ? (
+        <p className="f-mono text-xs text-ink-2">
+          Configura <code className="bg-surface-base px-1 rounded">GOOGLE_CALENDAR_SA_JSON</code> i habilita
+          la <strong>Google Drive API</strong> al Google Cloud per poder compartir.
+        </p>
+      ) : (
+        <>
+          <div className="bg-surface-base rounded p-3 space-y-1">
+            <p className="f-mono text-xs text-ink-2">Estructura al Drive del SA:</p>
+            <pre className="f-mono text-[10px] text-ink-3 leading-relaxed">
+{`Drive AMG (service account)/
+└── Tenants/          ← carpeta que es comparteix
+    ├── Restaurant Can Pep/
+    ├── Perruqueria Maria/
+    └── ...`}
+            </pre>
+          </div>
+
+          <form onSubmit={handleShare} className="flex gap-2 items-end flex-wrap">
+            <div className="flex-1 min-w-48">
+              <label className="block f-mono text-xs text-ink-2 mb-1 uppercase tracking-wide">Email Google</label>
+              <input
+                type="email"
+                required
+                placeholder="nom@gmail.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full bg-surface-base border border-border-base rounded px-3 py-2 text-sm text-ink-0 focus:outline-none focus:border-accent"
+              />
+            </div>
+            <div>
+              <label className="block f-mono text-xs text-ink-2 mb-1 uppercase tracking-wide">Permís</label>
+              <select
+                value={role}
+                onChange={e => setRole(e.target.value as 'reader' | 'writer')}
+                className="bg-surface-base border border-border-base rounded px-3 py-2 text-sm text-ink-0 focus:outline-none focus:border-accent"
+              >
+                <option value="reader">Llegir</option>
+                <option value="writer">Editar</option>
+              </select>
+            </div>
+            <AMGButton type="submit" size="sm" loading={loading} disabled={!email.trim()}>
+              Compartir
+            </AMGButton>
+          </form>
+        </>
+      )}
+    </div>
+  );
+}
+
 function ModelPricingSection({ queryClient }: { queryClient: ReturnType<typeof useQueryClient> }) {
   const [markup, setMarkup] = useState(20);
 
@@ -708,6 +807,8 @@ export default function SystemConfigPage() {
           })
         )}
       </div>
+      {/* Drive AMG */}
+      <DriveAMGSection />
       {/* Taula de preus IA */}
       <ModelPricingSection queryClient={qc} />
     </PortalShell>

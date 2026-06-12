@@ -107,7 +107,12 @@ El Drive del SA és invisible per defecte. Per veure'l des del teu Gmail/Drive p
 
 **Opció 1 — Via portal AMG (recomanat)**
 
-Pendent d'implementar: botó "Compartir Drive AMG" a Configuració del sistema.
+```
+Portal AMG → Configuració del sistema → secció "Drive AMG — Accés a la carpeta Tenants/"
+→ Introdueix l'email Google de l'usuari
+→ Tria el permís (Llegir / Editar)
+→ Compartir
+```
 
 **Opció 2 — Manual (1 vegada)**
 

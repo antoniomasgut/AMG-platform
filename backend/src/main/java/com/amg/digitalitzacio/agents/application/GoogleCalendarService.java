@@ -530,6 +530,32 @@ public class GoogleCalendarService {
         return (String) created.get("id");
     }
 
+    /**
+     * Comparteix la carpeta Tenants/ del Drive d'AMG amb un email.
+     * role: "reader" | "writer" | "commenter"
+     * Crea la carpeta arrel si encara no existeix.
+     */
+    public void shareDriveAMGFolder(String email, String role) throws Exception {
+        String accessToken = getSaAccessTokenWithScope(DRIVE_SCOPE);
+        String folderId = getOrCreateTenantsRootFolder(accessToken);
+        String body = objectMapper.writeValueAsString(Map.of(
+                "role", role,
+                "type", "user",
+                "emailAddress", email
+        ));
+        var req = HttpRequest.newBuilder()
+                .uri(URI.create(DRIVE_API + "/files/" + folderId + "/permissions?sendNotificationEmail=false"))
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        var res = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+        if (res.statusCode() < 200 || res.statusCode() >= 300) {
+            throw new IllegalStateException("Error compartint Drive: " + res.statusCode() + " " + res.body());
+        }
+        log.info("[DriveAMG] Carpeta Tenants/ compartida amb {} ({})", email, role);
+    }
+
     private DriveDocResult uploadHtmlAsGoogleDoc(String accessToken, String html, String title, String folderId) throws Exception {
         String boundary = "amg_sa_boundary_" + java.util.UUID.randomUUID().toString().replace("-", "");
         String metadata = objectMapper.writeValueAsString(Map.of(

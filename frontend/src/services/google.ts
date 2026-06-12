@@ -55,3 +55,16 @@ export async function sendMail(tenantId: string, to: string, subject: string, bo
     body: JSON.stringify({ to, subject, body }),
   });
 }
+
+// ── Drive AMG admin ───────────────────────────────────────────
+
+export async function shareDriveAMGFolder(email: string, role: 'reader' | 'writer'): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>('/admin/drive/share', {
+    method: 'POST',
+    body: JSON.stringify({ email, role }),
+  });
+}
+
+export async function getDriveAMGStatus(): Promise<{ saConfigured: boolean }> {
+  return apiFetch<{ saConfigured: boolean }>('/admin/drive/status');
+}
