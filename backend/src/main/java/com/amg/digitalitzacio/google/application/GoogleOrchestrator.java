@@ -161,4 +161,60 @@ public class GoogleOrchestrator {
         tokenService.revoke(tenantId);
         moduleConfigRepo.deleteById(tenantId);
     }
+
+    // ── Export HTML → Google Docs ─────────────────────────────────
+
+    public record DriveDocResult(String fileId, String webViewLink) {}
+
+    /**
+     * Puja HTML a Google Drive i el converteix a Google Docs.
+     * Retorna l'ID del fitxer i el link de visualització.
+     */
+    public DriveDocResult exportHtmlToGoogleDocs(UUID tenantId, String html, String title) {
+        var creds = tokenService.getValidCredentials(tenantId);
+        var config = moduleConfigRepo.findByTenantId(tenantId)
+                .orElse(GoogleModuleConfig.defaults(tenantId));
+
+        String boundary = "amg_boundary_" + java.util.UUID.randomUUID().toString().replace("-", "");
+
+        var metadataObj = new JsonObject();
+        metadataObj.addProperty("name", title);
+        metadataObj.addProperty("mimeType", "application/vnd.google-apps.document");
+        if (config.getDriveFolderId() != null && !config.getDriveFolderId().isBlank()) {
+            var parents = new JsonArray();
+            parents.add(config.getDriveFolderId());
+            metadataObj.add("parents", parents);
+        }
+        String metadata = gson.toJson(metadataObj);
+
+        String body = "--" + boundary + "\r\n" +
+                "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+                metadata + "\r\n" +
+                "--" + boundary + "\r\n" +
+                "Content-Type: text/html; charset=UTF-8\r\n\r\n" +
+                html + "\r\n" +
+                "--" + boundary + "--";
+
+        try {
+            var request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink"))
+                    .header("Authorization", "Bearer " + creds.accessToken())
+                    .header("Content-Type", "multipart/related; boundary=" + boundary)
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+
+            var response = http.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("Drive upload failed: " + response.statusCode() + " " + response.body());
+            }
+
+            var json = gson.fromJson(response.body(), JsonObject.class);
+            return new DriveDocResult(
+                    json.get("id").getAsString(),
+                    json.has("webViewLink") ? json.get("webViewLink").getAsString() : null
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Error exportant a Google Docs: " + e.getMessage(), e);
+        }
+    }
 }

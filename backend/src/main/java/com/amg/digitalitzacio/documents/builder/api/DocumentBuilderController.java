@@ -5,13 +5,16 @@ import com.amg.digitalitzacio.documents.builder.application.DocumentBuilderServi
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -135,6 +138,58 @@ public class DocumentBuilderController {
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(service.applyAiOperations(req.templateId(), req.prompt()));
+    }
+
+    // ── Exporta plantilla a Google Docs ──────────────────────────
+
+    @PostMapping("/templates/{id}/export-drive")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<?> exportTemplateToDrive(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable UUID id,
+            @RequestParam(required = false) UUID tenantId) {
+        try {
+            var result = service.exportTemplateToDrive(id, resolveTenantId(user, tenantId));
+            return ResponseEntity.ok(Map.of(
+                    "fileId", result.fileId(),
+                    "webViewLink", result.webViewLink() != null ? result.webViewLink() : "",
+                    "title", result.title()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ── Importa plantilla des d'un PDF extern ─────────────────────
+
+    @PostMapping(value = "/templates/import-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<?> importFromPdf(
+            @AuthenticationPrincipal UserPrincipal user,
+            @RequestParam(required = false) UUID tenantId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(required = false, defaultValue = "quote") String documentType,
+            @RequestParam(required = false) String templateName) {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Fitxer PDF requerit"));
+        }
+        if (!MediaType.APPLICATION_PDF_VALUE.equals(file.getContentType())
+                && (file.getOriginalFilename() == null || !file.getOriginalFilename().endsWith(".pdf"))) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Només s'accepten fitxers PDF"));
+        }
+        try {
+            var result = service.importFromPdf(
+                    resolveTenantId(user, tenantId),
+                    file.getBytes(),
+                    documentType,
+                    templateName != null ? templateName : file.getOriginalFilename()
+            );
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
     private UUID resolveTenantId(UserPrincipal user, UUID requestedTenantId) {

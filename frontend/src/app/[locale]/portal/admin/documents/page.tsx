@@ -1,13 +1,13 @@
 'use client';
 import { Link, useRouter } from '@/i18n/navigation';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/lib/toast-context';
 import {
-  listTemplates, deleteTemplate, duplicateTemplate,
-  type TemplateResponse,
+  listTemplates, deleteTemplate, duplicateTemplate, exportTemplateToDrive, importTemplateFromPdf,
+  type TemplateResponse, type DocumentType,
   DOCUMENT_TYPES,
 } from '@/services/documents';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -53,6 +53,89 @@ function ConfirmDeleteModal({
   );
 }
 
+function ImportPdfModal({ onClose, onImported, tenantId }: {
+  onClose: () => void;
+  onImported: () => void;
+  tenantId?: string;
+}) {
+  const { toast } = useToast();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [name, setName] = useState('');
+  const [docType, setDocType] = useState<DocumentType>('quote');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) return;
+    setLoading(true);
+    try {
+      await importTemplateFromPdf(file, docType, name || file.name.replace('.pdf', ''), tenantId);
+      toast('success', 'Plantilla generada des del PDF');
+      onImported();
+      onClose();
+    } catch {
+      toast('error', 'Error processant el PDF');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="amg-card card-clip w-full max-w-md p-6 space-y-4" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <div className="f-display font-bold text-base">Importar plantilla des de PDF</div>
+          <button onClick={onClose} className="text-ink-2 hover:text-ink-0"><IconSet.X size={18} /></button>
+        </div>
+        <p className="f-mono text-xs text-ink-2">
+          Puja un pressupost o factura en PDF. La IA analitzarà l'estructura i generarà una plantilla editable.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="block f-mono text-xs text-ink-2 mb-1 uppercase tracking-wide">Fitxer PDF</label>
+            <input ref={fileRef} type="file" accept=".pdf,application/pdf" className="hidden"
+              onChange={e => setFile(e.target.files?.[0] ?? null)} />
+            <div
+              className="border border-dashed border-border-base rounded p-4 text-center cursor-pointer hover:border-accent transition-colors"
+              onClick={() => fileRef.current?.click()}
+            >
+              {file ? (
+                <span className="f-mono text-xs text-ink-1">{file.name}</span>
+              ) : (
+                <span className="f-mono text-xs text-ink-3">Fes clic per seleccionar un PDF</span>
+              )}
+            </div>
+          </div>
+          <div>
+            <label className="block f-mono text-xs text-ink-2 mb-1 uppercase tracking-wide">Nom de la plantilla</label>
+            <input
+              className="w-full bg-surface-base border border-border-base rounded px-3 py-2 text-sm text-ink-0 focus:outline-none focus:border-accent"
+              placeholder="Ex: Pressupost pintura 2026"
+              value={name} onChange={e => setName(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block f-mono text-xs text-ink-2 mb-1 uppercase tracking-wide">Tipus de document</label>
+            <select
+              className="w-full bg-surface-base border border-border-base rounded px-3 py-2 text-sm text-ink-0 focus:outline-none focus:border-accent"
+              value={docType} onChange={e => setDocType(e.target.value as DocumentType)}
+            >
+              {DOCUMENT_TYPES.map(dt => <option key={dt.value} value={dt.value}>{dt.label}</option>)}
+            </select>
+          </div>
+          <div className="flex gap-3 pt-1">
+            <AMGButton type="submit" disabled={!file} loading={loading} className="flex-1 justify-center">
+              Generar plantilla
+            </AMGButton>
+            <AMGButton type="button" variant="outline" onClick={onClose}>Cancel·lar</AMGButton>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDocumentsPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -60,6 +143,8 @@ export default function AdminDocumentsPage() {
   const searchParams = useSearchParams();
   const forTenantId = searchParams.get('tenantId') ?? undefined;
   const [deleteTarget, setDeleteTarget] = useState<TemplateResponse | null>(null);
+  const [showImportPdf, setShowImportPdf] = useState(false);
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ['document-templates', forTenantId],
@@ -87,6 +172,19 @@ export default function AdminDocumentsPage() {
     onError: () => toast('error', 'Error duplicant la plantilla'),
   });
 
+  const handleExportDrive = async (templateId: string) => {
+    setExportingId(templateId);
+    try {
+      const result = await exportTemplateToDrive(templateId, forTenantId);
+      toast('success', 'Plantilla exportada a Google Docs');
+      if (result.webViewLink) window.open(result.webViewLink, '_blank');
+    } catch {
+      toast('error', 'Error exportant. Comprova que Google Drive està connectat.');
+    } finally {
+      setExportingId(null);
+    }
+  };
+
   return (
     <PortalShell breadcrumb="admin · documents">
       <div className="p-4 sm:p-8 space-y-6">
@@ -95,9 +193,14 @@ export default function AdminDocumentsPage() {
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / admin / documents /</span>
             <div className="f-display font-bold text-xl mt-1">Plantilles de documents</div>
           </div>
-          <AMGButton size="sm" icon={IconSet.Plus} onClick={() => router.push(`/portal/admin/documents/new${forTenantId ? `?tenantId=${forTenantId}` : ''}`)}>
-            Nova plantilla
-          </AMGButton>
+          <div className="flex gap-2">
+            <AMGButton size="sm" variant="secondary" icon={IconSet.Upload} onClick={() => setShowImportPdf(true)}>
+              Importar PDF
+            </AMGButton>
+            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => router.push(`/portal/admin/documents/new${forTenantId ? `?tenantId=${forTenantId}` : ''}`)}>
+              Nova plantilla
+            </AMGButton>
+          </div>
         </div>
 
         <div className="flex gap-3 border-b border-border-base pb-3">
@@ -174,6 +277,13 @@ export default function AdminDocumentsPage() {
                           <AMGButton size="sm" variant="ghost" onClick={() => doDuplicate(t.id)}>
                             <IconSet.Copy size={14} />
                           </AMGButton>
+                          <AMGButton
+                            size="sm" variant="ghost"
+                            loading={exportingId === t.id}
+                            onClick={() => handleExportDrive(t.id)}
+                          >
+                            <IconSet.Link size={14} />
+                          </AMGButton>
                           <AMGButton size="sm" variant="ghost" onClick={() => setDeleteTarget(t)}>
                             <IconSet.Trash size={14} />
                           </AMGButton>
@@ -194,6 +304,13 @@ export default function AdminDocumentsPage() {
           onClose={() => setDeleteTarget(null)}
           onConfirm={() => doDelete(deleteTarget.id)}
           loading={deleting}
+        />
+      )}
+      {showImportPdf && (
+        <ImportPdfModal
+          tenantId={forTenantId}
+          onClose={() => setShowImportPdf(false)}
+          onImported={invalidate}
         />
       )}
     </PortalShell>

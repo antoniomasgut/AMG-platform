@@ -958,3 +958,39 @@ export async function applyAiOperations(templateId: string, prompt: string): Pro
     body: JSON.stringify({ templateId, prompt }),
   });
 }
+
+export interface ExportDriveResult {
+  fileId: string;
+  webViewLink: string;
+  title: string;
+}
+
+export async function exportTemplateToDrive(templateId: string, tenantId?: string): Promise<ExportDriveResult> {
+  const qs = tenantId ? `?tenantId=${tenantId}` : '';
+  return apiFetch<ExportDriveResult>(`/documents/templates/${templateId}/export-drive${qs}`, { method: 'POST' });
+}
+
+export async function importTemplateFromPdf(
+  file: File,
+  documentType: DocumentType,
+  templateName: string,
+  tenantId?: string,
+): Promise<TemplateResponse> {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('documentType', documentType);
+  form.append('templateName', templateName);
+  if (tenantId) form.append('tenantId', tenantId);
+
+  const qs = tenantId ? `?tenantId=${tenantId}` : '';
+  const res = await fetch(`/api/v1/documents/templates/import-pdf${qs}`, {
+    method: 'POST',
+    body: form,
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw { status: res.status, body: err };
+  }
+  return res.json();
+}

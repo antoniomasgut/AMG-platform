@@ -2,6 +2,8 @@ package com.amg.digitalitzacio.documents.builder.application;
 
 import com.amg.digitalitzacio.documents.builder.api.dto.*;
 import com.amg.digitalitzacio.documents.builder.domain.*;
+import com.amg.digitalitzacio.google.application.GoogleOrchestrator;
+import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import com.amg.digitalitzacio.shared.storage.StorageProviderRouter;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -10,6 +12,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.xhtmlrenderer.pdf.ITextRenderer;
@@ -47,6 +51,8 @@ public class DocumentBuilderService {
     private final DocumentNumberSequenceRepository seqRepo;
     private final ObjectMapper objectMapper;
     private final StorageProviderRouter storageRouter;
+    private final GoogleOrchestrator googleOrchestrator;
+    private final AIProviderRouter aiProviderRouter;
 
     public List<TemplateResponse> listTemplates(UUID tenantId) {
         return templateRepo.findByTenantIdOrderByUpdatedAtDesc(tenantId).stream()
@@ -619,5 +625,112 @@ public class DocumentBuilderService {
             }
         }
         return d.getPdfUrl() != null ? d.getPdfUrl() : "/api/v1/documents/" + documentId + "/pdf";
+    }
+
+    // ── Opció A: Exporta plantilla a Google Docs ──────────────────
+
+    public record ExportDriveResult(String fileId, String webViewLink, String title) {}
+
+    public ExportDriveResult exportTemplateToDrive(UUID templateId, UUID tenantId) {
+        var t = templateRepo.findById(templateId)
+                .orElseThrow(() -> new NoSuchElementException("Template not found: " + templateId));
+        String html = previewTemplate(templateId);
+        String title = t.getName() + " — plantilla";
+        var result = googleOrchestrator.exportHtmlToGoogleDocs(tenantId, html, title);
+        return new ExportDriveResult(result.fileId(), result.webViewLink(), title);
+    }
+
+    // ── Opció B: Importa plantilla des d'un PDF extern ────────────
+
+    private static final String BLOCK_TYPES_HINT = """
+        Tipus de blocs disponibles:
+        document_title, document_number, document_date, document_validity,
+        company_info, customer_info, products_table, services_table,
+        subtotal, discount, tax, total,
+        text (amb camp "text"), rich_text (amb camp "html"),
+        separator, terms (amb camp "text"), conditions (amb camp "text"),
+        signature, logo, page_break
+        """;
+
+    @Transactional
+    public TemplateResponse importFromPdf(UUID tenantId, byte[] pdfBytes, String documentType, String templateName) {
+        String extractedText = extractPdfText(pdfBytes);
+
+        String prompt = """
+                Analitza aquest document (extret d'un PDF) i genera un array JSON de blocs per al sistema de plantilles AMG.
+
+                Tipus de document: %s
+
+                %s
+
+                Regles:
+                - Cada bloc és un objecte JSON amb el camp "type" obligatori
+                - Per als blocs "text", "terms", "conditions": afegeix el camp "text" amb el contingut real
+                - Per als blocs "rich_text": afegeix el camp "html" amb contingut HTML simple
+                - No inventes camps que no existeixin a la llista de blocs
+                - Retorna ÚNICAMENT l'array JSON, sense cap text addicional
+
+                Document:
+                ---
+                %s
+                ---
+                """.formatted(documentType, BLOCK_TYPES_HINT, extractedText.substring(0, Math.min(extractedText.length(), 3000)));
+
+        var ai = aiProviderRouter.forModel("claude-haiku-4-5-20251001");
+        String layoutJson = ai.chat(
+                "Ets un analitzador de documents que genera JSON estructurat per a plantilles. Retorna sempre JSON vàlid.",
+                List.of(),
+                prompt
+        );
+
+        // Neteja la resposta: extreu l'array JSON
+        if (layoutJson != null) {
+            int start = layoutJson.indexOf('[');
+            int end = layoutJson.lastIndexOf(']');
+            if (start >= 0 && end > start) {
+                layoutJson = layoutJson.substring(start, end + 1);
+            }
+        }
+
+        // Valida que és JSON vàlid
+        try {
+            objectMapper.readTree(layoutJson);
+        } catch (Exception e) {
+            log.warn("Claude va generar JSON invàlid, usant layout mínim: {}", e.getMessage());
+            layoutJson = """
+                    [
+                      {"type":"company_info"},
+                      {"type":"separator"},
+                      {"type":"customer_info"},
+                      {"type":"document_number"},
+                      {"type":"document_date"},
+                      {"type":"services_table"},
+                      {"type":"subtotal"},
+                      {"type":"tax"},
+                      {"type":"total"},
+                      {"type":"signature"}
+                    ]
+                    """;
+        }
+
+        var t = new DocumentTemplate();
+        t.setTenantId(tenantId);
+        t.setName(templateName != null && !templateName.isBlank() ? templateName : "Plantilla importada");
+        t.setDocumentType(documentType != null ? documentType : "quote");
+        t.setLayout(layoutJson);
+        t.setDataBindings("{}");
+        t.setStyles("{}");
+        var saved = templateRepo.save(t);
+        saveVersionSnapshot(saved, "Importat des de PDF");
+        return toTemplateResponse(saved);
+    }
+
+    private String extractPdfText(byte[] pdfBytes) {
+        try (var doc = PDDocument.load(pdfBytes)) {
+            var stripper = new PDFTextStripper();
+            return stripper.getText(doc);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("No s'ha pogut llegir el PDF: " + e.getMessage(), e);
+        }
     }
 }
