@@ -40,6 +40,8 @@ public class Budget {
     @Column(length = 255) private String rejectedReason;
     @Column(length = 50) private String sector;
     @Column(length = 50) private String businessSize;
+    private UUID leadId;
+    private Integer offerPercent;
     @CreatedDate @Column(updatable = false) private Instant createdAt;
     @LastModifiedDate private Instant updatedAt;
 }

@@ -10,4 +10,5 @@ public record UpdateBudgetRequest(UUID profileId, List<UUID> phaseIds, List<UUID
                                    String recommendation, List<UUID> recommendedPhaseIds,
                                    List<Integer> phaseNumbers,
                                    String sector, String businessSize,
-                                   List<CreateBudgetRequest.CustomLineRequest> customLines) {}
+                                   List<CreateBudgetRequest.CustomLineRequest> customLines,
+                                   Integer offerPercent) {}

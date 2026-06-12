@@ -32,6 +32,13 @@ public class BillingController {
         return billingService.createBudget(tenantId, request);
     }
 
+    @PostMapping("/leads/{leadId}/proposal")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public BudgetResponse createLeadProposal(@PathVariable UUID leadId, @Valid @RequestBody CreateBudgetRequest request) {
+        return billingService.createLeadProposal(leadId, request);
+    }
+
     @GetMapping("/tenants/{tenantId}/budgets")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     public Page<BudgetResponse> listBudgets(@PathVariable UUID tenantId,

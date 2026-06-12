@@ -1,7 +1,7 @@
 # Mòdul 07: Billing — Pressupostos i Descomptes
 
-> **Versió:** 1.1
-> **Data:** 2026-05-15
+> **Versió:** 1.2
+> **Data:** 2026-06-11
 > **Dependències:** Mòdul 01 (Auth), Mòdul 02 (Vault) — inclou flux d'intake, selecció de fases a pressupostar, i transició d'estats en acceptar pressupost
 
 ---
@@ -77,10 +77,14 @@
 | acceptedAt | Instant | @Column | |
 | rejectedAt | Instant | @Column | |
 | rejectedReason | String(255) | @Column | |
+| leadId | UUID | @Column | FK lògica a Lead (null si no prové d'una entrevista) |
+| offerPercent | Integer | @Column | Descompte d'oferta directa en % (0–100, null = sense oferta especial) |
+| sector | String(50) | @Column(length=50) | Sector del client (denormalitzat del ServiceProfile) |
+| businessSize | String(50) | @Column(length=50) | Mida empresa (denormalitzat del ServiceProfile) |
 | createdAt | Instant | @CreatedDate | |
 | updatedAt | Instant | @LastModifiedDate | |
 
-**Índexs:** (tenantId, status), (tenantId, budgetNumber)
+**Índexs:** `(tenantId, status)`, `(tenantId, budgetNumber)`, `(lead_id) WHERE lead_id IS NOT NULL`
 
 **BudgetStatus enum:** `DRAFT`, `SENT`, `ACCEPTED`, `REJECTED`, `EXPIRED`, `CANCELLED`
 

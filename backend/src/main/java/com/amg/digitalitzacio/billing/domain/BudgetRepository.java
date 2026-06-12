@@ -15,6 +15,7 @@ public interface BudgetRepository extends JpaRepository<Budget, UUID> {
     Page<Budget> findAllByOrderByCreatedAtDesc(Pageable pageable);
     Page<Budget> findByStatusOrderByCreatedAtDesc(BudgetStatus status, Pageable pageable);
     Optional<Budget> findByAcceptanceToken(String acceptanceToken);
+    Optional<Budget> findFirstByLeadIdOrderByCreatedAtDesc(UUID leadId);
     long countByTenantIdAndStatus(UUID tenantId, BudgetStatus status);
     long countByTenantId(UUID tenantId);
     void deleteByTenantId(UUID tenantId);

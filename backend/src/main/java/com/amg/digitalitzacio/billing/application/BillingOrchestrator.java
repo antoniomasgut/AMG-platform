@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.billing.application;
 import com.amg.digitalitzacio.auth.domain.*;
 import com.amg.digitalitzacio.billing.api.dto.*;
 import com.amg.digitalitzacio.billing.domain.*;
+import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.vault.application.InvoiceService;
 import com.amg.digitalitzacio.vault.application.PaymentService;
@@ -43,6 +44,7 @@ public class BillingOrchestrator implements BillingService {
     private final PaymentService paymentService;
     private final TenantRepository tenantRepository;
     private final NexePricingFormula pricingFormula;
+    private final LeadRepository leadRepository;
 
     @Override
     @Transactional
@@ -117,7 +119,8 @@ public class BillingOrchestrator implements BillingService {
         }
 
         var discountTotal = applyDiscounts(request.discountIds(), subtotal);
-        var total = subtotal.subtract(discountTotal);
+        var offerDiscount = computeOfferDiscount(subtotal, request.offerPercent());
+        var total = subtotal.subtract(discountTotal).subtract(offerDiscount);
         var validUntil = request.validUntil() != null ? request.validUntil() : LocalDate.now().plus(30, ChronoUnit.DAYS);
 
         var recPhaseIds = request.recommendedPhaseIds() != null
@@ -145,6 +148,8 @@ public class BillingOrchestrator implements BillingService {
                 .validUntil(validUntil)
                 .sector(resolvedSector)
                 .businessSize(resolvedSize)
+                .leadId(request.leadId())
+                .offerPercent(request.offerPercent())
                 .build();
         budget = budgetRepository.save(budget);
 
@@ -265,9 +270,12 @@ public class BillingOrchestrator implements BillingService {
         }
 
         var discountTotal = applyDiscounts(request.discountIds(), subtotal);
+        var offerPct = request.offerPercent() != null ? request.offerPercent() : budget.getOfferPercent();
+        var offerDiscount = computeOfferDiscount(subtotal, offerPct);
         budget.setSubtotal(subtotal);
         budget.setDiscountTotal(discountTotal);
-        budget.setTotal(subtotal.subtract(discountTotal));
+        budget.setOfferPercent(offerPct);
+        budget.setTotal(subtotal.subtract(discountTotal).subtract(offerDiscount));
         if (request.validUntil() != null) budget.setValidUntil(request.validUntil());
         if (request.notes() != null) budget.setNotes(request.notes());
         if (request.clientNotes() != null) budget.setClientNotes(request.clientNotes());
@@ -436,6 +444,28 @@ public class BillingOrchestrator implements BillingService {
         }
 
         return new DashboardResponse((int) pending, lastBudget, totalSpent, List.of());
+    }
+
+    private BigDecimal computeOfferDiscount(BigDecimal subtotal, Integer offerPercent) {
+        if (offerPercent == null || offerPercent <= 0) return BigDecimal.ZERO;
+        return subtotal.multiply(BigDecimal.valueOf(offerPercent))
+                .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+    }
+
+    @Override
+    @Transactional
+    public BudgetResponse createLeadProposal(UUID leadId, CreateBudgetRequest request) {
+        var lead = leadRepository.findById(leadId)
+                .orElseThrow(() -> new com.amg.digitalitzacio.shared.exception.ResourceNotFoundException("Lead " + leadId));
+        var sector = request.sector() != null ? request.sector() : lead.getInterviewSector();
+        var size = request.businessSize() != null ? request.businessSize() : lead.getInterviewBusinessSize();
+        var merged = new CreateBudgetRequest(
+                request.profileId(), request.phaseIds(), request.addonIds(),
+                request.notes(), request.clientNotes(), request.discountIds(),
+                request.validUntil(), request.recommendation(), request.recommendedPhaseIds(),
+                request.phaseNumbers(), sector, size, request.customLines(),
+                leadId, request.offerPercent());
+        return createBudget(lead.getTenantId(), merged);
     }
 
     private BigDecimal applyDiscounts(List<UUID> discountIds, BigDecimal subtotal) {
@@ -614,6 +644,7 @@ public class BillingOrchestrator implements BillingService {
                 budget.getRecommendation(), recPhaseIds,
                 phaseNumbers.isEmpty() ? null : phaseNumbers,
                 budget.getSector(), budget.getBusinessSize(),
-                customLinesList.isEmpty() ? null : customLinesList);
+                customLinesList.isEmpty() ? null : customLinesList,
+                budget.getLeadId(), budget.getOfferPercent());
     }
 }

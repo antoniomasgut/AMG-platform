@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public interface BillingService {
     BudgetResponse createBudget(UUID tenantId, CreateBudgetRequest request);
+    BudgetResponse createLeadProposal(UUID leadId, CreateBudgetRequest request);
     Page<BudgetResponse> listBudgets(UUID tenantId, String status, int page, int size);
     Page<BudgetResponse> listAllBudgets(String status, UUID tenantId, int page, int size);
     BudgetResponse getBudget(UUID budgetId, boolean includeInternalNotes);

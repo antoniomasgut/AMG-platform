@@ -16,6 +16,8 @@ export interface BudgetResponse {
   phaseNumbers: number[] | null;
   sector: string | null; businessSize: string | null;
   customLines: BudgetCustomLine[] | null;
+  leadId: string | null;
+  offerPercent: number | null;
 }
 
 export interface BudgetSummary { id: string; budgetNumber: string; total: number; status: string; sentAt: string | null; }
@@ -80,6 +82,8 @@ export interface CreateBudgetRequest {
   sector?: string;
   businessSize?: string;
   customLines?: CustomLineRequest[];
+  leadId?: string;
+  offerPercent?: number;
 }
 
 export const createBudget = (tenantId: string, data: CreateBudgetRequest) =>
@@ -91,6 +95,12 @@ export const createBudget = (tenantId: string, data: CreateBudgetRequest) =>
 export const updateBudget = (id: string, data: CreateBudgetRequest) =>
   apiFetch<BudgetResponse>(`/billing/budgets/${id}`, {
     method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
+export const createLeadProposal = (leadId: string, data: CreateBudgetRequest) =>
+  apiFetch<BudgetResponse>(`/billing/leads/${leadId}/proposal`, {
+    method: 'POST',
     body: JSON.stringify(data),
   });
 

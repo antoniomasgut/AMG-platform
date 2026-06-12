@@ -18,7 +18,8 @@ public record BudgetResponse(
     String recommendation, List<UUID> recommendedPhaseIds,
     List<Integer> phaseNumbers,
     String sector, String businessSize,
-    List<CustomLine> customLines
+    List<CustomLine> customLines,
+    UUID leadId, Integer offerPercent
 ) {
     public record BudgetPhase(String name, Integer sortOrder, List<BudgetLine> lines,
                                BigDecimal phaseTotal, BigDecimal phaseMonthlyTotal,
