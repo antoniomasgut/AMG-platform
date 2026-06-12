@@ -1,9 +1,9 @@
 services:
 
   backend:
-    image: amg-backend:latest
+    image: infra-backend:latest
     pull_policy: never
-    container_name: amg-backend
+    container_name: amg_backend
     restart: unless-stopped
     networks:
       - coolify
@@ -22,6 +22,11 @@ services:
       VAULT_MASTER_KEY: ${VAULT_MASTER_KEY}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS}
     labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`api.amgdl.com`)"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
       - "traefik.http.routers.backend.middlewares=secureHeaders,rateLimit,corsApi@file"
 
   amg_frontend:
@@ -37,6 +42,11 @@ services:
       HOSTNAME: 0.0.0.0
       NEXT_TELEMETRY_DISABLED: "1"
     labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`amgdl.com`) || Host(`www.amgdl.com`)"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
       - "traefik.http.routers.frontend.middlewares=secureHeaders"
 
 networks:

@@ -74,9 +74,9 @@ if $BUILD_BACKEND; then
   step "4. Build backend (pot trigar ~3 min)"
   ssh "$PROD_HOST" "
     cd $PROD_REPO/backend
-    docker build -t amg-backend:latest . 2>&1 | grep -E '#[0-9]+|ERROR|Successfully' | tail -15
+    docker build -t infra-backend:latest . 2>&1 | grep -E '#[0-9]+|ERROR|Successfully' | tail -15
   "
-  ok "Imatge amg-backend:latest construïda"
+  ok "Imatge infra-backend:latest construïda"
 else
   ok "4. Backend skipped (--no-backend)"
 fi
@@ -97,7 +97,7 @@ fi
 step "6. Reiniciant serveis"
 ssh "$PROD_HOST" "
   cd $PROD_REPO/infra
-  docker compose -f docker-compose.deploy.yml --env-file $PROD_ENV up -d 2>&1 | grep -v '^#'
+  docker compose -f docker-compose.deploy.yml --env-file $PROD_ENV up -d --remove-orphans 2>&1 | grep -v '^#'
 "
 ok "Contenidors actualitzats"
 
@@ -107,7 +107,7 @@ ok "Imatges dangling eliminades"
 
 # ── 8. Health check backend ───────────────────────────────────────────────
 step "7. Health check"
-MAX_RETRIES=30  # 2.5 minuts
+MAX_RETRIES=48  # 4 minuts
 RETRY=0
 echo -n "  Esperant backend"
 until curl -sf "$HEALTH_URL" > /dev/null 2>&1; do
