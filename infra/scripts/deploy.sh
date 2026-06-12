@@ -11,7 +11,7 @@ set -euo pipefail
 
 # ── Configuració ──────────────────────────────────────────────────────────
 PROD_HOST="root@65.108.148.62"
-PROD_REPO="/opt/amg/repo"
+PROD_REPO="/opt/amg"
 PROD_ENV="/opt/amg/.env"
 API_URL="https://api.amgdl.com"
 HEALTH_URL="https://api.amgdl.com/actuator/health"
@@ -73,10 +73,10 @@ ok "Codi actualitzat a $PROD_HOST"
 if $BUILD_BACKEND; then
   step "4. Build backend (pot trigar ~3 min)"
   ssh "$PROD_HOST" "
-    cd $PROD_REPO/backend
-    docker build -t infra-backend:latest . 2>&1 | grep -E '#[0-9]+|ERROR|Successfully' | tail -15
+    cd $PROD_REPO/infra
+    docker compose -f docker-compose.yml --env-file $PROD_ENV build --no-cache backend 2>&1 | grep -E '#[0-9]+|ERROR|Successfully|Step' | tail -15
   "
-  ok "Imatge infra-backend:latest construïda"
+  ok "Imatge backend construïda"
 else
   ok "4. Backend skipped (--no-backend)"
 fi
@@ -85,10 +85,10 @@ fi
 if $BUILD_FRONTEND; then
   step "5. Build frontend (pot trigar ~2 min)"
   ssh "$PROD_HOST" "
-    cd $PROD_REPO/frontend
-    docker build --build-arg NEXT_PUBLIC_API_URL=$API_URL -t infra-frontend:latest . 2>&1 | grep -E '#[0-9]+|ERROR|Successfully' | tail -15
+    cd $PROD_REPO/infra
+    docker compose -f docker-compose.yml --env-file $PROD_ENV build frontend 2>&1 | grep -E '#[0-9]+|ERROR|Successfully|Step' | tail -15
   "
-  ok "Imatge infra-frontend:latest construïda (NEXT_PUBLIC_API_URL=$API_URL)"
+  ok "Imatge frontend construïda"
 else
   ok "5. Frontend skipped (--no-frontend)"
 fi
@@ -97,7 +97,7 @@ fi
 step "6. Reiniciant serveis"
 ssh "$PROD_HOST" "
   cd $PROD_REPO/infra
-  docker compose -f docker-compose.deploy.yml --env-file $PROD_ENV up -d --remove-orphans 2>&1 | grep -v '^#'
+  docker compose -f docker-compose.yml --env-file $PROD_ENV up -d backend frontend 2>&1 | grep -v '^#'
 "
 ok "Contenidors actualitzats"
 
