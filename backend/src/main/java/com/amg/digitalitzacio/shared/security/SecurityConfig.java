@@ -139,6 +139,9 @@ public class SecurityConfig {
 
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/v1/widget/**", widgetConfig);
+        // Chat i engine: cridades des de landings en dominis externs
+        source.registerCorsConfiguration("/api/v1/chat/**", widgetConfig);
+        source.registerCorsConfiguration("/api/v1/engine/render/**", widgetConfig);
         source.registerCorsConfiguration("/**", config);
         return source;
     }

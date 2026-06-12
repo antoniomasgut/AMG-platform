@@ -3,6 +3,7 @@
 import { useState, useEffect, type FC } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getChatContext, saveChatContext, deleteChatContext } from '@/services/factory';
+import { useEditorStore } from '@/store/editor';
 
 const EXAMPLE_PROMPT = `Ets l'assistent virtual de [NOM DEL NEGOCI], [descripció breu] a [Ciutat].
 
@@ -33,6 +34,9 @@ export const ChatContextPanel: FC<Props> = ({ landingId }) => {
   const [saved, setSaved] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [hasContext, setHasContext] = useState(false);
+  const styles = useEditorStore((s) => s.styles);
+  const setStyles = useEditorStore((s) => s.setStyles);
+  const chatEnabled = styles.chatEnabled ?? false;
 
   const { data, isLoading } = useQuery({
     queryKey: ['chat-context', landingId],
@@ -90,6 +94,21 @@ export const ChatContextPanel: FC<Props> = ({ landingId }) => {
           <span className="ml-auto f-mono text-[9px] text-green-400">Actiu</span>
         )}
       </div>
+
+      {/* Toggle widget visible */}
+      <label className="flex items-center gap-3 cursor-pointer group">
+        <div
+          onClick={() => setStyles({ chatEnabled: !chatEnabled })}
+          className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${chatEnabled ? 'bg-[#FF6B00]' : 'bg-border-medium'}`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${chatEnabled ? 'translate-x-5' : ''}`}
+          />
+        </div>
+        <span className="text-xs text-ink-1 group-hover:text-ink-0 transition leading-tight">
+          Mostra el widget de xat flotant a la landing
+        </span>
+      </label>
 
       <p className="text-xs text-ink-3 leading-relaxed">
         El bot respon als visitants de la landing usant aquest context.

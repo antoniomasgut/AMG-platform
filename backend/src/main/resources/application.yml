@@ -61,6 +61,8 @@ app:
 
   landing:
     base-domain: ${LANDING_BASE_DOMAIN:webs.amgdl.com}
+  api:
+    url: ${APP_API_URL:https://api.amgdl.com}
 
   traefik:
     dynamic-config-dir: ${TRAEFIK_DYNAMIC_DIR:}

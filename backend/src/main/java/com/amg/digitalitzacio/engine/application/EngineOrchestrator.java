@@ -33,6 +33,9 @@ public class EngineOrchestrator implements EngineService {
     @Value("${app.landing.base-domain:webs.amgdl.com}")
     private String landingBaseDomain;
 
+    @Value("${app.api.url:https://api.amgdl.com}")
+    private String apiBaseUrl;
+
     private final LandingRepository landingRepository;
     private final LandingVersionRepository landingVersionRepository;
     private final ContactLeadRepository contactLeadRepository;
@@ -991,13 +994,13 @@ public class EngineOrchestrator implements EngineService {
                "cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0\">" +
                "<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"#fff\"><path d=\"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z\"/></svg>" +
                "</button></div></div></div>" +
-               buildChatScript(landingSlug);
+               buildChatScript(landingSlug, apiBaseUrl);
     }
 
-    private String buildChatScript(String landingSlug) {
+    private String buildChatScript(String landingSlug, String apiBase) {
         return "<script>(function(){" +
                "var SLUG='" + escapeJs(landingSlug) + "';" +
-               "var BASE='/api/v1/chat';" +
+               "var BASE='" + escapeJs(apiBase.replaceAll("/+$", "")) + "/api/v1/chat';" +
                "var sessionId=localStorage.getItem('amg_chat_sid_'+SLUG);" +
                "var panel=null,msgs=null,input=null,footer=null,prechat=null,opened=false;" +
                "function init(){" +

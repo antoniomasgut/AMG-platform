@@ -36,6 +36,9 @@ export interface PageStyles {
   phone?: string;
   address?: string;
   businessType?: string;
+  // Widget de xat flotant
+  chatEnabled?: boolean;
+  chatBusinessName?: string;
   /** @deprecated use fontHeading/fontBody */
   fontFamily?: string;
   /** @deprecated use accentColor */
