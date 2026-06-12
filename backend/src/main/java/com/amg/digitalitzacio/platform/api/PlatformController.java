@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.platform.api;
 
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.platform.api.dto.PlatformRecommendation;
 import com.amg.digitalitzacio.platform.application.PlatformRecommendationService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
@@ -21,13 +22,19 @@ public class PlatformController {
 
     private final PlatformRecommendationService recommendationService;
     private final SystemConfigService sysConfig;
+    private final TenantRepository tenantRepository;
 
-    /** Retorna el tenantId de la plataforma AMG (PLATFORM_TENANT_ID) */
+    /** Retorna el tenantId de la plataforma AMG — sempre resolt (PLATFORM_TENANT_ID o tenant isOwner) */
     @GetMapping("/self")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Map<String, String>> getSelf() {
         String tenantId = sysConfig.get("PLATFORM_TENANT_ID");
-        return ResponseEntity.ok(Map.of("tenantId", tenantId != null ? tenantId : ""));
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = tenantRepository.findByIsOwnerTrue()
+                    .map(t -> t.getId().toString())
+                    .orElse("");
+        }
+        return ResponseEntity.ok(Map.of("tenantId", tenantId));
     }
 
     /** Recomanacions de connectivitat/qualitat per al client */

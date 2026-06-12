@@ -17,21 +17,16 @@ function SetupBanner({ locale }: { locale: string }) {
       <div className="flex items-start gap-3">
         <IconSet.AlertCircle size={18} className="text-[#FF6B00] mt-0.5 flex-shrink-0" />
         <div>
-          <h2 className="text-sm font-semibold text-ink-1">Tenant de plataforma no configurat</h2>
+          <h2 className="text-sm font-semibold text-ink-1">Workspace AMG no disponible</h2>
           <p className="text-xs text-ink-2 mt-1">
-            Per fer servir els serveis d'AMG Digitalitzacions (agents, leads, Meta Ads...)
-            sense crear un tenant client, cal assignar un <strong>PLATFORM_TENANT_ID</strong>.
+            No s'ha pogut trobar el tenant propietari. Normalment s'auto-crea a l'inici.
+            Si el problema persisteix, reinicia el servei backend.
           </p>
         </div>
       </div>
-      <div className="pl-6 space-y-2 text-xs text-ink-2">
-        <p>1. Crea un tenant nou a <a href={`/${locale}/portal/admin/tenants`} className="text-accent-light hover:underline">Clients → Tenants</a> amb nom "AMG Digitalitzacions".</p>
-        <p>2. Copia el UUID i ves a <a href={`/${locale}/portal/platform/config`} className="text-accent-light hover:underline">Configuració</a> → secció GENERAL → camp <code className="bg-surface-overlay px-1 rounded">PLATFORM_TENANT_ID</code>.</p>
-        <p>3. Torna aquí — apareixerà el resum de la plataforma.</p>
-      </div>
       <div className="pl-6">
-        <AMGButton size="sm" onClick={() => window.location.href = `/${locale}/portal/platform/config`}>
-          Anar a Configuració →
+        <AMGButton size="sm" onClick={() => window.location.reload()}>
+          Recarregar
         </AMGButton>
       </div>
     </div>
@@ -112,6 +107,20 @@ export default function PlatformHubPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {([
                 {
+                  label: 'Google Workspace',
+                  desc: 'Connecta el Google d\'AMG per a Calendar, Drive, Gmail i Sheets propis',
+                  icon: '🔗',
+                  href: `/${locale}/portal/admin/tenants/${platformTenantId}/google`,
+                  badge: undefined,
+                },
+                {
+                  label: 'Automatitzacions',
+                  desc: 'Workflows n8n per a processos interns d\'AMG Digitalitzacions',
+                  icon: '⚡',
+                  href: `/${locale}/portal/admin/tenants/${platformTenantId}/automations`,
+                  badge: undefined,
+                },
+                {
                   label: 'Meta Ads AMG',
                   desc: 'Campanyes de Facebook i Instagram Ads per a AMG Digitalitzacions',
                   icon: '📢',
@@ -134,7 +143,7 @@ export default function PlatformHubPage() {
                 },
                 {
                   label: 'Configuració',
-                  desc: 'Claus API, PLATFORM_TENANT_ID i paràmetres del sistema',
+                  desc: 'Claus API i paràmetres del sistema',
                   icon: '⚙️',
                   href: `/${locale}/portal/platform/config`,
                   badge: undefined,

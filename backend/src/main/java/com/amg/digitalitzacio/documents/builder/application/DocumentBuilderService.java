@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
@@ -736,7 +737,13 @@ public class DocumentBuilderService {
         var t = new DocumentTemplate();
         t.setTenantId(tenantId);
         t.setName(templateName != null && !templateName.isBlank() ? templateName : "Plantilla importada");
-        t.setDocumentType(documentType != null ? documentType : "quote");
+        DocumentType docType;
+        try {
+            docType = documentType != null ? DocumentType.valueOf(documentType) : DocumentType.quote;
+        } catch (IllegalArgumentException ex) {
+            docType = DocumentType.quote;
+        }
+        t.setDocumentType(docType);
         t.setLayout(layoutJson);
         t.setDataBindings("{}");
         t.setStyles("{}");
@@ -746,7 +753,7 @@ public class DocumentBuilderService {
     }
 
     private String extractPdfText(byte[] pdfBytes) {
-        try (var doc = PDDocument.load(pdfBytes)) {
+        try (var doc = Loader.loadPDF(pdfBytes)) {
             var stripper = new PDFTextStripper();
             return stripper.getText(doc);
         } catch (Exception e) {

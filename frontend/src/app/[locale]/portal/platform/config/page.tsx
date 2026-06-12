@@ -183,12 +183,8 @@ export default function PlatformConfigPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-3 text-xs text-ink-2">
-                <p>Crea un tenant amb nom <strong>"AMG Digitalitzacions"</strong> i configura el seu UUID aquí baix com a <code className="bg-surface-overlay px-1 rounded">PLATFORM_TENANT_ID</code>.</p>
-                <AMGButton size="sm" variant="secondary"
-                  onClick={() => window.open(`/${locale}/portal/admin/tenants`, '_blank')}>
-                  Crear tenant →
-                </AMGButton>
+              <div className="space-y-2 text-xs text-ink-2">
+                <p>El workspace AMG s'auto-configura a l'inici del servidor. Si no apareix, reinicia el backend.</p>
               </div>
             )}
           </div>
