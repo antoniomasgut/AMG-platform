@@ -150,7 +150,7 @@ public class ChatSessionService {
                 .orElse(false);
     }
 
-    public CreateSessionResult createAgencySession(String contactName, String ip) {
+    public CreateSessionResult createAgencySession(String contactName, String contactPhone, String ip) {
         checkSessionRateLimit(ip);
 
         var owner = tenantRepository.findByIsOwnerTrue()
@@ -158,15 +158,21 @@ public class ChatSessionService {
         var tenantId    = owner.getId();
         var tenantIdStr = tenantId.toString();
 
+        String systemPrompt = promptBuilder.build(tenantId, null);
         var ctx = chatContextRepository.findById(tenantId)
                 .orElseGet(() -> buildDefaultAgencyContext(tenantId));
+        ctx = LandingChatContext.builder()
+                .landingId(ctx.getLandingId())
+                .businessName(ctx.getBusinessName())
+                .systemPrompt(systemPrompt)
+                .build();
 
         var aiCfg = aiConfigRepository.findByTenantId(tenantId).orElse(TenantAIConfig.defaultFor(tenantId));
         var model = (aiCfg.getPreferredModel() != null && !aiCfg.getPreferredModel().isBlank())
                 ? aiCfg.getPreferredModel() : CHAT_MODEL_DEFAULT;
 
         var sessionId = UUID.randomUUID().toString();
-        var greeting  = generateGreetingWithPrompt(ctx, ctx.getSystemPrompt(), "agency", model);
+        var greeting  = generateGreetingWithPrompt(ctx, systemPrompt, "agency", model);
 
         var session = ChatSession.builder()
                 .id(sessionId)
@@ -174,6 +180,7 @@ public class ChatSessionService {
                 .landingId(tenantIdStr)
                 .tenantId(tenantIdStr)
                 .contactName(contactName)
+                .contactPhone(contactPhone)
                 .preferredModel(model)
                 .agendaEnabled(false)
                 .messageCount(0)
@@ -182,6 +189,17 @@ public class ChatSessionService {
         session.getMessages().add(new ChatSession.ChatMessage("assistant", greeting));
         saveSession(session);
         incrementRateCounter(RATE_SESS_KEY + ip, 3600);
+
+        // Registra lead si tenim nom + telèfon
+        if (contactName != null && !contactName.isBlank()
+                && contactPhone != null && !contactPhone.isBlank()) {
+            try {
+                findOrCreateChatLead(tenantId, contactName.strip(), contactPhone.strip());
+            } catch (Exception e) {
+                log.warn("[Agency] Could not create lead for {}: {}", contactName, e.getMessage());
+            }
+        }
+
         return new CreateSessionResult(sessionId, greeting);
     }
 

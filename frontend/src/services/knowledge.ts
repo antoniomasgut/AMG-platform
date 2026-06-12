@@ -53,6 +53,18 @@ export function addDocument(
   });
 }
 
+export function updateDocument(
+  tenantId: string,
+  docId: string,
+  filename: string,
+  content: string
+): Promise<KnowledgeDocument> {
+  return apiFetch(`/agents/knowledge/${tenantId}/documents/${docId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ filename, content }),
+  });
+}
+
 export function deleteDocument(tenantId: string, docId: string): Promise<void> {
   return apiFetch(`/agents/knowledge/${tenantId}/documents/${docId}`, {
     method: 'DELETE',

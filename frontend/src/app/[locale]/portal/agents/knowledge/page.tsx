@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
-import { getKnowledge, updateEntries, testKnowledgeResponse, deleteDocument, uploadDocument } from '@/services/knowledge';
+import { getKnowledge, updateEntries, testKnowledgeResponse, deleteDocument, updateDocument, uploadDocument } from '@/services/knowledge';
 import { getTenant } from '@/services/admin';
 import { getSectorTemplates } from '../sectorKbTemplates';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -159,6 +159,8 @@ export default function KnowledgeWizardPage() {
   const [saveError, setSaveError] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<{ id: string; filename: string; content: string } | null>(null);
+  const [savingDoc, setSavingDoc] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
 
@@ -369,6 +371,20 @@ export default function KnowledgeWizardPage() {
       qc.invalidateQueries({ queryKey: ['knowledge', tenantId] });
     } catch {
       // silently ignore
+    }
+  };
+
+  const handleSaveDoc = async () => {
+    if (!tenantId || !editingDoc) return;
+    setSavingDoc(true);
+    try {
+      await updateDocument(tenantId, editingDoc.id, editingDoc.filename, editingDoc.content);
+      qc.invalidateQueries({ queryKey: ['knowledge', tenantId] });
+      setEditingDoc(null);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Error desant el document');
+    } finally {
+      setSavingDoc(false);
     }
   };
 
@@ -625,9 +641,46 @@ export default function KnowledgeWizardPage() {
               {(existing?.documents ?? []).length > 0 && (
                 <div className="space-y-2 mb-3">
                   {existing!.documents.map(doc => (
-                    <div key={doc.id} className="flex items-center justify-between px-3 py-2 amg-card card-clip text-sm">
-                      <span className="text-ink-1 truncate">{doc.filename}</span>
-                      <button onClick={() => handleDeleteDocument(doc.id)} className="text-xs text-danger hover:opacity-70 ml-3 shrink-0">Eliminar</button>
+                    <div key={doc.id}>
+                      <div className="flex items-center justify-between px-3 py-2 amg-card card-clip text-sm">
+                        <span className="text-ink-1 truncate">{doc.filename}</span>
+                        <div className="flex gap-2 ml-3 shrink-0">
+                          <button
+                            onClick={() => setEditingDoc({ id: doc.id, filename: doc.filename, content: '' })}
+                            className="text-xs text-accent-light hover:opacity-70"
+                          >Editar</button>
+                          <button onClick={() => handleDeleteDocument(doc.id)} className="text-xs text-danger hover:opacity-70">Eliminar</button>
+                        </div>
+                      </div>
+                      {editingDoc?.id === doc.id && (
+                        <div className="mt-1 p-3 border border-accent/30 rounded bg-accent-subtle space-y-2">
+                          <input
+                            type="text"
+                            value={editingDoc.filename}
+                            onChange={e => setEditingDoc(d => d && ({ ...d, filename: e.target.value }))}
+                            className="w-full bg-bg-0 border border-border-base rounded px-2 py-1 text-xs text-ink-0"
+                            placeholder="Nom del document"
+                          />
+                          <textarea
+                            rows={10}
+                            value={editingDoc.content}
+                            onChange={e => setEditingDoc(d => d && ({ ...d, content: e.target.value }))}
+                            placeholder="Contingut del document..."
+                            className="w-full bg-bg-0 border border-border-base rounded px-2 py-1 text-xs text-ink-0 font-mono resize-y"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleSaveDoc}
+                              disabled={savingDoc || !editingDoc.content.trim()}
+                              className="px-3 py-1.5 bg-accent text-black rounded text-xs font-bold disabled:opacity-40"
+                            >{savingDoc ? 'Desant...' : 'Desar canvis'}</button>
+                            <button
+                              onClick={() => setEditingDoc(null)}
+                              className="px-3 py-1.5 border border-border-base rounded text-xs text-ink-2 hover:text-ink-0"
+                            >Cancel·lar</button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

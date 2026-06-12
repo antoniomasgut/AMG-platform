@@ -97,6 +97,21 @@ public class KnowledgeBaseService {
     }
 
     @Transactional
+    public KnowledgeDocumentResponse updateDocument(UUID tenantId, UUID docId, String filename, String content) {
+        var kb = findOrCreate(tenantId);
+        var doc = knowledgeDocumentRepository.findById(docId)
+                .orElseThrow(() -> new IllegalArgumentException("Document not found"));
+        if (!doc.getKnowledgeBaseId().equals(kb.getId())) {
+            throw new IllegalArgumentException("Document does not belong to tenant");
+        }
+        doc.setFilename(filename);
+        doc.setExtractedText(content);
+        knowledgeDocumentRepository.save(doc);
+        bumpVersion(kb);
+        return new KnowledgeDocumentResponse(doc.getId(), doc.getFilename(),
+                doc.getStoragePath(), doc.getFileSize(), doc.getContentType(), doc.getIsProcessed(), doc.getUploadedAt());
+    }
+
     public void deleteDocument(UUID tenantId, UUID docId) {
         var kb = findOrCreate(tenantId);
         knowledgeDocumentRepository.findById(docId).ifPresent(doc -> {

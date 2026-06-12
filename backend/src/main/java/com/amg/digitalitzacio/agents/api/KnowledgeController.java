@@ -82,6 +82,16 @@ public class KnowledgeController {
         }
     }
 
+    @PutMapping("/{tenantId}/documents/{docId}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<KnowledgeDocumentResponse> updateDocument(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID docId,
+            @RequestBody AddDocumentRequest request) {
+        var response = knowledgeBaseService.updateDocument(tenantId, docId, request.filename(), request.content());
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{tenantId}/documents/{docId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> deleteDocument(

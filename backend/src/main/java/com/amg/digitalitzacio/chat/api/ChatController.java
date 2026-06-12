@@ -14,7 +14,7 @@ public class ChatController {
     private final ChatSessionService chatSessionService;
 
     record CreateSessionRequest(String landingSlug, String contactName, String contactPhone) {}
-    record CreateAgencySessionRequest(String contactName) {}
+    record CreateAgencySessionRequest(String contactName, String contactPhone) {}
     record CreateSessionResponse(String sessionId, String greeting) {}
     record SendMessageRequest(String message) {}
     record SendMessageResponse(String sessionId, String reply, boolean terminated) {}
@@ -29,7 +29,7 @@ public class ChatController {
     @ResponseStatus(HttpStatus.CREATED)
     public CreateSessionResponse createAgencySession(@RequestBody CreateAgencySessionRequest req,
                                                      HttpServletRequest httpReq) {
-        var result = chatSessionService.createAgencySession(req.contactName(), extractIp(httpReq));
+        var result = chatSessionService.createAgencySession(req.contactName(), req.contactPhone(), extractIp(httpReq));
         return new CreateSessionResponse(result.sessionId(), result.greeting());
     }
 

@@ -8,17 +8,19 @@ interface Message {
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
+const BRAND    = '#FF6B00';
 
 export function AgencyChatWidget() {
-  const [open, setOpen]               = useState(false);
-  const [step, setStep]               = useState<'prechat' | 'chat'>('prechat');
-  const [name, setName]               = useState('');
-  const [messages, setMessages]       = useState<Message[]>([]);
-  const [input, setInput]             = useState('');
-  const [loading, setLoading]         = useState(false);
-  const [sessionId, setSessionId]     = useState<string | null>(null);
-  const [enabled, setEnabled]         = useState<boolean | null>(null);
-  const endRef                        = useRef<HTMLDivElement>(null);
+  const [open, setOpen]           = useState(false);
+  const [step, setStep]           = useState<'prechat' | 'chat'>('prechat');
+  const [name, setName]           = useState('');
+  const [phone, setPhone]         = useState('');
+  const [messages, setMessages]   = useState<Message[]>([]);
+  const [input, setInput]         = useState('');
+  const [loading, setLoading]     = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [enabled, setEnabled]     = useState<boolean | null>(null);
+  const endRef                    = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/v1/chat/agency/status`)
@@ -39,15 +41,15 @@ export function AgencyChatWidget() {
   }, [messages, open]);
 
   async function startChat() {
-    if (!name.trim()) return;
+    if (!name.trim() || !phone.trim()) return;
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/v1/chat/agency/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contactName: name.trim() }),
+        body: JSON.stringify({ contactName: name.trim(), contactPhone: phone.trim() }),
       });
-      if (!res.ok) throw new Error('Error starting chat');
+      if (!res.ok) throw new Error();
       const data = await res.json();
       setSessionId(data.sessionId);
       localStorage.setItem('amg_agency_sid', data.sessionId);
@@ -93,6 +95,7 @@ export function AgencyChatWidget() {
     setMessages([]);
     setStep('prechat');
     setName('');
+    setPhone('');
     setInput('');
   }
 
@@ -106,74 +109,105 @@ export function AgencyChatWidget() {
         aria-label="Xat amb nosaltres"
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
-          width: 56, height: 56, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+          width: 60, height: 60, borderRadius: '50%',
+          background: BRAND,
           color: '#fff', border: 'none', cursor: 'pointer',
-          boxShadow: '0 4px 20px rgba(99,102,241,0.5)',
+          boxShadow: '0 4px 20px rgba(255,107,0,0.4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 24, transition: 'transform 0.2s',
+          transition: 'transform 0.2s, box-shadow 0.2s',
         }}
-        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.1)')}
-        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(255,107,0,0.5)'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(255,107,0,0.4)'; }}
       >
-        {open ? '✕' : '💬'}
+        {open
+          ? <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          : <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        }
       </button>
 
       {/* Chat panel */}
       {open && (
         <div style={{
-          position: 'fixed', bottom: 92, right: 24, zIndex: 9998,
-          width: 340, maxHeight: 500,
+          position: 'fixed', bottom: 96, right: 24, zIndex: 9998,
+          width: 340, maxHeight: 520,
           background: '#fff', borderRadius: 16,
-          boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: "'Inter', system-ui, sans-serif",
+          border: '1px solid #f0f0f0',
         }}>
           {/* Header */}
           <div style={{
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            background: BRAND,
             padding: '14px 16px', color: '#fff',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            flexShrink: 0,
           }}>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>AMG Digitalitzacions</div>
-              <div style={{ fontSize: 11, opacity: 0.85 }}>Assistent virtual · normalment respon en minuts</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 18,
+              }}>🤖</div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>AMG Digitalitzacions</div>
+                <div style={{ fontSize: 11, opacity: 0.85 }}>Assistent virtual · en línia</div>
+              </div>
             </div>
             {step === 'chat' && (
               <button onClick={reset} style={{
                 background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
                 borderRadius: 8, padding: '4px 8px', cursor: 'pointer', fontSize: 11,
+                fontFamily: 'inherit',
               }}>Nova conversa</button>
             )}
           </div>
 
           {/* Pre-chat form */}
           {step === 'prechat' && (
-            <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.5 }}>
                 Hola! Sóc l&apos;assistent d&apos;AMG. Com et dic?
               </p>
               <input
                 type="text"
-                placeholder="El teu nom"
+                placeholder="El teu nom *"
                 value={name}
                 onChange={e => setName(e.target.value)}
+                autoFocus
+                style={{
+                  padding: '10px 12px', borderRadius: 8,
+                  border: '1px solid #e5e7eb',
+                  fontSize: 14, outline: 'none',
+                  color: '#111827', fontFamily: 'inherit',
+                }}
+              />
+              <input
+                type="tel"
+                placeholder="Telèfon de contacte *"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && startChat()}
                 style={{
-                  padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
+                  padding: '10px 12px', borderRadius: 8,
+                  border: '1px solid #e5e7eb',
                   fontSize: 14, outline: 'none',
+                  color: '#111827', fontFamily: 'inherit',
                 }}
               />
               <button
                 onClick={startChat}
-                disabled={loading || !name.trim()}
+                disabled={loading || !name.trim() || !phone.trim()}
                 style={{
-                  background: loading ? '#a5b4fc' : '#6366f1',
+                  background: loading || !name.trim() ? '#fed7aa' : BRAND,
                   color: '#fff', border: 'none', borderRadius: 8,
-                  padding: '10px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                  padding: '10px 0', fontSize: 14, fontWeight: 600,
+                  cursor: loading || !name.trim() ? 'default' : 'pointer',
+                  fontFamily: 'inherit', transition: 'background 0.15s',
                 }}
               >
-                {loading ? 'Connectant…' : 'Iniciar xat'}
+                {loading ? 'Connectant…' : 'Iniciar xat →'}
               </button>
             </div>
           )}
@@ -181,15 +215,16 @@ export function AgencyChatWidget() {
           {/* Chat messages */}
           {step === 'chat' && (
             <>
-              <div style={{ flex: 1, overflowY: 'auto', padding: '14px 14px 8px', display: 'flex', flexDirection: 'column', gap: 10, minHeight: 240, maxHeight: 320 }}>
+              <div style={{
+                flex: 1, overflowY: 'auto', padding: '14px 14px 8px',
+                display: 'flex', flexDirection: 'column', gap: 10,
+                minHeight: 200, maxHeight: 360,
+              }}>
                 {messages.map((m, i) => (
-                  <div key={i} style={{
-                    display: 'flex',
-                    justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start',
-                  }}>
+                  <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{
                       maxWidth: '80%', padding: '9px 13px', borderRadius: 12,
-                      background: m.role === 'user' ? '#6366f1' : '#f3f4f6',
+                      background: m.role === 'user' ? BRAND : '#f3f4f6',
                       color: m.role === 'user' ? '#fff' : '#111827',
                       fontSize: 13, lineHeight: 1.5,
                       borderBottomRightRadius: m.role === 'user' ? 2 : 12,
@@ -203,13 +238,13 @@ export function AgencyChatWidget() {
                   <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                     <div style={{
                       background: '#f3f4f6', borderRadius: 12, borderBottomLeftRadius: 2,
-                      padding: '9px 13px', display: 'flex', gap: 4, alignItems: 'center',
+                      padding: '10px 14px', display: 'flex', gap: 4, alignItems: 'center',
                     }}>
                       {[0, 1, 2].map(i => (
                         <span key={i} style={{
                           width: 7, height: 7, borderRadius: '50%', background: '#9ca3af',
                           display: 'inline-block',
-                          animation: `bounce 1.2s ${i * 0.2}s infinite`,
+                          animation: `amgBounce 1.2s ${i * 0.2}s infinite`,
                         }} />
                       ))}
                     </div>
@@ -219,7 +254,7 @@ export function AgencyChatWidget() {
               </div>
               <div style={{
                 padding: '10px 12px', borderTop: '1px solid #f0f0f0',
-                display: 'flex', gap: 8,
+                display: 'flex', gap: 8, flexShrink: 0,
               }}>
                 <input
                   type="text"
@@ -231,18 +266,27 @@ export function AgencyChatWidget() {
                   style={{
                     flex: 1, padding: '9px 12px', borderRadius: 8,
                     border: '1px solid #e5e7eb', fontSize: 13, outline: 'none',
+                    color: '#111827', background: '#fff',
+                    fontFamily: 'inherit',
                   }}
                 />
                 <button
                   onClick={sendMessage}
                   disabled={loading || !input.trim()}
                   style={{
-                    background: loading || !input.trim() ? '#e0e7ff' : '#6366f1',
-                    color: loading || !input.trim() ? '#a5b4fc' : '#fff',
+                    background: loading || !input.trim() ? '#fed7aa' : BRAND,
+                    color: '#fff',
                     border: 'none', borderRadius: 8, padding: '0 14px',
-                    cursor: loading ? 'default' : 'pointer', fontSize: 16,
+                    cursor: loading || !input.trim() ? 'default' : 'pointer',
+                    fontSize: 18, transition: 'background 0.15s',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
                   }}
-                >→</button>
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                  </svg>
+                </button>
               </div>
             </>
           )}
@@ -250,9 +294,9 @@ export function AgencyChatWidget() {
       )}
 
       <style>{`
-        @keyframes bounce {
+        @keyframes amgBounce {
           0%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-6px); }
+          40% { transform: translateY(-5px); }
         }
       `}</style>
     </>
