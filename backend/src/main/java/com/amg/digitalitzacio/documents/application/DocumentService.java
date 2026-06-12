@@ -80,7 +80,8 @@ public class DocumentService {
             try {
                 String safeName = (name != null && !name.isBlank()) ? name : "Lead des de document";
                 var req = new LeadRequest(safeName, email, phone, LeadSource.OTHER,
-                        null, null, notes, null, null, null, null, null);
+                        null, null, notes, null, null, null, null, null,
+                        null, null, null, null);
                 var resp = leadService.createLead(req, principal);
                 leadId  = resp.id().toString();
                 created = true;

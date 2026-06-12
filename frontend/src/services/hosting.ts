@@ -3,7 +3,7 @@
 import { apiFetch } from './api';
 
 export type WebsiteStatus = 'PENDING_REVIEW' | 'APPROVED' | 'DEPLOYING' | 'ACTIVE' | 'SUSPENDED' | 'REJECTED';
-export type WebsiteType = 'STATIC' | 'CONTAINER';
+export type WebsiteType = 'STATIC' | 'CONTAINER' | 'EXTERNAL';
 
 export interface WebSiteResponse {
   id: string;

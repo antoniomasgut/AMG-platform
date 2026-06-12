@@ -231,7 +231,8 @@ Hibernate a producció usa `ddl-auto: validate` — les taules noves **cal crear
 | `google_connections` | V22 | `(id UUID PK, tenant_id UUID, google_account_email VARCHAR, google_user_id VARCHAR, encrypted_access_token TEXT, encrypted_refresh_token TEXT, token_expires_at TIMESTAMPTZ, is_active BOOLEAN)` |
 | `google_module_configs` | V22 | `(tenant_id UUID PK, drive_enabled BOOLEAN, gmail_enabled BOOLEAN, calendar_enabled BOOLEAN, sheets_enabled BOOLEAN, drive_folder_id VARCHAR)` |
 | `oauth_states` | V22 | `(id UUID PK, tenant_id UUID, state_token VARCHAR(64) UNIQUE, redirect_uri VARCHAR(500), requested_scopes TEXT, expires_at TIMESTAMPTZ)` |
-| `stripe_configs` (ALTER) | 2026-06-09 | `ALTER TABLE stripe_configs ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(100), ADD COLUMN IF NOT EXISTS stripe_payment_method_id VARCHAR(100), ADD COLUMN IF NOT EXISTS pm_last_four VARCHAR(10), ADD COLUMN IF NOT EXISTS pm_brand VARCHAR(30), ADD COLUMN IF NOT EXISTS pm_exp_month INTEGER, ADD COLUMN IF NOT EXISTS pm_exp_year INTEGER;` |
+| `stripe_configs` (ALTER) | V44 Flyway | `ADD COLUMN stripe_customer_id, stripe_payment_method_id, pm_last_four, pm_brand, pm_exp_month, pm_exp_year` |
+| `model_pricing` | V49 Flyway | `(model_name VARCHAR(100) PK, provider VARCHAR(50), input_cost_micros BIGINT, output_cost_micros BIGINT, markup_percent INTEGER DEFAULT 20, client_input_micros BIGINT, client_output_micros BIGINT, updated_at TIMESTAMPTZ)` |
 
 **NexeLocal Service Configs** (`nexe_service_configs`):
 - Service keys: `AGENDA`, `PRESSUPOSTOS`, `FIDELITZACIO`, `EQUIP`

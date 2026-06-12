@@ -427,7 +427,7 @@ public class WebHostingService {
                 </div>
                 """.formatted(widgetSnippet, formSnippet);
 
-        String subject = "Integra el xat i els formularis a la teva web — " + (tenant.getBusinessName() != null ? tenant.getBusinessName() : tenant.getEmail());
+        String subject = "Integra el xat i els formularis a la teva web — " + (tenant.getName() != null ? tenant.getName() : tenant.getEmail());
         emailService.sendEmail(tenant.getEmail(), subject, html);
         log.info("Snippets email sent to {} for site {}", tenant.getEmail(), siteId);
     }
