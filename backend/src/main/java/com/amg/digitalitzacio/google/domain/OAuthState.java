@@ -33,6 +33,9 @@ public class OAuthState {
     @Column(name = "requested_scopes", nullable = false, columnDefinition = "TEXT")
     private String requestedScopes;
 
+    @Column(name = "requested_modules", columnDefinition = "TEXT")
+    private String requestedModules;
+
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 

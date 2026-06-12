@@ -26,6 +26,7 @@ import {
   type ProviderSummary, type DeleteTenantCheck,
 } from '@/services/admin';
 import { createBudget, listBudgets, sendBudget, cancelBudget, updateBudget, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
+import { getDpaStatus, sendDpaRequest, type DpaStatus } from '@/services/dpa';
 import { getMetaAdsConfig, saveMetaAdsConfig, syncMetaAds } from '@/services/meta-ads';
 import { getChannelUsageStats, type ChannelUsageStats } from '@/services/agents-conversational';
 import { SECTOR_CONTEXTS, getSectorContext } from '@/services/sector-contexts';
@@ -2845,6 +2846,110 @@ function DeleteTenantModal({ tenantId, tenantName, onClose, onDeleted }: {
   );
 }
 
+// ─── DPA Section ──────────────────────────────────────────────
+
+function DpaSection({ tenantId, locale }: { tenantId: string; locale: string }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [sending, setSending] = useState(false);
+
+  const { data: dpa } = useQuery<DpaStatus>({
+    queryKey: ['dpa-status', tenantId],
+    queryFn: () => getDpaStatus(tenantId),
+  });
+
+  const status = dpa?.status ?? 'NOT_SENT';
+
+  const statusConfig: Record<string, { label: string; color: string }> = {
+    NOT_SENT: { label: 'No enviat', color: 'text-ink-3' },
+    PENDING:  { label: 'Pendent de signatura', color: 'text-yellow-400' },
+    SIGNED:   { label: 'Signat', color: 'text-green-400' },
+    EXPIRED:  { label: 'Caducat', color: 'text-red-400' },
+  };
+  const { label, color } = statusConfig[status] ?? statusConfig.NOT_SENT;
+
+  const handleSend = async () => {
+    setSending(true);
+    try {
+      await sendDpaRequest(tenantId);
+      qc.invalidateQueries({ queryKey: ['dpa-status', tenantId] });
+      toast('success', 'Acord de Tractament de Dades enviat per email');
+    } catch (e: unknown) {
+      toast('error', e instanceof Error ? e.message : 'Error en enviar');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <CollapsibleSection
+      eyebrow="Legal" title="Acord de Tractament de Dades (ATD)"
+      status={status === 'SIGNED' ? 'active' : 'neutral'}
+      collapsed
+      onToggle={() => {}}
+    >
+      <div className="amg-card card-clip p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${status === 'SIGNED' ? 'bg-green-400' : status === 'PENDING' ? 'bg-yellow-400' : 'bg-gray-400'}`} />
+              <span className={`f-mono text-xs font-semibold ${color}`}>{label}</span>
+            </div>
+            {status === 'SIGNED' && dpa?.signerName && (
+              <p className="f-mono text-xs text-ink-3">
+                Signat per <strong className="text-ink-1">{dpa.signerName}</strong>
+                {dpa.signerPosition && <> ({dpa.signerPosition})</>}
+                {dpa.signedAt && <> · {new Date(dpa.signedAt).toLocaleDateString('ca-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</>}
+              </p>
+            )}
+            {status === 'PENDING' && dpa?.token && (
+              <p className="f-mono text-xs text-ink-3">
+                Pendent de signatura ·{' '}
+                <a
+                  href={`/${locale}/dpa/${dpa.token}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-light underline"
+                >
+                  Previsualitzar
+                </a>
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-2 flex-wrap justify-end">
+            {status === 'SIGNED' && dpa?.token && (
+              <a
+                href={`/${locale}/dpa/${dpa.token}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-3 py-1.5 border border-border-base text-xs f-mono text-ink-1 hover:border-[#FF6B00] hover:text-accent-light transition-colors"
+              >
+                Veure document signat
+              </a>
+            )}
+            <AMGButton
+              type="button"
+              variant={status === 'SIGNED' ? 'ghost' : 'secondary'}
+              size="sm"
+              loading={sending}
+              onClick={handleSend}
+            >
+              {status === 'NOT_SENT' ? 'Enviar ATD per email' : status === 'SIGNED' ? 'Reenviar' : 'Reenviar enllaç'}
+            </AMGButton>
+          </div>
+        </div>
+
+        {status === 'NOT_SENT' && (
+          <p className="f-mono text-xs text-ink-3">
+            Envia l'Acord de Tractament de Dades al tenant perquè el llegeixi i signi digitalment. La signatura es registra amb data, hora i IP.
+          </p>
+        )}
+      </div>
+    </CollapsibleSection>
+  );
+}
+
 export default function TenantDetailPage() {
   const params = useParams<{ id: string; locale: string }>();
   const { id } = params;
@@ -3529,6 +3634,9 @@ export default function TenantDetailPage() {
           </div>
         </div>
         </CollapsibleSection>
+
+        {/* Acord de Tractament de Dades */}
+        <DpaSection tenantId={id} locale={locale} />
 
         {/* Plantilles de documents */}
         <CollapsibleSection

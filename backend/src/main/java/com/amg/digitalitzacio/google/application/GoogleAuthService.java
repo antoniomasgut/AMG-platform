@@ -1,5 +1,7 @@
 package com.amg.digitalitzacio.google.application;
 
+import com.amg.digitalitzacio.google.domain.GoogleModuleConfig;
+import com.amg.digitalitzacio.google.domain.GoogleModuleConfigRepository;
 import com.amg.digitalitzacio.google.domain.OAuthState;
 import com.amg.digitalitzacio.google.domain.OAuthStateRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,24 +44,28 @@ public class GoogleAuthService {
     private final OAuthStateRepository stateRepo;
     private final GoogleConfigService configService;
     private final GoogleTokenService tokenService;
+    private final GoogleModuleConfigRepository moduleConfigRepo;
     private final ObjectMapper objectMapper;
 
     public record AuthUrlResponse(String authUrl, String stateToken) {}
-    public record ConnectedResponse(String email, String googleUserId) {}
+    public record ConnectedResponse(String email, String googleUserId, java.util.List<String> activatedModules) {}
     /** @deprecated internament - no exposar tokens al client */
     public record TokenResponse(String accessToken, String refreshToken, int expiresIn, String email, String googleUserId) {}
 
     @Transactional
     public AuthUrlResponse generateAuthUrl(UUID tenantId, java.util.List<String> modules, String redirectUri) {
-        var scopes = modules.stream()
+        var scopeList = modules.stream()
             .map(m -> SCOPES.getOrDefault(m, SCOPES.get("drive")))
-            .collect(Collectors.joining(" "));
+            .collect(Collectors.toList());
+        scopeList.add("https://www.googleapis.com/auth/userinfo.email");
+        var scopes = String.join(" ", scopeList);
 
         var state = new OAuthState();
         state.setTenantId(tenantId);
         state.setStateToken(UUID.randomUUID().toString().replace("-", ""));
         state.setRedirectUri(redirectUri);
         state.setRequestedScopes(scopes);
+        state.setRequestedModules(String.join(",", modules));
         state.setExpiresAt(Instant.now().plus(STATE_EXPIRY_MINUTES, ChronoUnit.MINUTES));
         stateRepo.save(state);
 
@@ -129,11 +135,31 @@ public class GoogleAuthService {
             var tenantId = state.getTenantId();
             tokenService.saveTokens(tenantId, accessToken, refreshToken, expiresIn, email, userId);
 
-            return new ConnectedResponse(email, userId);
+            var modules = parseModules(state.getRequestedModules());
+            activateModules(tenantId, modules);
+
+            return new ConnectedResponse(email, userId, modules);
 
         } catch (Exception e) {
             throw new RuntimeException("Error al callback OAuth: " + e.getMessage(), e);
         }
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void activateModules(UUID tenantId, java.util.List<String> modules) {
+        var config = moduleConfigRepo.findByTenantId(tenantId)
+            .orElseGet(() -> GoogleModuleConfig.defaults(tenantId));
+        if (modules.contains("drive"))    config.setDriveEnabled(true);
+        if (modules.contains("gmail"))    config.setGmailEnabled(true);
+        if (modules.contains("calendar")) config.setCalendarEnabled(true);
+        if (modules.contains("sheets"))   config.setSheetsEnabled(true);
+        moduleConfigRepo.save(config);
+    }
+
+    private static java.util.List<String> parseModules(String requestedModules) {
+        if (requestedModules == null || requestedModules.isBlank()) return java.util.List.of();
+        return java.util.Arrays.stream(requestedModules.split(","))
+            .map(String::trim).filter(s -> !s.isBlank()).collect(Collectors.toList());
     }
 
     public static String buildScopeString(java.util.List<String> modules) {
