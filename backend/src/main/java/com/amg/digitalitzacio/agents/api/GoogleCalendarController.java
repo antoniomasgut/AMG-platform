@@ -64,6 +64,40 @@ public class GoogleCalendarController {
         }
     }
 
+    // ── SA info & validació ───────────────────────────────────────
+
+    @GetMapping("/sa-email")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<Map<String, String>> getSaEmail(@PathVariable UUID tenantId) {
+        if (!calendarService.isConfigured()) {
+            return ResponseEntity.ok(Map.of("email", "", "configured", "false"));
+        }
+        try {
+            String email = calendarService.getServiceAccountEmail();
+            return ResponseEntity.ok(Map.of("email", email, "configured", "true"));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("email", "", "configured", "false", "error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/validate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<Map<String, Object>> validateCalendarId(
+            @PathVariable UUID tenantId,
+            @RequestBody Map<String, String> body) {
+        String calendarId = body.get("calendarId");
+        if (calendarId == null || calendarId.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("valid", false, "error", "calendarId buit"));
+        }
+        try {
+            boolean valid = calendarService.validateCalendarAccess(calendarId);
+            return ResponseEntity.ok(Map.of("valid", valid,
+                    "message", valid ? "Calendari accessible amb el Service Account d'AMG" : "No s'ha pogut accedir al calendari"));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("valid", false, "error", e.getMessage()));
+        }
+    }
+
     // ── Fase 2: OAuth — el client autoritza amb el seu propi compte Google ──
 
     @GetMapping("/oauth-url")

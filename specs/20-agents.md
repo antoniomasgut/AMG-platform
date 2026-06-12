@@ -1,7 +1,7 @@
 # Mòdul 20 — Agents Autònoms i Conversacionals
 
-**Versió:** 2.0  
-**Estat:** v1 ✅ Implementat · v2 ⏳ Pendent  
+**Versió:** 2.1  
+**Estat:** v1 ✅ Implementat · v2 ⏳ Pendent · v2.1 (costos/pressupostos) ✅ Implementat  
 **Branca:** main (commit `ae694d6`) + feat/modul-20-v2  
 **Substitució de:** n8n per a automatitzacions bàsiques
 
@@ -497,3 +497,91 @@ Variables Resend (globals o per tenant):
 | API REST conversacional | ⏳ Pendent |
 | Frontend /portal/agents | ⏳ Pendent |
 | Migració BD (conversation, agentMode) | ⏳ Pendent |
+
+---
+
+# Part 3 — Sistema de costos i pressupostos IA (v2.1)
+
+> Control de costos per tenant: preus de models IA amb markup, pressupostos mensuals de consum, i tracking del cost real per missatge/token.
+
+---
+
+## 23. Entitat ModelPricing
+
+Taula `model_pricing` (V49). Preu de cost i preu client per model IA, amb markup configurable.
+
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| `modelName` | VARCHAR(100) PK | Identificador del model (ex. `claude-haiku-4-5-20251001`) |
+| `provider` | VARCHAR(50) | Proveïdor (`anthropic`, `deepseek`, `other`) |
+| `inputCostMicros` | BIGINT | Cost real entrada en micros d'€ per token |
+| `outputCostMicros` | BIGINT | Cost real sortida en micros d'€ per token |
+| `markupPercent` | INTEGER | Markup aplicat al client (default 20%) |
+| `clientInputMicros` | BIGINT | Preu client entrada = `inputCostMicros × (100 + markup) / 100` |
+| `clientOutputMicros` | BIGINT | Preu client sortida = `outputCostMicros × (100 + markup) / 100` |
+| `updatedAt` | TIMESTAMPTZ | Última actualització |
+
+**Models suportats:** `claude-haiku-4-5-20251001`, `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-opus-4-7`, `deepseek-chat`, `deepseek-reasoner`
+
+**Recàlcul automàtic:** `ModelPricingService` recalcula el primer dia de cada mes a les 00:05 UTC aplicant el markup actual. Es pot recalcular manualment via `recalculate(markupPercent)`.
+
+---
+
+## 24. Extensions a TenantAIConfig
+
+Nous camps afegits en migracions successives:
+
+| Camp | Migració | Tipus | Descripció |
+|------|----------|-------|-----------|
+| `responseLanguage` | V45 | VARCHAR(10) | Idioma de les respostes de l'agent (ex. `ca`, `es`) |
+| `chatModel` | V46 | VARCHAR(100) | Model a usar pel canal chat widget |
+| `whatsappModel` | V46 | VARCHAR(100) | Model a usar pel canal WhatsApp |
+| `emailModel` | V46 | VARCHAR(100) | Model a usar pel canal email |
+| `fallbackModel` | V47 | VARCHAR(100) | Model de fallback si el principal falla |
+| `monthlyCostBudgetEurCents` | V48 | INTEGER | Pressupost mensual IA en cèntims (500 = €5) |
+| `monthlyMessageBudget` | V46 | INTEGER | Nombre màxim de missatges WhatsApp/mes |
+| `monthlyWhatsappBudgetEurCents` | V51 | INTEGER | Pressupost mensual WhatsApp en cèntims |
+
+---
+
+## 25. Extensions a sector_phases (V50)
+
+Nous camps per calcular pressupostos recomanats per fase i sector:
+
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| `aiBudgetEurCents` | INTEGER | Pressupost base IA en c€/mes per a mida AUTÒNOM (default per fase: F1=500, F2=200, F3=150, F4=50, F5+=50) |
+| `whatsappMessageBudget` | INTEGER | Missatges WA base/mes per a mida AUTÒNOM (F1=200, F2=150, F3=50, F4=30, F5+=0) |
+
+---
+
+## 26. Extensions a channel_usage_logs i token_usage_logs
+
+**`token_usage_logs`** (V48): nou camp `cost_eur_micros BIGINT` — cost calculat en micros d'€ en el moment de l'enviament.
+
+**`channel_usage_logs`** (V51): nou camp `cost_eur_micros BIGINT` — cost del missatge WhatsApp en micros d'€ (tarifa conservadora per defecte: €0.055/missatge = 55.000 micros).
+
+---
+
+## 27. TenantBudgetDefaultsService
+
+Calcula i aplica pressupostos mensuals recomanats per a un tenant basant-se en:
+1. Les fases contractades (`tenant.contractedPhases` — format `F1,F2,F3`)
+2. La mida d'empresa (`businessSize`): AUTÒNOM ×1 · PETIT ×2.5 · MITJÀ ×5
+3. Els valors base de `sector_phases.ai_budget_eur_cents` i `whatsapp_message_budget`
+
+**Mètodes públics:**
+
+| Mètode | Descripció |
+|--------|-----------|
+| `getDefaults(tenantId)` | Calcula els pressupostos recomanats sense persistir |
+| `applyDefaults(tenantId)` | Calcula i persisteix a `TenantAIConfig` (sobreescriu sempre) |
+| `compute(size, contractedPhases)` | Càlcul genèric sense accedir a BD de tenant |
+
+**BudgetDefaults record:**
+```
+costBudgetEurCents     — pressupost IA en c€/mes
+messageBudget          — missatges WhatsApp/mes
+whatsappBudgetEurCents — pressupost WA en c€/mes (estimació tarifa €0.055/msg)
+breakdown              — text llegible amb el desglossament per fase
+```

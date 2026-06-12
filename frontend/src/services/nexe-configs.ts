@@ -21,6 +21,16 @@ export const provisionCalendar = (tenantId: string) =>
 export const getCalendarOAuthUrl = (tenantId: string) =>
   apiFetch<{ url: string }>(`/nexe/tenants/${tenantId}/calendar/oauth-url`);
 
+export const getCalendarSaEmail = (tenantId: string) =>
+  apiFetch<{ email: string; configured: string }>(`/nexe/tenants/${tenantId}/calendar/sa-email`);
+
+export const validateCalendarId = (tenantId: string, calendarId: string) =>
+  apiFetch<{ valid: boolean; message?: string; error?: string }>(`/nexe/tenants/${tenantId}/calendar/validate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ calendarId }),
+  });
+
 // ── Sector groups ──────────────────────────────────────────────
 
 export type AgendaMode = 'appointment' | 'inspection' | 'vehicle' | 'meeting';

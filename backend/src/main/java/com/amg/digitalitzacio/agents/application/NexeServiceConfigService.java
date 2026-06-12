@@ -2,7 +2,9 @@ package com.amg.digitalitzacio.agents.application;
 
 import com.amg.digitalitzacio.agents.domain.NexeServiceConfig;
 import com.amg.digitalitzacio.agents.domain.NexeServiceConfigRepository;
+import com.amg.digitalitzacio.shared.events.AgendaConfigSavedEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 public class NexeServiceConfigService {
 
     private final NexeServiceConfigRepository repo;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public List<NexeServiceConfig> getAll(UUID tenantId) {
@@ -37,6 +40,7 @@ public class NexeServiceConfigService {
     @Transactional
     public NexeServiceConfig save(UUID tenantId, String serviceKey, String configJson) {
         var existing = repo.findByTenantIdAndServiceKey(tenantId, serviceKey);
+        boolean isNew = existing.isEmpty();
         NexeServiceConfig config;
         if (existing.isPresent()) {
             config = existing.get();
@@ -44,6 +48,10 @@ public class NexeServiceConfigService {
         } else {
             config = NexeServiceConfig.of(tenantId, serviceKey, configJson);
         }
-        return repo.save(config);
+        var saved = repo.save(config);
+        if (isNew && "AGENDA".equals(serviceKey)) {
+            eventPublisher.publishEvent(new AgendaConfigSavedEvent(tenantId));
+        }
+        return saved;
     }
 }

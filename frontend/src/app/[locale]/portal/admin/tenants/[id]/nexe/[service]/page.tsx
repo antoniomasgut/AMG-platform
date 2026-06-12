@@ -8,7 +8,7 @@ import { getTenant } from '@/services/admin';
 import { useToast } from '@/lib/toast-context';
 import {
   getNexeConfig, saveNexeConfig,
-  provisionCalendar, getCalendarOAuthUrl,
+  provisionCalendar, getCalendarOAuthUrl, getCalendarSaEmail, validateCalendarId,
   AgendaConfig, AgendaMode, getAgendaMode, getAgendaDefaults,
   PressupostosConfig, QuoteMode, getQuoteMode, getPressupostosDefaults, ServiceItem,
   FidelitzacioConfig, DEFAULT_FIDELITZACIO,
@@ -217,6 +217,8 @@ function AgendaForm({ tenantId, sector }: { tenantId: string; sector?: string | 
   const labels = AGENDA_MODE_LABELS[mode];
   const [provisioning, setProvisioning] = React.useState(false);
   const [oauthLoading, setOauthLoading] = React.useState(false);
+  const [validating, setValidating] = React.useState(false);
+  const [validateResult, setValidateResult] = React.useState<{ valid: boolean; message?: string; error?: string } | null>(null);
 
   const { data: raw } = useQuery({
     queryKey: ['nexe-config', tenantId, 'AGENDA'],
@@ -225,6 +227,12 @@ function AgendaForm({ tenantId, sector }: { tenantId: string; sector?: string | 
 
   const sectorDefaults = getAgendaDefaults(sector);
   const [cfg, setCfg] = useState<AgendaConfig>(sectorDefaults);
+
+  const { data: saInfo } = useQuery({
+    queryKey: ['calendar-sa-email', tenantId],
+    queryFn: () => getCalendarSaEmail(tenantId),
+    enabled: cfg.calendar_type === 'google',
+  });
   const [questions, setQuestions] = useState<ClientQuestion[]>(sectorDefaults.client_questions);
   const [holidays, setHolidays] = useState<string[]>([]);
 
@@ -303,12 +311,75 @@ function AgendaForm({ tenantId, sector }: { tenantId: string; sector?: string | 
                     </AMGButton>
                   </div>
                   <div className="text-center f-mono text-xs text-ink-3">— o bé —</div>
-                  <Field label="Opció B — ID del calendari existent"
-                    hint="Si el client ja té un calendari i ha compartit accés amb el Service Account d'AMG">
-                    <input className={inp} placeholder="exemple@group.calendar.google.com"
-                      value={cfg.google_calendar_id}
-                      onChange={e => setCfg(c => ({ ...c, google_calendar_id: e.target.value }))} />
-                  </Field>
+                  <div className="bg-[rgba(255,107,0,0.04)] border border-[rgba(255,107,0,0.2)] rounded p-4 space-y-3">
+                    <p className="f-mono text-xs font-semibold text-accent-light uppercase tracking-wide">
+                      Opció B — El tenant comparteix el seu calendari amb AMG
+                    </p>
+                    {saInfo?.configured === 'true' && saInfo.email ? (
+                      <div className="space-y-2">
+                        <p className="f-mono text-xs text-ink-2">
+                          El tenant ha de compartir el seu calendari amb el Service Account d'AMG. Pasos:
+                        </p>
+                        <ol className="space-y-1.5 list-none">
+                          {[
+                            <>Obre <strong>Google Calendar</strong> → selecciona el calendari → <strong>Configuració i compartir</strong></>,
+                            <><strong>Compartir amb persones específiques</strong> → afegeix aquest email:</>,
+                            <><strong>Permís: Fer canvis als events</strong> → <strong>Envia</strong></>,
+                            <>Copia l'<strong>ID del calendari</strong> (apareix a "Integra el calendari") i enganxa'l aquí sota</>,
+                          ].map((step, i) => (
+                            <li key={i} className="flex gap-2">
+                              <span className="flex-shrink-0 w-4 h-4 rounded-full bg-accent-subtle border border-[rgba(255,107,0,0.4)] text-accent-light f-mono text-[9px] font-bold flex items-center justify-center">{i + 1}</span>
+                              <span className="f-mono text-xs text-ink-1">{step}</span>
+                            </li>
+                          ))}
+                        </ol>
+                        <div className="flex items-center gap-2 p-2 bg-surface-base border border-border-base rounded">
+                          <code className="f-mono text-xs text-accent-light flex-1 break-all">{saInfo.email}</code>
+                          <button type="button"
+                            className="f-mono text-[10px] text-ink-3 hover:text-ink-1 transition-colors flex-shrink-0"
+                            onClick={() => navigator.clipboard.writeText(saInfo.email)}>
+                            Copiar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="f-mono text-xs text-yellow-400">
+                        Service Account no configurat — afegeix <code className="bg-surface-base px-1 rounded text-[10px]">GOOGLE_CALENDAR_SA_JSON</code> a la configuració del sistema.
+                      </p>
+                    )}
+                    <Field label="ID del calendari del tenant">
+                      <div className="flex gap-2">
+                        <input className={`${inp} flex-1`} placeholder="exemple@group.calendar.google.com"
+                          value={cfg.google_calendar_id}
+                          onChange={e => { setCfg(c => ({ ...c, google_calendar_id: e.target.value })); setValidateResult(null); }} />
+                        <AMGButton type="button" variant="secondary" size="sm"
+                          loading={validating}
+                          disabled={!cfg.google_calendar_id.trim()}
+                          onClick={async () => {
+                            setValidating(true);
+                            setValidateResult(null);
+                            try {
+                              const r = await validateCalendarId(tenantId, cfg.google_calendar_id);
+                              setValidateResult(r);
+                            } catch (e: unknown) {
+                              setValidateResult({ valid: false, error: e instanceof Error ? e.message : 'Error' });
+                            } finally {
+                              setValidating(false);
+                            }
+                          }}>
+                          Verificar
+                        </AMGButton>
+                      </div>
+                      {validateResult && (
+                        <div className={`flex items-center gap-2 mt-2 p-2 rounded border ${validateResult.valid ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
+                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${validateResult.valid ? 'bg-green-400' : 'bg-red-400'}`} />
+                          <span className={`f-mono text-xs ${validateResult.valid ? 'text-green-400' : 'text-red-400'}`}>
+                            {validateResult.valid ? validateResult.message : (validateResult.error ?? 'No accessible')}
+                          </span>
+                        </div>
+                      )}
+                    </Field>
+                  </div>
                 </div>
               )}
             </div>

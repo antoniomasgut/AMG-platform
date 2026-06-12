@@ -103,6 +103,31 @@ public class GoogleCalendarService {
         }
     }
 
+    public String getServiceAccountEmail() throws Exception {
+        String saJson = systemConfigService.get("GOOGLE_CALENDAR_SA_JSON");
+        if (saJson == null || saJson.isBlank()) throw new IllegalStateException("GOOGLE_CALENDAR_SA_JSON no configurat");
+        Map<String, Object> sa = objectMapper.readValue(saJson, new TypeReference<>() {});
+        return (String) sa.get("client_email");
+    }
+
+    /**
+     * Comprova que el SA té accés al calendari intentant llegir-ne els metadades.
+     * Retorna true si el calendari és accessible, false si no.
+     */
+    public boolean validateCalendarAccess(String calendarId) throws Exception {
+        String accessToken = getSaAccessToken();
+        String encodedId = URLEncoder.encode(calendarId, StandardCharsets.UTF_8);
+        var req = HttpRequest.newBuilder()
+                .uri(URI.create(CALENDAR_API + "/calendars/" + encodedId))
+                .header("Authorization", "Bearer " + accessToken)
+                .GET()
+                .build();
+        var res = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+        if (res.statusCode() == 200) return true;
+        if (res.statusCode() == 404 || res.statusCode() == 403) return false;
+        throw new IllegalStateException("Error validant calendari: " + res.statusCode() + " " + res.body());
+    }
+
     // ── Fase 2: OAuth per compte del client ──────────────────────
 
     /** Genera la URL d'autorització OAuth 2.0 per al client. */
