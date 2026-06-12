@@ -19,6 +19,10 @@ export interface Lead {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  interviewNotes?: string | null;
+  webNeed?: string | null;
+  interviewSector?: string | null;
+  interviewBusinessSize?: string | null;
 }
 
 export interface LeadStats {
@@ -46,7 +50,18 @@ export interface CreateLeadRequest {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
+  interviewNotes?: string;
+  webNeed?: string;
+  interviewSector?: string;
+  interviewBusinessSize?: string;
 }
+
+export const WEB_NEED_OPTIONS = [
+  { value: 'NONE', label: 'Sense web' },
+  { value: 'PORTAL_STATIC', label: 'Web estàtica (portal AMG)' },
+  { value: 'PORTAL_CONTAINER', label: 'Web containeritzada (portal AMG)' },
+  { value: 'EXTERNAL', label: 'Web en proveïdor extern' },
+] as const;
 
 export interface CreateActivityRequest {
   type: string;

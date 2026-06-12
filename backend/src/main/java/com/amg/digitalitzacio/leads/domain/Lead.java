@@ -81,6 +81,11 @@ public class Lead {
 
     private Boolean hasWhatsapp;
 
+    @Column(columnDefinition = "TEXT") private String interviewNotes;
+    @Column(name = "web_need", length = 30) private String webNeed;
+    @Column(name = "interview_sector", length = 50) private String interviewSector;
+    @Column(name = "interview_business_size", length = 30) private String interviewBusinessSize;
+
     @Column(nullable = false)
     private Boolean isActive = true;
 

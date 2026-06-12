@@ -29,7 +29,11 @@ public record LeadResponse(
         String metaLeadId,
         boolean isActive,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String interviewNotes,
+        String webNeed,
+        String interviewSector,
+        String interviewBusinessSize
 ) {
     public record UserRef(UUID id, String name) {}
 }

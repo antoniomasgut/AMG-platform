@@ -1,7 +1,7 @@
 # Mòdul 03: Leads CRM
 
-> **Versió:** 1.1
-> **Data:** 2026-06-03
+> **Versió:** 1.2
+> **Data:** 2026-06-11
 > **Dependències:** Mòdul 01 (Auth) — tots els endpoints requereixen JWT + RBAC
 
 ---
@@ -25,7 +25,7 @@ mai es crea un duplicat.
 
 ### 2.1 Funcionalitats incloses
 
-- CRUD de leads (nom, email, telèfon, font, valor estimat, notes, etiquetes)
+- CRUD de leads (nom, email, telèfon, font, valor estimat, notes, etiquetes, dades d'entrevista)
 - Pipeline de 7 etapes: NEW → CONTACTED → QUALIFIED → PROPOSAL → NEGOTIATION → WON / LOST
 - Canvi d'etapa amb validació (LOST requereix motiu, WON registra data de conversió)
 - Obertura de leads tancats (WON/LOST → altra etapa neteja convertedAt)
@@ -75,6 +75,11 @@ mai es crea un duplicat.
 | convertedAt | Instant | @Column | Quan es va marcar com WON (= data de conversió a client) |
 | lastContactAt | Instant | @Column | Última vegada que el contacte va escriure (qualsevol canal) |
 | lastServiceAt | Instant | @Column | Última data de servei confirmat (F2: quan es crea cita) |
+| hasWhatsapp | Boolean | @Column | Si el contacte usa WhatsApp |
+| interviewNotes | TEXT | @Column(columnDefinition="TEXT") | Notes de l'entrevista comercial (lliure) |
+| webNeed | String(30) | @Column(name="web_need") | Necessitat web detectada (ex. `LANDING_BASIC`, `LANDING_PRO`, `NONE`) |
+| interviewSector | String(50) | @Column(name="interview_sector") | Sector detectat durant l'entrevista |
+| interviewBusinessSize | String(30) | @Column(name="interview_business_size") | Mida d'empresa detectada durant l'entrevista (`AUTONOMO`, `PETIT`, `MITJA`) |
 | isActive | Boolean | @Column(nullable=false) | Per soft-delete, default true |
 | createdAt | Instant | @CreatedDate | |
 | updatedAt | Instant | @LastModifiedDate | |

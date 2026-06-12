@@ -176,6 +176,10 @@ public class LeadService {
         if (request.notes() != null) lead.setNotes(request.notes());
         if (request.tags() != null) lead.setTags(request.tags());
         if (request.hasWhatsapp() != null) lead.setHasWhatsapp(request.hasWhatsapp());
+        if (request.interviewNotes() != null) lead.setInterviewNotes(request.interviewNotes());
+        if (request.webNeed() != null) lead.setWebNeed(request.webNeed());
+        if (request.interviewSector() != null) lead.setInterviewSector(request.interviewSector());
+        if (request.interviewBusinessSize() != null) lead.setInterviewBusinessSize(request.interviewBusinessSize());
 
         lead = leadRepository.save(lead);
         return toLeadResponse(lead);
@@ -461,7 +465,9 @@ public class LeadService {
                 lead.getLostReason(), lead.getConvertedAt(),
                 lead.getLastContactAt(), lead.getLastServiceAt(), lead.getHasWhatsapp(),
                 lead.getUtmSource(), lead.getUtmMedium(), lead.getUtmCampaign(), lead.getMetaLeadId(),
-                lead.getIsActive(), lead.getCreatedAt(), lead.getUpdatedAt()
+                lead.getIsActive(), lead.getCreatedAt(), lead.getUpdatedAt(),
+                lead.getInterviewNotes(), lead.getWebNeed(),
+                lead.getInterviewSector(), lead.getInterviewBusinessSize()
         );
     }
 
@@ -477,7 +483,9 @@ public class LeadService {
                 lead.getLostReason(), lead.getConvertedAt(),
                 lead.getLastContactAt(), lead.getLastServiceAt(), lead.getHasWhatsapp(),
                 lead.getUtmSource(), lead.getUtmMedium(), lead.getUtmCampaign(), lead.getMetaLeadId(),
-                lead.getIsActive(), lead.getCreatedAt(), lead.getUpdatedAt()
+                lead.getIsActive(), lead.getCreatedAt(), lead.getUpdatedAt(),
+                lead.getInterviewNotes(), lead.getWebNeed(),
+                lead.getInterviewSector(), lead.getInterviewBusinessSize()
         );
     }
 

@@ -8,7 +8,9 @@ import {
   getLead, getActivities, changeStage, createActivity, setWhatsapp, updateLead, deleteLead,
   completeActivity, updateActivity, deleteActivity,
   analyzeNotes, type AnalyzeNotesResponse, type Activity,
+  WEB_NEED_OPTIONS,
 } from '@/services/leads';
+import { createLeadProposal, sendBudget } from '@/services/billing';
 import { createBookingToken, getTokensForLead, type BookingToken } from '@/services/booking';
 import dynamic from 'next/dynamic';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -135,6 +137,16 @@ export default function LeadDetailPage() {
   const [editActivityData, setEditActivityData] = useState({ type: 'CALL', description: '', dueDate: '' });
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
 
+  const [interviewEdit, setInterviewEdit] = useState(false);
+  const [interviewForm, setInterviewForm] = useState({ interviewNotes: '', webNeed: '', interviewSector: '', interviewBusinessSize: '' });
+
+  const [showProposalModal, setShowProposalModal] = useState(false);
+  const [proposalPhases, setProposalPhases] = useState<number[]>([1]);
+  const [proposalNotes, setProposalNotes] = useState('');
+  const [proposalOffer, setProposalOffer] = useState('');
+  const [proposalUrl, setProposalUrl] = useState<string | null>(null);
+  const [copiedProposalUrl, setCopiedProposalUrl] = useState(false);
+
   const { data: lead, isLoading: loadingLead } = useQuery({
     queryKey: ['lead', id],
     queryFn: () => getLead(id),
@@ -199,6 +211,41 @@ export default function LeadDetailPage() {
       router.push(`/${locale}/portal/leads`);
     },
     onError: () => toast('error', 'Error arxivant el lead'),
+  });
+
+  const { mutate: doSaveInterview, isPending: savingInterview } = useMutation({
+    mutationFn: () => updateLead(id, {
+      interviewNotes: interviewForm.interviewNotes || undefined,
+      webNeed: interviewForm.webNeed || undefined,
+      interviewSector: interviewForm.interviewSector || undefined,
+      interviewBusinessSize: interviewForm.interviewBusinessSize || undefined,
+    }),
+    onSuccess: () => {
+      toast('success', 'Dades d\'entrevista desades');
+      setInterviewEdit(false);
+      qc.invalidateQueries({ queryKey: ['lead', id] });
+    },
+    onError: () => toast('error', 'Error desant dades d\'entrevista'),
+  });
+
+  const { mutate: doCreateProposal, isPending: creatingProposal } = useMutation({
+    mutationFn: async () => {
+      const proposal = await createLeadProposal(id, {
+        phaseNumbers: proposalPhases,
+        sector: lead?.interviewSector ?? undefined,
+        businessSize: lead?.interviewBusinessSize ?? undefined,
+        clientNotes: proposalNotes || undefined,
+        offerPercent: proposalOffer ? Number(proposalOffer) : undefined,
+      });
+      const sent = await sendBudget(proposal.id);
+      return sent;
+    },
+    onSuccess: (sent) => {
+      setProposalUrl(sent.acceptanceUrl);
+      toast('success', 'Proposta creada i enviada');
+      qc.invalidateQueries({ queryKey: ['lead', id] });
+    },
+    onError: () => toast('error', 'Error creant la proposta'),
   });
 
   const { mutate: doCompleteActivity } = useMutation({
@@ -291,6 +338,25 @@ export default function LeadDetailPage() {
     });
     setEditMode(true);
   };
+
+  const enterInterviewEdit = () => {
+    if (!lead) return;
+    setInterviewForm({
+      interviewNotes: lead.interviewNotes ?? '',
+      webNeed: lead.webNeed ?? '',
+      interviewSector: lead.interviewSector ?? '',
+      interviewBusinessSize: lead.interviewBusinessSize ?? '',
+    });
+    setInterviewEdit(true);
+  };
+
+  const PHASE_OPTIONS = [
+    { num: 1, label: 'F1 · Captació (Agent IA + WhatsApp)' },
+    { num: 2, label: 'F2 · Agenda online' },
+    { num: 3, label: 'F3 · Pressupostos digitals' },
+    { num: 4, label: 'F4 · Seguiment de clients' },
+    { num: 5, label: 'F5 · Alertes & Equip' },
+  ];
 
   if (!user) return null;
 
@@ -633,6 +699,205 @@ export default function LeadDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Dades de l'entrevista */}
+        <div className="amg-card card-clip p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Dades de l&apos;Entrevista</div>
+            {!interviewEdit ? (
+              <button onClick={enterInterviewEdit} className="flex items-center gap-1.5 f-mono text-[10px] text-ink-3 hover:text-accent-light transition-colors">
+                <IconSet.Edit size={12} /> Editar
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <AMGButton size="sm" variant="ghost" onClick={() => setInterviewEdit(false)}>Cancel·lar</AMGButton>
+                <AMGButton size="sm" loading={savingInterview} onClick={() => doSaveInterview()}>Desar</AMGButton>
+              </div>
+            )}
+          </div>
+
+          {!interviewEdit ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <div className="f-mono text-[10px] uppercase text-ink-3 mb-1">Sector</div>
+                  <div className="f-mono text-xs text-ink-0">{lead.interviewSector || '—'}</div>
+                </div>
+                <div>
+                  <div className="f-mono text-[10px] uppercase text-ink-3 mb-1">Mida</div>
+                  <div className="f-mono text-xs text-ink-0">{lead.interviewBusinessSize || '—'}</div>
+                </div>
+                <div>
+                  <div className="f-mono text-[10px] uppercase text-ink-3 mb-1">Necessitat web</div>
+                  <div className="f-mono text-xs text-ink-0">{WEB_NEED_OPTIONS.find(o => o.value === lead.webNeed)?.label ?? lead.webNeed ?? '—'}</div>
+                </div>
+              </div>
+              {lead.interviewNotes && (
+                <div>
+                  <div className="f-mono text-[10px] uppercase text-ink-3 mb-1">Notes de l&apos;entrevista</div>
+                  <p className="text-xs text-ink-1 whitespace-pre-wrap">{lead.interviewNotes}</p>
+                </div>
+              )}
+              <div className="pt-2 flex justify-end">
+                <AMGButton
+                  size="sm"
+                  icon={IconSet.Briefcase}
+                  onClick={() => {
+                    setProposalPhases([1]);
+                    setProposalNotes('');
+                    setProposalOffer('');
+                    setProposalUrl(null);
+                    setShowProposalModal(true);
+                  }}
+                >
+                  Crear proposta comercial
+                </AMGButton>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="f-mono text-[10px] uppercase text-ink-3 block mb-1">Sector</label>
+                  <input
+                    type="text"
+                    value={interviewForm.interviewSector}
+                    onChange={e => setInterviewForm(f => ({ ...f, interviewSector: e.target.value }))}
+                    placeholder="Ex: HOSPITALITY, BEAUTY..."
+                    className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="f-mono text-[10px] uppercase text-ink-3 block mb-1">Mida del negoci</label>
+                  <select
+                    value={interviewForm.interviewBusinessSize}
+                    onChange={e => setInterviewForm(f => ({ ...f, interviewBusinessSize: e.target.value }))}
+                    className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+                  >
+                    <option value="">— Selecciona —</option>
+                    <option value="AUTONOMO">Autònom</option>
+                    <option value="PETIT">Petit (1-5 trebs.)</option>
+                    <option value="MITJA">Mitjà (6-20 trebs.)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="f-mono text-[10px] uppercase text-ink-3 block mb-1">Necessitat web</label>
+                  <select
+                    value={interviewForm.webNeed}
+                    onChange={e => setInterviewForm(f => ({ ...f, webNeed: e.target.value }))}
+                    className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+                  >
+                    <option value="">— Selecciona —</option>
+                    {WEB_NEED_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="f-mono text-[10px] uppercase text-ink-3 block mb-1">Notes de l&apos;entrevista (dolors, necessitats, context)</label>
+                <textarea
+                  value={interviewForm.interviewNotes}
+                  onChange={e => setInterviewForm(f => ({ ...f, interviewNotes: e.target.value }))}
+                  placeholder="Ex: Perruqueria, vol agenda online, perd cites per telèfon, no té web..."
+                  rows={5}
+                  className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-y"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Modal: Crear proposta comercial */}
+        {showProposalModal && (
+          <>
+            <div className="fixed inset-0 bg-black/60 z-40" onClick={() => !creatingProposal && setShowProposalModal(false)} />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="bg-bg-0 border border-border-base w-full max-w-md shadow-2xl">
+                <div className="flex items-center justify-between p-5 border-b border-border-base">
+                  <div className="f-display font-bold text-base">Crear proposta comercial</div>
+                  <button onClick={() => setShowProposalModal(false)} className="p-1.5 text-ink-3 hover:text-ink-0"><IconSet.X size={16} /></button>
+                </div>
+
+                {proposalUrl ? (
+                  <div className="p-5 space-y-4">
+                    <div className="p-3 bg-success/10 border border-success/30 rounded text-success text-sm">
+                      Proposta creada i enviada correctament.
+                    </div>
+                    <div>
+                      <div className="f-mono text-[10px] uppercase text-ink-3 mb-1">URL de la proposta (per enviar al client)</div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          readOnly value={proposalUrl}
+                          className="flex-1 bg-bg-1 border border-border-base text-ink-2 px-3 h-9 f-mono text-xs focus:outline-none"
+                        />
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(proposalUrl); setCopiedProposalUrl(true); setTimeout(() => setCopiedProposalUrl(false), 2000); }}
+                          className="f-mono text-xs border border-border-base px-3 h-9 text-ink-2 hover:border-accent hover:text-accent-light transition-colors whitespace-nowrap"
+                        >
+                          {copiedProposalUrl ? '✓ Copiat' : 'Copiar'}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <AMGButton variant="ghost" onClick={() => setShowProposalModal(false)}>Tancar</AMGButton>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-5 space-y-4">
+                    <div>
+                      <div className="f-mono text-[10px] uppercase text-ink-3 mb-2">Fases a incloure</div>
+                      <div className="space-y-1.5">
+                        {PHASE_OPTIONS.map(({ num, label }) => (
+                          <label key={num} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={proposalPhases.includes(num)}
+                              onChange={e => setProposalPhases(prev => e.target.checked ? [...prev, num].sort() : prev.filter(n => n !== num))}
+                              className="accent-accent"
+                            />
+                            <span className="f-mono text-xs text-ink-1">{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {lead.interviewSector && lead.interviewBusinessSize && (
+                        <div className="mt-2 text-[10px] text-ink-3 f-mono">
+                          Sector: {lead.interviewSector} · Mida: {lead.interviewBusinessSize}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="f-mono text-[10px] uppercase text-ink-3 block mb-1">Oferta especial (%)</label>
+                      <input
+                        type="number" min="0" max="100" value={proposalOffer}
+                        onChange={e => setProposalOffer(e.target.value)}
+                        placeholder="0  (deixa buit si no hi ha oferta)"
+                        className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+                      />
+                    </div>
+                    <div>
+                      <label className="f-mono text-[10px] uppercase text-ink-3 block mb-1">Notes per al client</label>
+                      <textarea
+                        value={proposalNotes} onChange={e => setProposalNotes(e.target.value)}
+                        placeholder="Ex: Proposta personalitzada per a la vostra empresa..."
+                        rows={3}
+                        className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-none"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <AMGButton variant="ghost" onClick={() => setShowProposalModal(false)} disabled={creatingProposal}>Cancel·lar</AMGButton>
+                      <AMGButton
+                        loading={creatingProposal}
+                        disabled={proposalPhases.length === 0}
+                        onClick={() => doCreateProposal()}
+                      >
+                        Crear i enviar proposta
+                      </AMGButton>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Notes de reunió */}
         {(bookingTokens as BookingToken[]).some(bt => bt.confirmed && bt.meetingAt) && (

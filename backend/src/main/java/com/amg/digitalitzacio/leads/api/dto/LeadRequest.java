@@ -20,5 +20,9 @@ public record LeadRequest(
         Boolean hasWhatsapp,
         @Size(max = 100) String utmSource,
         @Size(max = 100) String utmMedium,
-        @Size(max = 150) String utmCampaign
+        @Size(max = 150) String utmCampaign,
+        String interviewNotes,
+        @Size(max = 30) String webNeed,
+        @Size(max = 50) String interviewSector,
+        @Size(max = 30) String interviewBusinessSize
 ) {}
