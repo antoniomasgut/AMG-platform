@@ -6,7 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/lib/toast-context';
 import {
-  listTemplates, deleteTemplate, duplicateTemplate, exportTemplateToDrive, importTemplateFromPdf,
+  listTemplates, deleteTemplate, duplicateTemplate,
+  exportTemplateToDrive, exportTemplateToDriveAMG, importTemplateFromPdf,
   type TemplateResponse, type DocumentType,
   DOCUMENT_TYPES,
 } from '@/services/documents';
@@ -145,6 +146,7 @@ export default function AdminDocumentsPage() {
   const [deleteTarget, setDeleteTarget] = useState<TemplateResponse | null>(null);
   const [showImportPdf, setShowImportPdf] = useState(false);
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [exportingAMGId, setExportingAMGId] = useState<string | null>(null);
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ['document-templates', forTenantId],
@@ -176,12 +178,25 @@ export default function AdminDocumentsPage() {
     setExportingId(templateId);
     try {
       const result = await exportTemplateToDrive(templateId, forTenantId);
-      toast('success', 'Plantilla exportada a Google Docs');
+      toast('success', 'Plantilla exportada al Drive del tenant');
       if (result.webViewLink) window.open(result.webViewLink, '_blank');
     } catch {
-      toast('error', 'Error exportant. Comprova que Google Drive està connectat.');
+      toast('error', 'Error exportant. Comprova que Google Drive del tenant està connectat.');
     } finally {
       setExportingId(null);
+    }
+  };
+
+  const handleExportDriveAMG = async (templateId: string) => {
+    setExportingAMGId(templateId);
+    try {
+      const result = await exportTemplateToDriveAMG(templateId, forTenantId);
+      toast('success', 'Plantilla exportada al Drive d\'AMG (Tenants/' + (forTenantId ?? '') + ')');
+      if (result.webViewLink) window.open(result.webViewLink, '_blank');
+    } catch {
+      toast('error', 'Error exportant al Drive d\'AMG. Comprova GOOGLE_CALENDAR_SA_JSON.');
+    } finally {
+      setExportingAMGId(null);
     }
   };
 
@@ -283,6 +298,13 @@ export default function AdminDocumentsPage() {
                             onClick={() => handleExportDrive(t.id)}
                           >
                             <IconSet.Link size={14} />
+                          </AMGButton>
+                          <AMGButton
+                            size="sm" variant="ghost"
+                            loading={exportingAMGId === t.id}
+                            onClick={() => handleExportDriveAMG(t.id)}
+                          >
+                            <IconSet.Database size={14} />
                           </AMGButton>
                           <AMGButton size="sm" variant="ghost" onClick={() => setDeleteTarget(t)}>
                             <IconSet.Trash size={14} />

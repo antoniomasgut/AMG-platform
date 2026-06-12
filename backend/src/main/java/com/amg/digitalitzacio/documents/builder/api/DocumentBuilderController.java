@@ -161,6 +161,27 @@ public class DocumentBuilderController {
         }
     }
 
+    // ── Exporta plantilla al Drive d'AMG (SA) ────────────────────
+
+    @PostMapping("/templates/{id}/export-drive-amg")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<?> exportTemplateToDriveAMG(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable UUID id,
+            @RequestParam(required = false) UUID tenantId) {
+        try {
+            var result = service.exportTemplateToDriveAMG(id, resolveTenantId(user, tenantId));
+            return ResponseEntity.ok(Map.of(
+                    "fileId", result.fileId(),
+                    "webViewLink", result.webViewLink() != null ? result.webViewLink() : "",
+                    "title", result.title()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
     // ── Importa plantilla des d'un PDF extern ─────────────────────
 
     @PostMapping(value = "/templates/import-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

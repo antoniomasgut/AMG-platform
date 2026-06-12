@@ -1,5 +1,7 @@
 package com.amg.digitalitzacio.documents.builder.application;
 
+import com.amg.digitalitzacio.agents.application.GoogleCalendarService;
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.documents.builder.api.dto.*;
 import com.amg.digitalitzacio.documents.builder.domain.*;
 import com.amg.digitalitzacio.google.application.GoogleOrchestrator;
@@ -52,6 +54,8 @@ public class DocumentBuilderService {
     private final ObjectMapper objectMapper;
     private final StorageProviderRouter storageRouter;
     private final GoogleOrchestrator googleOrchestrator;
+    private final GoogleCalendarService googleCalendarService;
+    private final TenantRepository tenantRepository;
     private final AIProviderRouter aiProviderRouter;
 
     public List<TemplateResponse> listTemplates(UUID tenantId) {
@@ -638,6 +642,22 @@ public class DocumentBuilderService {
         String title = t.getName() + " — plantilla";
         var result = googleOrchestrator.exportHtmlToGoogleDocs(tenantId, html, title);
         return new ExportDriveResult(result.fileId(), result.webViewLink(), title);
+    }
+
+    public ExportDriveResult exportTemplateToDriveAMG(UUID templateId, UUID tenantId) {
+        var t = templateRepo.findById(templateId)
+                .orElseThrow(() -> new NoSuchElementException("Template not found: " + templateId));
+        var tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new NoSuchElementException("Tenant not found: " + tenantId));
+        String html = previewTemplate(templateId);
+        String title = t.getName() + " — plantilla";
+        String tenantName = tenant.getName() != null ? tenant.getName() : tenantId.toString();
+        try {
+            var result = googleCalendarService.exportHtmlToDriveViaSA(html, title, tenantName);
+            return new ExportDriveResult(result.fileId(), result.webViewLink(), title);
+        } catch (Exception e) {
+            throw new RuntimeException("Error exportant al Drive d'AMG: " + e.getMessage(), e);
+        }
     }
 
     // ── Opció B: Importa plantilla des d'un PDF extern ────────────

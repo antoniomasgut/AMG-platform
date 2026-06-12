@@ -122,6 +122,11 @@ public class SystemConfigService {
     }
 
     @Transactional
+    public void setInternal(String key, String value) {
+        set(key, value, false, null, "text", null, null, null, null, null, null);
+    }
+
+    @Transactional
     public String set(String key, String rawValue, boolean isSecret, String description,
                       String valueType, String defaultValue, String validationRules, Integer sortOrder,
                       UUID userId, String userEmail, String ip) {

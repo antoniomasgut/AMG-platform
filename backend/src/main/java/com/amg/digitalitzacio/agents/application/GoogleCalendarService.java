@@ -398,4 +398,167 @@ public class GoogleCalendarService {
         try { return objectMapper.writeValueAsString(s); }
         catch (Exception e) { return "\"" + s.replace("\"", "'") + "\""; }
     }
+
+    // ── Drive AMG via SA ─────────────────────────────────────────
+
+    private static final String DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
+    private static final String DRIVE_API   = "https://www.googleapis.com/drive/v3";
+    private static final String DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3";
+
+    public record DriveDocResult(String fileId, String webViewLink) {}
+
+    /**
+     * Exporta HTML al Drive d'AMG dins Tenants/{tenantName}/.
+     * Crea les carpetes si no existeixen i desa l'ID arrel a system_settings.
+     */
+    public DriveDocResult exportHtmlToDriveViaSA(String html, String title, String tenantName) throws Exception {
+        String accessToken = getSaAccessTokenWithScope(DRIVE_SCOPE);
+
+        String rootFolderId = getOrCreateTenantsRootFolder(accessToken);
+        String tenantFolderId = getOrCreateFolder(accessToken, tenantName, rootFolderId);
+
+        return uploadHtmlAsGoogleDoc(accessToken, html, title, tenantFolderId);
+    }
+
+    private String getSaAccessTokenWithScope(String scope) throws Exception {
+        String saJson = systemConfigService.get("GOOGLE_CALENDAR_SA_JSON");
+        if (saJson == null || saJson.isBlank()) throw new IllegalStateException("GOOGLE_CALENDAR_SA_JSON no configurat");
+
+        Map<String, Object> sa = objectMapper.readValue(saJson, new TypeReference<>() {});
+        String clientEmail = (String) sa.get("client_email");
+        String privateKeyPem = (String) sa.get("private_key");
+
+        long now = Instant.now().getEpochSecond();
+        String header = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("{\"alg\":\"RS256\",\"typ\":\"JWT\"}".getBytes());
+        String payload = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(("{\"iss\":\"" + clientEmail + "\","
+                        + "\"scope\":\"" + scope + "\","
+                        + "\"aud\":\"https://oauth2.googleapis.com/token\","
+                        + "\"exp\":" + (now + 3600) + ","
+                        + "\"iat\":" + now + "}").getBytes());
+
+        String toSign = header + "." + payload;
+        String keyContent = privateKeyPem
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+        byte[] keyBytes = Base64.getDecoder().decode(keyContent);
+        PrivateKey privateKey = KeyFactory.getInstance("RSA")
+                .generatePrivate(new PKCS8EncodedKeySpec(keyBytes));
+        Signature sig = Signature.getInstance("SHA256withRSA");
+        sig.initSign(privateKey);
+        sig.update(toSign.getBytes());
+        String signature = Base64.getUrlEncoder().withoutPadding().encodeToString(sig.sign());
+
+        String jwt = toSign + "." + signature;
+        String body = "grant_type=" + URLEncoder.encode("urn:ietf:params:oauth:grant-type:jwt-bearer", StandardCharsets.UTF_8)
+                + "&assertion=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8);
+
+        var req = HttpRequest.newBuilder()
+                .uri(URI.create(TOKEN_URL))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        var res = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+        Map<String, Object> resp = objectMapper.readValue(res.body(), new TypeReference<>() {});
+        String token = (String) resp.get("access_token");
+        if (token == null) throw new IllegalStateException("SA Drive token error: " + res.body());
+        return token;
+    }
+
+    private String getOrCreateTenantsRootFolder(String accessToken) throws Exception {
+        String cached = systemConfigService.get("GOOGLE_DRIVE_AMG_TENANTS_FOLDER_ID");
+        if (cached != null && !cached.isBlank()) {
+            if (folderExists(accessToken, cached)) return cached;
+        }
+        String folderId = getOrCreateFolder(accessToken, "Tenants", null);
+        systemConfigService.setInternal("GOOGLE_DRIVE_AMG_TENANTS_FOLDER_ID", folderId);
+        return folderId;
+    }
+
+    private boolean folderExists(String accessToken, String folderId) {
+        try {
+            var req = HttpRequest.newBuilder()
+                    .uri(URI.create(DRIVE_API + "/files/" + folderId + "?fields=id,trashed"))
+                    .header("Authorization", "Bearer " + accessToken)
+                    .GET().build();
+            var res = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+            if (res.statusCode() != 200) return false;
+            Map<String, Object> f = objectMapper.readValue(res.body(), new TypeReference<>() {});
+            return !Boolean.TRUE.equals(f.get("trashed"));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private String getOrCreateFolder(String accessToken, String name, String parentId) throws Exception {
+        // Cerca carpeta existent
+        String query = "name='" + name.replace("'", "\\'") + "'"
+                + " and mimeType='application/vnd.google-apps.folder'"
+                + " and trashed=false"
+                + (parentId != null ? " and '" + parentId + "' in parents" : "");
+        var searchReq = HttpRequest.newBuilder()
+                .uri(URI.create(DRIVE_API + "/files?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8) + "&fields=files(id)"))
+                .header("Authorization", "Bearer " + accessToken)
+                .GET().build();
+        var searchRes = httpClient.send(searchReq, HttpResponse.BodyHandlers.ofString());
+        Map<String, Object> searchJson = objectMapper.readValue(searchRes.body(), new TypeReference<>() {});
+        @SuppressWarnings("unchecked")
+        var files = (java.util.List<Map<String, Object>>) searchJson.get("files");
+        if (files != null && !files.isEmpty()) {
+            return (String) files.get(0).get("id");
+        }
+
+        // Crea carpeta nova
+        Map<String, Object> meta = new java.util.LinkedHashMap<>();
+        meta.put("name", name);
+        meta.put("mimeType", "application/vnd.google-apps.folder");
+        if (parentId != null) meta.put("parents", List.of(parentId));
+
+        var createReq = HttpRequest.newBuilder()
+                .uri(URI.create(DRIVE_API + "/files?fields=id"))
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(meta)))
+                .build();
+        var createRes = httpClient.send(createReq, HttpResponse.BodyHandlers.ofString());
+        if (createRes.statusCode() < 200 || createRes.statusCode() >= 300) {
+            throw new IllegalStateException("Error creant carpeta '" + name + "': " + createRes.statusCode());
+        }
+        Map<String, Object> created = objectMapper.readValue(createRes.body(), new TypeReference<>() {});
+        return (String) created.get("id");
+    }
+
+    private DriveDocResult uploadHtmlAsGoogleDoc(String accessToken, String html, String title, String folderId) throws Exception {
+        String boundary = "amg_sa_boundary_" + java.util.UUID.randomUUID().toString().replace("-", "");
+        String metadata = objectMapper.writeValueAsString(Map.of(
+                "name", title,
+                "mimeType", "application/vnd.google-apps.document",
+                "parents", List.of(folderId)
+        ));
+        String body = "--" + boundary + "\r\n"
+                + "Content-Type: application/json; charset=UTF-8\r\n\r\n"
+                + metadata + "\r\n"
+                + "--" + boundary + "\r\n"
+                + "Content-Type: text/html; charset=UTF-8\r\n\r\n"
+                + html + "\r\n"
+                + "--" + boundary + "--";
+
+        var req = HttpRequest.newBuilder()
+                .uri(URI.create(DRIVE_UPLOAD + "/files?uploadType=multipart&fields=id,webViewLink"))
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "multipart/related; boundary=" + boundary)
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        var res = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+        if (res.statusCode() < 200 || res.statusCode() >= 300) {
+            throw new IllegalStateException("Drive upload SA failed: " + res.statusCode() + " " + res.body());
+        }
+        Map<String, Object> json = objectMapper.readValue(res.body(), new TypeReference<>() {});
+        return new DriveDocResult(
+                (String) json.get("id"),
+                json.getOrDefault("webViewLink", "").toString()
+        );
+    }
 }

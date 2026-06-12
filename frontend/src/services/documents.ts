@@ -970,6 +970,11 @@ export async function exportTemplateToDrive(templateId: string, tenantId?: strin
   return apiFetch<ExportDriveResult>(`/documents/templates/${templateId}/export-drive${qs}`, { method: 'POST' });
 }
 
+export async function exportTemplateToDriveAMG(templateId: string, tenantId?: string): Promise<ExportDriveResult> {
+  const qs = tenantId ? `?tenantId=${tenantId}` : '';
+  return apiFetch<ExportDriveResult>(`/documents/templates/${templateId}/export-drive-amg${qs}`, { method: 'POST' });
+}
+
 export async function importTemplateFromPdf(
   file: File,
   documentType: DocumentType,
