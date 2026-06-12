@@ -96,6 +96,11 @@ fi
 # ── 6. Deploy ─────────────────────────────────────────────────────────────
 step "6. Reiniciant serveis"
 ssh "$PROD_HOST" "
+  # Elimina contenidors orfes de deploys anteriors per evitar conflictes de nom
+  docker stop amg_frontend 2>/dev/null || true
+  docker rm   amg_frontend 2>/dev/null || true
+  docker stop amg_backend  2>/dev/null || true
+  docker rm   amg_backend  2>/dev/null || true
   cd $PROD_REPO/infra
   docker compose -f docker-compose.yml --env-file $PROD_ENV up -d backend frontend 2>&1 | grep -v '^#'
 "
