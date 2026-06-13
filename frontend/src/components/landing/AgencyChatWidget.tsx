@@ -53,7 +53,11 @@ export function AgencyChatWidget() {
       const data = await res.json();
       setSessionId(data.sessionId);
       localStorage.setItem('amg_agency_sid', data.sessionId);
-      setMessages([{ role: 'assistant', text: data.greeting }]);
+      const hist: Message[] = (data.history ?? []).map((m: { role: string; content: string }) => ({
+        role: m.role as 'user' | 'assistant',
+        text: m.content,
+      }));
+      setMessages([...hist, { role: 'assistant', text: data.greeting }]);
       setStep('chat');
     } catch {
       setMessages([{ role: 'assistant', text: 'No s\'ha pogut iniciar el xat. Torna-ho a provar.' }]);

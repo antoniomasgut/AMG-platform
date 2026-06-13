@@ -1,9 +1,12 @@
 package com.amg.digitalitzacio.chat.application;
 
 import com.amg.digitalitzacio.agents.application.ChannelUsageService;
+import com.amg.digitalitzacio.agents.application.ConversationService;
 import com.amg.digitalitzacio.agents.application.GoogleCalendarService;
 import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.PromptBuilder;
+import com.amg.digitalitzacio.agents.domain.ConversationChannel;
+import com.amg.digitalitzacio.agents.domain.ConversationRole;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
@@ -71,6 +74,7 @@ public class ChatSessionService {
     private final StringRedisTemplate redis;
     private final ObjectMapper objectMapper;
     private final LandingChatContextRepository chatContextRepository;
+    private final ConversationService conversationService;
     private final LandingRepository landingRepository;
     private final LeadRepository leadRepository;
     private final NexeServiceConfigService nexeConfigService;
@@ -86,7 +90,9 @@ public class ChatSessionService {
     @Value("${app.landing.base-domain:webs.amgdl.com}")
     private String landingBaseDomain;
 
-    public record CreateSessionResult(String sessionId, String greeting) {}
+    public record CreateSessionResult(String sessionId, String greeting, List<ChatSession.ChatMessage> history) {
+        public CreateSessionResult(String sessionId, String greeting) { this(sessionId, greeting, List.of()); }
+    }
     public record SendMessageResult(String sessionId, String reply, boolean terminated) {}
 
     public CreateSessionResult createSession(String landingSlug, String contactName, String contactPhone, String ip) {
@@ -171,6 +177,21 @@ public class ChatSessionService {
         var model = (aiCfg.getPreferredModel() != null && !aiCfg.getPreferredModel().isBlank())
                 ? aiCfg.getPreferredModel() : CHAT_MODEL_DEFAULT;
 
+        // Carrega historial previ per telèfon (best-effort)
+        List<ChatSession.ChatMessage> dbHistory = List.of();
+        if (contactPhone != null && !contactPhone.isBlank()) {
+            try {
+                var dbMsgs = conversationService.loadHistory(tenantId, contactPhone.strip(), ConversationChannel.WIDGET);
+                dbHistory = dbMsgs.stream()
+                        .map(c -> new ChatSession.ChatMessage(
+                                c.getRole() == ConversationRole.USER ? "user" : "assistant",
+                                c.getContent()))
+                        .toList();
+            } catch (Exception e) {
+                log.warn("[Agency] Could not load history for {}: {}", contactPhone, e.getMessage());
+            }
+        }
+
         var sessionId = UUID.randomUUID().toString();
         var greeting  = generateGreetingWithPrompt(ctx, systemPrompt, "agency", model);
 
@@ -186,9 +207,21 @@ public class ChatSessionService {
                 .messageCount(0)
                 .build();
 
+        // Precarrega historial a la sessió Redis (context de la IA)
+        session.getMessages().addAll(dbHistory);
         session.getMessages().add(new ChatSession.ChatMessage("assistant", greeting));
         saveSession(session);
         incrementRateCounter(RATE_SESS_KEY + ip, 3600);
+
+        // Guarda salutació al DB
+        if (contactPhone != null && !contactPhone.isBlank()) {
+            try {
+                conversationService.save(tenantId, contactPhone.strip(), ConversationChannel.WIDGET,
+                        ConversationRole.ASSISTANT, greeting, false);
+            } catch (Exception e) {
+                log.warn("[Agency] Could not persist greeting: {}", e.getMessage());
+            }
+        }
 
         // Registra lead si tenim nom + telèfon
         if (contactName != null && !contactName.isBlank()
@@ -200,7 +233,7 @@ public class ChatSessionService {
             }
         }
 
-        return new CreateSessionResult(sessionId, greeting);
+        return new CreateSessionResult(sessionId, greeting, dbHistory);
     }
 
     private LandingChatContext buildDefaultAgencyContext(UUID tenantId) {
@@ -365,6 +398,21 @@ public class ChatSessionService {
         trimHistory(session);
         saveSession(session);
         incrementRateCounter(RATE_MSG_KEY + ip, 3600);
+
+        // Persisteix al DB per a historial persistent (agency sessions amb telèfon)
+        if ("agency".equals(session.getLandingSlug())
+                && session.getContactPhone() != null && !session.getContactPhone().isBlank()) {
+            try {
+                var tenantUUID = UUID.fromString(session.getTenantId());
+                var phone = session.getContactPhone();
+                conversationService.save(tenantUUID, phone, ConversationChannel.WIDGET,
+                        ConversationRole.USER, userMessage, false);
+                conversationService.save(tenantUUID, phone, ConversationChannel.WIDGET,
+                        ConversationRole.ASSISTANT, reply, false);
+            } catch (Exception e) {
+                log.warn("[Agency] Could not persist message to DB: {}", e.getMessage());
+            }
+        }
 
         // Registra l'ús del canal de xat (best-effort; agency sessions no tenen landing real)
         try {

@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.chat.api;
 
 import com.amg.digitalitzacio.chat.application.ChatSessionService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +16,9 @@ public class ChatController {
 
     record CreateSessionRequest(String landingSlug, String contactName, String contactPhone) {}
     record CreateAgencySessionRequest(String contactName, String contactPhone) {}
-    record CreateSessionResponse(String sessionId, String greeting) {}
+    record HistoryMessage(String role, String content) {}
+    record CreateSessionResponse(String sessionId, String greeting, List<HistoryMessage> history) {}
+
     record SendMessageRequest(String message) {}
     record SendMessageResponse(String sessionId, String reply, boolean terminated) {}
     record AgencyStatusResponse(boolean enabled) {}
@@ -30,7 +33,10 @@ public class ChatController {
     public CreateSessionResponse createAgencySession(@RequestBody CreateAgencySessionRequest req,
                                                      HttpServletRequest httpReq) {
         var result = chatSessionService.createAgencySession(req.contactName(), req.contactPhone(), extractIp(httpReq));
-        return new CreateSessionResponse(result.sessionId(), result.greeting());
+        var history = result.history().stream()
+                .map(m -> new HistoryMessage(m.getRole(), m.getContent()))
+                .toList();
+        return new CreateSessionResponse(result.sessionId(), result.greeting(), history);
     }
 
     @PostMapping("/sessions")
@@ -39,7 +45,7 @@ public class ChatController {
                                                HttpServletRequest httpReq) {
         var result = chatSessionService.createSession(
                 req.landingSlug(), req.contactName(), req.contactPhone(), extractIp(httpReq));
-        return new CreateSessionResponse(result.sessionId(), result.greeting());
+        return new CreateSessionResponse(result.sessionId(), result.greeting(), List.of());
     }
 
     @PostMapping("/sessions/{sessionId}/messages")
