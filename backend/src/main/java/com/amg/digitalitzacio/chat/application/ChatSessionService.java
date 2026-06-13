@@ -239,6 +239,42 @@ public class ChatSessionService {
         return new CreateSessionResult(sessionId, greeting, dbHistory);
     }
 
+    private String buildLimitMessage(ChatSession session) {
+        String whatsapp = null;
+        String email    = null;
+
+        try {
+            if ("agency".equals(session.getLandingSlug())) {
+                // Canals de contacte del tenant propietari (AMG)
+                var owner = tenantRepository.findByIsOwnerTrue().orElse(null);
+                if (owner != null) {
+                    var link = chatLinkRepository.findByTenantId(owner.getId()).orElse(null);
+                    if (link != null) {
+                        whatsapp = link.getWhatsappPhoneNumber();
+                        email    = link.getEmailAddress();
+                    }
+                }
+                // Fallback als valors fixos d'AMG si no hi ha config al DB
+                if (whatsapp == null || whatsapp.isBlank()) whatsapp = "614492062";
+                if (email    == null || email.isBlank())    email    = "info@amgdl.com";
+            } else {
+                // Sessió de landing d'un tenant: busca la seva config
+                var tenantId = UUID.fromString(session.getTenantId());
+                var link = chatLinkRepository.findByTenantId(tenantId).orElse(null);
+                if (link != null) {
+                    whatsapp = link.getWhatsappPhoneNumber();
+                    email    = link.getEmailAddress();
+                }
+            }
+        } catch (Exception ignored) {}
+
+        var sb = new StringBuilder("Hem arribat al límit d'aquesta conversa. Per continuar contacta'ns directament:");
+        if (whatsapp != null && !whatsapp.isBlank()) sb.append("\n📱 WhatsApp: ").append(whatsapp);
+        if (email    != null && !email.isBlank())    sb.append("\n✉️ Email: ").append(email);
+        if (whatsapp == null && email == null)       sb.append(" contacta'ns per telèfon o email.");
+        return sb.toString();
+    }
+
     private LandingChatContext buildDefaultAgencyContext(UUID tenantId) {
         return LandingChatContext.builder()
                 .landingId(tenantId)
@@ -349,8 +385,8 @@ public class ChatSessionService {
         }
 
         if (session.getMessageCount() >= MAX_MSGS_PER_SESSION) {
-            return new SendMessageResult(sessionId,
-                "Conversa completada. Contacta'ns per telèfon per a més informació.", true);
+            deleteSession(sessionId);
+            return new SendMessageResult(sessionId, buildLimitMessage(session), true);
         }
 
         if (containsProfanity(userMessage)) {
