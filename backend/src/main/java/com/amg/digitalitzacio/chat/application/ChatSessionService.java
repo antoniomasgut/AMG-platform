@@ -177,11 +177,14 @@ public class ChatSessionService {
         var model = (aiCfg.getPreferredModel() != null && !aiCfg.getPreferredModel().isBlank())
                 ? aiCfg.getPreferredModel() : CHAT_MODEL_DEFAULT;
 
-        // Carrega historial previ per telèfon (best-effort)
+        // Carrega historial previ per telèfon (WIDGET + WhatsApp) — best-effort
         List<ChatSession.ChatMessage> dbHistory = List.of();
         if (contactPhone != null && !contactPhone.isBlank()) {
             try {
-                var dbMsgs = conversationService.loadHistory(tenantId, contactPhone.strip(), ConversationChannel.WIDGET);
+                var channels = List.of(ConversationChannel.WIDGET,
+                        ConversationChannel.WHATSAPP, ConversationChannel.WHATSAPP_META);
+                var dbMsgs = conversationService.loadHistoryAcrossChannels(
+                        tenantId, contactPhone.strip(), channels);
                 dbHistory = dbMsgs.stream()
                         .map(c -> new ChatSession.ChatMessage(
                                 c.getRole() == ConversationRole.USER ? "user" : "assistant",

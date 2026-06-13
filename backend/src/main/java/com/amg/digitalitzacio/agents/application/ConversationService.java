@@ -74,6 +74,15 @@ public class ConversationService {
         });
     }
 
+    @Transactional(readOnly = true)
+    public List<Conversation> loadHistoryAcrossChannels(UUID tenantId, String customerIdentifier,
+            java.util.Collection<ConversationChannel> channels) {
+        var conversations = conversationRepository
+            .findRecentByTenantIdAndCustomerIdentifierAndChannels(tenantId, customerIdentifier, channels);
+        Collections.reverse(conversations);
+        return conversations;
+    }
+
     private List<Conversation> loadRecentFromDatabase(UUID tenantId, String customerIdentifier, ConversationChannel channel) {
         var conversations = conversationRepository
             .findTop30ByTenantIdAndCustomerIdentifierAndChannelOrderByCreatedAtDesc(

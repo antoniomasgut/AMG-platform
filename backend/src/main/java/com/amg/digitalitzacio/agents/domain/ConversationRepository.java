@@ -20,6 +20,12 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     List<Conversation> findTop30ByTenantIdAndCustomerIdentifierAndChannelOrderByCreatedAtDesc(
         UUID tenantId, String customerIdentifier, ConversationChannel channel);
 
+    @Query("SELECT c FROM Conversation c WHERE c.tenantId = :tenantId AND c.customerIdentifier = :identifier AND c.channel IN :channels ORDER BY c.createdAt DESC LIMIT 40")
+    List<Conversation> findRecentByTenantIdAndCustomerIdentifierAndChannels(
+        @Param("tenantId") UUID tenantId,
+        @Param("identifier") String identifier,
+        @Param("channels") java.util.Collection<ConversationChannel> channels);
+
     long countByTenantIdAndCustomerIdentifierAndChannel(
         UUID tenantId, String customerIdentifier, ConversationChannel channel);
 
