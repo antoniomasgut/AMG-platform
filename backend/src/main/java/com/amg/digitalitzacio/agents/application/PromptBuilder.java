@@ -2,6 +2,10 @@ package com.amg.digitalitzacio.agents.application;
 
 import com.amg.digitalitzacio.agents.domain.ConversationRole;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
+import com.amg.digitalitzacio.auth.domain.BusinessSector;
+import com.amg.digitalitzacio.auth.domain.PhaseDepType;
+import com.amg.digitalitzacio.auth.domain.SectorPhase;
+import com.amg.digitalitzacio.auth.domain.SectorPhaseRepository;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -30,6 +35,7 @@ public class PromptBuilder {
     private final NexeServiceConfigService nexeServiceConfigService;
     private final TenantRepository tenantRepository;
     private final TenantAIConfigRepository tenantAIConfigRepository;
+    private final SectorPhaseRepository sectorPhaseRepository;
     private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
@@ -39,11 +45,13 @@ public class PromptBuilder {
         String basePrompt       = resolveTenantSystemPrompt(tenantId);
         String knowledgeBlock   = knowledgeBaseService.buildKnowledgeBlock(tenantId);
         String nexeBlock        = buildNexeBlock(tenantId);
+        String catalogBlock     = buildSectorCatalogBlock(tenantId);
         String historyBlock     = buildHistoryBlock(context);
 
         return languageRule
             + "<business_context>\n" + basePrompt + knowledgeBlock + "\n</business_context>\n"
             + "<services>\n" + nexeBlock + "\n</services>\n"
+            + (catalogBlock.isBlank() ? "" : "<sector_catalog>\n" + catalogBlock + "\n</sector_catalog>\n")
             + "<history>\n" + historyBlock + "\n</history>";
     }
 
@@ -220,6 +228,90 @@ public class PromptBuilder {
             log.debug("Could not parse EQUIP config: {}", e.getMessage());
             return "";
         }
+    }
+
+    // Injecta el catàleg complet de fases sectorials quan el tenant és una agència IA (agent de vendes)
+    private String buildSectorCatalogBlock(UUID tenantId) {
+        var sector = tenantRepository.findById(tenantId)
+                .map(t -> t.getSector())
+                .orElse(null);
+        if (sector != BusinessSector.AGENCIA_IA) return "";
+
+        var allPhases = sectorPhaseRepository.findAll();
+        if (allPhases.isEmpty()) return "";
+
+        var bySector = new java.util.LinkedHashMap<BusinessSector, List<SectorPhase>>();
+        for (var phase : allPhases) {
+            bySector.computeIfAbsent(phase.getSector(), k -> new java.util.ArrayList<>()).add(phase);
+        }
+        bySector.values().forEach(list -> list.sort(java.util.Comparator.comparingInt(SectorPhase::getPhaseNumber)));
+
+        var sb = new StringBuilder();
+        sb.append("Catàleg complet de fases per sector. Quan un prospecte explica el seu negoci, presenta les fases del seu sector.\n\n");
+
+        for (var entry : bySector.entrySet()) {
+            if (entry.getKey() == BusinessSector.AGENCIA_IA) continue;
+            sb.append("SECTOR: ").append(sectorLabel(entry.getKey())).append("\n");
+            for (var p : entry.getValue()) {
+                String req = (p.getRequiredPhases() != null && !p.getRequiredPhases().isBlank())
+                        ? " [req fase " + p.getRequiredPhases() + "]" : "";
+                String dep = p.getDependencyType() == PhaseDepType.BASE ? " ★BASE" : "";
+                sb.append("  F").append(p.getPhaseNumber()).append(dep).append(req)
+                  .append(" — ").append(p.getName()).append(": ").append(p.getDescription())
+                  .append(" (setup ").append(p.getSetupPrice().intValue()).append("€")
+                  .append(", ").append(p.getMonthlyPrice().intValue()).append("€/mes)\n");
+            }
+            sb.append("  → Recomanació per estalviar temps: ").append(firstRecommendation(entry.getKey())).append("\n\n");
+        }
+
+        return sb.toString();
+    }
+
+    private static String sectorLabel(BusinessSector s) {
+        return switch (s) {
+            case PINTOR -> "Pintura";
+            case ELECTRICISTA -> "Electricitat";
+            case FONTANER -> "Lampisteria";
+            case JARDINER -> "Jardineria";
+            case NETEJA -> "Neteja";
+            case TALLER_MECANIC -> "Taller mecànic";
+            case FISIOTERAPEUTA -> "Fisioteràpia";
+            case PSICOLEG -> "Psicologia";
+            case NUTRICIONISTA -> "Nutrició";
+            case RESTAURANTE -> "Restaurant";
+            case ACADEMIA -> "Acadèmia / Centre de formació";
+            case VETERINARI -> "Clínica veterinària";
+            case PERRUQUERIA_CANINA -> "Perruqueria canina";
+            case PERRUQUERIA -> "Perruqueria";
+            case ESTETICA -> "Centre d'estètica";
+            case GESTORIA -> "Gestoria / Assessoria";
+            case INMOBILIARIA -> "Immobiliària";
+            default -> s.name();
+        };
+    }
+
+    private static String firstRecommendation(BusinessSector s) {
+        return switch (s) {
+            case PINTOR, ELECTRICISTA, FONTANER, JARDINER, NETEJA ->
+                "F1+F2+F3 — generació i seguiment de pressupostos sense intervenció manual";
+            case TALLER_MECANIC ->
+                "F1+F2+F3 — pressupostos automàtics i agenda de deixada de vehicle";
+            case FISIOTERAPEUTA, PSICOLEG, NUTRICIONISTA ->
+                "F1+F2+F3 — agenda, historial de pacient i notes de sessió per veu";
+            case RESTAURANTE ->
+                "F1+F2 — reserves automàtiques i eliminació de no-shows";
+            case ACADEMIA ->
+                "F1+F2 — captació i matrícula sense trucades";
+            case VETERINARI, PERRUQUERIA_CANINA ->
+                "F1+F2 — agenda i historial de la mascota";
+            case PERRUQUERIA, ESTETICA ->
+                "F1+F2 — reserves i recordatoris, reducció de no-shows fins al 60%";
+            case GESTORIA ->
+                "F1+F2+F3 — captació, alta de client i recordatoris de terminis fiscals";
+            case INMOBILIARIA ->
+                "F1+F2+F3 — captació de propietats, cerca intel·ligent i agenda de visites coordinada";
+            default -> "F1 — punt d'entrada per al sector";
+        };
     }
 
     private void appendIfEnabled(StringBuilder sb, String json, Function<String, String> builder) {
