@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { getTenant } from '@/services/admin';
+import { getTenant, getTenantPhaseHealth, getTenantPhaseHistory, PhaseActivationRecord, PhaseHealthItem } from '@/services/admin';
 import { getNexeConfigs, getAgendaMode, getQuoteMode } from '@/services/nexe-configs';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
@@ -188,6 +188,85 @@ function PhaseCard({
   );
 }
 
+// ── Phase health section ───────────────────────────────────────────────────────
+
+function PhaseHealthSection({ results }: { results: PhaseHealthItem[] }) {
+  const withProblems = results.filter(r => !r.healthy || r.warnings.length > 0);
+  if (withProblems.length === 0) {
+    return (
+      <div className="amg-card card-clip p-4 flex items-center gap-3">
+        <IconSet.Check size={14} stroke="#39d353" />
+        <span className="f-mono text-label text-xs text-success">Totes les fases passen el diagnòstic tècnic</span>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {results.map(item => (
+        <div key={item.phase} className="amg-card card-clip p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`f-mono font-bold text-xs ${item.healthy ? 'text-success' : 'text-error'}`}>{item.phase}</span>
+            {item.healthy && item.warnings.length === 0
+              ? <span className="text-success text-xs">✓ Correcte</span>
+              : !item.healthy
+              ? <span className="text-error text-xs">Té problemes</span>
+              : <span className="text-warning text-xs">Avisos</span>
+            }
+          </div>
+          {item.issues.map((msg, i) => (
+            <div key={i} className="flex items-start gap-2 mt-1">
+              <IconSet.AlertTriangle size={11} className="text-error mt-0.5 shrink-0" />
+              <span className="f-mono text-label text-xs text-error">{msg}</span>
+            </div>
+          ))}
+          {item.warnings.map((msg, i) => (
+            <div key={i} className="flex items-start gap-2 mt-1">
+              <IconSet.Clock size={11} className="text-warning mt-0.5 shrink-0" />
+              <span className="f-mono text-label text-xs text-warning">{msg}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Phase history section ──────────────────────────────────────────────────────
+
+function PhaseHistorySection({ records }: { records: PhaseActivationRecord[] }) {
+  if (records.length === 0) {
+    return (
+      <div className="f-mono text-label text-xs text-ink-3 py-2">Sense registres d'activació</div>
+    );
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs f-mono text-label">
+        <thead>
+          <tr className="border-b border-border-base text-ink-3 text-left">
+            <th className="pb-1.5 pr-4 font-normal">Fase</th>
+            <th className="pb-1.5 pr-4 font-normal">Origen</th>
+            <th className="pb-1.5 pr-4 font-normal">Data activació</th>
+            <th className="pb-1.5 font-normal">Desactivada</th>
+          </tr>
+        </thead>
+        <tbody>
+          {records.map(r => (
+            <tr key={r.id} className="border-b border-border-base/40 text-ink-1">
+              <td className="py-1.5 pr-4 font-bold text-accent">{r.phase}</td>
+              <td className="py-1.5 pr-4 text-ink-2">{r.source}</td>
+              <td className="py-1.5 pr-4">{new Date(r.activatedAt).toLocaleString('ca')}</td>
+              <td className="py-1.5 text-ink-3">
+                {r.deactivatedAt ? new Date(r.deactivatedAt).toLocaleString('ca') : '—'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ── Bot step ───────────────────────────────────────────────────────────────────
 
 function BotCard({ tenantId, locale }: { tenantId: string; locale: string }) {
@@ -243,6 +322,18 @@ export default function ActivateWizardPage() {
   const { data: configs = {}, isLoading: loadingConfigs } = useQuery({
     queryKey: ['nexe-configs', tenantId],
     queryFn: () => getNexeConfigs(tenantId),
+    enabled: !!tenantId,
+  });
+
+  const { data: phaseHealth } = useQuery({
+    queryKey: ['phase-health', tenantId],
+    queryFn: () => getTenantPhaseHealth(tenantId),
+    enabled: !!tenantId,
+  });
+
+  const { data: phaseHistory = [] } = useQuery({
+    queryKey: ['phase-history', tenantId],
+    queryFn: () => getTenantPhaseHistory(tenantId),
     enabled: !!tenantId,
   });
 
@@ -375,6 +466,28 @@ export default function ActivateWizardPage() {
               Configuració de l&apos;agent
             </div>
             <BotCard tenantId={tenantId} locale={locale} />
+          </div>
+        )}
+
+        {/* Phase health diagnostic */}
+        {!loading && phaseHealth && phaseHealth.results.length > 0 && (
+          <div className="space-y-3">
+            <div className="f-mono text-label text-xs text-ink-3 uppercase tracking-widest">
+              Diagnòstic tècnic de fases
+            </div>
+            <PhaseHealthSection results={phaseHealth.results} />
+          </div>
+        )}
+
+        {/* Phase activation history */}
+        {!loading && phaseHistory.length > 0 && (
+          <div className="space-y-3">
+            <div className="f-mono text-label text-xs text-ink-3 uppercase tracking-widest">
+              Historial d&apos;activació
+            </div>
+            <div className="amg-card card-clip p-4">
+              <PhaseHistorySection records={phaseHistory} />
+            </div>
           </div>
         )}
 

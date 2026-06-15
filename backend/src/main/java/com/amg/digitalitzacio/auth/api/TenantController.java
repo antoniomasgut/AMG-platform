@@ -63,7 +63,11 @@ public class TenantController {
             return ResponseEntity.ok(Map.of("contractedPhases", List.of()));
         }
         var tenant = tenantRepository.findById(tenantId).orElseThrow();
-        String phases = tenant.getContractedPhases();
+        // activePhases és el override operacional; si és null, s'usa contractedPhases (igual que useTenantFeatures al frontend)
+        String activePhases = tenant.getActivePhases();
+        String phases = (activePhases != null && !activePhases.isBlank())
+                ? activePhases
+                : tenant.getContractedPhases();
         List<String> phaseList = (phases != null && !phases.isBlank())
                 ? Arrays.asList(phases.split(","))
                 : List.of();

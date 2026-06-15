@@ -455,6 +455,14 @@ public class BillingOrchestrator implements BillingService {
                 addContractedPhases(budget.getTenantId(), nexePhases);
             }
         }
+        advanceLeadStage(budget, PipelineStage.WON);
+        final var acceptedBudget2 = budget;
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                    @Override public void afterCommit() {
+                        postAcceptanceService.onBudgetAccepted(acceptedBudget2);
+                    }
+                });
         return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament");
     }
 

@@ -635,3 +635,35 @@ export const sendCommTemplate = (data: {
   method: 'POST',
   body: JSON.stringify(data),
 });
+
+// ── Phase diagnostics ──────────────────────────────────────────────────────────
+
+export interface PhaseActivationRecord {
+  id: string;
+  tenantId: string;
+  phase: string;
+  source: string;
+  budgetId?: string;
+  activatedBy?: string;
+  activatedAt: string;
+  deactivatedAt?: string;
+  deactivatedBy?: string;
+}
+
+export interface PhaseHealthItem {
+  phase: string;
+  healthy: boolean;
+  issues: string[];
+  warnings: string[];
+}
+
+export interface TenantPhaseHealthResponse {
+  tenantId: string;
+  results: PhaseHealthItem[];
+}
+
+export const getTenantPhaseHistory = (tenantId: string) =>
+  apiFetch<PhaseActivationRecord[]>(`/tenants/${tenantId}/phase-history`);
+
+export const getTenantPhaseHealth = (tenantId: string) =>
+  apiFetch<TenantPhaseHealthResponse>(`/tenants/${tenantId}/phase-health`);
