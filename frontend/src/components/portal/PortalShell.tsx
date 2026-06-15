@@ -22,8 +22,9 @@ type T = ReturnType<typeof useTranslations<'portalNav'>>;
 // ─────────────────────────────────────────────────────────────────────────────
 // CLIENT: veu els seus serveis i el seu compte
 // ─────────────────────────────────────────────────────────────────────────────
-function clientGroups(t: T, features: { canAccessAnalytics: boolean; isLoading: boolean }): NavGroup[] {
-  const analyticsLocked  = !features.isLoading && !features.canAccessAnalytics;
+function clientGroups(t: T, features: { canAccessAnalytics: boolean; canAccessLeads: boolean; isLoading: boolean }): NavGroup[] {
+  const analyticsLocked = !features.isLoading && !features.canAccessAnalytics;
+  const leadsLocked     = !features.isLoading && !features.canAccessLeads;
 
   return [
     {
@@ -47,7 +48,7 @@ function clientGroups(t: T, features: { canAccessAnalytics: boolean; isLoading: 
     {
       label: t('groups.clientsLeads'),
       items: [
-        { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads' },
+        { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads', locked: leadsLocked },
         { label: t('items.analytics'), icon: IconSet.Trending, href: '/portal/analytics', locked: analyticsLocked },
       ],
     },

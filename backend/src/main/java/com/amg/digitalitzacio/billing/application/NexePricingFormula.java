@@ -26,11 +26,11 @@ public class NexePricingFormula {
     );
 
     private static final Map<Integer, String> PHASE_LABELS = Map.of(
-        1, "F1 — Captació i Agent IA",
-        2, "F2 — Agenda i Cites",
-        3, "F3 — Pressupostos i Cobraments",
-        4, "F4 — Fidelització i Seguiment",
-        5, "F5 — Equip i Documentació"
+        1, "Captació i Agent IA",
+        2, "Agenda i Cites",
+        3, "Pressupostos i Cobraments",
+        4, "Fidelització i Seguiment",
+        5, "Equip i Documentació"
     );
 
     private static final BigDecimal SETUP_MULTIPLIER = new BigDecimal("2");

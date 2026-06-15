@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.leads.application;
 
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.billing.application.PostAcceptanceService;
 import com.amg.digitalitzacio.leads.domain.*;
 import com.amg.digitalitzacio.shared.notification.NotificationEvent;
 import com.amg.digitalitzacio.shared.notification.TenantNotificationService;
@@ -45,6 +46,7 @@ public class MetaLeadWebhookService {
     private final SystemConfigService sysConfig;
     private final TenantNotificationService notificationService;
     private final ObjectMapper objectMapper;
+    private final PostAcceptanceService postAcceptanceService;
 
     @Async
     @Transactional
@@ -89,6 +91,12 @@ public class MetaLeadWebhookService {
                     "nom",     lead.getName() != null ? lead.getName() : "—",
                     "contact", lead.getEmail() != null ? lead.getEmail() : lead.getPhone() != null ? lead.getPhone() : "—",
                     "stage",   "Nou (Meta Lead Ads)"));
+
+            String metaContact = lead.getEmail() != null ? lead.getEmail()
+                    : lead.getPhone() != null ? lead.getPhone() : "—";
+            postAcceptanceService.onLeadCreated(tenantId,
+                    lead.getName() != null ? lead.getName() : "—",
+                    metaContact, "META_ADS");
 
             log.info("Lead de Meta creat: tenant={} leadgenId={} name={}", tenantId, leadgenId, lead.getName());
         } catch (Exception e) {

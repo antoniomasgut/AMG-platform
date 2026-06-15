@@ -10,6 +10,7 @@ import com.amg.digitalitzacio.auth.domain.BusinessSector;
 import com.amg.digitalitzacio.auth.domain.BusinessSize;
 import com.amg.digitalitzacio.auth.domain.PreferredChannel;
 import com.amg.digitalitzacio.auth.domain.Tenant;
+import com.amg.digitalitzacio.auth.domain.TenantPhaseActivation;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.finops.domain.MonthlyInvoiceRepository;
@@ -25,6 +26,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import jakarta.validation.Valid;
@@ -57,6 +59,7 @@ public class TenantService {
     private final TenantTelegramConfigRepository tenantTelegramConfigRepository;
     private final SectorKnowledgeSeedService sectorKnowledgeSeedService;
     private final TenantBudgetDefaultsService tenantBudgetDefaultsService;
+    private final PhaseActivationService phaseActivationService;
 
     @Transactional
     public TenantResponse createTenant(@Valid CreateTenantRequest request) {
@@ -134,7 +137,21 @@ public class TenantService {
                 PreferredChannel.valueOf(request.preferredChannel().toUpperCase()));
         if (request.sector() != null) tenant.setSector(BusinessSector.valueOf(request.sector().toUpperCase()));
         if (request.businessSize() != null) tenant.setBusinessSize(BusinessSize.valueOf(request.businessSize().toUpperCase()));
-        if (request.contractedPhases() != null) tenant.setContractedPhases(toPhaseString(request.contractedPhases()));
+        if (request.contractedPhases() != null) {
+            // Detecta fases noves (activació) i eliminades (desactivació) i les registra
+            var before = tenant.getContractedPhases() != null
+                ? new HashSet<>(Arrays.asList(tenant.getContractedPhases().split(",")))
+                : new HashSet<String>();
+            var after = new HashSet<>(request.contractedPhases().stream()
+                .map(String::toUpperCase).toList());
+            after.stream()
+                .filter(p -> !p.isBlank() && !before.contains(p))
+                .forEach(p -> phaseActivationService.recordActivation(id, p, "MANUAL", null, null));
+            before.stream()
+                .filter(p -> !p.isBlank() && !after.contains(p))
+                .forEach(p -> phaseActivationService.recordDeactivation(id, p, null));
+            tenant.setContractedPhases(toPhaseString(request.contractedPhases()));
+        }
         if (request.activePhases() != null) tenant.setActivePhases(toPhaseString(request.activePhases()));
         if (request.agentSystemPrompt() != null) tenant.setAgentSystemPrompt(request.agentSystemPrompt());
         if (request.isFree() != null) tenant.setIsFree(request.isFree());

@@ -36,6 +36,7 @@ const KEY_OPTIONS: Record<string, { value: string; label: string }[]> = {
 const PHASE_GROUPS: { id: string; label: string; description: string; categories: string[] }[] = [
   { id: 'F0', label: 'Plataforma (base)', description: 'Configuració essencial de la plataforma: identitat, límits, models IA i emmagatzematge.', categories: ['MAINTENANCE', 'GENERAL', 'AI_MODELS', 'STORAGE'] },
   { id: 'F1', label: 'F1 · Agent IA i canals', description: 'Claus per als agents conversacionals i els canals de comunicació (Telegram, Email, WhatsApp).', categories: ['AGENTS'] },
+  { id: 'VENDES', label: 'Vendes · Notificacions', description: 'Telegram de vendes (chat ID) i activació individual de cada tipus de notificació comercial.', categories: ['VENDES'] },
   { id: 'F2', label: 'F2 · Agenda', description: 'Integració amb Google Calendar per crear i compartir agendes dels clients.', categories: ['CALENDAR'] },
   { id: 'F3', label: 'F3 · Pressupostos i Pagaments', description: 'Passerella de pagament Stripe i integració Holded per a facturació.', categories: ['PAYMENTS', 'FINOPS'] },
   { id: 'F5', label: 'F5 · Infraops i Alertes', description: 'Monitorització del servidor i alertes d\'infraestructura.', categories: ['INFRAOPS', 'BACKUP'] },
@@ -78,6 +79,13 @@ const KEY_IMPORTANCE: Record<string, Importance> = {
   TELEGRAM_CHAT_ID:          { level: 'optional',  impact: 'Alertes d\'infraestructura no s\'envien al Telegram' },
   OPENPROVIDER_USERNAME:     { level: 'optional',  impact: 'Registre de dominis via OpenProvider no disponible' },
   OPENPROVIDER_PASSWORD:     { level: 'optional',  impact: 'Registre de dominis via OpenProvider no disponible' },
+  AMG_SALES_CHAT_ID:         { level: 'important', impact: 'Les notificacions comercials (leads, pressupostos, pagaments) no s\'envien' },
+  AMG_NOTIFY_LEAD_CREATED:   { level: 'optional',  impact: 'Sense activar, no arriben alertes de nous leads a Telegram' },
+  AMG_NOTIFY_BUDGET_SENT:    { level: 'optional',  impact: 'Sense activar, no arriben alertes de pressupostos enviats' },
+  AMG_NOTIFY_BUDGET_ACCEPTED:{ level: 'optional',  impact: 'Sense activar, no arriben alertes de pressupostos acceptats' },
+  AMG_NOTIFY_PAYMENT_RECEIVED:{ level: 'optional', impact: 'Sense activar, no arriben alertes de pagaments confirmats' },
+  AMG_NOTIFY_AGENT_ERROR:    { level: 'optional',  impact: 'Sense activar, no arriben alertes d\'errors crítics d\'agent' },
+  AMG_NOTIFY_CONTACT_FORM:   { level: 'optional',  impact: 'Sense activar, no arriben alertes de formularis de contacte' },
 };
 
 type HelpStep = { n: number; text: React.ReactNode };

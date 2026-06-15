@@ -1,9 +1,11 @@
 package com.amg.digitalitzacio.billing.application;
 
+import com.amg.digitalitzacio.auth.application.PhaseActivationService;
 import com.amg.digitalitzacio.auth.domain.*;
 import com.amg.digitalitzacio.billing.api.dto.*;
 import com.amg.digitalitzacio.billing.domain.*;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
+import com.amg.digitalitzacio.leads.domain.PipelineStage;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.vault.application.InvoiceService;
 import com.amg.digitalitzacio.vault.application.PaymentService;
@@ -28,11 +30,11 @@ import java.util.*;
 public class BillingOrchestrator implements BillingService {
 
     private static final Map<Integer, String> PHASE_NAMES = Map.of(
-        1, "F1 · Captació",
-        2, "F2 · Agenda",
-        3, "F3 · Pressupostos",
-        4, "F4 · Seguiment",
-        5, "F5 · Alertes & Equip"
+        1, "Captació i Agent IA",
+        2, "Agenda i Cites",
+        3, "Pressupostos i Cobraments",
+        4, "Fidelització i Seguiment",
+        5, "Equip i Documentació"
     );
 
     private final BudgetRepository budgetRepository;
@@ -45,6 +47,8 @@ public class BillingOrchestrator implements BillingService {
     private final TenantRepository tenantRepository;
     private final NexePricingFormula pricingFormula;
     private final LeadRepository leadRepository;
+    private final PhaseActivationService phaseActivationService;
+    private final PostAcceptanceService postAcceptanceService;
 
     @Override
     @Transactional
@@ -314,6 +318,14 @@ public class BillingOrchestrator implements BillingService {
         budget.setAcceptanceToken(token);
         budget.setSentAt(Instant.now());
         budgetRepository.save(budget);
+        advanceLeadStage(budget, PipelineStage.PROPOSAL);
+        final var sentBudget = budget;
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                    @Override public void afterCommit() {
+                        postAcceptanceService.onBudgetSent(sentBudget.getTenantId(), null, sentBudget.getTotal(), sentBudget.getId());
+                    }
+                });
 
         var url = "https://amgdl.com/accept-budget?token=" + token;
         return new BudgetSendResponse(budget.getId(), "SENT", budget.getSentAt(), url);
@@ -356,14 +368,25 @@ public class BillingOrchestrator implements BillingService {
         }
 
         // Fases NexeLocal (F1-F5): afegeix a contractedPhases del tenant
+        var budgetSector = budget.getSector() != null
+                ? safeBusinessSector(budget.getSector()) : null;
         var nexePhases = lines.stream()
                 .map(BudgetLine::getPhaseNumber)
                 .filter(Objects::nonNull)
-                .map(n -> "F" + n)
+                .flatMap(n -> nexePhasesForSector(budgetSector, n).stream())
                 .distinct().sorted().toList();
         if (!nexePhases.isEmpty()) {
             addContractedPhases(budget.getTenantId(), nexePhases);
         }
+
+        advanceLeadStage(budget, PipelineStage.WON);
+        final var acceptedBudget = budget;
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                    @Override public void afterCommit() {
+                        postAcceptanceService.onBudgetAccepted(acceptedBudget);
+                    }
+                });
 
         return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament");
     }
@@ -381,6 +404,15 @@ public class BillingOrchestrator implements BillingService {
         budget.setRejectedReason(reason);
         budget.setAcceptanceToken(null);
         budgetRepository.save(budget);
+        advanceLeadStage(budget, PipelineStage.LOST);
+        final var rejectedBudget = budget;
+        final var rejectedReason = reason;
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                    @Override public void afterCommit() {
+                        postAcceptanceService.onBudgetRejected(rejectedBudget, rejectedReason);
+                    }
+                });
         return new AcceptRejectResponse("REJECTED", "Pressupost rebutjat");
     }
 
@@ -507,6 +539,38 @@ public class BillingOrchestrator implements BillingService {
         return tenantRepository.findById(tenantId).map(Tenant::getBusinessSize).orElse(null);
     }
 
+    private void advanceLeadStage(Budget budget, PipelineStage target) {
+        if (budget.getLeadId() == null) return;
+        leadRepository.findById(budget.getLeadId()).ifPresent(lead -> {
+            boolean shouldUpdate = target == PipelineStage.LOST
+                    || lead.getStage().ordinal() < target.ordinal();
+            if (shouldUpdate) {
+                lead.setStage(target);
+                leadRepository.save(lead);
+            }
+        });
+    }
+
+    private List<String> nexePhasesForSector(BusinessSector sector, int phaseNumber) {
+        if (phaseNumber > 1) return List.of("F" + Math.min(phaseNumber, 5));
+        // SP1: F1 always; add F2 or F3 depending on sector profile
+        if (sector == null) return List.of("F1");
+        return switch (sector) {
+            case FISIOTERAPEUTA, PSICOLEG, NUTRICIONISTA,
+                 PERRUQUERIA, ESTETICA, VETERINARI, PERRUQUERIA_CANINA,
+                 RESTAURANTE, GESTORIA, ACADEMIA, INMOBILIARIA -> List.of("F1", "F2");
+            case PINTOR, ELECTRICISTA, FONTANER, JARDINER,
+                 NETEJA, TALLER_MECANIC -> List.of("F1", "F3");
+            default -> List.of("F1");
+        };
+    }
+
+    private BusinessSector safeBusinessSector(String name) {
+        if (name == null) return null;
+        try { return BusinessSector.valueOf(name.toUpperCase()); }
+        catch (IllegalArgumentException e) { return null; }
+    }
+
     private void addContractedPhases(UUID tenantId, List<String> newPhases) {
         var tenant = tenantRepository.findById(tenantId).orElse(null);
         if (tenant == null) return;
@@ -517,6 +581,10 @@ public class BillingOrchestrator implements BillingService {
         existing.addAll(newPhases);
         tenant.setContractedPhases(String.join(",", existing));
         tenantRepository.save(tenant);
+        // Registra l'activació de cada nova fase al historial d'auditoria
+        for (String phase : newPhases) {
+            phaseActivationService.recordActivation(tenantId, phase, "BUDGET_ACCEPTED", null, null);
+        }
     }
 
     private Budget findBudget(UUID id) {

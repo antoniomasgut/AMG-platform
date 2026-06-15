@@ -1,7 +1,12 @@
 package com.amg.digitalitzacio.auth.api;
 
 import com.amg.digitalitzacio.auth.api.dto.*;
+import com.amg.digitalitzacio.auth.application.PhaseActivationService;
+import com.amg.digitalitzacio.auth.application.PhaseHealthService;
 import com.amg.digitalitzacio.auth.application.TenantService;
+import com.amg.digitalitzacio.auth.domain.TenantPhaseActivation;
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
+import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -11,8 +16,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +32,9 @@ import java.util.UUID;
 public class TenantController {
 
     private final TenantService tenantService;
+    private final PhaseActivationService phaseActivationService;
+    private final PhaseHealthService phaseHealthService;
+    private final TenantRepository tenantRepository;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
@@ -40,6 +53,40 @@ public class TenantController {
         // Native query with explicit ORDER BY — force unsorted pageable to avoid camelCase column translation
         Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
         return ResponseEntity.ok(tenantService.listTenants(unsorted, search, isActive, isFree));
+    }
+
+    @GetMapping("/me/features")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'SUPER_ADMIN')")
+    public ResponseEntity<Map<String, Object>> getMyFeatures(@AuthenticationPrincipal UserPrincipal principal) {
+        var tenantId = principal.tenantId();
+        if (tenantId == null) {
+            return ResponseEntity.ok(Map.of("contractedPhases", List.of()));
+        }
+        var tenant = tenantRepository.findById(tenantId).orElseThrow();
+        String phases = tenant.getContractedPhases();
+        List<String> phaseList = (phases != null && !phases.isBlank())
+                ? Arrays.asList(phases.split(","))
+                : List.of();
+        boolean hasF1 = phaseList.contains("F1");
+        boolean hasF2 = phaseList.contains("F2");
+        boolean hasF3 = phaseList.contains("F3");
+        boolean hasF4 = phaseList.contains("F4");
+        boolean hasF5 = phaseList.contains("F5");
+
+        var features = new HashMap<String, Object>();
+        features.put("contractedPhases",   phaseList);
+        features.put("canAccessAgent",     hasF1);
+        features.put("canAccessAgenda",    hasF2);
+        features.put("canAccessBilling",   hasF3);
+        features.put("canAccessLeads",     hasF3 || hasF4);
+        features.put("canAccessStorage",   hasF5);
+        features.put("canAccessDocuments", hasF5);
+        features.put("hasF1", hasF1);
+        features.put("hasF2", hasF2);
+        features.put("hasF3", hasF3);
+        features.put("hasF4", hasF4);
+        features.put("hasF5", hasF5);
+        return ResponseEntity.ok(features);
     }
 
     @GetMapping("/owner")
@@ -86,6 +133,18 @@ public class TenantController {
     public ResponseEntity<TenantResponse> setBillingStartDate(@PathVariable UUID id,
                                                               @Valid @RequestBody SetBillingDateRequest request) {
         return ResponseEntity.ok(tenantService.setBillingStartDate(id, request.billingStartDate()));
+    }
+
+    @GetMapping("/{id}/phase-history")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<List<TenantPhaseActivation>> getPhaseHistory(@PathVariable UUID id) {
+        return ResponseEntity.ok(phaseActivationService.getHistory(id));
+    }
+
+    @GetMapping("/{id}/phase-health")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<TenantPhaseHealthResponse> getPhaseHealth(@PathVariable UUID id) {
+        return ResponseEntity.ok(phaseHealthService.checkHealth(id));
     }
 
     @DeleteMapping("/{id}")

@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.leads.application;
 
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
+import com.amg.digitalitzacio.billing.application.PostAcceptanceService;
 import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.auth.domain.UserRepository;
 import com.amg.digitalitzacio.leads.api.dto.*;
@@ -41,6 +42,7 @@ public class LeadService {
     private final TenantNotificationService notificationService;
     private final AIProviderRouter aiProviderRouter;
     private final ObjectMapper objectMapper;
+    private final PostAcceptanceService postAcceptanceService;
 
     private static final Set<LeadSource> REENGAGEMENT_SOURCES = Set.of(
             LeadSource.WHATSAPP, LeadSource.WEB, LeadSource.LANDING_FORM,
@@ -99,6 +101,11 @@ public class LeadService {
                 "nom",     request.name() != null ? request.name() : "—",
                 "contact", contact,
                 "stage",   "Nou"));
+
+        postAcceptanceService.onLeadCreated(tenantId,
+                request.name() != null ? request.name() : "—",
+                contact,
+                source.name());
 
         return toLeadResponse(lead);
     }

@@ -35,6 +35,7 @@ public class SystemConfigService {
         new KnownKey("OLLAMA_BASE_URL",         "Ollama Base URL",            "URL de la instància Ollama (per defecte: http://localhost:11434)", "AGENTS", false, "url", "http://localhost:11434", null, 30),
         new KnownKey("TELEGRAM_BOT_TOKEN",      "Telegram Bot Token",         "Token del bot Telegram per a agents i notificacions", "AGENTS", true, "secret", null, null, 40),
         new KnownKey("TELEGRAM_CHAT_ID",        "Telegram Chat ID (InfraOps)","ID del chat on enviar alertes d'infraestructura", "INFRAOPS", false, "string", null, null, 10),
+        new KnownKey("AMG_SALES_CHAT_ID",       "Telegram Chat ID (Vendes)", "ID del chat Telegram per a alertes comercials (pressupostos, clients nous)", "VENDES", false, "string", "654048164", null, 10),
         new KnownKey("PLATFORM_TENANT_ID",      "Platform Tenant ID",         "UUID del tenant AMG per a leads del formulari web (opcional)", "GENERAL", false, "string", null, null, 10),
         new KnownKey("TWILIO_ACCOUNT_SID",      "Twilio Account SID",         "SID del compte Twilio per a WhatsApp Business", "AGENTS",    false, "string", null, null, 50),
         new KnownKey("TWILIO_AUTH_TOKEN",       "Twilio Auth Token",          "Token d'autenticació Twilio", "AGENTS",                        true,  "secret", null, null, 60),
@@ -96,7 +97,15 @@ public class SystemConfigService {
         new KnownKey("STORAGE_BACKUPS",           "Còpies de seguretat",        "On es guarden els backups.", "STORAGE", false, "string", "minio", "{\"pattern\":\"^(minio|local)$\"}", 50),
         new KnownKey("STORAGE_MAX_FILE_SIZE_MB",  "Mida màxima de fitxer (MB)", "Límit de mida per fitxer pujat.", "STORAGE", false, "number", "50", "{\"min\":1,\"max\":500}", 60),
         new KnownKey("STORAGE_RETENTION_DAYS",    "Retenció (dies)",            "Dies que es conserven els fitxers.", "STORAGE", false, "number", "365", "{\"min\":30,\"max\":3650}", 70),
-        new KnownKey("ASSETS_QUOTA_MB",           "Quota d'assets per tenant (MB)", "Espai màxim d'emmagatzematge per tenant. Per defecte: 500 MB.", "STORAGE", false, "number", "500", "{\"min\":10,\"max\":10240}", 80)
+        new KnownKey("ASSETS_QUOTA_MB",           "Quota d'assets per tenant (MB)", "Espai màxim d'emmagatzematge per tenant. Per defecte: 500 MB.", "STORAGE", false, "number", "500", "{\"min\":10,\"max\":10240}", 80),
+
+        // NOTIFICACIONS COMERCIALS (Telegram AMG)
+        new KnownKey("AMG_NOTIFY_LEAD_CREATED",     "Notificar: nou lead",            "Enviar Telegram a vendes quan es crea un nou lead.", "VENDES", false, "boolean", "true", null, 20),
+        new KnownKey("AMG_NOTIFY_BUDGET_SENT",       "Notificar: pressupost enviat",   "Enviar Telegram a vendes quan s'envia un pressupost.", "VENDES", false, "boolean", "true", null, 30),
+        new KnownKey("AMG_NOTIFY_BUDGET_ACCEPTED",   "Notificar: pressupost acceptat", "Enviar Telegram a vendes quan un client accepta un pressupost.", "VENDES", false, "boolean", "true", null, 40),
+        new KnownKey("AMG_NOTIFY_PAYMENT_RECEIVED",  "Notificar: pagament rebut",      "Enviar Telegram a vendes quan es confirma un pagament (Stripe o GoCardless).", "VENDES", false, "boolean", "true", null, 50),
+        new KnownKey("AMG_NOTIFY_AGENT_ERROR",       "Notificar: error d'agent",       "Enviar Telegram a vendes quan un agent IA falla de forma crítica.", "VENDES", false, "boolean", "true", null, 60),
+        new KnownKey("AMG_NOTIFY_CONTACT_FORM",      "Notificar: formulari de contacte","Enviar Telegram a vendes quan s'envia un formulari des d'una landing.", "VENDES", false, "boolean", "true", null, 70)
     );
 
     public String get(String key) {

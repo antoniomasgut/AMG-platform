@@ -58,7 +58,7 @@ export function useTenantFeatures(overrideTenantId?: string): TenantFeatures {
 
   return {
     hasF1, hasF2, hasF3, hasF4, hasF5,
-    canAccessLeads: hasF1,
+    canAccessLeads: hasF3 || hasF4,
     canAccessDocuments: hasF1 || hasF3,
     canAccessAnalytics: hasF4,
     canAccessVisits: hasF4,

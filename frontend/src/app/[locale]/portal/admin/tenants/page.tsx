@@ -15,6 +15,7 @@ import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGSectionTitle } from '@/components/ui/stat';
 import { IconSet } from '@/components/ui/icons';
+import { TenantPhaseMatrix } from '@/components/portal/TenantPhaseMatrix';
 
 const PAGE_SIZE = 20;
 
@@ -173,13 +174,16 @@ type ActiveFilter = 'all' | 'active' | 'inactive';
 type FreeFilter = 'all' | 'free' | 'paying';
 type SortOption = 'name,asc' | 'name,desc' | 'createdAt,desc' | 'createdAt,asc';
 
-type TabView = 'tenants' | 'canals';
+type TabView = 'tenants' | 'canals' | 'matriu';
 
 export default function AdminTenantsPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const searchParams = useSearchParams();
-  const [tab, setTab] = useState<TabView>(searchParams.get('tab') === 'canals' ? 'canals' : 'tenants');
+  const initialTab = searchParams.get('tab');
+  const [tab, setTab] = useState<TabView>(
+    initialTab === 'canals' ? 'canals' : initialTab === 'matriu' ? 'matriu' : 'tenants'
+  );
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [showNewTenant, setShowNewTenant] = useState(false);
@@ -294,7 +298,7 @@ export default function AdminTenantsPage() {
 
         {/* Pestanyes de vista */}
         <div className="flex gap-1">
-          {([['tenants', 'Llista de tenants'], ['canals', 'Activitat de canals (30d)']] as [TabView, string][]).map(([v, label]) => (
+          {([['tenants', 'Llista de tenants'], ['matriu', 'Matriu de fases'], ['canals', 'Activitat de canals (30d)']] as [TabView, string][]).map(([v, label]) => (
             <button
               key={v}
               onClick={() => setTab(v)}
@@ -313,6 +317,16 @@ export default function AdminTenantsPage() {
         {tab === 'canals' && (
           <div className="amg-card card-clip">
             <ChannelActivityTab tenants={tenants} />
+          </div>
+        )}
+
+        {/* Vista de matriu de fases */}
+        {tab === 'matriu' && (
+          <div className="amg-card card-clip overflow-hidden">
+            <div className="p-4 border-b border-border-base">
+              <div className="f-mono text-label uppercase text-ink-2 text-xs">Matriu de fases — tots els tenants</div>
+            </div>
+            <TenantPhaseMatrix tenants={tenants} />
           </div>
         )}
 

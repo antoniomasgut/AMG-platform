@@ -27,6 +27,7 @@ public class GoCardlessOrchestrator implements GoCardlessService {
     private final GoCardlessMandateRepository mandateRepository;
     private final GoCardlessPaymentRepository paymentRepository;
     private final MonthlyInvoiceRepository monthlyInvoiceRepository;
+    private final com.amg.digitalitzacio.billing.application.PostAcceptanceService postAcceptanceService;
 
     @Override
     @Transactional
@@ -166,6 +167,17 @@ public class GoCardlessOrchestrator implements GoCardlessService {
                         inv.setSepaCollected(true);
                         monthlyInvoiceRepository.save(inv);
                     });
+                    final var paidPayment = payment;
+                    org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                            new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                                @Override public void afterCommit() {
+                                    postAcceptanceService.onPaymentReceived(
+                                            paidPayment.getTenantId(),
+                                            paidPayment.getAmount(),
+                                            paidPayment.getGcPaymentId(),
+                                            "GOCARDLESS");
+                                }
+                            });
                     log.info("GoCardless: payment {} paid out", gcPaymentId);
                 }
                 case "failed" -> {

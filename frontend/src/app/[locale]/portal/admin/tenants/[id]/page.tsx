@@ -27,6 +27,7 @@ import {
 } from '@/services/admin';
 import { createBudget, listBudgets, sendBudget, cancelBudget, updateBudget, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
 import { getDpaStatus, sendDpaRequest, type DpaStatus } from '@/services/dpa';
+import { createIntake, getIntakeByBudget, type IntakeResponse as SetupIntakeResponse } from '@/services/setupIntake';
 import { getMetaAdsConfig, saveMetaAdsConfig, syncMetaAds } from '@/services/meta-ads';
 import { getChannelUsageStats, type ChannelUsageStats } from '@/services/agents-conversational';
 import { SECTOR_CONTEXTS, getSectorContext } from '@/services/sector-contexts';
@@ -70,45 +71,6 @@ const WORKER_ADDONS: Record<string, { setup: number; monthly: number }> = {
 const DEP_BADGE: Record<string, string> = {
   BASE: '🔵', REQUIRED: '🔴', OPTIONAL: '🟡',
 };
-
-// Regles de selecció de fases sectorials:
-// - BASE: sempre seleccionada, no es pot desmarcar
-// - OPTIONAL/REQUIRED: es pot seleccionar si tots els prerequisits (requiredPhases) estan actius
-// - En desmarcar una fase: es desmarquen en cascada totes les que en depenen
-function toggleSectorPhase(
-  phaseNum: number,
-  phases: SectorPhaseResponse[],
-  prev: Set<number>,
-): Set<number> {
-  const phase = phases.find(p => p.phaseNumber === phaseNum);
-  if (!phase || phase.dependencyType === 'BASE') return prev;
-  const next = new Set(prev);
-  if (next.has(phaseNum)) {
-    next.delete(phaseNum);
-    let changed = true;
-    while (changed) {
-      changed = false;
-      phases.forEach(p => {
-        if (next.has(p.phaseNumber) && p.dependencyType !== 'BASE' &&
-            p.requiredPhases.some(r => !next.has(r))) {
-          next.delete(p.phaseNumber);
-          changed = true;
-        }
-      });
-    }
-  } else {
-    if (phase.requiredPhases.every(r => next.has(r))) next.add(phaseNum);
-  }
-  return next;
-}
-
-function isSectorPhaseDisabled(phase: SectorPhaseResponse, selected: Set<number>): boolean {
-  if (phase.dependencyType === 'BASE') return true;
-  if (!selected.has(phase.phaseNumber)) {
-    return phase.requiredPhases.some(r => !selected.has(r));
-  }
-  return false;
-}
 
 type SectionStatus = 'active' | 'warning' | 'inactive' | 'neutral';
 
@@ -2151,15 +2113,6 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
   // NexeLocal state
   const [selectedPhaseNums, setSelectedPhaseNums] = useState<Set<number>>(new Set());
 
-  // Auto-selecciona la fase BASE quan es carreguen les fases del sector
-  useEffect(() => {
-    const base = sectorPhases?.find(p => p.dependencyType === 'BASE');
-    if (base) setSelectedPhaseNums(prev => {
-      if (prev.has(base.phaseNumber)) return prev;
-      const next = new Set(prev); next.add(base.phaseNumber); return next;
-    });
-  }, [sectorPhases]);
-
   // Catalog state
   const [selectedProfileId, setSelectedProfileId] = useState('');
   const [selectedPhaseIds, setSelectedPhaseIds] = useState<Set<string>>(new Set());
@@ -2271,24 +2224,18 @@ function NewBudgetModal({ tenantId, tenant, setup, onClose, onCreated }: {
                   <div className="space-y-2">
                     {sectorPhases.map((phase: SectorPhaseResponse) => {
                       const checked = selectedPhaseNums.has(phase.phaseNumber);
-                      const disabled = isSectorPhaseDisabled(phase, selectedPhaseNums);
                       const badge = DEP_BADGE[phase.dependencyType] ?? '';
-                      const missingReqs = phase.requiredPhases.filter(r => !selectedPhaseNums.has(r));
                       return (
-                        <label key={phase.phaseNumber} className={`flex items-start gap-3 p-3 border rounded transition ${disabled && !checked ? 'cursor-not-allowed opacity-50 border-border-base' : checked ? 'cursor-pointer border-[#FF6B00] bg-accent-muted' : 'cursor-pointer border-border-base hover:border-ink-2'}`}>
-                          <input type="checkbox" checked={checked} disabled={disabled}
-                            onChange={() => setSelectedPhaseNums(prev => toggleSectorPhase(phase.phaseNumber, sectorPhases, prev))}
-                            className="accent-[#FF6B00] mt-0.5 disabled:cursor-not-allowed" />
+                        <label key={phase.phaseNumber} className={`flex items-start gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
+                          <input type="checkbox" checked={checked}
+                            onChange={() => setSelectedPhaseNums(prev => { const s = new Set(prev); s.has(phase.phaseNumber) ? s.delete(phase.phaseNumber) : s.add(phase.phaseNumber); return s; })}
+                            className="accent-[#FF6B00] mt-0.5" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs leading-none">{badge}</span>
                               <span className="text-sm font-medium">F{phase.phaseNumber} · {phase.name}</span>
-                              {phase.dependencyType === 'BASE' && <span className="text-[10px] text-ink-3 f-mono">(obligatòria)</span>}
                             </div>
                             <div className="text-xs text-ink-3 mt-0.5 line-clamp-2">{phase.description}</div>
-                            {!checked && missingReqs.length > 0 && (
-                              <div className="text-[10px] text-amber-400 mt-0.5">Requereix F{missingReqs.join(', F')}</div>
-                            )}
                             {checked && (
                               <div className="text-xs text-ink-3 f-mono flex gap-3 mt-1">
                                 <span>Setup: {fmt(phase.setupPrice)}</span>
@@ -2437,14 +2384,25 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
     enabled: !!editBudgetSector,
   });
 
-  // Auto-selecciona la fase BASE si per alguna raó no és al pressupost existent
-  useEffect(() => {
-    const base = editSectorPhases?.find(p => p.dependencyType === 'BASE');
-    if (base) setEditPhaseNums(prev => {
-      if (prev.has(base.phaseNumber)) return prev;
-      const next = new Set(prev); next.add(base.phaseNumber); return next;
-    });
-  }, [editSectorPhases]);
+  // Fitxa de configuració vinculada al pressupost
+  const { data: intake, refetch: refetchIntake } = useQuery<SetupIntakeResponse | null>({
+    queryKey: ['intake', budget.id],
+    queryFn: () => getIntakeByBudget(budget.id),
+    enabled: mode === 'view',
+    initialData: null,
+  });
+  const [creatingIntake, setCreatingIntake] = useState(false);
+  const handleCreateIntake = async () => {
+    setCreatingIntake(true);
+    try {
+      await createIntake(budget.id);
+      await refetchIntake();
+    } catch {
+      toast('error', 'Error en generar la fitxa');
+    } finally {
+      setCreatingIntake(false);
+    }
+  };
 
   const isDraft = budget.status === 'DRAFT';
   const statusTone = budget.status === 'ACCEPTED' ? 'success'
@@ -2687,6 +2645,50 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
                   </div>
                 </div>
               </div>
+
+              {/* Fitxa de configuració */}
+              <div className="rounded-lg border border-border-base overflow-hidden">
+                <div className="px-4 py-3 bg-[rgba(255,255,255,0.04)] border-b border-border-base">
+                  <div className="text-xs text-ink-3 uppercase tracking-wider font-bold">Fitxa de configuració</div>
+                </div>
+                <div className="p-4">
+                  {intake ? (
+                    <div className="space-y-3">
+                      {/* Badge d'estat */}
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          intake.status === 'COMPLETE' ? 'bg-green-500/20 text-green-400'
+                          : intake.status === 'IN_PROGRESS' ? 'bg-amber-500/20 text-amber-400'
+                          : 'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {intake.status === 'COMPLETE' ? 'Completada' : intake.status === 'IN_PROGRESS' ? 'En progrés' : 'Pendent'}
+                        </span>
+                      </div>
+                      {/* URL copiable */}
+                      <div className="flex items-center gap-2">
+                        <input readOnly value={intake.intakeUrl}
+                          className="flex-1 bg-[rgba(255,255,255,0.05)] border border-border-base rounded px-3 py-1.5 text-xs text-ink-1 f-mono truncate focus:outline-none" />
+                        <button onClick={() => { navigator.clipboard.writeText(intake.intakeUrl); toast('success', 'Copiat'); }}
+                          className="shrink-0 px-3 py-1.5 bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-border-base text-ink-1 text-xs rounded transition">
+                          Copiar
+                        </button>
+                        <a href={intake.intakeUrl} target="_blank" rel="noreferrer"
+                          className="shrink-0 px-3 py-1.5 bg-[#FF6B00]/20 hover:bg-[#FF6B00]/30 border border-[#FF6B00]/40 text-[#FF6B00] text-xs rounded transition">
+                          Obrir
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleCreateIntake}
+                      disabled={creatingIntake}
+                      className="w-full py-2.5 rounded-lg border border-dashed border-border-base hover:border-[#FF6B00]/50 text-sm text-ink-3 hover:text-[#FF6B00] transition disabled:opacity-50"
+                    >
+                      {creatingIntake ? 'Generant…' : '+ Generar fitxa de configuració'}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           ) : (
             /* Edit mode — similar al formulari de creació */
@@ -2723,24 +2725,18 @@ function BudgetDetailModal({ budget, tenantId, tenant, setup, onClose, onRefresh
                       <div className="space-y-2">
                         {(editSectorPhases ?? []).map((phase: SectorPhaseResponse) => {
                           const checked = editPhaseNums.has(phase.phaseNumber);
-                          const disabled = isSectorPhaseDisabled(phase, editPhaseNums);
                           const badge = DEP_BADGE[phase.dependencyType] ?? '';
-                          const missingReqs = phase.requiredPhases.filter(r => !editPhaseNums.has(r));
                           return (
-                            <label key={phase.phaseNumber} className={`flex items-start gap-3 p-3 border rounded transition ${disabled && !checked ? 'cursor-not-allowed opacity-50 border-border-base' : checked ? 'cursor-pointer border-[#FF6B00] bg-accent-muted' : 'cursor-pointer border-border-base hover:border-ink-2'}`}>
-                              <input type="checkbox" checked={checked} disabled={disabled}
-                                onChange={() => setEditPhaseNums(prev => toggleSectorPhase(phase.phaseNumber, editSectorPhases ?? [], prev))}
-                                className="accent-[#FF6B00] mt-0.5 disabled:cursor-not-allowed" />
+                            <label key={phase.phaseNumber} className={`flex items-start gap-3 p-3 border rounded cursor-pointer transition ${checked ? 'border-[#FF6B00] bg-accent-muted' : 'border-border-base hover:border-ink-2'}`}>
+                              <input type="checkbox" checked={checked}
+                                onChange={() => setEditPhaseNums(prev => { const s = new Set(prev); s.has(phase.phaseNumber) ? s.delete(phase.phaseNumber) : s.add(phase.phaseNumber); return s; })}
+                                className="accent-[#FF6B00] mt-0.5" />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-xs leading-none">{badge}</span>
                                   <span className="text-sm font-medium">F{phase.phaseNumber} · {phase.name}</span>
-                                  {phase.dependencyType === 'BASE' && <span className="text-[10px] text-ink-3 f-mono">(obligatòria)</span>}
                                 </div>
                                 <div className="text-xs text-ink-3 mt-0.5 line-clamp-2">{phase.description}</div>
-                                {!checked && missingReqs.length > 0 && (
-                                  <div className="text-[10px] text-amber-400 mt-0.5">Requereix F{missingReqs.join(', F')}</div>
-                                )}
                                 {checked && (
                                   <div className="text-xs text-ink-3 f-mono flex gap-3 mt-1">
                                     <span>Setup: {fmt(phase.setupPrice)}</span>

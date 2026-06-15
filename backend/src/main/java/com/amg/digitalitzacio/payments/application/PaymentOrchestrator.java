@@ -29,6 +29,7 @@ public class PaymentOrchestrator implements PaymentService {
     private final BudgetRepository budgetRepository;
     private final FinOpsService finOpsService;
     private final GoCardlessService goCardlessService;
+    private final com.amg.digitalitzacio.billing.application.PostAcceptanceService postAcceptanceService;
 
     @Value("${app.payments.success-url:https://portal.amg.cat/payments/success}")
     private String successUrl;
@@ -192,6 +193,17 @@ public class PaymentOrchestrator implements PaymentService {
                             payment.setErrorMessage("Invoice creation failed: " + e.getMessage());
                             paymentRepository.save(payment);
                         }
+                        final var completedPayment = payment;
+                        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                                    @Override public void afterCommit() {
+                                        postAcceptanceService.onPaymentReceived(
+                                                completedPayment.getTenantId(),
+                                                completedPayment.getAmount(),
+                                                completedPayment.getStripePaymentIntentId(),
+                                                "STRIPE");
+                                    }
+                                });
                         break;
                     case "checkout.session.expired":
                     case "payment_intent.payment_failed":

@@ -110,7 +110,7 @@ function PhaseCard({ phase, phaseNum, selected, recommended, onToggle }: {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           ) : (
-            <span className="text-xs font-bold">F{phaseNum}</span>
+            <span className="text-sm font-bold">{phaseNum}</span>
           )}
         </div>
 

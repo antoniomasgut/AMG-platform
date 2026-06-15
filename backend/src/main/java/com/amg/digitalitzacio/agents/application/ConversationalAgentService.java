@@ -52,6 +52,7 @@ public class ConversationalAgentService {
     private final TokenBudgetService tokenBudgetService;
     private final ChannelUsageService channelUsageService;
     private final ObjectMapper objectMapper;
+    private final com.amg.digitalitzacio.billing.application.PostAcceptanceService postAcceptanceService;
 
     private static final Pattern BOOKING_TAG = Pattern.compile(
             "\\[CONFIRMA_CITA:(\\{.*?\\})]", Pattern.DOTALL);
@@ -117,6 +118,7 @@ public class ConversationalAgentService {
 
         } catch (Exception e) {
             log.error("Error handling incoming message for tenantId={}, channel={}", tenantId, channel, e);
+            postAcceptanceService.onAgentError(tenantId, e.getMessage());
         }
     }
 

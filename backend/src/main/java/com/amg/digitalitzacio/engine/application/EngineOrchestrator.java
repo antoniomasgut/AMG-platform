@@ -47,6 +47,7 @@ public class EngineOrchestrator implements EngineService {
     private final TenantNotificationService notificationService;
     private final ObjectMapper objectMapper;
     private final com.amg.digitalitzacio.engine.infrastructure.TraefikConfigWriter traefikConfigWriter;
+    private final com.amg.digitalitzacio.billing.application.PostAcceptanceService postAcceptanceService;
 
     // --- Landings ---
 
@@ -422,6 +423,10 @@ public class EngineOrchestrator implements EngineService {
                 "email",   request.email()   != null ? request.email()   : "—",
                 "phone",   request.phone()   != null ? request.phone()   : "—",
                 "message", request.message() != null ? request.message() : "—"));
+
+        postAcceptanceService.onContactForm(
+                landing.getTenantId(), landing.getTitle(),
+                request.name(), request.phone(), request.message());
 
         return new ContactResponse("Missatge rebut correctament");
     }
