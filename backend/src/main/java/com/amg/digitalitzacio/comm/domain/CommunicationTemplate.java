@@ -14,6 +14,10 @@ public class CommunicationTemplate {
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    /** NULL = plantilla global del sistema; UUID = override per tenant */
+    @Column
+    private UUID tenantId;
+
     @Column(nullable = false, length = 50)
     @Builder.Default
     private String sector = "ALL";

@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface DocumentTemplateRepository extends JpaRepository<DocumentTemplate, UUID> {
     List<DocumentTemplate> findByTenantIdOrderByUpdatedAtDesc(UUID tenantId);
     List<DocumentTemplate> findByTenantIdAndActiveTrue(UUID tenantId);
+    List<DocumentTemplate> findByTenantIdAndDocumentTypeAndActiveTrue(UUID tenantId, DocumentType documentType);
 }

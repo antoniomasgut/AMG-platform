@@ -111,6 +111,10 @@ export default function AgentsPage() {
   const [kbTestMessage, setKbTestMessage] = useState('');
   const [kbTestResult, setKbTestResult] = useState<string | null>(null);
   const [kbTestError, setKbTestError] = useState<string | null>(null);
+  const [entryError, setEntryError] = useState<string | null>(null);
+  const [entrySaved, setEntrySaved] = useState<string | null>(null);
+  const [channelSaved, setChannelSaved] = useState(false);
+  const [channelError, setChannelError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
@@ -249,6 +253,14 @@ export default function AgentsPage() {
       queryClient.invalidateQueries({ queryKey: ['channels', tenantId] });
       setWhatsappPhone('');
       setWhatsappMetaId('');
+      setEmailDraft('');
+      setChannelSaved(true);
+      setChannelError(null);
+      setTimeout(() => setChannelSaved(false), 3000);
+    },
+    onError: (err: Error) => {
+      setChannelError(err.message || 'Error desant els canals');
+      setChannelSaved(false);
     },
   });
 
@@ -266,6 +278,7 @@ export default function AgentsPage() {
       queryClient.invalidateQueries({ queryKey: ['ai-config', tenantId] });
       setSenderEmailDraft('');
       setSenderNameDraft('');
+      setReplyToDraft('');
     },
   });
 
@@ -391,10 +404,16 @@ export default function AgentsPage() {
       const entries = lines.map((line, i) => ({ key: `entry_${i}`, content: line.trim(), sortOrder: i }));
       return updateEntries(tenantId!, category, entries);
     },
-    onSuccess: () => {
+    onSuccess: (_, { category }) => {
       queryClient.invalidateQueries({ queryKey: ['knowledge', tenantId] });
       queryClient.invalidateQueries({ queryKey: ['knowledge-preview', tenantId] });
       setEditingCategory(null);
+      setEntryError(null);
+      setEntrySaved(category);
+      setTimeout(() => setEntrySaved(null), 3000);
+    },
+    onError: (err: Error) => {
+      setEntryError(err.message || 'Error desant les entrades');
     },
   });
 
@@ -963,6 +982,12 @@ export default function AgentsPage() {
                   </div>
                 </div>
               </div>
+              {channelSaved && (
+                <div className="p-2 rounded text-xs bg-success/10 text-success border border-success/30">✓ Canal desat correctament</div>
+              )}
+              {channelError && (
+                <div className="p-2 rounded text-xs bg-danger/10 text-danger border border-danger/30">✗ {channelError}</div>
+              )}
             </div>
             )}
           </div>
@@ -1471,7 +1496,12 @@ export default function AgentsPage() {
                     <div key={key} className="amg-card card-clip p-5 space-y-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="f-mono text-label uppercase text-ink-2 tracking-widest">{label}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="f-mono text-label uppercase text-ink-2 tracking-widest">{label}</div>
+                            {entrySaved === key && (
+                              <span className="text-xs text-green-600">✓ Desat</span>
+                            )}
+                          </div>
                           <div className="text-xs text-ink-3 mt-0.5">{hint}</div>
                         </div>
                         {!isEditing && (
@@ -1479,6 +1509,7 @@ export default function AgentsPage() {
                             onClick={() => {
                               setEditingCategory(key);
                               setCategoryDraft(entries.map(e => e.content).join('\n'));
+                              setEntryError(null);
                             }}
                             className="px-3 py-1 text-xs border border-border-base rounded hover:border-accent hover:text-accent transition"
                           >
@@ -1491,21 +1522,24 @@ export default function AgentsPage() {
                         <div className="space-y-2">
                           <textarea
                             value={categoryDraft}
-                            onChange={(e) => setCategoryDraft(e.target.value)}
+                            onChange={(e) => { setCategoryDraft(e.target.value); setEntryError(null); }}
                             className="w-full p-3 bg-bg-1 border border-border-base rounded text-sm resize-none font-mono"
                             rows={6}
                             placeholder={`Una entrada per línia...`}
                           />
+                          {entryError && (
+                            <p className="text-xs text-red-500">{entryError}</p>
+                          )}
                           <div className="flex gap-2">
                             <button
                               onClick={() => updateEntriesMutation.mutate({ category: key, content: categoryDraft })}
                               disabled={updateEntriesMutation.isPending}
                               className="px-4 py-2 bg-accent text-white rounded text-sm hover:opacity-90 disabled:opacity-50"
                             >
-                              Desar
+                              {updateEntriesMutation.isPending ? 'Desant…' : 'Desar'}
                             </button>
                             <button
-                              onClick={() => setEditingCategory(null)}
+                              onClick={() => { setEditingCategory(null); setEntryError(null); }}
                               className="px-4 py-2 border border-border-base rounded text-sm hover:border-accent"
                             >
                               Cancelar

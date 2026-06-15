@@ -54,6 +54,16 @@ export const ACTIONS: { value: string; label: string; variables: string[] }[] = 
     label: 'Cita cancel·lada',
     variables: ['NOM_NEGOCI', 'NOM_CLIENT', 'DATA_CITA', 'HORA_CITA', 'MOTIU'],
   },
+  {
+    value: 'DOCUMENT_STANDARD_DELIVERY',
+    label: 'Lliurament document estàndard',
+    variables: ['RECIPIENT_NAME', 'DOCUMENT_NAME', 'VIEW_URL', 'EXPIRES_AT', 'DOCUMENT_NUMBER'],
+  },
+  {
+    value: 'DOCUMENT_SENSITIVE_DELIVERY',
+    label: 'Lliurament document sensible',
+    variables: ['RECIPIENT_NAME', 'DOCUMENT_NAME', 'VIEW_URL', 'EXPIRES_AT', 'DOCUMENT_NUMBER'],
+  },
 ];
 
 export const listCommTemplates = () =>

@@ -177,6 +177,8 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 40 | Google Workspace (Drive, Gmail, Calendar, Sheets) | ⏳ Backend complet · Frontend bàsic | specs/40-google-workspace.md |
 | 41 | Agent Tool Calling (function calling + auto-quota) | ✅ Completat | specs/41-agent-tool-calling.md |
 | 42 | Meta Cloud API OAuth Onboarding (per-tenant WABA connect) | ✅ Completat | specs/42-meta-oauth-onboarding.md |
+| 43 | Communication Templates (WhatsApp + Email per acció+idioma) | ✅ Completat | specs/43-communication-templates.md |
+| 44 | Secure Document Delivery (lliurament segur, RGPD Art. 9) | ⏳ Spec aprovat | specs/44-secure-document-delivery.md |
 
 ---
 

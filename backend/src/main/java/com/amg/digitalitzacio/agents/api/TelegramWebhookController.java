@@ -6,6 +6,7 @@ import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
 import com.amg.digitalitzacio.agents.application.TeamGrowthService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.documents.delivery.application.BudgetWorkflowService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ public class TelegramWebhookController {
     private final ConversationalAgentService conversationalAgentService;
     private final TeamGrowthService teamGrowthService;
     private final AbsenceRescheduleService absenceRescheduleService;
+    private final BudgetWorkflowService budgetWorkflowService;
 
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody Map<String, Object> payload) {
@@ -103,6 +105,25 @@ public class TelegramWebhookController {
                 if (text.toLowerCase().startsWith("/festiu")) {
                     var reply = absenceRescheduleService.handleHolidayCommand(tenantId, text);
                     return ResponseEntity.ok(okTgReply(chatId, reply));
+                }
+
+                // Comanda de pressupost: /pressupost email nom [notes]
+                if (text.toLowerCase().startsWith("/pressupost")) {
+                    var reply = budgetWorkflowService.handleCommand(tenantId, chatId, text);
+                    return ResponseEntity.ok(okTgReply(chatId, reply));
+                }
+
+                // Aprovació/rebuig d'un pressupost pendent
+                if (budgetWorkflowService.hasPendingApproval(tenantId, chatId)) {
+                    String normalized = text.trim().toLowerCase()
+                        .replace("í", "i").replace("é", "e");
+                    if (normalized.matches("si|sí|yes|✅|👍|confirmar|enviar")) {
+                        var reply = budgetWorkflowService.approve(tenantId, chatId);
+                        if (reply != null) return ResponseEntity.ok(okTgReply(chatId, reply));
+                    } else if (normalized.matches("no|cancel·lar|cancelar|❌|👎")) {
+                        var reply = budgetWorkflowService.reject(tenantId, chatId);
+                        if (reply != null) return ResponseEntity.ok(okTgReply(chatId, reply));
+                    }
                 }
 
                 // Try to route to an agent

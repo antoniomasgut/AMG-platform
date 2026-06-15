@@ -81,6 +81,24 @@ public class CommunicationTemplateService {
                         "No active template for " + sec + "/" + channel + "/" + action + "/" + lang));
     }
 
+    /**
+     * Resolució amb override per tenant.
+     * Cadena: tenant+lang → tenant (qualsevol lang) → global+lang → global+"ca".
+     * Retorna null si no existeix cap plantilla (no llança excepció).
+     */
+    public CommunicationTemplate resolveForTenant(UUID tenantId, String channel, String action, String language) {
+        String lang = language != null && !language.isBlank() ? language : "ca";
+        if (tenantId != null) {
+            var specific = repo.findByTenantIdAndChannelAndActionAndLanguageAndIsActiveTrue(tenantId, channel, action, lang);
+            if (specific.isPresent()) return specific.get();
+            var anyLang = repo.findByTenantIdAndChannelAndActionAndIsActiveTrue(tenantId, channel, action);
+            if (anyLang.isPresent()) return anyLang.get();
+        }
+        return repo.findBySectorAndChannelAndActionAndLanguageAndIsActiveTrue("ALL", channel, action, lang)
+                .or(() -> repo.findBySectorAndChannelAndActionAndLanguageAndIsActiveTrue("ALL", channel, action, "ca"))
+                .orElse(null);
+    }
+
     // ── Send ──────────────────────────────────────────────────────────────────
 
     public String send(String channel, String to, String action, String sector, String language, Map<String, String> variables) {

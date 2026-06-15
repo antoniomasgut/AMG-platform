@@ -617,6 +617,52 @@ public class DocumentBuilderService {
             d.getHtmlContent(), d.getPdfUrl(), d.getGeneratedAt(), d.getCreatedAt());
     }
 
+    /** Genera el document HTML i retorna un resum lleuger (sense PDF) per al flux d'aprovació. */
+    @Transactional
+    public GeneratedDocumentSummary generateDocumentSummary(UUID tenantId, GenerateRequest req) {
+        var resp = generateDocument(tenantId, req);
+        var entity = documentRepo.findById(resp.id()).orElseThrow();
+        // Intenta extreure el total calculat
+        String total = null;
+        try {
+            var calc = objectMapper.readTree(entity.getCalculated());
+            if (calc.has("total")) total = calc.get("total").asText();
+        } catch (Exception ignored) {}
+        return new GeneratedDocumentSummary(entity.getId(), entity.getNumber(), total);
+    }
+
+    /** Genera i emmagatzema el PDF d'un GeneratedDocument existent. Retorna el storageFileId. */
+    @Transactional
+    public String generateAndStorePdf(UUID tenantId, UUID documentId) {
+        var entity = documentRepo.findById(documentId)
+            .orElseThrow(() -> new NoSuchElementException("Document not found: " + documentId));
+
+        if (entity.getStorageFileId() != null) return entity.getStorageFileId();
+
+        String html = entity.getHtmlContent();
+        if (html == null) throw new IllegalStateException("El document no té contingut HTML");
+
+        try {
+            var pdfBytes = renderPdf(html);
+            var provider = storageRouter.getProvider(tenantId);
+            var result = provider.upload(
+                new ByteArrayInputStream(pdfBytes),
+                entity.getNumber() + ".pdf", "application/pdf");
+            entity.setStorageProvider(result.provider());
+            entity.setStorageFileId(result.fileId());
+            entity.setStoragePath(result.fileName());
+            var signedUrl = provider.getSignedUrl(result.fileId(), Duration.ofDays(1));
+            entity.setPdfUrl(signedUrl != null ? signedUrl : "/api/v1/documents/" + documentId + "/pdf");
+            documentRepo.save(entity);
+            return result.fileId();
+        } catch (Exception e) {
+            log.error("Error generant PDF per al document {}: {}", documentId, e.getMessage());
+            throw new RuntimeException("Error generant PDF", e);
+        }
+    }
+
+    public record GeneratedDocumentSummary(UUID documentId, String documentNumber, String totalAmount) {}
+
     public String getDocumentPdfUrl(UUID documentId) {
         var d = documentRepo.findById(documentId)
             .orElseThrow(() -> new NoSuchElementException("Document not found: " + documentId));
