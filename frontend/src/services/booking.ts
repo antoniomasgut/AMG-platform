@@ -15,14 +15,23 @@ export interface MeetingSettings {
 export interface BookingToken {
   id: string;
   token: string;
-  leadId: string;
+  leadId: string | null;
   leadName: string;
   leadEmail: string | null;
+  recipientPhone: string | null;
+  recipientName: string | null;
+  bookingLabel: string | null;
+  sourceDocumentId: string | null;
   confirmed: boolean;
   meetingAt: string | null;
   meetLink: string | null;
   expiresAt: string;
   createdAt: string;
+}
+
+export interface AppointmentsResponse {
+  confirmed: BookingToken[];
+  pending: BookingToken[];
 }
 
 export interface TokenInfo {
@@ -69,6 +78,14 @@ export const createBookingToken = (leadId: string) =>
 
 export const getTokensForLead = (leadId: string) =>
   apiFetch<BookingToken[]>(`/booking/tokens/lead/${leadId}`);
+
+export const getAppointments = (from?: string, to?: string) => {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to)   params.set('to', to);
+  const qs = params.toString();
+  return apiFetch<AppointmentsResponse>(`/booking/appointments${qs ? `?${qs}` : ''}`);
+};
 
 // ── Public endpoints (no auth) ────────────────────────────────
 

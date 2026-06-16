@@ -12,8 +12,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -65,6 +67,27 @@ public class BookingController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<List<BookingToken>> getTokensForLead(@PathVariable UUID leadId) {
         return ResponseEntity.ok(bookingService.getTokensForLead(leadId));
+    }
+
+    // ── Agenda: llistat de cites per al tenant ───────────────────
+
+    @GetMapping("/appointments")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")
+    public ResponseEntity<Map<String, Object>> getAppointments(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @AuthenticationPrincipal UserPrincipal p) {
+        ZoneId zone = ZoneId.of("Europe/Madrid");
+        Instant fromInstant = (from != null)
+                ? LocalDate.parse(from).atStartOfDay(zone).toInstant()
+                : Instant.now().minus(7, java.time.temporal.ChronoUnit.DAYS);
+        Instant toInstant = (to != null)
+                ? LocalDate.parse(to).plusDays(1).atStartOfDay(zone).toInstant()
+                : Instant.now().plus(60, java.time.temporal.ChronoUnit.DAYS);
+
+        List<BookingToken> confirmed = bookingService.getAppointments(p.tenantId(), fromInstant, toInstant);
+        List<BookingToken> pending   = bookingService.getPendingTokens(p.tenantId());
+        return ResponseEntity.ok(Map.of("confirmed", confirmed, "pending", pending));
     }
 
     // ── Public: booking flow ─────────────────────────────────────

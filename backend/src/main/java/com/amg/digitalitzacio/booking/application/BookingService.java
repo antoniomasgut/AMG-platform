@@ -55,6 +55,16 @@ public class BookingService {
         return settingsRepo.save(s);
     }
 
+    // ── Agenda ───────────────────────────────────────────────────
+
+    public List<BookingToken> getAppointments(UUID tenantId, Instant from, Instant to) {
+        return tokenRepo.findByTenantIdAndMeetingAtBetween(tenantId, from, to);
+    }
+
+    public List<BookingToken> getPendingTokens(UUID tenantId) {
+        return tokenRepo.findPendingByTenantId(tenantId, Instant.now());
+    }
+
     // ── Token creation ───────────────────────────────────────────
 
     @Transactional

@@ -15,4 +15,10 @@ public interface BookingTokenRepository extends JpaRepository<BookingToken, UUID
 
     @Query("SELECT b FROM BookingToken b WHERE b.tenantId = :tenantId AND b.confirmed = true AND b.meetingAt BETWEEN :from AND :to")
     List<BookingToken> findConfirmedWithMeetingInWindow(@Param("tenantId") UUID tenantId, @Param("from") Instant from, @Param("to") Instant to);
+
+    @Query("SELECT b FROM BookingToken b WHERE b.tenantId = :tenantId AND b.meetingAt BETWEEN :from AND :to ORDER BY b.meetingAt ASC")
+    List<BookingToken> findByTenantIdAndMeetingAtBetween(@Param("tenantId") UUID tenantId, @Param("from") Instant from, @Param("to") Instant to);
+
+    @Query("SELECT b FROM BookingToken b WHERE b.tenantId = :tenantId AND b.confirmed = false AND b.expiresAt > :now ORDER BY b.createdAt DESC")
+    List<BookingToken> findPendingByTenantId(@Param("tenantId") UUID tenantId, @Param("now") Instant now);
 }

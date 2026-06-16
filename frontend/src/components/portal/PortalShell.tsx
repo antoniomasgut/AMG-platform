@@ -48,6 +48,7 @@ function clientGroups(t: T, features: { canAccessAnalytics: boolean; canAccessLe
     {
       label: t('groups.clientsLeads'),
       items: [
+        { label: t('items.agenda'), icon: IconSet.Calendar, href: '/portal/agenda' },
         { label: t('items.leadsCRM'), icon: IconSet.Users, href: '/portal/leads', locked: leadsLocked },
         { label: t('items.analytics'), icon: IconSet.Trending, href: '/portal/analytics', locked: analyticsLocked },
       ],
@@ -114,6 +115,7 @@ function adminGroups(t: T): NavGroup[] {
     {
       label: t('groups.operations'),
       items: [
+        { label: t('items.agenda'), icon: IconSet.Calendar, href: '/portal/agenda' },
         { label: t('items.opsHealth'), icon: IconSet.Activity, href: '/portal/ops' },
         { label: t('items.knowledge'), icon: IconSet.Book, href: '/portal/admin/knowledge' },
         { label: t('items.meetings'), icon: IconSet.Calendar, href: '/portal/admin/booking' },
@@ -173,6 +175,7 @@ function superAdminGroups(t: T): NavGroup[] {
     {
       label: t('groups.operations'),
       items: [
+        { label: t('items.agenda'), icon: IconSet.Calendar, href: '/portal/agenda' },
         { label: t('items.opsHealth'), icon: IconSet.Activity, href: '/portal/ops' },
         { label: t('items.knowledge'), icon: IconSet.Book, href: '/portal/admin/knowledge' },
         { label: t('items.commTemplates'), icon: IconSet.Mail, href: '/portal/admin/comm-templates' },
