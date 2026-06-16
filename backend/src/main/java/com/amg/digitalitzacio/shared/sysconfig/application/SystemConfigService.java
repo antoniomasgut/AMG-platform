@@ -198,61 +198,30 @@ public class SystemConfigService {
 
     public List<ConfigStatus> listStatus() {
         var dbKeys = repo.findAll();
-        var dbMap = dbKeys.stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        com.amg.digitalitzacio.shared.sysconfig.domain.SystemSetting::getKey,
-                        s -> s,
-                        (a, b) -> a));
         return KNOWN_KEYS.stream().map(k -> {
             boolean envConfigured = env.getProperty(k.key()) != null && !env.getProperty(k.key(), "").isBlank();
-            boolean dbConfigured = dbMap.containsKey(k.key());
+            boolean dbConfigured = dbKeys.stream().anyMatch(s -> s.getKey().equals(k.key()));
             boolean hasDefault = k.defaultValue() != null && !k.defaultValue().isBlank();
             String source = envConfigured ? "ENV" : dbConfigured ? "DB" : hasDefault ? "DEFAULT" : "MISSING";
-            String currentValue = resolveCurrentValue(k, source, dbMap, k.defaultValue());
             return new ConfigStatus(k.key(), k.label(), k.description(), k.category(), k.secret(), k.type(),
-                    envConfigured || dbConfigured || hasDefault, source, currentValue);
+                    envConfigured || dbConfigured || hasDefault, source, null);
         }).toList();
     }
 
     public ConfigStatus getDetailed(String key) {
-        var dbKeys = repo.findAll();
-        var dbMap = dbKeys.stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        com.amg.digitalitzacio.shared.sysconfig.domain.SystemSetting::getKey,
-                        s -> s,
-                        (a, b) -> a));
         return KNOWN_KEYS.stream()
                 .filter(k -> k.key().equals(key))
                 .findFirst()
                 .map(k -> {
                     boolean envConfigured = env.getProperty(k.key()) != null && !env.getProperty(k.key(), "").isBlank();
-                    boolean dbConfigured = dbMap.containsKey(k.key());
+                    boolean dbConfigured = repo.findById(k.key()).isPresent();
                     boolean hasDefault = k.defaultValue() != null && !k.defaultValue().isBlank();
                     String source = envConfigured ? "ENV" : dbConfigured ? "DB" : hasDefault ? "DEFAULT" : "MISSING";
-                    String currentValue = resolveCurrentValue(k, source, dbMap, k.defaultValue());
+                    String currentValue = k.secret() ? null : get(k.key());
                     return new ConfigStatus(k.key(), k.label(), k.description(), k.category(), k.secret(), k.type(),
                             envConfigured || dbConfigured || hasDefault, source, currentValue);
                 })
                 .orElse(null);
-    }
-
-    private String resolveCurrentValue(
-            KnownKey k, String source,
-            java.util.Map<String, com.amg.digitalitzacio.shared.sysconfig.domain.SystemSetting> dbMap,
-            String defaultValue) {
-        if (k.secret()) return null;
-        if ("ENV".equals(source)) return env.getProperty(k.key());
-        if ("DB".equals(source)) {
-            var setting = dbMap.get(k.key());
-            if (setting == null) return null;
-            try {
-                return encryption.decrypt(setting.getEncryptedValue());
-            } catch (Exception e) {
-                return null;
-            }
-        }
-        if ("DEFAULT".equals(source)) return defaultValue;
-        return null;
     }
 
     public List<SystemConfigAuditLog> getAuditLog(String key) {

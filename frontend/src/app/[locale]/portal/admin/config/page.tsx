@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { useTranslations } from 'next-intl';
-import { getSystemConfig, setSystemConfig, deleteSystemConfig, testSystemConfig, getAuditLog, TESTABLE_KEYS, type ConfigStatus } from '@/services/sysconfig';
+import { getSystemConfig, getSystemConfigDetail, setSystemConfig, deleteSystemConfig, testSystemConfig, getAuditLog, TESTABLE_KEYS, type ConfigStatus } from '@/services/sysconfig';
 import { listTenants } from '@/services/admin';
 import { getModelPrices, recalculateModelPrices } from '@/services/agents-conversational';
 import { getDriveAMGStatus, shareDriveAMGFolder } from '@/services/google';
@@ -219,6 +219,7 @@ function KeyRow({ item, onSave, onDelete, t }: {
   t: (key: string, opts?: any) => string;
 }) {
   const [editing, setEditing] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const [value, setValue] = useState('');
   const [show, setShow] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -226,6 +227,19 @@ function KeyRow({ item, onSave, onDelete, t }: {
   const [showAudit, setShowAudit] = useState(false);
   const [auditLog, setAuditLog] = useState<{ id: string; action: string; userEmail: string | null; changedAt: string }[]>([]);
   const qc = useQueryClient();
+
+  const handleOpenEdit = async () => {
+    setValue('');
+    setEditing(true);
+    if (!item.secret && item.source !== 'ENV' && item.configured) {
+      setLoadingEdit(true);
+      try {
+        const detail = await getSystemConfigDetail(item.key);
+        if (detail?.currentValue != null) setValue(detail.currentValue);
+      } catch {}
+      setLoadingEdit(false);
+    }
+  };
 
   const handleTest = async () => {
     setTesting(true);
@@ -277,19 +291,13 @@ function KeyRow({ item, onSave, onDelete, t }: {
             </AMGButton>
           )}
           {!item.configured && (
-            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => {
-              setValue('');
-              setEditing(true);
-            }}>
+            <AMGButton size="sm" icon={IconSet.Plus} onClick={handleOpenEdit}>
               {t('btnConfigure')}
             </AMGButton>
           )}
           {item.configured && item.source !== 'ENV' && (
             <>
-              <AMGButton size="sm" variant="secondary" icon={IconSet.Edit} onClick={() => {
-                if (item.currentValue != null) setValue(item.currentValue);
-                setEditing(true);
-              }}>
+              <AMGButton size="sm" variant="secondary" icon={IconSet.Edit} onClick={handleOpenEdit} disabled={loadingEdit}>
                 {t('btnEdit')}
               </AMGButton>
               <AMGButton
