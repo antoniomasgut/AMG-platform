@@ -126,6 +126,7 @@ services:
           - amg-backend
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
       - "traefik.http.routers.backend.rule=Host(`api.${APP_DOMAIN}`)"
       - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
