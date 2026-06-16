@@ -1,8 +1,8 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { getTenant, getTenantPhaseHealth, getTenantPhaseHistory, PhaseActivationRecord, PhaseHealthItem } from '@/services/admin';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getTenant, getTenantPhaseHealth, getTenantPhaseHistory, goLiveTenant, suspendTenant, PhaseActivationRecord, PhaseHealthItem } from '@/services/admin';
 import { getNexeConfigs, getAgendaMode, getQuoteMode } from '@/services/nexe-configs';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
@@ -337,6 +337,16 @@ export default function ActivateWizardPage() {
     enabled: !!tenantId,
   });
 
+  const queryClient = useQueryClient();
+  const goLiveMutation = useMutation({
+    mutationFn: () => goLiveTenant(tenantId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] }),
+  });
+  const suspendMutation = useMutation({
+    mutationFn: () => suspendTenant(tenantId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] }),
+  });
+
   const loading = loadingTenant || loadingConfigs;
 
   const phases: string[] = tenant?.contractedPhases ?? [];
@@ -487,6 +497,63 @@ export default function ActivateWizardPage() {
             </div>
             <div className="amg-card card-clip p-4">
               <PhaseHistorySection records={phaseHistory} />
+            </div>
+          </div>
+        )}
+
+        {/* Go-Live panel */}
+        {!loading && phases.length > 0 && (
+          <div className="amg-card card-clip p-5 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="f-mono text-label text-xs text-ink-3 uppercase tracking-widest mb-1">
+                  Estat de l&apos;agent
+                </div>
+                {tenant?.activePhases && tenant.activePhases.length > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-success inline-block" />
+                    <span className="f-display font-bold text-sm text-success">En Marxa</span>
+                    <span className="f-mono text-label text-xs text-ink-2">
+                      · fases actives: {tenant.activePhases.join(', ')}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                    <span className="f-display font-bold text-sm text-amber-500">Pendent d&apos;activació</span>
+                    <span className="f-mono text-label text-xs text-ink-2">
+                      · l&apos;agent no respon fins que activis
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <p className="f-mono text-label text-xs text-ink-2">
+              Fases contractades (pagades): <strong>{phases.join(', ')}</strong>
+              {tenant?.activePhases && tenant.activePhases.length > 0
+                ? ' — totes actives'
+                : ' — pendents de posada en marxa'}
+            </p>
+            <div className="flex gap-3">
+              {(!tenant?.activePhases || tenant.activePhases.length === 0) ? (
+                <AMGButton
+                  size="sm"
+                  variant="primary"
+                  onClick={() => goLiveMutation.mutate()}
+                  disabled={goLiveMutation.isPending}
+                >
+                  {goLiveMutation.isPending ? 'Activant…' : 'Posar en marxa'}
+                </AMGButton>
+              ) : (
+                <AMGButton
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => suspendMutation.mutate()}
+                  disabled={suspendMutation.isPending}
+                >
+                  {suspendMutation.isPending ? 'Suspenent…' : 'Suspendre agent'}
+                </AMGButton>
+              )}
             </div>
           </div>
         )}

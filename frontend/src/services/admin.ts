@@ -667,3 +667,9 @@ export const getTenantPhaseHistory = (tenantId: string) =>
 
 export const getTenantPhaseHealth = (tenantId: string) =>
   apiFetch<TenantPhaseHealthResponse>(`/tenants/${tenantId}/phase-health`);
+
+export const goLiveTenant = (tenantId: string) =>
+  apiFetch<void>(`/tenants/${tenantId}/go-live`, { method: 'POST' });
+
+export const suspendTenant = (tenantId: string) =>
+  apiFetch<void>(`/tenants/${tenantId}/suspend`, { method: 'POST' });

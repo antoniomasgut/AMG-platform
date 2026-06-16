@@ -63,13 +63,15 @@ public class TenantController {
             return ResponseEntity.ok(Map.of("contractedPhases", List.of()));
         }
         var tenant = tenantRepository.findById(tenantId).orElseThrow();
-        // activePhases és el override operacional; si és null, s'usa contractedPhases (igual que useTenantFeatures al frontend)
+        // Fases actives: només les que SUPER_ADMIN ha posat en marxa explícitament (activePhases).
+        // contractedPhases = pagat però pendent de configuració → no habilita funcions de l'agent.
         String activePhases = tenant.getActivePhases();
-        String phases = (activePhases != null && !activePhases.isBlank())
-                ? activePhases
-                : tenant.getContractedPhases();
-        List<String> phaseList = (phases != null && !phases.isBlank())
-                ? Arrays.asList(phases.split(","))
+        List<String> phaseList = (activePhases != null && !activePhases.isBlank())
+                ? Arrays.asList(activePhases.split(","))
+                : List.of();
+        // contractedPhases s'exposa per mostrar a la UI el que el client té pagat
+        List<String> contractedList = (tenant.getContractedPhases() != null && !tenant.getContractedPhases().isBlank())
+                ? Arrays.asList(tenant.getContractedPhases().split(","))
                 : List.of();
         boolean hasF1 = phaseList.contains("F1");
         boolean hasF2 = phaseList.contains("F2");
@@ -78,7 +80,8 @@ public class TenantController {
         boolean hasF5 = phaseList.contains("F5");
 
         var features = new HashMap<String, Object>();
-        features.put("contractedPhases",   phaseList);
+        features.put("contractedPhases",   contractedList);
+        features.put("activePhases",       phaseList);
         features.put("canAccessAgent",     hasF1);
         features.put("canAccessAgenda",    hasF2);
         features.put("canAccessBilling",   hasF3);
@@ -137,6 +140,30 @@ public class TenantController {
     public ResponseEntity<TenantResponse> setBillingStartDate(@PathVariable UUID id,
                                                               @Valid @RequestBody SetBillingDateRequest request) {
         return ResponseEntity.ok(tenantService.setBillingStartDate(id, request.billingStartDate()));
+    }
+
+    @PostMapping("/{id}/go-live")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void goLive(@PathVariable UUID id) {
+        var tenant = tenantRepository.findById(id)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Tenant not found: " + id));
+        if (tenant.getContractedPhases() != null && !tenant.getContractedPhases().isBlank()) {
+            tenant.setActivePhases(tenant.getContractedPhases());
+            tenantRepository.save(tenant);
+        }
+    }
+
+    @PostMapping("/{id}/suspend")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void suspend(@PathVariable UUID id) {
+        var tenant = tenantRepository.findById(id)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Tenant not found: " + id));
+        tenant.setActivePhases("");
+        tenantRepository.save(tenant);
     }
 
     @GetMapping("/{id}/phase-history")

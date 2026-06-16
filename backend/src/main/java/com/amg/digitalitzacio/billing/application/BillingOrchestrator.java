@@ -718,6 +718,12 @@ public class BillingOrchestrator implements BillingService {
         }
         if (!nexePhases.isEmpty()) {
             addContractedPhases(budget.getTenantId(), nexePhases);
+            // SUPER_ADMIN bypass: posa en marxa directament (activePhases = contractedPhases)
+            var tenant = tenantRepository.findById(budget.getTenantId()).orElse(null);
+            if (tenant != null) {
+                tenant.setActivePhases(tenant.getContractedPhases());
+                tenantRepository.save(tenant);
+            }
         }
         advanceLeadStage(budget, PipelineStage.WON);
         final var finalBudget = budget;

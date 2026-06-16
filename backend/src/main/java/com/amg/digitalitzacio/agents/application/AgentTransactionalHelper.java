@@ -43,6 +43,13 @@ class AgentTransactionalHelper {
         if (chatLinkOpt.isEmpty() || !Boolean.TRUE.equals(chatLinkOpt.get().getIsActive())) {
             return Optional.empty();
         }
+        // L'agent no respon fins que SUPER_ADMIN posa el tenant en marxa (activePhases explícit)
+        var tenantCheck = tenantRepository.findById(tenantId).orElse(null);
+        if (tenantCheck == null) return Optional.empty();
+        var activePhasesCheck = tenantCheck.getActivePhases();
+        if (activePhasesCheck == null || activePhasesCheck.isBlank() || !activePhasesCheck.contains("F1")) {
+            return Optional.empty();
+        }
         var chatLink = chatLinkOpt.get();
 
         boolean isNewContact = contactService.findOrCreate(tenantId, channel, identifier);
@@ -77,6 +84,13 @@ class AgentTransactionalHelper {
     Optional<IncomingPreparation> prepareWidgetMessage(UUID tenantId, String identifier, String text) {
         var chatLinkOpt = tenantChatLinkRepository.findByTenantId(tenantId);
         if (chatLinkOpt.isEmpty() || !Boolean.TRUE.equals(chatLinkOpt.get().getIsActive())) {
+            return Optional.empty();
+        }
+        // Igual que prepareIncoming: requereix F1 activa explícitament
+        var tenantCheck = tenantRepository.findById(tenantId).orElse(null);
+        if (tenantCheck == null) return Optional.empty();
+        var activePhasesCheck = tenantCheck.getActivePhases();
+        if (activePhasesCheck == null || activePhasesCheck.isBlank() || !activePhasesCheck.contains("F1")) {
             return Optional.empty();
         }
         var chatLink = chatLinkOpt.get();
