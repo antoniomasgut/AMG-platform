@@ -202,6 +202,7 @@ function superAdminGroups(t: T): NavGroup[] {
     {
       label: t('groups.system'),
       items: [
+        { label: t('items.deployHub'), icon: IconSet.Zap, href: '/portal/admin/deploy' },
         { label: t('items.catalog'), icon: IconSet.Box, href: '/portal/admin/vault' },
         { label: t('items.templates'), icon: IconSet.Layers, href: '/portal/admin/templates' },
         { label: t('items.backup'), icon: IconSet.Database, href: '/portal/admin/backup' },
