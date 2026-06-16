@@ -17,6 +17,9 @@ public interface SecureDocumentTokenRepository extends JpaRepository<SecureDocum
 
     Page<SecureDocumentToken> findByTenantIdOrderByCreatedAtDesc(UUID tenantId, Pageable pageable);
 
+    @Query("SELECT t FROM SecureDocumentToken t WHERE t.tenantId = :tenantId AND t.documentType = com.amg.digitalitzacio.documents.delivery.domain.DocumentViewType.BUDGET AND t.acceptedAt BETWEEN :from AND :to")
+    List<SecureDocumentToken> findBudgetsAcceptedBetween(UUID tenantId, Instant from, Instant to);
+
     @Modifying
     @Query("DELETE FROM SecureDocumentToken t WHERE t.sensitivity = 'STANDARD' AND t.expiresAt < :cutoff")
     int deleteExpiredStandard(Instant cutoff);

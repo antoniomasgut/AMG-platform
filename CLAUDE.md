@@ -178,7 +178,9 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 41 | Agent Tool Calling (function calling + auto-quota) | ✅ Completat | specs/41-agent-tool-calling.md |
 | 42 | Meta Cloud API OAuth Onboarding (per-tenant WABA connect) | ✅ Completat | specs/42-meta-oauth-onboarding.md |
 | 43 | Communication Templates (WhatsApp + Email per acció+idioma) | ✅ Completat | specs/43-communication-templates.md |
-| 44 | Secure Document Delivery (lliurament segur, RGPD Art. 9) | ⏳ Spec aprovat | specs/44-secure-document-delivery.md |
+| 44 | Secure Document Delivery (lliurament segur, RGPD Art. 9) | ✅ Completat | specs/44-secure-document-delivery.md |
+| 45 | Post-Budget Booking (F3 → F2, reserva automàtica post-acceptació) | ✅ Completat | specs/45-post-budget-booking.md |
+| 46 | Phase Integration Matrix (fases independents + integrades per sector) | ⏳ Spec aprovat | specs/46-phase-integration-matrix.md |
 
 ---
 

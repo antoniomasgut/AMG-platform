@@ -5,7 +5,6 @@ import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.application.EmailService;
-import com.amg.digitalitzacio.auth.domain.TenantPhaseActivationRepository;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.booking.application.BookingService;
 import com.amg.digitalitzacio.booking.domain.BookingToken;
@@ -38,7 +37,6 @@ public class DocumentViewService {
     private final TenantChatLinkRepository chatLinkRepo;
     private final TelegramBotClient telegramBotClient;
     private final TenantDocumentPreferencesService preferencesService;
-    private final TenantPhaseActivationRepository phaseActivationRepo;
     private final BookingService bookingService;
     private final TenantRepository tenantRepo;
     private final CommunicationTemplateService templateService;
@@ -119,7 +117,7 @@ public class DocumentViewService {
     }
 
     private boolean agendaIsActive(UUID tenantId) {
-        return phaseActivationRepo.existsByTenantIdAndPhaseAndDeactivatedAtIsNull(tenantId, "F2");
+        return tenantRepo.findById(tenantId).map(t -> t.isPhaseActive("F2")).orElse(false);
     }
 
     private void sendBookingInvitation(SecureDocumentToken docToken, BookingToken bookingToken,
