@@ -180,7 +180,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 43 | Communication Templates (WhatsApp + Email per acció+idioma) | ✅ Completat | specs/43-communication-templates.md |
 | 44 | Secure Document Delivery (lliurament segur, RGPD Art. 9) | ✅ Completat | specs/44-secure-document-delivery.md |
 | 45 | Post-Budget Booking (F3 → F2, reserva automàtica post-acceptació) | ✅ Completat | specs/45-post-budget-booking.md |
-| 46 | Phase Integration Matrix (fases independents + integrades per sector) | ⏳ Spec aprovat | specs/46-phase-integration-matrix.md |
+| 46 | Phase Integration Matrix (fases independents + integrades per sector) | ✅ Completat | specs/46-phase-integration-matrix.md |
 
 ---
 
@@ -237,6 +237,8 @@ Hibernate a producció usa `ddl-auto: validate` — les taules noves **cal crear
 | `oauth_states` | V22 | `(id UUID PK, tenant_id UUID, state_token VARCHAR(64) UNIQUE, redirect_uri VARCHAR(500), requested_scopes TEXT, expires_at TIMESTAMPTZ)` |
 | `stripe_configs` (ALTER) | V44 Flyway | `ADD COLUMN stripe_customer_id, stripe_payment_method_id, pm_last_four, pm_brand, pm_exp_month, pm_exp_year` |
 | `model_pricing` | V49 Flyway | `(model_name VARCHAR(100) PK, provider VARCHAR(50), input_cost_micros BIGINT, output_cost_micros BIGINT, markup_percent INTEGER DEFAULT 20, client_input_micros BIGINT, client_output_micros BIGINT, updated_at TIMESTAMPTZ)` |
+| `booking_tokens` (ALTER) | V66 Flyway | `lead_id` nullable + `ADD COLUMN source_document_id UUID, recipient_phone VARCHAR(30), recipient_name VARCHAR(255), booking_label VARCHAR(100)` |
+| `tenant_document_preferences` (ALTER) | V66 Flyway | `ADD COLUMN auto_booking_on_accept BOOLEAN NOT NULL DEFAULT true` |
 
 **NexeLocal Service Configs** (`nexe_service_configs`):
 - Service keys: `AGENDA`, `PRESSUPOSTOS`, `FIDELITZACIO`, `EQUIP`
