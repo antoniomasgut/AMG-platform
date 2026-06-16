@@ -277,13 +277,19 @@ function KeyRow({ item, onSave, onDelete, t }: {
             </AMGButton>
           )}
           {!item.configured && (
-            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => setEditing(true)}>
+            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => {
+              setValue('');
+              setEditing(true);
+            }}>
               {t('btnConfigure')}
             </AMGButton>
           )}
           {item.configured && item.source !== 'ENV' && (
             <>
-              <AMGButton size="sm" variant="secondary" icon={IconSet.Edit} onClick={() => setEditing(true)}>
+              <AMGButton size="sm" variant="secondary" icon={IconSet.Edit} onClick={() => {
+                if (item.currentValue != null) setValue(item.currentValue);
+                setEditing(true);
+              }}>
                 {t('btnEdit')}
               </AMGButton>
               <AMGButton

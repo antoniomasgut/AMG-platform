@@ -202,9 +202,10 @@ public class SystemConfigService {
             boolean envConfigured = env.getProperty(k.key()) != null && !env.getProperty(k.key(), "").isBlank();
             boolean dbConfigured = dbKeys.stream().anyMatch(s -> s.getKey().equals(k.key()));
             boolean hasDefault = k.defaultValue() != null && !k.defaultValue().isBlank();
+            String source = envConfigured ? "ENV" : dbConfigured ? "DB" : hasDefault ? "DEFAULT" : "MISSING";
+            String currentValue = resolveCurrentValue(k, source);
             return new ConfigStatus(k.key(), k.label(), k.description(), k.category(), k.secret(), k.type(),
-                    envConfigured || dbConfigured || hasDefault,
-                    envConfigured ? "ENV" : dbConfigured ? "DB" : hasDefault ? "DEFAULT" : "MISSING");
+                    envConfigured || dbConfigured || hasDefault, source, currentValue);
         }).toList();
     }
 
@@ -217,11 +218,22 @@ public class SystemConfigService {
                     boolean envConfigured = env.getProperty(k.key()) != null && !env.getProperty(k.key(), "").isBlank();
                     boolean dbConfigured = dbKeys.stream().anyMatch(s -> s.getKey().equals(k.key()));
                     boolean hasDefault = k.defaultValue() != null && !k.defaultValue().isBlank();
+                    String source = envConfigured ? "ENV" : dbConfigured ? "DB" : hasDefault ? "DEFAULT" : "MISSING";
+                    String currentValue = resolveCurrentValue(k, source);
                     return new ConfigStatus(k.key(), k.label(), k.description(), k.category(), k.secret(), k.type(),
-                            envConfigured || dbConfigured || hasDefault,
-                            envConfigured ? "ENV" : dbConfigured ? "DB" : hasDefault ? "DEFAULT" : "MISSING");
+                            envConfigured || dbConfigured || hasDefault, source, currentValue);
                 })
                 .orElse(null);
+    }
+
+    private String resolveCurrentValue(KnownKey k, String source) {
+        if (k.secret()) return null;
+        if ("MISSING".equals(source)) return null;
+        try {
+            return get(k.key());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public List<SystemConfigAuditLog> getAuditLog(String key) {
@@ -292,5 +304,5 @@ public class SystemConfigService {
     public record KnownKey(String key, String label, String description, String category, boolean secret,
                            String type, String defaultValue, String validationRules, int sortOrder) {}
     public record ConfigStatus(String key, String label, String description, String category, boolean secret,
-                               String type, boolean configured, String source) {}
+                               String type, boolean configured, String source, String currentValue) {}
 }

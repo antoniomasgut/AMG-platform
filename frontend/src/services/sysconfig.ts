@@ -9,6 +9,7 @@ export interface ConfigStatus {
   type: 'secret' | 'string' | 'url' | 'number' | 'boolean' | 'json';
   configured: boolean;
   source: 'ENV' | 'DB' | 'MISSING' | 'DEFAULT';
+  currentValue: string | null;
 }
 
 export interface AuditEntry {
