@@ -6,7 +6,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import {
-  listInvoices, getFinOpsDashboard, getGlobalFinOpsDashboard, cancelInvoice,
+  listInvoices, getFinOpsDashboard, getGlobalFinOpsDashboard,
+  getClientFinOpsDashboard, cancelInvoice, generateMonthlyInvoiceForTenant,
   type InvoiceResponse,
 } from '@/services/finops';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -38,7 +39,7 @@ const STATUS_FILTERS = ['', 'PENDING', 'PAID', 'OVERDUE', 'CANCELLED'];
 const PAGE_SIZE = 20;
 
 export default function FinOpsPage() {
-  const { user, isSuperAdmin } = useAuth();
+  const { user, isSuperAdmin, isAdmin, isClient } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
   const searchParams = useSearchParams();
@@ -52,10 +53,17 @@ export default function FinOpsPage() {
 
   const tenantId = user?.tenantId ?? '';
 
+  // Llacuna 6: dashboard condicional per rol
+  // CLIENT → /finops/dashboard/client (sense query param)
+  // ADMIN/SUPER_ADMIN → /finops/dashboard?tenantId=... o /finops/dashboard/global
   const { data: dashboard } = useQuery({
-    queryKey: ['finops-dashboard', tenantId],
-    queryFn: () => (isSuperAdmin ? getGlobalFinOpsDashboard() : getFinOpsDashboard(tenantId)),
-    enabled: isSuperAdmin || !!tenantId,
+    queryKey: ['finops-dashboard', isClient, tenantId],
+    queryFn: () => {
+      if (isClient) return getClientFinOpsDashboard();
+      if (isSuperAdmin) return getGlobalFinOpsDashboard();
+      return getFinOpsDashboard(tenantId);
+    },
+    enabled: isClient || isSuperAdmin || !!tenantId,
   });
 
   const { data: invoicePage, isLoading } = useQuery({
@@ -82,6 +90,17 @@ export default function FinOpsPage() {
     onError: () => toast('error', 'Error cancel·lant la factura'),
   });
 
+  // Llacuna 7: generar factura mensual per al tenant actual (ADMIN/SUPER_ADMIN)
+  const { mutate: doGenerateMonthly, isPending: generatingMonthly } = useMutation({
+    mutationFn: () => generateMonthlyInvoiceForTenant(tenantId),
+    onSuccess: () => {
+      toast('success', 'Factura mensual generada correctament');
+      qc.invalidateQueries({ queryKey: ['invoices'] });
+      qc.invalidateQueries({ queryKey: ['finops-dashboard'] });
+    },
+    onError: (err: Error) => toast('error', err.message || 'Error generant la factura mensual'),
+  });
+
   return (
     <PortalShell breadcrumb="finops">
       <div className="p-4 sm:p-8 space-y-6">
@@ -98,6 +117,25 @@ export default function FinOpsPage() {
             <AMGStat label="Total pagat" value={fmt(dashboard.totalPaid)} icon={IconSet.Check} tone="success" />
             <AMGStat label="Pendent" value={fmt(dashboard.totalPending)} icon={IconSet.Clock} tone={dashboard.totalPending > 0 ? 'danger' : 'success'} />
             <AMGStat label="Vençut" value={fmt(dashboard.totalOverdue)} icon={IconSet.AlertCircle} tone={dashboard.totalOverdue > 0 ? 'danger' : 'success'} />
+          </div>
+        )}
+
+        {/* Llacuna 7: Accions ADMIN/SUPER_ADMIN — generar factura mensual */}
+        {isAdmin && !isClient && tenantId && (
+          <div className="amg-card card-clip p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="f-display font-bold text-sm">Accions de facturació</p>
+              <p className="text-ui text-ink-2 mt-0.5">Genera la factura mensual per al mes anterior</p>
+            </div>
+            <AMGButton
+              size="sm"
+              variant="primary"
+              icon={IconSet.Receipt}
+              onClick={() => doGenerateMonthly()}
+              disabled={generatingMonthly}
+            >
+              {generatingMonthly ? 'Generant…' : 'Generar factura mensual'}
+            </AMGButton>
           </div>
         )}
 
@@ -164,7 +202,7 @@ export default function FinOpsPage() {
                           )}
                         </td>
                         <td className="px-4 sm:px-5 py-3">
-                          {inv.status === 'PENDING' && (
+                          {inv.status === 'PENDING' && !isClient && (
                             <AMGButton size="sm" variant="ghost" icon={IconSet.Trash} onClick={() => doCancel(inv.id)}>
                               Cancel·lar
                             </AMGButton>

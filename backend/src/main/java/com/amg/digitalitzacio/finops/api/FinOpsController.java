@@ -78,6 +78,12 @@ public class FinOpsController {
         return finOpsService.getDashboard(tenantId);
     }
 
+    @GetMapping("/dashboard/client")
+    @PreAuthorize("isAuthenticated()")
+    public FinOpsDashboardResponse getClientDashboard(@AuthenticationPrincipal UserPrincipal principal) {
+        return finOpsService.getDashboard(principal.tenantId());
+    }
+
     @GetMapping("/dashboard/global")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public FinOpsDashboardGlobalResponse getGlobalDashboard() {
@@ -137,6 +143,16 @@ public class FinOpsController {
             @RequestParam(required = false) String period) {
         var p = period != null ? period : YearMonth.now().minusMonths(1).toString();
         return finOpsService.generateMonthlyInvoices(p);
+    }
+
+    @PostMapping("/tenants/{tenantId}/invoices/generate-monthly")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public MonthlyInvoiceResponse generateMonthlyInvoiceForTenant(
+            @PathVariable UUID tenantId,
+            @RequestParam(required = false) String period) {
+        var p = period != null ? period : YearMonth.now().minusMonths(1).toString();
+        return finOpsService.generateMonthlyInvoiceForTenant(tenantId, p);
     }
 
     // --- SEPA XML ---

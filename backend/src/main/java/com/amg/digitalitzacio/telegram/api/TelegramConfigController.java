@@ -13,7 +13,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/telegram/tenants/{tenantId}")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SUPER_ADMIN')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
 public class TelegramConfigController {
 
     private final TenantTelegramService telegramService;

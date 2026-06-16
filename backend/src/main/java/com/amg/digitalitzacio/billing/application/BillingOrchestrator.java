@@ -1,5 +1,9 @@
 package com.amg.digitalitzacio.billing.application;
 
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
+import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.auth.application.PhaseActivationService;
 import com.amg.digitalitzacio.auth.domain.*;
 import com.amg.digitalitzacio.billing.api.dto.*;
@@ -56,6 +60,10 @@ public class BillingOrchestrator implements BillingService {
     private final LeadRepository leadRepository;
     private final PhaseActivationService phaseActivationService;
     private final PostAcceptanceService postAcceptanceService;
+    private final WhatsAppChannel whatsAppChannel;
+    private final WhatsAppMetaChannel whatsAppMetaChannel;
+    private final TenantChatLinkRepository chatLinkRepository;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -733,6 +741,53 @@ public class BillingOrchestrator implements BillingService {
                         postAcceptanceService.onBudgetAccepted(finalBudget);
                     }
                 });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> sendBudgetViaChannel(UUID budgetId, String channel) {
+        var budget = findBudget(budgetId);
+        if (budget.getStatus() != BudgetStatus.SENT) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El pressupost ha d'estar en estat SENT");
+        }
+
+        var url = "https://amgdl.com/accept-budget?token=" + budget.getAcceptanceToken();
+        var tenant = tenantRepository.findById(budget.getTenantId())
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found: " + budget.getTenantId()));
+
+        String effectiveChannel = channel != null ? channel.toUpperCase() : "WHATSAPP";
+
+        if ("WHATSAPP".equals(effectiveChannel)) {
+            String toPhone = tenant.getPhone();
+            if (toPhone == null || toPhone.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El tenant no té número de telèfon configurat");
+            }
+            var chatLink = chatLinkRepository.findByTenantId(budget.getTenantId()).orElse(null);
+            String missatge = "Hola! Aquí tens l'enllaç per revisar i acceptar el teu pressupost AMG Digitalització:\n"
+                    + url + "\n\nSi tens qualsevol pregunta, respon aquí.";
+            if (chatLink != null && chatLink.getWhatsappMetaPhoneNumberId() != null
+                    && !chatLink.getWhatsappMetaPhoneNumberId().isBlank()) {
+                whatsAppMetaChannel.sendMessage(chatLink.getWhatsappMetaPhoneNumberId(), toPhone, missatge);
+            } else if (chatLink != null && chatLink.getWhatsappPhoneNumber() != null
+                    && !chatLink.getWhatsappPhoneNumber().isBlank()) {
+                whatsAppChannel.sendMessage(chatLink.getWhatsappPhoneNumber(), toPhone, missatge);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hi ha canal WhatsApp configurat per a aquest tenant");
+            }
+        } else if ("EMAIL".equals(effectiveChannel)) {
+            String toEmail = tenant.getEmail();
+            if (toEmail == null || toEmail.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El tenant no té email configurat");
+            }
+            String subject = "El teu pressupost ja és disponible";
+            String body = "Hola!\n\nEl teu pressupost d'AMG Digitalització ja està disponible per revisar i acceptar:\n\n"
+                    + url + "\n\nSi tens qualsevol pregunta, respon a aquest correu.\n\nL'equip d'AMG Digitalització";
+            emailService.sendEmail(toEmail, subject, body);
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Canal no vàlid: " + channel + ". Usa WHATSAPP o EMAIL");
+        }
+
+        return Map.of("sent", true, "channel", effectiveChannel);
     }
 
     private Budget findBudget(UUID id) {

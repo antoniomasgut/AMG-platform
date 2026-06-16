@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NexeLocal — Tarifes de Servei 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent:   #FF6B00;
+      --dark:     #13132a;
+      --darker:   #0d0d1a;
+      --bg:       #f8f9fc;
+      --surface:  #ffffff;
+      --border:   #e2e8f0;
+      --text:     #1e2a3b;
+      --muted:    #64748b;
+      --green:    #16a34a;
+      --green-bg: #f0fdf4;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Capçalera ── */
+    header {
+      background: var(--darker);
+      padding: 28px 48px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    header .logo-wrap { display: flex; align-items: center; gap: 16px; }
+    header svg { height: 52px; width: auto; }
+    header .doc-meta { text-align: right; color: #8896aa; font-size: 12px; line-height: 1.6; }
+    header .doc-meta strong { display: block; color: #e2e8f0; font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
+
+    /* ── Cos principal ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 40px 32px 80px; }
+
+    .intro {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 40px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .intro strong { color: var(--text); }
+
+    /* ── Seccions de categoria ── */
+    .category { margin-bottom: 44px; }
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+    }
+    .category-header .icon {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 16px;
+    }
+    .category-header h2 {
+      font-family: 'Orbitron', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text);
+    }
+
+    /* ── Taules de preus ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      font-size: 13px;
+    }
+    thead tr {
+      background: var(--dark);
+      color: #e2e8f0;
+    }
+    thead th {
+      padding: 10px 14px;
+      text-align: right;
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    thead th:first-child, thead th:nth-child(2) { text-align: left; }
+    thead th.center { text-align: center; }
+
+    tbody tr { border-bottom: 1px solid var(--border); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f1f5f9; }
+
+    /* agrupació per sector — primera fila del grup */
+    tbody tr.group-start td:first-child {
+      border-top: 2px solid var(--border);
+    }
+
+    td {
+      padding: 9px 14px;
+      vertical-align: middle;
+      text-align: right;
+    }
+    td:first-child { text-align: left; font-weight: 500; }
+    td:nth-child(2) { text-align: left; }
+
+    .sector-name { font-weight: 600; color: var(--text); }
+    .sector-name small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
+
+    .badge-size {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-aut  { background: #dbeafe; color: #1d4ed8; }
+    .badge-pet  { background: #dcfce7; color: #15803d; }
+    .badge-mit  { background: #fef3c7; color: #b45309; }
+
+    .price-setup {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .price-f1 {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--accent);
+    }
+    .price-fx {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Taula de serveis addicionals */
+    .addons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .addon-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .addon-card .addon-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .addon-card .addon-price {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .addon-card .addon-recurrent {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    .addon-card .addon-note {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    /* Notes */
+    .notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-top: 40px;
+    }
+    .notes h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .notes ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .notes li {
+      font-size: 12px;
+      color: var(--muted);
+      padding-left: 16px;
+      position: relative;
+    }
+    .notes li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--darker);
+      padding: 20px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #8896aa;
+      font-size: 11px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* Impressió */
+    @media print {
+      body { background: white; font-size: 12px; }
+      header { padding: 20px 32px; }
+      main { padding: 24px 0; }
+      .category { page-break-inside: avoid; }
+      footer { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <!-- AMG Logo inline -->
+    <svg viewBox="0 0 340 110" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="triI" x1="42" y1="8" x2="42" y2="88" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#FF6B00" stop-opacity="0.14"/>
+          <stop offset="100%" stop-color="#FF6B00" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      <polygon points="72,6 82,16 82,100 12,100 4,90 4,6" fill="#13132a" stroke="#FF6B00" stroke-width="0.75" stroke-opacity="0.22"/>
+      <polygon points="43,14 10,97 76,97" fill="url(#triI)"/>
+      <line x1="43" y1="14" x2="10" y2="97" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.35" stroke-linecap="square"/>
+      <line x1="43" y1="14" x2="76" y2="97" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.35" stroke-linecap="square"/>
+      <line x1="21" y1="63" x2="65" y2="63" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.35" stroke-linecap="square"/>
+      <circle cx="43" cy="14" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4"/>
+      <circle cx="10" cy="97" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.6"/>
+      <circle cx="76" cy="97" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.6"/>
+      <circle cx="21" cy="63" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.6"/>
+      <circle cx="65" cy="63" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.6"/>
+      <text x="92" y="90" font-family="Orbitron,monospace" font-size="72" font-weight="700" fill="#FF6B00" letter-spacing="-2">MG</text>
+      <text x="8" y="108" font-family="'Space Grotesk',system-ui,sans-serif" font-size="10.5" font-weight="400" fill="#8896aa" letter-spacing="6.5">DIGITALITZACIONS</text>
+    </svg>
+  </div>
+  <div class="doc-meta">
+    <strong>TARIFES NEXELOCAL</strong>
+    Plans de digitalització per a negocis locals · Vigència: Juny 2026
+  </div>
+</header>
+
+<main>
+
+  <div class="intro">
+    <strong>Què inclou cada pla?</strong><br/>
+    Cada fase activa un conjunt de funcionalitats de l'agent IA: gestió de cites i reserves (F1), automatització i
+    seguiment (F2), generació de pressupostos (F3), fidelització de clients (F4) i alertes d'equip (F5).
+    El preu mensual és acumulatiu: contractar 2 fases s'aplica la tarifa de 2F, no la suma de F1+F2 per separat.
+    El <strong>setup</strong> és un pagament únic en la posada en marxa de cada fase.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SERVEIS A LA LLAR -->
+  <div class="category">
+    <div class="category-header">
+      <div class="icon">🏠</div>
+      <h2>Serveis a la llar</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Sector</th>
+          <th>Mida</th>
+          <th>Setup F1</th>
+          <th>1 fase/mes</th>
+          <th>2 fases/mes</th>
+          <th>3 fases/mes</th>
+          <th>4 fases/mes</th>
+          <th>5 fases/mes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="2">Pintor<small>Pintura i decoració</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€150</td>
+          <td class="price-f1">€59</td>
+          <td class="price-fx">€79</td>
+          <td class="price-fx">€99</td>
+          <td class="price-fx">€114</td>
+          <td class="price-fx">€129</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-pet">Petit</span></td>
+          <td class="price-setup">€250</td>
+          <td class="price-f1">€79</td>
+          <td class="price-fx">€99</td>
+          <td class="price-fx">€129</td>
+          <td class="price-fx">€144</td>
+          <td class="price-fx">€159</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="2">Electricista<small>Instal·lacions elèctriques</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€150</td>
+          <td class="price-f1">€59</td>
+          <td class="price-fx">€79</td>
+          <td class="price-fx">€99</td>
+          <td class="price-fx">€114</td>
+          <td class="price-fx">€129</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-pet">Petit</span></td>
+          <td class="price-setup">€250</td>
+          <td class="price-f1">€79</td>
+          <td class="price-fx">€99</td>
+          <td class="price-fx">€129</td>
+          <td class="price-fx">€144</td>
+          <td class="price-fx">€159</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name">Fontaner<small>Fontaneria i sanejament</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€150</td>
+          <td class="price-f1">€59</td>
+          <td class="price-fx">€79</td>
+          <td class="price-fx">€99</td>
+          <td class="price-fx">€114</td>
+          <td class="price-fx">€129</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name">Jardiner<small>Jardineria i zones verdes</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€150</td>
+          <td class="price-f1">€59</td>
+          <td class="price-fx">€79</td>
+          <td class="price-fx">€99</td>
+          <td class="price-fx">€114</td>
+          <td class="price-fx">€129</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="2">Neteja<small>Serveis de neteja</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€150</td>
+          <td class="price-f1">€59</td>
+          <td class="price-fx">€79</td>
+          <td class="price-fx">€99</td>
+          <td class="price-fx">€114</td>
+          <td class="price-fx">€129</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-mit">Mitjà</span></td>
+          <td class="price-setup">€350</td>
+          <td class="price-f1">€119</td>
+          <td class="price-fx">€149</td>
+          <td class="price-fx">€179</td>
+          <td class="price-fx">€194</td>
+          <td class="price-fx">€209</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SALUT I BENESTAR -->
+  <div class="category">
+    <div class="category-header">
+      <div class="icon">🏥</div>
+      <h2>Salut i benestar</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Sector</th><th>Mida</th><th>Setup F1</th>
+          <th>1 fase/mes</th><th>2 fases/mes</th><th>3 fases/mes</th><th>4 fases/mes</th><th>5 fases/mes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="3">Fisioterapeuta<small>Fisioteràpia i rehabilitació</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€175</td>
+          <td class="price-f1">€69</td><td class="price-fx">€89</td><td class="price-fx">€109</td><td class="price-fx">€124</td><td class="price-fx">€139</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-pet">Petit</span></td>
+          <td class="price-setup">€275</td>
+          <td class="price-f1">€99</td><td class="price-fx">€129</td><td class="price-fx">€169</td><td class="price-fx">€184</td><td class="price-fx">€199</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-mit">Mitjà</span></td>
+          <td class="price-setup">€375</td>
+          <td class="price-f1">€129</td><td class="price-fx">€169</td><td class="price-fx">€229</td><td class="price-fx">€254</td><td class="price-fx">€279</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="2">Psicòleg<small>Psicologia i teràpia</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€175</td>
+          <td class="price-f1">€69</td><td class="price-fx">€89</td><td class="price-fx">€109</td><td class="price-fx">€124</td><td class="price-fx">€139</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-pet">Petit</span></td>
+          <td class="price-setup">€300</td>
+          <td class="price-f1">€109</td><td class="price-fx">€149</td><td class="price-fx">€189</td><td class="price-fx">€209</td><td class="price-fx">€229</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name">Nutricionista<small>Nutrició i dietètica</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€175</td>
+          <td class="price-f1">€59</td><td class="price-fx">€79</td><td class="price-fx">€99</td><td class="price-fx">€114</td><td class="price-fx">€129</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ ESTÈTICA I BELLESA -->
+  <div class="category">
+    <div class="category-header">
+      <div class="icon">✂️</div>
+      <h2>Estètica i bellesa</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Sector</th><th>Mida</th><th>Setup F1</th>
+          <th>1 fase/mes</th><th>2 fases/mes</th><th>3 fases/mes</th><th>4 fases/mes</th><th>5 fases/mes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="2">Perruqueria<small>Perruqueria i cabell</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€150</td>
+          <td class="price-f1">€59</td><td class="price-fx">€79</td><td class="price-fx">€99</td><td class="price-fx">€114</td><td class="price-fx">€129</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-pet">Petit</span></td>
+          <td class="price-setup">€300</td>
+          <td class="price-f1">€99</td><td class="price-fx">€139</td><td class="price-fx">€179</td><td class="price-fx">€199</td><td class="price-fx">€219</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="2">Estètica<small>Tractaments estètics i spa</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€150</td>
+          <td class="price-f1">€59</td><td class="price-fx">€79</td><td class="price-fx">€99</td><td class="price-fx">€114</td><td class="price-fx">€129</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-mit">Mitjà</span></td>
+          <td class="price-setup">€350</td>
+          <td class="price-f1">€109</td><td class="price-fx">€149</td><td class="price-fx">€189</td><td class="price-fx">€209</td><td class="price-fx">€229</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name">Perruqueria canina<small>Estètica i banys per a mascotes</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€150</td>
+          <td class="price-f1">€49</td><td class="price-fx">€69</td><td class="price-fx">€89</td><td class="price-fx">€104</td><td class="price-fx">€119</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SERVEIS PROFESSIONALS -->
+  <div class="category">
+    <div class="category-header">
+      <div class="icon">💼</div>
+      <h2>Serveis professionals</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Sector</th><th>Mida</th><th>Setup F1</th>
+          <th>1 fase/mes</th><th>2 fases/mes</th><th>3 fases/mes</th><th>4 fases/mes</th><th>5 fases/mes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="2">Gestoria<small>Gestoria i assessoria fiscal</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€200</td>
+          <td class="price-f1">€69</td><td class="price-fx">€89</td><td class="price-fx">€109</td><td class="price-fx">€124</td><td class="price-fx">€139</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-mit">Mitjà</span></td>
+          <td class="price-setup">€400</td>
+          <td class="price-f1">€109</td><td class="price-fx">€149</td><td class="price-fx">€199</td><td class="price-fx">€224</td><td class="price-fx">€249</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="2">Acadèmia<small>Acadèmia, formació i classes particulars</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€175</td>
+          <td class="price-f1">€59</td><td class="price-fx">€79</td><td class="price-fx">€99</td><td class="price-fx">€114</td><td class="price-fx">€129</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-mit">Mitjà</span></td>
+          <td class="price-setup">€300</td>
+          <td class="price-f1">€99</td><td class="price-fx">€139</td><td class="price-fx">€169</td><td class="price-fx">€189</td><td class="price-fx">€209</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="3">Agència IA<small>Consultoria digital i agències</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€200</td>
+          <td class="price-f1">€89</td><td class="price-fx">€109</td><td class="price-fx">€129</td><td class="price-fx">€144</td><td class="price-fx">€159</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-pet">Petit</span></td>
+          <td class="price-setup">€350</td>
+          <td class="price-f1">€129</td><td class="price-fx">€159</td><td class="price-fx">€189</td><td class="price-fx">€204</td><td class="price-fx">€219</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-mit">Mitjà</span></td>
+          <td class="price-setup">€500</td>
+          <td class="price-f1">€164</td><td class="price-fx">€204</td><td class="price-fx">€244</td><td class="price-fx">€264</td><td class="price-fx">€284</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ AUTOMOCIÓ I MASCOTES -->
+  <div class="category">
+    <div class="category-header">
+      <div class="icon">🔧</div>
+      <h2>Automoció i mascotes</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Sector</th><th>Mida</th><th>Setup F1</th>
+          <th>1 fase/mes</th><th>2 fases/mes</th><th>3 fases/mes</th><th>4 fases/mes</th><th>5 fases/mes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="3">Taller mecànic<small>Mecànica i reparació de vehicles</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€125</td>
+          <td class="price-f1">€55</td><td class="price-fx">€75</td><td class="price-fx">€95</td><td class="price-fx">€110</td><td class="price-fx">€125</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-pet">Petit</span></td>
+          <td class="price-setup">€200</td>
+          <td class="price-f1">€79</td><td class="price-fx">€99</td><td class="price-fx">€129</td><td class="price-fx">€144</td><td class="price-fx">€159</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-mit">Mitjà</span></td>
+          <td class="price-setup">€325</td>
+          <td class="price-f1">€109</td><td class="price-fx">€139</td><td class="price-fx">€169</td><td class="price-fx">€184</td><td class="price-fx">€199</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="2">Veterinari<small>Clínica veterinària</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€175</td>
+          <td class="price-f1">€69</td><td class="price-fx">€89</td><td class="price-fx">€109</td><td class="price-fx">€124</td><td class="price-fx">€139</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-pet">Petit</span></td>
+          <td class="price-setup">€325</td>
+          <td class="price-f1">€109</td><td class="price-fx">€149</td><td class="price-fx">€189</td><td class="price-fx">€209</td><td class="price-fx">€229</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ RESTAURACIÓ I IMMOBILIARIA -->
+  <div class="category">
+    <div class="category-header">
+      <div class="icon">🍽️</div>
+      <h2>Restauració i immobiliària</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Sector</th><th>Mida</th><th>Setup F1</th>
+          <th>1 fase/mes</th><th>2 fases/mes</th><th>3 fases/mes</th><th>4 fases/mes</th><th>5 fases/mes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="3">Restaurant / Bar<small>Restauració i hostaleria</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€150</td>
+          <td class="price-f1">€64</td><td class="price-fx">€84</td><td class="price-fx">€104</td><td class="price-fx">€119</td><td class="price-fx">€134</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-pet">Petit</span></td>
+          <td class="price-setup">€275</td>
+          <td class="price-f1">€104</td><td class="price-fx">€124</td><td class="price-fx">€154</td><td class="price-fx">€169</td><td class="price-fx">€184</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-mit">Mitjà</span></td>
+          <td class="price-setup">€375</td>
+          <td class="price-f1">€139</td><td class="price-fx">€169</td><td class="price-fx">€199</td><td class="price-fx">€214</td><td class="price-fx">€229</td>
+        </tr>
+        <tr class="group-start">
+          <td class="sector-name" rowspan="3">Immobiliària<small>Agència immobiliària</small></td>
+          <td><span class="badge-size badge-aut">Autònom</span></td>
+          <td class="price-setup">€175</td>
+          <td class="price-f1">€79</td><td class="price-fx">€99</td><td class="price-fx">€119</td><td class="price-fx">€134</td><td class="price-fx">€149</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-pet">Petit</span></td>
+          <td class="price-setup">€300</td>
+          <td class="price-f1">€119</td><td class="price-fx">€149</td><td class="price-fx">€179</td><td class="price-fx">€194</td><td class="price-fx">€209</td>
+        </tr>
+        <tr>
+          <td><span class="badge-size badge-mit">Mitjà</span></td>
+          <td class="price-setup">€450</td>
+          <td class="price-f1">€154</td><td class="price-fx">€194</td><td class="price-fx">€234</td><td class="price-fx">€254</td><td class="price-fx">€274</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ SERVEIS ADDICIONALS -->
+  <div class="category">
+    <div class="category-header">
+      <div class="icon">⚡</div>
+      <h2>Serveis addicionals</h2>
+    </div>
+
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px;">
+      Serveis independents de les fases mensuals. El setup és un pagament únic.
+    </p>
+
+    <div class="addons-grid">
+      <div class="addon-card">
+        <div class="addon-name">Micro-landing</div>
+        <div class="addon-price">€30 <span style="font-size:12px;color:var(--muted)">setup</span></div>
+        <div class="addon-recurrent">+ €9/mes</div>
+        <div class="addon-note">Blocs bàsics + formulari de contacte</div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-name">Landing Pro</div>
+        <div class="addon-price">€80 <span style="font-size:12px;color:var(--muted)">setup</span></div>
+        <div class="addon-recurrent">+ €15/mes</div>
+        <div class="addon-note">Tots els blocs + formulari + botó WA + chat IA (requereix F1)</div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-name">Domini autogestionat</div>
+        <div class="addon-price">€30 <span style="font-size:12px;color:var(--muted)">setup</span></div>
+        <div class="addon-recurrent">Renovació a càrrec del client</div>
+        <div class="addon-note">El client gestiona la renovació anual</div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-name">Domini gestionat</div>
+        <div class="addon-price">€60 <span style="font-size:12px;color:var(--muted)">setup (inclou 1r any)</span></div>
+        <div class="addon-recurrent">+ €15/any renovació</div>
+        <div class="addon-note">AMG gestiona la renovació automàticament</div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-name">WhatsApp Business API</div>
+        <div class="addon-price">€50 <span style="font-size:12px;color:var(--muted)">setup</span></div>
+        <div class="addon-recurrent">Inclòs en el pla mensual</div>
+        <div class="addon-note">Activació canal WhatsApp Meta per al negoci</div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-name">Automatització bàsica</div>
+        <div class="addon-price">€20 <span style="font-size:12px;color:var(--muted)">setup</span></div>
+        <div class="addon-recurrent">1 flux automatitzat n8n</div>
+        <div class="addon-note">Integració simple sense condicionals complexos</div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-name">Automatització avançada</div>
+        <div class="addon-price">€60 <span style="font-size:12px;color:var(--muted)">setup</span></div>
+        <div class="addon-recurrent">Flux multi-pas amb lògica condicional</div>
+        <div class="addon-note">Fins a 3 serveis integrats + condicionals</div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-name">Bot IA bàsic</div>
+        <div class="addon-price">€40 <span style="font-size:12px;color:var(--muted)">setup</span></div>
+        <div class="addon-recurrent">Sense base de coneixement pròpia</div>
+        <div class="addon-note">Agent conversacional amb coneixement estàndard</div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-name">Bot IA avançat (RAG)</div>
+        <div class="addon-price">€100 <span style="font-size:12px;color:var(--muted)">setup</span></div>
+        <div class="addon-recurrent">Amb base de coneixement personalitzada</div>
+        <div class="addon-note">L'agent aprèn dels documents del negoci</div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-name">SMTP Corporatiu</div>
+        <div class="addon-price">€25 <span style="font-size:12px;color:var(--muted)">setup</span></div>
+        <div class="addon-recurrent">Configuració email propi del negoci</div>
+        <div class="addon-note">Compte @elnegoci.com per a l'agent</div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-name">Google Analytics</div>
+        <div class="addon-price">€25 <span style="font-size:12px;color:var(--muted)">setup</span></div>
+        <div class="addon-recurrent">Integrat a la landing</div>
+        <div class="addon-note">GA4 + dashboard d'esdeveniments bàsic</div>
+      </div>
+      <div class="addon-card" style="border-color:var(--accent);background:#fff7f0;">
+        <div class="addon-name" style="color:var(--accent)">Enginyeria / hora</div>
+        <div class="addon-price">€50/h</div>
+        <div class="addon-recurrent">Desenvolupaments a mida</div>
+        <div class="addon-note">Integracions especials, funcionalitat extra</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ NOTES -->
+  <div class="notes">
+    <h3>Condicions i notes</h3>
+    <ul>
+      <li>Tots els preus inclouen IVA. Facturació mensual per domiciliació bancària (SEPA).</li>
+      <li>El preu mensual inclou l'agent IA actiu 24/7, fins a 200 missatges WhatsApp/mes (Autònom) · 500 (Petit) · 1.000 (Mitjà).</li>
+      <li>La mida <strong>Autònom</strong> = 1 professional. <strong>Petit</strong> = 2–3 professionals actius. <strong>Mitjà</strong> = 4–6 professionals actius.</li>
+      <li>Per a restaurants i locals d'hostaleria, la mida es determina per nombre de locals o volum de reserves, no per plantilla total.</li>
+      <li>El setup de fases addicionals (F2–F5) s'aplica per fase contractada: €75/€100/€125 (Autònom/Petit/Mitjà) per a F2, €50/€75/€100 per a F3.</li>
+      <li>Permanència mínima: 3 mesos. Baixa amb 30 dies de preavís.</li>
+      <li>Preus vigents a partir del juny 2026. Subjecte a revisió anual (IPC).</li>
+    </ul>
+  </div>
+
+</main>
+
+<footer>
+  <div>AMG Digitalitzacions · <a href="mailto:hola@amgdigitalitzacio.cat">hola@amgdigitalitzacio.cat</a></div>
+  <div>Tarifes NexeLocal v2.0 · Juny 2026 · Document subjecte a canvis</div>
+</footer>
+
+</body>
+</html>

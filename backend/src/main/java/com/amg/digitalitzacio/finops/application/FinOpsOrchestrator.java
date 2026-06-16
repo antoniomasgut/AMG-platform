@@ -332,6 +332,56 @@ public class FinOpsOrchestrator implements FinOpsService {
     }
 
     @Override
+    @Transactional
+    public MonthlyInvoiceResponse generateMonthlyInvoiceForTenant(UUID tenantId, String period) {
+        // Si ja existeix la factura mensual per aquest tenant i període, retorna-la
+        var existing = monthlyInvoiceRepository.findByTenantIdAndPeriod(tenantId, period);
+        if (existing.isPresent()) {
+            return toMonthlyInvoiceResponse(existing.get());
+        }
+
+        var config = holdedConfigRepository.findByTenantId(tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Holded no configurat per al tenant: " + tenantId));
+
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
+        var billingStartDate = tenant != null ? tenant.getBillingStartDate() : null;
+
+        var amount = billingCalculator.calculateMonthlyAmount(tenantId, period, billingStartDate);
+        if (amount.compareTo(BigDecimal.ZERO) == 0) {
+            throw new IllegalStateException("L'import calculat per al tenant és zero — no es genera factura");
+        }
+
+        var totalExisting = monthlyInvoiceRepository.countByTenantId(tenantId);
+
+        var holdedInvoiceId = finOpsClient.createInvoice(
+                config.getHoldedContactId() != null ? config.getHoldedContactId() : "UNKNOWN",
+                amount,
+                amount.multiply(new BigDecimal("0.21")),
+                "Quota mensual serveis AMG – " + period,
+                null);
+
+        var sepaMandate = sepaMandateRepository.findByTenantIdAndIsActiveTrue(tenantId);
+        LocalDate collectionDate = sepaMandate.map(m -> LocalDate.now().withDayOfMonth(5)).orElse(null);
+
+        var invoice = MonthlyInvoice.builder()
+                .tenantId(tenantId)
+                .period(period)
+                .holdedInvoiceId(holdedInvoiceId)
+                .invoiceNumber("F-MENS-" + period + "-" + String.format("%03d", totalExisting + 1))
+                .amount(amount)
+                .status(InvoiceStatus.SENT)
+                .sepaCollectionDate(collectionDate)
+                .sepaCollected(false)
+                .tenantName(tenant != null ? tenant.getName() : null)
+                .tenantNif(tenant != null ? tenant.getNif() : null)
+                .tenantAddress(tenant != null ? tenant.getAddress() : null)
+                .tenantEmail(tenant != null ? tenant.getEmail() : null)
+                .build();
+        invoice = monthlyInvoiceRepository.save(invoice);
+        return toMonthlyInvoiceResponse(invoice);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public MonthlyInvoiceResponse getMonthlyInvoice(UUID id) {
         var invoice = monthlyInvoiceRepository.findById(id)

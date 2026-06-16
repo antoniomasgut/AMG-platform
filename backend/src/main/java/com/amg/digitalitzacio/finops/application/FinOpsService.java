@@ -30,6 +30,7 @@ public interface FinOpsService {
 
     // Facturació mensual
     List<MonthlyInvoiceResponse> generateMonthlyInvoices(String period);
+    MonthlyInvoiceResponse generateMonthlyInvoiceForTenant(UUID tenantId, String period);
     MonthlyInvoiceResponse getMonthlyInvoice(UUID id);
     Page<MonthlyInvoiceResponse> listMonthlyInvoices(UUID tenantId, String period, int page, int size);
 

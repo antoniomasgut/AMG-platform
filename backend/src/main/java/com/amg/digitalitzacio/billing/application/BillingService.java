@@ -4,6 +4,7 @@ import com.amg.digitalitzacio.billing.api.dto.*;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface BillingService {
@@ -21,4 +22,5 @@ public interface BillingService {
     AcceptRejectResponse acceptBudgetPhases(String token, List<String> phaseKeys);
     DashboardResponse getDashboard(UUID tenantId);
     void forceActivatePhases(UUID budgetId);
+    Map<String, Object> sendBudgetViaChannel(UUID budgetId, String channel);
 }

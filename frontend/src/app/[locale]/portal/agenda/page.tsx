@@ -9,6 +9,14 @@ import { AMGBadge } from '@/components/ui/badge';
 
 import { IconSet } from '@/components/ui/icons';
 import { getAppointments, type BookingToken } from '@/services/booking';
+import { apiFetch } from '@/services/api';
+
+interface FollowupLogEntry {
+  id: string;
+  type: string;
+  contact: string;
+  sentAt: string;
+}
 
 // ── Utilitats de dates ────────────────────────────────────────────────────────
 
@@ -141,6 +149,11 @@ export default function AgendaPage() {
     queryFn: () => getAppointments(monthRange.from, monthRange.to),
   });
 
+  const { data: followupLogs = [] } = useQuery({
+    queryKey: ['followup-history'],
+    queryFn: () => apiFetch<FollowupLogEntry[]>('/agents/followups/history'),
+  });
+
   const confirmed = data?.confirmed ?? [];
   const pending   = data?.pending   ?? [];
 
@@ -270,6 +283,42 @@ export default function AgendaPage() {
             </div>
           </div>
         )}
+
+        {/* Seguiments enviats (F4) */}
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-ink-3 mb-2">
+            Seguiments enviats (F4)
+          </div>
+          {followupLogs.length === 0 ? (
+            <div className="text-sm text-ink-3 py-6 text-center border border-dashed border-border-base rounded">
+              Cap seguiment enviat encara
+            </div>
+          ) : (
+            <div className="divide-y divide-border-base border border-border-base rounded">
+              {followupLogs.map(log => (
+                <div key={log.id} className="px-4 py-3 flex items-center gap-4">
+                  <div className="shrink-0">
+                    <span className={`f-mono text-[10px] uppercase px-2 py-0.5 border rounded ${
+                      log.type === 'APPOINTMENT'
+                        ? 'border-accent/40 text-accent-light'
+                        : 'border-border-base text-ink-2'
+                    }`}>
+                      {log.type === 'APPOINTMENT' ? 'Cita' : 'Servei'}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-ink-1 truncate">{log.contact}</div>
+                  </div>
+                  <div className="shrink-0 f-mono text-xs text-ink-3">
+                    {new Date(log.sentAt).toLocaleDateString('ca-ES', {
+                      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
       </div>
     </PortalShell>

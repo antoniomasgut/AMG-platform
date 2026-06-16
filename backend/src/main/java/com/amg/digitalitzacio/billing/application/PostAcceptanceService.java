@@ -1,11 +1,18 @@
 package com.amg.digitalitzacio.billing.application;
 
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
+import com.amg.digitalitzacio.agents.domain.TenantChatLink;
+import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.application.EmailService;
+import com.amg.digitalitzacio.auth.domain.Tenant;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.billing.domain.Budget;
 import com.amg.digitalitzacio.billing.domain.BudgetSetupIntake;
 import com.amg.digitalitzacio.billing.domain.BudgetSetupIntakeRepository;
+import com.amg.digitalitzacio.booking.application.BookingService;
+import com.amg.digitalitzacio.documents.delivery.domain.TenantDocumentPreferencesRepository;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +40,11 @@ public class PostAcceptanceService {
     private final EmailService emailService;
     private final TelegramBotClient telegramBotClient;
     private final SystemConfigService systemConfigService;
+    private final BookingService bookingService;
+    private final TenantDocumentPreferencesRepository tenantDocumentPreferencesRepository;
+    private final WhatsAppChannel whatsAppChannel;
+    private final WhatsAppMetaChannel whatsAppMetaChannel;
+    private final TenantChatLinkRepository chatLinkRepository;
 
     public void onSetupPaymentRequested(Budget budget, String paymentUrl) {
         try {
@@ -100,6 +112,9 @@ public class PostAcceptanceService {
             if (clientEmail != null && !clientEmail.isBlank()) {
                 sendWelcomeEmail(clientEmail, clientName, intakeUrl);
             }
+
+            // F3→F2: si el tenant té F2 activa i autoBookingOnAccept, enviar invitació de reserva
+            tryCreateBookingInvitation(budget, tenant, clientEmail, clientName);
 
         } catch (Exception e) {
             log.error("[PostAcceptance] Error processant post-acceptació budget {}: {}", budget.getId(), e.getMessage());
@@ -215,6 +230,45 @@ public class PostAcceptanceService {
     }
 
     // ── Private ──────────────────────────────────────────────────────────────
+
+    private void tryCreateBookingInvitation(Budget budget, Tenant tenant, String clientEmail, String clientName) {
+        try {
+            // Comprova si F2 (Agenda) està activa per al tenant
+            if (!tenant.isPhaseActive("F2")) return;
+
+            // Comprova les preferències: autoBookingOnAccept ha d'estar activat
+            var prefs = tenantDocumentPreferencesRepository.findById(budget.getTenantId()).orElse(null);
+            if (prefs != null && !prefs.isAutoBookingOnAccept()) return;
+
+            // Crea el token de reserva vinculat al pressupost (sourceDocument)
+            var bookingToken = bookingService.createTokenFromDocument(
+                    budget.getTenantId(), clientEmail,
+                    tenant.getPhone(), clientName,
+                    budget.getId());
+
+            String bookingUrl = "https://amgdl.com/ca/book/" + bookingToken.getToken();
+            String missatge = "Hola " + (clientName != null ? clientName : "client") + "! "
+                    + "Ja tenim el teu servei en preparació. El primer pas és reservar una reunió de configuració:\n"
+                    + bookingUrl + "\n\nEscull el dia i hora que millor et vagi.";
+
+            var chatLink = chatLinkRepository.findByTenantId(budget.getTenantId()).orElse(null);
+
+            if (chatLink != null && chatLink.getWhatsappMetaPhoneNumberId() != null
+                    && !chatLink.getWhatsappMetaPhoneNumberId().isBlank()
+                    && tenant.getPhone() != null && !tenant.getPhone().isBlank()) {
+                whatsAppMetaChannel.sendMessage(chatLink.getWhatsappMetaPhoneNumberId(), tenant.getPhone(), missatge);
+            } else if (chatLink != null && chatLink.getWhatsappPhoneNumber() != null
+                    && !chatLink.getWhatsappPhoneNumber().isBlank()
+                    && tenant.getPhone() != null && !tenant.getPhone().isBlank()) {
+                whatsAppChannel.sendMessage(chatLink.getWhatsappPhoneNumber(), tenant.getPhone(), missatge);
+            } else if (clientEmail != null && !clientEmail.isBlank()) {
+                emailService.sendEmail(clientEmail, "Reserva la teva primera reunió", missatge);
+            }
+
+        } catch (Exception e) {
+            log.warn("[PostAcceptance] No s'ha pogut crear invitació de reserva per budget {}: {}", budget.getId(), e.getMessage());
+        }
+    }
 
     private BudgetSetupIntake ensureIntake(Budget budget, String tenantName) {
         return intakeRepository.findByBudgetId(budget.getId()).orElseGet(() -> {

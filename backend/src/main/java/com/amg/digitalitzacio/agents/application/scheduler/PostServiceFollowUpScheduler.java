@@ -4,6 +4,8 @@ import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.channel.EmailChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
+import com.amg.digitalitzacio.agents.domain.FollowupLog;
+import com.amg.digitalitzacio.agents.domain.FollowupLogRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLink;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
@@ -46,6 +48,7 @@ public class PostServiceFollowUpScheduler {
     private final EmailChannel                  emailChannel;
     private final StringRedisTemplate           redis;
     private final ObjectMapper                  objectMapper;
+    private final FollowupLogRepository         followupLogRepository;
 
     @Scheduled(cron = "0 30 11 * * *")
     public void sendPostServiceFollowUps() {
@@ -95,6 +98,12 @@ public class PostServiceFollowUpScheduler {
                     .replace("{{url_ressenya}}", reviewUrl);
                 send(chatLink, identifier, message);
                 redis.opsForValue().set(redisKey, "1", REDIS_TTL_DAYS, TimeUnit.DAYS);
+                var logEntry = new FollowupLog();
+                logEntry.setTenantId(tenantId);
+                logEntry.setType("SERVICE");
+                logEntry.setEntityId(doc.getId());
+                logEntry.setContact(identifier);
+                followupLogRepository.save(logEntry);
                 log.info("[F3→F4] Seguiment post-servei enviat a {} (doc {}, tenant {})",
                     identifier, doc.getId(), tenantId);
             } catch (Exception e) {

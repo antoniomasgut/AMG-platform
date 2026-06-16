@@ -12,6 +12,7 @@ import {
 } from '@/services/leads';
 import { createLeadProposal, sendBudget } from '@/services/billing';
 import { createBookingToken, getTokensForLead, type BookingToken } from '@/services/booking';
+import { apiFetch } from '@/services/api';
 import dynamic from 'next/dynamic';
 import { PortalShell } from '@/components/portal/PortalShell';
 
@@ -299,6 +300,28 @@ export default function LeadDetailPage() {
       qc.invalidateQueries({ queryKey: ['booking-tokens', id] });
     },
     onError: () => toast('error', 'Error generant el link'),
+  });
+
+  const [sendingDemoId, setSendingDemoId] = useState<string | null>(null);
+
+  const { data: demoFlows = [] } = useQuery({
+    queryKey: ['demo-flows'],
+    queryFn: () => apiFetch<{ demos: { id: string; title: string; description: string }[] }>('/demo').then(r => r.demos),
+    enabled: !!user,
+  });
+
+  const { mutate: doSendDemoWhatsApp } = useMutation({
+    mutationFn: (demoId: string) =>
+      apiFetch<{ sent: boolean; phone: string }>(`/demo/${demoId}/send-whatsapp?leadId=${id}`, { method: 'POST' }),
+    onMutate: (demoId) => setSendingDemoId(demoId),
+    onSuccess: (_, demoId) => {
+      setSendingDemoId(null);
+      toast('success', 'Demo enviada per WhatsApp');
+    },
+    onError: (err: Error) => {
+      setSendingDemoId(null);
+      toast('error', err.message || 'Error enviant la demo per WhatsApp');
+    },
   });
 
   const { mutate: doAnalyzeNotes, isPending: analyzingNotes } = useMutation({
@@ -629,6 +652,38 @@ export default function LeadDetailPage() {
             );
           })}
         </div>
+
+        {/* Demos — Enviar per WhatsApp */}
+        {demoFlows.length > 0 && (
+          <div className="amg-card card-clip p-6 space-y-3">
+            <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Enviar Demo per WhatsApp</div>
+            <p className="text-sm text-ink-3">
+              Envia una demostració del sistema a {lead.phone ? lead.phone : 'aquest lead'} per WhatsApp.
+            </p>
+            <div className="space-y-2">
+              {demoFlows.map((flow) => (
+                <div key={flow.id} className="flex items-center justify-between gap-3 border border-border-base p-3">
+                  <div>
+                    <div className="f-mono text-xs font-semibold text-ink-0">{flow.title}</div>
+                    <div className="text-xs text-ink-3 mt-0.5 line-clamp-1">{flow.description}</div>
+                  </div>
+                  <AMGButton
+                    variant="outline"
+                    size="sm"
+                    loading={sendingDemoId === flow.id}
+                    disabled={!lead.phone || sendingDemoId !== null}
+                    onClick={() => doSendDemoWhatsApp(flow.id)}
+                  >
+                    Enviar
+                  </AMGButton>
+                </div>
+              ))}
+            </div>
+            {!lead.phone && (
+              <p className="f-mono text-xs text-danger-light">El lead no té telèfon — afegeix-lo per poder enviar.</p>
+            )}
+          </div>
+        )}
 
         {/* Notes d'Entrevista (IA) */}
         <div className="amg-card card-clip p-6 space-y-4 border-l-4 border-l-[#FF6B00]">

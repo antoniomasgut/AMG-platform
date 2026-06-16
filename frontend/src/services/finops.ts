@@ -29,6 +29,9 @@ export interface PageResponse<T> {
 export const getFinOpsDashboard = (tenantId: string) =>
   apiFetch<FinOpsDashboard>(`/finops/dashboard?tenantId=${tenantId}`);
 
+export const getClientFinOpsDashboard = () =>
+  apiFetch<FinOpsDashboard>('/finops/dashboard/client');
+
 export const getGlobalFinOpsDashboard = () =>
   apiFetch<FinOpsGlobalDashboard>('/finops/dashboard/global');
 
@@ -47,3 +50,22 @@ export const getInvoicePdfUrl = (id: string) =>
 
 export const cancelInvoice = (id: string) =>
   apiFetch<InvoiceResponse>(`/finops/invoices/${id}/cancel`, { method: 'POST' });
+
+export interface MonthlyInvoiceResponse {
+  id: string; tenantId: string; period: string;
+  invoiceNumber: string; amount: number; status: string;
+  sepaCollectionDate: string | null; sepaCollected: boolean;
+  invoicePdfUrl: string | null; createdAt: string;
+  tenantName: string | null; tenantNif: string | null;
+  tenantAddress: string | null; tenantEmail: string | null;
+}
+
+export const generateMonthlyInvoiceForTenant = (tenantId: string, period?: string) => {
+  const params = new URLSearchParams();
+  if (period) params.set('period', period);
+  const query = params.toString() ? `?${params}` : '';
+  return apiFetch<MonthlyInvoiceResponse>(
+    `/finops/tenants/${tenantId}/invoices/generate-monthly${query}`,
+    { method: 'POST' },
+  );
+};

@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>[INTERN] NexeLocal — Anàlisi de Costos i Marges 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Space+Grotesk:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent:   #FF6B00;
+      --bg-0:     #0d0d1a;
+      --bg-1:     #13132a;
+      --bg-2:     #1a1a2e;
+      --border:   #2a2a4a;
+      --ink-0:    #e2e8f0;
+      --ink-1:    #94a3b8;
+      --ink-2:    #64748b;
+      --green:    #22c55e;
+      --green-dim:#16a34a;
+      --blue:     #60a5fa;
+      --blue-dim: #2563eb;
+      --amber:    #fbbf24;
+      --amber-dim:#d97706;
+      --red:      #f87171;
+      --red-dim:  #dc2626;
+    }
+    body {
+      background: var(--bg-0);
+      color: var(--ink-0);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--bg-1);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo-area { display: flex; align-items: center; gap: 16px; }
+    .logo-area svg { height: 44px; width: auto; }
+    .doc-title { font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 700; letter-spacing: 2.5px; color: var(--ink-1); text-transform: uppercase; }
+    .badge-intern {
+      background: #7c3aed22;
+      border: 1px solid #7c3aed88;
+      color: #a78bfa;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ── Cos ── */
+    main { max-width: 1200px; margin: 0 auto; padding: 32px 32px 80px; }
+
+    /* ── Model de costos ── */
+    .model-box {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 36px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+    }
+    .model-box h2 {
+      grid-column: 1/-1;
+      font-family: 'Orbitron', monospace;
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--ink-2);
+      margin-bottom: 4px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .model-item { }
+    .model-item .label { font-size: 11px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .model-item .value { font-size: 20px; font-weight: 700; color: var(--accent); font-family: 'Share Tech Mono', monospace; }
+    .model-item .sub { font-size: 11px; color: var(--ink-1); margin-top: 2px; }
+
+    .size-cards { grid-column: 1/-1; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 4px; }
+    .size-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .size-card .name { font-weight: 600; font-size: 12px; color: var(--ink-0); margin-bottom: 8px; }
+    .size-card .line { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+    .size-card .line .k { color: var(--ink-2); }
+    .size-card .line .v { color: var(--ink-1); font-family: 'Share Tech Mono', monospace; }
+    .size-card .total-line {
+      display: flex; justify-content: space-between;
+      margin-top: 6px; padding-top: 6px;
+      border-top: 1px solid var(--border);
+      font-size: 12px; font-weight: 600;
+    }
+    .size-card .total-line .v { color: var(--accent); font-family: 'Share Tech Mono', monospace; }
+
+    /* ── Taula d'anàlisi ── */
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      margin-top: 32px;
+    }
+    .section-title h2 {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--ink-2);
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    thead tr { background: var(--bg-2); }
+    thead th {
+      padding: 10px 12px;
+      text-align: right;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--ink-2);
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+    }
+    thead th:first-child, thead th:nth-child(2) { text-align: left; }
+
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg-2); }
+
+    td { padding: 9px 12px; vertical-align: middle; text-align: right; }
+    td:first-child { text-align: left; }
+    td:nth-child(2) { text-align: left; }
+
+    .sector-name { font-weight: 600; color: var(--ink-0); font-size: 12px; }
+    .sector-sub { color: var(--ink-2); font-size: 10px; font-weight: 400; display: block; }
+
+    .badge-size {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-aut  { background: #1d4ed820; color: #60a5fa; border: 1px solid #1d4ed840; }
+    .badge-pet  { background: #15803d20; color: #4ade80; border: 1px solid #15803d40; }
+    .badge-mit  { background: #b4530920; color: #fbbf24; border: 1px solid #b4530940; }
+
+    .mono { font-family: 'Share Tech Mono', monospace; }
+    .muted { color: var(--ink-2); }
+    .wa-cell { color: var(--ink-1); font-size: 11px; }
+
+    /* Indicadors de marge */
+    .margin-bar-wrap { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+    .margin-bar {
+      width: 60px; height: 6px;
+      background: var(--bg-2);
+      border-radius: 3px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .margin-bar-fill { height: 100%; border-radius: 3px; }
+
+    .ind { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 12px; white-space: nowrap; }
+    .ind-excel { color: var(--green); }
+    .ind-be    { color: var(--blue); }
+    .ind-ok    { color: var(--amber); }
+    .ind-risc  { color: var(--red); }
+
+    .fill-excel { background: var(--green); }
+    .fill-be    { background: var(--blue); }
+    .fill-ok    { background: var(--amber); }
+    .fill-risc  { background: var(--red); }
+
+    /* ── Resum ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 32px;
+    }
+    .summary-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+    .summary-card .s-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .summary-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .summary-card li {
+      font-size: 11px;
+      color: var(--ink-1);
+      padding-left: 14px;
+      position: relative;
+    }
+    .summary-card li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      font-size: 9px;
+    }
+    .s-excel .s-label, .s-excel li::before { color: var(--green); }
+    .s-be    .s-label, .s-be    li::before { color: var(--blue); }
+    .s-ok    .s-label, .s-ok    li::before { color: var(--amber); }
+    .s-note  .s-label, .s-note  li::before { color: var(--ink-2); }
+
+    .note-box {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-top: 24px;
+      font-size: 11px;
+      color: var(--ink-1);
+      line-height: 1.8;
+    }
+    .note-box strong { color: var(--accent); }
+
+    footer {
+      background: var(--bg-1);
+      border-top: 1px solid var(--border);
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--ink-2);
+      font-size: 10px;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-area">
+    <svg viewBox="0 0 340 110" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="triC" x1="42" y1="8" x2="42" y2="88" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#FF6B00" stop-opacity="0.14"/>
+          <stop offset="100%" stop-color="#FF6B00" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      <polygon points="72,6 82,16 82,100 12,100 4,90 4,6" fill="#13132a" stroke="#FF6B00" stroke-width="0.75" stroke-opacity="0.22"/>
+      <polygon points="43,14 10,97 76,97" fill="url(#triC)"/>
+      <line x1="43" y1="14" x2="10" y2="97" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.35" stroke-linecap="square"/>
+      <line x1="43" y1="14" x2="76" y2="97" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.35" stroke-linecap="square"/>
+      <line x1="21" y1="63" x2="65" y2="63" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.35" stroke-linecap="square"/>
+      <circle cx="43" cy="14" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4"/>
+      <circle cx="10" cy="97" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.6"/>
+      <circle cx="76" cy="97" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.6"/>
+      <circle cx="21" cy="63" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.6"/>
+      <circle cx="65" cy="63" r="5.5" fill="#13132a" stroke="#FF6B00" stroke-width="4" stroke-opacity="0.6"/>
+      <text x="92" y="90" font-family="Orbitron,monospace" font-size="72" font-weight="700" fill="#FF6B00" letter-spacing="-2">MG</text>
+      <text x="8" y="108" font-family="'Space Grotesk',system-ui,sans-serif" font-size="10.5" font-weight="400" fill="#8896aa" letter-spacing="6.5">DIGITALITZACIONS</text>
+    </svg>
+    <div class="doc-title">Anàlisi de costos i marges · NexeLocal 2026</div>
+  </div>
+  <div class="badge-intern">⬛ Intern · Confidencial</div>
+</header>
+
+<main>
+
+  <!-- ── Model de costos ── -->
+  <div class="model-box">
+    <h2>Model de costos — Supòsits</h2>
+
+    <div class="model-item">
+      <div class="label">Fix per tenant/mes</div>
+      <div class="value">€11.50</div>
+      <div class="sub">Infraestructura €5 (VPS/10 clients) + Twilio número WA €6.50</div>
+    </div>
+    <div class="model-item">
+      <div class="label">Cost IA (100% budget)</div>
+      <div class="value">€5 · €12.50 · €25</div>
+      <div class="sub">Autònom / Petit / Mitjà · F1 budget × multiplicador mida</div>
+    </div>
+    <div class="model-item">
+      <div class="label">Cost WhatsApp</div>
+      <div class="value">€0.055/msg</div>
+      <div class="sub">Twilio tarifa unitària (pitjor cas; Meta ~€0.050/msg)</div>
+    </div>
+
+    <div class="size-cards">
+      <div class="size-card">
+        <div class="name">Autònom · ×1</div>
+        <div class="line"><span class="k">Fix</span><span class="v">€11.50</span></div>
+        <div class="line"><span class="k">IA F1</span><span class="v">€5.00</span></div>
+        <div class="line"><span class="k">WA (sector-variable)</span><span class="v">€2–€9</span></div>
+        <div class="total-line"><span>Cost base</span><span class="v">€18–€25</span></div>
+      </div>
+      <div class="size-card">
+        <div class="name">Petit · ×2.5</div>
+        <div class="line"><span class="k">Fix</span><span class="v">€11.50</span></div>
+        <div class="line"><span class="k">IA F1</span><span class="v">€12.50</span></div>
+        <div class="line"><span class="k">WA (sector-variable)</span><span class="v">€3–€13</span></div>
+        <div class="total-line"><span>Cost base</span><span class="v">€27–€37</span></div>
+      </div>
+      <div class="size-card">
+        <div class="name">Mitjà · ×5</div>
+        <div class="line"><span class="k">Fix</span><span class="v">€11.50</span></div>
+        <div class="line"><span class="k">IA F1</span><span class="v">€25.00</span></div>
+        <div class="line"><span class="k">WA (sector-variable)</span><span class="v">€5–€17</span></div>
+        <div class="total-line"><span>Cost base</span><span class="v">€41–€54</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Serveis a la llar ── -->
+  <div class="section-title"><h2>Serveis a la llar</h2></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Sector</th><th>Mida</th>
+        <th>F1/mes</th><th>WA est.</th><th>Cost WA</th><th>Cost fix+IA</th><th>Cost total</th>
+        <th>Marge €</th><th>Marge %</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="sector-name">Pintor</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€59</td><td class="wa-cell">50 msg</td><td class="mono muted">€2.75</td>
+        <td class="mono muted">€16.50</td><td class="mono">€19.25</td>
+        <td class="mono">€39.75</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:67%"></div></div><span class="ind ind-be">67%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Pintor</td>
+        <td><span class="badge-size badge-pet">Petit</span></td>
+        <td class="mono">€79</td><td class="wa-cell">75 msg</td><td class="mono muted">€4.13</td>
+        <td class="mono muted">€24.00</td><td class="mono">€28.13</td>
+        <td class="mono">€50.87</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:64%"></div></div><span class="ind ind-be">64%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Electricista</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€59</td><td class="wa-cell">50 msg</td><td class="mono muted">€2.75</td>
+        <td class="mono muted">€16.50</td><td class="mono">€19.25</td>
+        <td class="mono">€39.75</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:67%"></div></div><span class="ind ind-be">67%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Electricista</td>
+        <td><span class="badge-size badge-pet">Petit</span></td>
+        <td class="mono">€79</td><td class="wa-cell">75 msg</td><td class="mono muted">€4.13</td>
+        <td class="mono muted">€24.00</td><td class="mono">€28.13</td>
+        <td class="mono">€50.87</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:64%"></div></div><span class="ind ind-be">64%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Fontaner</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€59</td><td class="wa-cell">60 msg</td><td class="mono muted">€3.30</td>
+        <td class="mono muted">€16.50</td><td class="mono">€19.80</td>
+        <td class="mono">€39.20</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:66%"></div></div><span class="ind ind-be">66%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Jardiner</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€59</td><td class="wa-cell">40 msg</td><td class="mono muted">€2.20</td>
+        <td class="mono muted">€16.50</td><td class="mono">€18.70</td>
+        <td class="mono">€40.30</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:68%"></div></div><span class="ind ind-be">68%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Neteja</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€59</td><td class="wa-cell">60 msg</td><td class="mono muted">€3.30</td>
+        <td class="mono muted">€16.50</td><td class="mono">€19.80</td>
+        <td class="mono">€39.20</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:66%"></div></div><span class="ind ind-be">66%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Neteja</td>
+        <td><span class="badge-size badge-mit">Mitjà</span></td>
+        <td class="mono">€119</td><td class="wa-cell">150 msg</td><td class="mono muted">€8.25</td>
+        <td class="mono muted">€36.50</td><td class="mono">€44.75</td>
+        <td class="mono">€74.25</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:62%"></div></div><span class="ind ind-be">62%</span></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Salut i benestar ── -->
+  <div class="section-title"><h2>Salut i benestar</h2></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Sector</th><th>Mida</th>
+        <th>F1/mes</th><th>WA est.</th><th>Cost WA</th><th>Cost fix+IA</th><th>Cost total</th>
+        <th>Marge €</th><th>Marge %</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="sector-name">Fisioterapeuta</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€69</td><td class="wa-cell">80 msg</td><td class="mono muted">€4.40</td>
+        <td class="mono muted">€16.50</td><td class="mono">€20.90</td><td class="mono">€48.10</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:70%"></div></div><span class="ind ind-excel">70%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Fisioterapeuta</td>
+        <td><span class="badge-size badge-pet">Petit</span></td>
+        <td class="mono">€99</td><td class="wa-cell">120 msg</td><td class="mono muted">€6.60</td>
+        <td class="mono muted">€24.00</td><td class="mono">€30.60</td><td class="mono">€68.40</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:69%"></div></div><span class="ind ind-be">69%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Fisioterapeuta</td>
+        <td><span class="badge-size badge-mit">Mitjà</span></td>
+        <td class="mono">€129</td><td class="wa-cell">200 msg</td><td class="mono muted">€11.00</td>
+        <td class="mono muted">€36.50</td><td class="mono">€47.50</td><td class="mono">€81.50</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:63%"></div></div><span class="ind ind-be">63%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Psicòleg</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€69</td><td class="wa-cell">40 msg</td><td class="mono muted">€2.20</td>
+        <td class="mono muted">€16.50</td><td class="mono">€18.70</td><td class="mono">€50.30</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:73%"></div></div><span class="ind ind-excel">73%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Psicòleg</td>
+        <td><span class="badge-size badge-pet">Petit</span></td>
+        <td class="mono">€109</td><td class="wa-cell">70 msg</td><td class="mono muted">€3.85</td>
+        <td class="mono muted">€24.00</td><td class="mono">€27.85</td><td class="mono">€81.15</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:74%"></div></div><span class="ind ind-excel">74%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Nutricionista</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€59</td><td class="wa-cell">50 msg</td><td class="mono muted">€2.75</td>
+        <td class="mono muted">€16.50</td><td class="mono">€19.25</td><td class="mono">€39.75</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:67%"></div></div><span class="ind ind-be">67%</span></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Estètica i bellesa ── -->
+  <div class="section-title"><h2>Estètica i bellesa</h2></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Sector</th><th>Mida</th>
+        <th>F1/mes</th><th>WA est.</th><th>Cost WA</th><th>Cost fix+IA</th><th>Cost total</th>
+        <th>Marge €</th><th>Marge %</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="sector-name">Perruqueria</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€59</td><td class="wa-cell">150 msg</td><td class="mono muted">€8.25</td>
+        <td class="mono muted">€16.50</td><td class="mono">€24.75</td><td class="mono">€34.25</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-ok" style="width:58%"></div></div><span class="ind ind-ok">58%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Perruqueria</td>
+        <td><span class="badge-size badge-pet">Petit</span></td>
+        <td class="mono">€99</td><td class="wa-cell">225 msg</td><td class="mono muted">€12.38</td>
+        <td class="mono muted">€24.00</td><td class="mono">€36.38</td><td class="mono">€62.62</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:63%"></div></div><span class="ind ind-be">63%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Estètica</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€59</td><td class="wa-cell">120 msg</td><td class="mono muted">€6.60</td>
+        <td class="mono muted">€16.50</td><td class="mono">€23.10</td><td class="mono">€35.90</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:61%"></div></div><span class="ind ind-be">61%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Estètica</td>
+        <td><span class="badge-size badge-mit">Mitjà</span></td>
+        <td class="mono">€109</td><td class="wa-cell">150 msg</td><td class="mono muted">€8.25</td>
+        <td class="mono muted">€36.50</td><td class="mono">€44.75</td><td class="mono">€64.25</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-ok" style="width:59%"></div></div><span class="ind ind-ok">59%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Perruqueria canina</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€49</td><td class="wa-cell">70 msg</td><td class="mono muted">€3.85</td>
+        <td class="mono muted">€16.50</td><td class="mono">€20.35</td><td class="mono">€28.65</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-ok" style="width:58%"></div></div><span class="ind ind-ok">58%</span></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Serveis professionals ── -->
+  <div class="section-title"><h2>Serveis professionals</h2></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Sector</th><th>Mida</th>
+        <th>F1/mes</th><th>WA est.</th><th>Cost WA</th><th>Cost fix+IA</th><th>Cost total</th>
+        <th>Marge €</th><th>Marge %</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="sector-name">Gestoria</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€69</td><td class="wa-cell">30 msg</td><td class="mono muted">€1.65</td>
+        <td class="mono muted">€16.50</td><td class="mono">€18.15</td><td class="mono">€50.85</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:74%"></div></div><span class="ind ind-excel">74%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Gestoria</td>
+        <td><span class="badge-size badge-mit">Mitjà</span></td>
+        <td class="mono">€109</td><td class="wa-cell">100 msg</td><td class="mono muted">€5.50</td>
+        <td class="mono muted">€36.50</td><td class="mono">€42.00</td><td class="mono">€67.00</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:61%"></div></div><span class="ind ind-be">61%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Acadèmia</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€59</td><td class="wa-cell">60 msg</td><td class="mono muted">€3.30</td>
+        <td class="mono muted">€16.50</td><td class="mono">€19.80</td><td class="mono">€39.20</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:66%"></div></div><span class="ind ind-be">66%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Acadèmia</td>
+        <td><span class="badge-size badge-mit">Mitjà</span></td>
+        <td class="mono">€99</td><td class="wa-cell">160 msg</td><td class="mono muted">€8.80</td>
+        <td class="mono muted">€36.50</td><td class="mono">€45.30</td><td class="mono">€53.70</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-ok" style="width:54%"></div></div><span class="ind ind-ok">54%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Agència IA</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€89</td><td class="wa-cell">40 msg</td><td class="mono muted">€2.20</td>
+        <td class="mono muted">€16.50</td><td class="mono">€18.70</td><td class="mono">€70.30</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:79%"></div></div><span class="ind ind-excel">79%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Agència IA</td>
+        <td><span class="badge-size badge-pet">Petit</span></td>
+        <td class="mono">€129</td><td class="wa-cell">60 msg</td><td class="mono muted">€3.30</td>
+        <td class="mono muted">€24.00</td><td class="mono">€27.30</td><td class="mono">€101.70</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:79%"></div></div><span class="ind ind-excel">79%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Agència IA</td>
+        <td><span class="badge-size badge-mit">Mitjà</span></td>
+        <td class="mono">€164</td><td class="wa-cell">120 msg</td><td class="mono muted">€6.60</td>
+        <td class="mono muted">€36.50</td><td class="mono">€43.10</td><td class="mono">€120.90</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:74%"></div></div><span class="ind ind-excel">74%</span></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Automoció i mascotes ── -->
+  <div class="section-title"><h2>Automoció i mascotes</h2></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Sector</th><th>Mida</th>
+        <th>F1/mes</th><th>WA est.</th><th>Cost WA</th><th>Cost fix+IA</th><th>Cost total</th>
+        <th>Marge €</th><th>Marge %</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="sector-name">Taller mecànic</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€55</td><td class="wa-cell">50 msg</td><td class="mono muted">€2.75</td>
+        <td class="mono muted">€16.50</td><td class="mono">€19.25</td><td class="mono">€35.75</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:65%"></div></div><span class="ind ind-be">65%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Taller mecànic</td>
+        <td><span class="badge-size badge-pet">Petit</span></td>
+        <td class="mono">€79</td><td class="wa-cell">70 msg</td><td class="mono muted">€3.85</td>
+        <td class="mono muted">€24.00</td><td class="mono">€27.85</td><td class="mono">€51.15</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:65%"></div></div><span class="ind ind-be">65%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Taller mecànic</td>
+        <td><span class="badge-size badge-mit">Mitjà</span></td>
+        <td class="mono">€109</td><td class="wa-cell">120 msg</td><td class="mono muted">€6.60</td>
+        <td class="mono muted">€36.50</td><td class="mono">€43.10</td><td class="mono">€65.90</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:60%"></div></div><span class="ind ind-be">60%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Veterinari</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€69</td><td class="wa-cell">70 msg</td><td class="mono muted">€3.85</td>
+        <td class="mono muted">€16.50</td><td class="mono">€20.35</td><td class="mono">€48.65</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:70%"></div></div><span class="ind ind-excel">70%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Veterinari</td>
+        <td><span class="badge-size badge-pet">Petit</span></td>
+        <td class="mono">€109</td><td class="wa-cell">120 msg</td><td class="mono muted">€6.60</td>
+        <td class="mono muted">€24.00</td><td class="mono">€30.60</td><td class="mono">€78.40</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:72%"></div></div><span class="ind ind-excel">72%</span></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Restauració i immobiliaria ── -->
+  <div class="section-title"><h2>Restauració i immobiliària</h2></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Sector</th><th>Mida</th>
+        <th>F1/mes</th><th>WA est.</th><th>Cost WA</th><th>Cost fix+IA</th><th>Cost total</th>
+        <th>Marge €</th><th>Marge %</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="sector-name">Restaurant / Bar</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€64</td><td class="wa-cell">120 msg</td><td class="mono muted">€6.60</td>
+        <td class="mono muted">€16.50</td><td class="mono">€23.10</td><td class="mono">€40.90</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:64%"></div></div><span class="ind ind-be">64%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Restaurant / Bar</td>
+        <td><span class="badge-size badge-pet">Petit</span></td>
+        <td class="mono">€104</td><td class="wa-cell">200 msg</td><td class="mono muted">€11.00</td>
+        <td class="mono muted">€24.00</td><td class="mono">€35.00</td><td class="mono">€69.00</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:66%"></div></div><span class="ind ind-be">66%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Restaurant / Bar</td>
+        <td><span class="badge-size badge-mit">Mitjà</span></td>
+        <td class="mono">€139</td><td class="wa-cell">300 msg</td><td class="mono muted">€16.50</td>
+        <td class="mono muted">€36.50</td><td class="mono">€53.00</td><td class="mono">€86.00</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-be" style="width:62%"></div></div><span class="ind ind-be">62%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Immobiliària</td>
+        <td><span class="badge-size badge-aut">Autònom</span></td>
+        <td class="mono">€79</td><td class="wa-cell">50 msg</td><td class="mono muted">€2.75</td>
+        <td class="mono muted">€16.50</td><td class="mono">€19.25</td><td class="mono">€59.75</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:76%"></div></div><span class="ind ind-excel">76%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Immobiliària</td>
+        <td><span class="badge-size badge-pet">Petit</span></td>
+        <td class="mono">€119</td><td class="wa-cell">75 msg</td><td class="mono muted">€4.13</td>
+        <td class="mono muted">€24.00</td><td class="mono">€28.13</td><td class="mono">€90.87</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:76%"></div></div><span class="ind ind-excel">76%</span></div></td>
+      </tr>
+      <tr>
+        <td class="sector-name">Immobiliària</td>
+        <td><span class="badge-size badge-mit">Mitjà</span></td>
+        <td class="mono">€154</td><td class="wa-cell">125 msg</td><td class="mono muted">€6.88</td>
+        <td class="mono muted">€36.50</td><td class="mono">€43.38</td><td class="mono">€110.62</td>
+        <td><div class="margin-bar-wrap"><div class="margin-bar"><div class="margin-bar-fill fill-excel" style="width:72%"></div></div><span class="ind ind-excel">72%</span></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── Resum ── -->
+  <div class="section-title" style="margin-top:40px;"><h2>Resum executiu</h2></div>
+
+  <div class="summary-grid">
+    <div class="summary-card s-excel">
+      <div class="s-label">✅ Excel·lent ≥70%</div>
+      <ul>
+        <li>Fisioterapeuta AUT (70%)</li>
+        <li>Psicòleg AUT/PETIT (73-74%)</li>
+        <li>Gestoria AUT (74%)</li>
+        <li>Veterinari AUT/PETIT (70-72%)</li>
+        <li>Immobiliaria (72-76%)</li>
+        <li>Agència IA (74-79%)</li>
+      </ul>
+    </div>
+    <div class="summary-card s-be">
+      <div class="s-label">✓ Bé 60–69%</div>
+      <ul>
+        <li>Pintor, Electricista (64-67%)</li>
+        <li>Fontaner, Jardiner (66-68%)</li>
+        <li>Neteja (62-66%)</li>
+        <li>Nutricionista (67%)</li>
+        <li>Fisio PETIT/MITJA (63-69%)</li>
+        <li>Perruqueria PETIT (63%)</li>
+        <li>Estètica AUT (61%)</li>
+        <li>Gestoria MITJA (61%)</li>
+        <li>Acadèmia AUT (66%)</li>
+        <li>Taller mecànic (60-65%)</li>
+        <li>Restaurant (62-66%)</li>
+      </ul>
+    </div>
+    <div class="summary-card s-ok">
+      <div class="s-label">⚠️ Acceptable 50–59%</div>
+      <ul>
+        <li>Perruqueria AUT (58%)</li>
+        <li>Estètica MITJA (59%)</li>
+        <li>Acadèmia MITJA (54%)</li>
+        <li>Perruqueria canina (58%)</li>
+      </ul>
+    </div>
+    <div class="summary-card s-note">
+      <div class="s-label">📋 Notes clau</div>
+      <ul>
+        <li>Cap sector en ❌ risc</li>
+        <li>⚠️ millora amb IA real (40-60% del budget)</li>
+        <li>WA estimat = ús real, no budget màxim</li>
+        <li>Infra calculada a 10 clients (€5/client)</li>
+        <li>A 20 clients: +2-3% a tots els marges</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note-box">
+    <strong>Nota sobre els marges ⚠️:</strong>
+    Els 4 casos acceptables (Perruqueria, Estètica MITJA, Acadèmia MITJA, Perruc. canina) usen el 100% del pressupost IA
+    com a cost. En condicions reals, l'ús d'IA per a sectors de gestió de cites simple és del 40-60% del budget,
+    cosa que millora els marges a 63-68%. La Perruqueria canina a €49 és estructuralment el pitjor cas;
+    si es vol millorar, caldria pujar a €55-59.
+    <br/><br/>
+    <strong>Escalat d'infraestructura:</strong> A 10 clients, el cost fix per client és de €5/mes (VPS €50 total).
+    A 20 clients: €2.50/client → tots els marges pugen ~2-3%. A 50 clients: €1/client → +4-5%.
+  </div>
+
+</main>
+
+<footer>
+  <div>AMG Digitalitzacions · Document intern · No distribuir</div>
+  <div>Anàlisi NexeLocal v2.0 · Juny 2026</div>
+</footer>
+
+</body>
+</html>

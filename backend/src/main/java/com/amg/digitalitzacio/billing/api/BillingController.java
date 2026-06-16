@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -111,6 +112,14 @@ public class BillingController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void forceActivatePhases(@PathVariable UUID id) {
         billingService.forceActivatePhases(id);
+    }
+
+    @PostMapping("/budgets/{id}/send-via-channel")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public Map<String, Object> sendBudgetViaChannel(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "WHATSAPP") String channel) {
+        return billingService.sendBudgetViaChannel(id, channel);
     }
 
     // --- Discounts ---
