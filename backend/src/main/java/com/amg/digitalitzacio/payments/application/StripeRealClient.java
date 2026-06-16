@@ -40,12 +40,13 @@ public class StripeRealClient implements StripeClient {
     }
 
     @Override
-    public String createCheckoutSession(UUID budgetId, BigDecimal amount, String currency,
+    public CheckoutResult createCheckoutSession(UUID budgetId, BigDecimal amount, String currency,
                                          String successUrl, String cancelUrl) {
         try {
             var params = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.PAYMENT)
                     .putMetadata("budgetId", budgetId.toString())
+                    .putMetadata("type", "SETUP_PAYMENT")
                     .setSuccessUrl(successUrl)
                     .setCancelUrl(cancelUrl)
                     .addLineItem(
@@ -54,10 +55,10 @@ public class StripeRealClient implements StripeClient {
                                     .setPriceData(
                                             SessionCreateParams.LineItem.PriceData.builder()
                                                     .setCurrency(currency.toLowerCase())
-                                                    .setUnitAmount(amount.longValue())
+                                                    .setUnitAmount(amount.multiply(java.math.BigDecimal.valueOf(100)).longValue())
                                                     .setProductData(
                                                             SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                                                    .setName("Pressupost " + budgetId)
+                                                                    .setName("Setup NexeLocal — Pressupost " + budgetId)
                                                                     .build())
                                                     .build())
                                     .build())
@@ -65,7 +66,7 @@ public class StripeRealClient implements StripeClient {
 
             Session session = Session.create(params);
             log.info("Stripe checkout session created: {} for budget {}", session.getId(), budgetId);
-            return session.getUrl();
+            return new CheckoutResult(session.getUrl(), session.getId());
         } catch (StripeException e) {
             log.error("Failed to create Stripe checkout session for budget {}: {}", budgetId, e.getMessage());
             throw new RuntimeException("Stripe checkout session creation failed: " + e.getMessage(), e);

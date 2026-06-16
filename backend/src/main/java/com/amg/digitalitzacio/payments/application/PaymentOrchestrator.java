@@ -30,6 +30,7 @@ public class PaymentOrchestrator implements PaymentService {
     private final FinOpsService finOpsService;
     private final GoCardlessService goCardlessService;
     private final com.amg.digitalitzacio.billing.application.PostAcceptanceService postAcceptanceService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Value("${app.payments.success-url:https://portal.amg.cat/payments/success}")
     private String successUrl;
@@ -78,11 +79,11 @@ public class PaymentOrchestrator implements PaymentService {
         payment = paymentRepository.save(payment);
 
         try {
-            var checkoutUrl = stripeClient.createCheckoutSession(
+            var checkout = stripeClient.createCheckoutSession(
                     budgetId, payment.getAmount(), payment.getCurrency(),
                     successUrl, cancelUrl);
-            payment.setCheckoutUrl(checkoutUrl);
-            payment.setStripeSessionId("sess_" + UUID.randomUUID());
+            payment.setCheckoutUrl(checkout.url());
+            payment.setStripeSessionId(checkout.sessionId());
             payment = paymentRepository.save(payment);
         } catch (Exception e) {
             payment.setStatus(PaymentStatus.FAILED);
@@ -193,6 +194,20 @@ public class PaymentOrchestrator implements PaymentService {
                             payment.setErrorMessage("Invoice creation failed: " + e.getMessage());
                             paymentRepository.save(payment);
                         }
+                        // Detecta si és un pagament de setup → activa fases via event
+                        if (payment.getBudgetId() != null) {
+                            var setupBudget = budgetRepository.findById(payment.getBudgetId()).orElse(null);
+                            if (setupBudget != null && !Boolean.TRUE.equals(setupBudget.getSetupPaid())) {
+                                final var budgetForEvent = setupBudget;
+                                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                                    new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                                        @Override public void afterCommit() {
+                                            eventPublisher.publishEvent(new SetupPaymentCompletedEvent(
+                                                budgetForEvent.getId(), budgetForEvent.getTenantId()));
+                                        }
+                                    });
+                            }
+                        }
                         final var completedPayment = payment;
                         org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
                                 new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
@@ -302,6 +317,31 @@ public class PaymentOrchestrator implements PaymentService {
         config.setPmExpMonth(null);
         config.setPmExpYear(null);
         stripeConfigRepository.save(config);
+    }
+
+    @Override
+    @Transactional
+    public String createSetupCheckout(UUID budgetId, java.math.BigDecimal setupAmountEuros, UUID tenantId) {
+        var payment = Payment.builder()
+                .tenantId(tenantId)
+                .budgetId(budgetId)
+                .amount(setupAmountEuros)
+                .currency("EUR")
+                .status(PaymentStatus.PENDING)
+                .build();
+        payment = paymentRepository.save(payment);
+        try {
+            var checkout = stripeClient.createCheckoutSession(budgetId, setupAmountEuros, "EUR", successUrl, cancelUrl);
+            payment.setCheckoutUrl(checkout.url());
+            payment.setStripeSessionId(checkout.sessionId());
+            paymentRepository.save(payment);
+            return checkout.url();
+        } catch (Exception e) {
+            payment.setStatus(PaymentStatus.FAILED);
+            payment.setErrorMessage(e.getMessage());
+            paymentRepository.save(payment);
+            throw new RuntimeException("Error creant sessió de pagament Stripe: " + e.getMessage(), e);
+        }
     }
 
     private StripeConfig findConfig(UUID tenantId) {

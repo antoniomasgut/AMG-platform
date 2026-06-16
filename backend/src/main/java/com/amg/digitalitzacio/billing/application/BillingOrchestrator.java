@@ -6,17 +6,22 @@ import com.amg.digitalitzacio.billing.api.dto.*;
 import com.amg.digitalitzacio.billing.domain.*;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.leads.domain.PipelineStage;
+import com.amg.digitalitzacio.payments.application.SetupPaymentCompletedEvent;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.vault.application.InvoiceService;
 import com.amg.digitalitzacio.vault.application.PaymentService;
 import com.amg.digitalitzacio.vault.application.ProfileService;
 import com.amg.digitalitzacio.vault.application.VaultService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -27,6 +32,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BillingOrchestrator implements BillingService {
 
     private static final Map<Integer, String> PHASE_NAMES = Map.of(
@@ -44,6 +50,7 @@ public class BillingOrchestrator implements BillingService {
     private final VaultService vaultService;
     private final InvoiceService invoiceService;
     private final PaymentService paymentService;
+    private final com.amg.digitalitzacio.payments.application.PaymentService stripePaymentService;
     private final TenantRepository tenantRepository;
     private final NexePricingFormula pricingFormula;
     private final LeadRepository leadRepository;
@@ -342,41 +349,64 @@ public class BillingOrchestrator implements BillingService {
         budget.setStatus(BudgetStatus.ACCEPTED);
         budget.setAcceptedAt(Instant.now());
         budget.setAcceptanceToken(null);
-        budgetRepository.save(budget);
 
         var lines = budgetLineRepository.findByBudgetIdOrderBySortOrder(budget.getId());
 
-        // Fases catàleg (UUID): aprova al vault després del commit per evitar rollback
-        var phaseIds = lines.stream()
-                .map(BudgetLine::getPhaseId)
-                .filter(Objects::nonNull)
-                .distinct().toList();
-        if (!phaseIds.isEmpty()) {
-            var tenantId = budget.getTenantId();
-            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
-                new org.springframework.transaction.support.TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        for (var phaseId : phaseIds) {
-                            try {
-                                vaultService.approvePhase(tenantId, phaseId);
-                            } catch (Exception ignored) {}
-                        }
-                    }
-                }
-            );
-        }
-
-        // Fases NexeLocal (F1-F5): afegeix a contractedPhases del tenant
-        var budgetSector = budget.getSector() != null
-                ? safeBusinessSector(budget.getSector()) : null;
+        // Fases NexeLocal (F1-F5): porta de pagament de setup
+        var budgetSector = budget.getSector() != null ? safeBusinessSector(budget.getSector()) : null;
         var nexePhases = lines.stream()
                 .map(BudgetLine::getPhaseNumber)
                 .filter(Objects::nonNull)
                 .flatMap(n -> nexePhasesForSector(budgetSector, n).stream())
                 .distinct().sorted().toList();
+
         if (!nexePhases.isEmpty()) {
-            addContractedPhases(budget.getTenantId(), nexePhases);
+            budget.setSetupNexePhases(String.join(",", nexePhases));
+            budgetRepository.save(budget);
+            try {
+                String checkoutUrl = stripePaymentService.createSetupCheckout(
+                        budget.getId(), budget.getTotal(), budget.getTenantId());
+                final var savedBudget = budget;
+                final var payUrl = checkoutUrl;
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                        new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                            @Override public void afterCommit() {
+                                postAcceptanceService.onSetupPaymentRequested(savedBudget, payUrl);
+                            }
+                        });
+                return new AcceptRejectResponse("PAYMENT_REQUIRED",
+                        "Per activar el servei, completa el pagament del setup.", checkoutUrl);
+            } catch (Exception e) {
+                log.warn("[Billing] No s'ha pogut crear sessió Stripe per budget {}: {}", budget.getId(), e.getMessage());
+                // Fallback: activa fases directament si Stripe no disponible
+                addContractedPhases(budget.getTenantId(), nexePhases);
+                budget.setSetupPaid(Boolean.TRUE);
+                budget.setSetupPaidAt(Instant.now());
+                budgetRepository.save(budget);
+                advanceLeadStage(budget, PipelineStage.WON);
+                final var fb = budget;
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                        new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                            @Override public void afterCommit() { postAcceptanceService.onBudgetAccepted(fb); }
+                        });
+                return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament.", null);
+            }
+        }
+
+        budgetRepository.save(budget);
+
+        // Fases catàleg (UUID): aprova al vault
+        var phaseIds = lines.stream().map(BudgetLine::getPhaseId).filter(Objects::nonNull).distinct().toList();
+        if (!phaseIds.isEmpty()) {
+            var tenantId = budget.getTenantId();
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override public void afterCommit() {
+                        for (var phaseId : phaseIds) {
+                            try { vaultService.approvePhase(tenantId, phaseId); } catch (Exception ignored) {}
+                        }
+                    }
+                });
         }
 
         advanceLeadStage(budget, PipelineStage.WON);
@@ -388,7 +418,7 @@ public class BillingOrchestrator implements BillingService {
                     }
                 });
 
-        return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament");
+        return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament.", null);
     }
 
     @Override
@@ -413,7 +443,7 @@ public class BillingOrchestrator implements BillingService {
                         postAcceptanceService.onBudgetRejected(rejectedBudget, rejectedReason);
                     }
                 });
-        return new AcceptRejectResponse("REJECTED", "Pressupost rebutjat");
+        return new AcceptRejectResponse("REJECTED", "Pressupost rebutjat", null);
     }
 
     @Override
@@ -436,25 +466,61 @@ public class BillingOrchestrator implements BillingService {
         budget.setStatus(BudgetStatus.ACCEPTED);
         budget.setAcceptedAt(Instant.now());
         budget.setAcceptanceToken(null);
-        budgetRepository.save(budget);
 
-        if (phaseKeys != null && !phaseKeys.isEmpty()) {
-            var nexePhases = new ArrayList<String>();
+        // Separa fases NexeLocal (F1-F5) de fases catàleg (UUID)
+        var nexePhases = new ArrayList<String>();
+        var catalogPhaseIds = new ArrayList<UUID>();
+        if (phaseKeys != null) {
             for (var key : phaseKeys) {
                 if (key == null) continue;
                 if (key.matches("F[1-5]")) {
                     nexePhases.add(key);
                 } else {
-                    try {
-                        var phaseId = UUID.fromString(key);
-                        vaultService.approvePhase(budget.getTenantId(), phaseId);
-                    } catch (Exception ignored) {}
+                    try { catalogPhaseIds.add(UUID.fromString(key)); } catch (Exception ignored) {}
                 }
             }
-            if (!nexePhases.isEmpty()) {
+        }
+
+        // Porta de pagament: si hi ha fases NexeLocal, crear sessió Stripe
+        if (!nexePhases.isEmpty()) {
+            budget.setSetupNexePhases(String.join(",", nexePhases));
+            budgetRepository.save(budget);
+            try {
+                String checkoutUrl = stripePaymentService.createSetupCheckout(
+                        budget.getId(), budget.getTotal(), budget.getTenantId());
+                final var savedBudget = budget;
+                final var payUrl = checkoutUrl;
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                        new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                            @Override public void afterCommit() {
+                                postAcceptanceService.onSetupPaymentRequested(savedBudget, payUrl);
+                            }
+                        });
+                return new AcceptRejectResponse("PAYMENT_REQUIRED",
+                        "Per activar el servei, completa el pagament del setup.", checkoutUrl);
+            } catch (Exception e) {
+                log.warn("[Billing] No s'ha pogut crear sessió Stripe per budget {}: {}", budget.getId(), e.getMessage());
                 addContractedPhases(budget.getTenantId(), nexePhases);
+                budget.setSetupPaid(Boolean.TRUE);
+                budget.setSetupPaidAt(Instant.now());
             }
         }
+
+        budgetRepository.save(budget);
+
+        // Fases catàleg (UUID): aprova al vault
+        if (!catalogPhaseIds.isEmpty()) {
+            var tenantId = budget.getTenantId();
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override public void afterCommit() {
+                        for (var phaseId : catalogPhaseIds) {
+                            try { vaultService.approvePhase(tenantId, phaseId); } catch (Exception ignored) {}
+                        }
+                    }
+                });
+        }
+
         advanceLeadStage(budget, PipelineStage.WON);
         final var acceptedBudget2 = budget;
         org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
@@ -463,7 +529,7 @@ public class BillingOrchestrator implements BillingService {
                         postAcceptanceService.onBudgetAccepted(acceptedBudget2);
                     }
                 });
-        return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament");
+        return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament.", null);
     }
 
     @Override
@@ -599,6 +665,68 @@ public class BillingOrchestrator implements BillingService {
         for (String phase : newPhases) {
             phaseActivationService.recordActivation(tenantId, phase, "BUDGET_ACCEPTED", null, null);
         }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onSetupPaymentCompleted(SetupPaymentCompletedEvent event) {
+        var budget = budgetRepository.findById(event.budgetId()).orElse(null);
+        if (budget == null || Boolean.TRUE.equals(budget.getSetupPaid())) return;
+
+        budget.setSetupPaid(Boolean.TRUE);
+        budget.setSetupPaidAt(Instant.now());
+        budgetRepository.save(budget);
+
+        if (budget.getSetupNexePhases() != null && !budget.getSetupNexePhases().isBlank()) {
+            addContractedPhases(budget.getTenantId(),
+                    Arrays.asList(budget.getSetupNexePhases().split(",")));
+        }
+        advanceLeadStage(budget, PipelineStage.WON);
+        final var finalBudget = budget;
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                    @Override public void afterCommit() {
+                        postAcceptanceService.onBudgetAccepted(finalBudget);
+                    }
+                });
+    }
+
+    @Override
+    @Transactional
+    public void forceActivatePhases(UUID budgetId) {
+        var budget = findBudget(budgetId);
+        if (budget.getStatus() != BudgetStatus.ACCEPTED) {
+            budget.setStatus(BudgetStatus.ACCEPTED);
+            budget.setAcceptedAt(Instant.now());
+        }
+        if (!Boolean.TRUE.equals(budget.getSetupPaid())) {
+            budget.setSetupPaid(Boolean.TRUE);
+            budget.setSetupPaidAt(Instant.now());
+        }
+        budgetRepository.save(budget);
+
+        var nexePhases = new ArrayList<String>();
+        if (budget.getSetupNexePhases() != null && !budget.getSetupNexePhases().isBlank()) {
+            nexePhases.addAll(Arrays.asList(budget.getSetupNexePhases().split(",")));
+        } else {
+            var lines = budgetLineRepository.findByBudgetIdOrderBySortOrder(budgetId);
+            var budgetSector = budget.getSector() != null ? safeBusinessSector(budget.getSector()) : null;
+            lines.stream()
+                    .map(BudgetLine::getPhaseNumber).filter(Objects::nonNull)
+                    .flatMap(n -> nexePhasesForSector(budgetSector, n).stream())
+                    .distinct().sorted().forEach(nexePhases::add);
+        }
+        if (!nexePhases.isEmpty()) {
+            addContractedPhases(budget.getTenantId(), nexePhases);
+        }
+        advanceLeadStage(budget, PipelineStage.WON);
+        final var finalBudget = budget;
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
+                    @Override public void afterCommit() {
+                        postAcceptanceService.onBudgetAccepted(finalBudget);
+                    }
+                });
     }
 
     private Budget findBudget(UUID id) {

@@ -34,6 +34,53 @@ public class PostAcceptanceService {
     private final TelegramBotClient telegramBotClient;
     private final SystemConfigService systemConfigService;
 
+    public void onSetupPaymentRequested(Budget budget, String paymentUrl) {
+        try {
+            var tenant = tenantRepository.findById(budget.getTenantId()).orElse(null);
+            String clientName  = tenant != null && tenant.getName() != null ? tenant.getName() : (tenant != null ? tenant.getEmail() : "client");
+            String clientEmail = tenant != null ? tenant.getEmail() : null;
+
+            String tenantUrl = "https://amgdl.com/portal/admin/tenants/" + budget.getTenantId();
+            String msg = """
+                    💳 <b>Pressupost acceptat — pendent de pagament</b>
+                    👤 %s
+                    💰 %s €
+                    🔗 <a href="%s">Enllaç de pagament →</a>
+                    🔧 <a href="%s">Veure tenant →</a>
+                    """.formatted(clientName,
+                    budget.getTotal() != null ? budget.getTotal().toPlainString() : "—",
+                    paymentUrl, tenantUrl);
+            sendToSalesChat(msg);
+
+            if (clientEmail != null && !clientEmail.isBlank()) {
+                String subject = "Completa el pagament del teu servei AMG Digitalització";
+                String body = """
+                        Hola %s,
+
+                        Has acceptat el pressupost. Per activar el teu servei, completa el pagament del setup:
+
+                        %s
+
+                        L'import és de %s €. Podràs pagar amb targeta de crèdit o Bizum.
+
+                        Un cop completat el pagament, activarem el teu servei en les properes 24 hores.
+
+                        Gràcies!
+                        L'equip d'AMG Digitalització
+                        """.formatted(clientName,
+                        paymentUrl,
+                        budget.getTotal() != null ? budget.getTotal().toPlainString() : "—");
+                try {
+                    emailService.sendEmail(clientEmail, subject, body);
+                } catch (Exception e) {
+                    log.warn("[PostAcceptance] No s'ha pogut enviar email de pagament a {}: {}", clientEmail, e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            log.error("[PostAcceptance] Error en onSetupPaymentRequested budget {}: {}", budget.getId(), e.getMessage());
+        }
+    }
+
     public void onBudgetAccepted(Budget budget) {
         if (!isEnabled("AMG_NOTIFY_BUDGET_ACCEPTED")) return;
         try {

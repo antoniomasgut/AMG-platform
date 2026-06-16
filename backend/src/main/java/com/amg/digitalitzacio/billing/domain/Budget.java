@@ -34,6 +34,10 @@ public class Budget {
     @Column(columnDefinition = "TEXT") private String recommendation;
     @Column(columnDefinition = "TEXT") private String recommendedPhaseIds;
     @Column(length = 64) private String acceptanceToken;
+    @Builder.Default private Boolean setupPaid = Boolean.FALSE;
+    @Column(length = 255) private String setupStripeSessionId;
+    private Instant setupPaidAt;
+    @Column(columnDefinition = "TEXT") private String setupNexePhases;
     private Instant sentAt;
     private Instant acceptedAt;
     private Instant rejectedAt;

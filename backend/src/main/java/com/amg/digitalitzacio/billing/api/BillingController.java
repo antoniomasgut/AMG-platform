@@ -106,6 +106,13 @@ public class BillingController {
         return billingService.rejectBudget(token, request != null ? request.reason() : null);
     }
 
+    @PostMapping("/budgets/{id}/force-activate")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void forceActivatePhases(@PathVariable UUID id) {
+        billingService.forceActivatePhases(id);
+    }
+
     // --- Discounts ---
 
     @PostMapping("/discounts")

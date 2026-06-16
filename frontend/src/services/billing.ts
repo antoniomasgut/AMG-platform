@@ -115,17 +115,23 @@ export const listAllBudgets = (status?: string, tenantId?: string, page = 0, siz
 export const previewBudget = (token: string) =>
   apiFetch<BudgetResponse>(`/billing/budgets/preview?token=${encodeURIComponent(token)}`);
 
+export interface AcceptRejectResponse {
+  status: 'ACCEPTED' | 'PAYMENT_REQUIRED' | 'REJECTED';
+  message: string;
+  paymentUrl?: string | null;
+}
+
 export const acceptBudgetFull = (token: string) =>
-  apiFetch<{ status: string; message: string }>(`/billing/budgets/accept?token=${encodeURIComponent(token)}`, { method: 'POST' });
+  apiFetch<AcceptRejectResponse>(`/billing/budgets/accept?token=${encodeURIComponent(token)}`, { method: 'POST' });
 
 export const acceptBudgetPhases = (token: string, phaseKeys: string[]) =>
-  apiFetch<{ status: string; message: string }>(`/billing/budgets/accept-phases?token=${encodeURIComponent(token)}`, {
+  apiFetch<AcceptRejectResponse>(`/billing/budgets/accept-phases?token=${encodeURIComponent(token)}`, {
     method: 'POST',
     body: JSON.stringify({ phaseKeys }),
   });
 
 export const rejectBudget = (token: string, reason?: string) =>
-  apiFetch<{ status: string; message: string }>(`/billing/budgets/reject?token=${encodeURIComponent(token)}`, {
+  apiFetch<AcceptRejectResponse>(`/billing/budgets/reject?token=${encodeURIComponent(token)}`, {
     method: 'POST',
     body: JSON.stringify({ reason: reason ?? '' }),
   });

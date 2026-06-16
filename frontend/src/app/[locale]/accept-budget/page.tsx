@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { AMGLogo } from '@/components/ui/AMGLogo';
 import {
   previewBudget, acceptBudgetPhases, rejectBudget,
-  type BudgetResponse, type BudgetPhase,
+  type BudgetResponse, type BudgetPhase, type AcceptRejectResponse,
 } from '@/services/billing';
 
 function fmt(n: number) {
@@ -29,19 +29,29 @@ const SECTOR_LABELS: Record<string, string> = {
 
 // ── Result screen ─────────────────────────────────────────────────────────────
 
-function ResultScreen({ status, message }: { status: 'ACCEPTED' | 'REJECTED' | 'ERROR'; message: string }) {
+function ResultScreen({ status, message, paymentUrl }: {
+  status: 'ACCEPTED' | 'PAYMENT_REQUIRED' | 'REJECTED' | 'ERROR';
+  message: string;
+  paymentUrl?: string | null;
+}) {
   const isAccepted = status === 'ACCEPTED';
+  const isPayment = status === 'PAYMENT_REQUIRED';
   const isError = status === 'ERROR';
+
   return (
     <div className="min-h-dvh bg-gray-50 flex items-center justify-center p-6">
       <div className="max-w-md w-full text-center space-y-6">
         <AMGLogo className="h-8 w-auto mx-auto" />
         <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${
-          isAccepted ? 'bg-green-100' : isError ? 'bg-amber-100' : 'bg-red-100'
+          isAccepted ? 'bg-green-100' : isPayment ? 'bg-blue-100' : isError ? 'bg-amber-100' : 'bg-red-100'
         }`}>
           {isAccepted ? (
             <svg className="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : isPayment ? (
+            <svg className="w-9 h-9 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
             </svg>
           ) : (
             <svg className="w-9 h-9 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,12 +61,23 @@ function ResultScreen({ status, message }: { status: 'ACCEPTED' | 'REJECTED' | '
         </div>
         <div>
           <h1 className={`text-2xl font-bold mb-2 ${
-            isAccepted ? 'text-green-700' : isError ? 'text-amber-700' : 'text-red-700'
+            isAccepted ? 'text-green-700' : isPayment ? 'text-blue-700' : isError ? 'text-amber-700' : 'text-red-700'
           }`}>
-            {isAccepted ? 'Proposta acceptada' : isError ? 'Error' : 'Proposta rebutjada'}
+            {isAccepted ? 'Proposta acceptada' : isPayment ? 'Completa el pagament' : isError ? 'Error' : 'Proposta rebutjada'}
           </h1>
           <p className="text-gray-500 text-sm leading-relaxed">{message}</p>
         </div>
+        {isPayment && paymentUrl && (
+          <div className="space-y-3">
+            <a
+              href={paymentUrl}
+              className="block w-full py-4 rounded-xl bg-[#FF6B00] hover:bg-[#e55a00] text-white font-bold text-base shadow-[0_4px_14px_rgba(255,107,0,0.3)] transition"
+            >
+              Pagar ara (targeta o Bizum)
+            </a>
+            <p className="text-gray-400 text-xs">Pagament segur via Stripe · Acceptem Bizum a Espanya</p>
+          </div>
+        )}
         {isAccepted && (
           <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-left space-y-2">
             <p className="text-green-800 text-xs font-semibold uppercase tracking-wider">Propers passos</p>
@@ -190,7 +211,7 @@ function AcceptBudgetContent() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPhaseKeys, setSelectedPhaseKeys] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ status: 'ACCEPTED' | 'REJECTED' | 'ERROR'; message: string } | null>(null);
+  const [result, setResult] = useState<{ status: 'ACCEPTED' | 'PAYMENT_REQUIRED' | 'REJECTED' | 'ERROR'; message: string; paymentUrl?: string | null } | null>(null);
   const [rejectMode, setRejectMode] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
@@ -222,8 +243,12 @@ function AcceptBudgetContent() {
     if (!budget || selectedPhaseKeys.size === 0) return;
     setSubmitting(true);
     try {
-      await acceptBudgetPhases(token, Array.from(selectedPhaseKeys));
-      setResult({ status: 'ACCEPTED', message: `Has acceptat ${selectedPhaseKeys.size} fase${selectedPhaseKeys.size !== 1 ? 's' : ''}. Gràcies per la teva confiança!` });
+      const res = await acceptBudgetPhases(token, Array.from(selectedPhaseKeys));
+      if (res.status === 'PAYMENT_REQUIRED' && res.paymentUrl) {
+        setResult({ status: 'PAYMENT_REQUIRED', message: res.message, paymentUrl: res.paymentUrl });
+      } else {
+        setResult({ status: 'ACCEPTED', message: `Has acceptat ${selectedPhaseKeys.size} fase${selectedPhaseKeys.size !== 1 ? 's' : ''}. Gràcies per la teva confiança!` });
+      }
     } catch {
       setResult({ status: 'ERROR', message: 'Hi ha hagut un error en processar l\'acceptació. Contacta\'ns directament.' });
     } finally { setSubmitting(false); }
@@ -239,7 +264,7 @@ function AcceptBudgetContent() {
     } finally { setSubmitting(false); }
   };
 
-  if (result) return <ResultScreen status={result.status} message={result.message} />;
+  if (result) return <ResultScreen status={result.status} message={result.message} paymentUrl={result.paymentUrl} />;
 
   if (loading) {
     return (

@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface StripeClient {
-    String createCheckoutSession(UUID budgetId, BigDecimal amount, String currency,
+    record CheckoutResult(String url, String sessionId) {}
+
+    CheckoutResult createCheckoutSession(UUID budgetId, BigDecimal amount, String currency,
                                   String successUrl, String cancelUrl);
     String checkPaymentStatus(String stripeSessionId);
     String getReceiptUrl(String paymentIntentId);

@@ -20,4 +20,5 @@ public interface BillingService {
     BudgetResponse previewBudget(String token);
     AcceptRejectResponse acceptBudgetPhases(String token, List<String> phaseKeys);
     DashboardResponse getDashboard(UUID tenantId);
+    void forceActivatePhases(UUID budgetId);
 }

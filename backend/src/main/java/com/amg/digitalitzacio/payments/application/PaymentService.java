@@ -5,6 +5,7 @@ import com.amg.digitalitzacio.payments.api.dto.*;
 import org.springframework.lang.Nullable;
 import org.springframework.data.domain.Page;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface PaymentService {
@@ -24,4 +25,7 @@ public interface PaymentService {
     SavedPaymentMethodResponse completeSetup(UUID tenantId, String sessionId);
     @Nullable SavedPaymentMethodResponse getSavedPaymentMethod(UUID tenantId);
     void removeSavedPaymentMethod(UUID tenantId);
+
+    // Crea sessió de checkout per al pagament de setup (una sola vegada)
+    String createSetupCheckout(UUID budgetId, BigDecimal setupAmountEuros, UUID tenantId);
 }

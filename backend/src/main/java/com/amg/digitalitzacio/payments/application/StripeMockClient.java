@@ -11,9 +11,10 @@ import java.util.UUID;
 public class StripeMockClient implements StripeClient {
 
     @Override
-    public String createCheckoutSession(UUID budgetId, BigDecimal amount, String currency,
+    public CheckoutResult createCheckoutSession(UUID budgetId, BigDecimal amount, String currency,
                                          String successUrl, String cancelUrl) {
-        return "https://mock.stripe.com/checkout/" + UUID.randomUUID();
+        String sessionId = "cs_mock_" + UUID.randomUUID().toString().replace("-", "");
+        return new CheckoutResult("https://mock.stripe.com/checkout/" + sessionId, sessionId);
     }
 
     @Override
