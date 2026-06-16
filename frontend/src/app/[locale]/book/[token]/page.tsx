@@ -253,7 +253,7 @@ export default function BookingPage() {
       <div className="space-y-6">
         <div>
           <p className="text-xs font-mono uppercase tracking-wider text-[#FF6B00] mb-1">AMG Digitalitzacions</p>
-          <h1 className="text-xl font-bold text-white">Reserva una reunió</h1>
+          <h1 className="text-xl font-bold text-white">{info.bookingLabel ?? 'Reserva una reunió'}</h1>
           <p className="text-sm text-[#a0a0c0] mt-0.5">
             Hola, <strong className="text-white">{info.leadName}</strong>. Tria un dia i una hora.
           </p>

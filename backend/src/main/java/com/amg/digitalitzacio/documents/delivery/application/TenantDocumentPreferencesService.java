@@ -21,7 +21,8 @@ public class TenantDocumentPreferencesService {
 
     @Transactional
     public TenantDocumentPreferences save(UUID tenantId, String language,
-                                          String standardDocChannel, String sensitiveDocChannel) {
+                                          String standardDocChannel, String sensitiveDocChannel,
+                                          Boolean autoBookingOnAccept) {
         var prefs = repo.findById(tenantId).orElseGet(() -> {
             var p = new TenantDocumentPreferences();
             p.setTenantId(tenantId);
@@ -30,6 +31,7 @@ public class TenantDocumentPreferencesService {
         if (language != null && !language.isBlank()) prefs.setLanguage(language);
         if (standardDocChannel != null)  prefs.setStandardDocChannel(standardDocChannel);
         if (sensitiveDocChannel != null) prefs.setSensitiveDocChannel(sensitiveDocChannel);
+        if (autoBookingOnAccept != null) prefs.setAutoBookingOnAccept(autoBookingOnAccept);
         return repo.save(prefs);
     }
 

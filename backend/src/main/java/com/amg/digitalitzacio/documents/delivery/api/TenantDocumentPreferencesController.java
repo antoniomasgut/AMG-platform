@@ -22,7 +22,8 @@ public class TenantDocumentPreferencesController {
     public record PreferencesRequest(
         String language,
         String standardDocChannel,
-        String sensitiveDocChannel
+        String sensitiveDocChannel,
+        Boolean autoBookingOnAccept
     ) {}
 
     @GetMapping
@@ -39,7 +40,8 @@ public class TenantDocumentPreferencesController {
             @RequestBody PreferencesRequest req) {
         return ResponseEntity.ok(service.save(
             resolveTenantId(user, tenantId),
-            req.language(), req.standardDocChannel(), req.sensitiveDocChannel()
+            req.language(), req.standardDocChannel(), req.sensitiveDocChannel(),
+            req.autoBookingOnAccept()
         ));
     }
 

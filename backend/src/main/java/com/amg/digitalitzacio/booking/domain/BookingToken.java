@@ -24,7 +24,7 @@ public class BookingToken {
     @Column(nullable = false)
     private UUID tenantId;
 
-    @Column(nullable = false)
+    @Column
     private UUID leadId;
 
     @Column(nullable = false, unique = true, length = 64)
@@ -35,6 +35,18 @@ public class BookingToken {
 
     @Column(length = 150)
     private String leadEmail;
+
+    @Column
+    private UUID sourceDocumentId;
+
+    @Column(length = 30)
+    private String recipientPhone;
+
+    @Column(length = 255)
+    private String recipientName;
+
+    @Column(length = 100)
+    private String bookingLabel;
 
     @Column(nullable = false)
     private Instant expiresAt;

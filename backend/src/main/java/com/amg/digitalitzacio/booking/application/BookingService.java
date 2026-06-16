@@ -1,10 +1,12 @@
 package com.amg.digitalitzacio.booking.application;
 
 import com.amg.digitalitzacio.agents.application.GoogleCalendarService;
+import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.booking.domain.*;
 import com.amg.digitalitzacio.leads.domain.*;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,8 @@ public class BookingService {
     private final AvailabilityService availabilityService;
     private final EmailService emailService;
     private final SystemConfigService sysConfig;
+    private final NexeServiceConfigService nexeServiceConfigService;
+    private final ObjectMapper objectMapper;
 
     private static final ZoneId ZONE = ZoneId.of("Europe/Madrid");
     private static final SecureRandom RNG = new SecureRandom();
@@ -75,12 +79,50 @@ public class BookingService {
 
     // ── Public: token info + availability ───────────────────────
 
-    public record TokenInfo(String leadName, MeetingSettings settings) {}
+    public record TokenInfo(String leadName, MeetingSettings settings, String bookingLabel) {}
 
     public TokenInfo getTokenInfo(String token) {
         BookingToken bt = findValidToken(token);
         MeetingSettings s = getOrCreate(bt.getTenantId());
-        return new TokenInfo(bt.getLeadName(), s);
+        return new TokenInfo(bt.getLeadName(), s, bt.getBookingLabel());
+    }
+
+    // ── Token creation from document ─────────────────────────────
+
+    @Transactional
+    public BookingToken createTokenFromDocument(UUID tenantId, String recipientEmail,
+                                                String recipientPhone, String recipientName,
+                                                UUID sourceDocumentId) {
+        String label = resolveBookingLabel(tenantId);
+
+        var bt = new BookingToken();
+        bt.setTenantId(tenantId);
+        bt.setToken(generateToken());
+        bt.setLeadEmail(recipientEmail);
+        bt.setRecipientPhone(recipientPhone);
+        bt.setRecipientName(recipientName);
+        bt.setLeadName(recipientName != null ? recipientName : "");
+        bt.setSourceDocumentId(sourceDocumentId);
+        bt.setBookingLabel(label);
+        bt.setExpiresAt(Instant.now().plus(Duration.ofDays(14)));
+        return tokenRepo.save(bt);
+    }
+
+    private String resolveBookingLabel(UUID tenantId) {
+        return nexeServiceConfigService.get(tenantId, "AGENDA").map(cfg -> {
+            try {
+                var node = objectMapper.readTree(cfg.getConfigJson());
+                String mode = node.path("mode").asText("");
+                return switch (mode) {
+                    case "vehicle"    -> "Programa l'entrega del vehicle";
+                    case "inspection" -> "Concreta el dia d'inici";
+                    case "meeting"    -> "Concerta una reunió";
+                    default           -> "Reserva la teva cita";
+                };
+            } catch (Exception e) {
+                return "Reserva la teva cita";
+            }
+        }).orElse("Reserva la teva cita");
     }
 
     public List<LocalDate> getAvailableDays(String token) {
@@ -124,20 +166,22 @@ public class BookingService {
         bt.setMeetLink(meetLink);
         tokenRepo.save(bt);
 
-        leadRepo.findById(bt.getLeadId()).ifPresent(lead -> {
-            if (lead.getStage() == PipelineStage.NEW || lead.getStage() == PipelineStage.CONTACTED) {
-                lead.setStage(PipelineStage.QUALIFIED);
-                leadRepo.save(lead);
-            }
-            var act = new Activity();
-            act.setLeadId(lead.getId());
-            act.setUserId(SYSTEM_USER);
-            act.setType(ActivityType.MEETING);
-            act.setDescription("Reunió programada · " + formatDateTime(slotLocal)
-                    + (meetLink != null ? "\nGoogle Meet: " + meetLink : ""));
-            act.setDueDate(slotLocal.atZone(ZONE).toInstant());
-            activityRepo.save(act);
-        });
+        if (bt.getLeadId() != null) {
+            leadRepo.findById(bt.getLeadId()).ifPresent(lead -> {
+                if (lead.getStage() == PipelineStage.NEW || lead.getStage() == PipelineStage.CONTACTED) {
+                    lead.setStage(PipelineStage.QUALIFIED);
+                    leadRepo.save(lead);
+                }
+                var act = new Activity();
+                act.setLeadId(lead.getId());
+                act.setUserId(SYSTEM_USER);
+                act.setType(ActivityType.MEETING);
+                act.setDescription("Reunió programada · " + formatDateTime(slotLocal)
+                        + (meetLink != null ? "\nGoogle Meet: " + meetLink : ""));
+                act.setDueDate(slotLocal.atZone(ZONE).toInstant());
+                activityRepo.save(act);
+            });
+        }
 
         sendConfirmationEmails(bt, slotLocal, meetLink, s);
 

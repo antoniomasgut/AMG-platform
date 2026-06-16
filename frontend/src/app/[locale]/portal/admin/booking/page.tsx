@@ -6,7 +6,10 @@ import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { useToast } from '@/lib/toast-context';
-import { getBookingSettings, updateBookingSettings, type MeetingSettings } from '@/services/booking';
+import {
+  getBookingSettings, updateBookingSettings, type MeetingSettings,
+  getDocumentPreferences, updateDocumentPreferences,
+} from '@/services/booking';
 
 const inp = "w-full bg-surface-base border border-border-base rounded px-3 py-1.5 text-sm font-mono text-ink-1 focus:outline-none focus:border-accent-light";
 
@@ -27,6 +30,20 @@ export default function BookingSettingsPage() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ['booking-settings'],
     queryFn: getBookingSettings,
+  });
+
+  const { data: docPrefs } = useQuery({
+    queryKey: ['doc-preferences'],
+    queryFn: () => getDocumentPreferences(),
+  });
+
+  const { mutate: toggleAutoBooking, isPending: togglingAutoBooking } = useMutation({
+    mutationFn: (val: boolean) => updateDocumentPreferences({ autoBookingOnAccept: val }),
+    onSuccess: () => {
+      toast('success', 'Configuració desada');
+      qc.invalidateQueries({ queryKey: ['doc-preferences'] });
+    },
+    onError: () => toast('error', 'Error desant la configuració'),
   });
 
   const [form, setForm] = useState({
@@ -196,6 +213,39 @@ export default function BookingSettingsPage() {
                     Sense calendari configurat no es crearan events Meet automàticament.
                   </p>
                 )}
+              </div>
+            </div>
+
+            {/* Reserva automàtica post-pressupost */}
+            <div className="bg-surface-base border border-border-base rounded-xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-border-base">
+                <h2 className="text-sm font-semibold text-ink-1">Reserva automàtica (F3 → F2)</h2>
+                <p className="text-xs text-ink-3 mt-0.5">
+                  Quan un client accepta un pressupost, envia automàticament l&apos;enllaç de reserva
+                </p>
+              </div>
+              <div className="p-5">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <button
+                    role="switch"
+                    aria-checked={docPrefs?.autoBookingOnAccept ?? true}
+                    disabled={togglingAutoBooking}
+                    onClick={() => toggleAutoBooking(!(docPrefs?.autoBookingOnAccept ?? true))}
+                    className={`relative w-10 h-6 rounded-full transition-colors ${
+                      (docPrefs?.autoBookingOnAccept ?? true) ? 'bg-[#FF6B00]' : 'bg-surface-overlay'
+                    }`}
+                  >
+                    <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
+                      (docPrefs?.autoBookingOnAccept ?? true) ? 'left-5' : 'left-1'
+                    }`} />
+                  </button>
+                  <span className="text-sm text-ink-1">
+                    {(docPrefs?.autoBookingOnAccept ?? true) ? 'Activat' : 'Desactivat'}
+                  </span>
+                </label>
+                <p className="text-xs text-ink-3 mt-2">
+                  Requereix F2 (Agenda) i F3 (Pressupostos) actives al tenant.
+                </p>
               </div>
             </div>
 

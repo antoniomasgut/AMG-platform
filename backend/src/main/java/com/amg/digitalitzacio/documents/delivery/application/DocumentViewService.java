@@ -1,19 +1,31 @@
 package com.amg.digitalitzacio.documents.delivery.application;
 
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.auth.application.EmailService;
+import com.amg.digitalitzacio.auth.domain.TenantPhaseActivationRepository;
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
+import com.amg.digitalitzacio.booking.application.BookingService;
+import com.amg.digitalitzacio.booking.domain.BookingToken;
+import com.amg.digitalitzacio.comm.application.CommunicationTemplateService;
 import com.amg.digitalitzacio.documents.builder.domain.DocumentStatus;
 import com.amg.digitalitzacio.documents.builder.domain.GeneratedDocumentRepository;
 import com.amg.digitalitzacio.documents.delivery.api.dto.AcceptRequest;
 import com.amg.digitalitzacio.documents.delivery.api.dto.DocumentViewResponse;
 import com.amg.digitalitzacio.documents.delivery.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
+import com.amg.digitalitzacio.whatsapp.domain.WhatsAppWabaConfigRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +37,16 @@ public class DocumentViewService {
     private final GeneratedDocumentRepository generatedDocumentRepo;
     private final TenantChatLinkRepository chatLinkRepo;
     private final TelegramBotClient telegramBotClient;
+    private final TenantDocumentPreferencesService preferencesService;
+    private final TenantPhaseActivationRepository phaseActivationRepo;
+    private final BookingService bookingService;
+    private final TenantRepository tenantRepo;
+    private final CommunicationTemplateService templateService;
+    private final WhatsAppMetaChannel whatsAppMetaChannel;
+    private final WhatsAppChannel whatsAppChannel;
+    private final WhatsAppWabaConfigRepository wabaConfigRepo;
+    private final EmailService emailService;
+    private final SystemConfigService sysConfig;
 
     @Transactional
     public DocumentViewResponse view(String tokenValue, String ip, String ua) {
@@ -63,7 +85,6 @@ public class DocumentViewService {
         token.setSignerIp(ip);
         tokenRepo.save(token);
 
-        // Actualitza l'estat del GeneratedDocument font si existeix
         if (token.getSourceEntityType() == SourceEntityType.GENERATED_DOCUMENT
                 && token.getSourceEntityId() != null) {
             generatedDocumentRepo.findById(token.getSourceEntityId()).ifPresent(doc -> {
@@ -75,17 +96,140 @@ public class DocumentViewService {
         audit(token, AuditEventType.DOCUMENT_ACCEPTED, ip, null);
         log.info("[SecureDoc] Document {} acceptat per '{}' des de {}", token.getId(), req.signerName(), ip);
 
-        notifyTenantAcceptance(token, req.signerName());
+        boolean bookingSent = false;
+        var prefs = preferencesService.getPreferences(token.getTenantId());
+        if (prefs.isAutoBookingOnAccept() && agendaIsActive(token.getTenantId())) {
+            try {
+                var bookingToken = bookingService.createTokenFromDocument(
+                    token.getTenantId(),
+                    token.getRecipientEmail(),
+                    token.getRecipientPhone(),
+                    token.getRecipientName(),
+                    token.getId()
+                );
+                sendBookingInvitation(token, bookingToken, prefs);
+                bookingSent = true;
+            } catch (Exception e) {
+                log.warn("[SecureDoc] Error enviant invitació de reserva per document {}: {}",
+                    token.getId(), e.getMessage());
+            }
+        }
+
+        notifyTenantAcceptance(token, req.signerName(), bookingSent);
     }
 
-    private void notifyTenantAcceptance(SecureDocumentToken token, String signerName) {
+    private boolean agendaIsActive(UUID tenantId) {
+        return phaseActivationRepo.existsByTenantIdAndPhaseAndDeactivatedAtIsNull(tenantId, "F2");
+    }
+
+    private void sendBookingInvitation(SecureDocumentToken docToken, BookingToken bookingToken,
+                                       TenantDocumentPreferences prefs) {
+        String baseUrl = sysConfig.get("APP_BASE_URL");
+        if (baseUrl == null || baseUrl.isBlank()) baseUrl = "https://app.amgdl.com";
+        String bookingUrl = baseUrl + "/book/" + bookingToken.getToken();
+
+        String businessName = tenantRepo.findById(docToken.getTenantId())
+            .map(t -> t.getName() != null ? t.getName() : "")
+            .orElse("");
+
+        String lang = prefs.getLanguage();
+        String channel = prefs.getStandardDocChannel();
+        String phone = docToken.getRecipientPhone();
+
+        boolean sendWa = phone != null && !phone.isBlank()
+            && ("WHATSAPP".equals(channel) || "BOTH".equals(channel));
+        boolean sendEmail = "EMAIL".equals(channel) || "BOTH".equals(channel) || !sendWa;
+
+        var vars = Map.of(
+            "RECIPIENT_NAME", bookingToken.getLeadName() != null ? bookingToken.getLeadName() : "",
+            "BUSINESS_NAME",  businessName,
+            "BOOKING_URL",    bookingUrl,
+            "DOCUMENT_NAME",  docToken.getFileName().replaceFirst("\\.pdf$", ""),
+            "BOOKING_LABEL",  bookingToken.getBookingLabel() != null ? bookingToken.getBookingLabel() : "Reserva la teva cita"
+        );
+
+        if (sendWa) {
+            sendBookingWhatsApp(docToken.getTenantId(), phone, vars, lang);
+        }
+        if (sendEmail) {
+            String email = docToken.getRecipientEmail();
+            if (email != null && !email.isBlank()) {
+                sendBookingEmail(email, vars, lang, docToken.getTenantId());
+            } else {
+                log.warn("[SecureDoc] No s'ha pogut enviar invitació per email: destinatari sense email (doc={})",
+                    docToken.getId());
+            }
+        }
+    }
+
+    private void sendBookingWhatsApp(UUID tenantId, String phone,
+                                     Map<String, String> vars, String lang) {
+        var tpl = templateService.resolveForTenant(tenantId, "WHATSAPP", "BOOKING_INVITATION", lang);
+        String msg = tpl != null
+            ? templateService.render(tpl.getBody(), vars)
+            : String.format("Hola %s,\n\nPots concretar la data aquí:\n%s",
+                vars.get("RECIPIENT_NAME"), vars.get("BOOKING_URL"));
+
+        var wabaOpt = wabaConfigRepo.findByTenantId(tenantId);
+        if (wabaOpt.isPresent() && wabaOpt.get().getPhoneNumberId() != null) {
+            try {
+                whatsAppMetaChannel.sendMessage(wabaOpt.get().getPhoneNumberId(), phone, msg);
+                log.info("[SecureDoc] Invitació booking WhatsApp Meta enviada a {} (tenant={})", phone, tenantId);
+                return;
+            } catch (Exception e) {
+                log.warn("[SecureDoc] WhatsApp Meta fallat (booking) per {}: {}", phone, e.getMessage());
+            }
+        }
+
+        var chatLink = chatLinkRepo.findByTenantId(tenantId).orElse(null);
+        String fromPhone = chatLink != null ? chatLink.getWhatsappPhoneNumber() : null;
+        if (fromPhone != null && !fromPhone.isBlank()) {
+            try {
+                whatsAppChannel.sendMessage(fromPhone, phone, msg);
+                log.info("[SecureDoc] Invitació booking WhatsApp Twilio enviada a {} (tenant={})", phone, tenantId);
+            } catch (Exception e) {
+                log.warn("[SecureDoc] WhatsApp Twilio fallat (booking) per {}: {}", phone, e.getMessage());
+            }
+        }
+    }
+
+    private void sendBookingEmail(String email, Map<String, String> vars,
+                                  String lang, UUID tenantId) {
+        var tpl = templateService.resolveForTenant(tenantId, "EMAIL", "BOOKING_INVITATION", lang);
+        String subject;
+        String body;
+        if (tpl != null) {
+            subject = tpl.getSubject() != null
+                ? templateService.render(tpl.getSubject(), vars)
+                : "Reserva la teva cita — " + vars.get("DOCUMENT_NAME");
+            body = templateService.render(tpl.getBody(), vars);
+        } else {
+            subject = "Reserva la teva cita — " + vars.get("DOCUMENT_NAME");
+            body = String.format("Hola %s,\n\nPots concretar la data aquí:\n%s",
+                vars.get("RECIPIENT_NAME"), vars.get("BOOKING_URL"));
+        }
+        try {
+            emailService.sendEmail(email, subject, body);
+            log.info("[SecureDoc] Invitació booking email enviada a {} (tenant={})", email, tenantId);
+        } catch (Exception e) {
+            log.warn("[SecureDoc] Error enviant booking email a {}: {}", email, e.getMessage());
+        }
+    }
+
+    private void notifyTenantAcceptance(SecureDocumentToken token, String signerName, boolean bookingSent) {
         try {
             var chatLink = chatLinkRepo.findByTenantId(token.getTenantId()).orElse(null);
             if (chatLink == null || chatLink.getTelegramChatId() == null) return;
 
+            String bookingLine = bookingSent
+                ? "\n📅 S'ha enviat l'enllaç de reserva automàticament."
+                : "\n👉 Envia l'enllaç de reserva des del CRM quan estiguis a punt.";
+
             String msg = String.format(
-                "✅ <b>%s</b> ha acceptat el pressupost <b>%s</b>.",
-                signerName, token.getFileName().replace(".pdf", "")
+                "✅ <b>%s</b> ha acceptat el pressupost <b>%s</b>.%s",
+                signerName,
+                token.getFileName().replace(".pdf", ""),
+                bookingLine
             );
             telegramBotClient.sendMessageForTenant(token.getTenantId(), chatLink.getTelegramChatId(), msg);
         } catch (Exception e) {

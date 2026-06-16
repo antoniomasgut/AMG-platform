@@ -73,11 +73,12 @@ public class BookingController {
     public ResponseEntity<Map<String, Object>> getTokenInfo(@PathVariable String token) {
         BookingService.TokenInfo info = bookingService.getTokenInfo(token);
         MeetingSettings s = info.settings();
-        return ResponseEntity.ok(Map.of(
-                "leadName",            info.leadName(),
-                "slotDurationMinutes", s.getSlotDurationMinutes(),
-                "workingDays",         s.getWorkingDays()
-        ));
+        var resp = new java.util.HashMap<String, Object>();
+        resp.put("leadName",            info.leadName());
+        resp.put("slotDurationMinutes", s.getSlotDurationMinutes());
+        resp.put("workingDays",         s.getWorkingDays());
+        if (info.bookingLabel() != null) resp.put("bookingLabel", info.bookingLabel());
+        return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/{token}/days")

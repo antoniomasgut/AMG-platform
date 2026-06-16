@@ -29,6 +29,15 @@ export interface TokenInfo {
   leadName: string;
   slotDurationMinutes: number;
   workingDays: string;
+  bookingLabel?: string;
+}
+
+export interface DocumentPreferences {
+  tenantId: string;
+  language: string;
+  standardDocChannel: string;
+  sensitiveDocChannel: string;
+  autoBookingOnAccept: boolean;
 }
 
 export interface BookingResult {
@@ -39,6 +48,15 @@ export interface BookingResult {
 const BASE = process.env.NEXT_PUBLIC_API_URL || '';
 
 // ── Admin endpoints (authenticated) ──────────────────────────
+
+export const getDocumentPreferences = (tenantId?: string) =>
+  apiFetch<DocumentPreferences>(`/documents/preferences${tenantId ? `?tenantId=${tenantId}` : ''}`);
+
+export const updateDocumentPreferences = (data: Partial<DocumentPreferences>, tenantId?: string) =>
+  apiFetch<DocumentPreferences>(
+    `/documents/preferences${tenantId ? `?tenantId=${tenantId}` : ''}`,
+    { method: 'PUT', body: JSON.stringify(data) }
+  );
 
 export const getBookingSettings = () =>
   apiFetch<MeetingSettings>('/booking/settings');

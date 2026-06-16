@@ -27,6 +27,10 @@ public class TenantDocumentPreferences {
     @Column(nullable = false, length = 10)
     private String sensitiveDocChannel = "EMAIL";
 
+    /** Envia invitació de reserva automàticament en acceptar un pressupost (F3 → F2) */
+    @Column(nullable = false)
+    private boolean autoBookingOnAccept = true;
+
     @Column(nullable = false)
     private Instant updatedAt;
 
