@@ -341,7 +341,12 @@ function KeyRow({ item, onSave, onDelete, t }: {
 
       {editing && (
         <div className="mt-3">
-          {inputMode === 'boolean' ? (
+          {loadingEdit ? (
+            <div className="flex items-center gap-2 text-xs text-ink-3 f-mono py-2">
+              <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+              Carregant valor actual…
+            </div>
+          ) : inputMode === 'boolean' ? (
             <div className="flex gap-2 items-center">
               <button
                 type="button"
@@ -451,6 +456,7 @@ function KeyRow({ item, onSave, onDelete, t }: {
             </div>
           )}
         </div>
+
       )}
     </div>
   );
