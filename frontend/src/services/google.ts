@@ -9,6 +9,7 @@ export interface GoogleStatus {
   gmailEnabled: boolean;
   calendarEnabled: boolean;
   sheetsEnabled: boolean;
+  driveFolderId?: string | null;
 }
 
 export interface AuthUrlResponse {
@@ -21,6 +22,25 @@ export interface ModuleConfigRequest {
   gmailEnabled: boolean;
   calendarEnabled: boolean;
   sheetsEnabled: boolean;
+  driveFolderId?: string | null;
+}
+
+export interface DriveFileItem {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  createdTime: string;
+  webViewLink: string;
+}
+
+export interface CalendarEventItem {
+  id: string;
+  summary: string;
+  description?: string;
+  start: string;
+  end: string;
+  htmlLink: string;
 }
 
 export async function getGoogleStatus(tenantId: string): Promise<GoogleStatus> {
@@ -54,6 +74,15 @@ export async function sendMail(tenantId: string, to: string, subject: string, bo
     method: 'POST',
     body: JSON.stringify({ to, subject, body }),
   });
+}
+
+export async function getDriveFiles(tenantId: string, folderId?: string): Promise<DriveFileItem[]> {
+  const qs = folderId ? `?folderId=${folderId}` : '';
+  return apiFetch<DriveFileItem[]>(`/tenants/${tenantId}/google/drive${qs}`);
+}
+
+export async function getCalendarEvents(tenantId: string): Promise<CalendarEventItem[]> {
+  return apiFetch<CalendarEventItem[]>(`/tenants/${tenantId}/google/calendar/events`);
 }
 
 // ── Drive AMG admin ───────────────────────────────────────────

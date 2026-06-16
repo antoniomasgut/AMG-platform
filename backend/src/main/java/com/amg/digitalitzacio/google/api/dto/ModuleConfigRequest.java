@@ -4,5 +4,6 @@ public record ModuleConfigRequest(
     boolean driveEnabled,
     boolean gmailEnabled,
     boolean calendarEnabled,
-    boolean sheetsEnabled
+    boolean sheetsEnabled,
+    String driveFolderId
 ) {}

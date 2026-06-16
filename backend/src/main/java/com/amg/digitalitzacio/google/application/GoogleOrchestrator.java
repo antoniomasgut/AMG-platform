@@ -40,7 +40,8 @@ public class GoogleOrchestrator {
             .orElse(GoogleModuleConfig.defaults(tenantId));
         return new GoogleStatusResponse(true, conn.email(),
             config.isDriveEnabled(), config.isGmailEnabled(),
-            config.isCalendarEnabled(), config.isSheetsEnabled());
+            config.isCalendarEnabled(), config.isSheetsEnabled(),
+            config.getDriveFolderId());
     }
 
     @Transactional
@@ -51,6 +52,7 @@ public class GoogleOrchestrator {
         config.setGmailEnabled(req.gmailEnabled());
         config.setCalendarEnabled(req.calendarEnabled());
         config.setSheetsEnabled(req.sheetsEnabled());
+        if (req.driveFolderId() != null) config.setDriveFolderId(req.driveFolderId());
         return moduleConfigRepo.save(config);
     }
 

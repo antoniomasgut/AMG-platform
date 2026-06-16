@@ -6,5 +6,6 @@ public record GoogleStatusResponse(
     boolean driveEnabled,
     boolean gmailEnabled,
     boolean calendarEnabled,
-    boolean sheetsEnabled
+    boolean sheetsEnabled,
+    String driveFolderId
 ) {}

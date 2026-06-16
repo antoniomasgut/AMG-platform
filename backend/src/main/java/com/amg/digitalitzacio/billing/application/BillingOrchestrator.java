@@ -586,10 +586,16 @@ public class BillingOrchestrator implements BillingService {
         if (tenant.getContractedPhases() != null && !tenant.getContractedPhases().isBlank()) {
             existing.addAll(Arrays.asList(tenant.getContractedPhases().split(",")));
         }
+        // Prerequisit: F2/F3/F4/F5 requereix F1 (Captació i Agent IA)
+        var combined = new TreeSet<>(existing);
+        combined.addAll(newPhases);
+        boolean hasAdvanced = combined.stream().anyMatch(p -> p.equals("F2") || p.equals("F3") || p.equals("F4") || p.equals("F5"));
+        if (hasAdvanced && !combined.contains("F1")) {
+            throw new IllegalArgumentException("F1 (Captació i Agent IA) és prerequisit per contractar fases avançades (F2–F5)");
+        }
         existing.addAll(newPhases);
         tenant.setContractedPhases(String.join(",", existing));
         tenantRepository.save(tenant);
-        // Registra l'activació de cada nova fase al historial d'auditoria
         for (String phase : newPhases) {
             phaseActivationService.recordActivation(tenantId, phase, "BUDGET_ACCEPTED", null, null);
         }
