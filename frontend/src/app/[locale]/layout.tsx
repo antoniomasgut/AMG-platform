@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: {
-      default: 'AMG Digitalitzacions · Agent IA per a negocis locals',
+      default: 'AMG Digitalitzacions · Agent IA per a negocis locals a Mallorca',
       template: '%s · AMG Digitalitzacions',
     },
     description: t('subtitle'),
@@ -62,21 +62,28 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Organization',
+    '@type': 'LocalBusiness',
     name: 'AMG Digitalitzacions',
     url: `${SITE_URL}/${locale}`,
     logo: `${SITE_URL}/favicon.svg`,
+    telephone: '+34-614-492-062',
+    email: 'info@amgdl.com',
+    areaServed: {
+      '@type': 'Place',
+      name: 'Mallorca',
+    },
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Palma',
+      addressRegion: 'Illes Balears',
+      addressCountry: 'ES',
+    },
     contactPoint: {
       '@type': 'ContactPoint',
       telephone: '+34-614-492-062',
       email: 'info@amgdl.com',
       contactType: 'customer service',
       availableLanguage: ['Catalan', 'Spanish', 'English', 'German'],
-    },
-    address: {
-      '@type': 'PostalAddress',
-      addressRegion: 'Illes Balears',
-      addressCountry: 'ES',
     },
   };
 

@@ -18,7 +18,14 @@
     "titleAccent": "BY NOT REPLYING ON WHATSAPP",
     "subtitle": "Turn your WhatsApp into an organised lead-generation machine. No tech skills required.",
     "cta": "BOOK A DEMO",
-    "scrollDown": "SCROLL TO LEARN MORE"
+    "scrollDown": "SCROLL TO LEARN MORE",
+    "badge": "Automation for local businesses · Mallorca",
+    "ctaSecondary": "SEE HOW IT WORKS",
+    "guarantees": [
+      "Live in 48h",
+      "No long-term contract",
+      "Support in your language"
+    ]
   },
   "problem": {
     "title": "IS YOUR BUSINESS CONTROLLING YOU?",
@@ -1365,6 +1372,354 @@
         "DRAFT": "Draft",
         "CANCELLED": "Cancelled"
       }
+    }
+  },
+  "verticals": {
+    "shared": {
+      "consultaGratuita": "Free consultation",
+      "veureFunciona": "See how it works",
+      "ctaButton": "Chat on WhatsApp →",
+      "ctaContact": "+34 614 492 062 · info@amgdl.com",
+      "portalLink": "Have a portal? Access the portal →",
+      "faqSectionLabel": "Frequently asked questions"
+    },
+    "pressupostos": {
+      "meta": {
+        "title": "Automated quote follow-up for businesses · Mallorca | AMG Digitalitzacions",
+        "description": "No quote left unanswered. PDF generation, automatic follow-up and approval tracking via WhatsApp. From 59€/month."
+      },
+      "badge": "Automation · Quotes & projects · Mallorca",
+      "h1": "No quote",
+      "h1Accent": "left unanswered.",
+      "subtitle": "For builders, installers, architects, photographers and any business that works with custom quotes. The agent generates them, follows up and records responses — so you don't lose jobs because you didn't call in time.",
+      "problemLabel": "The problem",
+      "problemHeadline": "A quote without follow-up is a lost job.",
+      "problems": [
+        {
+          "num": "01",
+          "title": "Quotes that get forgotten",
+          "desc": "You send it, days pass, and nobody follows up."
+        },
+        {
+          "num": "02",
+          "title": "No visibility on interest",
+          "desc": "You have no way of knowing who opened it or who is undecided."
+        },
+        {
+          "num": "03",
+          "title": "Hours quoting manually",
+          "desc": "Time taken away from real work to draft and send documents."
+        }
+      ],
+      "solutionsLabel": "How we solve it",
+      "solutionsHeadline": "Generate, send and follow up. Automatically.",
+      "solutions": [
+        {
+          "num": "01",
+          "title": "Automatic PDF quotes",
+          "desc": "The agent generates the quote in PDF with your format and sends it to the client immediately, via WhatsApp or email.",
+          "pills": [
+            "Automatic generation",
+            "Your design",
+            "Instant delivery"
+          ]
+        },
+        {
+          "num": "02",
+          "title": "Follow-up on no replies",
+          "desc": "If the client doesn't respond, the agent follows up on its own on the days you set, with the right message each time.",
+          "pills": [
+            "Scheduled reminders",
+            "No chasing from you",
+            "More closed quotes"
+          ]
+        },
+        {
+          "num": "03",
+          "title": "Response tracking",
+          "desc": "You always know who accepted, who's undecided and who said no. All logged automatically.",
+          "pills": [
+            "Quote status at a glance",
+            "Logged approvals",
+            "Clear pipeline view"
+          ]
+        },
+        {
+          "num": "04",
+          "title": "Client reactivation",
+          "desc": "The agent recovers past clients and half-finished quotes, automatically.",
+          "pills": [
+            "Recover lost opportunities",
+            "Follow up on pending jobs",
+            "Better conversion"
+          ]
+        }
+      ],
+      "forWhoLabel": "Built for",
+      "forWho": [
+        "Builders & contractors",
+        "Installers",
+        "Architects & surveyors",
+        "Photographers & caterers",
+        "Workshops",
+        "Removal companies",
+        "Custom service businesses"
+      ],
+      "faqTitle": "What everyone usually asks.",
+      "faqs": [
+        {
+          "q": "Can I use my own quote format?",
+          "a": "Yes. The agent generates PDFs with your design and your data."
+        },
+        {
+          "q": "How often does it follow up?",
+          "a": "You decide: for example at day 2 and day 5. The agent does it on its own with the tone you want."
+        },
+        {
+          "q": "Will clients feel harassed by a robot?",
+          "a": "No. The messages are natural and you can stop or join the thread whenever you like."
+        },
+        {
+          "q": "How long does it take to go live?",
+          "a": "The website is published within 48h and the quote system is configured in phases."
+        }
+      ],
+      "testimonialQuote": "[ Testimonial from Fullana Reformes — text pending ]",
+      "testimonialName": "Fullana Reformes",
+      "testimonialRole": "Building contractor · Mallorca",
+      "ctaTitle": "Let's talk about your quotes.",
+      "ctaSubtitle": "Free consultation, no commitment. Quote in 24h."
+    },
+    "despatxos": {
+      "meta": {
+        "title": "AI agent for professional offices & services · Mallorca | AMG Digitalitzacions",
+        "description": "Filter repetitive queries and get your time back. The agent answers common questions, qualifies leads and only passes through what matters. From 59€/month."
+      },
+      "badge": "Automation · Professional services · Mallorca",
+      "h1": "Filter repetitive queries",
+      "h1Accent": "and get your time back.",
+      "subtitle": "For accountancy firms, law offices, consultancies and professional services. The agent answers routine questions, qualifies contacts and only passes through the enquiries that truly need your attention.",
+      "problemLabel": "The problem",
+      "problemHeadline": "The time you waste answering the same thing over and over.",
+      "problems": [
+        {
+          "num": "01",
+          "title": "The same questions every day",
+          "desc": "Documents, deadlines, what do I need for... Always the same."
+        },
+        {
+          "num": "02",
+          "title": "Calls that go nowhere",
+          "desc": "People asking about things outside your scope or who will never hire you."
+        },
+        {
+          "num": "03",
+          "title": "Queries that fall through the cracks",
+          "desc": "Messages that arrive outside office hours and by the time you see them it's too late."
+        }
+      ],
+      "solutionsLabel": "How we solve it",
+      "solutionsHeadline": "Fewer interruptions. More valuable work.",
+      "solutions": [
+        {
+          "num": "01",
+          "title": "Automatic FAQ answers",
+          "desc": "The agent answers routine questions 24/7: documentation, deadlines, hours, prices. You stop repeating yourself.",
+          "pills": [
+            "Always available",
+            "Consistent answers",
+            "Fewer interruptions"
+          ]
+        },
+        {
+          "num": "02",
+          "title": "Lead qualification",
+          "desc": "Before passing anyone to you, the agent collects the key information and filters out what doesn't fit.",
+          "pills": [
+            "Pre-filtered leads",
+            "Prepared contacts",
+            "Fewer wasted calls"
+          ]
+        },
+        {
+          "num": "03",
+          "title": "Document collection",
+          "desc": "The agent requests and collects the documents you need from each client, in an organised and automatic way.",
+          "pills": [
+            "Automatic requests",
+            "Everything collected neatly",
+            "Less back-and-forth"
+          ]
+        },
+        {
+          "num": "04",
+          "title": "Follow-up & reminders",
+          "desc": "Deadlines, renewals, expiries. The agent alerts the client (and you) before it's too late.",
+          "pills": [
+            "Expiry alerts",
+            "Automatic reminders",
+            "Nothing slips through"
+          ]
+        }
+      ],
+      "forWhoLabel": "Built for",
+      "forWho": [
+        "Accountancy & tax firms",
+        "Law offices",
+        "Consultancies",
+        "Agencies",
+        "HR professionals",
+        "Professional services with recurring queries"
+      ],
+      "faqTitle": "What everyone usually asks.",
+      "faqs": [
+        {
+          "q": "Can the agent give sensitive or legal information?",
+          "a": "No. It answers general questions and collects information; substantive matters always go through you."
+        },
+        {
+          "q": "Does it connect with my management tools?",
+          "a": "We work with what you already use whenever possible, or we suggest alternatives."
+        },
+        {
+          "q": "Does the client know when they're talking to a person?",
+          "a": "Yes, and you can jump into the thread at any time. Hybrid bot + human mode."
+        },
+        {
+          "q": "How long does it take to go live?",
+          "a": "The website is published within 48h and the agent is configured in phases for your office."
+        }
+      ],
+      "testimonialQuote": "[ Testimonial from Aiguabella Assessors — text pending ]",
+      "testimonialName": "Aiguabella Assessors",
+      "testimonialRole": "Accountancy firm · Mallorca",
+      "ctaTitle": "Let's talk about your office.",
+      "ctaSubtitle": "Free consultation, no commitment. Quote in 24h."
+    },
+    "citaPrevia": {
+      "meta": {
+        "title": "Automated scheduling for appointment-based businesses · Mallorca | AMG Digitalitzacions",
+        "description": "Cut no-shows and stop managing your schedule manually. Automated bookings, reminders and WhatsApp confirmations. From 59€/month."
+      },
+      "badge": "Automation · Appointment businesses · Mallorca",
+      "h1": "Fewer no-shows.",
+      "h1Accent": "A schedule that runs itself.",
+      "subtitle": "For physiotherapists, clinics, beauty centres, vets and any business that works with prior appointments. Automated bookings, reminders and WhatsApp confirmations — without you having to answer every message.",
+      "problemLabel": "The problem",
+      "problemHeadline": "Every empty slot is money you won't get back.",
+      "problems": [
+        {
+          "num": "01",
+          "title": "No-shows",
+          "desc": "The patient who doesn't show up leaves a gap you can't fill."
+        },
+        {
+          "num": "02",
+          "title": "Manually managed schedule",
+          "desc": "Hours every day confirming appointments by WhatsApp between clients."
+        },
+        {
+          "num": "03",
+          "title": "Clients who don't come back",
+          "desc": "They finish treatment and disappear, with no follow-up from anyone."
+        }
+      ],
+      "solutionsLabel": "How we solve it",
+      "solutionsHeadline": "An agent that works when you can't.",
+      "solutions": [
+        {
+          "num": "01",
+          "title": "Automatic reminders",
+          "desc": "The agent sends a reminder the day before and asks for confirmation. If the client can't make it, the slot opens up for someone else.",
+          "pills": [
+            "Fewer empty slots",
+            "Automatic confirmation",
+            "Easy rescheduling"
+          ]
+        },
+        {
+          "num": "02",
+          "title": "WhatsApp bookings 24/7",
+          "desc": "Clients book on their own, at any hour, without you having to reply. The schedule updates itself.",
+          "pills": [
+            "Off-hours bookings",
+            "No missed calls",
+            "Always up to date"
+          ]
+        },
+        {
+          "num": "03",
+          "title": "Client reactivation",
+          "desc": "The agent detects who hasn't visited in a while and proposes a return, automatically.",
+          "pills": [
+            "Win back inactive clients",
+            "Post-treatment follow-up",
+            "More recurring visits"
+          ]
+        },
+        {
+          "num": "04",
+          "title": "Automatic reviews",
+          "desc": "After each visit, the agent asks for a Google review. More ratings, more new clients.",
+          "pills": [
+            "Automatic request",
+            "Better reputation",
+            "More Google leads"
+          ]
+        }
+      ],
+      "forWhoLabel": "Built for",
+      "forWho": [
+        "Physiotherapists",
+        "Dental clinics",
+        "Psychologists",
+        "Beauty & aesthetics centres",
+        "Hair salons",
+        "Veterinarians",
+        "Nutritionists",
+        "Podiatrists"
+      ],
+      "faqTitle": "What everyone usually asks.",
+      "faqs": [
+        {
+          "q": "Does it connect with my current booking system?",
+          "a": "Yes. We work with the tools you already use, or we set up a new one if you prefer."
+        },
+        {
+          "q": "Does the client notice they're talking to a bot?",
+          "a": "The agent replies naturally, and you can jump into the conversation at any time in the same thread."
+        },
+        {
+          "q": "How long does it take to go live?",
+          "a": "The website is published within 48h and the agent is configured in phases according to your needs."
+        },
+        {
+          "q": "What if I want to change something?",
+          "a": "The system evolves with you: we implement adjustments and improvements when you need them, within your plan."
+        }
+      ],
+      "testimonialQuote": "[ Testimonial from Clínica Rosselló — text pending ]",
+      "testimonialName": "Clínica Rosselló",
+      "testimonialRole": "Physiotherapy clinic · Palma",
+      "ctaTitle": "Let's talk about your schedule.",
+      "ctaSubtitle": "Free consultation, no commitment. Quote in 24h."
+    }
+  },
+  "sectors": {
+    "title": "WHAT TYPE OF BUSINESS?",
+    "subtitle": "Solutions built for specific sectors in Mallorca.",
+    "cta": "See solution →",
+    "citaPrevia": {
+      "label": "Appointment-based businesses",
+      "desc": "Physios, clinics, beauty, vets, hairdressers..."
+    },
+    "pressupostos": {
+      "label": "Quote-based businesses",
+      "desc": "Renovation, installers, architects, photographers, caterers..."
+    },
+    "despatxos": {
+      "label": "Professional offices",
+      "desc": "Accountants, lawyers, consultants, agencies..."
     }
   }
 }

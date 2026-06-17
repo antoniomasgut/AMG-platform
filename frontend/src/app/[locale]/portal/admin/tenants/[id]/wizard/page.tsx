@@ -770,6 +770,165 @@ function AgentStep({ tenantId, tenant, channels, onSave }: {
   );
 }
 
+// ── Pas: Pendent de configurar ───────────────────────────────────────────────
+
+interface PendingItem {
+  id: string;
+  label: string;
+  desc: string;
+  sectionId: string;
+  done: boolean;
+  required: boolean;
+}
+
+function PendingStep({ tenant, channels, selectedPhases, tenantId, locale, onNext }: {
+  tenant: TenantResponse;
+  channels?: ChannelsConfig | null;
+  selectedPhases: string[];
+  tenantId: string;
+  locale: string;
+  onNext: () => void;
+}) {
+  const router = useRouter();
+  const phases = new Set(selectedPhases);
+
+  const items: PendingItem[] = [
+    {
+      id: 'whatsapp',
+      label: 'WhatsApp Business (WABA)',
+      desc: "Connectar el número de WhatsApp de l'agent via Meta Cloud API.",
+      sectionId: 'section-whatsapp',
+      done: !!(channels?.whatsappPhoneNumber || channels?.whatsappMetaPhoneNumberId),
+      required: true,
+    },
+    {
+      id: 'telegram',
+      label: 'Telegram Bot',
+      desc: 'Connectar el canal de Telegram per a notificacions internes i equip.',
+      sectionId: 'section-telegram',
+      done: !!channels?.telegramLinked,
+      required: phases.has('F5'),
+    },
+    {
+      id: 'atd',
+      label: 'Acord de Tractament de Dades (ATD)',
+      desc: 'Enviar i signar l\'ATD amb el client. Obligatori per a la posada en marxa.',
+      sectionId: 'section-atd',
+      done: false,
+      required: true,
+    },
+    {
+      id: 'web',
+      label: 'Landing / Allotjament web',
+      desc: 'Configurar la landing page i el domini si el client en vol.',
+      sectionId: 'section-web',
+      done: false,
+      required: false,
+    },
+    ...(phases.has('F3') ? [{
+      id: 'documents',
+      label: 'Plantilles de documents',
+      desc: 'Configurar les plantilles de pressupost i contracte per a aquest client.',
+      sectionId: 'section-documents',
+      done: false,
+      required: true,
+    }] : []),
+    {
+      id: 'lifecycle',
+      label: 'Cicle de vida — Activació',
+      desc: "Marcar la implementació com a entregada, establir la data d'inici de facturació i activar el bot.",
+      sectionId: 'section-lifecycle',
+      done: !!tenant.billingStartDate,
+      required: true,
+    },
+    {
+      id: 'gocardless',
+      label: 'GoCardless SEPA (opcional)',
+      desc: 'Configurar la domiciliació bancària si el client la vol.',
+      sectionId: 'section-gocardless',
+      done: false,
+      required: false,
+    },
+  ];
+
+  const required = items.filter(i => i.required);
+  const optional = items.filter(i => !i.required);
+  const pendingRequired = required.filter(i => !i.done).length;
+
+  function goTo(sectionId: string) {
+    router.push(`/${locale}/portal/admin/tenants/${tenantId}#${sectionId}`);
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-bold text-ink-0 mb-1">Pendent de configurar</h2>
+        <p className="text-sm text-ink-2">
+          El nucli de l&apos;agent ja és configurat. Completa els passos següents a la pàgina del tenant per deixar-ho tot a punt.
+        </p>
+      </div>
+
+      {pendingRequired > 0 && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-[rgba(255,107,0,0.08)] border border-[rgba(255,107,0,0.25)] rounded text-xs text-accent f-mono">
+          <IconSet.Bell size={12} /> {pendingRequired} {pendingRequired === 1 ? 'element obligatori pendent' : 'elements obligatoris pendents'}
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <div className="f-mono text-[10px] uppercase tracking-wider text-ink-3 mb-1">Obligatori</div>
+        {required.map(item => (
+          <div key={item.id} className={`flex items-start gap-3 p-3 rounded border ${
+            item.done
+              ? 'bg-[rgba(57,211,83,0.05)] border-[rgba(57,211,83,0.2)]'
+              : 'bg-surface-base border-border-base'
+          }`}>
+            <div className={`mt-0.5 shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
+              item.done ? 'bg-[rgba(57,211,83,0.2)] text-[#39d353]' : 'bg-[rgba(255,107,0,0.15)] text-accent'
+            }`}>
+              {item.done ? '✓' : '!'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-ink-0">{item.label}</div>
+              <div className="text-xs text-ink-3 mt-0.5">{item.desc}</div>
+            </div>
+            <button
+              onClick={() => goTo(item.sectionId)}
+              className="shrink-0 f-mono text-[10px] uppercase tracking-wider text-accent hover:text-accent-light border border-[rgba(255,107,0,0.3)] hover:border-accent px-2 py-1 transition"
+            >
+              Anar →
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {optional.length > 0 && (
+        <div className="space-y-2">
+          <div className="f-mono text-[10px] uppercase tracking-wider text-ink-3 mb-1">Opcional</div>
+          {optional.map(item => (
+            <div key={item.id} className="flex items-start gap-3 p-3 rounded border border-border-base bg-surface-base opacity-75 hover:opacity-100 transition">
+              <div className="mt-0.5 shrink-0 w-4 h-4 rounded-full border border-border-base flex items-center justify-center text-[10px] text-ink-3">○</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-ink-0">{item.label}</div>
+                <div className="text-xs text-ink-3 mt-0.5">{item.desc}</div>
+              </div>
+              <button
+                onClick={() => goTo(item.sectionId)}
+                className="shrink-0 f-mono text-[10px] uppercase tracking-wider text-ink-3 hover:text-ink-1 border border-border-base px-2 py-1 transition"
+              >
+                Anar →
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="pt-2">
+        <AMGButton onClick={onNext}>Completar wizard →</AMGButton>
+      </div>
+    </div>
+  );
+}
+
 // ── Step: Done ───────────────────────────────────────────────────────────────
 
 function DoneStep({ tenant, selectedPhases, tenantId, locale, onRestart }: {
@@ -876,6 +1035,7 @@ export default function TenantWizardPage() {
     { id: 'phases', label: 'Fases' },
     ...selectedPhases.sort().map(p => ({ id: `phase-${p}`, label: `${p} — ${PHASE_INFO[p]?.label ?? p}` })),
     { id: 'agent', label: 'Agent IA' },
+    { id: 'pending', label: 'Pendent' },
     { id: 'done', label: 'Completat' },
   ];
 
@@ -888,7 +1048,7 @@ export default function TenantWizardPage() {
     const newSteps = [
       { id: 'general' }, { id: 'phases' },
       ...phasesToUse.sort().map(p => ({ id: `phase-${p}` })),
-      { id: 'agent' }, { id: 'done' },
+      { id: 'agent' }, { id: 'pending' }, { id: 'done' },
     ];
     const newIdx = Math.min(currentStep + 1, newSteps.length - 1);
     setCompletedIds(prev => new Set(Array.from(prev).concat(stepId)));
@@ -1084,6 +1244,17 @@ export default function TenantWizardPage() {
                 />
               )}
 
+              {currentStepObj?.id === 'pending' && (
+                <PendingStep
+                  tenant={tenant}
+                  channels={channels}
+                  selectedPhases={selectedPhases}
+                  tenantId={tenantId}
+                  locale={locale}
+                  onNext={() => advance('pending')}
+                />
+              )}
+
               {currentStepObj?.id === 'done' && (
                 <DoneStep
                   tenant={tenant}
@@ -1095,7 +1266,7 @@ export default function TenantWizardPage() {
               )}
 
               {/* Back button (not on first step or done) */}
-              {currentStep > 0 && currentStepObj?.id !== 'done' && (
+              {currentStep > 0 && currentStepObj?.id !== 'done' && currentStepObj?.id !== 'pending' && (
                 <div className="mt-6 pt-4 border-t border-border-base">
                   <button onClick={() => setCurrentStep(s => Math.max(0, s - 1))}
                     className="flex items-center gap-1.5 text-xs text-ink-3 hover:text-ink-1 f-mono transition">

@@ -61,9 +61,9 @@ const KEY_IMPORTANCE: Record<string, Importance> = {
   MAINTENANCE_MODE:          { level: 'important', impact: 'Sense configurar, el mode manteniment queda desactivat per defecte' },
   PLATFORM_TENANT_ID:        { level: 'important', impact: 'Els leads del formulari web no s\'assignen a cap tenant' },
   DEEPSEEK_API_KEY:          { level: 'important', impact: 'DeepSeek no disponible com a alternativa als models Claude' },
-  TWILIO_ACCOUNT_SID:        { level: 'important', impact: 'Canal WhatsApp via Twilio no disponible' },
-  TWILIO_AUTH_TOKEN:         { level: 'important', impact: 'Canal WhatsApp via Twilio no disponible' },
-  TWILIO_WHATSAPP_FROM:      { level: 'important', impact: 'Canal WhatsApp via Twilio no disponible' },
+  TWILIO_ACCOUNT_SID:        { level: 'optional',  impact: 'Canal WhatsApp via Twilio no disponible (alternativa: Meta Cloud API directe per tenant)' },
+  TWILIO_AUTH_TOKEN:         { level: 'optional',  impact: 'Canal WhatsApp via Twilio no disponible (alternativa: Meta Cloud API directe per tenant)' },
+  TWILIO_WHATSAPP_FROM:      { level: 'optional',  impact: 'Canal WhatsApp via Twilio no disponible (alternativa: Meta Cloud API directe per tenant)' },
   META_PAGE_ACCESS_TOKEN:    { level: 'important', impact: 'Meta Ads sense token de pàgina de fallback' },
   META_APP_SECRET:           { level: 'important', impact: 'Les signatures HMAC dels webhooks Meta no es verifiquen' },
   META_ADS_MANAGEMENT_TOKEN: { level: 'important', impact: 'No es poden crear ni gestionar campanyes Meta des del portal' },
@@ -77,6 +77,7 @@ const KEY_IMPORTANCE: Record<string, Importance> = {
   GOOGLE_OAUTH_CLIENT_SECRET:{ level: 'optional',  impact: 'Els clients no podran connectar el seu propi Google Calendar' },
   OPENAI_API_KEY:            { level: 'optional',  impact: 'Generació d\'imatges DALL·E no disponible per a Meta Ads' },
   TELEGRAM_CHAT_ID:          { level: 'optional',  impact: 'Alertes d\'infraestructura no s\'envien al Telegram' },
+  OLLAMA_BASE_URL:           { level: 'optional',  impact: 'Models locals via Ollama no disponibles (requereix instància Ollama activa al servidor)' },
   OPENPROVIDER_USERNAME:     { level: 'optional',  impact: 'Registre de dominis via OpenProvider no disponible' },
   OPENPROVIDER_PASSWORD:     { level: 'optional',  impact: 'Registre de dominis via OpenProvider no disponible' },
   AMG_SALES_CHAT_ID:         { level: 'important', impact: 'Les notificacions comercials (leads, pressupostos, pagaments) no s\'envien' },
@@ -706,7 +707,8 @@ export default function SystemConfigPage() {
     c.label.toLowerCase().includes(search.toLowerCase()) ||
     c.description.toLowerCase().includes(search.toLowerCase())
   );
-  const missing = list.filter((c) => !c.configured).length;
+  const missingCritical = list.filter(c => !c.configured && KEY_IMPORTANCE[c.key]?.level === 'critical').length;
+  const missingOther    = list.filter(c => !c.configured && KEY_IMPORTANCE[c.key]?.level !== 'critical').length;
 
   const byCategory = filtered.reduce<Record<string, ConfigStatus[]>>((acc, c) => {
     const cat = c.category;
@@ -738,8 +740,9 @@ export default function SystemConfigPage() {
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">{t('breadcrumbDisplay')}</span>
             <div className="flex items-center gap-3 mt-1">
               <div className="f-display font-bold text-xl">{t('title')}</div>
-              {missing > 0 && <AMGBadge tone="danger">{t('missing', { n: missing })}</AMGBadge>}
-              {missing === 0 && list.length > 0 && <AMGBadge tone="success">{t('allConfigured')}</AMGBadge>}
+              {missingCritical > 0 && <AMGBadge tone="danger">{missingCritical} imprescindible{missingCritical > 1 ? 's' : ''} sense configurar</AMGBadge>}
+              {missingCritical === 0 && missingOther > 0 && <AMGBadge tone="warning">{missingOther} opcional{missingOther > 1 ? 's' : ''} sense configurar</AMGBadge>}
+              {missingCritical === 0 && missingOther === 0 && list.length > 0 && <AMGBadge tone="success">{t('allConfigured')}</AMGBadge>}
             </div>
           </div>
         </div>

@@ -341,6 +341,65 @@ function SectionCard({
   );
 }
 
+// ── Bloc informatiu WABA ───────────────────────────────────────────────────────
+function WABAInfoCallout() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-orange-200 bg-orange-50 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-start gap-3 p-4 text-left hover:bg-orange-100 transition"
+      >
+        <span className="text-xl leading-none mt-0.5">📱</span>
+        <div className="flex-1">
+          <div className="text-sm font-semibold text-orange-800">
+            Necessitareu un número de WhatsApp Business API
+          </div>
+          <div className="text-xs text-orange-600 mt-0.5">
+            Podeu iniciar el tràmit ara mentre ompliu la fitxa — {open ? 'amaga detalls ▲' : 'veure com ▼'}
+          </div>
+        </div>
+      </button>
+      {open && (
+        <div className="px-4 pb-4 space-y-3 border-t border-orange-200 pt-3">
+          <p className="text-xs text-orange-700">
+            L&apos;agent IA usa WhatsApp Business API (no l&apos;app del mòbil). Si ja teniu un número
+            dedicat, poseu-lo al camp de dalt. Si no, inicieu el tràmit ara:
+          </p>
+          <div className="space-y-2">
+            {[
+              { n: '1', text: 'Creeu un compte a ', link: 'business.facebook.com', url: 'https://business.facebook.com', after: ' amb el vostre Facebook personal' },
+              { n: '2', text: 'Verificau el negoci pujant el CIF o un document d\'Hisenda (triga 1–5 dies)', link: null, url: null, after: null },
+              { n: '3', text: 'Enviau-nos l\'ID del Business Manager i el número que voleu activar — nosaltres fem la resta', link: null, url: null, after: null },
+            ].map(({ n, text, link, url, after }) => (
+              <div key={n} className="flex items-start gap-2">
+                <span className="w-5 h-5 min-w-5 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
+                <span className="text-xs text-orange-800">
+                  {text}
+                  {link && url && <a href={url} target="_blank" rel="noopener noreferrer" className="underline font-medium">{link}</a>}
+                  {after}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-lg bg-white border border-orange-200 p-3 text-xs text-orange-700">
+            💡 <strong>Si ja useu WhatsApp Business al mòbil</strong> amb el número actual, recomanem
+            contractar una línia nova (Lebara, Simyo… des de ~3€/mes) exclusivament per a l&apos;agent,
+            per no perdre l&apos;historial.
+          </div>
+          <div className="text-xs text-orange-600">
+            Dubtes? Escriviu-nos a{' '}
+            <a href="https://wa.me/34614492062" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+              +34 614 492 062
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Secció AGENT ───────────────────────────────────────────────────────────────
 function AgentSection({ data, onChange }: { data: IntakeData; onChange: (p: Partial<IntakeData>) => void }) {
   return (
@@ -359,6 +418,7 @@ function AgentSection({ data, onChange }: { data: IntakeData; onChange: (p: Part
           onChange={e => onChange({ whatsappPhone: e.target.value })}
           placeholder="+34 6XX XXX XXX" />
       </div>
+      <WABAInfoCallout />
       <div>
         <label className={labelCls}>Horaris d'atenció</label>
         <input type="text" className={inputCls}

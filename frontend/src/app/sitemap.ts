@@ -5,6 +5,9 @@ const LOCALES = ['ca', 'es', 'en', 'de'] as const;
 
 const PUBLIC_PATHS = [
   '',
+  '/cita-previa',
+  '/pressupostos',
+  '/despatxos',
   '/login',
   '/forgot-password',
   '/legal/avis-legal',
@@ -22,8 +25,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       entries.push({
         url,
         lastModified: new Date(),
-        changeFrequency: path === '' ? 'weekly' : 'monthly',
-        priority: path === '' ? 1.0 : path === '/login' ? 0.8 : 0.5,
+        changeFrequency: path === '' ? 'weekly' : ['/cita-previa', '/pressupostos', '/despatxos'].includes(path) ? 'monthly' : 'monthly',
+        priority: path === '' ? 1.0 : ['/cita-previa', '/pressupostos', '/despatxos'].includes(path) ? 0.9 : path === '/login' ? 0.8 : 0.5,
         alternates: {
           languages: Object.fromEntries(
             LOCALES.map(l => [l, `${SITE_URL}/${l}${path}`])
