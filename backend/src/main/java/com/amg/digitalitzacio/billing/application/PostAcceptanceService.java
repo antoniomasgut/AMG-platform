@@ -285,6 +285,24 @@ public class PostAcceptanceService {
         }
     }
 
+    public void onSetupSlaExpired(com.amg.digitalitzacio.billing.domain.BudgetSetupIntake intake, long hoursWaiting) {
+        try {
+            String tenantUrl = "https://amgdl.com/portal/admin/tenants/" + intake.getTenantId() + "/wizard";
+            String msg = """
+                    ⚠️ <b>SLA expirat — Setup sense activar</b>
+                    👤 %s · %s
+                    ⏱ Fa %d hores esperant implementació
+                    🔧 <a href="%s">Iniciar implementació →</a>
+                    """.formatted(
+                    intake.getTenantName() != null ? intake.getTenantName() : "Desconegut",
+                    intake.getSector() != null ? intake.getSector() : "—",
+                    hoursWaiting, tenantUrl);
+            sendToSalesChat(msg);
+        } catch (Exception e) {
+            log.warn("[PostAcceptance] Error notificant SLA expirat tenant={}: {}", intake.getTenantId(), e.getMessage());
+        }
+    }
+
     public void onBudgetRejected(Budget budget, String reason) {
         try {
             var tenant = tenantRepository.findById(budget.getTenantId()).orElse(null);

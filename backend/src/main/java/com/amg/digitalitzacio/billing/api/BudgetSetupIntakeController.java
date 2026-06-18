@@ -7,6 +7,7 @@ import com.amg.digitalitzacio.billing.domain.BudgetLineRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetSetupIntake;
 import com.amg.digitalitzacio.billing.domain.BudgetSetupIntakeRepository;
+import com.amg.digitalitzacio.billing.domain.BudgetStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -101,6 +102,44 @@ public class BudgetSetupIntakeController {
                 .map(i -> ResponseEntity.ok(toResponse(i)))
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    // GET /api/v1/billing/status/{token} — pública, retorna l'estat del projecte per token
+    @GetMapping("/status/{token}")
+    public ProjectStatusResponse getProjectStatus(@PathVariable String token) {
+        BudgetSetupIntake intake = intakeRepository.findByToken(token)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Estat no trobat"));
+
+        Budget budget = budgetRepository.findById(intake.getBudgetId()).orElse(null);
+        var tenant = tenantRepository.findById(intake.getTenantId()).orElse(null);
+
+        boolean configReceived   = true;
+        boolean paymentConfirmed = budget != null &&
+                (budget.getStatus() == BudgetStatus.ACCEPTED || budget.getStatus() == BudgetStatus.EXPIRED);
+        boolean setupCompleted   = "COMPLETE".equals(intake.getStatus());
+        boolean isActive         = tenant != null && tenant.getActivePhases() != null
+                                   && !tenant.getActivePhases().isBlank();
+        boolean implementing     = setupCompleted && !isActive;
+
+        return new ProjectStatusResponse(
+                intake.getTenantName(), intake.getSector(),
+                configReceived, intake.getCreatedAt(),
+                paymentConfirmed, paymentConfirmed && budget != null ? budget.getUpdatedAt() : null,
+                setupCompleted, intake.getCompletedAt(),
+                implementing,
+                isActive,
+                "https://amgdl.com/ca/login"
+        );
+    }
+
+    record ProjectStatusResponse(
+            String tenantName, String sector,
+            boolean configReceived, Instant configReceivedAt,
+            boolean paymentConfirmed, Instant paymentConfirmedAt,
+            boolean setupCompleted, Instant setupCompletedAt,
+            boolean implementing,
+            boolean active,
+            String portalUrl
+    ) {}
 
     // GET /api/v1/billing/intake/{token} — pública, retorna la fitxa per token
     @GetMapping("/intake/{token}")
