@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.prospecting.application;
 
+import com.amg.digitalitzacio.billing.application.PostAcceptanceService;
 import com.amg.digitalitzacio.leads.domain.Lead;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.leads.domain.LeadSource;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class DefaultLeadService implements LeadService {
 
     private final LeadRepository leadRepository;
+    private final PostAcceptanceService postAcceptanceService;
 
     @Override
     @Transactional
@@ -47,6 +49,7 @@ public class DefaultLeadService implements LeadService {
         lead.setSource(parseSource(source));
         var saved = leadRepository.save(lead);
         log.debug("Created lead {} from prospect export", saved.getId());
+        postAcceptanceService.onLeadCreated(tenantId, name, phone != null ? phone : email, source);
         return new LeadCreationResult(saved.getId(), true);
     }
 

@@ -6,6 +6,7 @@ import com.amg.digitalitzacio.auth.application.PhaseHealthService;
 import com.amg.digitalitzacio.auth.application.TenantService;
 import com.amg.digitalitzacio.auth.domain.TenantPhaseActivation;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
+import com.amg.digitalitzacio.billing.application.PostAcceptanceService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class TenantController {
     private final PhaseActivationService phaseActivationService;
     private final PhaseHealthService phaseHealthService;
     private final TenantRepository tenantRepository;
+    private final PostAcceptanceService postAcceptanceService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
@@ -153,6 +155,7 @@ public class TenantController {
             tenant.setActivePhases(tenant.getContractedPhases());
             tenantRepository.save(tenant);
         }
+        postAcceptanceService.onGoLive(id);
     }
 
     @PostMapping("/{id}/suspend")

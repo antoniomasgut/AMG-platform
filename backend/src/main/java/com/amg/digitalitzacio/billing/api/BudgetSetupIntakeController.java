@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.billing.api;
 
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
+import com.amg.digitalitzacio.billing.application.PostAcceptanceService;
 import com.amg.digitalitzacio.billing.domain.Budget;
 import com.amg.digitalitzacio.billing.domain.BudgetLineRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetRepository;
@@ -29,6 +30,7 @@ public class BudgetSetupIntakeController {
     private final BudgetRepository budgetRepository;
     private final BudgetLineRepository budgetLineRepository;
     private final TenantRepository tenantRepository;
+    private final PostAcceptanceService postAcceptanceService;
 
     // Records de resposta/petició
     record IntakeResponse(
@@ -120,6 +122,11 @@ public class BudgetSetupIntakeController {
         if (request.complete()) {
             intake.setStatus("COMPLETE");
             intake.setCompletedAt(Instant.now());
+            BudgetSetupIntake saved = intakeRepository.save(intake);
+            postAcceptanceService.onSetupCompleted(
+                    saved.getTenantId(), saved.getTenantName(), saved.getSector(),
+                    "https://amgdl.com/setup-intake/" + saved.getToken());
+            return toResponse(saved);
         } else if ("PENDING".equals(intake.getStatus())) {
             // Primer desar → passa a IN_PROGRESS
             intake.setStatus("IN_PROGRESS");

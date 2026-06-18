@@ -209,6 +209,82 @@ public class PostAcceptanceService {
         }
     }
 
+    public void onSetupCompleted(UUID tenantId, String tenantName, String sector, String intakeUrl) {
+        try {
+            String tenantUrl = "https://amgdl.com/portal/admin/tenants/" + tenantId + "/wizard";
+            String msg = """
+                    🔔 <b>Setup completat</b> — %s
+                    🏢 Sector: %s
+                    📋 <a href="%s">Fitxa de configuració →</a>
+                    🔧 <a href="%s">Iniciar implementació →</a>
+                    ⚠️ Acció requerida en les pròximes 24h
+                    """.formatted(
+                    tenantName != null ? tenantName : "Desconegut",
+                    sector != null ? sector : "—",
+                    intakeUrl, tenantUrl);
+            sendToSalesChat(msg);
+        } catch (Exception e) {
+            log.warn("[PostAcceptance] Error notificant setup completat tenant={}: {}", tenantId, e.getMessage());
+        }
+    }
+
+    public void onGoLive(UUID tenantId) {
+        try {
+            var tenant = tenantRepository.findById(tenantId).orElse(null);
+            if (tenant == null) return;
+
+            String clientName  = tenant.getName() != null ? tenant.getName() : tenant.getEmail();
+            String clientEmail = tenant.getEmail();
+            String clientPhone = tenant.getPhone();
+            String portalUrl   = "https://amgdl.com/ca/login";
+
+            // Notificació interna a l'equip
+            String internalMsg = """
+                    🚀 <b>Tenant activat!</b> — %s
+                    🔧 <a href="https://amgdl.com/portal/admin/tenants/%s">Veure tenant →</a>
+                    """.formatted(clientName, tenantId);
+            sendToSalesChat(internalMsg);
+
+            // Missatge d'onboarding al client
+            String onboardingMsg = """
+                    Hola %s! 🎉
+
+                    El teu agent IA ja està actiu i funcionant.
+
+                    Pots accedir al teu panel de gestió aquí:
+                    %s
+
+                    Durant els propers dies t'enviarem alguns consells per treure'n el màxim profit.
+
+                    Si tens qualsevol dubte, escriu-nos per WhatsApp i t'ajudem de seguida.
+
+                    L'equip d'AMG Digitalitzacions
+                    """.formatted(clientName != null ? clientName : "client", portalUrl);
+
+            var chatLink = chatLinkRepository.findByTenantId(tenantId).orElse(null);
+            boolean sent = false;
+
+            if (chatLink != null && chatLink.getWhatsappMetaPhoneNumberId() != null
+                    && !chatLink.getWhatsappMetaPhoneNumberId().isBlank()
+                    && clientPhone != null && !clientPhone.isBlank()) {
+                whatsAppMetaChannel.sendMessage(chatLink.getWhatsappMetaPhoneNumberId(), clientPhone, onboardingMsg);
+                sent = true;
+            } else if (chatLink != null && chatLink.getWhatsappPhoneNumber() != null
+                    && !chatLink.getWhatsappPhoneNumber().isBlank()
+                    && clientPhone != null && !clientPhone.isBlank()) {
+                whatsAppChannel.sendMessage(chatLink.getWhatsappPhoneNumber(), clientPhone, onboardingMsg);
+                sent = true;
+            }
+
+            if (!sent && clientEmail != null && !clientEmail.isBlank()) {
+                emailService.sendEmail(clientEmail, "El teu agent ja està actiu! 🚀", onboardingMsg);
+            }
+
+        } catch (Exception e) {
+            log.error("[PostAcceptance] Error en onGoLive tenant={}: {}", tenantId, e.getMessage());
+        }
+    }
+
     public void onBudgetRejected(Budget budget, String reason) {
         try {
             var tenant = tenantRepository.findById(budget.getTenantId()).orElse(null);
