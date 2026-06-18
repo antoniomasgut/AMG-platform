@@ -174,7 +174,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 37 | Tenant Document Builder | ✅ Completat (backend) · ✅ Frontend (nou) | specs/37-tenant-document-builder.md |
 | 38 | Tenant Storage (MinIO + S3) | ✅ Completat | specs/38-tenant-storage.md |
 | 39 | System Config | ✅ Completat | specs/39-system-config.md |
-| 40 | Google Workspace (Drive, Gmail, Calendar, Sheets) | ⏳ Backend complet · Frontend bàsic | specs/40-google-workspace.md |
+| 40 | Google Workspace (Drive, Gmail, Calendar, Sheets) | ✅ Completat | specs/40-google-workspace.md |
 | 41 | Agent Tool Calling (function calling + auto-quota) | ✅ Completat | specs/41-agent-tool-calling.md |
 | 42 | Meta Cloud API OAuth Onboarding (per-tenant WABA connect) | ✅ Completat | specs/42-meta-oauth-onboarding.md |
 | 43 | Communication Templates (WhatsApp + Email per acció+idioma) | ✅ Completat | specs/43-communication-templates.md |
