@@ -113,8 +113,9 @@ public class BudgetSetupIntakeController {
         var tenant = tenantRepository.findById(intake.getTenantId()).orElse(null);
 
         boolean configReceived   = true;
+        // setupPaid = Stripe/GoCardless confirmat; ACCEPTED = pagament offline confirmat per AMG
         boolean paymentConfirmed = budget != null &&
-                (budget.getStatus() == BudgetStatus.ACCEPTED || budget.getStatus() == BudgetStatus.EXPIRED);
+                (Boolean.TRUE.equals(budget.getSetupPaid()) || budget.getStatus() == BudgetStatus.ACCEPTED);
         boolean setupCompleted   = "COMPLETE".equals(intake.getStatus());
         boolean isActive         = tenant != null && tenant.getActivePhases() != null
                                    && !tenant.getActivePhases().isBlank();
