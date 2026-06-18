@@ -182,6 +182,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 45 | Post-Budget Booking (F3 → F2, reserva automàtica post-acceptació) | ✅ Completat | specs/45-post-budget-booking.md |
 | 46 | Phase Integration Matrix (fases independents + integrades per sector) | ✅ Completat | specs/46-phase-integration-matrix.md |
 | 49 | Landing SEO Vertical (pàgines pilar + Schema + fix localhost) | ✅ Completat | specs/49-landing-seo-vertical.md |
+| 50 | Sales & Implementation Pipeline (prospecció → activació amb etapes, SLAs i onboarding) | ⏳ Spec aprovat · Pendent implementació | specs/50-sales-pipeline.md |
 
 ---
 
