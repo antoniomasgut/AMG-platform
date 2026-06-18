@@ -588,6 +588,7 @@
       "opsHealth": "Systemstatus",
       "tenants": "Tenants",
       "users": "Benutzer",
+      "pipeline": "Vertriebspipeline",
       "programs": "Programme",
       "deployHub": "Deploy Hub",
       "catalog": "Katalog",

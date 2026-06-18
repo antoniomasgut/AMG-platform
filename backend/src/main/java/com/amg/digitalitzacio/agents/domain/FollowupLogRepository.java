@@ -6,4 +6,6 @@ import java.util.UUID;
 
 public interface FollowupLogRepository extends JpaRepository<FollowupLog, UUID> {
     List<FollowupLog> findByTenantIdOrderBySentAtDesc(UUID tenantId);
+
+    boolean existsByTenantIdAndTypeAndEntityId(UUID tenantId, String type, UUID entityId);
 }

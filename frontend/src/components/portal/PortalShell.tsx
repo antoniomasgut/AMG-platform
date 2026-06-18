@@ -185,6 +185,7 @@ function superAdminGroups(t: T): NavGroup[] {
     {
       label: t('groups.clients'),
       items: [
+        { label: t('items.pipeline'), icon: IconSet.Layers, href: '/portal/admin/pipeline' },
         { label: t('items.tenants'), icon: IconSet.Building, href: '/portal/admin/tenants' },
         { label: t('items.users'), icon: IconSet.Shield, href: '/portal/admin/users' },
         { label: t('items.programs'), icon: IconSet.Sparkles, href: '/portal/billing/programs' },

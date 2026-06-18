@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,4 +21,6 @@ public interface BudgetRepository extends JpaRepository<Budget, UUID> {
     long countByTenantIdAndStatus(UUID tenantId, BudgetStatus status);
     long countByTenantId(UUID tenantId);
     void deleteByTenantId(UUID tenantId);
+
+    List<Budget> findByStatusAndSentAtBetween(BudgetStatus status, Instant from, Instant to);
 }
