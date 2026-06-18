@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import {
   getGoogleStatus, getAuthUrl, updateModules, testConnection, disconnectTenant,
-  getDriveFiles, getCalendarEvents,
+  getDriveFiles, getCalendarEvents, sendMail,
   type GoogleStatus, type DriveFileItem, type CalendarEventItem,
 } from '@/services/google';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -14,7 +14,7 @@ import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { IconSet } from '@/components/ui/icons';
 
-type Tab = 'config' | 'drive' | 'calendar';
+type Tab = 'config' | 'drive' | 'calendar' | 'gmail' | 'sheets';
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleString('ca-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -176,6 +176,121 @@ function CalendarTab({ tenantId }: { tenantId: string }) {
   );
 }
 
+// ── Gmail tab ──────────────────────────────────────────────────────────────────
+
+function GmailTab({ tenantId }: { tenantId: string }) {
+  const { toast } = useToast();
+  const [to, setTo] = useState('');
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+    try {
+      const msg = await sendMail(tenantId, to, subject, body);
+      toast('success', msg || 'Correu enviat');
+      setTo(''); setSubject(''); setBody('');
+    } catch (err: any) {
+      toast('error', err?.body?.message || 'Error enviant el correu');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="amg-card card-clip p-5 space-y-4">
+      <div className="f-mono text-label text-xs text-ink-3 uppercase tracking-widest">
+        Envia un correu des del teu compte Gmail
+      </div>
+      <form onSubmit={handleSend} className="space-y-3">
+        <div>
+          <label className="f-mono text-[10px] text-ink-3 uppercase tracking-wider block mb-1">
+            A (destinatari)
+          </label>
+          <input
+            type="email"
+            required
+            value={to}
+            onChange={e => setTo(e.target.value)}
+            placeholder="client@exemple.com"
+            className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+          />
+        </div>
+        <div>
+          <label className="f-mono text-[10px] text-ink-3 uppercase tracking-wider block mb-1">
+            Assumpte
+          </label>
+          <input
+            type="text"
+            required
+            value={subject}
+            onChange={e => setSubject(e.target.value)}
+            placeholder="Assumpte del correu"
+            className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+          />
+        </div>
+        <div>
+          <label className="f-mono text-[10px] text-ink-3 uppercase tracking-wider block mb-1">
+            Missatge
+          </label>
+          <textarea
+            required
+            value={body}
+            onChange={e => setBody(e.target.value)}
+            rows={6}
+            placeholder="Escriu el missatge aquí..."
+            className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 py-2 f-mono text-xs focus:outline-none focus:border-accent resize-none"
+          />
+        </div>
+        <AMGButton type="submit" disabled={sending}>
+          {sending ? 'Enviant…' : 'Enviar correu'}
+        </AMGButton>
+      </form>
+    </div>
+  );
+}
+
+// ── Sheets tab ─────────────────────────────────────────────────────────────────
+
+function SheetsTab() {
+  return (
+    <div className="amg-card card-clip p-6 space-y-4">
+      <div className="f-mono text-label text-xs text-ink-3 uppercase tracking-widest">
+        Google Sheets
+      </div>
+      <div className="space-y-3">
+        <p className="text-sm text-ink-2">
+          Connecta fulls de càlcul de Google Sheets per llegir dades externes: catàlegs de productes, tarifes o configuracions editables pel tenant.
+        </p>
+        <div className="border border-border-base bg-bg-1 p-4 space-y-2">
+          <div className="f-mono text-[10px] text-ink-3 uppercase tracking-wider">Casos d&apos;ús</div>
+          <ul className="space-y-1">
+            {[
+              'Catàleg de productes o serveis',
+              'Tarifes i preus editables sense codi',
+              'Configuracions externes del negoci',
+              'Llistes de clients o contactes',
+            ].map(item => (
+              <li key={item} className="flex items-start gap-2 f-mono text-xs text-ink-1">
+                <span className="text-accent mt-0.5">▪</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex items-center gap-2 p-3 border border-border-base bg-bg-1">
+          <AMGBadge tone="warning">Pròximament</AMGBadge>
+          <span className="f-mono text-xs text-ink-2">
+            La lectura de dades des de Sheets s&apos;activarà en una propera versió.
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function GoogleIntegrationPage() {
@@ -267,7 +382,9 @@ export default function GoogleIntegrationPage() {
   const TABS: { id: Tab; label: string; disabled?: boolean }[] = [
     { id: 'config',   label: 'Configuració' },
     { id: 'drive',    label: 'Drive',    disabled: !status?.connected || !status?.driveEnabled },
+    { id: 'gmail',    label: 'Gmail',    disabled: !status?.connected || !status?.gmailEnabled },
     { id: 'calendar', label: 'Calendar', disabled: !status?.connected || !status?.calendarEnabled },
+    { id: 'sheets',   label: 'Sheets',   disabled: !status?.connected || !status?.sheetsEnabled },
   ];
 
   return (
@@ -375,8 +492,14 @@ export default function GoogleIntegrationPage() {
             {/* Drive tab */}
             {activeTab === 'drive' && <DriveTab tenantId={tenantId} />}
 
+            {/* Gmail tab */}
+            {activeTab === 'gmail' && <GmailTab tenantId={tenantId} />}
+
             {/* Calendar tab */}
             {activeTab === 'calendar' && <CalendarTab tenantId={tenantId} />}
+
+            {/* Sheets tab */}
+            {activeTab === 'sheets' && <SheetsTab />}
           </>
         ) : (
           /* Not connected */
