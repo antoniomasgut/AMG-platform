@@ -92,28 +92,29 @@ public class PipelineController {
                 .map(i -> toIntakeCard(i, "SETUP_PENDING"))
                 .toList();
 
-        // Columna 5: Implementant (intake completat, tenant no plenament actiu)
+        // Columna 5: Implementant (intake completat, però el tenant NO té activePhases encara)
         var completedIntakes = intakeRepository.findByStatusAndCompletedAtBefore("COMPLETE",
                         Instant.now().plusSeconds(1)).stream()
                 .filter(i -> {
                     var tenant = tenantRepository.findById(i.getTenantId()).orElse(null);
-                    return tenant == null || (tenant.getActivePhases() == null
-                            && (tenant.getContractedPhases() == null || tenant.getContractedPhases().isBlank()));
+                    // Només mostrar si el tenant existeix però encara no té fases actives
+                    return tenant != null
+                            && (tenant.getActivePhases() == null || tenant.getActivePhases().isBlank());
                 })
                 .limit(50)
                 .map(i -> toIntakeCard(i, "IMPLEMENTING"))
                 .toList();
 
-        // Columna 6: Actius (tenant amb fases actives)
+        // Columna 6: Actius (tenant amb activePhases no nul — go-live confirmat)
         var activeCards = tenantRepository.findAll().stream()
-                .filter(t -> t.getContractedPhases() != null && !t.getContractedPhases().isBlank())
+                .filter(t -> t.getActivePhases() != null && !t.getActivePhases().isBlank())
                 .sorted((a, b) -> {
                     if (a.getUpdatedAt() == null) return 1;
                     if (b.getUpdatedAt() == null) return -1;
                     return b.getUpdatedAt().compareTo(a.getUpdatedAt());
                 })
                 .limit(50)
-                .map(t -> toTenantCard(t))
+                .map(this::toTenantCard)
                 .toList();
 
         var columns = List.of(
