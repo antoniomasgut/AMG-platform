@@ -181,7 +181,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 44 | Secure Document Delivery (lliurament segur, RGPD Art. 9) | ✅ Completat | specs/44-secure-document-delivery.md |
 | 45 | Post-Budget Booking (F3 → F2, reserva automàtica post-acceptació) | ✅ Completat | specs/45-post-budget-booking.md |
 | 46 | Phase Integration Matrix (fases independents + integrades per sector) | ✅ Completat | specs/46-phase-integration-matrix.md |
-| 49 | Landing SEO Vertical (pàgines pilar + Schema + fix localhost) | ⏳ Spec aprovat · Pendent implementació | specs/49-landing-seo-vertical.md |
+| 49 | Landing SEO Vertical (pàgines pilar + Schema + fix localhost) | ✅ Completat | specs/49-landing-seo-vertical.md |
 
 ---
 
