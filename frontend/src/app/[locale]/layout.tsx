@@ -37,6 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: 'AMG Digitalitzacions',
       locale: OG_LOCALES[locale] ?? 'ca_ES',
       type: 'website',
+      images: [{ url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -62,12 +63,14 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
+    '@type': 'ProfessionalService',
     name: 'AMG Digitalitzacions',
+    description: 'Disseny web i automatització amb agent IA per a negocis locals a Mallorca. Webs, WhatsApp automatitzat, reserves i seguiment de clients.',
     url: `${SITE_URL}/${locale}`,
     logo: `${SITE_URL}/favicon.svg`,
-    telephone: '+34-614-492-062',
+    telephone: '+34614492062',
     email: 'info@amgdl.com',
+    priceRange: '€€',
     areaServed: {
       '@type': 'Place',
       name: 'Mallorca',
@@ -80,7 +83,7 @@ export default async function LocaleLayout({ children, params }: Props) {
     },
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+34-614-492-062',
+      telephone: '+34614492062',
       email: 'info@amgdl.com',
       contactType: 'customer service',
       availableLanguage: ['Catalan', 'Spanish', 'English', 'German'],

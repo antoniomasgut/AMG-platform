@@ -1705,6 +1705,14 @@
       "ctaSubtitle": "Kostenlose Beratung, unverbindlich. Angebot in 24 Stunden."
     }
   },
+  "altresNegocis": {
+    "label": "Weitere Branchen",
+    "title": "IHR GESCHÄFT NICHT DABEI?",
+    "subtitle": "Wir arbeiten mit jeder Branche. Wenn Sie einen wiederkehrenden Prozess haben — Termine, Angebote, Anfragen, Rechnungen — automatisieren wir ihn.",
+    "cta": "Erzählen Sie uns Ihren Fall",
+    "examplesLabel": "Branchen, mit denen wir arbeiten",
+    "sectors": ["Apotheken", "Pensionen", "Immobilien", "Schulen", "Fahrschulen", "Reinigungen", "Elektriker", "Gartenpflege", "Notariate", "Tierkliniken", "Sportzentren", "Fotografen"]
+  },
   "sectors": {
     "title": "FÜR WELCHE ART VON BETRIEB?",
     "subtitle": "Lösungen für bestimmte Branchen auf Mallorca.",

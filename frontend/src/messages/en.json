@@ -1705,6 +1705,14 @@
       "ctaSubtitle": "Free consultation, no commitment. Quote in 24h."
     }
   },
+  "altresNegocis": {
+    "label": "Other sectors",
+    "title": "YOUR BUSINESS NOT HERE?",
+    "subtitle": "We work with any sector. If you have a repetitive process — appointments, quotes, enquiries, invoices — we automate it.",
+    "cta": "Tell us your case",
+    "examplesLabel": "Sectors we work with",
+    "sectors": ["Pharmacies", "Hotels", "Real estate", "Schools", "Driving schools", "Dry cleaners", "Electricians", "Gardening", "Notaries", "Vet clinics", "Sports centres", "Photographers"]
+  },
   "sectors": {
     "title": "WHAT TYPE OF BUSINESS?",
     "subtitle": "Solutions built for specific sectors in Mallorca.",

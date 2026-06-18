@@ -1705,6 +1705,14 @@
       "ctaSubtitle": "Consulta gratuïta i sense compromís. Pressupost en 24h."
     }
   },
+  "altresNegocis": {
+    "label": "Altres sectors",
+    "title": "EL TEU NEGOCI NO ÉS AQUÍ?",
+    "subtitle": "Treballem amb qualsevol sector. Si tens un procés repetitiu — cites, pressupostos, consultes, factures — l'automatitzem.",
+    "cta": "Explica'ns el teu cas",
+    "examplesLabel": "Sectors amb els que treballem",
+    "sectors": ["Farmàcies", "Hostals", "Immobiliàries", "Escoles", "Autoescoles", "Tintoreries", "Electricistes", "Jardins", "Notaries", "Clíniques veterinàries", "Centres esportius", "Fotògrafs"]
+  },
   "sectors": {
     "title": "PER A QUIN TIPUS DE NEGOCI?",
     "subtitle": "Solucions pensades per sectors específics a Mallorca.",
