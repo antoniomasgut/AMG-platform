@@ -106,11 +106,12 @@ public class PostAcceptanceService {
 
             var intake = ensureIntake(budget, tenant.getName());
             String intakeUrl = "https://amgdl.com/setup-intake/" + intake.getToken();
+            String statusUrl  = "https://amgdl.com/ca/status/" + intake.getToken();
 
             notifyAmgTeam(budget, clientName, sector, total, intakeUrl);
 
             if (clientEmail != null && !clientEmail.isBlank()) {
-                sendWelcomeEmail(clientEmail, clientName, intakeUrl);
+                sendWelcomeEmail(clientEmail, clientName, intakeUrl, statusUrl);
             }
 
             // F3→F2: si el tenant té F2 activa i autoBookingOnAccept, enviar invitació de reserva
@@ -392,7 +393,7 @@ public class PostAcceptanceService {
         sendToSalesChat(msg);
     }
 
-    private void sendWelcomeEmail(String to, String name, String intakeUrl) {
+    private void sendWelcomeEmail(String to, String name, String intakeUrl, String statusUrl) {
         String subject = "Benvingut/da a AMG Digitalització 🎉";
         String body = """
                 Hola %s,
@@ -409,12 +410,16 @@ public class PostAcceptanceService {
 
                 %s
 
+                Pots seguir l'estat del teu projecte en temps real aquí:
+
+                %s
+
                 Si tens qualsevol pregunta, respon a aquest correu o escriu-nos
                 directament al WhatsApp i t'atendrem de seguida.
 
                 Fins aviat!
                 L'equip d'AMG Digitalització
-                """.formatted(name != null ? name : "client", intakeUrl);
+                """.formatted(name != null ? name : "client", intakeUrl, statusUrl);
         try {
             emailService.sendEmail(to, subject, body);
         } catch (Exception e) {

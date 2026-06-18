@@ -56,18 +56,23 @@ public class OnboardingSequenceScheduler {
 
         log.info("[Onboarding] D{} — {} activacions a processar", daysAfterActivation, activations.size());
 
+        // Processar un sol missatge per tenant (deduplicar independentment de quantes fases activades el mateix dia)
+        var processedTenants = new java.util.HashSet<UUID>();
         for (var activation : activations) {
+            UUID tenantId = activation.getTenantId();
+            if (processedTenants.contains(tenantId)) continue;
+
             String logType = "ONBOARDING_D" + daysAfterActivation;
-            // Evitem duplicats per tenant (un missatge per tenant, independentment de quantes fases activades)
-            if (followupLogRepository.existsByTenantIdAndTypeAndEntityId(
-                    activation.getTenantId(), logType, activation.getId())) {
+            if (followupLogRepository.existsByTenantIdAndTypeAndEntityId(tenantId, logType, tenantId)) {
+                processedTenants.add(tenantId);
                 continue;
             }
 
             try {
                 processActivation(activation, daysAfterActivation, logType);
+                processedTenants.add(tenantId);
             } catch (Exception e) {
-                log.warn("[Onboarding] Error D{} tenant {}: {}", daysAfterActivation, activation.getTenantId(), e.getMessage());
+                log.warn("[Onboarding] Error D{} tenant {}: {}", daysAfterActivation, tenantId, e.getMessage());
             }
         }
     }
@@ -94,7 +99,8 @@ public class OnboardingSequenceScheduler {
         }
 
         if (sent) {
-            saveLog(activation.getTenantId(), logType, activation.getId());
+            // entityId = tenantId per garantir deduplicació per tenant (no per fase)
+            saveLog(activation.getTenantId(), logType, activation.getTenantId());
             log.info("[Onboarding] D{} enviat a tenant {}", day, activation.getTenantId());
         }
     }
