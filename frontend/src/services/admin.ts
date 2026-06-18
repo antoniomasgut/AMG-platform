@@ -673,3 +673,14 @@ export const goLiveTenant = (tenantId: string) =>
 
 export const suspendTenant = (tenantId: string) =>
   apiFetch<void>(`/tenants/${tenantId}/suspend`, { method: 'POST' });
+
+export interface TenantReadiness {
+  intakeCompleted: boolean;
+  hasLanding: boolean;
+  hasKbEntries: boolean;
+  hasChannel: boolean;
+  ready: boolean;
+}
+
+export const getTenantReadiness = (tenantId: string) =>
+  apiFetch<TenantReadiness>(`/tenants/${tenantId}/readiness`);

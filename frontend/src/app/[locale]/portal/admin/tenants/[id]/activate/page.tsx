@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getTenant, getTenantPhaseHealth, getTenantPhaseHistory, goLiveTenant, suspendTenant, PhaseActivationRecord, PhaseHealthItem } from '@/services/admin';
+import { getTenant, getTenantPhaseHealth, getTenantPhaseHistory, goLiveTenant, suspendTenant, getTenantReadiness, PhaseActivationRecord, PhaseHealthItem, TenantReadiness } from '@/services/admin';
 import { getNexeConfigs, getAgendaMode, getQuoteMode } from '@/services/nexe-configs';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
@@ -338,9 +338,19 @@ export default function ActivateWizardPage() {
   });
 
   const queryClient = useQueryClient();
+  const { data: readiness } = useQuery({
+    queryKey: ['tenant-readiness', tenantId],
+    queryFn: () => getTenantReadiness(tenantId),
+    enabled: !!tenantId,
+    refetchInterval: 30_000,
+  });
+
   const goLiveMutation = useMutation({
     mutationFn: () => goLiveTenant(tenantId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['tenant-readiness', tenantId] });
+    },
   });
   const suspendMutation = useMutation({
     mutationFn: () => suspendTenant(tenantId),
@@ -534,13 +544,43 @@ export default function ActivateWizardPage() {
                 ? ' — totes actives'
                 : ' — pendents de posada en marxa'}
             </p>
+            {/* Checklist de prerequisites go-live */}
+            {(!tenant?.activePhases || tenant.activePhases.length === 0) && readiness && (
+              <div className="mb-4 border border-[#222] p-4 space-y-2">
+                <div className="f-mono text-label text-[10px] uppercase tracking-widest text-ink-3 mb-3">
+                  Prerequisits per activar
+                </div>
+                {(
+                  [
+                    { key: 'intakeCompleted', label: 'Setup wizard completat pel client' },
+                    { key: 'hasLanding',      label: 'Landing publicada (estat ACTIVA)' },
+                    { key: 'hasKbEntries',    label: 'Knowledge base amb contingut' },
+                    { key: 'hasChannel',      label: 'Canal de comunicació configurat' },
+                  ] as { key: keyof TenantReadiness; label: string }[]
+                ).map(({ key, label }) => {
+                  const ok = readiness[key] === true;
+                  return (
+                    <div key={key} className="flex items-center gap-2">
+                      <div className={`w-4 h-4 flex items-center justify-center shrink-0 ${ok ? 'bg-[#ff6b00]' : 'border border-[#444]'}`}>
+                        {ok
+                          ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          : <span className="w-1.5 h-1.5 bg-[#555] rounded-full" />
+                        }
+                      </div>
+                      <span className={`text-xs font-mono ${ok ? 'text-ink-1' : 'text-ink-3'}`}>{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             <div className="flex gap-3">
               {(!tenant?.activePhases || tenant.activePhases.length === 0) ? (
                 <AMGButton
                   size="sm"
                   variant="primary"
                   onClick={() => goLiveMutation.mutate()}
-                  disabled={goLiveMutation.isPending}
+                  disabled={goLiveMutation.isPending || (readiness != null && !readiness.ready)}
                 >
                   {goLiveMutation.isPending ? 'Activant…' : 'Posar en marxa'}
                 </AMGButton>

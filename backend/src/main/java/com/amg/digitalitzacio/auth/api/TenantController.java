@@ -1,5 +1,9 @@
 package com.amg.digitalitzacio.auth.api;
 
+import com.amg.digitalitzacio.agents.application.SectorKbSeederService;
+import com.amg.digitalitzacio.agents.domain.KnowledgeBaseRepository;
+import com.amg.digitalitzacio.agents.domain.KnowledgeEntryRepository;
+import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.api.dto.*;
 import com.amg.digitalitzacio.auth.application.PhaseActivationService;
 import com.amg.digitalitzacio.auth.application.PhaseHealthService;
@@ -7,6 +11,9 @@ import com.amg.digitalitzacio.auth.application.TenantService;
 import com.amg.digitalitzacio.auth.domain.TenantPhaseActivation;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.billing.application.PostAcceptanceService;
+import com.amg.digitalitzacio.billing.domain.BudgetSetupIntakeRepository;
+import com.amg.digitalitzacio.hosting.domain.WebSiteRepository;
+import com.amg.digitalitzacio.hosting.domain.WebsiteStatus;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +44,12 @@ public class TenantController {
     private final PhaseHealthService phaseHealthService;
     private final TenantRepository tenantRepository;
     private final PostAcceptanceService postAcceptanceService;
+    private final SectorKbSeederService sectorKbSeederService;
+    private final KnowledgeBaseRepository knowledgeBaseRepository;
+    private final KnowledgeEntryRepository knowledgeEntryRepository;
+    private final TenantChatLinkRepository chatLinkRepository;
+    private final BudgetSetupIntakeRepository intakeRepository;
+    private final WebSiteRepository webSiteRepository;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
@@ -144,6 +157,37 @@ public class TenantController {
         return ResponseEntity.ok(tenantService.setBillingStartDate(id, request.billingStartDate()));
     }
 
+    record ReadinessResponse(
+            boolean intakeCompleted,
+            boolean hasLanding,
+            boolean hasKbEntries,
+            boolean hasChannel,
+            boolean ready
+    ) {}
+
+    @GetMapping("/{id}/readiness")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ReadinessResponse> getReadiness(@PathVariable UUID id) {
+        boolean intakeCompleted = intakeRepository.existsByTenantIdAndStatus(id, "COMPLETE");
+
+        var websites = webSiteRepository.findByTenantId(id);
+        boolean hasLanding = websites.stream().anyMatch(w -> w.getStatus() == WebsiteStatus.ACTIVE);
+
+        boolean hasKbEntries = knowledgeBaseRepository.findByTenantId(id)
+                .map(kb -> knowledgeEntryRepository.countByKnowledgeBaseId(kb.getId()) > 0)
+                .orElse(false);
+
+        var chatLink = chatLinkRepository.findByTenantId(id).orElse(null);
+        boolean hasChannel = chatLink != null && (
+                Boolean.TRUE.equals(chatLink.getWhatsappEnabled()) ||
+                Boolean.TRUE.equals(chatLink.getEmailEnabled()) ||
+                chatLink.getTelegramChatId() != null
+        );
+
+        boolean ready = intakeCompleted && hasLanding && hasKbEntries && hasChannel;
+        return ResponseEntity.ok(new ReadinessResponse(intakeCompleted, hasLanding, hasKbEntries, hasChannel, ready));
+    }
+
     @PostMapping("/{id}/go-live")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -155,6 +199,8 @@ public class TenantController {
             tenant.setActivePhases(tenant.getContractedPhases());
             tenantRepository.save(tenant);
         }
+        String sectorName = tenant.getSector() != null ? tenant.getSector().name() : null;
+        sectorKbSeederService.seedIfEmpty(id, sectorName);
         postAcceptanceService.onGoLive(id);
     }
 

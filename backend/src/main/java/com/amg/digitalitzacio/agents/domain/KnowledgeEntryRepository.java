@@ -16,6 +16,8 @@ public interface KnowledgeEntryRepository extends JpaRepository<KnowledgeEntry, 
     List<KnowledgeEntry> findByKnowledgeBaseIdAndCategoryAndIsActiveTrueOrderBySortOrder(UUID knowledgeBaseId, KnowledgeCategory category);
     Optional<KnowledgeEntry> findByKnowledgeBaseIdAndKey(UUID knowledgeBaseId, String key);
 
+    long countByKnowledgeBaseId(UUID knowledgeBaseId);
+
     @Modifying
     @Query("DELETE FROM KnowledgeEntry e WHERE e.knowledgeBaseId = :kbId AND e.category = :category")
     void deleteByKnowledgeBaseIdAndCategory(@Param("kbId") UUID knowledgeBaseId, @Param("category") KnowledgeCategory category);
