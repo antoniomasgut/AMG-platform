@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /portal/
 Disallow: /api/
-Disallow: /status/
-Disallow: /setup-intake/
+Disallow: /*/status/
+Disallow: /*/setup-intake/
 
 Sitemap: https://amgdl.com/sitemap.xml

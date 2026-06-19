@@ -1,6 +1,5 @@
 package com.amg.digitalitzacio.auth.api;
 
-import com.amg.digitalitzacio.agents.application.SectorKbSeederService;
 import com.amg.digitalitzacio.agents.domain.KnowledgeBaseRepository;
 import com.amg.digitalitzacio.agents.domain.KnowledgeEntryRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
@@ -44,7 +43,6 @@ public class TenantController {
     private final PhaseHealthService phaseHealthService;
     private final TenantRepository tenantRepository;
     private final PostAcceptanceService postAcceptanceService;
-    private final SectorKbSeederService sectorKbSeederService;
     private final KnowledgeBaseRepository knowledgeBaseRepository;
     private final KnowledgeEntryRepository knowledgeEntryRepository;
     private final TenantChatLinkRepository chatLinkRepository;
@@ -199,8 +197,6 @@ public class TenantController {
             tenant.setActivePhases(tenant.getContractedPhases());
             tenantRepository.save(tenant);
         }
-        String sectorName = tenant.getSector() != null ? tenant.getSector().name() : null;
-        sectorKbSeederService.seedIfEmpty(id, sectorName);
         postAcceptanceService.onGoLive(id);
     }
 

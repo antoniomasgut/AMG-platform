@@ -86,6 +86,15 @@ public class Lead {
     @Column(name = "interview_sector", length = 50) private String interviewSector;
     @Column(name = "interview_business_size", length = 30) private String interviewBusinessSize;
 
+    @Column(name = "pipeline_stage", length = 30)
+    private String pipelineStage;
+
+    @Column(name = "sla_deadline")
+    private Instant slaDeadline;
+
+    @Column(name = "sla_alerted")
+    private Boolean slaAlerted = false;
+
     @Column(nullable = false)
     private Boolean isActive = true;
 

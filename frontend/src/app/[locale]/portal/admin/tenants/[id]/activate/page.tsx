@@ -552,12 +552,12 @@ export default function ActivateWizardPage() {
                 </div>
                 {(
                   [
-                    { key: 'intakeCompleted', label: 'Setup wizard completat pel client' },
-                    { key: 'hasLanding',      label: 'Landing publicada (estat ACTIVA)' },
-                    { key: 'hasKbEntries',    label: 'Knowledge base amb contingut' },
-                    { key: 'hasChannel',      label: 'Canal de comunicació configurat' },
-                  ] as { key: keyof TenantReadiness; label: string }[]
-                ).map(({ key, label }) => {
+                    { key: 'intakeCompleted', label: 'Setup wizard completat pel client', actionHref: `/${locale}/portal/admin/tenants/${tenantId}/wizard`, actionLabel: 'Veure wizard' },
+                    { key: 'hasLanding',      label: 'Landing publicada (estat ACTIVA)',  actionHref: `/${locale}/portal/hosting`,                             actionLabel: 'Gestionar landings' },
+                    { key: 'hasKbEntries',    label: 'Knowledge base amb contingut',      actionHref: `/${locale}/portal/agents`,                              actionLabel: 'Afegir contingut' },
+                    { key: 'hasChannel',      label: 'Canal de comunicació configurat',   actionHref: `/${locale}/portal/admin/tenants/${tenantId}`,           actionLabel: 'Configurar canals' },
+                  ] as { key: keyof TenantReadiness; label: string; actionHref: string; actionLabel: string }[]
+                ).map(({ key, label, actionHref, actionLabel }) => {
                   const ok = readiness[key] === true;
                   return (
                     <div key={key} className="flex items-center gap-2">
@@ -568,6 +568,14 @@ export default function ActivateWizardPage() {
                         }
                       </div>
                       <span className={`text-xs font-mono ${ok ? 'text-ink-1' : 'text-ink-3'}`}>{label}</span>
+                      {!ok && (
+                        <button
+                          onClick={() => router.push(actionHref)}
+                          className="ml-auto text-[10px] font-mono text-accent hover:text-accent-light underline underline-offset-2 shrink-0"
+                        >
+                          {actionLabel} →
+                        </button>
+                      )}
                     </div>
                   );
                 })}

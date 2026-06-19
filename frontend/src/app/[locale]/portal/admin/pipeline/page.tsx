@@ -1,8 +1,8 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PortalShell } from '@/components/portal/PortalShell';
-import { getPipeline, type PipelineCard, type PipelineColumn } from '@/services/pipeline';
+import { getPipeline, updateLeadStage, LEAD_STAGE_LABELS, type PipelineCard, type PipelineColumn } from '@/services/pipeline';
 
 function fmtDate(iso: string | null): string {
   if (!iso) return '';
@@ -28,6 +28,73 @@ const COUNT_COLORS: Record<string, string> = {
   ACTIVE:        'text-[#ff6b00]',
 };
 
+// Targeta per a cards de leads — inclou selector d'etapa
+function LeadKanbanCard({ card }: { card: PipelineCard }) {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: (stage: string) => updateLeadStage(card.id, stage),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pipeline'] }),
+  });
+
+  return (
+    <div className="bg-[#111] border border-[#222] hover:border-[#2a2a2a] transition-colors">
+      <a
+        href={card.actionUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block p-3 group"
+      >
+        <div className="font-semibold text-sm text-[#f0f0f0] truncate group-hover:text-white">
+          {card.name}
+        </div>
+        {card.sector && (
+          <div className="font-mono text-[10px] text-[#555] mt-0.5 uppercase tracking-widest">
+            {card.sector.toLowerCase()}
+          </div>
+        )}
+        <div className="flex items-center justify-between mt-2 gap-2">
+          {card.value ? (
+            <span className="font-mono text-[11px] text-[#ff6b00]">{card.value}</span>
+          ) : (
+            <span />
+          )}
+          {card.date && (
+            <span className="font-mono text-[10px] text-[#444]">{fmtDate(card.date)}</span>
+          )}
+        </div>
+        {card.contact && !card.value && (
+          <div className="font-mono text-[10px] text-[#555] mt-1 truncate">{card.contact}</div>
+        )}
+      </a>
+
+      {/* Selector d'etapa — no propaga el clic al link */}
+      <div
+        className="border-t border-[#1a1a1a] px-2 py-1.5 flex items-center gap-1.5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {mutation.isPending ? (
+          <span className="w-3 h-3 border border-[#ff6b00] border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <span className="w-3 h-3 rounded-full bg-[#1e1e1e]" />
+        )}
+        <select
+          value={card.stage ?? ''}
+          onChange={(e) => { e.stopPropagation(); mutation.mutate(e.target.value); }}
+          disabled={mutation.isPending}
+          className="flex-1 bg-transparent text-[#555] font-mono text-[10px] uppercase tracking-widest border-none outline-none cursor-pointer hover:text-[#888] disabled:opacity-50"
+        >
+          {Object.entries(LEAD_STAGE_LABELS).map(([value, label]) => (
+            <option key={value} value={value} className="bg-[#111] text-[#ccc]">
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+// Targeta genèrica per a budgets, intakes i tenants
 function KanbanCard({ card }: { card: PipelineCard }) {
   return (
     <a
@@ -79,7 +146,11 @@ function KanbanColumn({ col }: { col: PipelineColumn }) {
             Buit
           </div>
         ) : (
-          col.cards.map((card) => <KanbanCard key={card.id} card={card} />)
+          col.cards.map((card) =>
+            card.stage !== null && card.stage !== undefined
+              ? <LeadKanbanCard key={card.id} card={card} />
+              : <KanbanCard key={card.id} card={card} />
+          )
         )}
       </div>
     </div>

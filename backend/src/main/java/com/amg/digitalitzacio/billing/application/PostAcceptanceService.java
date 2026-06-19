@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.billing.application;
 
+import com.amg.digitalitzacio.agents.application.SectorKbSeederService;
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
@@ -45,6 +46,7 @@ public class PostAcceptanceService {
     private final WhatsAppChannel whatsAppChannel;
     private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final TenantChatLinkRepository chatLinkRepository;
+    private final SectorKbSeederService sectorKbSeederService;
 
     public void onSetupPaymentRequested(Budget budget, String paymentUrl) {
         try {
@@ -211,6 +213,12 @@ public class PostAcceptanceService {
     }
 
     public void onSetupCompleted(UUID tenantId, String tenantName, String sector, String intakeUrl) {
+        // Sembrar la KB amb contingut base del sector mentre l'equip prepara la implementació
+        try {
+            sectorKbSeederService.seedIfEmpty(tenantId, sector);
+        } catch (Exception e) {
+            log.warn("[PostAcceptance] Error sembrant KB sector={} tenant={}: {}", sector, tenantId, e.getMessage());
+        }
         try {
             String tenantUrl = "https://amgdl.com/portal/admin/tenants/" + tenantId + "/wizard";
             String msg = """
