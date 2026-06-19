@@ -1615,7 +1615,14 @@
     "titleAccent": "WEIL SIE NICHT AUF WHATSAPP ANTWORTEN",
     "subtitle": "Verwandeln Sie Ihr WhatsApp in eine Maschine für organisierte Arbeit. Kein Technik-Jargon, keine Komplikationen.",
     "cta": "DEMO VEREINBAREN",
-    "scrollDown": "SCROLLEN SIE FÜR MEHR INFORMATIONEN"
+    "scrollDown": "SCROLLEN SIE FÜR MEHR INFORMATIONEN",
+    "badge": "Automatisierung für lokale Betriebe · Mallorca",
+    "ctaSecondary": "SO FUNKTIONIERT ES",
+    "guarantees": [
+      "In 48 Std. live",
+      "Keine Bindung",
+      "Support auf Deutsch"
+    ]
   },
   "problem": {
     "title": "KONTROLLIERT IHR UNTERNEHMEN SIE?",
@@ -1756,5 +1763,374 @@
       }
     ],
     "title": "SO FUNKTIONIERT'S"
+  },
+  "verticals": {
+    "shared": {
+      "consultaGratuita": "Kostenlose Beratung",
+      "veureFunciona": "So funktioniert es",
+      "ctaButton": "Per WhatsApp anfragen →",
+      "ctaContact": "+34 614 492 062 · info@amgdl.com",
+      "portalLink": "Sie haben ein Portal? Zum Portal →",
+      "faqSectionLabel": "Häufig gestellte Fragen"
+    },
+    "pressupostos": {
+      "meta": {
+        "title": "Automatisches Angebots-Follow-up für Unternehmen · Mallorca | AMG Digitalitzacions",
+        "description": "Kein Angebot bleibt unbeantwortet. PDF-Erstellung, automatisches Follow-up und Genehmigungsverfolgung per WhatsApp. Ab 59 €/Monat."
+      },
+      "badge": "Automatisierung · Angebote & Projekte · Mallorca",
+      "h1": "Kein Angebot",
+      "h1Accent": "bleibt unbeantwortet.",
+      "subtitle": "Für Bauunternehmer, Installateure, Architekten, Fotografen und alle, die mit individuellen Angeboten arbeiten. Der Agent erstellt, verfolgt und dokumentiert die Antworten — damit Sie keine Aufträge verpassen.",
+      "problemLabel": "Das Problem",
+      "problemHeadline": "Ein Angebot ohne Nachfassen ist ein verlorener Auftrag.",
+      "problems": [
+        {
+          "num": "01",
+          "title": "Angebote werden vergessen",
+          "desc": "Sie schicken es ab, Tage vergehen und niemand hakt nach."
+        },
+        {
+          "num": "02",
+          "title": "Kein Überblick über Interesse",
+          "desc": "Sie haben keine Möglichkeit zu wissen, wer es geöffnet hat oder wer zögert."
+        },
+        {
+          "num": "03",
+          "title": "Stunden für manuelle Angebote",
+          "desc": "Zeit, die Sie der eigentlichen Arbeit entnehmen, um Dokumente zu verfassen."
+        }
+      ],
+      "solutionsLabel": "Unsere Lösung",
+      "solutionsHeadline": "Erstellen, senden und nachfassen. Automatisch.",
+      "solutions": [
+        {
+          "num": "01",
+          "title": "Automatische PDF-Angebote",
+          "desc": "Der Agent erstellt das Angebot als PDF in Ihrem Format und sendet es sofort per WhatsApp oder E-Mail.",
+          "pills": [
+            "Automatische Erstellung",
+            "Ihr Design",
+            "Sofortige Zustellung"
+          ]
+        },
+        {
+          "num": "02",
+          "title": "Follow-up bei Nicht-Antworten",
+          "desc": "Antwortet der Kunde nicht, hakt der Agent an den von Ihnen festgelegten Tagen nach.",
+          "pills": [
+            "Geplante Erinnerungen",
+            "Kein Nachfassen nötig",
+            "Mehr abgeschlossene Angebote"
+          ]
+        },
+        {
+          "num": "03",
+          "title": "Antwort-Tracking",
+          "desc": "Sie wissen jederzeit, wer zugestimmt hat, wer zögert und wer Nein gesagt hat.",
+          "pills": [
+            "Angebotsstatus auf einen Blick",
+            "Erfasste Genehmigungen",
+            "Klare Pipeline-Übersicht"
+          ]
+        },
+        {
+          "num": "04",
+          "title": "Kundenreaktivierung",
+          "desc": "Der Agent reaktiviert frühere Kunden und halbfertige Angebote automatisch.",
+          "pills": [
+            "Verlorene Chancen zurückgewinnen",
+            "Ausstehende Aufträge verfolgen",
+            "Bessere Konversion"
+          ]
+        }
+      ],
+      "forWhoLabel": "Für wen",
+      "forWho": [
+        "Bauunternehmen",
+        "Installateure",
+        "Architekten & Bausachverständige",
+        "Fotografen & Catering",
+        "Werkstätten",
+        "Umzugsunternehmen",
+        "Dienstleister"
+      ],
+      "faqTitle": "Was alle fragen.",
+      "faqs": [
+        {
+          "q": "Kann ich mein eigenes Angebotsformat verwenden?",
+          "a": "Ja. Der Agent erstellt PDFs mit Ihrem Design und Ihren Daten."
+        },
+        {
+          "q": "Wie oft wird nachgefasst?",
+          "a": "Das entscheiden Sie: z.B. nach 2 und nach 5 Tagen. Der Agent tut es im gewünschten Ton."
+        },
+        {
+          "q": "Fühlt sich der Kunde von einem Bot belästigt?",
+          "a": "Nein. Die Nachrichten sind natürlich und Sie können den Thread jederzeit stoppen."
+        },
+        {
+          "q": "Wie lange dauert die Einrichtung?",
+          "a": "Die Website wird in 48 Stunden veröffentlicht und das Angebotssystem wird phasenweise konfiguriert."
+        }
+      ],
+      "testimonialQuote": "[ Erfahrungsbericht von Fullana Reformes — Text ausstehend ]",
+      "testimonialName": "Fullana Reformes",
+      "testimonialRole": "Bauunternehmen · Mallorca",
+      "ctaTitle": "Sprechen wir über Ihre Angebote.",
+      "ctaSubtitle": "Kostenlose Beratung, unverbindlich. Angebot in 24 Stunden."
+    },
+    "despatxos": {
+      "meta": {
+        "title": "KI-Agent für Kanzleien und professionelle Dienstleister · Mallorca | AMG Digitalitzacions",
+        "description": "Filtern Sie wiederkehrende Anfragen und gewinnen Sie Ihre Zeit zurück. Ab 59 €/Monat."
+      },
+      "badge": "Automatisierung · Professionelle Dienstleister · Mallorca",
+      "h1": "Wiederkehrende Anfragen filtern",
+      "h1Accent": "und Zeit zurückgewinnen.",
+      "subtitle": "Für Steuerberatungen, Anwaltskanzleien, Unternehmensberatungen und professionelle Dienstleister. Der Agent beantwortet Routinefragen, qualifiziert Kontakte und leitet nur die Anfragen weiter, die wirklich Ihre Aufmerksamkeit benötigen.",
+      "problemLabel": "Das Problem",
+      "problemHeadline": "Die Zeit, die Sie damit verbringen, immer wieder dasselbe zu beantworten.",
+      "problems": [
+        {
+          "num": "01",
+          "title": "Dieselben Fragen jeden Tag",
+          "desc": "Dokumente, Fristen, was brauche ich für... Immer dasselbe."
+        },
+        {
+          "num": "02",
+          "title": "Anrufe, die nirgendwohin führen",
+          "desc": "Menschen, die nach Dingen fragen, die außerhalb Ihres Bereichs liegen."
+        },
+        {
+          "num": "03",
+          "title": "Anfragen, die verloren gehen",
+          "desc": "Nachrichten, die außerhalb der Öffnungszeiten eintreffen und zu spät gesehen werden."
+        }
+      ],
+      "solutionsLabel": "Unsere Lösung",
+      "solutionsHeadline": "Weniger Unterbrechungen. Mehr wertvolle Arbeit.",
+      "solutions": [
+        {
+          "num": "01",
+          "title": "Automatische FAQ-Antworten",
+          "desc": "Der Agent beantwortet Routinefragen rund um die Uhr: Dokumente, Fristen, Öffnungszeiten, Preise.",
+          "pills": [
+            "Immer verfügbar",
+            "Konsistente Antworten",
+            "Weniger Unterbrechungen"
+          ]
+        },
+        {
+          "num": "02",
+          "title": "Lead-Qualifizierung",
+          "desc": "Bevor jemand zu Ihnen weitergeleitet wird, sammelt der Agent die wichtigsten Informationen und filtert aus, was nicht passt.",
+          "pills": [
+            "Vorgefilterte Leads",
+            "Vorbereitete Kontakte",
+            "Weniger vergeudete Anrufe"
+          ]
+        },
+        {
+          "num": "03",
+          "title": "Dokumentenerfassung",
+          "desc": "Der Agent fordert die benötigten Dokumente von jedem Kunden an und sammelt sie geordnet.",
+          "pills": [
+            "Automatische Anfragen",
+            "Alles ordentlich erfasst",
+            "Weniger Hin und Her"
+          ]
+        },
+        {
+          "num": "04",
+          "title": "Nachverfolgung & Erinnerungen",
+          "desc": "Fristen, Verlängerungen, Ablaufdaten. Der Agent benachrichtigt den Kunden (und Sie), bevor es zu spät ist.",
+          "pills": [
+            "Ablaufbenachrichtigungen",
+            "Automatische Erinnerungen",
+            "Nichts fällt durch das Raster"
+          ]
+        }
+      ],
+      "forWhoLabel": "Für wen",
+      "forWho": [
+        "Steuer- & Unternehmensberatungen",
+        "Anwaltskanzleien",
+        "Unternehmensberatungen",
+        "Agenturen",
+        "HR-Profis",
+        "Dienstleister mit wiederkehrenden Anfragen"
+      ],
+      "faqTitle": "Was alle fragen.",
+      "faqs": [
+        {
+          "q": "Kann der Agent sensible oder rechtliche Informationen weitergeben?",
+          "a": "Nein. Er beantwortet allgemeine Fragen und sammelt Informationen; inhaltliche Fragen gehen immer durch Sie."
+        },
+        {
+          "q": "Verbindet es sich mit meinen Verwaltungstools?",
+          "a": "Wir arbeiten wo möglich mit dem, was Sie bereits nutzen, oder schlagen Alternativen vor."
+        },
+        {
+          "q": "Weiß der Kunde, wenn er mit einer Person spricht?",
+          "a": "Ja, und Sie können jederzeit in den Thread einsteigen. Hybrid-Modus: Bot + Mensch."
+        },
+        {
+          "q": "Wie lange dauert die Einrichtung?",
+          "a": "Die Website wird in 48 Stunden veröffentlicht und der Agent wird phasenweise konfiguriert."
+        }
+      ],
+      "testimonialQuote": "[ Erfahrungsbericht von Aiguabella Assessors — Text ausstehend ]",
+      "testimonialName": "Aiguabella Assessors",
+      "testimonialRole": "Steuerberatung · Mallorca",
+      "ctaTitle": "Sprechen wir über Ihre Kanzlei.",
+      "ctaSubtitle": "Kostenlose Beratung, unverbindlich. Angebot in 24 Stunden."
+    },
+    "citaPrevia": {
+      "meta": {
+        "title": "Automatisierter Terminkalender für Unternehmen · Mallorca | AMG Digitalitzacions",
+        "description": "Weniger Terminausfälle, kein manueller Kalender mehr. Automatische Buchungen, Erinnerungen und WhatsApp-Bestätigungen. Ab 59 €/Monat."
+      },
+      "badge": "Automatisierung · Terminbasierte Unternehmen · Mallorca",
+      "h1": "Weniger Terminausfälle.",
+      "h1Accent": "Ein Kalender, der sich selbst verwaltet.",
+      "subtitle": "Für Physiotherapeuten, Kliniken, Beautycenter, Tierärzte und alle Unternehmen, die mit Terminvereinbarungen arbeiten. Automatische Buchungen, Erinnerungen und WhatsApp-Bestätigungen — ohne jede Nachricht selbst beantworten zu müssen.",
+      "problemLabel": "Das Problem",
+      "problemHeadline": "Jeder leere Termin ist Geld, das nicht zurückkommt.",
+      "problems": [
+        {
+          "num": "01",
+          "title": "Terminausfälle",
+          "desc": "Der Patient, der nicht erscheint, hinterlässt eine Lücke, die Sie nicht mehr füllen können."
+        },
+        {
+          "num": "02",
+          "title": "Manuell verwalteter Kalender",
+          "desc": "Stunden täglich damit verbracht, Termine per WhatsApp zu bestätigen."
+        },
+        {
+          "num": "03",
+          "title": "Kunden, die nicht wiederkommen",
+          "desc": "Sie beenden die Behandlung und verschwinden, ohne dass jemand nachfasst."
+        }
+      ],
+      "solutionsLabel": "Unsere Lösung",
+      "solutionsHeadline": "Ein Agent, der arbeitet, wenn Sie es nicht können.",
+      "solutions": [
+        {
+          "num": "01",
+          "title": "Automatische Erinnerungen",
+          "desc": "Der Agent sendet am Vortag eine Erinnerung und bittet um Bestätigung. Kann der Kunde nicht kommen, wird der Termin freigegeben.",
+          "pills": [
+            "Weniger leere Termine",
+            "Automatische Bestätigung",
+            "Einfache Umbuchung"
+          ]
+        },
+        {
+          "num": "02",
+          "title": "WhatsApp-Buchungen 24/7",
+          "desc": "Kunden buchen selbstständig, zu jeder Stunde, ohne dass Sie antworten müssen. Der Kalender aktualisiert sich automatisch.",
+          "pills": [
+            "Buchungen außerhalb der Öffnungszeiten",
+            "Keine verpassten Anrufe",
+            "Immer aktuell"
+          ]
+        },
+        {
+          "num": "03",
+          "title": "Kundenreaktivierung",
+          "desc": "Der Agent erkennt, wer schon lange nicht mehr da war, und schlägt automatisch eine Rückkehr vor.",
+          "pills": [
+            "Inaktive Kunden zurückgewinnen",
+            "Nachsorge-Begleitung",
+            "Mehr Stammkunden"
+          ]
+        },
+        {
+          "num": "04",
+          "title": "Automatische Bewertungen",
+          "desc": "Nach jedem Besuch bittet der Agent um eine Google-Bewertung. Mehr Bewertungen, mehr neue Kunden.",
+          "pills": [
+            "Automatische Anfrage",
+            "Bessere Reputation",
+            "Mehr Google-Leads"
+          ]
+        }
+      ],
+      "forWhoLabel": "Für wen",
+      "forWho": [
+        "Physiotherapeuten",
+        "Zahnkliniken",
+        "Psychologen",
+        "Beauty- & Ästhetikcenter",
+        "Friseure",
+        "Tierärzte",
+        "Ernährungsberater",
+        "Podologen"
+      ],
+      "faqTitle": "Was alle fragen.",
+      "faqs": [
+        {
+          "q": "Verbindet es sich mit meinem bestehenden Buchungssystem?",
+          "a": "Ja. Wir arbeiten mit den Tools, die Sie bereits nutzen, oder richten ein neues ein."
+        },
+        {
+          "q": "Merkt der Kunde, dass er mit einem Bot spricht?",
+          "a": "Der Agent antwortet auf natürliche Weise, und Sie können jederzeit in das Gespräch einsteigen."
+        },
+        {
+          "q": "Wie lange dauert die Einrichtung?",
+          "a": "Die Website wird innerhalb von 48 Stunden veröffentlicht und der Agent wird phasenweise konfiguriert."
+        },
+        {
+          "q": "Was passiert, wenn ich etwas ändern möchte?",
+          "a": "Das System entwickelt sich mit Ihnen: Wir implementieren Anpassungen, wenn Sie sie benötigen."
+        }
+      ],
+      "testimonialQuote": "[ Erfahrungsbericht von Clínica Rosselló — Text ausstehend ]",
+      "testimonialName": "Clínica Rosselló",
+      "testimonialRole": "Physiotherapiepraxis · Palma",
+      "ctaTitle": "Sprechen wir über Ihren Kalender.",
+      "ctaSubtitle": "Kostenlose Beratung, unverbindlich. Angebot in 24 Stunden."
+    }
+  },
+  "altresNegocis": {
+    "label": "Weitere Branchen",
+    "title": "IHR GESCHÄFT NICHT DABEI?",
+    "subtitle": "Wir arbeiten mit jeder Branche. Wenn Sie einen wiederkehrenden Prozess haben — Termine, Angebote, Anfragen, Rechnungen — automatisieren wir ihn.",
+    "cta": "Erzählen Sie uns Ihren Fall",
+    "examplesLabel": "Branchen, mit denen wir arbeiten",
+    "sectors": [
+      "Apotheken",
+      "Pensionen",
+      "Immobilien",
+      "Schulen",
+      "Fahrschulen",
+      "Reinigungen",
+      "Elektriker",
+      "Gartenpflege",
+      "Notariate",
+      "Tierkliniken",
+      "Sportzentren",
+      "Fotografen"
+    ]
+  },
+  "sectors": {
+    "title": "FÜR WELCHE ART VON BETRIEB?",
+    "subtitle": "Lösungen für bestimmte Branchen auf Mallorca.",
+    "cta": "Lösung ansehen →",
+    "citaPrevia": {
+      "label": "Terminbasierte Betriebe",
+      "desc": "Physiotherapeuten, Kliniken, Schönheit, Tierärzte, Friseursalons..."
+    },
+    "pressupostos": {
+      "label": "Angebot-basierte Betriebe",
+      "desc": "Umbau, Installateure, Architekten, Fotografen, Catering..."
+    },
+    "despatxos": {
+      "label": "Professionelle Kanzleien",
+      "desc": "Steuerberater, Anwälte, Berater, Agenturen..."
+    }
   }
 }

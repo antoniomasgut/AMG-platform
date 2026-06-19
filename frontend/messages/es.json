@@ -1615,7 +1615,14 @@
     "titleAccent": "POR NO RESPONDER AL WHATSAPP",
     "subtitle": "Convierte tu WhatsApp en una máquina de generar trabajo organizado. Sin tecnicismos, sin complicaciones.",
     "cta": "PIDE UNA DEMO",
-    "scrollDown": "DESPLÁZATE PARA SABER MÁS"
+    "scrollDown": "DESPLÁZATE PARA SABER MÁS",
+    "badge": "Automatización para negocios locales · Mallorca",
+    "ctaSecondary": "VER CÓMO FUNCIONA",
+    "guarantees": [
+      "Configurado en 48h",
+      "Sin permanencia",
+      "Soporte en español"
+    ]
   },
   "problem": {
     "title": "¿TU NEGOCIO TE CONTROLA A TI?",
@@ -1756,5 +1763,374 @@
       }
     ],
     "title": "CÓMO FUNCIONA"
+  },
+  "verticals": {
+    "shared": {
+      "consultaGratuita": "Consulta gratuita",
+      "veureFunciona": "Ver cómo funciona",
+      "ctaButton": "Consultar por WhatsApp →",
+      "ctaContact": "+34 614 492 062 · info@amgdl.com",
+      "portalLink": "¿Tienes un portal? Accede al portal →",
+      "faqSectionLabel": "Preguntas frecuentes"
+    },
+    "pressupostos": {
+      "meta": {
+        "title": "Seguimiento automático de presupuestos para negocios · Mallorca | AMG Digitalitzacions",
+        "description": "Que ningún presupuesto quede sin respuesta. Generación en PDF, seguimiento automático y registro de aprobaciones por WhatsApp. Desde 59€/mes."
+      },
+      "badge": "Automatización · Presupuestos y obras · Mallorca",
+      "h1": "Que ningún presupuesto",
+      "h1Accent": "quede sin respuesta.",
+      "subtitle": "Para reformas, instaladores, arquitectos, fotógrafos y cualquier negocio que trabaje con presupuestos a medida. El agente los genera, hace el seguimiento y registra las respuestas — para que no pierdas trabajos por no llamar a tiempo.",
+      "problemLabel": "El problema",
+      "problemHeadline": "Un presupuesto sin seguimiento es un trabajo perdido.",
+      "problems": [
+        {
+          "num": "01",
+          "title": "Presupuestos que se olvidan",
+          "desc": "Lo envías, pasan los días y nadie hace el seguimiento."
+        },
+        {
+          "num": "02",
+          "title": "No sabes quién está interesado",
+          "desc": "No tienes manera de saber quién lo ha abierto ni quién duda."
+        },
+        {
+          "num": "03",
+          "title": "Horas haciendo presupuestos a mano",
+          "desc": "Tiempo que quitas del trabajo real para redactar y enviar documentos."
+        }
+      ],
+      "solutionsLabel": "Cómo te lo resolvemos",
+      "solutionsHeadline": "Genera, envía y haz el seguimiento. Solo.",
+      "solutions": [
+        {
+          "num": "01",
+          "title": "Presupuestos en PDF automáticos",
+          "desc": "El agente genera el presupuesto en PDF con tu formato y lo envía al cliente al momento, por WhatsApp o email.",
+          "pills": [
+            "Generación automática",
+            "Tu diseño",
+            "Envío inmediato"
+          ]
+        },
+        {
+          "num": "02",
+          "title": "Seguimiento de no contestados",
+          "desc": "Si el cliente no responde, el agente hace el seguimiento solo los días que decidas, con el mensaje adecuado cada vez.",
+          "pills": [
+            "Recordatorios programados",
+            "Sin insistir tú",
+            "Más presupuestos cerrados"
+          ]
+        },
+        {
+          "num": "03",
+          "title": "Registro de respuestas",
+          "desc": "Sabes en todo momento quién ha aceptado, quién duda y quién ha dicho que no. Todo registrado automáticamente.",
+          "pills": [
+            "Estado de cada presupuesto",
+            "Aprobaciones registradas",
+            "Visión clara del pipeline"
+          ]
+        },
+        {
+          "num": "04",
+          "title": "Reactivación de clientes",
+          "desc": "El agente recupera clientes antiguos y presupuestos que se quedaron a medias, automáticamente.",
+          "pills": [
+            "Recuperación de oportunidades",
+            "Seguimiento de trabajos pendientes",
+            "Más conversión"
+          ]
+        }
+      ],
+      "forWhoLabel": "Pensado para",
+      "forWho": [
+        "Reformas y construcción",
+        "Instaladores",
+        "Arquitectos y aparejadores",
+        "Fotógrafos y caterings",
+        "Talleres",
+        "Empresas de mudanzas",
+        "Servicios a medida"
+      ],
+      "faqTitle": "Lo que suele preguntar todo el mundo.",
+      "faqs": [
+        {
+          "q": "¿Puedo usar mi formato de presupuesto?",
+          "a": "Sí. El agente genera los PDF con tu diseño y tus datos."
+        },
+        {
+          "q": "¿Cada cuánto hace el seguimiento?",
+          "a": "Lo decides tú: por ejemplo a los 2 días y a los 5. El agente lo hace solo con el tono que quieras."
+        },
+        {
+          "q": "¿El cliente se queda con sensación de robot insistente?",
+          "a": "No. Los mensajes son naturales y puedes parar o entrar al hilo cuando quieras."
+        },
+        {
+          "q": "¿Cuánto tarda en estar en marcha?",
+          "a": "La web se publica en 48h y el sistema de presupuestos se configura por fases."
+        }
+      ],
+      "testimonialQuote": "[ Testimonio de Fullana Reformes — texto pendiente ]",
+      "testimonialName": "Fullana Reformes",
+      "testimonialRole": "Empresa de reformas · Mallorca",
+      "ctaTitle": "Hablemos de tus presupuestos.",
+      "ctaSubtitle": "Consulta gratuita y sin compromiso. Presupuesto en 24h."
+    },
+    "despatxos": {
+      "meta": {
+        "title": "Agente IA para despachos y servicios profesionales · Mallorca | AMG Digitalitzacions",
+        "description": "Filtra consultas repetitivas y recupera tu tiempo. El agente responde dudas, cualifica contactos y te pasa solo lo que importa. Desde 59€/mes."
+      },
+      "badge": "Automatización · Servicios profesionales · Mallorca",
+      "h1": "Filtra las consultas repetitivas",
+      "h1Accent": "y recupera tu tiempo.",
+      "subtitle": "Para asesorías, despachos de abogados, consultorías y servicios profesionales. El agente responde las dudas habituales, cualifica los contactos y te pasa solo las consultas que de verdad necesitan tu atención.",
+      "problemLabel": "El problema",
+      "problemHeadline": "El tiempo que pierdes respondiendo lo mismo una y otra vez.",
+      "problems": [
+        {
+          "num": "01",
+          "title": "Las mismas preguntas cada día",
+          "desc": "Documentos, plazos, qué necesito para... Siempre lo mismo."
+        },
+        {
+          "num": "02",
+          "title": "Llamadas que no van a ningún lado",
+          "desc": "Gente que pregunta cosas que no son tu ámbito o que no va a contratar."
+        },
+        {
+          "num": "03",
+          "title": "Consultas que se pierden",
+          "desc": "Mensajes que llegan fuera de horario y cuando los ves ya es tarde."
+        }
+      ],
+      "solutionsLabel": "Cómo te lo resolvemos",
+      "solutionsHeadline": "Menos interrupciones. Más trabajo de valor.",
+      "solutions": [
+        {
+          "num": "01",
+          "title": "Respuestas automáticas a las FAQs",
+          "desc": "El agente responde las preguntas habituales 24/7: documentación, plazos, horarios, precios.",
+          "pills": [
+            "Disponible siempre",
+            "Respuestas consistentes",
+            "Menos interrupciones"
+          ]
+        },
+        {
+          "num": "02",
+          "title": "Cualificación de contactos",
+          "desc": "Antes de pasarte a nadie, el agente recoge la información clave y descarta lo que no encaja.",
+          "pills": [
+            "Filtrado previo",
+            "Contactos preparados",
+            "Menos llamadas perdidas"
+          ]
+        },
+        {
+          "num": "03",
+          "title": "Recogida de documentación",
+          "desc": "El agente pide y recoge los documentos que necesitas de cada cliente, de manera ordenada y automática.",
+          "pills": [
+            "Solicitud automática",
+            "Todo recogido y ordenado",
+            "Menos ir y volver"
+          ]
+        },
+        {
+          "num": "04",
+          "title": "Seguimiento y recordatorios",
+          "desc": "Plazos, renovaciones, vencimientos. El agente avisa al cliente (y a ti) antes de que sea tarde.",
+          "pills": [
+            "Avisos de vencimiento",
+            "Recordatorios automáticos",
+            "Nada se te pasa"
+          ]
+        }
+      ],
+      "forWhoLabel": "Pensado para",
+      "forWho": [
+        "Asesorías y gestorías",
+        "Despachos de abogados",
+        "Consultorías",
+        "Agencias",
+        "Graduados sociales",
+        "Servicios profesionales con consultas recurrentes"
+      ],
+      "faqTitle": "Lo que suele preguntar todo el mundo.",
+      "faqs": [
+        {
+          "q": "¿El agente puede dar información sensible o legal?",
+          "a": "No. Responde dudas generales y recoge información; las cuestiones de fondo siempre pasan por ti."
+        },
+        {
+          "q": "¿Se conecta con mis herramientas de gestión?",
+          "a": "Trabajamos con lo que ya usas siempre que sea posible, o te proponemos alternativas."
+        },
+        {
+          "q": "¿El cliente sabe cuándo habla con una persona?",
+          "a": "Sí, y tú puedes entrar al hilo en cualquier momento. Modo híbrido bot + persona."
+        },
+        {
+          "q": "¿Cuánto tarda en estar en marcha?",
+          "a": "La web se publica en 48h y el agente se configura por fases según tu despacho."
+        }
+      ],
+      "testimonialQuote": "[ Testimonio de Aiguabella Assessors — texto pendiente ]",
+      "testimonialName": "Aiguabella Assessors",
+      "testimonialRole": "Asesoría · Mallorca",
+      "ctaTitle": "Hablemos de tu despacho.",
+      "ctaSubtitle": "Consulta gratuita y sin compromiso. Presupuesto en 24h."
+    },
+    "citaPrevia": {
+      "meta": {
+        "title": "Web y agenda automática para negocios con cita previa · Mallorca | AMG Digitalitzacions",
+        "description": "Reduce las faltas de asistencia y deja de gestionar la agenda a mano. Reservas, recordatorios y confirmaciones automáticas por WhatsApp. Desde 59€/mes."
+      },
+      "badge": "Automatización · Negocios de citas · Mallorca",
+      "h1": "Menos faltas de asistencia.",
+      "h1Accent": "Una agenda que se gestiona sola.",
+      "subtitle": "Para fisioterapeutas, clínicas, centros de estética, veterinarios y cualquier negocio que trabaje con cita previa. Reservas, recordatorios y confirmaciones automáticas por WhatsApp — sin que tengas que responder cada mensaje.",
+      "problemLabel": "El problema",
+      "problemHeadline": "Cada hora vacía es dinero que no vuelve.",
+      "problems": [
+        {
+          "num": "01",
+          "title": "Faltas de asistencia",
+          "desc": "El paciente que no aparece deja un hueco que ya no recuperas."
+        },
+        {
+          "num": "02",
+          "title": "Agenda gestionada a mano",
+          "desc": "Horas cada día confirmando citas por WhatsApp entre cliente y cliente."
+        },
+        {
+          "num": "03",
+          "title": "Clientes que no vuelven",
+          "desc": "Acaban el tratamiento y desaparecen, y nadie hace el seguimiento."
+        }
+      ],
+      "solutionsLabel": "Cómo te lo resolvemos",
+      "solutionsHeadline": "Un agente que trabaja cuando tú no puedes.",
+      "solutions": [
+        {
+          "num": "01",
+          "title": "Recordatorios automáticos",
+          "desc": "El agente envía un recordatorio el día anterior y pide confirmación. Si el cliente no puede venir, la hora queda libre para otro.",
+          "pills": [
+            "Menos huecos en la agenda",
+            "Confirmación automática",
+            "Reprogramación sencilla"
+          ]
+        },
+        {
+          "num": "02",
+          "title": "Reservas por WhatsApp 24/7",
+          "desc": "Los clientes piden hora solos, a cualquier hora, sin que tengas que contestar. La agenda se actualiza sola.",
+          "pills": [
+            "Reservas fuera de horario",
+            "Sin llamadas perdidas",
+            "Disponibilidad siempre al día"
+          ]
+        },
+        {
+          "num": "03",
+          "title": "Reactivación de clientes",
+          "desc": "El agente detecta quién lleva tiempo sin venir y le propone volver, automáticamente.",
+          "pills": [
+            "Recuperación de inactivos",
+            "Seguimiento postratamiento",
+            "Más visitas recurrentes"
+          ]
+        },
+        {
+          "num": "04",
+          "title": "Reseñas automáticas",
+          "desc": "Después de cada visita, el agente pide una reseña en Google. Más valoraciones, más clientes nuevos.",
+          "pills": [
+            "Solicitud automática",
+            "Mejor reputación",
+            "Más captación por Google"
+          ]
+        }
+      ],
+      "forWhoLabel": "Pensado para",
+      "forWho": [
+        "Fisioterapeutas",
+        "Clínicas dentales",
+        "Psicólogos",
+        "Centros de estética",
+        "Peluquerías",
+        "Veterinarios",
+        "Nutricionistas",
+        "Podólogos"
+      ],
+      "faqTitle": "Lo que suele preguntar todo el mundo.",
+      "faqs": [
+        {
+          "q": "¿Se conecta con mi sistema de agenda actual?",
+          "a": "Sí. Trabajamos con las herramientas que ya usas o te montamos una nueva si lo prefieres."
+        },
+        {
+          "q": "¿El cliente nota que habla con un bot?",
+          "a": "El agente responde de manera natural, y tú puedes entrar a la conversación en cualquier momento en el mismo hilo."
+        },
+        {
+          "q": "¿Cuánto tarda en estar en marcha?",
+          "a": "La web se publica en 48h y el agente se configura por fases según tus necesidades."
+        },
+        {
+          "q": "¿Qué pasa si quiero cambiar algo?",
+          "a": "El sistema evoluciona contigo: implementamos ajustes y mejoras cuando los necesitas, dentro de la cuota."
+        }
+      ],
+      "testimonialQuote": "[ Testimonio de Clínica Rosselló — texto pendiente ]",
+      "testimonialName": "Clínica Rosselló",
+      "testimonialRole": "Centro de fisioterapia · Palma",
+      "ctaTitle": "Hablemos de tu agenda.",
+      "ctaSubtitle": "Consulta gratuita y sin compromiso. Presupuesto en 24h."
+    }
+  },
+  "altresNegocis": {
+    "label": "Otros sectores",
+    "title": "¿TU NEGOCIO NO ESTÁ AQUÍ?",
+    "subtitle": "Trabajamos con cualquier sector. Si tienes un proceso repetitivo — citas, presupuestos, consultas, facturas — lo automatizamos.",
+    "cta": "Cuéntanos tu caso",
+    "examplesLabel": "Sectores con los que trabajamos",
+    "sectors": [
+      "Farmacias",
+      "Hostales",
+      "Inmobiliarias",
+      "Escuelas",
+      "Autoescuelas",
+      "Tintorerías",
+      "Electricistas",
+      "Jardines",
+      "Notarías",
+      "Clínicas veterinarias",
+      "Centros deportivos",
+      "Fotógrafos"
+    ]
+  },
+  "sectors": {
+    "title": "¿PARA QUÉ TIPO DE NEGOCIO?",
+    "subtitle": "Soluciones diseñadas para sectores específicos en Mallorca.",
+    "cta": "Ver solución →",
+    "citaPrevia": {
+      "label": "Negocios con cita previa",
+      "desc": "Fisioterapeutas, clínicas, estética, veterinarios, peluquerías..."
+    },
+    "pressupostos": {
+      "label": "Negocios con presupuestos",
+      "desc": "Reformas, instaladores, arquitectos, fotógrafos, caterings..."
+    },
+    "despatxos": {
+      "label": "Despachos profesionales",
+      "desc": "Asesorías, abogados, consultorías, gestorías, agencias..."
+    }
   }
 }
