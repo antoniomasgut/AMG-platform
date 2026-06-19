@@ -35,7 +35,7 @@ public class SystemConfigService {
         new KnownKey("OLLAMA_BASE_URL",         "Ollama Base URL",            "URL de la instància Ollama (per defecte: http://localhost:11434)", "AGENTS", false, "url", "http://localhost:11434", null, 30),
         new KnownKey("TELEGRAM_BOT_TOKEN",      "Telegram Bot Token",         "Token del bot Telegram per a agents i notificacions", "AGENTS", true, "secret", null, null, 40),
         new KnownKey("TELEGRAM_CHAT_ID",        "Telegram Chat ID (InfraOps)","ID del chat on enviar alertes d'infraestructura", "INFRAOPS", false, "string", null, null, 10),
-        new KnownKey("AMG_SALES_CHAT_ID",       "Telegram Chat ID (Vendes)", "ID del chat Telegram per a alertes comercials (pressupostos, clients nous)", "VENDES", false, "string", "654048164", null, 10),
+        new KnownKey("AMG_SALES_CHAT_ID",       "Telegram Chat ID (Vendes)", "ID del chat Telegram per a alertes comercials (pressupostos, clients nous)", "VENDES", false, "string", "614492062", null, 10),
         new KnownKey("PLATFORM_TENANT_ID",      "Platform Tenant ID",         "UUID del tenant AMG per a leads del formulari web (opcional)", "GENERAL", false, "string", null, null, 10),
         new KnownKey("TWILIO_ACCOUNT_SID",      "Twilio Account SID",         "SID del compte Twilio per a WhatsApp Business", "AGENTS",    false, "string", null, null, 50),
         new KnownKey("TWILIO_AUTH_TOKEN",       "Twilio Auth Token",          "Token d'autenticació Twilio", "AGENTS",                        true,  "secret", null, null, 60),
