@@ -1712,7 +1712,20 @@
     "subtitle": "Trabajamos con cualquier sector. Si tienes un proceso repetitivo — citas, presupuestos, consultas, facturas — lo automatizamos.",
     "cta": "Cuéntanos tu caso",
     "examplesLabel": "Sectores con los que trabajamos",
-    "sectors": ["Farmacias", "Hostales", "Inmobiliarias", "Escuelas", "Autoescuelas", "Tintorerías", "Electricistas", "Jardines", "Notarías", "Clínicas veterinarias", "Centros deportivos", "Fotógrafos"]
+    "sectors": [
+      "Farmacias",
+      "Hostales",
+      "Inmobiliarias",
+      "Escuelas",
+      "Autoescuelas",
+      "Tintorerías",
+      "Electricistas",
+      "Jardines",
+      "Notarías",
+      "Clínicas veterinarias",
+      "Centros deportivos",
+      "Fotógrafos"
+    ]
   },
   "sectors": {
     "title": "¿PARA QUÉ TIPO DE NEGOCIO?",
@@ -1730,5 +1743,18 @@
       "label": "Despachos profesionales",
       "desc": "Asesorías, abogados, consultorías, gestorías, agencias..."
     }
+  },
+  "widget": {
+    "ariaLabel": "Chatea con nosotros",
+    "newChat": "Nueva conversación",
+    "onlineStatus": "Asistente virtual · en línea",
+    "greeting": "¡Hola! Soy el asistente de AMG. ¿Cómo te llamas?",
+    "namePlaceholder": "Tu nombre *",
+    "phonePlaceholder": "Teléfono de contacto *",
+    "startChat": "Iniciar chat →",
+    "connecting": "Conectando…",
+    "messagePlaceholder": "Escribe un mensaje…",
+    "errorStart": "No se ha podido iniciar el chat. Inténtalo de nuevo.",
+    "errorSend": "Error de conexión. Inténtalo de nuevo."
   }
 }

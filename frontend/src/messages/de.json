@@ -1712,7 +1712,20 @@
     "subtitle": "Wir arbeiten mit jeder Branche. Wenn Sie einen wiederkehrenden Prozess haben — Termine, Angebote, Anfragen, Rechnungen — automatisieren wir ihn.",
     "cta": "Erzählen Sie uns Ihren Fall",
     "examplesLabel": "Branchen, mit denen wir arbeiten",
-    "sectors": ["Apotheken", "Pensionen", "Immobilien", "Schulen", "Fahrschulen", "Reinigungen", "Elektriker", "Gartenpflege", "Notariate", "Tierkliniken", "Sportzentren", "Fotografen"]
+    "sectors": [
+      "Apotheken",
+      "Pensionen",
+      "Immobilien",
+      "Schulen",
+      "Fahrschulen",
+      "Reinigungen",
+      "Elektriker",
+      "Gartenpflege",
+      "Notariate",
+      "Tierkliniken",
+      "Sportzentren",
+      "Fotografen"
+    ]
   },
   "sectors": {
     "title": "FÜR WELCHE ART VON BETRIEB?",
@@ -1730,5 +1743,18 @@
       "label": "Professionelle Kanzleien",
       "desc": "Steuerberater, Anwälte, Berater, Agenturen..."
     }
+  },
+  "widget": {
+    "ariaLabel": "Chatten Sie mit uns",
+    "newChat": "Neues Gespräch",
+    "onlineStatus": "Virtueller Assistent · online",
+    "greeting": "Hallo! Ich bin der AMG-Assistent. Wie heißen Sie?",
+    "namePlaceholder": "Ihr Name *",
+    "phonePlaceholder": "Kontakttelefon *",
+    "startChat": "Chat starten →",
+    "connecting": "Verbinde…",
+    "messagePlaceholder": "Nachricht schreiben…",
+    "errorStart": "Der Chat konnte nicht gestartet werden. Bitte erneut versuchen.",
+    "errorSend": "Verbindungsfehler. Bitte erneut versuchen."
   }
 }

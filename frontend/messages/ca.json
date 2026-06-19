@@ -2132,5 +2132,18 @@
       "label": "Despatxos professionals",
       "desc": "Assessories, advocats, consultories, gestories, agències..."
     }
+  },
+  "widget": {
+    "ariaLabel": "Xat amb nosaltres",
+    "newChat": "Nova conversa",
+    "onlineStatus": "Assistent virtual · en línia",
+    "greeting": "Hola! Sóc l'assistent d'AMG. Com et dic?",
+    "namePlaceholder": "El teu nom *",
+    "phonePlaceholder": "Telèfon de contacte *",
+    "startChat": "Iniciar xat →",
+    "connecting": "Connectant…",
+    "messagePlaceholder": "Escriu un missatge…",
+    "errorStart": "No s'ha pogut iniciar el xat. Torna-ho a provar.",
+    "errorSend": "Error de connexió. Torna-ho a provar."
   }
 }

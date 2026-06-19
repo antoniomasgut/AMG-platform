@@ -2132,5 +2132,18 @@
       "label": "Professionelle Kanzleien",
       "desc": "Steuerberater, Anwälte, Berater, Agenturen..."
     }
+  },
+  "widget": {
+    "ariaLabel": "Chatten Sie mit uns",
+    "newChat": "Neues Gespräch",
+    "onlineStatus": "Virtueller Assistent · online",
+    "greeting": "Hallo! Ich bin der AMG-Assistent. Wie heißen Sie?",
+    "namePlaceholder": "Ihr Name *",
+    "phonePlaceholder": "Kontakttelefon *",
+    "startChat": "Chat starten →",
+    "connecting": "Verbinde…",
+    "messagePlaceholder": "Nachricht schreiben…",
+    "errorStart": "Der Chat konnte nicht gestartet werden. Bitte erneut versuchen.",
+    "errorSend": "Verbindungsfehler. Bitte erneut versuchen."
   }
 }

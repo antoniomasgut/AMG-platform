@@ -2132,5 +2132,18 @@
       "label": "Despachos profesionales",
       "desc": "Asesorías, abogados, consultorías, gestorías, agencias..."
     }
+  },
+  "widget": {
+    "ariaLabel": "Chatea con nosotros",
+    "newChat": "Nueva conversación",
+    "onlineStatus": "Asistente virtual · en línea",
+    "greeting": "¡Hola! Soy el asistente de AMG. ¿Cómo te llamas?",
+    "namePlaceholder": "Tu nombre *",
+    "phonePlaceholder": "Teléfono de contacto *",
+    "startChat": "Iniciar chat →",
+    "connecting": "Conectando…",
+    "messagePlaceholder": "Escribe un mensaje…",
+    "errorStart": "No se ha podido iniciar el chat. Inténtalo de nuevo.",
+    "errorSend": "Error de conexión. Inténtalo de nuevo."
   }
 }

@@ -1712,7 +1712,20 @@
     "subtitle": "Treballem amb qualsevol sector. Si tens un procés repetitiu — cites, pressupostos, consultes, factures — l'automatitzem.",
     "cta": "Explica'ns el teu cas",
     "examplesLabel": "Sectors amb els que treballem",
-    "sectors": ["Farmàcies", "Hostals", "Immobiliàries", "Escoles", "Autoescoles", "Tintoreries", "Electricistes", "Jardins", "Notaries", "Clíniques veterinàries", "Centres esportius", "Fotògrafs"]
+    "sectors": [
+      "Farmàcies",
+      "Hostals",
+      "Immobiliàries",
+      "Escoles",
+      "Autoescoles",
+      "Tintoreries",
+      "Electricistes",
+      "Jardins",
+      "Notaries",
+      "Clíniques veterinàries",
+      "Centres esportius",
+      "Fotògrafs"
+    ]
   },
   "sectors": {
     "title": "PER A QUIN TIPUS DE NEGOCI?",
@@ -1730,5 +1743,18 @@
       "label": "Despatxos professionals",
       "desc": "Assessories, advocats, consultories, gestories, agències..."
     }
+  },
+  "widget": {
+    "ariaLabel": "Xat amb nosaltres",
+    "newChat": "Nova conversa",
+    "onlineStatus": "Assistent virtual · en línia",
+    "greeting": "Hola! Sóc l'assistent d'AMG. Com et dic?",
+    "namePlaceholder": "El teu nom *",
+    "phonePlaceholder": "Telèfon de contacte *",
+    "startChat": "Iniciar xat →",
+    "connecting": "Connectant…",
+    "messagePlaceholder": "Escriu un missatge…",
+    "errorStart": "No s'ha pogut iniciar el xat. Torna-ho a provar.",
+    "errorSend": "Error de connexió. Torna-ho a provar."
   }
 }

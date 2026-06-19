@@ -1712,7 +1712,20 @@
     "subtitle": "We work with any sector. If you have a repetitive process — appointments, quotes, enquiries, invoices — we automate it.",
     "cta": "Tell us your case",
     "examplesLabel": "Sectors we work with",
-    "sectors": ["Pharmacies", "Hotels", "Real estate", "Schools", "Driving schools", "Dry cleaners", "Electricians", "Gardening", "Notaries", "Vet clinics", "Sports centres", "Photographers"]
+    "sectors": [
+      "Pharmacies",
+      "Hotels",
+      "Real estate",
+      "Schools",
+      "Driving schools",
+      "Dry cleaners",
+      "Electricians",
+      "Gardening",
+      "Notaries",
+      "Vet clinics",
+      "Sports centres",
+      "Photographers"
+    ]
   },
   "sectors": {
     "title": "WHAT TYPE OF BUSINESS?",
@@ -1730,5 +1743,18 @@
       "label": "Professional offices",
       "desc": "Accountants, lawyers, consultants, agencies..."
     }
+  },
+  "widget": {
+    "ariaLabel": "Chat with us",
+    "newChat": "New conversation",
+    "onlineStatus": "Virtual assistant · online",
+    "greeting": "Hi! I'm AMG's assistant. What's your name?",
+    "namePlaceholder": "Your name *",
+    "phonePlaceholder": "Contact phone *",
+    "startChat": "Start chat →",
+    "connecting": "Connecting…",
+    "messagePlaceholder": "Write a message…",
+    "errorStart": "Could not start the chat. Please try again.",
+    "errorSend": "Connection error. Please try again."
   }
 }

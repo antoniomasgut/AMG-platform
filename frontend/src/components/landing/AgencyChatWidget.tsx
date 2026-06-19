@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -11,6 +12,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
 const BRAND    = '#FF6B00';
 
 export function AgencyChatWidget() {
+  const t = useTranslations('widget');
   const [open, setOpen]           = useState(false);
   const [step, setStep]           = useState<'prechat' | 'chat'>('prechat');
   const [name, setName]           = useState('');
@@ -60,7 +62,7 @@ export function AgencyChatWidget() {
       setMessages([...hist, { role: 'assistant', text: data.greeting }]);
       setStep('chat');
     } catch {
-      setMessages([{ role: 'assistant', text: 'No s\'ha pogut iniciar el xat. Torna-ho a provar.' }]);
+      setMessages([{ role: 'assistant', text: t('errorStart') }]);
       setStep('chat');
     } finally {
       setLoading(false);
@@ -87,7 +89,7 @@ export function AgencyChatWidget() {
         setSessionId(null);
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', text: 'Error de connexió. Torna-ho a provar.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: t('errorSend') }]);
     } finally {
       setLoading(false);
     }
@@ -110,7 +112,7 @@ export function AgencyChatWidget() {
       {/* Floating button */}
       <button
         onClick={() => setOpen(o => !o)}
-        aria-label="Xat amb nosaltres"
+        aria-label={t('ariaLabel')}
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
           width: 60, height: 60, borderRadius: '50%',
@@ -156,7 +158,7 @@ export function AgencyChatWidget() {
               }}>🤖</div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>AMG Digitalitzacions</div>
-                <div style={{ fontSize: 11, opacity: 0.85 }}>Assistent virtual · en línia</div>
+                <div style={{ fontSize: 11, opacity: 0.85 }}>{t('onlineStatus')}</div>
               </div>
             </div>
             {step === 'chat' && (
@@ -164,7 +166,7 @@ export function AgencyChatWidget() {
                 background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff',
                 borderRadius: 8, padding: '4px 8px', cursor: 'pointer', fontSize: 11,
                 fontFamily: 'inherit',
-              }}>Nova conversa</button>
+              }}>{t('newChat')}</button>
             )}
           </div>
 
@@ -172,11 +174,11 @@ export function AgencyChatWidget() {
           {step === 'prechat' && (
             <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.5 }}>
-                Hola! Sóc l&apos;assistent d&apos;AMG. Com et dic?
+                {t('greeting')}
               </p>
               <input
                 type="text"
-                placeholder="El teu nom *"
+                placeholder={t('namePlaceholder')}
                 value={name}
                 onChange={e => setName(e.target.value)}
                 autoFocus
@@ -189,7 +191,7 @@ export function AgencyChatWidget() {
               />
               <input
                 type="tel"
-                placeholder="Telèfon de contacte *"
+                placeholder={t('phonePlaceholder')}
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && startChat()}
@@ -211,7 +213,7 @@ export function AgencyChatWidget() {
                   fontFamily: 'inherit', transition: 'background 0.15s',
                 }}
               >
-                {loading ? 'Connectant…' : 'Iniciar xat →'}
+                {loading ? t('connecting') : t('startChat')}
               </button>
             </div>
           )}
@@ -262,7 +264,7 @@ export function AgencyChatWidget() {
               }}>
                 <input
                   type="text"
-                  placeholder="Escriu un missatge…"
+                  placeholder={t('messagePlaceholder')}
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && sendMessage()}
