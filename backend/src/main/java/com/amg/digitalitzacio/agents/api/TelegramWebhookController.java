@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.agents.api;
 
 import com.amg.digitalitzacio.agents.application.AbsenceRescheduleService;
 import com.amg.digitalitzacio.agents.application.AgentRegistry;
+import com.amg.digitalitzacio.agents.application.AmgAdminCommandService;
 import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
 import com.amg.digitalitzacio.agents.application.TeamGrowthService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
@@ -29,6 +30,7 @@ public class TelegramWebhookController {
     private final TeamGrowthService teamGrowthService;
     private final AbsenceRescheduleService absenceRescheduleService;
     private final BudgetWorkflowService budgetWorkflowService;
+    private final AmgAdminCommandService amgAdminCommandService;
 
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody Map<String, Object> payload) {
@@ -54,6 +56,12 @@ public class TelegramWebhookController {
             }
 
             log.info("Missatge TG rebut de chat {}: {}", chatId, text);
+
+            // Comandes AMG Admin (xat de vendes o infraops)
+            if (amgAdminCommandService.isAdminChat(chatId)) {
+                amgAdminCommandService.handle(chatId, text);
+                return ResponseEntity.ok("ok");
+            }
 
             // Handle /start with link code
             if (text.startsWith("/start")) {
