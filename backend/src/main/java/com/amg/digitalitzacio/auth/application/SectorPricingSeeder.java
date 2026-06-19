@@ -82,7 +82,10 @@ public class SectorPricingSeeder implements CommandLineRunner {
             // Agència IA / Consultoria
             entry(BusinessSector.AGENCIA_IA,         BusinessSize.AUTONOMO, 200,  89, 20, 20, 15, 15),
             entry(BusinessSector.AGENCIA_IA,         BusinessSize.PETIT,    350, 129, 30, 30, 15, 15),
-            entry(BusinessSector.AGENCIA_IA,         BusinessSize.MITJA,    500, 164, 40, 40, 20, 20)
+            entry(BusinessSector.AGENCIA_IA,         BusinessSize.MITJA,    500, 164, 40, 40, 20, 20),
+            // Atenció a la infància
+            entry(BusinessSector.MARE_DE_DIA,        BusinessSize.AUTONOMO, 175,  59, 20, 20, 15, 15),
+            entry(BusinessSector.MARE_DE_DIA,        BusinessSize.PETIT,    275,  89, 30, 30, 15, 15)
         ));
     }
 

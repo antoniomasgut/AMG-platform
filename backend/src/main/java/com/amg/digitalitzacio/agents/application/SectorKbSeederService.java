@@ -170,6 +170,22 @@ public class SectorKbSeederService {
                 new SeedEntry(KnowledgeCategory.FAQ, "grups_nivell",
                     "Formem grups reduïts per nivell i edat per garantir un aprenentatge efectiu.", 4)
             );
+            case MARE_DE_DIA -> List.of(
+                new SeedEntry(KnowledgeCategory.SERVICE, "servei_mare_de_dia",
+                    "Som una llar familiar d'atenció a la infància. Cuidem nens i nenes de 4 mesos a 3 anys en un entorn familiar i personalitzat, amb un màxim de 6 infants per grup.", 0),
+                new SeedEntry(KnowledgeCategory.SCHEDULE, "horari",
+                    "Atenem de dilluns a divendres de 7:30h a 17:00h. Consulta disponibilitat per a mitja jornada o jornada completa.", 1),
+                new SeedEntry(KnowledgeCategory.PRICING, "preus",
+                    "La quota mensual inclou àpats adaptats a l'edat, material didàctic i activitats de desenvolupament. Contacta'ns per conèixer el preu actual i la disponibilitat de places.", 2),
+                new SeedEntry(KnowledgeCategory.FAQ, "documentacio",
+                    "Per formalitzar la inscripció cal: cartilla de vacunació actualitzada, targeta sanitària, autorització mèdica per a urgències i contracte d'inscripció signat.", 3),
+                new SeedEntry(KnowledgeCategory.FAQ, "visita_coneixenca",
+                    "Oferim visites de coneixença sense compromís per a les famílies interessades. Pots sol·licitar-la aquí i et proposem data i hora disponible.", 4),
+                new SeedEntry(KnowledgeCategory.FAQ, "places_espera",
+                    "Les places són limitades. Si en aquest moment no n'hi ha cap de lliure, t'inclourem a la llista d'espera i t'avisarem en primer lloc quan n'hi hagi una disponible.", 5),
+                new SeedEntry(KnowledgeCategory.FAQ, "infants_malalts",
+                    "Per salut de tots els infants, no podem atendre nens amb febre, vòmits o malalties contagioses. En cas de malaltia, cal avisar abans de les 8h del matí.", 6)
+            );
             default -> List.of(
                 new SeedEntry(KnowledgeCategory.SERVICE, "serveis_principals",
                     "Oferim serveis professionals de qualitat. Contacta'ns per a més informació sobre el que podem fer per tu.", 0),
