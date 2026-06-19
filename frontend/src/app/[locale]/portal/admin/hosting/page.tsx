@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGButton } from '@/components/ui/button';
-import { listAllAdminSites, approveSite, rejectSite, type WebSiteResponse, type WebsiteStatus } from '@/services/hosting';
+import { listAllAdminSites, approveSite, rejectSite, downloadCompose, type WebSiteResponse, type WebsiteStatus } from '@/services/hosting';
 
 const STATUS_LABELS: Record<WebsiteStatus, string> = {
   PENDING_REVIEW: 'Pendent revisió',
@@ -37,13 +37,25 @@ function ReviewModal({
   onDone: () => void;
 }) {
   const [notes, setNotes] = useState('');
+  const [upstreamContainer, setUpstreamContainer] = useState('');
+  const [upstreamPort, setUpstreamPort] = useState('80');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const isContainer = site.type === 'CONTAINER';
 
   async function handleApprove() {
+    if (isContainer && !upstreamContainer.trim()) {
+      setError('Cal indicar el nom del contenidor upstream.');
+      return;
+    }
     setLoading(true);
     try {
-      await approveSite(site.id, notes || undefined);
+      await approveSite(
+        site.id,
+        notes || undefined,
+        isContainer ? upstreamContainer.trim() : undefined,
+        isContainer ? (parseInt(upstreamPort) || 80) : undefined,
+      );
       onDone();
     } catch {
       setError('Error en aprovar el lloc.');
@@ -81,10 +93,58 @@ function ReviewModal({
           )}
         </div>
 
+        {isContainer && (
+          <>
+            <AMGButton
+              variant="secondary"
+              size="sm"
+              onClick={() => downloadCompose(site.id).catch(() => setError('Error descarregant el compose.'))}
+            >
+              ↓ Descarregar docker-compose.yml
+            </AMGButton>
+
+            <div className="p-3 bg-[#1a1a30] border border-border-base text-xs f-mono text-ink-2 space-y-1">
+              <div className="text-ink-3 uppercase tracking-wider mb-2">Desplegament manual (SSH)</div>
+              <div>1. Revisa el compose descarregat</div>
+              <div>2. Copia els fitxers al servidor</div>
+              <div className="text-accent-light">ssh root@65.108.148.62</div>
+              <div className="text-accent-light">docker compose -f docker-compose.yml up -d</div>
+              <div>3. Anota el nom del contenidor frontend i el port</div>
+              <div>4. Omple els camps de baix i aprova</div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="f-mono text-label text-xs uppercase text-ink-2">
+                  Contenidor upstream <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="w-full bg-[#0d0d1a] border border-border-base text-ink-0 text-sm p-2 focus:outline-none focus:border-accent"
+                  placeholder="nom-del-contenidor"
+                  value={upstreamContainer}
+                  onChange={e => setUpstreamContainer(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="f-mono text-label text-xs uppercase text-ink-2">Port</label>
+                <input
+                  type="number"
+                  className="w-full bg-[#0d0d1a] border border-border-base text-ink-0 text-sm p-2 focus:outline-none focus:border-accent"
+                  value={upstreamPort}
+                  onChange={e => setUpstreamPort(e.target.value)}
+                  min={1}
+                  max={65535}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
         <div className="space-y-1">
           <label className="f-mono text-label text-xs uppercase text-ink-2">Notes internes (opcional per aprovar, obligatòries per rebutjar)</label>
           <textarea
-            className="w-full bg-[#0d0d1a] border border-border-base text-ink-0 text-sm p-3 resize-none h-24 focus:outline-none focus:border-accent"
+            className="w-full bg-[#0d0d1a] border border-border-base text-ink-0 text-sm p-3 resize-none h-20 focus:outline-none focus:border-accent"
             placeholder="Indica el motiu de rebuig o notes d'aprovació..."
             value={notes}
             onChange={e => setNotes(e.target.value)}

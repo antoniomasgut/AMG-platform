@@ -152,7 +152,9 @@ public class WebHostingController {
                                                         @RequestBody(required = false) ReviewRequest request,
                                                         @AuthenticationPrincipal UserPrincipal principal) {
         String notes = request != null ? request.notes() : null;
-        return ResponseEntity.ok(webHostingService.approveSite(siteId, notes, principal));
+        String upstreamContainer = request != null ? request.upstreamContainer() : null;
+        Integer upstreamPort = request != null ? request.upstreamPort() : null;
+        return ResponseEntity.ok(webHostingService.approveSite(siteId, notes, upstreamContainer, upstreamPort, principal));
     }
 
     @PostMapping("/admin/sites/{siteId}/reject")

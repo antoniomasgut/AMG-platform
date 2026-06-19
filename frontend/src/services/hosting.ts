@@ -108,11 +108,32 @@ export async function listPendingSites(): Promise<WebSiteResponse[]> {
   return apiFetch<WebSiteResponse[]>('/hosting/admin/sites/pending');
 }
 
-export async function approveSite(siteId: string, notes?: string): Promise<WebSiteResponse> {
+export async function approveSite(
+  siteId: string,
+  notes?: string,
+  upstreamContainer?: string,
+  upstreamPort?: number,
+): Promise<WebSiteResponse> {
   return apiFetch<WebSiteResponse>(`/hosting/admin/sites/${siteId}/approve`, {
     method: 'POST',
-    body: JSON.stringify({ notes }),
+    body: JSON.stringify({ notes, upstreamContainer, upstreamPort }),
   });
+}
+
+export async function downloadCompose(siteId: string): Promise<void> {
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
+  const res = await fetch(`${apiUrl}/api/v1/hosting/admin/sites/${siteId}/compose`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error('Error descarregant el compose');
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'docker-compose.yml';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export async function rejectSite(siteId: string, notes: string): Promise<WebSiteResponse> {

@@ -127,12 +127,19 @@ public class WebHostingService {
         return toResponse(webSiteRepository.save(site));
     }
 
-    public WebSiteResponse approveSite(UUID siteId, String notes, UserPrincipal principal) {
+    public WebSiteResponse approveSite(UUID siteId, String notes, String upstreamContainer,
+                                        Integer upstreamPort, UserPrincipal principal) {
         WebSite site = findSite(siteId);
         site.setStatus(WebsiteStatus.APPROVED);
         site.setReviewNotes(notes);
         site.setReviewedBy(principal.id());
         site.setReviewedAt(Instant.now());
+        if (upstreamContainer != null && !upstreamContainer.isBlank()) {
+            site.setUpstreamContainer(upstreamContainer);
+        }
+        if (upstreamPort != null) {
+            site.setUpstreamPort(upstreamPort);
+        }
         webSiteRepository.save(site);
 
         deploySite(site);
