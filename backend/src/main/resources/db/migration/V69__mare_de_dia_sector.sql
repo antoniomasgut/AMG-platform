@@ -43,15 +43,20 @@ ALTER TABLE tenant_activated_phases ADD CONSTRAINT tenant_activated_phases_secto
     ));
 
 -- 4. Inserir preus (el seeder no re-sembra en producció si ja hi ha dades)
+-- Columnes legacy monthly_* tenen NOT NULL; s'omplen amb 0 (no les usa l'entitat actual)
 INSERT INTO sector_pricing
     (id, sector, business_size, setup_price, price_f1, price_f2, price_f3, price_f4, price_f5,
-     setup_f2, setup_f3, setup_f4, setup_f5, created_at, updated_at)
+     setup_f2, setup_f3, setup_f4, setup_f5,
+     monthly_complete, monthlyf1, monthly_f1f2, monthly_f1f2f3,
+     created_at, updated_at)
 SELECT
     gen_random_uuid(), sector, business_size, setup_price, price_f1, price_f2, price_f3, price_f4, price_f5,
-    0, 0, 0, 0, now(), now()
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    now(), now()
 FROM (VALUES
-    ('MARE_DE_DIA', 'AUTONOMO', 175, 59, 20, 20, 15, 15),
-    ('MARE_DE_DIA', 'PETIT',    275, 89, 30, 30, 15, 15)
+    ('MARE_DE_DIA'::varchar, 'AUTONOMO'::varchar, 175::numeric, 59::numeric, 20::numeric, 20::numeric, 15::numeric, 15::numeric),
+    ('MARE_DE_DIA'::varchar, 'PETIT'::varchar,    275::numeric, 89::numeric, 30::numeric, 30::numeric, 15::numeric, 15::numeric)
 ) AS t(sector, business_size, setup_price, price_f1, price_f2, price_f3, price_f4, price_f5)
 WHERE NOT EXISTS (
     SELECT 1 FROM sector_pricing sp
