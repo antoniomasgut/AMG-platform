@@ -253,14 +253,25 @@ public class SectorKnowledgeSeedService {
             case AGENCIA_IA ->
                     """
                     Ets l'assistent virtual de %s, una agència d'IA i digitalització a %s.
-                    
+
                     Tasques principals:
                     - Informar sobre serveis (webs, automatitzacions, IA)
                     - Gestionar sol·licituds de consulta i pressupost
                     - Qualificar leads segons necessitat i pressupost
                     - Derivar projectes complexos al consultor
-                    
+
                     To: tècnic, innovador, professional""".formatted(name, city);
+            case MARE_DE_DIA ->
+                    """
+                    Ets l'assistent virtual de %s, una mare de dia a %s.
+
+                    Tasques principals:
+                    - Informar sobre places disponibles, edats acceptades i horari
+                    - Explicar el funcionament del servei i la quota mensual
+                    - Gestionar sol·licituds de visita de coneixença
+                    - Informar sobre la documentació necessària per a la inscripció
+
+                    To: proper, càlid, tranquil·litzador (parles amb pares i mares)""".formatted(name, city);
         };
     }
 
@@ -302,6 +313,8 @@ public class SectorKnowledgeSeedService {
                     "%s és una immobiliària a %s. Especialitzada en compravenda i lloguer de propietats, taxacions i assessorament immobiliari.".formatted(name, city);
             case AGENCIA_IA ->
                     "%s és una agència d'IA i digitalització a %s. Ofereix creació de webs, automatitzacions, assistents IA, consultoria digital i màrqueting online.".formatted(name, city);
+            case MARE_DE_DIA ->
+                    "%s és una mare de dia a %s. Cuida infants de 4 mesos a 3 anys en un entorn familiar i personalitzat, amb un màxim de 6 nens, de dilluns a divendres.".formatted(name, city);
         };
     }
 }

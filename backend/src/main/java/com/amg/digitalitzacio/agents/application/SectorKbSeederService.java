@@ -175,7 +175,7 @@ public class SectorKbSeederService {
                     "Som una llar familiar d'atenció a la infància. Cuidem nens i nenes de 4 mesos a 3 anys en un entorn familiar i personalitzat, amb un màxim de 6 infants per grup.", 0),
                 new SeedEntry(KnowledgeCategory.SCHEDULE, "horari",
                     "Atenem de dilluns a divendres de 7:30h a 17:00h. Consulta disponibilitat per a mitja jornada o jornada completa.", 1),
-                new SeedEntry(KnowledgeCategory.PRICING, "preus",
+                new SeedEntry(KnowledgeCategory.BUSINESS_INFO, "preus",
                     "La quota mensual inclou àpats adaptats a l'edat, material didàctic i activitats de desenvolupament. Contacta'ns per conèixer el preu actual i la disponibilitat de places.", 2),
                 new SeedEntry(KnowledgeCategory.FAQ, "documentacio",
                     "Per formalitzar la inscripció cal: cartilla de vacunació actualitzada, targeta sanitària, autorització mèdica per a urgències i contracte d'inscripció signat.", 3),
