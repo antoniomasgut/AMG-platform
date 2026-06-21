@@ -25,7 +25,16 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request,
                                                 HttpServletRequest servletRequest) {
-        var ip = servletRequest.getRemoteAddr();
+        String ip = servletRequest.getHeader("X-Real-IP");
+        if (ip == null || ip.isBlank()) {
+            ip = servletRequest.getHeader("X-Forwarded-For");
+            if (ip != null && ip.contains(",")) {
+                ip = ip.split(",")[0].trim();
+            }
+        }
+        if (ip == null || ip.isBlank()) {
+            ip = servletRequest.getRemoteAddr();
+        }
         var response = authService.login(request, ip);
         var cookie = ResponseCookie.from("access_token", response.accessToken())
                 .httpOnly(true)

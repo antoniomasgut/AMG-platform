@@ -132,6 +132,12 @@ public class AssetOrchestrator implements AssetService {
 
     @Override
     @Transactional(readOnly = true)
+    public AssetResponse getAsset(UUID assetId) {
+        return toResponse(findActive(assetId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Resource serveFile(UUID assetId) {
         var asset = findActive(assetId);
         var filePath = Path.of(storageConfig.getPath(), asset.getStoragePath());

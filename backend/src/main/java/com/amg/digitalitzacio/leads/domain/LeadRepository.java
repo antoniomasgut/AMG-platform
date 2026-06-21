@@ -81,6 +81,8 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
 
     List<Lead> findByUpdatedAtBefore(Instant cutoff);
 
+    List<Lead> findByCreatedAtBefore(Instant cutoff);
+
     // Counts
     @Query("SELECT COUNT(l) FROM Lead l WHERE l.tenantId = :tenantId AND l.isActive = true")
     long countByTenantId(@Param("tenantId") UUID tenantId);

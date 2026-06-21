@@ -15,6 +15,8 @@ import java.util.UUID;
 @Table(name = "budgets", indexes = {
     @Index(name = "idx_budget_tenant_status", columnList = "tenantId,status"),
     @Index(name = "idx_budget_tenant_number", columnList = "tenantId,budgetNumber")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "uk_budget_number_tenant", columnNames = {"tenant_id", "budget_number"})
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder

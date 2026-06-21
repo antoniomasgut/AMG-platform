@@ -6,6 +6,7 @@ import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetStatus;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,6 +30,7 @@ public class BudgetClientFollowUpScheduler {
     private final TenantRepository tenantRepository;
     private final FollowupLogRepository followupLogRepository;
     private final EmailService emailService;
+    private final SystemConfigService systemConfigService;
 
     @Scheduled(cron = "0 30 9 * * *")
     public void sendClientReminders() {
@@ -60,7 +62,11 @@ public class BudgetClientFollowUpScheduler {
                 String clientName = tenant.getName() != null ? tenant.getName() : "client";
                 String email = tenant.getEmail();
                 String budgetRef = budget.getBudgetNumber() != null ? budget.getBudgetNumber() : budget.getId().toString().substring(0, 8).toUpperCase();
-                String acceptUrl = "https://amgdl.com/ca/login";
+                String appBase = systemConfigService.get("APP_BASE_URL");
+                if (appBase == null || appBase.isBlank()) appBase = "https://amgdl.com";
+                String acceptUrl = budget.getAcceptanceToken() != null
+                        ? appBase + "/accept-budget?token=" + budget.getAcceptanceToken()
+                        : appBase + "/ca/login";
 
                 String subject = daysSinceSent == 2
                         ? "Tens un pressupost pendent · " + budgetRef

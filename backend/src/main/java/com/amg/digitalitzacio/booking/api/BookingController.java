@@ -5,12 +5,16 @@ import com.amg.digitalitzacio.booking.application.BookingService;
 import com.amg.digitalitzacio.booking.domain.BookingToken;
 import com.amg.digitalitzacio.booking.domain.MeetingSettings;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -19,6 +23,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/v1/booking")
@@ -26,6 +31,11 @@ import java.util.UUID;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final StringRedisTemplate redis;
+
+    private static final String RATE_KEY     = "booking:confirm:rate:%s";
+    private static final int    RATE_LIMIT   = 20;
+    private static final int    RATE_WINDOW  = 60;
 
     // ── Admin: settings ──────────────────────────────────────────
 
@@ -126,12 +136,32 @@ public class BookingController {
     @PostMapping("/{token}/confirm")
     public ResponseEntity<Map<String, Object>> confirm(
             @PathVariable String token,
-            @Valid @RequestBody BookingConfirmRequest req) {
+            @Valid @RequestBody BookingConfirmRequest req,
+            HttpServletRequest request) {
+        checkConfirmRateLimit(request);
         LocalDateTime slot = LocalDateTime.parse(req.slotDatetime());
         BookingService.BookingResult result = bookingService.confirmBooking(token, slot);
         var resp = new java.util.HashMap<String, Object>();
         resp.put("meetingAt", result.meetingAt().toString());
         if (result.meetLink() != null) resp.put("meetLink", result.meetLink());
         return ResponseEntity.ok(resp);
+    }
+
+    private void checkConfirmRateLimit(HttpServletRequest request) {
+        String ip  = resolveClientIp(request);
+        String key = RATE_KEY.formatted(ip);
+        Long count = redis.opsForValue().increment(key);
+        if (count != null && count == 1) {
+            redis.expire(key, RATE_WINDOW, TimeUnit.SECONDS);
+        }
+        if (count != null && count > RATE_LIMIT) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Massa intents. Torna-ho a provar en un minut.");
+        }
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) return realIp;
+        return request.getRemoteAddr();
     }
 }

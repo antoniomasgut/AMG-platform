@@ -4,21 +4,26 @@ import com.amg.digitalitzacio.gocardless.api.dto.ProviderSummaryResponse;
 import com.amg.digitalitzacio.payments.api.dto.*;
 import com.amg.digitalitzacio.payments.application.PaymentService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final SystemConfigService systemConfigService;
 
     @PostMapping("/configure")
     @ResponseStatus(HttpStatus.CREATED)
@@ -78,7 +83,19 @@ public class PaymentController {
 
     @PostMapping("/webhook")
     @ResponseStatus(HttpStatus.OK)
-    public WebhookResponse webhook(@RequestBody WebhookRequest request) {
+    public WebhookResponse webhook(
+            @RequestHeader(value = "X-Webhook-Token", required = false) String token,
+            @RequestBody WebhookRequest request) {
+        String secret = systemConfigService.get("STRIPE_WEBHOOK_SECRET");
+        if (secret != null && !secret.isBlank()) {
+            if (token == null || !secret.equals(token)) {
+                log.warn("Stripe webhook: token invàlid o absent");
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid webhook token");
+            }
+        } else {
+            log.error("STRIPE_WEBHOOK_SECRET no configurat — webhook rebutjat");
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Webhook not configured");
+        }
         return paymentService.processWebhook(request);
     }
 
@@ -97,8 +114,20 @@ public class PaymentController {
             @RequestParam String successUrl,
             @RequestParam(required = false, defaultValue = "") String cancelUrl,
             @AuthenticationPrincipal UserPrincipal principal) {
+        String appBase = systemConfigService.get("APP_BASE_URL");
+        validateRedirectUrl(successUrl, appBase);
+        if (!cancelUrl.isBlank()) validateRedirectUrl(cancelUrl, appBase);
         var email = principal != null ? principal.email() : null;
         return paymentService.createSetupSession(tenantId, email, successUrl, cancelUrl);
+    }
+
+    private void validateRedirectUrl(String url, String appBase) {
+        if (url == null || url.isBlank()) return;
+        if (appBase != null && !appBase.isBlank() && url.startsWith(appBase)) return;
+        // Permet URLs relatives que comencin per /
+        if (url.startsWith("/") && !url.startsWith("//")) return;
+        log.warn("Redirect URL no permesa: {}", url);
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "URL de redirecció no permesa");
     }
 
     @PostMapping("/tenants/{tenantId}/setup/complete")

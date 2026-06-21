@@ -102,7 +102,8 @@ public class GoCardlessController {
         if (secret != null && !secret.isBlank()) {
             validateWebhookSignature(rawBody, signature, secret);
         } else {
-            log.warn("GOCARDLESS_WEBHOOK_SECRET not configured — skipping signature validation");
+            log.error("GOCARDLESS_WEBHOOK_SECRET not configured — rejecting webhook");
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Webhook secret not configured");
         }
         GoCardlessWebhookRequest request = objectMapper.readValue(rawBody, GoCardlessWebhookRequest.class);
         return goCardlessService.processWebhook(request);

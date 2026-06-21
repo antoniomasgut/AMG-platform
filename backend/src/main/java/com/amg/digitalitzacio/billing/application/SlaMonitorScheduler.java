@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 
 // Comprova cada hora si hi ha setups completats sense activar en més de 24h
 @Component
@@ -34,9 +35,16 @@ public class SlaMonitorScheduler {
 
         for (var intake : overdueIntakes) {
             var tenant = tenantRepository.findById(intake.getTenantId()).orElse(null);
-            boolean alreadyActive = tenant != null
-                    && tenant.getActivePhases() != null
-                    && !tenant.getActivePhases().isBlank();
+            boolean alreadyActive = false;
+            if (tenant != null && tenant.getContractedPhases() != null && !tenant.getContractedPhases().isBlank()) {
+                var contracted = Set.of(tenant.getContractedPhases().split(","));
+                var active = tenant.getActivePhases() != null
+                        ? Set.of(tenant.getActivePhases().split(","))
+                        : contracted;
+                alreadyActive = active.containsAll(contracted);
+            } else if (tenant != null) {
+                alreadyActive = tenant.getActivePhases() != null && !tenant.getActivePhases().isBlank();
+            }
 
             if (alreadyActive) continue;
 

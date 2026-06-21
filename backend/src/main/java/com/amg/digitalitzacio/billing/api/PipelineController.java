@@ -224,6 +224,9 @@ public class PipelineController {
         }
 
         String fromStage = lead.getStage() != null ? lead.getStage().name() : null;
+        if (lead.getStage() != null) {
+            validateStageTransition(lead.getStage(), newStage);
+        }
         lead.setStage(newStage);
 
         // SLA deadline per etapa
@@ -249,6 +252,18 @@ public class PipelineController {
         pipelineEventRepository.save(event);
 
         return ResponseEntity.ok(new StageTransitionResponse(leadId.toString(), fromStage, newStage.name()));
+    }
+
+    private void validateStageTransition(PipelineStage from, PipelineStage to) {
+        if (to == PipelineStage.WON || to == PipelineStage.LOST || to == PipelineStage.NURTURING) return;
+        if (from == PipelineStage.WON || from == PipelineStage.LOST) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "No es pot canviar l'etapa d'un lead " + from);
+        }
+        if (to.ordinal() > from.ordinal() + 2) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Transicio d'etapa no permesa: " + from + " → " + to);
+        }
     }
 
     // ── Historial d'events d'un lead ───────────────────────────────────────────

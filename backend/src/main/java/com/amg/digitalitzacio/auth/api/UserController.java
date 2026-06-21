@@ -37,7 +37,12 @@ public class UserController {
             Pageable pageable,
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) UUID tenantId,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        // ADMIN only sees users from their own tenant
+        if (principal != null && "ADMIN".equals(principal.role())) {
+            tenantId = principal.tenantId();
+        }
         return ResponseEntity.ok(userService.listUsers(pageable, role, tenantId, search));
     }
 

@@ -66,21 +66,28 @@ public class N8nRealClient implements N8nClient {
         }
     }
 
+    private String validateWorkflowId(String id) {
+        if (id == null || !id.matches("[a-zA-Z0-9_-]+")) {
+            throw new IllegalArgumentException("Invalid workflow ID: " + id);
+        }
+        return id;
+    }
+
     @Override
     public boolean activateWorkflow(String n8nWorkflowId) {
-        return executeAction("/workflows/" + n8nWorkflowId + "/activate", "activate");
+        return executeAction("/workflows/" + validateWorkflowId(n8nWorkflowId) + "/activate", "activate");
     }
 
     @Override
     public boolean deactivateWorkflow(String n8nWorkflowId) {
-        return executeAction("/workflows/" + n8nWorkflowId + "/deactivate", "deactivate");
+        return executeAction("/workflows/" + validateWorkflowId(n8nWorkflowId) + "/deactivate", "deactivate");
     }
 
     @Override
     public boolean deleteWorkflow(String n8nWorkflowId) {
         try {
             webClient.delete()
-                    .uri(apiUrl + "/workflows/" + n8nWorkflowId)
+                    .uri(apiUrl + "/workflows/" + validateWorkflowId(n8nWorkflowId))
                     .header("X-N8N-API-KEY", apiKey != null ? apiKey : "")
                     .retrieve()
                     .toBodilessEntity()

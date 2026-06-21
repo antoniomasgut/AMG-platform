@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.auth.application;
 
 import com.amg.digitalitzacio.shared.config.JwtProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,7 @@ import java.util.HexFormat;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
@@ -103,19 +105,24 @@ public class RefreshTokenService {
     }
 
     public void deleteAllForUser(UUID userId) {
-        var pattern = KEY_PREFIX + "*";
-        try (var connection = redis.getConnectionFactory().getConnection()) {
-            var keys = connection.keys((KEY_PREFIX + "*").getBytes());
-            for (var keyBytes : keys) {
-                var key = new String(keyBytes);
+        String userIdStr = userId.toString();
+        var scanOptions = org.springframework.data.redis.core.ScanOptions.scanOptions()
+                .match(KEY_PREFIX + "*")
+                .count(100)
+                .build();
+        try (var cursor = redis.scan(scanOptions)) {
+            while (cursor.hasNext()) {
+                String key = cursor.next();
                 var stored = redis.opsForValue().get(key);
                 if (stored != null) {
                     var parts = stored.split(VALUE_SEPARATOR, 2);
-                    if (parts.length > 0 && userId.toString().equals(parts[0])) {
+                    if (parts.length > 0 && userIdStr.equals(parts[0])) {
                         redis.delete(key);
                     }
                 }
             }
+        } catch (Exception e) {
+            log.warn("Error during Redis scan for user {}: {}", userId, e.getMessage());
         }
     }
 

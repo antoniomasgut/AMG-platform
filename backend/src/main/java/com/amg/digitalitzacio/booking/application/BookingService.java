@@ -105,6 +105,12 @@ public class BookingService {
                                                 UUID sourceDocumentId) {
         String label = resolveBookingLabel(tenantId);
 
+        // Invalida tokens anteriors per al mateix document
+        if (sourceDocumentId != null) {
+            tokenRepo.findActiveBySourceDocumentId(sourceDocumentId, Instant.now())
+                    .forEach(t -> { t.setExpiresAt(Instant.now()); tokenRepo.save(t); });
+        }
+
         var bt = new BookingToken();
         bt.setTenantId(tenantId);
         bt.setToken(generateToken());

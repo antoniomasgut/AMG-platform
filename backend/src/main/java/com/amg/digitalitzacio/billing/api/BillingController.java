@@ -60,9 +60,16 @@ public class BillingController {
     }
 
     @GetMapping("/tenants/{tenantId}/budgets/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public BudgetResponse getBudget(@PathVariable UUID id) {
-        return billingService.getBudget(id, false);
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public BudgetResponse getBudget(@PathVariable UUID tenantId,
+                                     @PathVariable UUID id,
+                                     @AuthenticationPrincipal UserPrincipal principal) {
+        var budget = billingService.getBudget(id, false);
+        if (!"SUPER_ADMIN".equals(principal.role()) && !"ADMIN".equals(principal.role())
+                && !tenantId.equals(budget.tenantId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Access denied");
+        }
+        return budget;
     }
 
     @PutMapping("/budgets/{id}")

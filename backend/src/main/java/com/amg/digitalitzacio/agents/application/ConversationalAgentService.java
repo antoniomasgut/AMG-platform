@@ -57,8 +57,14 @@ public class ConversationalAgentService {
     private static final Pattern BOOKING_TAG = Pattern.compile(
             "\\[CONFIRMA_CITA:(\\{.*?\\})]", Pattern.DOTALL);
     private static final String REMINDER_AGENT_SLUG = "appointment-reminder";
+    // Límit per evitar DoS via prompts enormes a l'API d'IA
+    private static final int MAX_INCOMING_TEXT_LENGTH = 4000;
 
     public void handleIncoming(UUID tenantId, String identifier, ConversationChannel channel, String text) {
+        if (text != null && text.length() > MAX_INCOMING_TEXT_LENGTH) {
+            log.warn("Missatge entrant massa llarg ({} chars) de {} — truncat", text.length(), identifier);
+            text = text.substring(0, MAX_INCOMING_TEXT_LENGTH);
+        }
         try {
             log.info("Handling incoming message for tenantId={}, channel={}", tenantId, channel);
 

@@ -349,7 +349,7 @@ public class BillingOrchestrator implements BillingService {
     @Override
     @Transactional(noRollbackFor = Exception.class)
     public AcceptRejectResponse acceptBudget(String token) {
-        var budget = budgetRepository.findByAcceptanceToken(token)
+        var budget = budgetRepository.findByAcceptanceTokenForUpdate(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
         if (budget.getStatus() != BudgetStatus.SENT) {
             throw new IllegalArgumentException("Budget is not in SENT status");
@@ -385,19 +385,10 @@ public class BillingOrchestrator implements BillingService {
                 return new AcceptRejectResponse("PAYMENT_REQUIRED",
                         "Per activar el servei, completa el pagament del setup.", checkoutUrl);
             } catch (Exception e) {
-                log.warn("[Billing] No s'ha pogut crear sessió Stripe per budget {}: {}", budget.getId(), e.getMessage());
-                // Fallback: activa fases directament si Stripe no disponible
-                addContractedPhases(budget.getTenantId(), nexePhases);
-                budget.setSetupPaid(Boolean.TRUE);
-                budget.setSetupPaidAt(Instant.now());
+                log.error("[Billing] Error creant sessió Stripe per budget {} — fases NO activades: {}", budget.getId(), e.getMessage());
                 budgetRepository.save(budget);
-                advanceLeadStage(budget, PipelineStage.WON);
-                final var fb = budget;
-                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
-                        new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
-                            @Override public void afterCommit() { postAcceptanceService.onBudgetAccepted(fb); }
-                        });
-                return new AcceptRejectResponse("ACCEPTED", "Pressupost acceptat correctament.", null);
+                return new AcceptRejectResponse("PAYMENT_ERROR",
+                        "No s'ha pogut processar el pagament. Contacta amb suport.", null);
             }
         }
 
@@ -588,21 +579,27 @@ public class BillingOrchestrator implements BillingService {
         for (var id : discountIds) {
             var discount = discountRepository.findById(id).orElse(null);
             if (discount == null || !discount.getIsActive()) continue;
+            if (discount.getMaxApplications() != null && discount.getMaxApplications() > 0
+                    && discount.getAppliedCount() >= discount.getMaxApplications()) continue;
             switch (discount.getType()) {
                 case PERCENTAGE -> total = total.add(subtotal.multiply(discount.getValue())
                         .divide(BigDecimal.valueOf(100)));
                 case FIXED -> total = total.add(discount.getValue());
             }
-            // appliedCount tracking is not incremented here —
-            // discount limits and usage tracking are pending implementation
+            discount.setAppliedCount(discount.getAppliedCount() + 1);
+            discountRepository.save(discount);
         }
         return total;
     }
 
     private String generateBudgetNumber(UUID tenantId) {
         var year = LocalDate.now().getYear();
-        var count = budgetRepository.countByTenantId(tenantId) + 1;
-        return String.format("BUD-%d-%04d", year, count);
+        var last = budgetRepository.findMaxBudgetNumberForTenantAndYear(tenantId, String.valueOf(year));
+        int next = last.map(n -> {
+            try { return Integer.parseInt(n.replaceAll(".*-(\\d+)$", "$1")) + 1; }
+            catch (NumberFormatException e) { return 1; }
+        }).orElse(1);
+        return String.format("BUD-%d-%04d", year, next);
     }
 
     private BusinessSector resolveSector(UUID tenantId, String reqSector) {
@@ -744,7 +741,6 @@ public class BillingOrchestrator implements BillingService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Map<String, Object> sendBudgetViaChannel(UUID budgetId, String channel) {
         var budget = findBudget(budgetId);
         if (budget.getStatus() != BudgetStatus.SENT) {

@@ -2,9 +2,13 @@ package com.amg.digitalitzacio.billing.domain;
 
 import com.amg.digitalitzacio.billing.domain.Budget;
 import com.amg.digitalitzacio.billing.domain.BudgetStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
@@ -23,4 +27,11 @@ public interface BudgetRepository extends JpaRepository<Budget, UUID> {
     void deleteByTenantId(UUID tenantId);
 
     List<Budget> findByStatusAndSentAtBetween(BudgetStatus status, Instant from, Instant to);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Budget b WHERE b.acceptanceToken = :token")
+    Optional<Budget> findByAcceptanceTokenForUpdate(@Param("token") String token);
+
+    @Query("SELECT MAX(b.budgetNumber) FROM Budget b WHERE b.tenantId = :tenantId AND b.budgetNumber LIKE CONCAT('BUD-', :year, '-%')")
+    Optional<String> findMaxBudgetNumberForTenantAndYear(@Param("tenantId") UUID tenantId, @Param("year") String year);
 }

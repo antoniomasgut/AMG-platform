@@ -208,6 +208,28 @@ public class SectorPhaseSeeder implements ApplicationRunner {
                 PhaseDepType.OPTIONAL, "2", 150, 49)
         ));
 
+        // ── Mare de Dia / Llar d'Infants ─────────────────────────────────
+        repo.saveAll(List.of(
+            phase(BusinessSector.MARE_DE_DIA, 1, "Gestió d'Inscripcions",
+                "El pare/mare consulta places disponibles per WhatsApp → el bot recull les dades del nen i fa l'alta automàticament",
+                PhaseDepType.BASE, null, 79, 49),
+            phase(BusinessSector.MARE_DE_DIA, 2, "Comunicació Diària amb Pares",
+                "Al final del dia el bot envia resum d'activitat (àpats, son, jocs) als pares per WhatsApp",
+                PhaseDepType.OPTIONAL, "1", 49, 22),
+            phase(BusinessSector.MARE_DE_DIA, 3, "Control d'Assistència i Horaris",
+                "Els pares notifiquen absències i retards per WhatsApp → el bot actualitza el registre i notifica la professional per Telegram",
+                PhaseDepType.OPTIONAL, "1", 49, 18),
+            phase(BusinessSector.MARE_DE_DIA, 4, "Facturació i Recordatoris de Pagament",
+                "Recordatori mensual de pagament als pares per WhatsApp. Factura per email. Escala impagaments automàticament",
+                PhaseDepType.OPTIONAL, "1", 69, 18),
+            phase(BusinessSector.MARE_DE_DIA, 5, "Seguiment i Informes del Nen",
+                "La professional registra evolució per Telegram → el bot genera informe mensual i l'envia als pares per email",
+                PhaseDepType.OPTIONAL, "1,2", 69, 15),
+            phase(BusinessSector.MARE_DE_DIA, 6, "Llista d'Espera i Reactivació",
+                "Gestió automàtica de llista d'espera. Notificació quan es libera una plaça. Ofertes per temporada estival",
+                PhaseDepType.OPTIONAL, "1", 39, 12)
+        ));
+
         // ── Inmobiliaria ─────────────────────────────────────────────────
         repo.saveAll(List.of(
             phase(BusinessSector.INMOBILIARIA, 1, "Captació de Propietats",

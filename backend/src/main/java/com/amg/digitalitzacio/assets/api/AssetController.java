@@ -49,10 +49,15 @@ public class AssetController {
 
     @GetMapping("/{assetId}/file")
     public ResponseEntity<Resource> serveFile(@PathVariable UUID assetId) {
+        var asset = assetService.getAsset(assetId);
         var resource = assetService.serveFile(assetId);
+        // SVG pot contenir JS — força descàrrega per evitar XSS en context del navegador
+        String mimeType = asset.mimeType() != null ? asset.mimeType() : "application/octet-stream";
+        boolean isSvg = "image/svg+xml".equals(mimeType);
+        String disposition = isSvg ? "attachment" : "inline";
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .contentType(MediaType.parseMediaType(mimeType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition)
                 .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000, immutable")
                 .body(resource);
     }

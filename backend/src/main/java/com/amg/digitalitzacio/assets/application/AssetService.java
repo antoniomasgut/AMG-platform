@@ -16,6 +16,8 @@ public interface AssetService {
 
     AssetStatsResponse getStats(UUID tenantId);
 
+    AssetResponse getAsset(UUID assetId);
+
     Resource serveFile(UUID assetId);
 
     Resource serveThumbnail(UUID assetId);

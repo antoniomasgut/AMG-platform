@@ -145,7 +145,7 @@ public class KnowledgeController {
             @PathVariable UUID tenantId,
             @RequestBody Map<String, String> body) {
         var query = body.getOrDefault("query", "");
-        var limit = Integer.parseInt(body.getOrDefault("limit", "10"));
+        var limit = Math.min(Integer.parseInt(body.getOrDefault("limit", "10")), 50);
         var kbOpt = knowledgeBaseRepository.findByTenantId(tenantId);
         if (kbOpt.isEmpty()) return ResponseEntity.ok(List.of());
         var results = vectorSearchService.search(kbOpt.get().getId(), query, limit);

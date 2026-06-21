@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +31,9 @@ public class GoogleCalendarOAuthCallbackController {
     private final GoogleCalendarService calendarService;
     private final NexeServiceConfigService nexeConfigService;
     private final ObjectMapper objectMapper;
+    private final StringRedisTemplate redis;
+
+    private static final String STATE_KEY = "gcal:oauth:state:%s";
 
     @GetMapping("/oauth-callback")
     public ResponseEntity<Void> oauthCallback(
@@ -38,7 +42,15 @@ public class GoogleCalendarOAuthCallbackController {
             HttpServletRequest request) {
 
         try {
-            UUID tenantId   = UUID.fromString(state);
+            // Verifica el state contra Redis per prevenir CSRF
+            String storedTenantId = redis.opsForValue().getAndDelete(STATE_KEY.formatted(state));
+            if (storedTenantId == null) {
+                log.warn("Google Calendar OAuth: state invàlid o expirat: {}", state);
+                return ResponseEntity.status(302)
+                        .location(URI.create("/portal/admin?error=calendar_oauth_csrf"))
+                        .build();
+            }
+            UUID tenantId   = UUID.fromString(storedTenantId);
             String redirectUri = buildRedirectUri(request);
             String refreshToken = calendarService.exchangeCodeForRefreshToken(code, redirectUri);
 

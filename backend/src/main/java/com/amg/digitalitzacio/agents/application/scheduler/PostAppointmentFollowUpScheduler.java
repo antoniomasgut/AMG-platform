@@ -99,13 +99,14 @@ public class PostAppointmentFollowUpScheduler {
                     .replace("{{nom}}", name)
                     .replace("{{url_ressenya}}", reviewUrl);
                 send(chatLink, identifier, message);
-                redis.opsForValue().set(redisKey, "1", REDIS_TTL_DAYS, TimeUnit.DAYS);
+                // Persisteix primer; Redis és deduplicació lleugera
                 var logEntry = new FollowupLog();
                 logEntry.setTenantId(tenantId);
                 logEntry.setType("APPOINTMENT");
                 logEntry.setEntityId(booking.getId());
                 logEntry.setContact(identifier);
                 followupLogRepository.save(logEntry);
+                redis.opsForValue().set(redisKey, "1", REDIS_TTL_DAYS, TimeUnit.DAYS);
                 log.info("[F2→F4] Seguiment post-cita enviat a {} (booking {}, tenant {})",
                     identifier, booking.getId(), tenantId);
             } catch (Exception e) {

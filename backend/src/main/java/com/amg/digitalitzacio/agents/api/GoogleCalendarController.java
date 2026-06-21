@@ -8,12 +8,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RestController
@@ -25,6 +27,10 @@ public class GoogleCalendarController {
     private final NexeServiceConfigService nexeConfigService;
     private final TenantRepository tenantRepository;
     private final ObjectMapper objectMapper;
+    private final StringRedisTemplate redis;
+
+    private static final String STATE_KEY = "gcal:oauth:state:%s";
+    private static final int    STATE_TTL_MINUTES = 10;
 
     // ── Fase 1: AMG crea el calendari per al tenant ──────────────
 
@@ -111,8 +117,13 @@ public class GoogleCalendarController {
                     .body(Map.of("error", "GOOGLE_OAUTH_CLIENT_ID / CLIENT_SECRET no configurats"));
         }
 
+        // Genera un state aleatori i el guarda a Redis per prevenir CSRF
+        String stateToken = UUID.randomUUID().toString();
+        redis.opsForValue().set(STATE_KEY.formatted(stateToken), tenantId.toString(),
+                STATE_TTL_MINUTES, TimeUnit.MINUTES);
+
         String redirectUri = buildRedirectUri(request);
-        String url = calendarService.buildOAuthUrl(tenantId.toString(), redirectUri);
+        String url = calendarService.buildOAuthUrl(stateToken, redirectUri);
         return ResponseEntity.ok(Map.of("url", url));
     }
 

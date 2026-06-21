@@ -374,6 +374,9 @@ public class PostAcceptanceService {
     }
 
     private BudgetSetupIntake ensureIntake(Budget budget, String tenantName) {
+        // Re-check dins del mateix thread per evitar race condition de doble creació
+        var existing = intakeRepository.findByBudgetId(budget.getId()).orElse(null);
+        if (existing != null) return existing;
         return intakeRepository.findByBudgetId(budget.getId()).orElseGet(() -> {
             var intake = new BudgetSetupIntake();
             intake.setBudgetId(budget.getId());

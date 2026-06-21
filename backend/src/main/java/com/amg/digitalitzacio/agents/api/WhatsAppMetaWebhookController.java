@@ -5,11 +5,18 @@ import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 
 @RestController
 @RequestMapping("/api/v1/agents/whatsapp-meta/webhook")
@@ -20,6 +27,7 @@ public class WhatsAppMetaWebhookController {
     private final ConversationalAgentService conversationalAgentService;
     private final TenantChatLinkRepository tenantChatLinkRepository;
     private final SystemConfigService systemConfigService;
+    private final ObjectMapper objectMapper;
 
     // Meta verifica el webhook amb un GET inicial
     @GetMapping
@@ -41,7 +49,27 @@ public class WhatsAppMetaWebhookController {
     }
 
     @PostMapping
-    public ResponseEntity<String> handleWebhook(@RequestBody JsonNode payload) {
+    public ResponseEntity<String> handleWebhook(
+            @RequestHeader(value = "X-Hub-Signature-256", required = false) String hubSignature,
+            @RequestBody byte[] rawBody) {
+        String appSecret = systemConfigService.get("META_APP_SECRET");
+        if (appSecret != null && !appSecret.isBlank()) {
+            if (!verifyMetaSignature(rawBody, hubSignature, appSecret)) {
+                log.warn("WhatsApp Meta webhook: signatura X-Hub-Signature-256 invàlida");
+                return ResponseEntity.status(401).body("Unauthorized");
+            }
+        } else {
+            log.warn("META_APP_SECRET no configurat — WhatsApp Meta webhook sense verificació HMAC");
+        }
+
+        JsonNode payload;
+        try {
+            payload = objectMapper.readTree(rawBody);
+        } catch (Exception e) {
+            log.error("Error parsejant payload WhatsApp Meta: {}", e.getMessage());
+            return ResponseEntity.badRequest().body("Bad Request");
+        }
+
         try {
             if (!"whatsapp_business_account".equals(payload.path("object").asText())) {
                 return ResponseEntity.ok("ok");
@@ -80,5 +108,20 @@ public class WhatsAppMetaWebhookController {
     @Async
     private void handleAsync(java.util.UUID tenantId, String from, String text) {
         conversationalAgentService.handleIncoming(tenantId, from, ConversationChannel.WHATSAPP_META, text);
+    }
+
+    private boolean verifyMetaSignature(byte[] body, String signature, String appSecret) {
+        if (signature == null || !signature.startsWith("sha256=")) return false;
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(appSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            String expected = "sha256=" + HexFormat.of().formatHex(mac.doFinal(body));
+            return MessageDigest.isEqual(
+                    expected.getBytes(StandardCharsets.UTF_8),
+                    signature.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            log.error("Error verificant signatura Meta: {}", e.getMessage());
+            return false;
+        }
     }
 }

@@ -3,13 +3,16 @@ package com.amg.digitalitzacio.finops.api;
 import com.amg.digitalitzacio.finops.api.dto.*;
 import com.amg.digitalitzacio.finops.application.FinOpsService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.YearMonth;
 import java.util.List;
@@ -19,9 +22,11 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/finops")
 @RequiredArgsConstructor
+@Slf4j
 public class FinOpsController {
 
     private final FinOpsService finOpsService;
+    private final SystemConfigService systemConfigService;
 
     @PostMapping("/configure")
     @ResponseStatus(HttpStatus.CREATED)
@@ -92,7 +97,18 @@ public class FinOpsController {
 
     @PostMapping("/webhook")
     @ResponseStatus(HttpStatus.OK)
-    public WebhookResponse webhook(@RequestBody WebhookRequest request) {
+    public WebhookResponse webhook(
+            @RequestHeader(value = "X-Webhook-Token", required = false) String token,
+            @RequestBody WebhookRequest request) {
+        String secret = systemConfigService.get("HOLDED_WEBHOOK_SECRET");
+        if (secret != null && !secret.isBlank()) {
+            if (token == null || !secret.equals(token)) {
+                log.warn("Holded webhook: token invàlid o absent");
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid webhook token");
+            }
+        } else {
+            log.warn("HOLDED_WEBHOOK_SECRET no configurat — webhook sense verificació");
+        }
         return finOpsService.processWebhook(request);
     }
 

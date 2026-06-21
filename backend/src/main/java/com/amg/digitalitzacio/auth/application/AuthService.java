@@ -149,6 +149,7 @@ public class AuthService {
         }
 
         var user = userOpt.get();
+        resetTokenRepository.deleteByUserId(user.getId());
         var token = generateSecureToken();
         var tokenHash = RefreshTokenService.hashToken(token);
         var expiresAt = Instant.now().plusSeconds(1800);

@@ -6,12 +6,19 @@ import com.amg.digitalitzacio.whatsapp.api.dto.WhatsAppConnectRequest;
 import com.amg.digitalitzacio.whatsapp.api.dto.WhatsAppTestMessageRequest;
 import com.amg.digitalitzacio.whatsapp.application.WhatsAppBusinessOrchestrator;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 
 import java.util.UUID;
 
@@ -23,6 +30,7 @@ public class WhatsAppController {
 
     private final WhatsAppBusinessOrchestrator orchestrator;
     private final SystemConfigService systemConfigService;
+    private final ObjectMapper objectMapper;
 
     /** Retorna la config WABA del tenant */
     @GetMapping("/tenants/{tenantId}/config")
@@ -83,8 +91,28 @@ public class WhatsAppController {
 
     /** POST webhook — rep missatges i events de Meta */
     @PostMapping("/webhook")
-    public ResponseEntity<String> receiveWebhook(@RequestBody(required = false) JsonNode payload) {
-        if (payload == null) return ResponseEntity.ok("ok");
+    public ResponseEntity<String> receiveWebhook(
+            @RequestHeader(value = "X-Hub-Signature-256", required = false) String hubSignature,
+            @RequestBody(required = false) byte[] rawBody) {
+        if (rawBody == null || rawBody.length == 0) return ResponseEntity.ok("ok");
+
+        String appSecret = systemConfigService.get("WHATSAPP_WEBHOOK_SECRET");
+        if (appSecret != null && !appSecret.isBlank()) {
+            if (!verifyHmacSignature(rawBody, hubSignature, appSecret)) {
+                log.warn("WhatsApp webhook: signatura X-Hub-Signature-256 invàlida");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            }
+        } else {
+            log.warn("WHATSAPP_WEBHOOK_SECRET no configurat — WhatsApp webhook sense verificació HMAC");
+        }
+
+        JsonNode payload;
+        try {
+            payload = objectMapper.readTree(rawBody);
+        } catch (Exception e) {
+            log.error("Error parsejant payload WhatsApp: {}", e.getMessage());
+            return ResponseEntity.badRequest().body("Bad Request");
+        }
 
         try {
             var entries = payload.path("entry");
@@ -116,5 +144,20 @@ public class WhatsAppController {
         }
 
         return ResponseEntity.ok("ok");
+    }
+
+    private boolean verifyHmacSignature(byte[] body, String signature, String secret) {
+        if (signature == null || !signature.startsWith("sha256=")) return false;
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            String expected = "sha256=" + HexFormat.of().formatHex(mac.doFinal(body));
+            return MessageDigest.isEqual(
+                    expected.getBytes(StandardCharsets.UTF_8),
+                    signature.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            log.error("Error verificant signatura WhatsApp HMAC: {}", e.getMessage());
+            return false;
+        }
     }
 }

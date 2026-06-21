@@ -29,7 +29,7 @@ public class GdprRetentionScheduler {
     @Transactional
     public void purgeExpiredPersonalData() {
         Instant cutoff = Instant.now().minus(RETENTION_YEARS * 365L, ChronoUnit.DAYS);
-        List<Lead> expired = leadRepository.findByUpdatedAtBefore(cutoff);
+        List<Lead> expired = leadRepository.findByCreatedAtBefore(cutoff);
 
         if (expired.isEmpty()) return;
 

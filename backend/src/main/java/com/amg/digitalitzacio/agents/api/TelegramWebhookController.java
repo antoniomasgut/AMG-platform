@@ -8,6 +8,7 @@ import com.amg.digitalitzacio.agents.application.TeamGrowthService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.documents.delivery.application.BudgetWorkflowService;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -31,9 +32,19 @@ public class TelegramWebhookController {
     private final AbsenceRescheduleService absenceRescheduleService;
     private final BudgetWorkflowService budgetWorkflowService;
     private final AmgAdminCommandService amgAdminCommandService;
+    private final SystemConfigService systemConfigService;
 
     @PostMapping("/webhook")
-    public ResponseEntity<String> handleWebhook(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<String> handleWebhook(
+            @RequestHeader(value = "X-Telegram-Bot-Api-Secret-Token", required = false) String secretToken,
+            @RequestBody Map<String, Object> payload) {
+        String expectedSecret = systemConfigService.get("TELEGRAM_WEBHOOK_SECRET");
+        if (expectedSecret != null && !expectedSecret.isBlank()) {
+            if (!expectedSecret.equals(secretToken)) {
+                log.warn("Telegram webhook: secret_token invàlid o absent");
+                return ResponseEntity.status(401).body("Unauthorized");
+            }
+        }
         try {
             var message = extractMessage(payload);
             if (message == null) {
@@ -159,8 +170,16 @@ public class TelegramWebhookController {
     // Endpoint per-tenant: cada client té el seu bot amb la seva URL
     @PostMapping("/webhook/{tenantId}")
     public ResponseEntity<String> handleCustomerWebhook(
+            @RequestHeader(value = "X-Telegram-Bot-Api-Secret-Token", required = false) String secretToken,
             @PathVariable UUID tenantId,
             @RequestBody Map<String, Object> payload) {
+        String expectedSecret = systemConfigService.get("TELEGRAM_WEBHOOK_SECRET");
+        if (expectedSecret != null && !expectedSecret.isBlank()) {
+            if (!expectedSecret.equals(secretToken)) {
+                log.warn("Telegram webhook (tenant {}): secret_token invàlid o absent", tenantId);
+                return ResponseEntity.status(401).body("Unauthorized");
+            }
+        }
         try {
             var message = extractMessage(payload);
             if (message == null) return ResponseEntity.ok("ok");

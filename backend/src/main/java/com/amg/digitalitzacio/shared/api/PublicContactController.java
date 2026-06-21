@@ -34,6 +34,9 @@ public class PublicContactController {
             req.message() == null || req.message().isBlank()) {
             return ResponseEntity.badRequest().body(new ContactResponse(false));
         }
+        if (req.name().length() > 100 || req.email().length() > 200 || req.message().length() > 2000) {
+            return ResponseEntity.badRequest().body(new ContactResponse(false));
+        }
 
         String name    = req.name().strip();
         String email   = req.email().strip().toLowerCase();

@@ -57,9 +57,10 @@ public class ChatController {
     }
 
     private String extractIp(HttpServletRequest req) {
-        var forwarded = req.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+        // Traefik posa la IP real del client a X-Real-IP (no és manipulable pel client)
+        var realIp = req.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
         }
         return req.getRemoteAddr();
     }
