@@ -99,7 +99,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/demo/**").permitAll()
                         // Documents i DPA: accés per token sense autenticació JWT (clients externs)
                         .requestMatchers(HttpMethod.GET, "/api/v1/documents/view/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/documents/view/**/accept").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/documents/view/*/accept").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/documents/download/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/dpa/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/public/dpa/**").permitAll()
