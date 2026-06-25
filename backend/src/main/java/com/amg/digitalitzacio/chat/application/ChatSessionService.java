@@ -156,7 +156,7 @@ public class ChatSessionService {
                 .orElse(false);
     }
 
-    public CreateSessionResult createAgencySession(String contactName, String contactPhone, String ip) {
+    public CreateSessionResult createAgencySession(String contactName, String contactPhone, String locale, String ip) {
         checkSessionRateLimit(ip);
 
         var owner = tenantRepository.findByIsOwnerTrue()
@@ -196,7 +196,7 @@ public class ChatSessionService {
         }
 
         var sessionId = UUID.randomUUID().toString();
-        var greeting  = generateGreetingWithPrompt(ctx, systemPrompt, "agency", model);
+        var greeting  = generateGreetingWithPrompt(ctx, systemPrompt, "agency", model, locale);
 
         var session = ChatSession.builder()
                 .id(sessionId)
@@ -294,20 +294,45 @@ public class ChatSessionService {
     }
 
     private String generateGreetingWithPrompt(LandingChatContext ctx, String systemPrompt, String landingSlug) {
-        return generateGreetingWithPrompt(ctx, systemPrompt, landingSlug, null);
+        return generateGreetingWithPrompt(ctx, systemPrompt, landingSlug, null, null);
     }
 
     private String generateGreetingWithPrompt(LandingChatContext ctx, String systemPrompt, String landingSlug, String modelOverride) {
-        String fallback = "Hola! Sóc l'assistent virtual de " + ctx.getBusinessName() + ". En què puc ajudar-te?";
+        return generateGreetingWithPrompt(ctx, systemPrompt, landingSlug, modelOverride, null);
+    }
+
+    private String generateGreetingWithPrompt(LandingChatContext ctx, String systemPrompt, String landingSlug, String modelOverride, String locale) {
+        String langName = resolveLanguageName(locale);
+        String fallback = greetingFallback(ctx.getBusinessName(), locale);
         try {
             String greetingPrompt = systemPrompt +
-                "\n\nGenera un missatge de benvinguda breu i amigable en català (màx. 2 frases). Presenta't pel nom del negoci i ofereix ajuda.";
+                "\n\nGenera un missatge de benvinguda breu i amigable en " + langName + " (màx. 2 frases). Presenta't pel nom del negoci i ofereix ajuda.";
             var result = callAI(greetingPrompt, List.of(), "Hola", isDemo(landingSlug), modelOverride);
             return (result != null && !result.isBlank()) ? result : fallback;
         } catch (Exception e) {
             log.warn("Could not generate greeting: {}", e.getMessage());
             return fallback;
         }
+    }
+
+    private String resolveLanguageName(String locale) {
+        if (locale == null) return "català";
+        return switch (locale) {
+            case "es" -> "castellà (espanyol)";
+            case "en" -> "anglès";
+            case "de" -> "alemany";
+            default   -> "català";
+        };
+    }
+
+    private String greetingFallback(String businessName, String locale) {
+        if (locale == null) locale = "ca";
+        return switch (locale) {
+            case "es" -> "¡Hola! Soy el asistente virtual de " + businessName + ". ¿En qué puedo ayudarte?";
+            case "en" -> "Hi! I'm the virtual assistant of " + businessName + ". How can I help you?";
+            case "de" -> "Hallo! Ich bin der virtuelle Assistent von " + businessName + ". Wie kann ich Ihnen helfen?";
+            default   -> "Hola! Sóc l'assistent virtual de " + businessName + ". En què puc ajudar-te?";
+        };
     }
 
     private String processBookingTag(String response, UUID tenantId, String leadId) {
@@ -364,6 +389,10 @@ public class ChatSessionService {
                     lead.setName(name);
                     lead.setPhone(phone);
                     lead.setSource(LeadSource.CHAT_WIDGET);
+                    lead.setStage(com.amg.digitalitzacio.leads.domain.PipelineStage.NEW);
+                    lead.setIsActive(true);
+                    lead.setCreatedAt(Instant.now());
+                    lead.setUpdatedAt(Instant.now());
                     lead.setLastContactAt(Instant.now());
                     return leadRepository.save(lead);
                 });

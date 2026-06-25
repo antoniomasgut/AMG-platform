@@ -15,7 +15,7 @@ public class ChatController {
     private final ChatSessionService chatSessionService;
 
     record CreateSessionRequest(String landingSlug, String contactName, String contactPhone) {}
-    record CreateAgencySessionRequest(String contactName, String contactPhone) {}
+    record CreateAgencySessionRequest(String contactName, String contactPhone, String locale) {}
     record HistoryMessage(String role, String content) {}
     record CreateSessionResponse(String sessionId, String greeting, List<HistoryMessage> history) {}
 
@@ -32,7 +32,11 @@ public class ChatController {
     @ResponseStatus(HttpStatus.CREATED)
     public CreateSessionResponse createAgencySession(@RequestBody CreateAgencySessionRequest req,
                                                      HttpServletRequest httpReq) {
-        var result = chatSessionService.createAgencySession(req.contactName(), req.contactPhone(), extractIp(httpReq));
+        String locale = req.locale();
+        if (locale == null || locale.isBlank()) {
+            locale = extractLocaleFromAcceptLanguage(httpReq.getHeader("Accept-Language"));
+        }
+        var result = chatSessionService.createAgencySession(req.contactName(), req.contactPhone(), locale, extractIp(httpReq));
         var history = result.history().stream()
                 .map(m -> new HistoryMessage(m.getRole(), m.getContent()))
                 .toList();
@@ -54,6 +58,16 @@ public class ChatController {
                                            HttpServletRequest httpReq) {
         var result = chatSessionService.sendMessage(sessionId, req.message(), extractIp(httpReq));
         return new SendMessageResponse(result.sessionId(), result.reply(), result.terminated());
+    }
+
+    private String extractLocaleFromAcceptLanguage(String acceptLanguage) {
+        if (acceptLanguage == null || acceptLanguage.isBlank()) return null;
+        String primary = acceptLanguage.split(",")[0].split(";")[0].trim().toLowerCase();
+        if (primary.startsWith("es")) return "es";
+        if (primary.startsWith("en")) return "en";
+        if (primary.startsWith("de")) return "de";
+        if (primary.startsWith("ca")) return "ca";
+        return null;
     }
 
     private String extractIp(HttpServletRequest req) {

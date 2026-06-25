@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -12,7 +12,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
 const BRAND    = '#FF6B00';
 
 export function AgencyChatWidget() {
-  const t = useTranslations('widget');
+  const t      = useTranslations('widget');
+  const locale = useLocale();
   const [open, setOpen]           = useState(false);
   const [step, setStep]           = useState<'prechat' | 'chat'>('prechat');
   const [name, setName]           = useState('');
@@ -49,7 +50,7 @@ export function AgencyChatWidget() {
       const res = await fetch(`${API_BASE}/api/v1/chat/agency/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contactName: name.trim(), contactPhone: phone.trim() }),
+        body: JSON.stringify({ contactName: name.trim(), contactPhone: phone.trim(), locale }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
