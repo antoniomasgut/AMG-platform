@@ -549,6 +549,56 @@ URGÈNCIES: no respira, traumatisme, convulsions, tòxic → avisar immediatamen
   },
 
   {
+    key: 'MARE_DE_DIA',
+    label: 'Mare de dia',
+    templates: {
+      prospecting: [
+        {
+          title: 'Email fred',
+          body: `Assumpte: Gestió de places i comunicació amb les famílies per a {NOM_NEGOCI}
+
+Hola {NOM_CONTACTE},
+
+Ajudem mares de dia a gestionar sol·licituds de plaça, comunicar disponibilitat i enviar recordatoris a les famílies per WhatsApp.
+
+Menys trucades, més tranquil·litat. Les famílies reserven i confirmen sense haver de trucar.
+
+Vols que t'ho ensenyi?
+
+{TEU_NOM}`,
+        },
+      ],
+      'meta-ads': [
+        {
+          title: 'Campanya',
+          body: `1. "Places disponibles per a {EDAT} mesos – {CIUTAT}. Entorn familiar i proper."
+2. "Mare de dia a {CIUTAT}. Màxim {MAX_INFANTS} infants. Sol·licita informació."`,
+        },
+      ],
+      'agent-prompt': [
+        {
+          title: 'Prompt base',
+          body: `Ets l'assistent de {NOM_NEGOCI}, mare de dia a {CIUTAT}.
+
+SERVEIS: {SERVEIS}
+
+ROL: Informar sobre places disponibles, horaris, preus i documentació necessària per a la matrícula.
+
+PER SOL·LICITAR PLAÇA: nom de l'infant, data de naixement, jornada desitjada (completa/mitja), data d'incorporació prevista
+
+HORARI: {HORARI}
+
+IMPORTANT:
+- Màxim 6 infants simultanis (normativa vigent)
+- Edats acceptades: 4 mesos fins a 3 anys
+- Si la família insisteix en edats fora del rang → explica la normativa amb amabilitat
+- Per urgències o incidències amb un infant → avisar directament a {NOM_NEGOCI}`,
+        },
+      ],
+    },
+  },
+
+  {
     key: 'PSICOLEG',
     label: 'Psicòleg / Psicòloga',
     templates: {
