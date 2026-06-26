@@ -150,6 +150,11 @@ const SECTOR_AGENDA_DEFAULTS: Record<string, Partial<AgendaConfig>> = {
     client_questions: [q('Espècie (gos, gat, ocell...)?', true), q('Raça i edat de l\'animal?', true), q('Motiu de la visita?', true)],
     confirmation_template: "Visita veterinària confirmada per al {{data}} a les {{hora}}. Porta el carnet de vacunes si el tens.",
   },
+  MARE_DE_DIA: {
+    slot_duration_minutes: 45, buffer_minutes: 0, max_days_advance: 30, min_notice_hours: 24,
+    client_questions: [q('Nom i edat de l\'infant?', true), q('Jornada desitjada (completa / mitja)?', true), q('Data aproximada d\'incorporació?', true)],
+    confirmation_template: "Visita de coneixença confirmada per al {{data}} a les {{hora}}. Us esperem per conèixer la família!",
+  },
   ACADEMIA: {
     slot_duration_minutes: 60, buffer_minutes: 5,
     client_questions: [q('Assignatura o matèria?', true), q('Nivell actual (primària, ESO, Batxillerat...)?', true), q('Prefereixes classe presencial o online?')],
@@ -370,6 +375,14 @@ const SECTOR_QUOTE_DEFAULTS: Record<string, Partial<PressupostosConfig>> = {
       svc('Desparasitació', 15, 'tractament'),
       svc('Esterilització gat', 180, 'cirurgia'),
       svc('Esterilització gos (petit)', 250, 'cirurgia'),
+    ],
+  },
+  MARE_DE_DIA: {
+    quote_validity_days: 30,
+    services_catalog: [
+      svc('Jornada completa (mensual)', 450, 'mes', 'Inclou àpats i material didàctic, de 7:30h a 17:00h'),
+      svc('Mitja jornada matí (mensual)', 280, 'mes', 'De 7:30h a 13:00h, inclou àpat del migdia'),
+      svc('Matrícula / Inscripció', 150, 'únic', 'Quota única d\'alta al servei'),
     ],
   },
 };
