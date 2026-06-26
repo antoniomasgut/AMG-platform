@@ -21,11 +21,12 @@ public class ChatController {
 
     record SendMessageRequest(String message) {}
     record SendMessageResponse(String sessionId, String reply, boolean terminated) {}
-    record AgencyStatusResponse(boolean enabled) {}
+    record AgencyStatusResponse(boolean enabled, String wabaPhone) {}
 
     @GetMapping("/agency/status")
     public AgencyStatusResponse getAgencyStatus() {
-        return new AgencyStatusResponse(chatSessionService.isAgencyChatEnabled());
+        var status = chatSessionService.getAgencyStatus();
+        return new AgencyStatusResponse(status.enabled(), status.wabaPhone());
     }
 
     @PostMapping("/agency/sessions")

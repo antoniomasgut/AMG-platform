@@ -24,12 +24,13 @@ export function AgencyChatWidget() {
   const [loading, setLoading]     = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [enabled, setEnabled]     = useState<boolean | null>(null);
+  const [wabaPhone, setWabaPhone] = useState<string | null>(null);
   const endRef                    = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/v1/chat/agency/status`)
       .then(r => r.json())
-      .then(d => setEnabled(!!d.enabled))
+      .then(d => { setEnabled(!!d.enabled); setWabaPhone(d.wabaPhone ?? null); })
       .catch(() => setEnabled(false));
   }, []);
 
@@ -111,9 +112,9 @@ export function AgencyChatWidget() {
 
   return (
     <>
-      {/* WhatsApp personal button */}
+      {/* WhatsApp button — WABA si disponible, personal com a fallback temporal */}
       <a
-        href={`https://wa.me/${WA_NUMBER}`}
+        href={`https://wa.me/${wabaPhone ? wabaPhone.replace(/\D/g, '') : WA_NUMBER}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="WhatsApp"

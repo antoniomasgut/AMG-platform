@@ -11,6 +11,8 @@ import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
+import com.amg.digitalitzacio.whatsapp.domain.WhatsAppConnectionStatus;
+import com.amg.digitalitzacio.whatsapp.domain.WhatsAppWabaConfigRepository;
 import com.amg.digitalitzacio.chat.domain.ChatSession;
 import com.amg.digitalitzacio.chat.domain.LandingChatContext;
 import com.amg.digitalitzacio.chat.domain.LandingChatContextRepository;
@@ -86,6 +88,7 @@ public class ChatSessionService {
     private final TenantRepository tenantRepository;
     private final TenantAIConfigRepository aiConfigRepository;
     private final TenantChatLinkRepository chatLinkRepository;
+    private final WhatsAppWabaConfigRepository wabaConfigRepository;
 
     @Value("${app.landing.base-domain:webs.amgdl.com}")
     private String landingBaseDomain;
@@ -147,13 +150,24 @@ public class ChatSessionService {
         return new CreateSessionResult(sessionId, greeting);
     }
 
-    public boolean isAgencyChatEnabled() {
-        return tenantRepository.findByIsOwnerTrue()
-                .map(owner -> chatLinkRepository.findByTenantId(owner.getId())
-                        .map(link -> Boolean.TRUE.equals(link.getIsActive())
-                                && Boolean.TRUE.equals(link.getWidgetEnabled()))
-                        .orElse(false))
+    public record AgencyStatus(boolean enabled, String wabaPhone) {}
+
+    public AgencyStatus getAgencyStatus() {
+        var ownerOpt = tenantRepository.findByIsOwnerTrue();
+        if (ownerOpt.isEmpty()) return new AgencyStatus(false, null);
+
+        var owner = ownerOpt.get();
+        boolean enabled = chatLinkRepository.findByTenantId(owner.getId())
+                .map(link -> Boolean.TRUE.equals(link.getIsActive())
+                        && Boolean.TRUE.equals(link.getWidgetEnabled()))
                 .orElse(false);
+
+        String wabaPhone = wabaConfigRepository.findByTenantId(owner.getId())
+                .filter(c -> c.getStatus() == WhatsAppConnectionStatus.CONNECTED)
+                .map(c -> c.getDisplayPhoneNumber())
+                .orElse(null);
+
+        return new AgencyStatus(enabled, wabaPhone);
     }
 
     public CreateSessionResult createAgencySession(String contactName, String contactPhone, String locale, String ip) {
