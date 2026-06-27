@@ -26,6 +26,7 @@ const SECTOR_OPTIONS = [
   { value: 'GESTORIA', label: 'Gestoria / Assessoria' },
   { value: 'INMOBILIARIA', label: 'Immobiliària' },
   { value: 'AGENCIA_IA', label: 'Agència IA' },
+  { value: 'MARE_DE_DIA', label: 'Mare de dia' },
   { value: 'DENTISTA', label: 'Dentista / Clínica dental' },
 ];
 import { PortalShell } from '@/components/portal/PortalShell';

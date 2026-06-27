@@ -711,6 +711,39 @@ Sempre: consulta gratuïta → proposta per fases → pressupost en 24h.`,
 SEGUIMENT PROPOSTA PENDENT (5 dies sense resposta):
 - "Hola [nom], volíem saber si has tingut temps de revisar la proposta. Si vols que l'adaptem o tens alguna pregunta, avisa'ns."`,
   },
+
+  MARE_DE_DIA: {
+    BOOKING_RULES: `DADES A RECOLLIR PER SOL·LICITAR PLAÇA:
+- Nom i telèfon del pare/mare/tutor
+- Nom de l'infant i data de naixement
+- Jornada desitjada: completa (07:30-17:00) o mitja (07:30-13:00)
+- Data d'incorporació prevista
+- Alguna necessitat especial o al·lèrgia
+
+EDATS ACCEPTADES: de 4 mesos fins a 3 anys (normativa vigent)
+PLACES MÀXIMES: 6 infants simultanis
+
+Si l'infant supera els 3 anys → explicar amb amabilitat que per normativa no podem acceptar-lo i suggerir escoles bressol municipals.
+
+Si no hi ha places disponibles → apuntar a llista d'espera: nom, telèfon, edat de l'infant i preferència de jornada.`,
+
+    QUOTE_RULES: `TARIFES:
+- Jornada completa (07:30-17:00): 450€/mes
+- Mitja jornada (07:30-13:00): 280€/mes
+- Matrícula (pagament únic): 150€
+
+El preu inclou: menjador, material didàctic i activitats.
+No s'accepten pagaments parcials — la plaça es reserva amb el pagament de la matrícula.`,
+
+    FOLLOWUP_RULES: `SEGUIMENT SOL·LICITUD PENDENT (3 dies sense resposta):
+- "Hola [nom]! Ens hem posat en contacte per la plaça per a [nom infant]. Teniu algun dubte o voleu que us enviem més informació?"
+
+RECORDATORI DOCUMENTACIÓ (quan la família ha confirmat):
+- "Hola [nom]! Per formalitzar la plaça necessitem: DNI tutor, cartilla vacunació i full d'autoritzacions. Us passem el formulari per email."
+
+AVÍS LLISTA D'ESPERA (quan s'allibera plaça):
+- "Hola [nom]! S'ha alliberat una plaça per a [jornada] a partir de [data]. Esteu interessats? La reserva es confirma en 48h."`,
+  },
 };
 
 export function getSectorTemplates(sector: string | null | undefined): SectorTemplates {

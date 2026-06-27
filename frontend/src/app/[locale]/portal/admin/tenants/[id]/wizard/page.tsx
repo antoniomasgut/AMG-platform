@@ -55,6 +55,7 @@ const SECTOR_RECOMMENDED: Record<string, string[]> = {
   ACADEMIA: ['F1', 'F2'],
   RESTAURANTE: ['F1', 'F4'],
   INMOBILIARIA: ['F1', 'F3', 'F4'],
+  MARE_DE_DIA: ['F1', 'F2', 'F3'],
   AGENCIA_IA: ['F1', 'F3', 'F5'],
 };
 

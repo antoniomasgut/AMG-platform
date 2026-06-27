@@ -36,6 +36,7 @@ const SECTORS: { value: string; label: string }[] = [
   { value: 'ACADEMIA', label: 'Acadèmia' },
   { value: 'PERRUQUERIA_CANINA', label: 'Perruqueria Canina' },
   { value: 'INMOBILIARIA', label: 'Immobiliària' },
+  { value: 'MARE_DE_DIA', label: 'Mare de dia' },
   { value: 'AGENCIA_IA', label: 'Agència IA' },
 ];
 

@@ -383,6 +383,7 @@ export default function ActivateWizardPage() {
     GESTORIA: 'Gestoria', FISIOTERAPEUTA: 'Fisioterapeuta', PSICOLEG: 'Psicòleg',
     NUTRICIONISTA: 'Nutricionista', PERRUQUERIA: 'Perruqueria', ESTETICA: 'Estètica',
     PERRUQUERIA_CANINA: 'Perruqueria Canina', VETERINARI: 'Veterinari',
+    MARE_DE_DIA: 'Mare de dia',
     RESTAURANT: 'Restaurant', PASTISSERIA: 'Pastisseria', FARMACIA: 'Farmàcia',
     OPTICA: 'Òptica', DENTISTA: 'Dentista', CLINICA: 'Clínica',
   };

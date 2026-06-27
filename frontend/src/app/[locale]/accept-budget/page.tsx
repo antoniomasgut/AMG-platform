@@ -24,7 +24,7 @@ const SECTOR_LABELS: Record<string, string> = {
   RESTAURANTE: 'Restaurant', ACADEMIA: 'Acadèmia', VETERINARI: 'Veterinari',
   PERRUQUERIA_CANINA: 'Perruqueria canina', PERRUQUERIA: 'Perruqueria',
   ESTETICA: 'Centre d\'estètica', GESTORIA: 'Gestoria', INMOBILIARIA: 'Immobiliària',
-  AGENCIA_IA: 'Agència IA',
+  MARE_DE_DIA: 'Mare de dia', AGENCIA_IA: 'Agència IA',
 };
 
 // ── Result screen ─────────────────────────────────────────────────────────────
