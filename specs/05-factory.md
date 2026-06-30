@@ -107,6 +107,12 @@ type BlockType =
  * MICRO: hero, text, services, gallery, faq, cta, testimonials, map, footer, contact-form
  * PRO:   tots els anteriors + opening-hours, pricing, team, video, reviews, whatsapp-cta, chat-cta
  *
+ * reviews (PRO):
+ *   - source='manual': el tenant escriu les ressenyes a mà a l'editor
+ *   - source='google_business': sincronitza automàticament de Google Business Profile (Spec 52 §12)
+ *     BlockProperties mostra: estat sync, botó "Sincronitzar ara", filtres minRating/maxItems
+ *     Requereix connexió GBP activa; si no → avís a l'editor
+ *
  * whatsapp-cta (PRO):
  *   - Sense F1: wa.me/{whatsappPersonal} → WhatsApp personal del negoci, resposta manual
  *   - Amb F1:   wa.me/{whatsappBusinessApi} → WhatsApp Business API (Mòdul 27), agent IA + Inbox (Mòdul 25)

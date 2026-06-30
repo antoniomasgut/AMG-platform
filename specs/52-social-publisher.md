@@ -303,7 +303,77 @@ Taula amb: xarxa, tipus, preview caption, data, estat (publicat/programat/error)
 
 ---
 
-## 12. Ordre d'implementació
+## 12. Ressenyes de Google Business a les landings (Spec 04 + 05)
+
+La connexió amb Google Business Profile (§7.2) habilita automàticament la sincronització de ressenyes per al bloc `reviews` de les landings (PRO). Integrat a les Spec 04 (Engine) i Spec 05 (Factory) — no és un mòdul separat.
+
+### 12.1 Model de dades
+
+```sql
+-- Flyway V72
+CREATE TABLE google_business_reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    review_id VARCHAR(255) NOT NULL,         -- ID de Google
+    author_name VARCHAR(255),
+    rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    reply TEXT,                              -- resposta del propietari (si n'hi ha)
+    review_time TIMESTAMPTZ,
+    synced_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE (tenant_id, review_id)
+);
+CREATE INDEX idx_gbr_tenant ON google_business_reviews(tenant_id, rating DESC, review_time DESC);
+```
+
+### 12.2 Sincronització
+
+`GoogleBusinessReviewSyncJob` (`@Scheduled` cada 24h):
+1. Per cada tenant amb `google_business_location_id` configurat
+2. Crida `accounts.locations.reviews.list` (Google My Business API v4.9)
+3. Upsert a `google_business_reviews` per `(tenant_id, review_id)`
+4. Endpoint manual: `POST /api/v1/social/tenants/{id}/google-business/reviews/sync`
+
+### 12.3 Canvi al bloc `reviews` (Spec 04 + 05)
+
+El bloc `reviews` afegeix el camp `source` a les seves props:
+
+```typescript
+interface ReviewsBlockProps {
+  title: string;
+  source: 'manual' | 'google_business';  // NOU — default: 'manual'
+  minRating: number;                      // NOU — filtre mínim (default: 4)
+  maxItems: number;                       // NOU — màxim a mostrar (default: 6)
+  googleMapsUrl: string;
+  items: ReviewItem[];                    // només usat si source='manual'
+}
+```
+
+**Render (Engine — Spec 04):**
+- `source = 'manual'` → renderitza `props.items` (comportament actual)
+- `source = 'google_business'` → llegeix de `google_business_reviews` (server-side, SSR) filtrant per `minRating` i ordenant per `rating DESC, review_time DESC`, limitat a `maxItems`
+
+**Editor (Factory — Spec 05 `BlockProperties`):**
+- Toggle "Font: Manual / Google Business"
+- Si Google Business: mostra estat de sincronització + botó "Sincronitzar ara" (crida l'endpoint manual)
+- Si `source = 'google_business'` però el tenant no té GBP connectat: avís "Connecta Google Business Profile a Configuració → Social"
+
+### 12.4 SEO
+
+Les ressenyes renderitzades server-side inclouen `schema.org/Review` JSON-LD per a rich snippets a Google:
+
+```json
+{
+  "@type": "Review",
+  "author": { "@type": "Person", "name": "Maria G." },
+  "reviewRating": { "@type": "Rating", "ratingValue": "5" },
+  "reviewBody": "Excel·lent servei..."
+}
+```
+
+---
+
+## 13. Ordre d'implementació
 
 1. **Taula `social_posts`** (Flyway V71)
 2. **Connexió Meta per social** (nous scopes a Spec 42 OAuth flow)
@@ -311,7 +381,9 @@ Taula amb: xarxa, tipus, preview caption, data, estat (publicat/programat/error)
 4. **`SocialContentGeneratorService`** (generació IA de captions)
 5. **Integració Telegram** (`SocialPublisherOrchestrator` + estat Redis)
 6. **`SocialSchedulerJob`** (publicacions programades)
-7. **Connexió Google Business** (nou scope a Spec 40 OAuth)
+7. **Connexió Google Business** (nou scope a Spec 40 OAuth + `google_business_location_id`)
 8. **`GoogleBusinessPublisherService`** (WHATS_NEW + OFFER)
-9. **Frontend** (pàgina connexió + historial)
-10. **LinkedIn** (Fase 2)
+9. **Taula `google_business_reviews`** (Flyway V72) + `GoogleBusinessReviewSyncJob`
+10. **Bloc `reviews` amb `source: google_business`** (Engine + Factory + JSON-LD)
+11. **Frontend** (pàgina connexió + historial publicacions)
+12. **LinkedIn** (Fase 2)

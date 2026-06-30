@@ -212,6 +212,14 @@ Tipus de blocs suportats al render:
 | `cta` | text, buttonText, buttonUrl | CTA simple |
 | `footer` | companyName, email, phone, socialLinks | Peu de pàgina |
 | `map` | address, lat, lng | Mapa incrustat (OpenStreetMap) |
+| `reviews` | title, source, minRating, maxItems, googleMapsUrl, items[] | Ressenyes (manual o sync GBP — veure baix) |
+
+**Bloc `reviews` — font de dades (PRO):**
+
+- `source: 'manual'` → renderitza `props.items` (estàtic, definit a l'editor)
+- `source: 'google_business'` → llegeix de `google_business_reviews` (server-side) filtrat per `minRating` (≥4 per defecte) i limitat a `maxItems` (6 per defecte), ordenat per `rating DESC, review_time DESC`
+
+El render server-side (SSR) inclou `schema.org/Review` JSON-LD per a rich snippets a Google. Requereix connexió Google Business Profile (Spec 52 §7.2).
 
 ---
 
