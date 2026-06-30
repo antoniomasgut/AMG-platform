@@ -142,19 +142,11 @@ public class SocialPublisherOrchestrator {
         }
 
         draft.put("postType", postType);
-        boolean needsMedia = postType.equals("PHOTO");
-        draft.put("step", needsMedia ? "AWAIT_MEDIA" : "AWAIT_CAPTION");
+        draft.put("step", "AWAIT_CAPTION");
         saveDraft(chatId, draft);
 
-        if (needsMedia) {
-            telegramBotClient.sendMessage(chatId,
-                "📎 Envía l'URL pública de la imatge (has de pujar-la primer a MinIO o usar una URL CDN):\n"
-                + "Exemple: <code>https://cdn.amgdl.com/fotos/foto.jpg</code>\n\n"
-                + "O escriu <code>SENSE_FOTO</code> per continuar sense imatge.");
-        } else {
-            telegramBotClient.sendMessage(chatId,
-                "✍️ Escriu el text del post o <code>IA</code> per generar-lo automàticament:");
-        }
+        telegramBotClient.sendMessage(chatId,
+            "✍️ Escriu el text del post o <code>IA</code> per generar-lo automàticament:");
     }
 
     private void handleMedia(Long chatId, String text, Map<String, String> draft) {
@@ -168,11 +160,19 @@ public class SocialPublisherOrchestrator {
             draft.put("mediaUrl", url);
         }
 
-        draft.put("step", "AWAIT_CAPTION");
+        draft.put("step", "AWAIT_CONFIRM");
         saveDraft(chatId, draft);
+        sendPreview(chatId, draft, draft.get("caption"));
+    }
 
-        telegramBotClient.sendMessage(chatId,
-            "✍️ Escriu el text del post o <code>IA</code> per generar-lo automàticament:");
+    private void sendPreview(Long chatId, Map<String, String> draft, String caption) {
+        String preview = "📋 <b>Resum del post:</b>\n"
+            + "Xarxes: " + buildNetworkList(draft) + "\n"
+            + "Tipus: " + draft.get("postType") + "\n"
+            + (draft.containsKey("mediaUrl") ? "🖼 Imatge: " + draft.get("mediaUrl") + "\n" : "")
+            + "\n" + (caption != null ? caption : "")
+            + "\n\n✅ Escriu <code>SI</code> per publicar o <code>NO</code> per cancel·lar.";
+        telegramBotClient.sendMessage(chatId, preview);
     }
 
     private void handleCaption(Long chatId, String text, Map<String, String> draft) {
@@ -188,17 +188,20 @@ public class SocialPublisherOrchestrator {
         }
 
         draft.put("caption", caption);
-        draft.put("step", "AWAIT_CONFIRM");
-        saveDraft(chatId, draft);
 
-        String preview = "📋 <b>Resum del post:</b>\n"
-            + "Xarxes: " + buildNetworkList(draft) + "\n"
-            + "Tipus: " + draft.get("postType") + "\n"
-            + (draft.containsKey("mediaUrl") ? "URL imatge: " + draft.get("mediaUrl") + "\n" : "")
-            + "\n" + caption
-            + "\n\n✅ Escriu <code>SI</code> per publicar o <code>NO</code> per cancel·lar.";
-
-        telegramBotClient.sendMessage(chatId, preview);
+        boolean needsMedia = "PHOTO".equals(draft.get("postType"));
+        if (needsMedia) {
+            draft.put("step", "AWAIT_MEDIA");
+            saveDraft(chatId, draft);
+            telegramBotClient.sendMessage(chatId,
+                "📎 Ara envia l'URL pública de la imatge:\n"
+                + "Exemple: <code>https://cdn.amgdl.com/fotos/foto.jpg</code>\n\n"
+                + "O escriu <code>SENSE_FOTO</code> per publicar sense imatge.");
+        } else {
+            draft.put("step", "AWAIT_CONFIRM");
+            saveDraft(chatId, draft);
+            sendPreview(chatId, draft, caption);
+        }
     }
 
     private void handleConfirm(Long chatId, String text, Map<String, String> draft) {
