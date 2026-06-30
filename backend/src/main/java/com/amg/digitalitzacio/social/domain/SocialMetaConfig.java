@@ -33,9 +33,11 @@ public class SocialMetaConfig {
 
     private Instant tokenExpiresAt;
 
+    @Column(name = "pages_manage_posts_granted", nullable = false)
     @Builder.Default
     private Boolean pagesManagedPostsGranted = false;
 
+    @Column(name = "ig_content_publish_granted", nullable = false)
     @Builder.Default
     private Boolean igContentPublishGranted = false;
 
