@@ -57,6 +57,20 @@ public class TelegramWebhookController {
                     ? ((Number) chat.get("id")).longValue()
                     : null;
             var text = message.get("text") instanceof String t ? t.trim() : "";
+
+            // Detecta foto enviada directament (per al flux social publisher)
+            String photoFileId = null;
+            if (message.get("photo") instanceof java.util.List<?> photos && !photos.isEmpty()) {
+                // Agafem la foto de major resolució (última de la llista)
+                var lastPhoto = photos.get(photos.size() - 1);
+                if (lastPhoto instanceof Map<?, ?> photoMap) {
+                    photoFileId = photoMap.get("file_id") instanceof String fid ? fid : null;
+                }
+                // Les fotos de TG no porten "text" sinó "caption"
+                if (text.isBlank() && message.get("caption") instanceof String cap) {
+                    text = cap.trim();
+                }
+            }
             Long fromUserId = null;
             String firstName = "Usuari";
             if (message.get("from") instanceof Map<?, ?> from) {
@@ -155,7 +169,7 @@ public class TelegramWebhookController {
 
                 // Pas d'un flux de publicació social actiu
                 if (socialOrchestrator.hasDraft(chatId)) {
-                    socialOrchestrator.handleStep(chatId, text);
+                    socialOrchestrator.handleStep(chatId, text, photoFileId);
                     return ResponseEntity.ok("ok");
                 }
 

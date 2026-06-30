@@ -49,6 +49,7 @@ public class SocialPublisherOrchestrator {
     private final InstagramPublisherService instagramPublisher;
     private final FacebookPublisherService facebookPublisher;
     private final GoogleBusinessPublisherService googleBusinessPublisher;
+    private final TelegramMediaUploadService telegramMediaUploadService;
 
     /** Retorna true si hi ha un draft actiu per a aquest chatId */
     public boolean hasDraft(Long chatId) {
@@ -75,9 +76,9 @@ public class SocialPublisherOrchestrator {
             + "\nEscriu les lletres separades per espai, p.ex.: <code>I F</code>");
     }
 
-    /** Processa cada pas del flux */
+    /** Processa cada pas del flux. photoFileId és no-null quan l'usuari envia una foto. */
     @Async
-    public void handleStep(Long chatId, String text) {
+    public void handleStep(Long chatId, String text, String photoFileId) {
         var draft = loadDraft(chatId);
         if (draft == null) return;
 
@@ -86,7 +87,7 @@ public class SocialPublisherOrchestrator {
         switch (step) {
             case "AWAIT_NETWORKS" -> handleNetworks(chatId, text, draft);
             case "AWAIT_TYPE"     -> handleType(chatId, text, draft);
-            case "AWAIT_MEDIA"    -> handleMedia(chatId, text, draft);
+            case "AWAIT_MEDIA"    -> handleMedia(chatId, text, photoFileId, draft);
             case "AWAIT_CAPTION"  -> handleCaption(chatId, text, draft);
             case "AWAIT_CONFIRM"  -> handleConfirm(chatId, text, draft);
             default -> {
@@ -149,15 +150,31 @@ public class SocialPublisherOrchestrator {
             "✍️ Escriu el text del post o <code>IA</code> per generar-lo automàticament:");
     }
 
-    private void handleMedia(Long chatId, String text, Map<String, String> draft) {
-        String url = text.trim();
-        if (!url.equalsIgnoreCase("SENSE_FOTO")) {
-            if (!url.startsWith("http")) {
+    private void handleMedia(Long chatId, String text, String photoFileId, Map<String, String> draft) {
+        // Cas 1: l'usuari ha enviat una foto directament per Telegram
+        if (photoFileId != null) {
+            telegramBotClient.sendMessage(chatId, "⏳ Pujant la foto…");
+            try {
+                UUID tenantId = UUID.fromString(draft.get("tenantId"));
+                String url = telegramMediaUploadService.downloadAndUpload(photoFileId, tenantId);
+                draft.put("mediaUrl", url);
+            } catch (Exception e) {
                 telegramBotClient.sendMessage(chatId,
-                    "⚠️ Ha de ser una URL vàlida que comenci per http/https o escriu <code>SENSE_FOTO</code>.");
+                    "⚠️ No s'ha pogut pujar la foto: " + e.getMessage()
+                    + "\nEnvia una URL o escriu <code>SENSE_FOTO</code>.");
                 return;
             }
-            draft.put("mediaUrl", url);
+        } else {
+            // Cas 2: l'usuari escriu una URL o SENSE_FOTO
+            String url = text.trim();
+            if (!url.equalsIgnoreCase("SENSE_FOTO")) {
+                if (!url.startsWith("http")) {
+                    telegramBotClient.sendMessage(chatId,
+                        "⚠️ Envia la foto directament o una URL vàlida (http/https), o escriu <code>SENSE_FOTO</code>.");
+                    return;
+                }
+                draft.put("mediaUrl", url);
+            }
         }
 
         draft.put("step", "AWAIT_CONFIRM");
@@ -194,7 +211,7 @@ public class SocialPublisherOrchestrator {
             draft.put("step", "AWAIT_MEDIA");
             saveDraft(chatId, draft);
             telegramBotClient.sendMessage(chatId,
-                "📎 Ara envia l'URL pública de la imatge:\n"
+                "📸 Envia la foto directament aquí, o una URL pública:\n"
                 + "Exemple: <code>https://cdn.amgdl.com/fotos/foto.jpg</code>\n\n"
                 + "O escriu <code>SENSE_FOTO</code> per publicar sense imatge.");
         } else {
