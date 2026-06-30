@@ -9,6 +9,7 @@ import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.documents.delivery.application.BudgetWorkflowService;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
+import com.amg.digitalitzacio.social.application.SocialPublisherOrchestrator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,7 @@ public class TelegramWebhookController {
     private final BudgetWorkflowService budgetWorkflowService;
     private final AmgAdminCommandService amgAdminCommandService;
     private final SystemConfigService systemConfigService;
+    private final SocialPublisherOrchestrator socialOrchestrator;
 
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(
@@ -143,6 +145,18 @@ public class TelegramWebhookController {
                         var reply = budgetWorkflowService.reject(tenantId, chatId);
                         if (reply != null) return ResponseEntity.ok(okTgReply(chatId, reply));
                     }
+                }
+
+                // Comanda de publicació social: /publica
+                if (text.toLowerCase().startsWith("/publica")) {
+                    socialOrchestrator.startFlow(tenantId, chatId);
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Pas d'un flux de publicació social actiu
+                if (socialOrchestrator.hasDraft(chatId)) {
+                    socialOrchestrator.handleStep(chatId, text);
+                    return ResponseEntity.ok("ok");
                 }
 
                 // Try to route to an agent
