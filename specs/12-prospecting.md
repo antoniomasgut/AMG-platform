@@ -1,360 +1,472 @@
 # Mòdul 12: Prospecting — Cerca i Gestió de Clients Potencials
 
-> **Versió:** 1.0
-> **Data:** 2026-05-13
-> **Dependències:** Mòdul 01 (Auth), Mòdul 03 (Leads)
+> **Versió:** 2.0
+> **Data:** 2026-06-30
+> **Dependències:** Mòdul 01 (Auth), Mòdul 03 (Leads), Mòdul 15 (Demo), Mòdul 30 (Chat Widget), Mòdul 41 (Agent Tool Calling)
+> **Canvis v2:** Scoring ampliat (0-100), web scraping profund, detecció de xarxes socials, informe IA, demo automàtica, generació de widget JS, missatge personalitzat IA, classificació per rang, dashboard
 
 ---
 
 ## 1. Objectius
 
-- Cercar clients potencials per sector i localitat a Mallorca
-- Generar llistats de prospects amb dades de contacte (nom, email, telèfon, web, xarxes socials)
-- Enriquir els prospects amb informació pública (Google Maps, Instagram, web)
-- Exportar prospects al Mòdul 03 (Leads) per iniciar el CRM
-- Gestionar campanyes de prospecció per sector/zona
+- Identificar negocis locals amb potencial de conversió i puntuar-los automàticament (0–100)
+- Generar demos personalitzades automàticament quan el score supera el llindar
+- Analitzar la presència digital dels prospects via IA i detectar oportunitats concretes
+- Generar codi de widget (chat + WhatsApp) llest per copiar per a negocis amb web existent
+- Enviar missatges de prospecció hiper-personalitzats (mai genèrics)
+- Gestionar el seguiment fins a la conversió
 
 ---
 
-## 2. Abast
+## 2. Flux general
 
-### 2.1 Funcionalitats incloses
-
-- **Cerca per sector + localitat**: Buscar negocis a Mallorca per tipus (restaurants, botigues, etc.) i municipi
-- **Fonts de dades**: Google Maps (scraping étic), Instagram Business, Páginas Amarillas
-- **Enriquiment automàtic**: Extreure email, telèfon, web, xarxes socials, horaris, valoracions
-- **Llistat de prospects**: Taula amb dades bàsiques i estat de prospecció
-- **Exportació a Leads**: Seleccionar prospects i crear Leads al CRM (Mòdul 03)
-- **Campanyes de prospecció**: Agrupar cerques per sector/ubicació amb estat i notes
-- **Límit per font**: Control de rate limiting per no ser bloquejat
-
-### 2.2 Funcionalitats excloses
-
-- Scraping massiu / agressiu (només consultes públiques amb rate limiting)
-- Compra de bases de dades de tercers
-- Enviament automàtic d'emails o missatges (es fa des d'Automations)
-- Verificació de contactes (es farà manualment)
-
-### 2.3 Actors
-
-| Actor | Descripció | Permisos |
-|-------|-----------|----------|
-| SUPER_ADMIN | Gestiona totes les campanyes de prospecció | Crear, executar, exportar |
-| ADMIN | Operador comercial | Crear cerques, veure prospects, exportar a Leads |
+```
+Google Places API
+      │
+      ▼
+Scraping bàsic (nom, categoria, adreça, telèfon, web, rating, reviews, fotos, horaris)
+      │
+      ▼
+Enriquiment (web scraping + xarxes socials + tech stack)
+      │
+      ▼
+Scoring 0–100
+      │
+      ├─ 0–30  → Descartar automàticament
+      ├─ 31–60 → Guardar per revisió manual
+      ├─ 61–80 → Generar demo automàtica
+      └─ 81–100 → Demo prioritària + contacte immediat
+                      │
+                      ▼
+              Informe IA estructurat
+                      │
+                      ▼
+              Generació de missatge personalitzat
+                      │
+                      ▼
+              Enviament pel canal disponible
+                      │
+                      ▼
+              Seguiment (obertura demo, converses, reunions)
+```
 
 ---
 
-## 3. Model de dades
+## 3. Fonts de dades
 
-### 3.1 Entitats (PostgreSQL)
+El sistema és modular (`ProspectScraper` interface). Cada font és una implementació independent.
 
-#### ProspectCampaign (Campanya de prospecció)
+### Prioritat 1 — Google Places API (✅ implementat)
 
-Agrupa una cerca per sector + localitat.
+Dades obtingudes:
+- Nom, categoria, adreça, telèfon, web, valoració, nombre de ressenyes
+- Horaris, fotos, descripció, coordenades, `placeId`, múltiples seus
 
-| Camp | Tipus | Mapeig JPA | Descripció |
-|------|-------|-----------|------------|
-| id | UUID | @Id @GeneratedValue | |
-| name | String(100) | @Column(nullable=false) | Nom humà (ex: "Restaurants Palma") |
-| sector | String(50) | @Column(nullable=false) | Sector a cercar (ex: "restaurant", "perruqueria") |
-| location | String(100) | @Column(nullable=false) | Localitat (ex: "Palma", "Inca", "Manacor") |
-| source | Enum(STRING) | @Enumerated | `GOOGLE_MAPS`, `INSTAGRAM`, `PAGINAS_AMARILLAS`, `MANUAL` |
-| status | Enum(STRING) | @Enumerated | `DRAFT`, `IN_PROGRESS`, `COMPLETED`, `FAILED` |
-| totalFound | Integer | @Builder.Default | Nombre total de prospects trobats |
-| totalExported | Integer | @Builder.Default | Quants s'han exportat a Leads |
-| searchParams | TEXT(JSON) | @Column(columnDefinition="TEXT") | Paràmetres de cerca (JSON) |
-| notes | String(500) | @Column | Notes internes |
-| createdBy | UUID | @Column(nullable=false) | FK a User |
-| createdAt | Instant | @CreatedDate | |
-| updatedAt | Instant | @LastModifiedDate | |
+### Prioritat 2 — Web scraping (⚠️ parcialment implementat — ampliar)
 
-**Índex:** (sector, location), (status)
+`WebAnalyzerService` analitza la web del negoci i extreu:
 
-#### Prospect (Client potencial)
+**Contingut:**
+- Títol, meta description, serveis, FAQ, formularis, emails, telèfons, WhatsApp, CTA, horaris, logo
 
-Un negoci trobat durant la prospecció.
+**Presència digital:**
+- Xarxes socials detectades (Facebook, Instagram, LinkedIn, TikTok, YouTube)
 
-| Camp | Tipus | Mapeig JPA | Descripció |
-|------|-------|-----------|------------|
-| id | UUID | @Id @GeneratedValue | |
-| campaignId | UUID | @Column(nullable=false) | FK a ProspectCampaign |
-| name | String(150) | @Column(nullable=false) | Nom del negoci |
-| description | String(500) | @Column | Descripció breu |
-| sector | String(50) | @Column | Sector detectat |
-| address | String(255) | @Column | Adreça completa |
-| city | String(100) | @Column | Municipi |
-| postalCode | String(10) | @Column | Codi postal |
-| phone | String(20) | @Column | Telèfon |
-| email | String(100) | @Column | Email (si es troba) |
-| website | String(300) | @Column | URL del web |
-| instagram | String(100) | @Column | Usuari d'Instagram |
-| googleRating | BigDecimal(2,1) | @Column | Valoració (0.0-5.0) |
-| googleReviews | Integer | @Column | Nombre de ressenyes |
-| googlePlaceId | String(100) | @Column(unique=true) | ID de Google Places |
-| hasWebsite | Boolean | @Builder.Default | Si té web pròpia |
-| hasInstagram | Boolean | @Builder.Default | Si té Instagram |
-| hasWhatsapp | Boolean | @Builder.Default | Si té WhatsApp Business |
-| status | Enum(STRING) | @Enumerated | `NEW`, `CONTACTED`, `QUALIFIED`, `EXPORTED`, `DISCARDED` |
-| source | Enum(STRING) | @Enumerated | Font d'origen |
-| externalId | String(100) | @Column | ID a la font externa |
-| leadId | UUID | @Column | FK a Lead (Mòdul 03) si s'exporta |
-| notes | String(500) | @Column | Notes internes |
-| createdAt | Instant | @CreatedDate | |
-| updatedAt | Instant | @LastModifiedDate | |
+**Anàlisi tècnica:**
+| Senyal | Com es detecta |
+|--------|---------------|
+| SSL | Schema `https://` + certificat vàlid |
+| Responsive | Viewport meta tag + media queries |
+| Velocitat | Time-to-first-byte via HTTP HEAD |
+| Framework/CMS | Headers HTTP, classes HTML, meta generators |
+| Google Analytics | `gtag.js` o `analytics.js` a la font |
+| Google Tag Manager | `gtm.js` a la font |
+| Meta Pixel | `fbq('init'` a la font |
+| Chat widget | Intercom, Crisp, Tidio, LiveChat, Drift |
+| WhatsApp widget | `wa.me/` links o widgets de tercers |
+| Sistema de reserves | Calendly, SimplyBook, Acuity, Booksy, formulari propi |
+| Formulari de contacte | `<form>` amb camps de contacte |
+| Política de cookies | Banner de cookies / avís RGPD |
+| Accessibilitat bàsica | `alt` en imatges, contrast colors |
 
-**Índex:** (campaignId), (status), (sector, city), googlePlaceId (unique)
+### Prioritat 3 — Google Business Profile (⚠️ nou)
 
-### 3.2 Enums
+Via Google My Business API (reutilitza connexió Spec 52 §7.2):
+- Preguntes i respostes públiques
+- Ressenyes: text, valoració, freqüència de noves ressenyes
+- Fotografies publicades
+- Popularitat (pics d'activitat)
 
-```java
-public enum ProspectSource {
-    GOOGLE_MAPS, INSTAGRAM, PAGINAS_AMARILLAS, MANUAL
-}
+### Prioritat 4 — Xarxes socials (⚠️ nou — estén enriquiment existent)
 
-public enum CampaignStatus {
-    DRAFT, IN_PROGRESS, COMPLETED, FAILED
-}
+Detecció automàtica per nom del negoci + URL del web:
 
-public enum ProspectStatus {
-    NEW, CONTACTED, QUALIFIED, EXPORTED, DISCARDED
+| Xarxa | Dades a extreure |
+|-------|-----------------|
+| Facebook | Existència de pàgina, última publicació, seguidors aproximats |
+| Instagram | Usuari, última publicació, seguidors |
+| LinkedIn | Pàgina d'empresa, activitat recent |
+| TikTok | Compte, última publicació |
+| YouTube | Canal, vídeos recents |
+
+### Prioritat 5 — Tech stack (⚠️ nou — part de `WebAnalyzerService`)
+
+Detectar automàticament via capçaleres HTTP + anàlisi font:
+- Google Analytics / GA4 / GTM
+- Meta Pixel
+- Cloudflare
+- Framework (React, Vue, Next.js, WordPress, PrestaShop, Shopify, Wix, Squarespace)
+- Hosting (OVH, Ionos, Hostinger, etc.)
+
+---
+
+## 4. Model de dades
+
+### 4.1 Entitat `Prospect` — camps nous (migració Flyway V73)
+
+Camps existents: `id`, `campaignId`, `name`, `description`, `sector`, `address`, `city`, `postalCode`, `phone`, `email`, `website`, `instagram`, `googleRating`, `googleReviews`, `googlePlaceId`, `hasWebsite`, `hasInstagram`, `hasWhatsapp`, `status`, `source`, `externalId`, `leadId`, `notes`, `score`, `createdAt`, `updatedAt`
+
+**Nous camps (ALTER TABLE prospects):**
+
+```sql
+-- Web analysis
+ALTER TABLE prospects ADD COLUMN has_ssl BOOLEAN;
+ALTER TABLE prospects ADD COLUMN is_responsive BOOLEAN;
+ALTER TABLE prospects ADD COLUMN has_analytics BOOLEAN;
+ALTER TABLE prospects ADD COLUMN has_pixel BOOLEAN;
+ALTER TABLE prospects ADD COLUMN has_gtm BOOLEAN;
+ALTER TABLE prospects ADD COLUMN has_chat_widget BOOLEAN;
+ALTER TABLE prospects ADD COLUMN has_booking_system BOOLEAN;
+ALTER TABLE prospects ADD COLUMN has_contact_form BOOLEAN;
+ALTER TABLE prospects ADD COLUMN has_faq BOOLEAN;
+ALTER TABLE prospects ADD COLUMN has_clear_cta BOOLEAN;
+ALTER TABLE prospects ADD COLUMN tech_stack VARCHAR(500);     -- JSON array de techs detectades
+ALTER TABLE prospects ADD COLUMN web_load_ms INTEGER;         -- time-to-first-byte en ms
+ALTER TABLE prospects ADD COLUMN cms_detected VARCHAR(50);    -- WordPress, Shopify, etc.
+
+-- Social networks
+ALTER TABLE prospects ADD COLUMN facebook_url VARCHAR(300);
+ALTER TABLE prospects ADD COLUMN linkedin_url VARCHAR(300);
+ALTER TABLE prospects ADD COLUMN tiktok_url VARCHAR(300);
+ALTER TABLE prospects ADD COLUMN youtube_url VARCHAR(300);
+ALTER TABLE prospects ADD COLUMN has_facebook BOOLEAN;
+ALTER TABLE prospects ADD COLUMN has_linkedin BOOLEAN;
+ALTER TABLE prospects ADD COLUMN has_tiktok BOOLEAN;
+
+-- Scoring & classification
+ALTER TABLE prospects ADD COLUMN score_breakdown TEXT;        -- JSON amb detall de cada senyal
+ALTER TABLE prospects ADD COLUMN prospect_tier VARCHAR(20);   -- DISCARD, REVIEW, DEMO, PRIORITY
+
+-- AI analysis
+ALTER TABLE prospects ADD COLUMN ai_report TEXT;              -- informe estructurat generat per IA
+ALTER TABLE prospects ADD COLUMN ai_pitch TEXT;               -- missatge personalitzat per enviar
+ALTER TABLE prospects ADD COLUMN demo_url VARCHAR(500);       -- URL de la demo generada (si n'hi ha)
+ALTER TABLE prospects ADD COLUMN widget_code TEXT;            -- codi JS generat (si té web)
+ALTER TABLE prospects ADD COLUMN web_analyzed_at TIMESTAMPTZ;
+ALTER TABLE prospects ADD COLUMN ai_analyzed_at TIMESTAMPTZ;
+```
+
+### 4.2 Entitat `ProspectCampaign` — camps nous
+
+```sql
+ALTER TABLE prospect_campaigns ADD COLUMN auto_demo_threshold INTEGER DEFAULT 61;
+ALTER TABLE prospect_campaigns ADD COLUMN auto_contact_channel VARCHAR(20);  -- EMAIL, WHATSAPP, FORM
+ALTER TABLE prospect_campaigns ADD COLUMN total_demos_generated INTEGER DEFAULT 0;
+ALTER TABLE prospect_campaigns ADD COLUMN total_discarded INTEGER DEFAULT 0;
+```
+
+---
+
+## 5. Sistema de scoring (0–100)
+
+El scoring és **configurable sense modificar codi**: els pesos es llegeixen de `SystemConfig` (Spec 39) i es poden ajustar des del portal.
+
+### 5.1 Potencial comercial (+50 pts màxim)
+
+| Senyal | Condició | Punts |
+|--------|---------|-------|
+| `PROFITABLE_SECTOR` | Sector d'alta conversió (fisio, perruqueria, restaurant, etc.) | +20 |
+| `HIGH_REVIEWS` | >100 ressenyes Google | +10 |
+| `GOOD_RATING` | Rating ≥ 4.4★ | +10 |
+| `HAS_MOBILE` | Telèfon mòbil detectat | +5 |
+| `MULTIPLE_LOCATIONS` | Múltiples seus (>1 al Places API) | +10 |
+
+### 5.2 Necessitat de digitalització (+85 pts màxim)
+
+| Senyal | Condició | Punts |
+|--------|---------|-------|
+| `NO_CHAT` | Sense chat widget a la web | +10 |
+| `NO_WHATSAPP_WIDGET` | Sense WhatsApp Business / widget WA | +10 |
+| `NO_BOOKING` | Sense sistema de reserves online | +10 |
+| `NO_AUTOMATIONS` | Sense GTM ni Pixel (no fa tracking) | +15 |
+| `OLD_WEB` | Web lenta (>3s TTFB) o sense responsive | +15 |
+| `NO_CTA` | Sense CTA clara a la web | +10 |
+| `NO_FAQ` | Sense secció FAQ | +5 |
+| `NO_FORM` | Sense formulari de contacte | +10 |
+
+### 5.3 Penalitzacions
+
+| Senyal | Condició | Punts |
+|--------|---------|-------|
+| `DOMAIN_DOWN` | Domini caigut o timeout | -50 |
+| `CLOSED` | Negoci marcat com a tancat a Google | -100 |
+| `NOT_ACCEPTING` | "No accepta nous clients" detectat | -50 |
+| `UNDER_CONSTRUCTION` | Web en construcció | -40 |
+
+### 5.4 Classificació per rang
+
+| Rang | Tier | Acció automàtica |
+|------|------|-----------------|
+| 0–30 | `DISCARD` | Marcar com a descartat, no contactar |
+| 31–60 | `REVIEW` | Guardar per revisió manual |
+| 61–80 | `DEMO` | Generar demo automàtica |
+| 81–100 | `PRIORITY` | Demo prioritària + notificació Telegram al SUPER_ADMIN |
+
+---
+
+## 6. Informe IA estructurat
+
+`ProspectAnalysisService` usa Claude (Sonnet) per generar un informe estructurat per a cada prospect que supera 31 punts.
+
+**Inputs:** totes les dades del `Prospect` (web analysis, scoring, xarxes, tech stack)
+
+**Output JSON (desat a `ai_report`):**
+```json
+{
+  "digitalProblems": ["Sense sistema de reserves", "Web no responsive", "..."],
+  "automationOpportunities": ["Agent IA per WhatsApp → gestió de cites", "..."],
+  "manualProcesses": ["Reserva per telèfon", "Respostes a WhatsApp manuals", "..."],
+  "channelsUsed": ["Instagram actiu", "Facebook inactiu", "Sense WhatsApp Business"],
+  "commercialOpportunities": ["F1+F2 → agent + agenda → estalvi 3h/dia", "..."],
+  "recommendedDemo": "FISIOTERAPEUTA amb agent de cites + recordatoris",
+  "estimatedPhases": ["F1", "F2"],
+  "pitchAngle": "Tens 4.8★ però perds clients per no respondre fora d'horari"
 }
 ```
 
 ---
 
-## 4. Endpoints API
+## 7. Generació automàtica de demo
+
+Quan `score >= auto_demo_threshold` (defecte: 61):
+
+`ProspectDemoGeneratorService` orquestra:
+1. Crear tenant demo via `DemoService` (Mòdul 15)
+2. Configurar landing personalitzada amb:
+   - Colors extrets de la web del negoci (palette detection)
+   - Logo (si es troba a la web)
+   - Serveis detectats
+   - FAQ detectat
+   - Informació pública (nom, adreça, horaris)
+   - Formulari de contacte + botó WhatsApp
+3. Entrenar agent IA amb la informació pública recollida (context + KB)
+4. Desar `demo_url` al `Prospect`
+5. Si `PRIORITY`: notificar SUPER_ADMIN per Telegram
+
+**Restriccions:**
+- L'agent IA de la demo respon **únicament amb informació pública** del negoci
+- La landing inclou avís visible: "Aquesta és una demostració creada per AMG Digitalitzacions"
+- TTL de la demo: 7 dies (ampliat respecte els 24h de demos internes)
+
+---
+
+## 8. Generació de widget JS
+
+Per a prospects que ja tenen web (`hasWebsite = true`), `WidgetCodeGeneratorService` genera codi llest per copiar.
+
+### 8.1 Widget de chat
+
+```javascript
+<!-- AMG Chat Widget -->
+<script>
+  window.AMGChat = { tenantId: 'DEMO_ID', position: 'bottom-right', theme: 'light' };
+</script>
+<script src="https://cdn.amgdl.com/widget.js" async></script>
+```
+
+### 8.2 Widget WhatsApp
+
+```javascript
+<!-- WhatsApp Button by AMG -->
+<a href="https://wa.me/34XXXXXXXXX?text=Hola%2C%20m%27agradaria%20m%C3%A9s%20informaci%C3%B3"
+   style="position:fixed;bottom:24px;right:24px;z-index:9999">
+  <img src="https://cdn.amgdl.com/wa-btn.svg" width="60" alt="WhatsApp">
+</a>
+```
+
+### 8.3 Instruccions per framework
+
+El codi s'acompanya d'instruccions específiques per al CMS/framework detectat:
+
+| CMS/Framework | Instruccions |
+|--------------|-------------|
+| WordPress | Plugin Header Footer Code Manager o functions.php |
+| Elementor | Custom Code widget |
+| PrestaShop | Mòdul CustomJS |
+| Shopify | theme.liquid → `</body>` |
+| Wix | Velo → Page Code |
+| Squarespace | Code Injection → Footer |
+| HTML estàtic | Abans de `</body>` |
+| React/Next.js | `_document.tsx` o `layout.tsx` |
+| Vue | `index.html` → `</body>` |
+
+---
+
+## 9. Missatge personalitzat IA
+
+`ProspectMessageGeneratorService` usa Claude per generar un missatge d'aproximació que:
+
+- **Mai és genèric** — fa referència a dades concretes del negoci
+- Menciona oportunitats específiques detectades
+- Adapta el to al sector i la mida del negoci
+- Inclou un CTA clar (demo, reunió, trucada)
+
+**Exemple output:**
+> "Hola, he vist que [Nom Negoci] té 4.8★ a Google amb 127 ressenyes — excel·lent reputació. He notat que no teniu sistema de reserves online ni WhatsApp Business: molts dels vostres clients potencials probablement us escriuen fora d'horari i no reben resposta. He preparat una demostració de com quedaria un agent IA gestionant les vostres cites automàticament: [demo_url]"
+
+**Desat a `ai_pitch`.**
+
+---
+
+## 10. Detecció de canal de contacte
+
+El sistema detecta automàticament el millor canal per contactar (ordre de prioritat configurable):
+
+1. **Email** — detectat a la web o via enriquiment
+2. **WhatsApp** — si `hasWhatsapp = true`
+3. **Formulari web** — si `hasContactForm = true` + URL del formulari
+4. **Telèfon** — com a darrer recurs (manual)
+5. **Facebook Messenger** — si `hasFacebook = true`
+6. **Instagram DM** — si `hasInstagram = true`
+7. **LinkedIn** — si `hasLinkedin = true`
+
+El canal seleccionat s'usa per a l'enviament automàtic del missatge (integra amb Spec 20/43).
+
+---
+
+## 11. Endpoints API
 
 Prefix base: `/api/v1/prospecting`
 
-| Mètode | Ruta | @PreAuthorize | Descripció |
-|--------|------|--------------|-----------|
-| POST | /api/v1/prospecting/campaigns | SUPER_ADMIN, ADMIN | Crear nova campanya |
-| GET | /api/v1/prospecting/campaigns | SUPER_ADMIN, ADMIN | Llistar campanyes |
-| GET | /api/v1/prospecting/campaigns/{id} | SUPER_ADMIN, ADMIN | Detall de campanya |
-| POST | /api/v1/prospecting/campaigns/{id}/run | SUPER_ADMIN, ADMIN | Executar cerca (scraping) |
-| PUT | /api/v1/prospecting/campaigns/{id} | SUPER_ADMIN, ADMIN | Actualitzar campanya |
-| DELETE | /api/v1/prospecting/campaigns/{id} | SUPER_ADMIN | Eliminar campanya |
-| GET | /api/v1/prospecting/campaigns/{id}/prospects | SUPER_ADMIN, ADMIN | Llistar prospects d'una campanya |
-| PUT | /api/v1/prospecting/prospects/{id} | SUPER_ADMIN, ADMIN | Actualitzar estat/notes d'un prospect |
-| POST | /api/v1/prospecting/prospects/{id}/enrich | SUPER_ADMIN, ADMIN | Enriquir prospect (cercar email, xarxes) |
-| POST | /api/v1/prospecting/prospects/{id}/export | SUPER_ADMIN, ADMIN | Exportar prospect a Leads (Mòdul 03) |
-| POST | /api/v1/prospecting/campaigns/{id}/export-all | SUPER_ADMIN, ADMIN | Exportar tots els prospects d'una campanya a Leads |
+### Existents (✅)
 
-### Detall d'endpoints
+| Mètode | Ruta | Descripció |
+|--------|------|-----------|
+| POST | `/campaigns` | Crear nova campanya |
+| GET | `/campaigns` | Llistar campanyes |
+| GET | `/campaigns/{id}` | Detall de campanya |
+| POST | `/campaigns/{id}/run` | Executar cerca |
+| PUT | `/campaigns/{id}` | Actualitzar campanya |
+| DELETE | `/campaigns/{id}` | Eliminar campanya |
+| GET | `/campaigns/{id}/prospects` | Llistar prospects |
+| PUT | `/prospects/{id}` | Actualitzar estat/notes |
+| POST | `/prospects/{id}/enrich` | Enriquir prospect |
+| POST | `/prospects/{id}/export` | Exportar a Leads |
+| POST | `/campaigns/{id}/export-all` | Exportar tots a Leads |
 
-#### `POST /api/v1/prospecting/campaigns` — Crear campanya
+### Nous (⚠️)
 
-Request:
+| Mètode | Ruta | Descripció |
+|--------|------|-----------|
+| POST | `/prospects/{id}/analyze-web` | Llança `WebAnalyzerService` per al prospect |
+| POST | `/campaigns/{id}/analyze-all` | Analitza web de tots els prospects d'una campanya |
+| POST | `/prospects/{id}/ai-report` | Genera informe IA estructurat |
+| POST | `/prospects/{id}/generate-demo` | Genera demo personalitzada |
+| GET | `/prospects/{id}/widget-code` | Retorna codi JS del widget |
+| GET | `/campaigns/{id}/dashboard` | Stats de la campanya (score mig, tiers, conversió) |
+| GET | `/dashboard` | Dashboard global de prospecció |
+
+---
+
+## 12. Serveis nous
+
+| Servei | Responsabilitat |
+|--------|----------------|
+| `WebAnalyzerService` | Scraping profund de la web: SSL, responsive, tech stack, social links, chat, reserves, formularis |
+| `ProspectAnalysisService` | Genera informe IA estructurat via Claude |
+| `ProspectDemoGeneratorService` | Crea demo personalitzada (delega a `DemoService` — Spec 15) |
+| `WidgetCodeGeneratorService` | Genera snippets JS per chat + WhatsApp, adaptat per CMS |
+| `ProspectMessageGeneratorService` | Genera missatge personalitzat via Claude |
+| `ProspectChannelDetectorService` | Determina el millor canal de contacte disponible |
+
+---
+
+## 13. Dashboard
+
+`GET /api/v1/prospecting/dashboard` retorna:
+
 ```json
 {
-  "name": "Restaurants Palma",
-  "sector": "restaurant",
-  "location": "Palma",
-  "source": "GOOGLE_MAPS",
-  "searchParams": {
-    "keywords": ["restaurant", "menjar", "taula"],
-    "maxResults": 50,
-    "minRating": 3.5
-  },
-  "notes": "Campanya per trobar restaurants a Palma sense web"
-}
-```
-
-Response 201: ProspectCampaign
-
-#### `POST /api/v1/prospecting/campaigns/{id}/run` — Executar cerca
-
-Dispara el scraper per a la campanya. Retorna els prospects trobats en temps real o en background.
-
-Response 202:
-```json
-{
-  "campaignId": "uuid",
-  "status": "IN_PROGRESS",
-  "estimatedDuration": "30s"
-}
-```
-
-#### `POST /api/v1/prospecting/prospects/{id}/enrich` — Enriquir prospect
-
-Busca informació addicional del negoci:
-- Web scraping de la seva web (si en té)
-- Cerca d'email via WhoIs o contact page
-- Instagram scraping (si és públic)
-- WhatsApp Business detection
-
-Response 200: Prospect actualitzat amb noves dades
-
-#### `POST /api/v1/prospecting/prospects/{id}/export` — Exportar a Leads
-
-Crea un Lead al Mòdul 03 amb les dades del prospect.
-
-Response 201:
-```json
-{
-  "prospectId": "uuid",
-  "leadId": "uuid",
-  "leadUrl": "/api/v1/leads/uuid",
-  "status": "EXPORTED"
+  "totalAnalyzed": 342,
+  "discarded": 89,
+  "review": 121,
+  "demo": 98,
+  "priority": 34,
+  "avgScore": 54.2,
+  "demosGenerated": 132,
+  "exported": 67,
+  "conversionRate": 19.6,
+  "bySector": [
+    { "sector": "FISIOTERAPEUTA", "count": 45, "avgScore": 71.3, "conversion": 28.9 }
+  ],
+  "byChannel": [
+    { "channel": "EMAIL", "sent": 89, "responded": 23, "rate": 25.8 }
+  ],
+  "avgTimeToResponse": "2.4 dies"
 }
 ```
 
 ---
 
-## 5. Serveis
+## 14. Configuració (SystemConfig — Spec 39)
 
-### 5.1 ProspectScraper (Interface)
+Claus configurables sense modificar codi:
 
-```java
-public interface ProspectScraper {
-    List<ProspectResult> search(String sector, String location, Map<String, Object> params);
-    ProspectEnrichment enrich(String externalId, String website);
-    boolean isRateLimited();
-    String getSourceName();
-}
-```
-
-### 5.2 Implementacions
-
-- **GoogleMapsScraper**: Cerca negocis a Google Maps (via Places API o scraping)
-- **InstagramScraper**: Cerca perfils d'Instagram per sector/ubicació
-- **ManualScraper**: Entrada manual de dades (no fa scraping)
-
-Totes les implementacions tenen rate limiting incorporat (màxim X peticions per minut).
-
-### 5.3 ProspectingService
-
-```java
-public interface ProspectingService {
-    ProspectCampaign createCampaign(CreateCampaignRequest request);
-    ProspectCampaign getCampaign(UUID campaignId);
-    Page<ProspectCampaign> listCampaigns(String sector, String location, int page, int size);
-    ProspectCampaign updateCampaign(UUID campaignId, UpdateCampaignRequest request);
-    void deleteCampaign(UUID campaignId);
-
-    ProspectCampaign runCampaign(UUID campaignId);
-
-    Page<Prospect> listProspects(UUID campaignId, String status, int page, int size);
-    Prospect updateProspect(UUID prospectId, UpdateProspectRequest request);
-    Prospect enrichProspect(UUID prospectId);
-    LeadExportResponse exportProspect(UUID prospectId);
-    int exportAllProspects(UUID campaignId);
-}
-```
+| Clau | Valor per defecte | Descripció |
+|------|------------------|-----------|
+| `PROSPECTING_AUTO_DEMO_THRESHOLD` | `61` | Score mínim per generar demo |
+| `PROSPECTING_DISCARD_THRESHOLD` | `30` | Score màxim per descartar |
+| `PROSPECTING_DEMO_TTL_DAYS` | `7` | Dies de vida de les demos de prospecció |
+| `PROSPECTING_WEB_TIMEOUT_MS` | `10000` | Timeout scraping web |
+| `PROSPECTING_MAX_CONCURRENT_ENRICH` | `3` | Enriquiments en paral·lel |
+| `PROSPECTING_CONTACT_PRIORITY` | `EMAIL,WHATSAPP,FORM,PHONE` | Ordre de canals |
 
 ---
 
-## 6. Integració amb Google Places API
+## 15. Seguretat i límits
 
-### 6.1 API
-
-- Base URL: `https://maps.googleapis.com/maps/api/place`
-- Autenticació: API Key (`GOOGLE_PLACES_API_KEY`)
-- Endpoints:
-  - `POST /maps/api/place/textsearch/json` — Cerca textual per sector + ubicació
-  - `GET /maps/api/place/details/json` — Detall d'un negoci (email, web, horaris)
-
-### 6.2 Rate limiting
-
-- 10 peticions per segon (límits de Google)
-- El scraper ha d'esperar entre peticions
-- Si es supera el límit, Google retorna `OVER_QUERY_LIMIT`
-
-### 6.3 Flux de cerca
-
-```
-1. ADMIN crea campanya: sector = "restaurant", location = "Palma"
-2. ADMIN executa campanya: POST /campaigns/{id}/run
-3. Sistema:
-   a. Crida Google Places Text Search: "restaurants a Palma, Mallorca"
-   b. Obté llistat de negocis (nom, adreça, rating, placeId)
-   c. Per a cada negoci:
-      - Crida Place Details per obtenir telèfon, web, horaris
-      - Detecta si té web pròpia (hasWebsite)
-      - Guarda com a Prospect (status = NEW)
-   d. Quan acaba, marca campanya com COMPLETED
-4. ADMIN revisa els prospects
-5. ADMIN pot enriquir: cercar email, Instagram
-6. ADMIN exporta a Leads els prospects interessants
-```
+- Google Places API: 10 req/s màxim
+- Web scraping: 1 req/3s per domini, `User-Agent` honest (`AMGBot/1.0`)
+- Només dades públiques — mai autenticació a tercers
+- `CLIENT` sense accés al mòdul de prospecció
+- API Keys al Vault (Mòdul 02)
 
 ---
 
-## 7. Configuració
+## 16. Ordre d'implementació (v2)
 
-### application.yml
-
-```yaml
-app:
-  prospecting:
-    google:
-      places-api-key: ${GOOGLE_PLACES_API_KEY}
-      rate-limit-per-second: 10
-    enrichment:
-      timeout-seconds: 10
-      max-concurrent: 3
-    default-max-results: 50
-```
+1. **Migració V73** — nous camps a `prospects` i `prospect_campaigns`
+2. **`WebAnalyzerService`** — SSL, responsive, tech stack, social detection
+3. **Scoring ampliat** — estendre `detectSignals()` amb els 13 senyals nous
+4. **Classificació per tiers** — DISCARD/REVIEW/DEMO/PRIORITY
+5. **`ProspectAnalysisService`** — informe IA via Claude
+6. **`ProspectMessageGeneratorService`** — missatge personalitzat
+7. **`ProspectDemoGeneratorService`** — demo automàtica (integra Spec 15)
+8. **`WidgetCodeGeneratorService`** — snippets JS per CMS
+9. **`ProspectChannelDetectorService`** — detecció canal òptim
+10. **Nous endpoints** + dashboard frontend
 
 ---
 
-## 8. Seguretat
+## 17. QA
 
-- Les API Keys de Google Places s'emmagatzemen al Vault (Mòdul 02)
-- Scraping només de dades públiques (no autenticades)
-- Rate limiting per evitar bloqueig de fonts externes
-- CLIENT no té accés a prospecció
-
----
-
-## 9. Tests d'integració
-
-12 tests mínims (patró: `ProspectingControllerTest.java`):
-
-| # | Test | Esperat |
-|---|------|---------|
-| 1 | Crear campanya | 201 |
-| 2 | Llistar campanyes buit | 200 |
-| 3 | Executar campanya amb MockScraper | 202, prospects creats |
-| 4 | Llistar prospects d'una campanya | 200 |
-| 5 | Actualitzar estat d'un prospect | 200 |
-| 6 | Enriquir prospect (mock) | 200, dades addicionals |
-| 7 | Exportar prospect a Leads | 201, leadId no null |
-| 8 | Exportar tots els prospects | 200, count > 0 |
-| 9 | CLIENT no pot accedir | 403 |
-| 10 | Sense JWT | 401 |
-| 11 | Eliminar campanya | 204 |
-| 12 | Prospect ja exportat no es pot re-exportar | 409 |
-
----
-
-## 10. QA / Casos de prova
-
-| # | Escenari | Esperat |
-|---|----------|---------|
-| PRO-01 | Cercar "restaurants a Palma" → 25 resultats | Campaign COMPLETED, 25 prospects |
-| PRO-02 | Enriquir un restaurant amb web | email trobat (o no), Instagram detectat |
-| PRO-03 | Exportar 5 prospects a Leads | 5 Leads creats, prospects EXPORTED |
-| PRO-04 | Cercar mateix sector+ubicació dos cops | No duplicar prospects (deduplicació per googlePlaceId) |
-| PRO-05 | Google API key no configurada | 400 "Google Places not configured" |
-| PRO-06 | Rate limit excedit | Esperar i reintentar, o error clar |
-
----
-
-## 11. Resum d'entitats
-
-| Entitat | Repositori | DTOs | Endpoints |
-|---------|-----------|------|-----------|
-| ProspectCampaign | ProspectCampaignRepository | CreateCampaignRequest, CampaignResponse | CRUD + run |
-| Prospect | ProspectRepository | UpdateProspectRequest, ProspectResponse, LeadExportResponse | llistar, update, enrich, export |
-
----
-
-## 12. Obert / Pendents
-
-- [ ] Decidir si Google Places API key es posa directament a application.yml o es guarda al Vault
-- [ ] MockScraper: implementar per tests (retorna dades falses)
-- [ ] Deduplicació: evitar crear el mateix prospect dos cops (per googlePlaceId)
-- [ ] Campanyes programades: executar automàticament cada setmana/mes
-- [ ] Notificació quan una campanya acaba (Telegram)
-- [ ] Export massiu: crear Leads en batch (transacció)
+| Cas | Resultat esperat |
+|-----|-----------------|
+| Prospect amb score 75 | Tier DEMO, demo generada automàticament |
+| Prospect amb score 85 | Tier PRIORITY, notificació Telegram SUPER_ADMIN |
+| Prospect amb score 20 | Tier DISCARD, no es genera demo ni missatge |
+| Web amb WordPress detectat | `cmsDetected='WordPress'`, instruccions WP al widget code |
+| Negoci sense web | `WebAnalyzerService` retorna null graciosament, score reflecteix NO_WEBSITE |
+| Missatge IA generat | Conté referència concreta (rating, carència detectada), no és genèric |
+| Demo generada | Landing pública accessible, agent respon amb info del negoci, avís "demostració" visible |
+| Domini caigut | Score -50, tier DISCARD, `DOMAIN_DOWN` als signals |
