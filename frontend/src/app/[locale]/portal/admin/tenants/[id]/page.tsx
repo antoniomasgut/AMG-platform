@@ -3372,6 +3372,14 @@ export default function TenantDetailPage() {
             >
               Visites
             </AMGButton>
+            <AMGButton
+              size="sm"
+              variant="ghost"
+              icon={IconSet.Globe}
+              onClick={() => router.push(`/${locale}/portal/admin/tenants/${id}/social`)}
+            >
+              Social
+            </AMGButton>
             <button
               type="button"
               onClick={() => setShowDeleteTenant(true)}

@@ -32,26 +32,8 @@ public class SocialSchedulerJob {
         for (SocialPost post : due) {
             post.setStatus("PUBLISHING");
             postRepository.save(post);
-
-            try {
-                var draft = new java.util.HashMap<String, String>();
-                draft.put("tenantId",  post.getTenantId().toString());
-                draft.put("step",      "PUBLISHING");
-                draft.put("ig", "INSTAGRAM".equals(post.getNetwork()) ? "1" : "0");
-                draft.put("fb", "FACEBOOK".equals(post.getNetwork()) ? "1" : "0");
-                draft.put("gb", "GOOGLE_BUSINESS".equals(post.getNetwork()) ? "1" : "0");
-                draft.put("postType",  post.getPostType());
-                draft.put("caption",   post.getCaption() != null ? post.getCaption() : "");
-                if (post.getMediaUrl() != null) draft.put("mediaUrl", post.getMediaUrl());
-
-                orchestrator.publishAsync(post.getTenantId(), null, draft);
-                postRepository.delete(post);
-            } catch (Exception e) {
-                log.error("Error publicant post programat {}: {}", post.getId(), e.getMessage());
-                post.setStatus("FAILED");
-                post.setErrorMessage(e.getMessage());
-                postRepository.save(post);
-            }
+            // publishNow és síncron: actualitza l'estat del post existent (PUBLISHED o FAILED)
+            orchestrator.publishNow(post);
         }
     }
 }

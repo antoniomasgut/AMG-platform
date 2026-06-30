@@ -89,6 +89,7 @@ public class SocialPublisherOrchestrator {
             case "AWAIT_TYPE"     -> handleType(chatId, text, draft);
             case "AWAIT_MEDIA"    -> handleMedia(chatId, text, photoFileId, draft);
             case "AWAIT_CAPTION"  -> handleCaption(chatId, text, draft);
+            case "AWAIT_SCHEDULE" -> handleSchedule(chatId, text, draft);
             case "AWAIT_CONFIRM"  -> handleConfirm(chatId, text, draft);
             default -> {
                 redis.delete(KEY_PREFIX + chatId);
@@ -177,9 +178,94 @@ public class SocialPublisherOrchestrator {
             }
         }
 
-        draft.put("step", "AWAIT_CONFIRM");
+        askWhenToPublish(chatId, draft);
+    }
+
+    private void askWhenToPublish(Long chatId, Map<String, String> draft) {
+        draft.put("step", "AWAIT_SCHEDULE");
         saveDraft(chatId, draft);
-        sendPreview(chatId, draft, draft.get("caption"));
+        telegramBotClient.sendMessage(chatId,
+            "⏰ Quan vols publicar?\n\n"
+            + "<code>ARA</code> — publicar immediatament\n"
+            + "<code>DD/MM HH:MM</code> — programar (ex: <code>15/07 09:30</code>)");
+    }
+
+    private void handleSchedule(Long chatId, String text, Map<String, String> draft) {
+        String input = text.trim().toUpperCase();
+        if (input.equals("ARA") || input.equals("NOW")) {
+            draft.put("step", "AWAIT_CONFIRM");
+            saveDraft(chatId, draft);
+            sendPreview(chatId, draft, draft.get("caption"));
+            return;
+        }
+
+        // Intenta parsejar DD/MM HH:MM
+        try {
+            var parts = text.trim().split("\\s+");
+            if (parts.length != 2) throw new IllegalArgumentException("format invàlid");
+            var dateParts = parts[0].split("/");
+            var timeParts = parts[1].split(":");
+            if (dateParts.length != 2 || timeParts.length != 2) throw new IllegalArgumentException("format invàlid");
+
+            int day    = Integer.parseInt(dateParts[0]);
+            int month  = Integer.parseInt(dateParts[1]);
+            int hour   = Integer.parseInt(timeParts[0]);
+            int minute = Integer.parseInt(timeParts[1]);
+            int year   = java.time.LocalDate.now(java.time.ZoneId.of("Europe/Madrid")).getYear();
+
+            var scheduledAt = java.time.LocalDateTime.of(year, month, day, hour, minute)
+                .atZone(java.time.ZoneId.of("Europe/Madrid"))
+                .toInstant();
+
+            if (scheduledAt.isBefore(Instant.now())) {
+                telegramBotClient.sendMessage(chatId,
+                    "⚠️ La data ha de ser futura. Torna a intentar-ho o escriu <code>ARA</code>.");
+                return;
+            }
+
+            // Desa el post com a SCHEDULED i tanca el flux
+            redis.delete(KEY_PREFIX + chatId);
+            UUID tenantId = UUID.fromString(draft.get("tenantId"));
+            String network = buildNetworkList(draft).split(" ")[0].toUpperCase()
+                .replace("INSTAGRAM", "INSTAGRAM")
+                .replace("FACEBOOK", "FACEBOOK")
+                .replace("GOOGLE", "GOOGLE_BUSINESS");
+
+            // Si hi ha múltiples xarxes, desa un post per cadascuna
+            for (String net : resolveNetworks(draft)) {
+                var post = SocialPost.builder()
+                    .tenantId(tenantId)
+                    .network(net)
+                    .postType(draft.get("postType"))
+                    .caption(draft.get("caption"))
+                    .mediaUrl(draft.get("mediaUrl"))
+                    .status("SCHEDULED")
+                    .scheduledAt(scheduledAt)
+                    .build();
+                postRepository.save(post);
+            }
+
+            String formatted = java.time.format.DateTimeFormatter
+                .ofPattern("dd/MM/yyyy HH:mm")
+                .withZone(java.time.ZoneId.of("Europe/Madrid"))
+                .format(scheduledAt);
+            telegramBotClient.sendMessage(chatId,
+                "✅ Post programat per al <b>" + formatted + "</b>.\n"
+                + "Pots veure'l i cancel·lar-lo des del portal.");
+
+        } catch (Exception e) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ Format no reconegut. Exemples vàlids:\n"
+                + "<code>ARA</code>\n<code>15/07 09:30</code>");
+        }
+    }
+
+    private java.util.List<String> resolveNetworks(Map<String, String> draft) {
+        var list = new java.util.ArrayList<String>();
+        if ("1".equals(draft.get("ig"))) list.add("INSTAGRAM");
+        if ("1".equals(draft.get("fb"))) list.add("FACEBOOK");
+        if ("1".equals(draft.get("gb"))) list.add("GOOGLE_BUSINESS");
+        return list;
     }
 
     private void sendPreview(Long chatId, Map<String, String> draft, String caption) {
@@ -215,9 +301,7 @@ public class SocialPublisherOrchestrator {
                 + "Exemple: <code>https://cdn.amgdl.com/fotos/foto.jpg</code>\n\n"
                 + "O escriu <code>SENSE_FOTO</code> per publicar sense imatge.");
         } else {
-            draft.put("step", "AWAIT_CONFIRM");
-            saveDraft(chatId, draft);
-            sendPreview(chatId, draft, caption);
+            askWhenToPublish(chatId, draft);
         }
     }
 
@@ -234,6 +318,66 @@ public class SocialPublisherOrchestrator {
         telegramBotClient.sendMessage(chatId, "⏳ Publicant a les xarxes seleccionades…");
 
         publishAsync(tenantId, chatId, draft);
+    }
+
+    /**
+     * Publica un post SCHEDULED existent i n'actualitza l'estat (sense crear registre nou).
+     * Cridat de forma síncrona des de SocialSchedulerJob.
+     */
+    public void publishNow(SocialPost scheduledPost) {
+        var draft = new HashMap<String, String>();
+        draft.put("tenantId",  scheduledPost.getTenantId().toString());
+        draft.put("ig", "INSTAGRAM".equals(scheduledPost.getNetwork())      ? "1" : "0");
+        draft.put("fb", "FACEBOOK".equals(scheduledPost.getNetwork())       ? "1" : "0");
+        draft.put("gb", "GOOGLE_BUSINESS".equals(scheduledPost.getNetwork()) ? "1" : "0");
+        draft.put("postType", scheduledPost.getPostType());
+        draft.put("caption",  scheduledPost.getCaption() != null ? scheduledPost.getCaption() : "");
+        if (scheduledPost.getMediaUrl() != null) draft.put("mediaUrl", scheduledPost.getMediaUrl());
+
+        UUID tenantId = scheduledPost.getTenantId();
+        var metaConfigOpt = metaConfigRepo.findByTenantId(tenantId);
+        String postType = scheduledPost.getPostType();
+        String caption  = scheduledPost.getCaption();
+        String mediaUrl = scheduledPost.getMediaUrl();
+        boolean ig = "1".equals(draft.get("ig"));
+        boolean fb = "1".equals(draft.get("fb"));
+        boolean gb = "1".equals(draft.get("gb"));
+
+        try {
+            if (ig && metaConfigOpt.isPresent()) {
+                var mc = metaConfigOpt.get();
+                String token = vaultEncryption.decrypt(mc.getPageAccessTokenEncrypted());
+                instagramPublisher.publishFeedPhoto(mc.getInstagramAccountId(), token,
+                    mediaUrl != null ? mediaUrl : "", caption != null ? caption : "");
+            }
+            if (fb && metaConfigOpt.isPresent()) {
+                var mc = metaConfigOpt.get();
+                String token = vaultEncryption.decrypt(mc.getPageAccessTokenEncrypted());
+                if ("PHOTO".equals(postType) && mediaUrl != null) {
+                    facebookPublisher.publishPhoto(mc.getFacebookPageId(), token, mediaUrl, caption);
+                } else {
+                    facebookPublisher.publishText(mc.getFacebookPageId(), token, caption != null ? caption : "");
+                }
+            }
+            if (gb) {
+                var gConfig = googleConfigRepo.findById(tenantId).orElse(null);
+                String locationName = gConfig != null ? gConfig.getBusinessLocationId() : null;
+                if (locationName != null && !locationName.isBlank()) {
+                    switch (postType != null ? postType : "") {
+                        case "OFFER" -> googleBusinessPublisher.publishOffer(tenantId, locationName, caption, mediaUrl);
+                        case "EVENT" -> googleBusinessPublisher.publishEvent(tenantId, locationName, caption, caption, mediaUrl);
+                        default      -> googleBusinessPublisher.publishWhatsNew(tenantId, locationName, caption, mediaUrl);
+                    }
+                }
+            }
+            scheduledPost.setStatus("PUBLISHED");
+            scheduledPost.setPublishedAt(Instant.now());
+        } catch (Exception e) {
+            log.error("Error publicant post programat {}: {}", scheduledPost.getId(), e.getMessage());
+            scheduledPost.setStatus("FAILED");
+            scheduledPost.setErrorMessage(e.getMessage());
+        }
+        postRepository.save(scheduledPost);
     }
 
     @Async
