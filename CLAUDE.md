@@ -222,6 +222,7 @@ Cada fase té un cost de **setup individual** (varia per `businessSize`: AUTONOM
 | Bot IA avançat (RAG) | 100€ |
 | SMTP Corporatiu | 25€ |
 | Google Analytics | 25€ |
+| Social Publisher (Instagram + Facebook + Google Business via Telegram IA) | 50€ |
 
 ---
 

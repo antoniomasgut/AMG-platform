@@ -113,6 +113,12 @@ Cada servei es pot contractar solt (add-on) o dins d'una fase. **Tots a 10 €/m
 | **SMTP Corporatiu** | Correu transaccional (SendGrid/Resend). Verificació de domini, plantilles. | 1 h | 50 € | 0 € | 50 € | 10 € |
 | **Google Analytics** | GA4 + Search Console + Tags Manager. Dashboard mensual. | 1 h | 50 € | 0 € | 50 € | 10 € |
 
+### 2.7 Social Publisher
+
+| Servei | Descripció | Hores eng | Cost setup (eng) | Despeses | Setup total | Mensual |
+|--------|-----------|-----------|-----------------|---------|------------|---------|
+| **Social Publisher** | Publicació multi-xarxa (Instagram, Facebook, Google Business) des del Telegram del client. Captions generats per IA. Foto enviada directament pel xat. Historial de publicacions al portal. Requereix F1. | 1 h | 50 € | 0 € | 50 € | 0 € (inclòs en F1) |
+
 ---
 
 ## 3. Fases NexeLocal (mapeig comercial → serveis tècnics)
