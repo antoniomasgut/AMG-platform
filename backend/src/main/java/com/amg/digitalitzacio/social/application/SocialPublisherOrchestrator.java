@@ -181,82 +181,118 @@ public class SocialPublisherOrchestrator {
         askWhenToPublish(chatId, draft);
     }
 
+    private static final java.time.ZoneId ZONE_ES = java.time.ZoneId.of("Europe/Madrid");
+    private static final java.util.regex.Pattern PAT_TIME =
+        java.util.regex.Pattern.compile("(\\d{1,2}):(\\d{2})");
+    private static final java.util.regex.Pattern PAT_DATE_FULL =
+        java.util.regex.Pattern.compile("(\\d{1,2})/(\\d{1,2})/(\\d{4})");
+    private static final java.util.regex.Pattern PAT_DATE_SHORT =
+        java.util.regex.Pattern.compile("(\\d{1,2})/(\\d{1,2})");
+
     private void askWhenToPublish(Long chatId, Map<String, String> draft) {
         draft.put("step", "AWAIT_SCHEDULE");
         saveDraft(chatId, draft);
         telegramBotClient.sendMessage(chatId,
             "⏰ Quan vols publicar?\n\n"
             + "<code>ARA</code> — publicar immediatament\n"
-            + "<code>DD/MM HH:MM</code> — programar (ex: <code>15/07 09:30</code>)");
+            + "<code>avui a les 22:00</code> — avui a l'hora indicada\n"
+            + "<code>demà a les 09:30</code> — demà\n"
+            + "<code>15/07 18:00</code> — data sense any (any actual)\n"
+            + "<code>15/07/2026 18:00</code> — data amb any completa");
     }
 
     private void handleSchedule(Long chatId, String text, Map<String, String> draft) {
-        String input = text.trim().toUpperCase();
-        if (input.equals("ARA") || input.equals("NOW")) {
+        String lower = text.trim().toLowerCase();
+
+        if (lower.equals("ara") || lower.equals("now")) {
             draft.put("step", "AWAIT_CONFIRM");
             saveDraft(chatId, draft);
             sendPreview(chatId, draft, draft.get("caption"));
             return;
         }
 
-        // Intenta parsejar DD/MM HH:MM
+        Instant scheduledAt = parseScheduleInput(lower);
+        if (scheduledAt == null) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ Format no reconegut. Exemples:\n"
+                + "<code>ARA</code>\n"
+                + "<code>avui a les 22:00</code>\n"
+                + "<code>demà a les 09:30</code>\n"
+                + "<code>15/07 18:00</code>\n"
+                + "<code>15/07/2026 a les 07:00</code>");
+            return;
+        }
+
+        if (scheduledAt.isBefore(Instant.now())) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ La data ha de ser futura. Torna a intentar-ho o escriu <code>ARA</code>.");
+            return;
+        }
+
+        redis.delete(KEY_PREFIX + chatId);
+        UUID tenantId = UUID.fromString(draft.get("tenantId"));
+        for (String net : resolveNetworks(draft)) {
+            postRepository.save(SocialPost.builder()
+                .tenantId(tenantId)
+                .network(net)
+                .postType(draft.get("postType"))
+                .caption(draft.get("caption"))
+                .mediaUrl(draft.get("mediaUrl"))
+                .status("SCHEDULED")
+                .scheduledAt(scheduledAt)
+                .build());
+        }
+
+        String formatted = java.time.format.DateTimeFormatter
+            .ofPattern("dd/MM/yyyy HH:mm")
+            .withZone(ZONE_ES)
+            .format(scheduledAt);
+        telegramBotClient.sendMessage(chatId,
+            "✅ Post programat per al <b>" + formatted + "</b>.\n"
+            + "Pots veure'l i cancel·lar-lo des del portal.");
+    }
+
+    /** Parseja expressions de data/hora en català i format numèric. */
+    private Instant parseScheduleInput(String lower) {
+        // Extreu l'hora — obligatòria en tots els formats
+        var timeMatcher = PAT_TIME.matcher(lower);
+        if (!timeMatcher.find()) return null;
+        int hour   = Integer.parseInt(timeMatcher.group(1));
+        int minute = Integer.parseInt(timeMatcher.group(2));
+        if (hour > 23 || minute > 59) return null;
+
+        java.time.LocalDate date;
+
+        if (lower.startsWith("avui") || lower.startsWith("today")) {
+            date = java.time.LocalDate.now(ZONE_ES);
+        } else if (lower.startsWith("dem") || lower.startsWith("tomorrow")) {
+            // "demà" o "dema"
+            date = java.time.LocalDate.now(ZONE_ES).plusDays(1);
+        } else {
+            // Prova DD/MM/YYYY primer (més específic)
+            var fullMatcher = PAT_DATE_FULL.matcher(lower);
+            if (fullMatcher.find()) {
+                int day   = Integer.parseInt(fullMatcher.group(1));
+                int month = Integer.parseInt(fullMatcher.group(2));
+                int year  = Integer.parseInt(fullMatcher.group(3));
+                try { date = java.time.LocalDate.of(year, month, day); }
+                catch (Exception e) { return null; }
+            } else {
+                // Prova DD/MM (any actual)
+                var shortMatcher = PAT_DATE_SHORT.matcher(lower);
+                if (!shortMatcher.find()) return null;
+                int day   = Integer.parseInt(shortMatcher.group(1));
+                int month = Integer.parseInt(shortMatcher.group(2));
+                int year  = java.time.LocalDate.now(ZONE_ES).getYear();
+                try { date = java.time.LocalDate.of(year, month, day); }
+                catch (Exception e) { return null; }
+            }
+        }
+
         try {
-            var parts = text.trim().split("\\s+");
-            if (parts.length != 2) throw new IllegalArgumentException("format invàlid");
-            var dateParts = parts[0].split("/");
-            var timeParts = parts[1].split(":");
-            if (dateParts.length != 2 || timeParts.length != 2) throw new IllegalArgumentException("format invàlid");
-
-            int day    = Integer.parseInt(dateParts[0]);
-            int month  = Integer.parseInt(dateParts[1]);
-            int hour   = Integer.parseInt(timeParts[0]);
-            int minute = Integer.parseInt(timeParts[1]);
-            int year   = java.time.LocalDate.now(java.time.ZoneId.of("Europe/Madrid")).getYear();
-
-            var scheduledAt = java.time.LocalDateTime.of(year, month, day, hour, minute)
-                .atZone(java.time.ZoneId.of("Europe/Madrid"))
-                .toInstant();
-
-            if (scheduledAt.isBefore(Instant.now())) {
-                telegramBotClient.sendMessage(chatId,
-                    "⚠️ La data ha de ser futura. Torna a intentar-ho o escriu <code>ARA</code>.");
-                return;
-            }
-
-            // Desa el post com a SCHEDULED i tanca el flux
-            redis.delete(KEY_PREFIX + chatId);
-            UUID tenantId = UUID.fromString(draft.get("tenantId"));
-            String network = buildNetworkList(draft).split(" ")[0].toUpperCase()
-                .replace("INSTAGRAM", "INSTAGRAM")
-                .replace("FACEBOOK", "FACEBOOK")
-                .replace("GOOGLE", "GOOGLE_BUSINESS");
-
-            // Si hi ha múltiples xarxes, desa un post per cadascuna
-            for (String net : resolveNetworks(draft)) {
-                var post = SocialPost.builder()
-                    .tenantId(tenantId)
-                    .network(net)
-                    .postType(draft.get("postType"))
-                    .caption(draft.get("caption"))
-                    .mediaUrl(draft.get("mediaUrl"))
-                    .status("SCHEDULED")
-                    .scheduledAt(scheduledAt)
-                    .build();
-                postRepository.save(post);
-            }
-
-            String formatted = java.time.format.DateTimeFormatter
-                .ofPattern("dd/MM/yyyy HH:mm")
-                .withZone(java.time.ZoneId.of("Europe/Madrid"))
-                .format(scheduledAt);
-            telegramBotClient.sendMessage(chatId,
-                "✅ Post programat per al <b>" + formatted + "</b>.\n"
-                + "Pots veure'l i cancel·lar-lo des del portal.");
-
+            return date.atTime(hour, minute).atZone(ZONE_ES).toInstant();
         } catch (Exception e) {
-            telegramBotClient.sendMessage(chatId,
-                "⚠️ Format no reconegut. Exemples vàlids:\n"
-                + "<code>ARA</code>\n<code>15/07 09:30</code>");
+            return null;
         }
     }
 
