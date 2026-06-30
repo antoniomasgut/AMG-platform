@@ -5,6 +5,7 @@ import com.amg.digitalitzacio.agents.application.ConversationService;
 import com.amg.digitalitzacio.agents.application.GoogleCalendarService;
 import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.PromptBuilder;
+import com.amg.digitalitzacio.agents.application.TelegramBotClient;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.ConversationRole;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
@@ -89,6 +90,7 @@ public class ChatSessionService {
     private final TenantAIConfigRepository aiConfigRepository;
     private final TenantChatLinkRepository chatLinkRepository;
     private final WhatsAppWabaConfigRepository wabaConfigRepository;
+    private final TelegramBotClient telegramBotClient;
 
     @Value("${app.landing.base-domain:webs.amgdl.com}")
     private String landingBaseDomain;
@@ -147,7 +149,25 @@ public class ChatSessionService {
         saveSession(session);
         incrementRateCounter(RATE_SESS_KEY + ip, 3600);
 
+        // Notificació best-effort al SUPER_ADMIN quan un visitant inicia xat
+        notifyAdminNewChatSession(landing.getTitle(), landingSlug, contactName, contactPhone);
+
         return new CreateSessionResult(sessionId, greeting);
+    }
+
+    private void notifyAdminNewChatSession(String businessName, String slug, String name, String phone) {
+        try {
+            var adminChatId = sysConfig.get("TELEGRAM_CHAT_ID");
+            if (adminChatId == null || adminChatId.isBlank()) return;
+            long chatId = Long.parseLong(adminChatId.trim());
+            String msg = "💬 *Nou visitant al widget de xat*\n"
+                       + "🏢 Landing: " + businessName + " (" + slug + ")\n"
+                       + (name  != null && !name.isBlank()  ? "👤 Nom: "    + name  + "\n" : "")
+                       + (phone != null && !phone.isBlank() ? "📱 Telèfon: " + phone + "\n" : "");
+            telegramBotClient.sendMessage(chatId, msg);
+        } catch (Exception e) {
+            log.debug("Admin chat notification skipped: {}", e.getMessage());
+        }
     }
 
     public record AgencyStatus(boolean enabled, String wabaPhone) {}

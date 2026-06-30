@@ -48,6 +48,44 @@ export interface Prospect {
   score?: number | null;
   reviews?: string[];
   signals?: ProspectSignal[];
+  // Spec 12 v2
+  hasSsl?: boolean;
+  isResponsive?: boolean;
+  hasAnalytics?: boolean;
+  hasPixel?: boolean;
+  hasGtm?: boolean;
+  hasChatWidget?: boolean;
+  hasBookingSystem?: boolean;
+  hasContactForm?: boolean;
+  hasFaq?: boolean;
+  hasClearCta?: boolean;
+  techStack?: string;
+  webLoadMs?: number;
+  cmsDetected?: string;
+  facebookUrl?: string;
+  linkedinUrl?: string;
+  tiktokUrl?: string;
+  youtubeUrl?: string;
+  hasFacebook?: boolean;
+  hasLinkedin?: boolean;
+  hasTiktok?: boolean;
+  prospectTier?: 'DISCARD' | 'REVIEW' | 'DEMO' | 'PRIORITY';
+  scoreBreakdown?: string;
+  aiReport?: string;
+  aiPitch?: string;
+  demoUrl?: string;
+  widgetCode?: string;
+  webAnalyzedAt?: string;
+  aiAnalyzedAt?: string;
+}
+
+export interface ProspectingDashboard {
+  totalCampaigns: number;
+  totalProspects: number;
+  byTier: Record<string, number>;
+  byStatus: Record<string, number>;
+  avgScore: number;
+  topCampaigns: Array<{ id: string; name: string; total: number; priority: number; demo: number }>;
 }
 
 export type ProspectSource = 'GOOGLE_MAPS' | 'INSTAGRAM' | 'PAGINAS_AMARILLAS' | 'MANUAL';
@@ -146,3 +184,25 @@ export const scheduleCampaign = (id: string, nextRun: string, repeatDays: number
 
 export const unscheduleCampaign = (id: string) =>
   apiFetch<Campaign>(`/prospecting/campaigns/${id}/unschedule`, { method: 'POST' });
+
+// ── Spec 12 v2 ────────────────────────────────────────────────────────────────
+export const analyzeWebProspect = (id: string) =>
+  apiFetch<Prospect>(`/prospecting/prospects/${id}/analyze-web`, { method: 'POST' });
+
+export const analyzeAllWebCampaign = (id: string) =>
+  apiFetch<{ analyzed: number }>(`/prospecting/campaigns/${id}/analyze-all`, { method: 'POST' });
+
+export const generateAiReport = (id: string) =>
+  apiFetch<Prospect>(`/prospecting/prospects/${id}/ai-report`, { method: 'POST' });
+
+export const getWidgetCode = (id: string) =>
+  apiFetch<{ code: string }>(`/prospecting/prospects/${id}/widget-code`);
+
+export const detectChannels = (id: string) =>
+  apiFetch<Record<string, string>>(`/prospecting/prospects/${id}/channels`);
+
+export const getCampaignDashboard = (id: string) =>
+  apiFetch<Record<string, unknown>>(`/prospecting/campaigns/${id}/dashboard`);
+
+export const getGlobalDashboard = () =>
+  apiFetch<Record<string, unknown>>(`/prospecting/dashboard`);

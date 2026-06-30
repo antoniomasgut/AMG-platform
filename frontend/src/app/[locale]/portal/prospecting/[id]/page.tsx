@@ -10,6 +10,7 @@ import {
   exportContactableProspects, scoreProspects, qualifyByMinScore,
   updateProspect, exportQualifiedProspects, generateOutreach,
   scheduleCampaign, unscheduleCampaign,
+  analyzeWebProspect, generateAiReport, getWidgetCode,
   type Campaign, type Prospect, type UpdateProspectPayload,
 } from '@/services/prospecting';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -17,6 +18,7 @@ import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { IconSet } from '@/components/ui/icons';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 
 const PROSPECT_STATUS_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 'warning'> = {
   NEW: 'neutral', FOUND: 'neutral', QUALIFIED: 'success',
@@ -144,8 +146,15 @@ function EditField({ label, value, onChange }: { label: string; value: string; o
   );
 }
 
+const TIER_TONE: Record<string, 'success' | 'warning' | 'danger' | 'neutral' | 'accent'> = {
+  PRIORITY: 'accent', DEMO: 'success', REVIEW: 'warning', DISCARD: 'neutral',
+};
+const TIER_LABEL_MAP: Record<string, string> = {
+  PRIORITY: 'Prioritari', DEMO: 'Demo', REVIEW: 'Revisar', DISCARD: 'Descartar',
+};
+
 function ProspectDrawer({
-  prospect, onClose, onExport, onEnrich, onQualify, onDiscard, onSave,
+  prospect: initialProspect, onClose, onExport, onEnrich, onQualify, onDiscard, onSave,
   exporting, enriching, updatingStatus, saving,
 }: {
   prospect: Prospect;
@@ -157,6 +166,7 @@ function ProspectDrawer({
   onSave: (id: string, payload: UpdateProspectPayload) => void;
   exporting: boolean; enriching: boolean; updatingStatus: boolean; saving: boolean;
 }) {
+  const [prospect, setProspect] = useState(initialProspect);
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState({
     name: prospect.name ?? '',
@@ -170,10 +180,28 @@ function ProspectDrawer({
   const [outreachChannel, setOutreachChannel] = useState<'email' | 'whatsapp'>('email');
   const [outreachText, setOutreachText] = useState('');
   const [copied, setCopied] = useState(false);
+  const [widgetCode, setWidgetCode] = useState('');
+  const [widgetCopied, setWidgetCopied] = useState(false);
+  const [showWidget, setShowWidget] = useState(false);
 
   const { mutate: doGenerateOutreach, isPending: generatingOutreach } = useMutation({
     mutationFn: (channel: 'email' | 'whatsapp') => generateOutreach(prospect.id, channel),
     onSuccess: (data) => setOutreachText(data.message),
+  });
+
+  const { mutate: doAnalyzeWeb, isPending: analyzingWeb } = useMutation({
+    mutationFn: () => analyzeWebProspect(prospect.id),
+    onSuccess: (data) => setProspect(data),
+  });
+
+  const { mutate: doAiReport, isPending: generatingAiReport } = useMutation({
+    mutationFn: () => generateAiReport(prospect.id),
+    onSuccess: (data) => setProspect(data),
+  });
+
+  const { mutate: doGetWidgetCode, isPending: loadingWidget } = useMutation({
+    mutationFn: () => getWidgetCode(prospect.id),
+    onSuccess: (data) => { setWidgetCode(data.code); setShowWidget(true); },
   });
 
   const handleCopy = () => {
@@ -347,12 +375,110 @@ function ProspectDrawer({
               {prospect.score != null && (
                 <section>
                   <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Puntuació</div>
-                  <div className="flex items-center gap-2">
-                    <span className={`f-mono text-2xl font-bold ${prospect.score >= 8 ? 'text-success' : prospect.score >= 5 ? 'text-accent-light' : 'text-ink-2'}`}>
-                      {prospect.score}
-                    </span>
-                    <span className="f-mono text-xs text-ink-3">/ 16 pts</span>
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-16 h-16">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                          stroke={prospect.score >= 81 ? '#FF6B00' : prospect.score >= 61 ? '#22c55e' : prospect.score >= 31 ? '#eab308' : '#6b7280'}
+                          strokeWidth="3" strokeLinecap="round"
+                          strokeDasharray={`${(prospect.score / 100) * 100} 100`}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="f-mono text-base font-bold text-ink-0">{prospect.score}</span>
+                      </div>
+                    </div>
+                    <div>
+                      {prospect.prospectTier && (
+                        <AMGBadge tone={TIER_TONE[prospect.prospectTier] ?? 'neutral'}>
+                          {TIER_LABEL_MAP[prospect.prospectTier] ?? prospect.prospectTier}
+                        </AMGBadge>
+                      )}
+                      <div className="f-mono text-[10px] text-ink-3 mt-1">de 100 pts</div>
+                    </div>
                   </div>
+                  {prospect.scoreBreakdown && (
+                    <details className="mt-2">
+                      <summary className="f-mono text-[9px] uppercase text-ink-3 cursor-pointer">Desglossament</summary>
+                      <pre className="f-mono text-[9px] text-ink-2 mt-1 leading-relaxed whitespace-pre-wrap">{prospect.scoreBreakdown}</pre>
+                    </details>
+                  )}
+                </section>
+              )}
+
+              {/* Anàlisi web */}
+              {prospect.webAnalyzedAt && (
+                <section>
+                  <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Anàlisi web</div>
+                  <div className="grid grid-cols-2 gap-1">
+                    {[
+                      { label: 'SSL',       val: prospect.hasSsl },
+                      { label: 'Responsive', val: prospect.isResponsive },
+                      { label: 'Analytics', val: prospect.hasAnalytics },
+                      { label: 'Pixel Meta', val: prospect.hasPixel },
+                      { label: 'GTM',       val: prospect.hasGtm },
+                      { label: 'Chat',      val: prospect.hasChatWidget },
+                      { label: 'Reserves',  val: prospect.hasBookingSystem },
+                      { label: 'Formulari', val: prospect.hasContactForm },
+                      { label: 'FAQ',       val: prospect.hasFaq },
+                      { label: 'CTA clar',  val: prospect.hasClearCta },
+                    ].map(({ label, val }) => (
+                      val != null && (
+                        <div key={label} className="flex items-center gap-1.5 text-[10px] f-mono">
+                          <span className={val ? 'text-green-400' : 'text-ink-3'}>
+                            {val ? '✓' : '✗'}
+                          </span>
+                          <span className={val ? 'text-ink-1' : 'text-ink-3'}>{label}</span>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                  {prospect.cmsDetected && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="f-mono text-[9px] text-ink-3">CMS:</span>
+                      <AMGBadge tone="neutral">{prospect.cmsDetected}</AMGBadge>
+                      {prospect.webLoadMs && (
+                        <span className="f-mono text-[9px] text-ink-3">{prospect.webLoadMs}ms</span>
+                      )}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {/* Informe IA */}
+              {prospect.aiReport && (
+                <section>
+                  <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Informe IA</div>
+                  <pre className="f-mono text-[10px] text-ink-1 leading-relaxed whitespace-pre-wrap bg-bg-1 p-3 rounded border border-border-base max-h-48 overflow-y-auto">
+                    {prospect.aiReport}
+                  </pre>
+                  {prospect.aiPitch && (
+                    <div className="mt-2">
+                      <div className="f-mono text-[9px] uppercase text-ink-3 mb-1">Pitch personalitzat</div>
+                      <p className="f-mono text-[11px] text-ink-1 bg-[rgba(255,107,0,0.06)] p-3 rounded border border-[rgba(255,107,0,0.2)] leading-relaxed">
+                        {prospect.aiPitch}
+                      </p>
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {/* Widget code */}
+              {showWidget && widgetCode && (
+                <section>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3">Codi Widget</div>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(widgetCode); setWidgetCopied(true); setTimeout(() => setWidgetCopied(false), 2000); }}
+                      className="f-mono text-[9px] uppercase text-accent-light border border-[rgba(255,107,0,0.3)] px-2 py-0.5 rounded hover:border-[#FF6B00] transition"
+                    >
+                      {widgetCopied ? 'Copiat!' : 'Copiar'}
+                    </button>
+                  </div>
+                  <pre className="f-mono text-[9px] text-green-300 bg-[#070715] p-3 rounded border border-border-base max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                    {widgetCode}
+                  </pre>
                 </section>
               )}
 
@@ -438,6 +564,33 @@ function ProspectDrawer({
               <AMGButton variant="secondary" icon={IconSet.Refresh} loading={enriching} onClick={() => onEnrich(prospect.id)} className="w-full justify-center">
                 Enriquir dades
               </AMGButton>
+              {prospect.hasWebsite && (
+                <div className="flex gap-2">
+                  <AMGButton
+                    size="sm" variant="secondary" loading={analyzingWeb}
+                    onClick={() => doAnalyzeWeb()}
+                    className="flex-1 justify-center"
+                  >
+                    <IconSet.Search size={12} /> Analitzar web
+                  </AMGButton>
+                  <AMGButton
+                    size="sm" variant="secondary" loading={generatingAiReport}
+                    onClick={() => doAiReport()}
+                    className="flex-1 justify-center"
+                  >
+                    <IconSet.Sparkles size={12} /> Informe IA
+                  </AMGButton>
+                </div>
+              )}
+              {prospect.hasWebsite && (
+                <AMGButton
+                  size="sm" variant="secondary" loading={loadingWidget}
+                  onClick={() => doGetWidgetCode()}
+                  className="w-full justify-center"
+                >
+                  {'</>'} Codi widget
+                </AMGButton>
+              )}
             </>
           )}
         </div>
@@ -605,7 +758,12 @@ export default function CampaignDetailPage() {
     <PortalShell breadcrumb={`prospecting / ${c.name}`} backHref={`/${locale}/portal/prospecting`}>
       <div className="p-4 sm:p-8 space-y-6 max-w-4xl">
         <div>
-          <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / prospecting /</span>
+          <div className="flex items-center justify-between">
+            <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / prospecting /</span>
+            <Link href={`/${locale}/portal/prospecting/dashboard`} className="f-mono text-[10px] uppercase tracking-wider text-ink-3 hover:text-accent-light transition border border-border-base px-2 py-1 rounded">
+              Dashboard →
+            </Link>
+          </div>
           <div className="flex items-center gap-3 mt-1">
             <div className="f-display font-bold text-xl">{c.name}</div>
             <AMGBadge tone={CAMPAIGN_STATUS_TONE[c.status]}>
