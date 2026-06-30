@@ -4,6 +4,7 @@ import com.amg.digitalitzacio.agents.application.AbsenceRescheduleService;
 import com.amg.digitalitzacio.agents.application.AgentRegistry;
 import com.amg.digitalitzacio.agents.application.AmgAdminCommandService;
 import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
+import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.TeamGrowthService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
@@ -35,6 +36,10 @@ public class TelegramWebhookController {
     private final AmgAdminCommandService amgAdminCommandService;
     private final SystemConfigService systemConfigService;
     private final SocialPublisherOrchestrator socialOrchestrator;
+    private final NexeServiceConfigService nexeServiceConfigService;
+
+    private static final java.util.regex.Pattern SOCIAL_TRIGGER = java.util.regex.Pattern.compile(
+        "(?i)\\b(publica|publicar|post|instagram|facebook|penja|penjar|xarxes)\\b");
 
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(
@@ -161,15 +166,24 @@ public class TelegramWebhookController {
                     }
                 }
 
-                // Comanda de publicació social: /publica
-                if (text.toLowerCase().startsWith("/publica")) {
-                    socialOrchestrator.startFlow(tenantId, chatId);
+                // Pas d'un flux de publicació social actiu (prioritat: continua el flux existent)
+                if (socialOrchestrator.hasDraft(chatId)) {
+                    socialOrchestrator.handleStep(chatId, text, photoFileId);
                     return ResponseEntity.ok("ok");
                 }
 
-                // Pas d'un flux de publicació social actiu
-                if (socialOrchestrator.hasDraft(chatId)) {
-                    socialOrchestrator.handleStep(chatId, text, photoFileId);
+                // Comanda /publica o paraules clau de publicació social
+                boolean isSocialIntent = text.toLowerCase().startsWith("/publica")
+                    || (!text.startsWith("/") && SOCIAL_TRIGGER.matcher(text).find());
+                if (isSocialIntent) {
+                    boolean activated = nexeServiceConfigService
+                        .get(tenantId, "SOCIAL_PUBLISHER").isPresent();
+                    if (!activated) {
+                        return ResponseEntity.ok(okTgReply(chatId,
+                            "ℹ️ El servei de publicació a xarxes socials no està activat per al teu compte.\n"
+                            + "Contacta l'administrador per activar-lo."));
+                    }
+                    socialOrchestrator.startFlow(tenantId, chatId);
                     return ResponseEntity.ok("ok");
                 }
 

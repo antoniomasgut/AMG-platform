@@ -36,6 +36,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     private final ProspectAnalysisService prospectAnalysisService;
     private final WidgetCodeGeneratorService widgetCodeGeneratorService;
     private final ProspectChannelDetectorService channelDetectorService;
+    private final ProspectDemoGeneratorService prospectDemoGeneratorService;
 
     private static final int TIER_PRIORITY = 81;
     private static final int TIER_DEMO = 61;
@@ -694,6 +695,8 @@ public class ProspectingOrchestrator implements ProspectingService {
             p.setWidgetCode(widgetCodeGeneratorService.generate(p));
         }
         prospectRepository.save(p);
+        // Genera demo automàticament si és PRIORITY
+        prospectDemoGeneratorService.generateIfEligible(p);
         return toProspectResponse(p);
     }
 
