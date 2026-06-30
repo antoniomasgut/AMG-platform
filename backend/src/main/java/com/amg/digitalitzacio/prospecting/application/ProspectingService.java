@@ -30,4 +30,13 @@ public interface ProspectingService {
     CampaignResponse scheduleCampaign(UUID campaignId, Instant nextRun, int repeatDays);
     CampaignResponse unscheduleCampaign(UUID campaignId);
     String generateOutreach(UUID prospectId, String channel);
+
+    // Spec 12 v2 — nous mètodes
+    ProspectResponse analyzeWeb(UUID prospectId);
+    int analyzeAllWeb(UUID campaignId);
+    ProspectResponse generateAiReport(UUID prospectId);
+    String getWidgetCode(UUID prospectId);
+    Map<String, String> detectChannels(UUID prospectId);
+    Map<String, Object> getCampaignDashboard(UUID campaignId);
+    Map<String, Object> getGlobalDashboard();
 }

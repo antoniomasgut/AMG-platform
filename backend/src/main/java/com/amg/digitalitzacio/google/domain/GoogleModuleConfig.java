@@ -32,6 +32,12 @@ public class GoogleModuleConfig {
     @Column(name = "drive_folder_id")
     private String driveFolderId;
 
+    @Column(name = "business_enabled", nullable = false)
+    private boolean businessEnabled;
+
+    @Column(name = "business_location_id")
+    private String businessLocationId;
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 

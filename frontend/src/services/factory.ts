@@ -346,6 +346,9 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
     icon: '⭐',
     defaultProps: {
       title: 'El que diuen de nosaltres',
+      source: 'manual',
+      minRating: 4,
+      maxItems: 6,
       googleMapsUrl: '',
       items: [
         { name: 'Maria G.', rating: 5, text: 'Excel·lent servei, molt professionals!', date: '2026-01-15' },

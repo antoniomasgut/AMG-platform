@@ -32,6 +32,20 @@ public class ProspectingOrchestrator implements ProspectingService {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final AIProviderRouter aiProviderRouter;
+    private final WebAnalyzerService webAnalyzerService;
+    private final ProspectAnalysisService prospectAnalysisService;
+    private final WidgetCodeGeneratorService widgetCodeGeneratorService;
+    private final ProspectChannelDetectorService channelDetectorService;
+
+    private static final int TIER_PRIORITY = 81;
+    private static final int TIER_DEMO = 61;
+    private static final int TIER_REVIEW = 31;
+
+    private static final Set<String> PROFITABLE_SECTORS = Set.of(
+        "FISIOTERAPEUTA", "PSICOLEG", "NUTRICIONISTA", "PERRUQUERIA", "ESTETICA",
+        "PERRUQUERIA_CANINA", "VETERINARI", "RESTAURANTE", "DENTISTA",
+        "MARE_DE_DIA", "CLINICA", "ACADEMIA"
+    );
 
     @Override
     @Transactional
@@ -288,7 +302,15 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     private int calculateScore(Prospect p) {
-        return detectSignals(p).stream().mapToInt(com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal::points).sum();
+        int score = detectSignals(p).stream().mapToInt(ProspectSignal::points).sum();
+        return Math.max(0, Math.min(100, score));
+    }
+
+    private void recalculateAndSave(Prospect p) {
+        int score = calculateScore(p);
+        p.setScore(score);
+        p.setProspectTier(computeTier(score));
+        prospectRepository.save(p);
     }
 
     @Override
@@ -517,15 +539,31 @@ public class ProspectingOrchestrator implements ProspectingService {
     private ProspectResponse toProspectResponse(Prospect p) {
         List<String> reviews = List.of();
         if (p.getReviewsJson() != null) {
-            try { reviews = objectMapper.readValue(p.getReviewsJson(), new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {}); }
+            try { reviews = objectMapper.readValue(p.getReviewsJson(), new TypeReference<List<String>>() {}); }
             catch (Exception ignored) {}
         }
-        return new ProspectResponse(p.getId(), p.getCampaignId(), p.getName(), p.getDescription(),
+        return new ProspectResponse(
+                p.getId(), p.getCampaignId(), p.getName(), p.getDescription(),
                 p.getSector(), p.getAddress(), p.getCity(), p.getPostalCode(), p.getPhone(), p.getEmail(),
                 p.getWebsite(), p.getInstagram(), p.getGoogleRating(), p.getGoogleReviews(),
                 p.getGooglePlaceId(), p.getHasWebsite(), p.getHasInstagram(), p.getHasWhatsapp(),
+                // web analysis
+                p.getHasSsl(), p.getIsResponsive(), p.getHasAnalytics(), p.getHasPixel(),
+                p.getHasGtm(), p.getHasChatWidget(), p.getHasBookingSystem(),
+                p.getHasContactForm(), p.getHasFaq(), p.getHasClearCta(),
+                p.getTechStack(), p.getWebLoadMs(), p.getCmsDetected(),
+                // social
+                p.getFacebookUrl(), p.getLinkedinUrl(), p.getTiktokUrl(), p.getYoutubeUrl(),
+                p.getHasFacebook(), p.getHasLinkedin(), p.getHasTiktok(),
+                // scoring
+                p.getScore(), p.getProspectTier(), p.getScoreBreakdown(),
+                // ai
+                p.getAiReport(), p.getAiPitch(), p.getDemoUrl(),
+                // meta
                 p.getStatus().name(), p.getSource().name(), p.getExternalId(), p.getLeadId(),
-                p.getNotes(), p.getCreatedAt(), p.getUpdatedAt(), p.getScore(), reviews, detectSignals(p));
+                p.getNotes(), p.getCreatedAt(), p.getUpdatedAt(),
+                p.getWebAnalyzedAt(), p.getAiAnalyzedAt(),
+                reviews, detectSignals(p));
     }
 
     private static com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal signal(
@@ -533,46 +571,184 @@ public class ProspectingOrchestrator implements ProspectingService {
         return new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(code, label, pitch, tone, points);
     }
 
-    // Punts màxims possibles (senyals mútuament excloents inclosos):
-    // NO_WHATSAPP(5) + LOW_REVIEWS(4) + MIXED_RATING(3) + NO_WEBSITE(3) + NO_INSTAGRAM(1) = 16 pts
-    private List<com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal> detectSignals(Prospect p) {
-        var signals = new ArrayList<com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal>();
+    private List<ProspectSignal> detectSignals(Prospect p) {
+        var signals = new ArrayList<ProspectSignal>();
 
-        // Sense WhatsApp Business → porta d'entrada a l'agent IA (F1) + WhatsApp Business API
-        if (p.getPhone() != null && !p.getPhone().isBlank() && !Boolean.TRUE.equals(p.getHasWhatsapp())) {
-            signals.add(signal("NO_WHATSAPP", "Sense WhatsApp Business", "Agent IA per WhatsApp + WhatsApp Business API", "warning", 5));
+        // ── Potencial comercial ────────────────────────────────────────────────
+        if (p.getSector() != null && PROFITABLE_SECTORS.contains(p.getSector().toUpperCase())) {
+            signals.add(signal("PROFITABLE_SECTOR", "Sector d'alta conversió", "F1+F2 → agent + agenda → ROI ràpid", "opportunity", 20));
         }
-
-        // Reviews Google → menys ressenyes = necessitat clara d'automatització F4
         if (p.getGoogleReviews() != null) {
             int rev = p.getGoogleReviews();
-            if (rev < 10) {
-                signals.add(signal("LOW_REVIEWS", "Molt pocs reviews (" + rev + ")", "Automatització de recollida de ressenyes (F4)", "opportunity", 4));
+            if (rev > 100) {
+                signals.add(signal("HIGH_REVIEWS", "Molt actiu a Google (" + rev + " reviews)", "Base sòlida de clients → automatitzar fidelització (F4)", "opportunity", 10));
+            } else if (rev < 10) {
+                signals.add(signal("LOW_REVIEWS", "Molt pocs reviews (" + rev + ")", "Automatització de recollida de ressenyes (F4)", "warning", 0));
             } else if (rev < 30) {
-                signals.add(signal("FEW_REVIEWS", "Poca activitat Google (" + rev + " reviews)", "Agent de fidelització + campanya de reviews", "info", 2));
+                signals.add(signal("FEW_REVIEWS", "Poca activitat Google (" + rev + " reviews)", "Agent de fidelització + campanya de reviews", "info", 0));
             }
         }
-
-        // Rating Google → marge de millora = pitch d'automatització de fidelització
         if (p.getGoogleRating() != null) {
             double r = p.getGoogleRating().doubleValue();
-            if (r < 3.5) {
-                signals.add(signal("LOW_RATING", "Rating baix (" + p.getGoogleRating() + "★)", "Agent de resposta a ressenyes + gestió reputació", "danger", 2));
+            if (r >= 4.4) {
+                signals.add(signal("GOOD_RATING", "Excel·lent rating (" + p.getGoogleRating() + "★)", "Aprofitar reputació per automatitzar captació", "opportunity", 10));
+            } else if (r < 3.5) {
+                signals.add(signal("LOW_RATING", "Rating baix (" + p.getGoogleRating() + "★)", "Agent de resposta a ressenyes + gestió reputació", "danger", 0));
             } else if (r < 4.3) {
-                signals.add(signal("MIXED_RATING", "Rating millorable (" + p.getGoogleRating() + "★)", "Agent de fidelització + automatització reviews", "info", 3));
+                signals.add(signal("MIXED_RATING", "Rating millorable (" + p.getGoogleRating() + "★)", "Agent de fidelització + automatització reviews", "info", 0));
             }
         }
+        if (p.getPhone() != null && p.getPhone().replaceAll("\\D","").startsWith("6")) {
+            signals.add(signal("HAS_MOBILE", "Telèfon mòbil disponible", "Canal directe per WhatsApp Business", "info", 5));
+        }
 
-        // Sense web → sense web AMG, integrar el chat widget i formularis és molt complex
+        // ── Necessitat de digitalització ──────────────────────────────────────
+        if (Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasChatWidget())) {
+            signals.add(signal("NO_CHAT", "Sense chat a la web", "Widget IA de xat (Spec 30) — augment conversió", "warning", 10));
+        }
+        if (!Boolean.TRUE.equals(p.getHasWhatsapp())) {
+            signals.add(signal("NO_WHATSAPP", "Sense WhatsApp Business", "Agent IA per WhatsApp + WABA API → porta d'entrada F1", "warning", 10));
+        }
+        if (Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasBookingSystem())) {
+            signals.add(signal("NO_BOOKING", "Sense sistema de reserves online", "Agenda automàtica (F2) → estalvi 2-3h/dia de telèfon", "warning", 10));
+        }
+        if (!Boolean.TRUE.equals(p.getHasAnalytics()) && !Boolean.TRUE.equals(p.getHasGtm()) && !Boolean.TRUE.equals(p.getHasPixel())) {
+            signals.add(signal("NO_AUTOMATIONS", "Sense tracking ni automatitzacions", "GTM + Meta Pixel + Analytics → base per a F3 i F4", "warning", 15));
+        }
+        if (Boolean.TRUE.equals(p.getHasWebsite()) &&
+            (Boolean.FALSE.equals(p.getIsResponsive()) || (p.getWebLoadMs() != null && p.getWebLoadMs() > 3000))) {
+            signals.add(signal("OLD_WEB", "Web lenta o no adaptada a mòbil", "Landing AMG Pro → millora UX i conversió", "danger", 15));
+        }
+        if (Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasClearCta())) {
+            signals.add(signal("NO_CTA", "Sense CTA clara a la web", "Optimització conversió + botó WhatsApp/chat", "warning", 10));
+        }
+        if (Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasFaq())) {
+            signals.add(signal("NO_FAQ", "Sense secció FAQ", "FAQ automàtica des de la KB de l'agent IA", "info", 5));
+        }
+        if (Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasContactForm())) {
+            signals.add(signal("NO_FORM", "Sense formulari de contacte", "Formulari AMG → captura leads a la BD", "warning", 10));
+        }
         if (!Boolean.TRUE.equals(p.getHasWebsite())) {
             signals.add(signal("NO_WEBSITE", "Sense web gestionada", "Landing AMG = base per a chat, formularis i Meta Pixel", "warning", 3));
         }
-
-        // Sense Instagram
         if (!Boolean.TRUE.equals(p.getHasInstagram())) {
-            signals.add(signal("NO_INSTAGRAM", "Sense Instagram detectat", "Presència digital + automatitzacions", "neutral", 1));
+            signals.add(signal("NO_INSTAGRAM", "Sense Instagram detectat", "Presència digital + Social Publisher (Spec 52)", "neutral", 1));
+        }
+
+        // ── Penalitzacions ────────────────────────────────────────────────────
+        if (Boolean.TRUE.equals(p.getHasWebsite()) && p.getWebLoadMs() != null && p.getWebLoadMs() < 0) {
+            signals.add(signal("DOMAIN_DOWN", "Domini no accessible", "Cal verificar manualment", "danger", -50));
         }
 
         return signals;
+    }
+
+    private String computeTier(int score) {
+        if (score >= TIER_PRIORITY) return "PRIORITY";
+        if (score >= TIER_DEMO) return "DEMO";
+        if (score >= TIER_REVIEW) return "REVIEW";
+        return "DISCARD";
+    }
+
+    @Override
+    @Transactional
+    public ProspectResponse analyzeWeb(UUID prospectId) {
+        var p = prospectRepository.findById(prospectId)
+            .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
+        webAnalyzerService.analyze(p);
+        recalculateAndSave(p);
+        log.info("Web analyzed for prospect {}: cms={}, ssl={}, score={}", p.getId(), p.getCmsDetected(), p.getHasSsl(), p.getScore());
+        return toProspectResponse(p);
+    }
+
+    @Override
+    @Transactional
+    public int analyzeAllWeb(UUID campaignId) {
+        var prospects = prospectRepository.findByCampaignId(campaignId).stream()
+            .filter(p -> p.getWebAnalyzedAt() == null)
+            .filter(p -> p.getWebsite() != null && !p.getWebsite().isBlank())
+            .toList();
+        int analyzed = 0;
+        for (var p : prospects) {
+            try {
+                webAnalyzerService.analyze(p);
+                recalculateAndSave(p);
+                analyzed++;
+                Thread.sleep(1500);
+            } catch (Exception e) {
+                log.debug("Web analysis failed for {}: {}", p.getId(), e.getMessage());
+            }
+        }
+        log.info("Web analysis done: {}/{} prospects in campaign {}", analyzed, prospects.size(), campaignId);
+        return analyzed;
+    }
+
+    @Override
+    @Transactional
+    public ProspectResponse generateAiReport(UUID prospectId) {
+        var p = prospectRepository.findById(prospectId)
+            .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
+        prospectAnalysisService.generateReport(p);
+        prospectAnalysisService.generatePitch(p);
+        if (Boolean.TRUE.equals(p.getHasWebsite())) {
+            p.setWidgetCode(widgetCodeGeneratorService.generate(p));
+        }
+        prospectRepository.save(p);
+        return toProspectResponse(p);
+    }
+
+    @Override
+    public String getWidgetCode(UUID prospectId) {
+        var p = prospectRepository.findById(prospectId)
+            .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
+        if (p.getWidgetCode() != null) return p.getWidgetCode();
+        return widgetCodeGeneratorService.generate(p);
+    }
+
+    @Override
+    public Map<String, String> detectChannels(UUID prospectId) {
+        var p = prospectRepository.findById(prospectId)
+            .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
+        return channelDetectorService.detectAll(p);
+    }
+
+    @Override
+    public Map<String, Object> getCampaignDashboard(UUID campaignId) {
+        var prospects = prospectRepository.findByCampaignId(campaignId);
+        return buildDashboardStats(prospects);
+    }
+
+    @Override
+    public Map<String, Object> getGlobalDashboard() {
+        var prospects = prospectRepository.findAll();
+        return buildDashboardStats(prospects);
+    }
+
+    private Map<String, Object> buildDashboardStats(List<Prospect> prospects) {
+        long total = prospects.size();
+        long discard = prospects.stream().filter(p -> "DISCARD".equals(p.getProspectTier())).count();
+        long review  = prospects.stream().filter(p -> "REVIEW".equals(p.getProspectTier())).count();
+        long demo    = prospects.stream().filter(p -> "DEMO".equals(p.getProspectTier())).count();
+        long priority= prospects.stream().filter(p -> "PRIORITY".equals(p.getProspectTier())).count();
+        long exported= prospects.stream().filter(p -> p.getStatus() == ProspectStatus.EXPORTED).count();
+        double avgScore = prospects.stream()
+            .filter(p -> p.getScore() != null).mapToInt(Prospect::getScore).average().orElse(0);
+
+        var bySector = prospects.stream()
+            .filter(p -> p.getSector() != null && p.getScore() != null)
+            .collect(Collectors.groupingBy(Prospect::getSector,
+                Collectors.averagingInt(Prospect::getScore)));
+
+        return Map.of(
+            "total", total,
+            "discarded", discard,
+            "review", review,
+            "demo", demo,
+            "priority", priority,
+            "exported", exported,
+            "avgScore", Math.round(avgScore * 10.0) / 10.0,
+            "conversionRate", total > 0 ? Math.round((exported * 1000.0 / total)) / 10.0 : 0,
+            "bySector", bySector
+        );
     }
 }

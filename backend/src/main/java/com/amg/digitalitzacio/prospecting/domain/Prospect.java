@@ -71,6 +71,55 @@ public class Prospect {
     @Builder.Default
     private Boolean hasWhatsapp = false;
 
+    // Web analysis
+    private Boolean hasSsl;
+    private Boolean isResponsive;
+    private Boolean hasAnalytics;
+    private Boolean hasPixel;
+    private Boolean hasGtm;
+    private Boolean hasChatWidget;
+    private Boolean hasBookingSystem;
+    private Boolean hasContactForm;
+    private Boolean hasFaq;
+    private Boolean hasClearCta;
+    @Column(length = 500)
+    private String techStack;
+    private Integer webLoadMs;
+    @Column(length = 50)
+    private String cmsDetected;
+
+    // Social networks
+    @Column(length = 300)
+    private String facebookUrl;
+    @Column(length = 300)
+    private String linkedinUrl;
+    @Column(length = 300)
+    private String tiktokUrl;
+    @Column(length = 300)
+    private String youtubeUrl;
+    private Boolean hasFacebook;
+    private Boolean hasLinkedin;
+    private Boolean hasTiktok;
+
+    // Scoring & classification
+    @Column(columnDefinition = "TEXT")
+    private String scoreBreakdown;
+    @Column(length = 20)
+    private String prospectTier;
+
+    // AI analysis
+    @Column(columnDefinition = "TEXT")
+    private String aiReport;
+    @Column(columnDefinition = "TEXT")
+    private String aiPitch;
+    @Column(length = 500)
+    private String demoUrl;
+    @Column(columnDefinition = "TEXT")
+    private String widgetCode;
+
+    private Instant webAnalyzedAt;
+    private Instant aiAnalyzedAt;
+
     @Enumerated(EnumType.STRING)
     private ProspectStatus status;
 

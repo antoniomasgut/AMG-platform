@@ -52,6 +52,18 @@ public class ProspectCampaign {
 
     private Integer repeatIntervalDays;
 
+    @Builder.Default
+    private Integer autoDemoThreshold = 61;
+
+    @Column(length = 20)
+    private String autoContactChannel;
+
+    @Builder.Default
+    private Integer totalDemosGenerated = 0;
+
+    @Builder.Default
+    private Integer totalDiscarded = 0;
+
     @CreatedDate @Column(updatable = false)
     private Instant createdAt;
 

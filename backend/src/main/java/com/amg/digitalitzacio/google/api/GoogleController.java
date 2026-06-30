@@ -4,7 +4,9 @@ import com.amg.digitalitzacio.google.api.dto.*;
 import com.amg.digitalitzacio.google.application.CalendarEventItem;
 import com.amg.digitalitzacio.google.application.DriveFileItem;
 import com.amg.digitalitzacio.google.application.GoogleAuthService;
+import com.amg.digitalitzacio.google.application.GoogleBusinessReviewSyncService;
 import com.amg.digitalitzacio.google.application.GoogleOrchestrator;
+import com.amg.digitalitzacio.google.domain.GoogleBusinessReview;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -24,6 +27,7 @@ public class GoogleController {
 
     private final GoogleAuthService authService;
     private final GoogleOrchestrator orchestrator;
+    private final GoogleBusinessReviewSyncService reviewSyncService;
 
     @GetMapping
     @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
@@ -104,5 +108,24 @@ public class GoogleController {
             @PathVariable UUID tenantId,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(orchestrator.listCalendarEvents(tenantId));
+    }
+
+    @GetMapping("/business/reviews")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
+    public ResponseEntity<List<GoogleBusinessReview>> getReviews(
+            @PathVariable UUID tenantId,
+            @RequestParam(defaultValue = "4") int minRating,
+            @RequestParam(defaultValue = "6") int maxItems,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(reviewSyncService.getReviews(tenantId, minRating, maxItems));
+    }
+
+    @PostMapping("/business/reviews/sync")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or (hasRole('ADMIN') and #principal.tenantId == #tenantId)")
+    public ResponseEntity<Map<String, Integer>> syncReviews(
+            @PathVariable UUID tenantId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        int synced = reviewSyncService.sync(tenantId);
+        return ResponseEntity.ok(Map.of("synced", synced));
     }
 }

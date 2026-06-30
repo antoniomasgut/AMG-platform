@@ -2,6 +2,8 @@ package com.amg.digitalitzacio.engine.application;
 
 import com.amg.digitalitzacio.engine.api.dto.*;
 import com.amg.digitalitzacio.engine.domain.*;
+import com.amg.digitalitzacio.google.application.GoogleBusinessReviewSyncService;
+import com.amg.digitalitzacio.google.domain.GoogleBusinessReview;
 import com.amg.digitalitzacio.leads.domain.Lead;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.leads.domain.LeadSource;
@@ -48,6 +50,7 @@ public class EngineOrchestrator implements EngineService {
     private final ObjectMapper objectMapper;
     private final com.amg.digitalitzacio.engine.infrastructure.TraefikConfigWriter traefikConfigWriter;
     private final com.amg.digitalitzacio.billing.application.PostAcceptanceService postAcceptanceService;
+    private final GoogleBusinessReviewSyncService googleBusinessReviewSyncService;
 
     // --- Landings ---
 
@@ -715,7 +718,7 @@ public class EngineOrchestrator implements EngineService {
                             if (bi != null && !bi.toString().isBlank()) heroImageUrl = bi.toString();
                         }
                     }
-                    blocksHtml.append(renderBlock(blockMap, sv, landing.getSlug()));
+                    blocksHtml.append(renderBlock(blockMap, sv, landing.getSlug(), landing.getTenantId()));
                 }
             }
         }
@@ -869,7 +872,7 @@ public class EngineOrchestrator implements EngineService {
                "document.querySelectorAll('[data-anim]').forEach(function(el){io.observe(el)})})();</script>";
     }
 
-    private String renderBlock(Map<String, Object> block, StyleVars s, String slug) {
+    private String renderBlock(Map<String, Object> block, StyleVars s, String slug, UUID tenantId) {
         var type = String.valueOf(block.getOrDefault("type", ""));
         var rawProps = block.getOrDefault("props", Map.of());
         Map<String, Object> props;
@@ -894,7 +897,7 @@ public class EngineOrchestrator implements EngineService {
             case "pricing"       -> renderPricing(props, s);
             case "team"          -> renderTeam(props, s);
             case "video"         -> renderVideo(props, s);
-            case "reviews"       -> renderReviews(props, s);
+            case "reviews"       -> renderReviews(props, s, tenantId);
             default              -> "";
         };
     }
@@ -1459,33 +1462,83 @@ public class EngineOrchestrator implements EngineService {
     }
 
     @SuppressWarnings("unchecked")
-    private String renderReviews(Map<String, Object> props, StyleVars s) {
-        var title   = str(props, "title", "Ressenyes");
-        var gmUrl   = str(props, "googleMapsUrl", "");
-        var items   = props.getOrDefault("items", List.of());
-        var html    = new StringBuilder();
-        html.append("<section class=\"sec\" style=\"background:").append(s.accent()).append("10\">")
-            .append("<div class=\"w\"><h2 class=\"sec-title\" data-anim>").append(escapeHtml(title)).append("</h2>")
-            .append("<div class=\"grid-3\">");
-        if (items instanceof List<?> list) {
-            for (var item : list) {
-                if (item instanceof Map m) {
-                    var im     = (Map<String, Object>) m;
-                    var name   = str(im, "name", "");
-                    var text   = str(im, "text", "");
-                    var date   = str(im, "date", "");
-                    var rating = im.getOrDefault("rating", 5);
-                    var stars  = "★".repeat(rating instanceof Number n ? Math.min(n.intValue(), 5) : 5);
-                    html.append("<div class=\"card\" data-anim>")
-                        .append("<div style=\"color:#f59e0b;margin-bottom:10px\">").append(stars).append("</div>")
-                        .append("<p style=\"opacity:.75;font-size:.9rem;line-height:1.7;font-style:italic;margin-bottom:16px\">&ldquo;").append(escapeHtml(text)).append("&rdquo;</p>")
-                        .append("<div style=\"display:flex;justify-content:space-between;align-items:center\">")
-                        .append("<span style=\"font-weight:700;font-size:.85rem;color:").append(s.primary()).append("\">").append(escapeHtml(name)).append("</span>")
-                        .append("<span style=\"opacity:.4;font-size:.75rem\">").append(escapeHtml(date)).append("</span>")
-                        .append("</div></div>");
+    private String renderReviews(Map<String, Object> props, StyleVars s, UUID tenantId) {
+        var title     = str(props, "title", "Ressenyes");
+        var gmUrl     = str(props, "googleMapsUrl", "");
+        var source    = str(props, "source", "manual");
+        var minRating = props.getOrDefault("minRating", 4);
+        var maxItems  = props.getOrDefault("maxItems", 6);
+
+        record ReviewItem(String name, String text, String date, int rating) {}
+        var reviewItems = new java.util.ArrayList<ReviewItem>();
+
+        if ("google_business".equals(source) && tenantId != null) {
+            int minR = minRating instanceof Number n ? n.intValue() : 4;
+            int maxI = maxItems instanceof Number n ? n.intValue() : 6;
+            try {
+                var gbpReviews = googleBusinessReviewSyncService.getReviews(tenantId, minR, maxI);
+                for (var r : gbpReviews) {
+                    var dateStr = r.getReviewTime() != null
+                        ? r.getReviewTime().toString().substring(0, 10) : "";
+                    reviewItems.add(new ReviewItem(
+                        r.getAuthorName() != null ? r.getAuthorName() : "Client",
+                        r.getComment()    != null ? r.getComment()    : "",
+                        dateStr, r.getRating()
+                    ));
+                }
+            } catch (Exception e) {
+                log.warn("Error obtenint ressenyes GBP per tenant {}: {}", tenantId, e.getMessage());
+            }
+        } else {
+            var items = props.getOrDefault("items", List.of());
+            if (items instanceof List<?> list) {
+                for (var item : list) {
+                    if (item instanceof Map m) {
+                        var im = (Map<String, Object>) m;
+                        var rating = im.getOrDefault("rating", 5);
+                        reviewItems.add(new ReviewItem(
+                            str(im, "name", ""),
+                            str(im, "text", ""),
+                            str(im, "date", ""),
+                            rating instanceof Number n ? Math.min(n.intValue(), 5) : 5
+                        ));
+                    }
                 }
             }
         }
+
+        var html = new StringBuilder();
+
+        // JSON-LD Schema.org/Review per a rich snippets
+        if (!reviewItems.isEmpty()) {
+            html.append("<script type=\"application/ld+json\">[");
+            for (int i = 0; i < reviewItems.size(); i++) {
+                var r = reviewItems.get(i);
+                if (i > 0) html.append(",");
+                html.append("{\"@context\":\"https://schema.org\",\"@type\":\"Review\",")
+                    .append("\"reviewRating\":{\"@type\":\"Rating\",\"ratingValue\":").append(r.rating()).append(",\"bestRating\":5},")
+                    .append("\"author\":{\"@type\":\"Person\",\"name\":\"").append(escapeJson(r.name())).append("\"},")
+                    .append("\"reviewBody\":\"").append(escapeJson(r.text())).append("\",")
+                    .append("\"datePublished\":\"").append(escapeJson(r.date())).append("\"}");
+            }
+            html.append("]</script>");
+        }
+
+        html.append("<section class=\"sec\" style=\"background:").append(s.accent()).append("10\">")
+            .append("<div class=\"w\"><h2 class=\"sec-title\" data-anim>").append(escapeHtml(title)).append("</h2>")
+            .append("<div class=\"grid-3\">");
+
+        for (var r : reviewItems) {
+            var stars = "★".repeat(Math.min(r.rating(), 5));
+            html.append("<div class=\"card\" data-anim>")
+                .append("<div style=\"color:#f59e0b;margin-bottom:10px\">").append(stars).append("</div>")
+                .append("<p style=\"opacity:.75;font-size:.9rem;line-height:1.7;font-style:italic;margin-bottom:16px\">&ldquo;").append(escapeHtml(r.text())).append("&rdquo;</p>")
+                .append("<div style=\"display:flex;justify-content:space-between;align-items:center\">")
+                .append("<span style=\"font-weight:700;font-size:.85rem;color:").append(s.primary()).append("\">").append(escapeHtml(r.name())).append("</span>")
+                .append("<span style=\"opacity:.4;font-size:.75rem\">").append(escapeHtml(r.date())).append("</span>")
+                .append("</div></div>");
+        }
+
         html.append("</div>");
         if (!gmUrl.isBlank()) {
             html.append("<div style=\"text-align:center;margin-top:28px\">")
@@ -1497,6 +1550,12 @@ public class EngineOrchestrator implements EngineService {
         }
         html.append("</div></section>");
         return html.toString();
+    }
+
+    private String escapeJson(String input) {
+        if (input == null) return "";
+        return input.replace("\\", "\\\\").replace("\"", "\\\"")
+                    .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
     }
 
     private String sanitizeBody(String html) {

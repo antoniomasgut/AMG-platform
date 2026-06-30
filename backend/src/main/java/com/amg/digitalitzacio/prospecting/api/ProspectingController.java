@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/prospecting")
@@ -174,5 +175,49 @@ public class ProspectingController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public CampaignResponse unscheduleCampaign(@PathVariable UUID id) {
         return service.unscheduleCampaign(id);
+    }
+
+    // ── Spec 12 v2 — nous endpoints ──────────────────────────────────────────
+
+    @PostMapping("/prospects/{id}/analyze-web")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ProspectResponse analyzeWeb(@PathVariable UUID id) {
+        return service.analyzeWeb(id);
+    }
+
+    @PostMapping("/campaigns/{id}/analyze-all")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, Integer> analyzeAllWeb(@PathVariable UUID id) {
+        return Map.of("analyzed", service.analyzeAllWeb(id));
+    }
+
+    @PostMapping("/prospects/{id}/ai-report")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ProspectResponse generateAiReport(@PathVariable UUID id) {
+        return service.generateAiReport(id);
+    }
+
+    @GetMapping("/prospects/{id}/widget-code")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, String> getWidgetCode(@PathVariable UUID id) {
+        return Map.of("code", service.getWidgetCode(id) != null ? service.getWidgetCode(id) : "");
+    }
+
+    @GetMapping("/prospects/{id}/channels")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, String> detectChannels(@PathVariable UUID id) {
+        return service.detectChannels(id);
+    }
+
+    @GetMapping("/campaigns/{id}/dashboard")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, Object> campaignDashboard(@PathVariable UUID id) {
+        return service.getCampaignDashboard(id);
+    }
+
+    @GetMapping("/dashboard")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, Object> globalDashboard() {
+        return service.getGlobalDashboard();
     }
 }

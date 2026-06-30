@@ -5,6 +5,7 @@ import { useEditorStore } from '@/store/editor';
 import { BLOCK_TEMPLATES, generateBlock, listAIModels, type AIModelInfo } from '@/services/factory';
 import { ImagePicker } from './ImagePicker';
 import { IconSet } from '@/components/ui/icons';
+import { useAuth } from '@/lib/auth-context';
 
 export const BlockProperties: FC = () => {
   const selectedBlockId = useEditorStore((s) => s.selectedBlockId);
@@ -12,8 +13,11 @@ export const BlockProperties: FC = () => {
   const updateBlockProps = useEditorStore((s) => s.updateBlockProps);
   const landing = useEditorStore((s) => s.landing);
   const styles = useEditorStore((s) => s.styles);
+  const { user } = useAuth();
   const [imgPickerFor, setImgPickerFor] = useState<string | null>(null);
   const [showJson, setShowJson] = useState(false);
+  const [syncingReviews, setSyncingReviews] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
 
   // IA generation state
   const [aiOpen, setAiOpen] = useState(false);
@@ -69,6 +73,21 @@ export const BlockProperties: FC = () => {
 
   const handleChange = (key: string, value: unknown) => {
     updateBlockProps(block.id, { [key]: value });
+  };
+
+  const handleSyncGBPReviews = async () => {
+    if (!user?.tenantId) return;
+    setSyncingReviews(true);
+    setSyncMsg('');
+    try {
+      const res = await fetch(`/api/v1/tenants/${user.tenantId}/google/business/reviews/sync`, { method: 'POST' });
+      const data = await res.json();
+      setSyncMsg(`Sincronitzades ${data.synced ?? 0} ressenyes`);
+    } catch {
+      setSyncMsg('Error en sincronitzar');
+    } finally {
+      setSyncingReviews(false);
+    }
   };
 
   const renderField = (key: string, value: unknown) => {
@@ -360,7 +379,74 @@ export const BlockProperties: FC = () => {
         </div>
       )}
 
+      {block.type === 'reviews' && (
+        <div className="mb-4 border border-[rgba(255,107,0,0.2)] rounded p-3 space-y-3 bg-[#0a0a18]">
+          <div className="f-mono text-[9px] uppercase tracking-widest text-accent-light mb-2">Font de ressenyes</div>
+
+          {/* Source toggle */}
+          <div className="flex gap-2">
+            {(['manual', 'google_business'] as const).map((src) => (
+              <button
+                key={src}
+                onClick={() => handleChange('source', src)}
+                className={`flex-1 py-1.5 rounded text-xs f-mono transition ${
+                  (block.props.source ?? 'manual') === src
+                    ? 'bg-[#FF6B00] text-black font-bold'
+                    : 'bg-[#0d0d1a] border border-border-medium text-ink-2 hover:text-ink-0'
+                }`}
+              >
+                {src === 'manual' ? 'Manual' : 'Google Business'}
+              </button>
+            ))}
+          </div>
+
+          {(block.props.source ?? 'manual') === 'google_business' && (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="f-mono text-[9px] uppercase text-ink-3 block mb-1">Valoració mínima</label>
+                  <select
+                    value={String(block.props.minRating ?? 4)}
+                    onChange={(e) => handleChange('minRating', Number(e.target.value))}
+                    className="w-full bg-[#0d0d1a] border border-border-medium rounded p-1.5 text-xs text-ink-0"
+                  >
+                    {[3, 4, 5].map((v) => <option key={v} value={v}>{v} ★</option>)}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="f-mono text-[9px] uppercase text-ink-3 block mb-1">Màxim a mostrar</label>
+                  <select
+                    value={String(block.props.maxItems ?? 6)}
+                    onChange={(e) => handleChange('maxItems', Number(e.target.value))}
+                    className="w-full bg-[#0d0d1a] border border-border-medium rounded p-1.5 text-xs text-ink-0"
+                  >
+                    {[3, 6, 9, 12].map((v) => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                </div>
+              </div>
+              <button
+                onClick={handleSyncGBPReviews}
+                disabled={syncingReviews || !user?.tenantId}
+                className="w-full py-1.5 bg-[#0d0d1a] border border-[rgba(255,107,0,0.4)] text-accent-light text-xs rounded f-mono hover:border-[#FF6B00] transition disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {syncingReviews ? (
+                  <><span className="w-3 h-3 border-2 border-accent-light border-t-transparent rounded-full animate-spin inline-block" /> Sincronitzant...</>
+                ) : '↻ Sincronitzar ressenyes GBP ara'}
+              </button>
+              {syncMsg && <div className="f-mono text-[9px] text-green-400">{syncMsg}</div>}
+              <div className="f-mono text-[8px] text-ink-3">
+                Sincronització automàtica diària a les 3:00 AM. Requereix Google Business connectat al portal.
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {Object.keys(tpl?.defaultProps || {}).map((key) => {
+        // Ocultar camps de source/minRating/maxItems (gestionats al panell superior)
+        if (block.type === 'reviews' && ['source', 'minRating', 'maxItems'].includes(key)) return null;
+        // Ocultar items si la font és google_business
+        if (block.type === 'reviews' && key === 'items' && (block.props.source ?? 'manual') === 'google_business') return null;
         const value = key in (block.props || {}) ? block.props[key] : (tpl?.defaultProps || {})[key];
         return renderField(key, value);
       })}
