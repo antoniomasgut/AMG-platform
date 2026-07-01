@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.prospecting.application;
 import com.amg.digitalitzacio.auth.domain.UserRepository;
 import com.amg.digitalitzacio.prospecting.api.dto.*;
 import com.amg.digitalitzacio.prospecting.domain.*;
+import org.springframework.web.multipart.MultipartFile;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.amg.digitalitzacio.shared.exception.ConflictException;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
@@ -37,6 +38,8 @@ public class ProspectingOrchestrator implements ProspectingService {
     private final WidgetCodeGeneratorService widgetCodeGeneratorService;
     private final ProspectChannelDetectorService channelDetectorService;
     private final ProspectDemoGeneratorService prospectDemoGeneratorService;
+    private final ProspectMessageGeneratorService prospectMessageGeneratorService;
+    private final ProspectCsvImportService prospectCsvImportService;
 
     private static final int TIER_PRIORITY = 81;
     private static final int TIER_DEMO = 61;
@@ -564,7 +567,9 @@ public class ProspectingOrchestrator implements ProspectingService {
                 p.getStatus().name(), p.getSource().name(), p.getExternalId(), p.getLeadId(),
                 p.getNotes(), p.getCreatedAt(), p.getUpdatedAt(),
                 p.getWebAnalyzedAt(), p.getAiAnalyzedAt(),
-                reviews, detectSignals(p));
+                reviews, detectSignals(p),
+                p.getPitchSentAt(), p.getPitchOpenedAt(), p.getDemoOpenedAt(),
+                p.getFollowupCount(), p.getLastFollowupAt());
     }
 
     private static com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal signal(
@@ -725,6 +730,79 @@ public class ProspectingOrchestrator implements ProspectingService {
     public Map<String, Object> getGlobalDashboard() {
         var prospects = prospectRepository.findAll();
         return buildDashboardStats(prospects);
+    }
+
+    @Override
+    @Transactional
+    public String generatePitch(UUID prospectId) {
+        return prospectMessageGeneratorService.generatePitch(prospectId);
+    }
+
+    @Override
+    @Transactional
+    public Map<String, String> generateDemo(UUID prospectId) {
+        var p = prospectRepository.findById(prospectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
+        // Forçar generació síncrona independentment del tier (acció manual)
+        String savedTier = p.getProspectTier();
+        p.setProspectTier("PRIORITY");
+        // generateIfEligible és @Async però l'objecte ja té demoUrl pendent: cridem el servei directament
+        prospectDemoGeneratorService.generateSync(p);
+        p.setProspectTier(savedTier);
+        prospectRepository.save(p);
+        return Map.of("demoUrl", p.getDemoUrl() != null ? p.getDemoUrl() : "");
+    }
+
+    @Override
+    public Map<String, Integer> importCsv(UUID campaignId, MultipartFile file) {
+        return prospectCsvImportService.importCsv(campaignId, file);
+    }
+
+    @Override
+    public List<DuplicateGroupResponse> findDuplicates() {
+        // Agrupa per googlePlaceId
+        var byPlaceId = prospectRepository.findDuplicatesByGooglePlaceId().stream()
+                .collect(Collectors.groupingBy(Prospect::getGooglePlaceId));
+
+        // Agrupa per telèfon
+        var byPhone = prospectRepository.findDuplicatesByPhone().stream()
+                .collect(Collectors.groupingBy(Prospect::getPhone));
+
+        var result = new ArrayList<DuplicateGroupResponse>();
+
+        byPlaceId.forEach((placeId, prospects) -> {
+            var summaries = prospects.stream()
+                    .map(p -> new DuplicateGroupResponse.ProspectSummary(
+                            p.getId(), p.getCampaignId(), p.getName(), p.getPhone(),
+                            p.getEmail(), p.getGooglePlaceId(),
+                            p.getStatus() != null ? p.getStatus().name() : null))
+                    .toList();
+            result.add(new DuplicateGroupResponse("PLACE_ID", placeId, summaries));
+        });
+
+        byPhone.forEach((phone, prospects) -> {
+            var summaries = prospects.stream()
+                    .map(p -> new DuplicateGroupResponse.ProspectSummary(
+                            p.getId(), p.getCampaignId(), p.getName(), p.getPhone(),
+                            p.getEmail(), p.getGooglePlaceId(),
+                            p.getStatus() != null ? p.getStatus().name() : null))
+                    .toList();
+            result.add(new DuplicateGroupResponse("PHONE", phone, summaries));
+        });
+
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public void trackPitchOpen(UUID prospectId) {
+        prospectRepository.findById(prospectId).ifPresent(p -> {
+            if (p.getPitchOpenedAt() == null) {
+                p.setPitchOpenedAt(Instant.now());
+                prospectRepository.save(p);
+                log.debug("Pitch obert pel prospect {}", prospectId);
+            }
+        });
     }
 
     private Map<String, Object> buildDashboardStats(List<Prospect> prospects) {

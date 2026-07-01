@@ -139,6 +139,15 @@ public class Prospect {
     @Column(columnDefinition = "TEXT")
     private String reviewsJson;
 
+    // Tracking d'obertures (pixel email + demo)
+    private Instant pitchSentAt;
+    private Instant pitchOpenedAt;
+    private Instant demoOpenedAt;
+
+    @Builder.Default
+    private Integer followupCount = 0;
+    private Instant lastFollowupAt;
+
     @CreatedDate @Column(updatable = false)
     private Instant createdAt;
 

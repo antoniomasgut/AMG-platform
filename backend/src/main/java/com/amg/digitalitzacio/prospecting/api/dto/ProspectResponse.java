@@ -27,5 +27,8 @@ public record ProspectResponse(
         String status, String source, String externalId, UUID leadId,
         String notes, Instant createdAt, Instant updatedAt,
         Instant webAnalyzedAt, Instant aiAnalyzedAt,
-        List<String> reviews, List<ProspectSignal> signals
+        List<String> reviews, List<ProspectSignal> signals,
+        // tracking obertures (v2.1)
+        Instant pitchSentAt, Instant pitchOpenedAt, Instant demoOpenedAt,
+        Integer followupCount, Instant lastFollowupAt
 ) {}

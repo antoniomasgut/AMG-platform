@@ -64,6 +64,19 @@ public class ProspectCampaign {
     @Builder.Default
     private Integer totalDiscarded = 0;
 
+    // Seqüència automàtica de follow-up
+    @Builder.Default
+    private Boolean autoSequenceEnabled = false;
+
+    @Builder.Default
+    private Integer followupDays1 = 3;
+
+    @Builder.Default
+    private Integer followupDays2 = 7;
+
+    @Builder.Default
+    private Integer followupDays3 = 14;
+
     @CreatedDate @Column(updatable = false)
     private Instant createdAt;
 

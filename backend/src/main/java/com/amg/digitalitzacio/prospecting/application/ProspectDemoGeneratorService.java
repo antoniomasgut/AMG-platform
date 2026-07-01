@@ -26,6 +26,15 @@ public class ProspectDemoGeneratorService {
     private String baseUrl;
 
     /**
+     * Genera una demo de forma síncrona (per a invocació manual des d'endpoint).
+     * No comprova el tier; el caller és responsable de validar l'elegibilitat.
+     */
+    @Transactional
+    public void generateSync(Prospect prospect) {
+        doGenerate(prospect);
+    }
+
+    /**
      * Genera una demo per a un prospect si és PRIORITY i encara no en té.
      * S'invoca asíncronament des de ProspectAnalysisService.
      */
@@ -39,7 +48,11 @@ public class ProspectDemoGeneratorService {
         if (!"PRIORITY".equals(prospect.getProspectTier())) {
             return;
         }
+        doGenerate(prospect);
+    }
 
+    private void doGenerate(Prospect prospect) {
+        if (prospect.getDemoUrl() != null && !prospect.getDemoUrl().isBlank()) return;
         try {
             String sector = normalizeSector(prospect.getSector());
             String companyName = prospect.getName();

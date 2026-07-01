@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.prospecting.application;
 
 import com.amg.digitalitzacio.prospecting.api.dto.*;
 import org.springframework.data.domain.Page;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.List;
@@ -39,4 +40,11 @@ public interface ProspectingService {
     Map<String, String> detectChannels(UUID prospectId);
     Map<String, Object> getCampaignDashboard(UUID campaignId);
     Map<String, Object> getGlobalDashboard();
+
+    // Spec 12 v2.1 — millores
+    String generatePitch(UUID prospectId);
+    Map<String, String> generateDemo(UUID prospectId);
+    Map<String, Integer> importCsv(UUID campaignId, MultipartFile file);
+    List<DuplicateGroupResponse> findDuplicates();
+    void trackPitchOpen(UUID prospectId);
 }

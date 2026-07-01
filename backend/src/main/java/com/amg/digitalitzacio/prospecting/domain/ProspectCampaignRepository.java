@@ -25,4 +25,6 @@ public interface ProspectCampaignRepository extends JpaRepository<ProspectCampai
             Pageable pageable);
     @Query("SELECT c FROM ProspectCampaign c WHERE c.status = 'SCHEDULED' AND c.scheduledNextRun IS NOT NULL AND c.scheduledNextRun <= :now")
     List<ProspectCampaign> findScheduledDue(@Param("now") Instant now);
+
+    List<ProspectCampaign> findByAutoSequenceEnabled(Boolean autoSequenceEnabled);
 }

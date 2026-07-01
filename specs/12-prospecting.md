@@ -312,9 +312,9 @@ El codi s'acompanya d'instruccions específiques per al CMS/framework detectat:
 
 ---
 
-## 9. Missatge personalitzat IA
+## 9. Missatge personalitzat IA ✅
 
-`ProspectMessageGeneratorService` usa Claude per generar un missatge d'aproximació que:
+`ProspectMessageGeneratorService` usa Claude (via `ProspectAnalysisService.generatePitch()`) per generar un missatge d'aproximació que:
 
 - **Mai és genèric** — fa referència a dades concretes del negoci
 - Menciona oportunitats específiques detectades
@@ -324,7 +324,9 @@ El codi s'acompanya d'instruccions específiques per al CMS/framework detectat:
 **Exemple output:**
 > "Hola, he vist que [Nom Negoci] té 4.8★ a Google amb 127 ressenyes — excel·lent reputació. He notat que no teniu sistema de reserves online ni WhatsApp Business: molts dels vostres clients potencials probablement us escriuen fora d'horari i no reben resposta. He preparat una demostració de com quedaria un agent IA gestionant les vostres cites automàticament: [demo_url]"
 
-**Desat a `ai_pitch`.**
+**Desat a `ai_pitch`.** Endpoint: `POST /prospects/{id}/generate-pitch`.
+
+> Quan s'envia per email, s'ha d'incloure el pixel de tracking (§20) per registrar `pitchOpenedAt`.
 
 ---
 
@@ -364,30 +366,36 @@ Prefix base: `/api/v1/prospecting`
 | POST | `/prospects/{id}/export` | Exportar a Leads |
 | POST | `/campaigns/{id}/export-all` | Exportar tots a Leads |
 
-### Nous (⚠️)
+### v2 — implementats (✅)
 
 | Mètode | Ruta | Descripció |
 |--------|------|-----------|
 | POST | `/prospects/{id}/analyze-web` | Llança `WebAnalyzerService` per al prospect |
 | POST | `/campaigns/{id}/analyze-all` | Analitza web de tots els prospects d'una campanya |
-| POST | `/prospects/{id}/ai-report` | Genera informe IA estructurat |
-| POST | `/prospects/{id}/generate-demo` | Genera demo personalitzada |
+| POST | `/prospects/{id}/ai-report` | Genera informe IA estructurat + pitch |
+| POST | `/prospects/{id}/generate-demo` | Genera demo personalitzada (síncron, qualsevol tier) |
+| POST | `/prospects/{id}/generate-pitch` | Genera missatge pitch via IA i el desa |
 | GET | `/prospects/{id}/widget-code` | Retorna codi JS del widget |
 | GET | `/campaigns/{id}/dashboard` | Stats de la campanya (score mig, tiers, conversió) |
 | GET | `/dashboard` | Dashboard global de prospecció |
+| POST | `/campaigns/{id}/import-csv` | Importa prospects des de CSV (màx 500 files) |
+| GET | `/duplicates` | Llista grups de prospects duplicats cross-campanya |
+| GET | `/track/{prospectId}/open` | Pixel 1x1 tracking obertura de pitch (públic) |
 
 ---
 
 ## 12. Serveis nous
 
-| Servei | Responsabilitat |
-|--------|----------------|
-| `WebAnalyzerService` | Scraping profund de la web: SSL, responsive, tech stack, social links, chat, reserves, formularis |
-| `ProspectAnalysisService` | Genera informe IA estructurat via Claude |
-| `ProspectDemoGeneratorService` | Crea demo personalitzada (delega a `DemoService` — Spec 15) |
-| `WidgetCodeGeneratorService` | Genera snippets JS per chat + WhatsApp, adaptat per CMS |
-| `ProspectMessageGeneratorService` | Genera missatge personalitzat via Claude |
-| `ProspectChannelDetectorService` | Determina el millor canal de contacte disponible |
+| Servei | Estat | Responsabilitat |
+|--------|-------|----------------|
+| `WebAnalyzerService` | ✅ | Scraping profund de la web: SSL, responsive, tech stack, social links, chat, reserves, formularis |
+| `ProspectAnalysisService` | ✅ | Genera informe IA estructurat + pitch via Claude |
+| `ProspectDemoGeneratorService` | ✅ | Crea demo personalitzada (delega a `DemoService` — Spec 15) |
+| `WidgetCodeGeneratorService` | ✅ | Genera snippets JS per chat + WhatsApp, adaptat per CMS |
+| `ProspectMessageGeneratorService` | ✅ | Wrapper que persisteix el pitch generat per `ProspectAnalysisService` |
+| `ProspectChannelDetectorService` | ✅ | Determina el millor canal de contacte disponible |
+| `ProspectCsvImportService` | ✅ | Importa prospects des de CSV; deduplicació per phone/email |
+| `ProspectFollowUpScheduler` | ✅ | Scheduler diari (8:00) de follow-ups automatitzats |
 
 ---
 
@@ -443,18 +451,22 @@ Claus configurables sense modificar codi:
 
 ---
 
-## 16. Ordre d'implementació (v2)
+## 16. Ordre d'implementació
 
-1. **Migració V73** — nous camps a `prospects` i `prospect_campaigns`
-2. **`WebAnalyzerService`** — SSL, responsive, tech stack, social detection
-3. **Scoring ampliat** — estendre `detectSignals()` amb els 13 senyals nous
-4. **Classificació per tiers** — DISCARD/REVIEW/DEMO/PRIORITY
-5. **`ProspectAnalysisService`** — informe IA via Claude
-6. **`ProspectMessageGeneratorService`** — missatge personalitzat
-7. **`ProspectDemoGeneratorService`** — demo automàtica (integra Spec 15)
-8. **`WidgetCodeGeneratorService`** — snippets JS per CMS
-9. **`ProspectChannelDetectorService`** — detecció canal òptim
-10. **Nous endpoints** + dashboard frontend
+### v2 (✅ completat — V72)
+1. Migració V72 — nous camps a `prospects` i `prospect_campaigns`
+2. `WebAnalyzerService`, scoring ampliat, classificació per tiers
+3. `ProspectAnalysisService` + `ProspectMessageGeneratorService`
+4. `ProspectDemoGeneratorService` + `WidgetCodeGeneratorService`
+5. `ProspectChannelDetectorService` + nous endpoints + dashboard
+
+### v2.1 (✅ completat — V75)
+6. **Migració V75** — camps de tracking (`pitch_sent_at`, `pitch_opened_at`, `demo_opened_at`, `followup_count`, `last_followup_at`) i configuració de seqüència per campanya
+7. **`ProspectCsvImportService`** — importació CSV amb deduplicació
+8. **Pixel de tracking** — endpoint públic `/track/{id}/open`
+9. **Deduplicació cross-campanya** — `/duplicates`
+10. **`ProspectFollowUpScheduler`** — scheduler diari follow-ups automàtics
+11. **`POST /prospects/{id}/generate-demo`** — endpoint manual de generació de demo
 
 ---
 
@@ -470,3 +482,122 @@ Claus configurables sense modificar codi:
 | Missatge IA generat | Conté referència concreta (rating, carència detectada), no és genèric |
 | Demo generada | Landing pública accessible, agent respon amb info del negoci, avís "demostració" visible |
 | Domini caigut | Score -50, tier DISCARD, `DOMAIN_DOWN` als signals |
+| CSV importat (400 files) | 400 importats, duplicats omesos, retorna `{imported, skipped}` |
+| CSV amb >500 files | Error 400 |
+| Pixel tracking cridat | `pitchOpenedAt` actualitzat a BD, imatge PNG 1x1 retornada |
+| Duplicat cross-campanya | `/duplicates` retorna el grup amb `matchType=PHONE` o `PLACE_ID` |
+| Campanya amb `autoSequenceEnabled=true` | Scheduler detecta prospects CONTACTED > N dies i envia notificació Telegram |
+
+---
+
+## 18. Seqüència automàtica de follow-up
+
+### 18.1 Descripció
+`ProspectFollowUpScheduler` s'executa cada dia a les 8:00. Comprova tots els prospects amb:
+- `status = CONTACTED`
+- `pitchSentAt IS NOT NULL`
+- `followupCount < 3`
+- Darrer contacte (o pitch) fa més de `followupDaysN` dies
+
+### 18.2 Configuració per campanya
+```
+ProspectCampaign.autoSequenceEnabled = true
+ProspectCampaign.followupDays1 = 3   (defecte)
+ProspectCampaign.followupDays2 = 7   (defecte)
+ProspectCampaign.followupDays3 = 14  (defecte)
+```
+
+### 18.3 Acció del scheduler
+1. Incrementa `followupCount`
+2. Actualitza `lastFollowupAt = now()`
+3. Envia notificació Telegram al canal de la plataforma (`TELEGRAM_CHAT_ID`)
+4. Format: `🔁 Follow-up #N — [Nom negoci]\nPorta X dies sense resposta...`
+
+### 18.4 Límit
+Màxim 3 follow-ups per prospect (`followupCount >= 3` → para).
+
+---
+
+## 19. Importació CSV
+
+### 19.1 Endpoint
+```
+POST /api/v1/prospecting/campaigns/{id}/import-csv
+Content-Type: multipart/form-data
+Param: file (CSV)
+```
+
+### 19.2 Format CSV
+```csv
+name,phone,email,website,address,city
+Forn Ca n'Antònia,+34971234567,info@forncantonia.com,https://forncantonia.com,Carrer Major 5,Felanitx
+```
+- Primera fila: capçaleres (es detecten automàticament i s'ometen)
+- Màxim **500 files** per importació (error 400 si supera)
+- Columnes opcionals: les buides s'ignoren
+
+### 19.3 Deduplicació
+- Dins la campanya: `(campaignId, phone)` i `(campaignId, email)`
+- Resposta: `{"imported": N, "skipped": M}`
+
+### 19.4 Prospect creat
+- `source = MANUAL`
+- `status = NEW`
+- `hasWebsite = true` si `website` no és buit
+
+---
+
+## 20. Tracking d'obertures
+
+### 20.1 Camps nous a `prospects`
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| `pitchSentAt` | TIMESTAMPTZ | Quan es va enviar el pitch |
+| `pitchOpenedAt` | TIMESTAMPTZ | Primera vegada que s'obre l'email (via pixel) |
+| `demoOpenedAt` | TIMESTAMPTZ | Primera vegada que s'obre la demo |
+| `followupCount` | INTEGER | Nombre de follow-ups enviats (0–3) |
+| `lastFollowupAt` | TIMESTAMPTZ | Data del darrer follow-up |
+
+### 20.2 Pixel d'obertura
+```
+GET /api/v1/prospecting/track/{prospectId}/open
+```
+- Endpoint públic (sense autenticació)
+- Actualitza `pitchOpenedAt` si és null
+- Retorna PNG 1x1 transparent (`Cache-Control: no-store`)
+- S'incrusta a l'email del pitch: `<img src="https://api.amgdl.com/api/v1/prospecting/track/{id}/open" width="1" height="1">`
+
+---
+
+## 21. Deduplicació cross-campanya
+
+```
+GET /api/v1/prospecting/duplicates
+```
+
+Retorna grups de prospects duplicats entre campanyes del sistema:
+
+```json
+[
+  {
+    "matchType": "PLACE_ID",
+    "matchValue": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+    "prospects": [
+      {"id": "...", "campaignId": "...", "name": "Forn Ca n'Antònia", "status": "NEW"},
+      {"id": "...", "campaignId": "...", "name": "Forn Ca n'Antònia", "status": "CONTACTED"}
+    ]
+  }
+]
+```
+
+**Criteris de duplicat:**
+- Mateix `googlePlaceId` (no nul) en més d'un prospect
+- Mateix `phone` (no nul) en més d'un prospect
+
+---
+
+## 22. Pendents (⚠️)
+
+- **GBP API** (Google Business Profile): ressenyes, Q&A, popularitat — pendent d'integrar V71 amb el pipeline de prospecció
+- **Enviament automàtic de pitch**: el canal és detectat però l'enviament real (email/WhatsApp) no s'executa automàticament — pendent d'integrar amb Spec 20/43
+- **Tracking obertura demo**: `demoOpenedAt` disponible a la BD però el widget de demo no envia l'event encara

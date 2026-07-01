@@ -113,6 +113,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/billing/intake/*").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/billing/intake/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/billing/status/*").permitAll()
+                        // Pixel de tracking d'obertures de pitch (sense autenticació — email extern)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/prospecting/track/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").authenticated()
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/tenants/**").authenticated()

@@ -5,12 +5,14 @@ import com.amg.digitalitzacio.prospecting.application.ProspectingService;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import org.springframework.data.domain.Page;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.List;
@@ -219,5 +221,56 @@ public class ProspectingController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public Map<String, Object> globalDashboard() {
         return service.getGlobalDashboard();
+    }
+
+    // ── Spec 12 v2.1 — millores ──────────────────────────────────────────────
+
+    @PostMapping("/prospects/{id}/generate-pitch")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, String> generatePitch(@PathVariable UUID id) {
+        return Map.of("pitch", service.generatePitch(id));
+    }
+
+    @PostMapping("/prospects/{id}/generate-demo")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, String> generateDemo(@PathVariable UUID id) {
+        return service.generateDemo(id);
+    }
+
+    @PostMapping(value = "/campaigns/{id}/import-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<Map<String, Integer>> importCsv(
+            @PathVariable UUID id,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(service.importCsv(id, file));
+    }
+
+    @GetMapping("/duplicates")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public List<DuplicateGroupResponse> findDuplicates() {
+        return service.findDuplicates();
+    }
+
+    /** Pixel de tracking 1x1: l'email del pitch inclou aquesta URL per saber si s'ha obert. */
+    @GetMapping("/track/{prospectId}/open")
+    public ResponseEntity<byte[]> trackOpen(@PathVariable UUID prospectId) {
+        service.trackPitchOpen(prospectId);
+        // PNG 1x1 transparent (bytes fixos)
+        byte[] pixel = new byte[]{
+            (byte)0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
+            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
+            0x08,0x06,0x00,0x00,0x00,0x1F,0x15,(byte)0xC4,
+            (byte)0x89,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
+            0x54,0x78,(byte)0x9C,0x62,0x00,0x01,0x00,0x00,
+            0x05,0x00,0x01,0x0D,0x0A,0x2D,(byte)0xB4,0x00,
+            0x00,0x00,0x00,0x49,0x45,0x4E,0x44,(byte)0xAE,
+            0x42,0x60,(byte)0x82
+        };
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .header("Cache-Control", "no-store, no-cache")
+                .body(pixel);
     }
 }
