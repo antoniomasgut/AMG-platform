@@ -77,6 +77,12 @@ export interface Prospect {
   widgetCode?: string;
   webAnalyzedAt?: string;
   aiAnalyzedAt?: string;
+  // v2.1 tracking
+  pitchSentAt?: string;
+  pitchOpenedAt?: string;
+  demoOpenedAt?: string;
+  followupCount?: number;
+  lastFollowupAt?: string;
 }
 
 export interface ProspectingDashboard {
@@ -206,3 +212,27 @@ export const getCampaignDashboard = (id: string) =>
 
 export const getGlobalDashboard = () =>
   apiFetch<Record<string, unknown>>(`/prospecting/dashboard`);
+
+// ── Spec 12 v2.1 ──────────────────────────────────────────────────────────────
+export const generatePitch = (id: string) =>
+  apiFetch<Prospect>(`/prospecting/prospects/${id}/generate-pitch`, { method: 'POST' });
+
+export const generateDemo = (id: string) =>
+  apiFetch<{ demoUrl: string }>(`/prospecting/prospects/${id}/generate-demo`, { method: 'POST' });
+
+export const importCsv = (campaignId: string, file: File) => {
+  const form = new FormData();
+  form.append('file', file);
+  return apiFetch<{ imported: number; skipped: number }>(
+    `/prospecting/campaigns/${campaignId}/import-csv`,
+    { method: 'POST', body: form, headers: {} }
+  );
+};
+
+export interface DuplicateGroup {
+  matchType: 'PHONE' | 'PLACE_ID';
+  prospects: Array<{ id: string; name: string; campaignId: string; phone?: string; googlePlaceId?: string }>;
+}
+
+export const getDuplicates = () =>
+  apiFetch<DuplicateGroup[]>('/prospecting/duplicates');

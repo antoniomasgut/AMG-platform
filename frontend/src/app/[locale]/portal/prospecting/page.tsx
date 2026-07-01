@@ -6,8 +6,8 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import {
   getCampaigns, createCampaign, runCampaign, deleteCampaign, cloneCampaign,
-  scheduleCampaign, unscheduleCampaign,
-  type Campaign, type ProspectSource,
+  scheduleCampaign, unscheduleCampaign, getDuplicates,
+  type Campaign, type ProspectSource, type DuplicateGroup,
 } from '@/services/prospecting';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
@@ -42,6 +42,7 @@ export default function ProspectingPage() {
   const locale = params.locale as string;
 
   const [showForm, setShowForm] = useState(false);
+  const [showDuplicates, setShowDuplicates] = useState(false);
   const [form, setForm] = useState({
     name: '', sector: '', location: '',
     source: 'GOOGLE_MAPS' as ProspectSource,
@@ -67,6 +68,12 @@ export default function ProspectingPage() {
   const totalElements = data?.totalElements ?? 0;
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['campaigns'] });
+
+  const { data: duplicates = [], isLoading: loadingDuplicates } = useQuery({
+    queryKey: ['duplicates'],
+    queryFn: getDuplicates,
+    enabled: !!user && isAdmin && showDuplicates,
+  });
 
   const { mutate: doCreate, isPending: creating } = useMutation({
     mutationFn: () => createCampaign({
@@ -126,10 +133,43 @@ export default function ProspectingPage() {
             <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / prospecting /</span>
             <div className="f-display font-bold text-xl mt-1">Prospecció</div>
           </div>
-          <AMGButton icon={IconSet.Plus} onClick={() => setShowForm(!showForm)}>
-            Nova campanya
-          </AMGButton>
+          <div className="flex gap-2">
+            <AMGButton variant="secondary" onClick={() => setShowDuplicates(v => !v)}>
+              Duplicats
+            </AMGButton>
+            <AMGButton icon={IconSet.Plus} onClick={() => setShowForm(!showForm)}>
+              Nova campanya
+            </AMGButton>
+          </div>
         </div>
+
+        {/* Duplicats cross-campanya */}
+        {showDuplicates && (
+          <div className="amg-card card-clip p-5 space-y-3">
+            <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3">Duplicats cross-campanya</div>
+            {loadingDuplicates ? (
+              <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin block" />
+            ) : (duplicates as DuplicateGroup[]).length === 0 ? (
+              <p className="f-mono text-xs text-ink-2">Cap duplicat detectat.</p>
+            ) : (
+              <div className="space-y-3">
+                {(duplicates as DuplicateGroup[]).map((group, i) => (
+                  <div key={i} className="border border-warning/30 bg-warning/5 p-3 space-y-1">
+                    <div className="f-mono text-[9px] uppercase text-warning mb-2">
+                      {group.matchType === 'PHONE' ? 'Mateix telèfon' : 'Mateix Google Place'}
+                    </div>
+                    {group.prospects.map(p => (
+                      <div key={p.id} className="flex items-center justify-between">
+                        <span className="f-mono text-xs text-ink-1">{p.name}</span>
+                        <span className="f-mono text-[10px] text-ink-3">{p.phone ?? p.googlePlaceId}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Formulari nova campanya */}
         {showForm && (

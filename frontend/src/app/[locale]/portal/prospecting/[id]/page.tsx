@@ -11,6 +11,7 @@ import {
   updateProspect, exportQualifiedProspects, generateOutreach,
   scheduleCampaign, unscheduleCampaign,
   analyzeWebProspect, generateAiReport, getWidgetCode,
+  generatePitch, generateDemo, importCsv,
   type Campaign, type Prospect, type UpdateProspectPayload,
 } from '@/services/prospecting';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -165,7 +166,7 @@ function ProspectDrawer({
   onDiscard: (id: string) => void;
   onSave: (id: string, payload: UpdateProspectPayload) => void;
   exporting: boolean; enriching: boolean; updatingStatus: boolean; saving: boolean;
-}) {
+}): React.ReactElement {
   const [prospect, setProspect] = useState(initialProspect);
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState({
@@ -202,6 +203,16 @@ function ProspectDrawer({
   const { mutate: doGetWidgetCode, isPending: loadingWidget } = useMutation({
     mutationFn: () => getWidgetCode(prospect.id),
     onSuccess: (data) => { setWidgetCode(data.code); setShowWidget(true); },
+  });
+
+  const { mutate: doGeneratePitch, isPending: generatingPitch } = useMutation({
+    mutationFn: () => generatePitch(prospect.id),
+    onSuccess: (data) => setProspect(data),
+  });
+
+  const { mutate: doGenerateDemo, isPending: generatingDemo } = useMutation({
+    mutationFn: () => generateDemo(prospect.id),
+    onSuccess: (data) => setProspect(prev => ({ ...prev, demoUrl: data.demoUrl })),
   });
 
   const handleCopy = () => {
@@ -446,19 +457,48 @@ function ProspectDrawer({
                 </section>
               )}
 
-              {/* Informe IA */}
-              {prospect.aiReport && (
+              {/* Informe IA + pitch + demo */}
+              {(prospect.aiReport || prospect.aiPitch || prospect.demoUrl) && (
                 <section>
                   <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Informe IA</div>
-                  <pre className="f-mono text-[10px] text-ink-1 leading-relaxed whitespace-pre-wrap bg-bg-1 p-3 rounded border border-border-base max-h-48 overflow-y-auto">
-                    {prospect.aiReport}
-                  </pre>
+                  {prospect.aiReport && (
+                    <pre className="f-mono text-[10px] text-ink-1 leading-relaxed whitespace-pre-wrap bg-bg-1 p-3 rounded border border-border-base max-h-48 overflow-y-auto">
+                      {prospect.aiReport}
+                    </pre>
+                  )}
                   {prospect.aiPitch && (
                     <div className="mt-2">
                       <div className="f-mono text-[9px] uppercase text-ink-3 mb-1">Pitch personalitzat</div>
                       <p className="f-mono text-[11px] text-ink-1 bg-[rgba(255,107,0,0.06)] p-3 rounded border border-[rgba(255,107,0,0.2)] leading-relaxed">
                         {prospect.aiPitch}
                       </p>
+                    </div>
+                  )}
+                  {prospect.demoUrl && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <a
+                        href={prospect.demoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="f-mono text-[10px] text-accent-light hover:underline truncate"
+                      >
+                        {prospect.demoUrl}
+                      </a>
+                      {prospect.demoOpenedAt && (
+                        <AMGBadge tone="success">Demo oberta</AMGBadge>
+                      )}
+                    </div>
+                  )}
+                  {prospect.pitchSentAt && (
+                    <div className="mt-1 flex items-center gap-2 f-mono text-[9px] text-ink-3">
+                      <span>Pitch enviat: {new Date(prospect.pitchSentAt).toLocaleDateString('ca')}</span>
+                      {prospect.pitchOpenedAt
+                        ? <AMGBadge tone="success">Obert</AMGBadge>
+                        : <AMGBadge tone="neutral">No obert</AMGBadge>
+                      }
+                      {prospect.followupCount ? (
+                        <span>· {prospect.followupCount} follow-up{prospect.followupCount > 1 ? 's' : ''}</span>
+                      ) : null}
                     </div>
                   )}
                 </section>
@@ -591,6 +631,37 @@ function ProspectDrawer({
                   {'</>'} Codi widget
                 </AMGButton>
               )}
+              <div className="flex gap-2">
+                <AMGButton
+                  size="sm" variant="secondary" loading={generatingPitch}
+                  onClick={() => doGeneratePitch()}
+                  className="flex-1 justify-center"
+                  icon={IconSet.Sparkles}
+                >
+                  Pitch IA
+                </AMGButton>
+                {!prospect.demoUrl && (
+                  <AMGButton
+                    size="sm" variant="secondary" loading={generatingDemo}
+                    onClick={() => doGenerateDemo()}
+                    className="flex-1 justify-center"
+                  >
+                    Generar demo
+                  </AMGButton>
+                )}
+                {prospect.demoUrl && (
+                  <a
+                    href={prospect.demoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1"
+                  >
+                    <AMGButton size="sm" variant="secondary" className="w-full justify-center">
+                      Veure demo →
+                    </AMGButton>
+                  </a>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -611,8 +682,10 @@ export default function CampaignDetailPage() {
   const id = params.id as string;
 
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
-  const [minScoreFilter, setMinScoreFilter] = useState<number>(5);
+  const [minScoreFilter, setMinScoreFilter] = useState<number>(31);
   const [showDiscarded, setShowDiscarded] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [showCsvImport, setShowCsvImport] = useState(false);
 
   const { data: campaign, isLoading: loadingCampaign } = useQuery({
     queryKey: ['campaign', id],
@@ -726,6 +799,17 @@ export default function CampaignDetailPage() {
     onError: () => toast('error', 'Error cancel·lant la programació'),
   });
 
+  const { mutate: doImportCsv, isPending: importingCsv } = useMutation({
+    mutationFn: (file: File) => importCsv(id, file),
+    onSuccess: (data) => {
+      toast('success', `${data.imported} prospects importats, ${data.skipped} omesos`);
+      setCsvFile(null);
+      setShowCsvImport(false);
+      invalidateProspects();
+    },
+    onError: () => toast('error', 'Error important el CSV'),
+  });
+
   if (!user || !isAdmin) return null;
 
   if (loadingCampaign) {
@@ -807,6 +891,33 @@ export default function CampaignDetailPage() {
           </div>
         </div>
 
+        {/* Importació CSV */}
+        {showCsvImport && (
+          <div className="amg-card card-clip p-5 space-y-3">
+            <div className="f-mono text-[10px] uppercase tracking-widest text-ink-3">Importar prospects via CSV</div>
+            <p className="f-mono text-xs text-ink-2">Columnes acceptades: <code className="text-accent-light">name, phone, email, website, address, city</code> · Màx 500 files</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept=".csv"
+                onChange={e => setCsvFile(e.target.files?.[0] ?? null)}
+                className="f-mono text-xs text-ink-1 file:mr-3 file:bg-bg-2 file:border file:border-border-base file:text-ink-1 file:px-3 file:py-1 file:f-mono file:text-xs file:cursor-pointer"
+              />
+              <AMGButton
+                size="sm"
+                loading={importingCsv}
+                disabled={!csvFile}
+                onClick={() => csvFile && doImportCsv(csvFile)}
+              >
+                Importar
+              </AMGButton>
+              <AMGButton size="sm" variant="ghost" onClick={() => { setShowCsvImport(false); setCsvFile(null); }}>
+                Cancel·lar
+              </AMGButton>
+            </div>
+          </div>
+        )}
+
         {/* Prospects */}
         <div className="amg-card card-clip">
           <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
@@ -819,6 +930,9 @@ export default function CampaignDetailPage() {
                 <AMGButton size="sm" variant="secondary" icon={IconSet.Sparkles} loading={scoring} onClick={() => doScore()}>
                   Puntuar
                 </AMGButton>
+                <AMGButton size="sm" variant="secondary" onClick={() => setShowCsvImport(v => !v)}>
+                  ↑ CSV
+                </AMGButton>
                 {prospectList.some(p => p.score != null) && (
                   <div className="flex items-center gap-1">
                     <select
@@ -826,7 +940,7 @@ export default function CampaignDetailPage() {
                       onChange={e => setMinScoreFilter(Number(e.target.value))}
                       className="f-mono text-[11px] bg-bg-1 border border-border-base rounded px-2 py-1 text-ink-1"
                     >
-                      {[3, 4, 5, 6, 7, 8].map(v => (
+                      {[20, 31, 40, 50, 61, 75, 81].map(v => (
                         <option key={v} value={v}>≥ {v} pts</option>
                       ))}
                     </select>
@@ -903,7 +1017,7 @@ export default function CampaignDetailPage() {
                     const hasContact = !!(p.phone || p.email);
                     const scored = p.score != null;
                     const scoreColor = scored
-                      ? p.score! >= 8 ? 'text-success' : p.score! >= 5 ? 'text-accent-light' : 'text-ink-2'
+                      ? p.score! >= 81 ? 'text-accent-light' : p.score! >= 61 ? 'text-success' : p.score! >= 31 ? 'text-warning' : 'text-ink-2'
                       : 'text-ink-3';
                     const rowClass = p.status === 'QUALIFIED'
                       ? 'border-b border-success/10 bg-success/[0.03] hover:bg-success/[0.06]'
