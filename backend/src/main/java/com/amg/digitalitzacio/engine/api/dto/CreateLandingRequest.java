@@ -8,5 +8,6 @@ public record CreateLandingRequest(
     String metaDescription,
     String landingType,
     UUID serviceId,
-    UUID templateId
+    UUID templateId,
+    String styles
 ) {}

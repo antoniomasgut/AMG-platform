@@ -11,5 +11,6 @@ public record LandingTemplateSummary(
     String description,
     int sectionCount,
     boolean isActive,
+    String colorSchemes,
     Instant createdAt
 ) {}

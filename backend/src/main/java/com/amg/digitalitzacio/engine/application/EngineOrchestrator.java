@@ -80,11 +80,21 @@ public class EngineOrchestrator implements EngineService {
 
         // Create initial DRAFT version — populate from template defaults if templateId provided
         var initialContent = buildTemplateDefaultContent(request.templateId(), tenantId);
+        String stylesJson = null;
+        if (request.styles() != null) {
+            stylesJson = request.styles();
+        } else if (request.templateId() != null) {
+            var tplOpt = landingTemplateRepository.findById(request.templateId());
+            if (tplOpt.isPresent() && tplOpt.get().getDefaultStyles() != null) {
+                stylesJson = tplOpt.get().getDefaultStyles();
+            }
+        }
         var version = LandingVersion.builder()
                 .landingId(landing.getId())
                 .versionNumber(1)
                 .status(VersionStatus.DRAFT)
                 .content(initialContent)
+                .styles(stylesJson)
                 .build();
         landingVersionRepository.save(version);
 

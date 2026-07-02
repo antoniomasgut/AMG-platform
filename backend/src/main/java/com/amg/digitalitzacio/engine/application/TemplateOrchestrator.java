@@ -38,7 +38,7 @@ public class TemplateOrchestrator implements TemplateService {
                 .map(t -> new LandingTemplateSummary(
                         t.getId(), t.getName(), t.getSlug(), t.getDescription(),
                         sectionRepository.findByTemplateIdOrderBySortOrder(t.getId()).size(),
-                        t.getIsActive(), t.getCreatedAt()))
+                        t.getIsActive(), t.getColorSchemes(), t.getCreatedAt()))
                 .toList();
     }
 
