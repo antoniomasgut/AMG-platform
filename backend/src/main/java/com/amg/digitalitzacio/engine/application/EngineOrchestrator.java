@@ -720,9 +720,12 @@ public class EngineOrchestrator implements EngineService {
         var fontsParam = headingName.equals(bodyName)
                 ? headingName.replace(" ", "+") + ":wght@400;600;700"
                 : headingName.replace(" ", "+") + ":wght@400;600;700|" + bodyName.replace(" ", "+") + ":wght@400;600";
+        // Càrrega asíncrona de Google Fonts — no bloqueja el render (millora LCP/FCP)
         var googleFontsLink = "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">" +
                 "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>" +
-                "<link href=\"https://fonts.googleapis.com/css2?family=" + fontsParam + "&display=swap\" rel=\"stylesheet\">";
+                "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=" + fontsParam + "&display=swap\" " +
+                "media=\"print\" onload=\"this.media='all'\">" +
+                "<noscript><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=" + fontsParam + "&display=swap\"></noscript>";
 
         var publicUrl = buildPublicUrl(landing);
         var sv = new StyleVars(
@@ -736,6 +739,21 @@ public class EngineOrchestrator implements EngineService {
         var phone        = styles != null ? styles.getOrDefault("phone", "")           : "";
         var address      = styles != null ? styles.getOrDefault("address", "")         : "";
         var bizType      = styles != null ? styles.getOrDefault("businessType", "LocalBusiness") : "LocalBusiness";
+        // Mapatge automàtic plantilla → tipus Schema.org si no s'ha definit manualment
+        if ("LocalBusiness".equals(bizType.toString()) && landing.getTemplateId() != null) {
+            var tplOpt = landingTemplateRepository.findById(landing.getTemplateId());
+            if (tplOpt.isPresent()) {
+                bizType = switch (tplOpt.get().getSlug()) {
+                    case "restaurant-professional"    -> "Restaurant";
+                    case "perruqueria-professional"   -> "HairSalon";
+                    case "fisioterapeuta-professional" -> "MedicalBusiness";
+                    case "reformes-professional", "pintor-professional" -> "HomeAndConstructionBusiness";
+                    case "jardineria-professional"    -> "LandscapingService";
+                    case "neteja-professional"        -> "HouseCleaning";
+                    default -> "LocalBusiness";
+                };
+            }
+        }
         var gaId         = styles != null ? styles.getOrDefault("gaId", "")            : "";
         var customCss    = styles != null ? styles.getOrDefault("customCss", "")       : "";
         var logoUrl      = styles != null ? styles.getOrDefault("logoUrl", "").toString() : "";
@@ -1027,6 +1045,40 @@ public class EngineOrchestrator implements EngineService {
     }
 
     @SuppressWarnings("unchecked")
+    private String renderSteps(Map<String, Object> props, StyleVars s) {
+        var title = str(props, "title", "Com treballem");
+        var items = props.getOrDefault("items", List.of());
+        var html  = new StringBuilder();
+        html.append("<section class=\"sec\"><div class=\"w\" data-anim>");
+        html.append("<h2 class=\"sec-title\">").append(escapeHtml(title)).append("</h2>");
+        html.append("<div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:32px\">");
+        if (items instanceof List<?> list) {
+            int idx = 0;
+            for (var item : list) {
+                if (item instanceof Map m) {
+                    idx++;
+                    @SuppressWarnings("unchecked")
+                    var im        = (Map<String, Object>) m;
+                    var stepTitle = str(im, "title", "Pas " + idx);
+                    var stepDesc  = str(im, "description", "");
+                    html.append("<div style=\"text-align:center;padding:24px 16px\" data-anim>")
+                        .append("<div style=\"width:64px;height:64px;border-radius:50%;background:var(--p);color:#fff;")
+                        .append("font-family:").append(escapeHtml(s.fontH())).append(";font-size:1.6rem;font-weight:800;")
+                        .append("display:flex;align-items:center;justify-content:center;margin:0 auto 20px\">")
+                        .append(idx).append("</div>")
+                        .append("<h3 style=\"font-size:1.05rem;font-weight:700;margin-bottom:10px;color:var(--tx)\">")
+                        .append(escapeHtml(stepTitle)).append("</h3>")
+                        .append("<p style=\"font-size:.9rem;opacity:.7;line-height:1.6\">")
+                        .append(escapeHtml(stepDesc)).append("</p>")
+                        .append("</div>");
+                }
+            }
+        }
+        html.append("</div></div></section>");
+        return html.toString();
+    }
+
+    @SuppressWarnings("unchecked")
     private String renderGallery(Map<String, Object> props, StyleVars s) {
         var title = str(props, "title", "");
         var rawItems = props.getOrDefault("items", List.of());
@@ -1185,6 +1237,7 @@ public class EngineOrchestrator implements EngineService {
             case "reviews"       -> renderReviews(props, s, tenantId);
             case "trust-bar"     -> renderTrustBar(props, s);
             case "gallery"       -> renderGallery(props, s);
+            case "steps"         -> renderSteps(props, s);
             default              -> "";
         };
     }

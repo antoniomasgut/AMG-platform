@@ -17,7 +17,8 @@ public enum BlockType {
     VIDEO,
     REVIEWS,
     TRUST_BAR,
-    CHAT_CTA;
+    CHAT_CTA,
+    STEPS;
 
     /** Nom del tipus de bloc per al JSON de la landing (guions, no guions baixos). */
     public String typeName() {
