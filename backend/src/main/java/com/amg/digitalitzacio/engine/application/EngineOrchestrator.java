@@ -785,6 +785,13 @@ public class EngineOrchestrator implements EngineService {
                "</head><body>" +
                stickyNav +
                blocksHtml +
+               // Lightbox global (galeries d'imatges)
+               "<div id=\"lb-ov\" onclick=\"if(event.target===this)closeLb()\">" +
+               "<button id=\"lb-cls\" onclick=\"closeLb()\">&times;</button>" +
+               "<button id=\"lb-p\" onclick=\"lbMove(-1)\">&#8592;</button>" +
+               "<img id=\"lb-img\" src=\"\" alt=\"\">" +
+               "<button id=\"lb-n\" onclick=\"lbMove(1)\">&#8594;</button>" +
+               "</div>" +
                "<footer class=\"legal-footer\"><div class=\"w\">" +
                "<p>&copy; " + java.time.Year.now() + " " + escapeHtml(landing.getTitle()) + ". Tots els drets reservats.</p>" +
                "<p><a href=\"" + escapeHtml(legalBase) + "/avis-legal\" target=\"_blank\" rel=\"noopener\">Av&iacute;s legal</a> &middot; " +
@@ -906,14 +913,33 @@ public class EngineOrchestrator implements EngineService {
                "@media(max-width:640px){.sec{padding:56px 0}.sec-title{margin-bottom:32px}.nav-cta{padding:9px 16px;font-size:.82rem}.trust-bar-inner{gap:28px 40px}.trust-value{font-size:1.8rem}}" +
                // Animació scroll
                "[data-anim]{opacity:0;transform:translateY(28px);transition:opacity .55s ease,transform .55s ease}" +
-               "[data-anim].visible{opacity:1;transform:none}";
+               "[data-anim].visible{opacity:1;transform:none}" +
+               // Galeria d'imatges
+               ".gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:32px}" +
+               ".gl-item{aspect-ratio:4/3;overflow:hidden;border-radius:10px;cursor:zoom-in;position:relative}" +
+               ".gl-item img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease,box-shadow .3s}" +
+               ".gl-item:hover img{transform:scale(1.08)}" +
+               ".gl-item::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .3s;border-radius:10px}" +
+               ".gl-item:hover::after{background:rgba(0,0,0,.18)}" +
+               // Lightbox
+               "#lb-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:20000;align-items:center;justify-content:center;cursor:zoom-out}" +
+               "#lb-ov.open{display:flex}" +
+               "#lb-img{max-width:90vw;max-height:85vh;object-fit:contain;border-radius:4px;cursor:default;box-shadow:0 0 60px rgba(0,0,0,.8)}" +
+               "#lb-cls{position:absolute;top:16px;right:20px;color:#fff;font-size:2rem;cursor:pointer;background:none;border:none;line-height:1;opacity:.8;padding:8px}" +
+               "#lb-cls:hover{opacity:1}" +
+               "#lb-p,#lb-n{position:absolute;top:50%;transform:translateY(-50%);color:#fff;font-size:1.8rem;cursor:pointer;background:rgba(255,255,255,.15);border:none;padding:14px 20px;border-radius:8px;line-height:1;user-select:none;transition:background .2s}" +
+               "#lb-p:hover,#lb-n:hover{background:rgba(255,255,255,.3)}" +
+               "#lb-p{left:12px}#lb-n{right:12px}" +
+               "@media(max-width:640px){#lb-p,#lb-n{padding:10px 14px;font-size:1.4rem}}";
     }
 
     @SuppressWarnings("unchecked")
     private String renderTrustBar(Map<String, Object> props, StyleVars s) {
         var items = props.getOrDefault("items", List.of());
         var html = new StringBuilder();
-        html.append("<section class=\"trust-bar\"><div class=\"w trust-bar-inner\">");
+        // Banda diagonal amb skewY — el contingut interior fa counter-skew per quedar recte
+        html.append("<div style=\"transform:skewY(-2.5deg);background:var(--p);padding:5vw 0;margin:-3vw 0;position:relative;z-index:2;overflow:hidden\">");
+        html.append("<div style=\"transform:skewY(2.5deg);display:flex;justify-content:center;flex-wrap:wrap;gap:40px 60px;text-align:center;padding:16px 20px;max-width:1100px;margin:0 auto\">");
         if (items instanceof List<?> list) {
             for (var item : list) {
                 if (item instanceof Map m) {
@@ -921,17 +947,65 @@ public class EngineOrchestrator implements EngineService {
                     var value = str(im, "value", "");
                     var label = str(im, "label", "");
                     var icon  = str(im, "icon", "");
+                    // Extreure part numèrica i sufix per a l'animació de comptador
+                    var numStr = value.matches("^[0-9.].*") ? value.replaceAll("^([0-9.]+).*", "$1") : "";
+                    var sufStr = numStr.isEmpty() ? "" : value.substring(numStr.length());
+                    String countAttr = numStr.isEmpty() ? ""
+                            : " data-countup=\"" + numStr + "\" data-suffix=\"" + escapeHtml(sufStr) + "\"";
                     String iconPart = icon.isBlank() ? ""
                             : "<div style=\"font-size:1.6rem;margin-bottom:6px\">" + escapeHtml(icon) + "</div>";
                     html.append("<div class=\"trust-stat\" data-anim>")
                         .append(iconPart)
-                        .append("<div class=\"trust-value\">").append(escapeHtml(value)).append("</div>")
+                        .append("<div class=\"trust-value\"").append(countAttr).append(">").append(escapeHtml(value)).append("</div>")
                         .append("<div class=\"trust-label\">").append(escapeHtml(label)).append("</div>")
                         .append("</div>");
                 }
             }
         }
-        html.append("</div></section>");
+        html.append("</div></div>");
+        return html.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private String renderGallery(Map<String, Object> props, StyleVars s) {
+        var title = str(props, "title", "");
+        var rawItems = props.getOrDefault("items", List.of());
+        var imageList = new java.util.ArrayList<Map<String, Object>>();
+        if (rawItems instanceof List<?> list) {
+            for (var item : list) {
+                if (item instanceof Map m) imageList.add((Map<String, Object>) m);
+            }
+        }
+        if (imageList.isEmpty()) return "";
+
+        // Variable JS global per a les dades del lightbox d'aquesta galeria
+        var galleryVar = "glr" + Integer.toHexString(System.identityHashCode(props));
+        var jsItems = new StringBuilder("[");
+        for (int i = 0; i < imageList.size(); i++) {
+            var img = imageList.get(i);
+            if (i > 0) jsItems.append(",");
+            jsItems.append("{u:\"").append(escapeJs(str(img, "url", ""))).append("\"")
+                   .append(",a:\"").append(escapeJs(str(img, "alt", ""))).append("\"}");
+        }
+        jsItems.append("]");
+
+        var html = new StringBuilder();
+        html.append("<section class=\"sec\" style=\"background:#f8fafc\"><div class=\"w\" data-anim>");
+        if (!title.isBlank()) {
+            html.append("<h2 class=\"sec-title\">").append(escapeHtml(title)).append("</h2>");
+        }
+        html.append("<script>window['").append(galleryVar).append("']=").append(jsItems).append(";</script>");
+        html.append("<div class=\"gallery-grid\">");
+        for (int i = 0; i < imageList.size(); i++) {
+            var img = imageList.get(i);
+            var url = str(img, "url", "");
+            var alt = str(img, "alt", "");
+            if (url.isBlank()) continue;
+            html.append("<div class=\"gl-item\" onclick=\"openLb(window['").append(galleryVar).append("'],").append(i).append(")\">");
+            html.append("<img src=\"").append(escapeHtml(url)).append("\" alt=\"").append(escapeHtml(alt)).append("\" loading=\"lazy\">");
+            html.append("</div>");
+        }
+        html.append("</div></div></section>");
         return html.toString();
     }
 
@@ -956,6 +1030,37 @@ public class EngineOrchestrator implements EngineService {
                // Nav shadow en scroll
                "var nav=document.getElementById('amg-nav');" +
                "if(nav){window.addEventListener('scroll',function(){nav.classList.toggle('scrolled',window.scrollY>30);},{passive:true});}" +
+               // Comptadors animats (trust-bar i qualsevol [data-countup])
+               "document.querySelectorAll('[data-countup]').forEach(function(el){" +
+               "var cio=new IntersectionObserver(function(en){en.forEach(function(x){" +
+               "if(!x.isIntersecting)return;cio.unobserve(x.target);" +
+               "var tgt=parseFloat(x.target.dataset.countup);" +
+               "var suf=x.target.dataset.suffix||'';" +
+               "var dec=tgt%1!==0,t0=null;" +
+               "function anim(ts){if(!t0)t0=ts;" +
+               "var p=Math.min((ts-t0)/1200,1),ease=1-Math.pow(1-p,3),cur=tgt*ease;" +
+               "x.target.textContent=(dec?cur.toFixed(1):Math.floor(cur))+suf;" +
+               "if(p<1)requestAnimationFrame(anim);}" +
+               "requestAnimationFrame(anim);" +
+               "});},{threshold:0.5});cio.observe(el);});" +
+               // Lightbox per a galeries d'imatges
+               "var lbData=[],lbIdx=0;" +
+               "window.openLb=function(items,idx){lbData=items;lbIdx=idx;" +
+               "document.getElementById('lb-img').src=lbData[lbIdx].u;" +
+               "document.getElementById('lb-img').alt=lbData[lbIdx].a||'';" +
+               "document.getElementById('lb-ov').classList.add('open');" +
+               "document.body.style.overflow='hidden';};" +
+               "window.closeLb=function(){" +
+               "document.getElementById('lb-ov').classList.remove('open');" +
+               "document.body.style.overflow='';};" +
+               "window.lbMove=function(d){lbIdx=(lbIdx+d+lbData.length)%lbData.length;" +
+               "document.getElementById('lb-img').src=lbData[lbIdx].u;};" +
+               "document.addEventListener('keydown',function(e){" +
+               "var ov=document.getElementById('lb-ov');" +
+               "if(!ov||!ov.classList.contains('open'))return;" +
+               "if(e.key==='Escape')closeLb();" +
+               "if(e.key==='ArrowLeft')lbMove(-1);" +
+               "if(e.key==='ArrowRight')lbMove(1);});" +
                "})();</script>";
     }
 
@@ -986,6 +1091,7 @@ public class EngineOrchestrator implements EngineService {
             case "video"         -> renderVideo(props, s);
             case "reviews"       -> renderReviews(props, s, tenantId);
             case "trust-bar"     -> renderTrustBar(props, s);
+            case "gallery"       -> renderGallery(props, s);
             default              -> "";
         };
     }
@@ -1002,7 +1108,8 @@ public class EngineOrchestrator implements EngineService {
 
         var bgCss = bgImage.isBlank()
                 ? "background:linear-gradient(135deg," + s.accent() + " 0%," + s.primary() + " 100%)"
-                : "background:linear-gradient(rgba(0,0,0,.48),rgba(0,0,0,.48)),url('" + escapeHtml(bgImage) + "') center/cover no-repeat";
+                : "background:linear-gradient(135deg," + s.primary() + "e0 0%," + s.primary() + "88 100%)," +
+                  "url('" + escapeHtml(bgImage) + "') center/cover no-repeat";
 
         String ctaPrimary = "";
         if (!ctaText.isBlank()) {
@@ -1016,10 +1123,10 @@ public class EngineOrchestrator implements EngineService {
         String ctasHtml = (ctaPrimary + ctaSecondary).isBlank() ? ""
                 : "<div style=\"display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:36px\">" + ctaPrimary + ctaSecondary + "</div>";
 
-        return "<section style=\"" + bgCss + ";color:#fff\">" +
-               "<div class=\"w\" style=\"padding:100px 20px 90px;text-align:center\">" +
-               "<h1 style=\"font-size:clamp(2rem,5vw,3.5rem);font-weight:800;margin-bottom:20px\">" + escapeHtml(title) + "</h1>" +
-               "<p style=\"font-size:clamp(1rem,2.5vw,1.2rem);opacity:.88;max-width:620px;margin:0 auto;line-height:1.7\">" + escapeHtml(subtitle) + "</p>" +
+        return "<section style=\"" + bgCss + ";color:#fff;position:relative;clip-path:polygon(0 0,100% 0,100% 93%,0 100%);padding-bottom:40px\">" +
+               "<div class=\"w\" style=\"padding:110px 20px 80px;text-align:center\">" +
+               "<h1 style=\"font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:20px;text-shadow:0 2px 20px rgba(0,0,0,.25)\">" + escapeHtml(title) + "</h1>" +
+               "<p style=\"font-size:clamp(1rem,2.5vw,1.25rem);opacity:.9;max-width:640px;margin:0 auto;line-height:1.75;text-shadow:0 1px 8px rgba(0,0,0,.2)\">" + escapeHtml(subtitle) + "</p>" +
                ctasHtml +
                "</div></section>";
     }
