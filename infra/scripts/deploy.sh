@@ -108,9 +108,6 @@ ssh "$PROD_HOST" "
 "
 ok "Contenidors actualitzats"
 
-# Traefik necessita reinici per actualitzar la IP dels contenidors recreats
-ssh "$PROD_HOST" "docker restart coolify-proxy > /dev/null 2>&1 || true"
-
 # ── 7. Netejar imatges antigues ───────────────────────────────────────────
 ssh "$PROD_HOST" "docker image prune -f > /dev/null 2>&1 || true"
 ok "Imatges dangling eliminades"
@@ -131,6 +128,12 @@ until curl -sf "$HEALTH_URL" > /dev/null 2>&1; do
 done
 echo ""
 ok "Backend sa → $HEALTH_URL"
+
+# Traefik necessita reinici per actualitzar la IP dels contenidors recreats.
+# Es fa DESPRÉS que els contenidors estiguin sans — si es reinicia just en
+# recrear-los, cacheja la IP antiga i retorna 504 fins a un nou reinici.
+ssh "$PROD_HOST" "docker restart coolify-proxy > /dev/null 2>&1 || true"
+sleep 8
 
 # ── 9. Health check frontend ──────────────────────────────────────────────
 MAX_RETRIES=12
