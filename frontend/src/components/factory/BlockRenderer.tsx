@@ -11,6 +11,7 @@ interface Props {
   isSelected?: boolean;
   onSelect?: (id: string) => void;
   onRemove?: (id: string) => void;
+  onDuplicate?: (id: string) => void;
   onUpdateProps?: (props: Partial<Record<string, unknown>>) => void;
   onClick?: () => void;
   preview?: boolean;
@@ -43,7 +44,7 @@ const ET: FC<{
 };
 
 export const BlockRenderer: FC<Props> = ({
-  block, styles, isSelected, onSelect, onRemove, onUpdateProps, onClick, preview,
+  block, styles, isSelected, onSelect, onRemove, onDuplicate, onUpdateProps, onClick, preview,
 }) => {
   const handleClick = () => {
     if (preview) return;
@@ -68,12 +69,22 @@ export const BlockRenderer: FC<Props> = ({
   const wrapperClass = `relative group ${!preview ? 'border-2 border-transparent hover:border-[#FF6B00]/30 cursor-pointer' : ''} ${isSelected ? '!border-[#FF6B00] ring-1 ring-[#FF6B00]/20' : ''}`;
 
   const removeBtn = !preview ? (
-    <button
-      onClick={(e) => { e.stopPropagation(); onRemove?.(block.id); }}
-      className="absolute top-2 right-2 z-10 w-6 h-6 bg-red-500 text-white text-xs flex items-center justify-center rounded hover:bg-red-600 opacity-0 group-hover:opacity-100 transition"
-    >
-      ×
-    </button>
+    <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+      <button
+        onClick={(e) => { e.stopPropagation(); onDuplicate?.(block.id); }}
+        title="Duplicar bloc"
+        className="w-6 h-6 bg-[#FF6B00] text-white text-xs flex items-center justify-center rounded hover:bg-[#FF9A3C]"
+      >
+        ⧉
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onRemove?.(block.id); }}
+        title="Eliminar bloc"
+        className="w-6 h-6 bg-red-500 text-white text-xs flex items-center justify-center rounded hover:bg-red-600"
+      >
+        ×
+      </button>
+    </div>
   ) : null;
 
   const renderContent = () => {

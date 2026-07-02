@@ -44,24 +44,36 @@ function extractColorsFromImage(img: HTMLImageElement): [string, string] {
 }
 
 const HEADING_FONTS = [
-  { value: 'Playfair Display, serif',      label: 'Playfair Display — elegant' },
-  { value: 'Montserrat, sans-serif',       label: 'Montserrat — modern' },
-  { value: 'Oswald, sans-serif',           label: 'Oswald — impactant' },
-  { value: 'Raleway, sans-serif',          label: 'Raleway — contemporani' },
-  { value: 'Roboto Slab, serif',           label: 'Roboto Slab — sòlid' },
-  { value: 'DM Sans, sans-serif',          label: 'DM Sans — net' },
-  { value: 'Cormorant Garamond, serif',    label: 'Cormorant Garamond — clàssic' },
-  { value: 'Inter, sans-serif',            label: 'Inter — neutre' },
+  { value: 'Inter, sans-serif',                label: 'Inter — minimalista modern' },
+  { value: 'Poppins, sans-serif',              label: 'Poppins — geomètric versàtil' },
+  { value: 'Montserrat, sans-serif',           label: 'Montserrat — modern clàssic' },
+  { value: 'Playfair Display, serif',          label: 'Playfair Display — luxe elegant' },
+  { value: 'Oswald, sans-serif',               label: 'Oswald — impacte fort' },
+  { value: 'Raleway, sans-serif',              label: 'Raleway — contemporani' },
+  { value: 'Nunito, sans-serif',               label: 'Nunito — amigable familiar' },
+  { value: 'DM Sans, sans-serif',              label: 'DM Sans — clean premium' },
+  { value: 'Cormorant Garamond, serif',        label: 'Cormorant Garamond — clàssic luxe' },
+  { value: 'Space Grotesk, sans-serif',        label: 'Space Grotesk — tech · startup' },
+  { value: 'Outfit, sans-serif',               label: 'Outfit — molt modern' },
+  { value: 'Josefin Sans, sans-serif',         label: 'Josefin Sans — elegant geomètric' },
+  { value: 'Rubik, sans-serif',                label: 'Rubik — modern arrodonit' },
+  { value: 'Plus Jakarta Sans, sans-serif',    label: 'Plus Jakarta Sans — premium 2024' },
+  { value: 'Roboto Slab, serif',               label: 'Roboto Slab — sòlid fiable' },
 ];
 
 const BODY_FONTS = [
-  { value: 'Lato, sans-serif',             label: 'Lato' },
-  { value: 'Open Sans, sans-serif',        label: 'Open Sans' },
-  { value: 'Roboto, sans-serif',           label: 'Roboto' },
-  { value: 'Source Sans Pro, sans-serif',  label: 'Source Sans Pro' },
-  { value: 'Inter, sans-serif',            label: 'Inter' },
-  { value: 'Merriweather, serif',          label: 'Merriweather' },
-  { value: 'Poppins, sans-serif',          label: 'Poppins' },
+  { value: 'Inter, sans-serif',               label: 'Inter — UI estàndard' },
+  { value: 'Lato, sans-serif',                label: 'Lato — humanista càlid' },
+  { value: 'Open Sans, sans-serif',           label: 'Open Sans — universal' },
+  { value: 'Roboto, sans-serif',              label: 'Roboto — Android / Google' },
+  { value: 'Source Sans Pro, sans-serif',     label: 'Source Sans Pro — professional' },
+  { value: 'Merriweather, serif',             label: 'Merriweather — serif llegible' },
+  { value: 'Nunito, sans-serif',              label: 'Nunito — arrodonit net' },
+  { value: 'DM Sans, sans-serif',             label: 'DM Sans — minimalista' },
+  { value: 'Noto Sans, sans-serif',           label: 'Noto Sans — multilingüe (ca/es/en/de)' },
+  { value: 'Rubik, sans-serif',               label: 'Rubik — modern còmode' },
+  { value: 'Poppins, sans-serif',             label: 'Poppins — versàtil' },
+  { value: 'Plus Jakarta Sans, sans-serif',   label: 'Plus Jakarta Sans — premium' },
 ];
 
 const COLOR_FIELDS: Array<{ key: 'primaryColor' | 'accentColor'; label: string; hint: string }> = [

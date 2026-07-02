@@ -5,6 +5,21 @@ import type { BlockType } from './factory';
 
 // --- Types ---
 
+export interface ColorScheme {
+  name: string;
+  primary: string;
+  accent: string;
+  fontHeading: string;
+  fontBody: string;
+  bg: string;
+  text: string;
+}
+
+export function parseColorSchemes(raw?: string): ColorScheme[] {
+  if (!raw) return [];
+  try { return JSON.parse(raw) as ColorScheme[]; } catch { return []; }
+}
+
 export interface TemplateSummary {
   id: string;
   name: string;
@@ -12,6 +27,7 @@ export interface TemplateSummary {
   description: string;
   sectionCount: number;
   isActive: boolean;
+  colorSchemes?: string;
   createdAt: string;
 }
 

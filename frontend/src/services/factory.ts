@@ -220,6 +220,13 @@ export async function deleteLanding(tenantId: string, landingId: string): Promis
   return apiFetch<void>(`/engine/tenants/${tenantId}/landings/${landingId}`, { method: 'DELETE' });
 }
 
+export async function generatePreviewToken(tenantId: string, landingId: string): Promise<{ token: string; previewUrl: string }> {
+  return apiFetch<{ token: string; previewUrl: string }>(
+    `/engine/tenants/${tenantId}/landings/${landingId}/preview-token`,
+    { method: 'POST' }
+  );
+}
+
 // --- Chat context ---
 
 export interface ChatContext {

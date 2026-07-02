@@ -3,7 +3,8 @@
 import { useState, useCallback, useEffect, useRef, type FC } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useEditorStore } from '@/store/editor';
-import { createVersion, updateVersion, publishLanding, unpublishLanding } from '@/services/factory';
+import { createVersion, updateVersion, publishLanding, unpublishLanding, generatePreviewToken } from '@/services/factory';
+import { getCurrentUser } from '@/services/auth';
 import { BlockCatalog } from './BlockCatalog';
 import { BlockProperties } from './BlockProperties';
 import { PageStylesPanel } from './PageStylesPanel';
@@ -23,10 +24,15 @@ interface Props {
 
 export const FactoryLayout: FC<Props> = ({ landingId }) => {
   const router = useRouter();
+  const user = getCurrentUser();
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('blocks');
   const [statusMsg, setStatusMsg] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [shareCopied, setShareCopied] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
 
   const landing = useEditorStore((s) => s.landing);
   const versionId = useEditorStore((s) => s.versionId);
@@ -37,13 +43,18 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
   const markClean = useEditorStore((s) => s.markClean);
   const markSaving = useEditorStore((s) => s.markSaving);
   const addBlock = useEditorStore((s) => s.addBlock);
+  const undo = useEditorStore((s) => s.undo);
+  const redo = useEditorStore((s) => s.redo);
+  const history = useEditorStore((s) => s.history);
+  const historyIndex = useEditorStore((s) => s.historyIndex);
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
 
   const selectedBlockId = useEditorStore((s) => s.selectedBlockId);
 
   const isDirtyRef = useRef(isDirty);
   useEffect(() => { isDirtyRef.current = isDirty; }, [isDirty]);
 
-  // Auto-switch to Props tab when a block is selected in the canvas
   useEffect(() => {
     if (selectedBlockId) setSidebarTab('properties');
   }, [selectedBlockId]);
@@ -58,6 +69,21 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [undo, redo]);
 
   const handleSave = useCallback(async () => {
     if (!versionId) return;
@@ -104,6 +130,28 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
     }
   }, [landingId, markSaving, router]);
 
+  const handleShare = useCallback(async () => {
+    if (!user?.tenantId) return;
+    setShareLoading(true);
+    setShareOpen(true);
+    try {
+      const { previewUrl } = await generatePreviewToken(user.tenantId, landingId);
+      setShareUrl(previewUrl);
+    } catch {
+      setShareUrl('');
+    } finally {
+      setShareLoading(false);
+    }
+  }, [user?.tenantId, landingId]);
+
+  const handleCopyShare = useCallback(() => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    });
+  }, [shareUrl]);
+
   const handleAddBlock = useCallback((type: BlockType) => {
     addBlock(type);
     setSidebarTab('properties');
@@ -145,11 +193,40 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
         {isDirty && (
           <span className="w-2 h-2 rounded-full bg-[#FF6B00] shrink-0" title="Canvis sense desar" />
         )}
+
+        {/* Undo / Redo */}
+        <button
+          onClick={undo}
+          disabled={!canUndo}
+          title="Desfer (Ctrl+Z)"
+          className="w-7 h-7 flex items-center justify-center rounded text-ink-2 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-base"
+        >
+          ↩
+        </button>
+        <button
+          onClick={redo}
+          disabled={!canRedo}
+          title="Refer (Ctrl+Y)"
+          className="w-7 h-7 flex items-center justify-center rounded text-ink-2 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition text-base"
+        >
+          ↪
+        </button>
+
         <div className="flex-1" />
         <PreviewToolbar />
         {statusMsg && (
           <span className="f-mono text-label text-accent-light">{statusMsg}</span>
         )}
+
+        {/* Share preview link */}
+        <button
+          onClick={handleShare}
+          title="Compartir previsualització amb el client"
+          className="f-mono text-label uppercase px-3 h-8 rounded border border-border-base text-ink-1 hover:text-accent-light hover:border-accent-light transition"
+        >
+          ↗ Preview
+        </button>
+
         <button
           onClick={handleSave}
           disabled={!isDirty || isSaving}
@@ -224,7 +301,6 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
           className="fixed inset-0 z-40 bg-black/90 flex flex-col items-center justify-start pt-6 overflow-auto"
           onClick={() => setShowPreview(false)}
         >
-          {/* Device toggle */}
           <div className="flex justify-center gap-2 mb-4 shrink-0" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setPreviewDevice('desktop')}
@@ -256,6 +332,58 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
                 <BlockRenderer key={block.id} block={block} styles={styles} preview />
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share preview modal */}
+      {shareOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center"
+          onClick={() => setShareOpen(false)}
+        >
+          <div
+            className="bg-[#13132a] border border-border-base rounded-xl p-6 w-full max-w-md shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="f-mono text-sm uppercase tracking-wider text-ink-0 mb-1">
+              Previsualització per al client
+            </h3>
+            <p className="text-ink-3 text-xs mb-4">
+              Comparteix aquest enllaç perquè el client pugui veure la landing sense publicar-la.
+              Caduca als 7 dies.
+            </p>
+            {shareLoading ? (
+              <div className="h-10 flex items-center justify-center text-ink-3 text-sm">
+                Generant enllaç...
+              </div>
+            ) : shareUrl ? (
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={shareUrl}
+                  className="flex-1 bg-[#0d0d1a] border border-border-base rounded px-3 py-2 text-xs text-ink-1 f-mono truncate"
+                />
+                <button
+                  onClick={handleCopyShare}
+                  className={`px-3 py-2 rounded f-mono text-xs font-semibold transition ${
+                    shareCopied
+                      ? 'bg-green-600 text-white'
+                      : 'bg-[#FF6B00] text-black hover:bg-[#FF9A3C]'
+                  }`}
+                >
+                  {shareCopied ? '✓ Copiat' : 'Copiar'}
+                </button>
+              </div>
+            ) : (
+              <p className="text-red-400 text-xs">Error en generar l&apos;enllaç. Torna-ho a provar.</p>
+            )}
+            <button
+              onClick={() => setShareOpen(false)}
+              className="mt-4 w-full py-2 rounded border border-border-base text-ink-2 f-mono text-xs hover:text-ink-0 transition"
+            >
+              Tancar
+            </button>
           </div>
         </div>
       )}

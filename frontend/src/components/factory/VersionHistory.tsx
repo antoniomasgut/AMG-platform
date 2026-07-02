@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, type FC } from 'react';
+import { useState, useMemo, type FC } from 'react';
 import { useEditorStore } from '@/store/editor';
+import { useAuth } from '@/lib/auth-context';
 import type { VersionResponse } from '@/services/factory';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -23,11 +24,38 @@ export const VersionHistory: FC = () => {
   const landing = useEditorStore((s) => s.landing);
   const versionId = useEditorStore((s) => s.versionId);
   const loadLanding = useEditorStore((s) => s.loadLanding);
+  const { user } = useAuth();
+  const [translating, setTranslating] = useState(false);
+  const [translateMsg, setTranslateMsg] = useState('');
 
   const sorted = useMemo(
     () => landing ? [...landing.versions].sort((a, b) => b.versionNumber - a.versionNumber) : [],
     [landing]
   );
+
+  const handleAutoTranslate = async () => {
+    if (!user?.tenantId || !landing?.id) return;
+    setTranslating(true);
+    setTranslateMsg('');
+    try {
+      const res = await fetch(
+        `/api/v1/engine/tenants/${user.tenantId}/landings/${landing.id}/auto-translate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sourceLocale: 'ca', targetLocales: ['es', 'en', 'de'] }),
+        }
+      );
+      if (!res.ok) throw new Error('Error');
+      const versions = await res.json() as unknown[];
+      setTranslateMsg(`${versions.length} traduccions creades`);
+      setTimeout(() => setTranslateMsg(''), 4000);
+    } catch {
+      setTranslateMsg('Error en traduir');
+    } finally {
+      setTranslating(false);
+    }
+  };
 
   if (!landing) return null;
 
@@ -39,6 +67,29 @@ export const VersionHistory: FC = () => {
 
   return (
     <div className="p-3 space-y-2">
+      <div className="mb-4 border border-[rgba(255,107,0,0.2)] rounded p-3 space-y-2 bg-[#0a0a18]">
+        <div className="f-mono text-[9px] uppercase tracking-widest text-accent-light">
+          ✦ Auto-traducció IA
+        </div>
+        <div className="f-mono text-[9px] text-ink-3 leading-relaxed">
+          Tradueix la versió publicada al castellà, anglès i alemany automàticament.
+        </div>
+        <button
+          onClick={handleAutoTranslate}
+          disabled={translating}
+          className="w-full py-2 bg-[rgba(255,107,0,0.15)] text-accent-light text-xs rounded f-mono hover:bg-[rgba(255,107,0,0.25)] transition disabled:opacity-40 flex items-center justify-center gap-2"
+        >
+          {translating ? (
+            <><span className="w-3 h-3 border-2 border-accent-light border-t-transparent rounded-full animate-spin inline-block" /> Traduint...</>
+          ) : '✦ Traduir a ES · EN · DE'}
+        </button>
+        {translateMsg && (
+          <div className={`f-mono text-[9px] ${translateMsg.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>
+            {translateMsg}
+          </div>
+        )}
+      </div>
+
       <div className="f-mono text-label uppercase tracking-widest text-ink-3">Historial de versions</div>
       {sorted.map((v) => {
         const isCurrent = v.id === versionId;

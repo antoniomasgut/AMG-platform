@@ -6,10 +6,10 @@ import { useRouter } from '@/i18n/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/auth';
 import { createLanding } from '@/services/factory';
+import { parseColorSchemes, type TemplateSummary, type ColorScheme } from '@/services/templates';
 import { TemplateSelector } from '@/components/factory/TemplateSelector';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGButton } from '@/components/ui/button';
-import { IconSet } from '@/components/ui/icons';
 
 function slugify(text: string): string {
   return text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -20,8 +20,9 @@ function NewLandingForm() {
   const searchParams = useSearchParams();
   const params = useParams();
   const locale = params.locale as string;
-  const [step, setStep] = useState<'template' | 'details'>('template');
-  const [templateId, setTemplateId] = useState('');
+  const [step, setStep] = useState<'template' | 'scheme' | 'details'>('template');
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateSummary | null>(null);
+  const [selectedScheme, setSelectedScheme] = useState<ColorScheme | null>(null);
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
 
@@ -35,7 +36,15 @@ function NewLandingForm() {
       setErrorMsg('');
       const tid = urlTenantId || user?.tenantId;
       if (!tid) throw new Error('No tenant');
-      return createLanding(tid, title, slug, templateId || undefined);
+      const schemeStyles = selectedScheme ? {
+        primaryColor: selectedScheme.primary,
+        accentColor: selectedScheme.accent,
+        fontHeading: selectedScheme.fontHeading,
+        fontBody: selectedScheme.fontBody,
+        bgColor: selectedScheme.bg,
+        textColor: selectedScheme.text,
+      } : undefined;
+      return createLanding(tid, title, slug, selectedTemplate?.id || undefined, schemeStyles);
     },
     onSuccess: (landing) => {
       router.push(`/portal/landings/${landing.id}/edit`);
@@ -45,12 +54,17 @@ function NewLandingForm() {
     },
   });
 
-  const handleSelectTemplate = (id: string) => {
-    setTemplateId(id);
-    setStep('details');
-    // Derive default name from template — will load from API in details step
+  const handleSelectTemplate = (tpl: TemplateSummary) => {
+    setSelectedTemplate(tpl);
+    const schemes = parseColorSchemes(tpl.colorSchemes);
+    if (schemes.length > 0) {
+      setStep('scheme');
+    } else {
+      setStep('details');
+    }
     setTitle('');
     setSlug('');
+    setSelectedScheme(null);
   };
 
   if (!user) {
@@ -73,12 +87,66 @@ function NewLandingForm() {
     );
   }
 
+  if (step === 'scheme') {
+    const schemes = parseColorSchemes(selectedTemplate?.colorSchemes);
+    return (
+      <PortalShell breadcrumb="landings / nova" backHref={`/${locale}/portal/landings`}>
+        <div className="p-4 sm:p-8 space-y-6">
+          <div>
+            <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / landings / nova /</span>
+            <div className="f-display font-bold text-xl mt-1">Tria l&apos;estil visual</div>
+            <p className="text-sm text-ink-1 mt-1">Selecciona una paleta de colors per a la teva landing</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4 max-w-lg">
+            {schemes.map((scheme, i) => (
+              <button
+                key={i}
+                onClick={() => { setSelectedScheme(scheme); setStep('details'); }}
+                className="amg-card card-clip p-4 text-left hover:ring-1 hover:ring-[#FF6B00] transition group"
+              >
+                <div className="flex gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-md" style={{ background: scheme.primary }} />
+                  <div className="w-8 h-8 rounded-md" style={{ background: scheme.accent }} />
+                  <div className="w-8 h-8 rounded-md border border-white/10" style={{ background: scheme.bg }} />
+                </div>
+                <div className="f-mono text-xs font-bold text-ink-0 mb-0.5">{scheme.name}</div>
+                <div
+                  className="f-mono text-[9px] text-ink-3"
+                  style={{ fontFamily: scheme.fontHeading }}
+                >
+                  {scheme.fontHeading.split(',')[0]}
+                </div>
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-3">
+            <AMGButton variant="ghost" onClick={() => setStep('template')}>← Enrere</AMGButton>
+            <AMGButton variant="ghost" onClick={() => { setSelectedScheme(null); setStep('details'); }}>Ometre</AMGButton>
+          </div>
+        </div>
+      </PortalShell>
+    );
+  }
+
   return (
     <PortalShell breadcrumb="landings / nova" backHref={`/${locale}/portal/landings`}>
     <div className="p-4 sm:p-8 max-w-lg space-y-6">
       <div>
         <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / landings / nova /</span>
         <div className="f-display font-bold text-xl mt-1">Configura la landing</div>
+        {selectedScheme && (
+          <div className="flex items-center gap-2 mt-2">
+            <div className="w-3 h-3 rounded-full" style={{ background: selectedScheme.primary }} />
+            <div className="w-3 h-3 rounded-full" style={{ background: selectedScheme.accent }} />
+            <span className="f-mono text-[10px] text-ink-3">{selectedScheme.name}</span>
+            <button
+              onClick={() => setStep('scheme')}
+              className="f-mono text-[9px] text-accent-light underline ml-1"
+            >
+              canviar
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="amg-card card-clip p-5 space-y-4">
@@ -106,7 +174,7 @@ function NewLandingForm() {
         </div>
 
         <div className="flex gap-3 pt-2">
-          <AMGButton variant="ghost" onClick={() => setStep('template')}>
+          <AMGButton variant="ghost" onClick={() => setStep(selectedScheme !== null || parseColorSchemes(selectedTemplate?.colorSchemes).length > 0 ? 'scheme' : 'template')}>
             ← Enrere
           </AMGButton>
           <AMGButton

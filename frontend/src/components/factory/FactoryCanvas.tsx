@@ -23,6 +23,7 @@ export const FactoryCanvas: FC = () => {
   const selectedBlockId = useEditorStore((s) => s.selectedBlockId);
   const selectBlock = useEditorStore((s) => s.selectBlock);
   const removeBlock = useEditorStore((s) => s.removeBlock);
+  const duplicateBlock = useEditorStore((s) => s.duplicateBlock);
   const moveBlock = useEditorStore((s) => s.moveBlock);
   const updateBlockProps = useEditorStore((s) => s.updateBlockProps);
 
@@ -67,6 +68,7 @@ export const FactoryCanvas: FC = () => {
                   isSelected={block.id === selectedBlockId}
                   onSelect={selectBlock}
                   onRemove={removeBlock}
+                  onDuplicate={duplicateBlock}
                   onUpdateProps={updateBlockProps}
                 />
               ))}
