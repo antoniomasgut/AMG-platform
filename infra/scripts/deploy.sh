@@ -73,9 +73,10 @@ ok "Codi actualitzat a $PROD_HOST"
 if $BUILD_BACKEND; then
   step "4. Build backend (pot trigar ~3 min)"
   ssh "$PROD_HOST" "
+    set -o pipefail
     cd $PROD_REPO/infra
     docker compose -f docker-compose.yml --env-file $PROD_ENV build --no-cache backend 2>&1 | grep -E '#[0-9]+|ERROR|Successfully|Step' | tail -15
-  "
+  " || fail "Build backend fallit — revisa: ssh $PROD_HOST 'cd $PROD_REPO/infra && docker compose build backend'"
   ok "Imatge backend construïda"
 else
   ok "4. Backend skipped (--no-backend)"
@@ -85,9 +86,10 @@ fi
 if $BUILD_FRONTEND; then
   step "5. Build frontend (pot trigar ~2 min)"
   ssh "$PROD_HOST" "
+    set -o pipefail
     cd $PROD_REPO/infra
     docker compose -f docker-compose.yml --env-file $PROD_ENV build frontend 2>&1 | grep -E '#[0-9]+|ERROR|Successfully|Step' | tail -15
-  "
+  " || fail "Build frontend fallit — revisa: ssh $PROD_HOST 'cd $PROD_REPO/infra && docker compose build frontend'"
   ok "Imatge frontend construïda"
 else
   ok "5. Frontend skipped (--no-frontend)"

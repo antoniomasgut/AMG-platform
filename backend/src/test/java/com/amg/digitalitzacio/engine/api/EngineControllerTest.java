@@ -113,7 +113,7 @@ class EngineControllerTest {
     @Test
     void tc01_crearLanding_Returns201() throws Exception {
         var request = new CreateLandingRequest("Restaurant Can Pedro", "restaurant-can-pedro",
-                "Restaurant de cuina mallorquina", null, landingServiceId, null);
+                "Restaurant de cuina mallorquina", null, landingServiceId, null, null, null);
 
         mockMvc.perform(post("/api/v1/engine/tenants/{tenantId}/landings", tenant.getId())
                 .header("Authorization", "Bearer " + superAdminToken)
@@ -132,7 +132,7 @@ class EngineControllerTest {
                 .tenantId(tenant.getId()).serviceId(landingServiceId)
                 .title("Existing").slug("duplicat").build());
 
-        var request = new CreateLandingRequest("New", "duplicat", null, null, landingServiceId, null);
+        var request = new CreateLandingRequest("New", "duplicat", null, null, landingServiceId, null, null, null);
 
         mockMvc.perform(post("/api/v1/engine/tenants/{tenantId}/landings", tenant.getId())
                 .header("Authorization", "Bearer " + superAdminToken)
@@ -265,7 +265,7 @@ class EngineControllerTest {
     /* ── TC-09: CLIENT no pot crear landing → 403 ── */
     @Test
     void tc09_clientNoPotCrearLanding_Returns403() throws Exception {
-        var request = new CreateLandingRequest("Test", "test", null, null, landingServiceId, null);
+        var request = new CreateLandingRequest("Test", "test", null, null, landingServiceId, null, null, null);
 
         mockMvc.perform(post("/api/v1/engine/tenants/{tenantId}/landings", tenant.getId())
                 .header("Authorization", "Bearer " + clientToken)

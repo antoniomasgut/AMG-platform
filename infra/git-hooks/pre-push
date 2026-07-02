@@ -14,7 +14,9 @@ fi
 echo "🔍 Comprovant compilació backend (main + tests)..."
 cd "$BACKEND"
 
-if mvn test-compile -B -q 2>/dev/null; then
+# 'clean' és necessari: la compilació incremental no recompila els tests
+# quan canvia un record del main, i deixa passar errors de signatura
+if mvn clean test-compile -B -q 2>/dev/null; then
   echo "✅ Compilació OK"
 else
   echo ""
