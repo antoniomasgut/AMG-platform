@@ -79,7 +79,7 @@ public class TenantVaultService implements VaultService {
                     var ts = TenantService.builder()
                             .tenantId(tenantId).serviceId(svc.getId()).phaseId(phase.getId())
                             .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : BigDecimal.ZERO)
-                            .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : BigDecimal.TEN)
+                            .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : BigDecimal.ZERO)
                             .catalogVersionLocked(svc.getVersion() != null ? svc.getVersion() : 1)
                             .build();
                     tenantServiceRepository.save(ts);
@@ -122,7 +122,7 @@ public class TenantVaultService implements VaultService {
                 var ts = TenantService.builder()
                         .tenantId(tenantId).serviceId(svc.getId()).phaseId(phaseId)
                         .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : java.math.BigDecimal.ZERO)
-                        .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : java.math.BigDecimal.TEN)
+                        .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : java.math.BigDecimal.ZERO)
                         .catalogVersionLocked(svc.getVersion() != null ? svc.getVersion() : 1)
                         .build();
                 tenantServiceRepository.save(ts);
@@ -141,7 +141,7 @@ public class TenantVaultService implements VaultService {
         var ts = TenantService.builder()
                 .tenantId(tenantId).serviceId(catalogServiceId).phaseId(null)
                 .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : java.math.BigDecimal.ZERO)
-                .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : java.math.BigDecimal.TEN)
+                .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : java.math.BigDecimal.ZERO)
                 .catalogVersionLocked(svc.getVersion() != null ? svc.getVersion() : 1)
                 .build();
         tenantServiceRepository.save(ts);
@@ -398,7 +398,7 @@ public class TenantVaultService implements VaultService {
         var ts = TenantService.builder()
                 .tenantId(tenantId).serviceId(serviceId).phaseId(null)
                 .setupPriceLocked(svc.getSalePrice() != null ? svc.getSalePrice() : BigDecimal.ZERO)
-                .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : BigDecimal.TEN)
+                .monthlyPriceLocked(svc.getMonthlyPrice() != null ? svc.getMonthlyPrice() : BigDecimal.ZERO)
                 .catalogVersionLocked(svc.getVersion() != null ? svc.getVersion() : 1)
                 .build();
         tenantServiceRepository.save(ts);

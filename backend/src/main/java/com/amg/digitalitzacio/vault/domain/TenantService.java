@@ -21,7 +21,7 @@ public class TenantService {
     @Column(name = "phase_id", nullable = true) private UUID phaseId;
     @Enumerated(EnumType.STRING) @Builder.Default @Column(nullable = false) private ServiceStatus status = ServiceStatus.PENDING;
     @Column(nullable = false, precision = 10, scale = 2) @Builder.Default private BigDecimal setupPriceLocked = BigDecimal.ZERO;
-    @Column(nullable = false, precision = 10, scale = 2) @Builder.Default private BigDecimal monthlyPriceLocked = BigDecimal.TEN;
+    @Column(nullable = false, precision = 10, scale = 2) @Builder.Default private BigDecimal monthlyPriceLocked = BigDecimal.ZERO;
     @Builder.Default @Column(nullable = false) private Integer catalogVersionLocked = 1;
     @Builder.Default @Column(nullable = false) private Boolean outdated = false;
     private Instant outdatedAt;
