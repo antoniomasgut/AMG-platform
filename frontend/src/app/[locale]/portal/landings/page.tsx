@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/auth';
-import { listLandings, getLandingStats, unpublishLanding, deleteLanding } from '@/services/factory';
+import { listLandings, getLandingStats, unpublishLanding, deleteLanding, duplicateLanding } from '@/services/factory';
 import { AMGButton } from '@/components/ui/button';
 import { AMGBadge } from '@/components/ui/badge';
 import { IconSet } from '@/components/ui/icons';
@@ -51,6 +51,14 @@ export default function LandingsPage() {
     onSuccess: () => {
       setConfirmDelete(null);
       queryClient.invalidateQueries({ queryKey: ['landings', user?.tenantId] });
+    },
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: (landingId: string) => duplicateLanding(user!.tenantId!, landingId),
+    onSuccess: (copy) => {
+      queryClient.invalidateQueries({ queryKey: ['landings', user?.tenantId] });
+      router.push(`/portal/landings/${copy.id}/edit`);
     },
   });
 
@@ -131,6 +139,14 @@ export default function LandingsPage() {
                     </AMGButton>
                   </>
                 )}
+                <button
+                  onClick={() => duplicateMutation.mutate(l.id)}
+                  disabled={duplicateMutation.isPending}
+                  title="Duplicar landing"
+                  className="f-mono text-[10px] text-ink-3 hover:text-accent-light transition"
+                >
+                  {duplicateMutation.isPending && duplicateMutation.variables === l.id ? 'Duplicant...' : '⧉ Duplicar'}
+                </button>
                 {confirmDelete === l.id ? (
                   <div className="flex gap-1 items-center">
                     <span className="f-mono text-[10px] text-warning">Segur?</span>

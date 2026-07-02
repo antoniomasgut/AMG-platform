@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, type FC } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useEditorStore } from '@/store/editor';
-import { createVersion, updateVersion, publishLanding, unpublishLanding, generatePreviewToken } from '@/services/factory';
+import { createVersion, updateVersion, publishLanding, unpublishLanding, generatePreviewToken, duplicateLanding } from '@/services/factory';
 import { getCurrentUser } from '@/services/auth';
 import { BlockCatalog } from './BlockCatalog';
 import { BlockProperties } from './BlockProperties';
@@ -152,6 +152,20 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
     });
   }, [shareUrl]);
 
+  const handleDuplicate = useCallback(async () => {
+    if (!user?.tenantId) return;
+    markSaving(true);
+    try {
+      const copy = await duplicateLanding(user.tenantId, landingId);
+      setStatusMsg('Landing duplicada');
+      setTimeout(() => router.push(`/portal/landings/${copy.id}/edit`), 800);
+    } catch {
+      setStatusMsg('Error en duplicar');
+    } finally {
+      markSaving(false);
+    }
+  }, [user?.tenantId, landingId, markSaving, router]);
+
   const handleAddBlock = useCallback((type: BlockType) => {
     addBlock(type);
     setSidebarTab('properties');
@@ -217,6 +231,16 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
         {statusMsg && (
           <span className="f-mono text-label text-accent-light">{statusMsg}</span>
         )}
+
+        {/* Duplicar landing */}
+        <button
+          onClick={handleDuplicate}
+          disabled={isSaving}
+          title="Duplicar aquesta landing"
+          className="w-8 h-8 flex items-center justify-center rounded border border-border-base text-ink-1 hover:text-accent-light hover:border-accent-light disabled:opacity-50 transition text-sm"
+        >
+          ⧉
+        </button>
 
         {/* Share preview link */}
         <button

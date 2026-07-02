@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef, type FC } from 'react';
+import { useState, useRef, useEffect, type FC } from 'react';
 import { useEditorStore } from '@/store/editor';
-import { BUSINESS_TYPES } from '@/services/factory';
+import { BUSINESS_TYPES, updateLandingMeta } from '@/services/factory';
+import { getCurrentUser } from '@/services/auth';
 
 function extractColorsFromImage(img: HTMLImageElement): [string, string] {
   const canvas = document.createElement('canvas');
@@ -95,10 +96,35 @@ const PALETTES: Array<{ name: string; primary: string; accent: string; bg: strin
 export const PageStylesPanel: FC = () => {
   const styles = useEditorStore((s) => s.styles);
   const setStyles = useEditorStore((s) => s.setStyles);
+  const landing = useEditorStore((s) => s.landing);
   const [logoUrl, setLogoUrl] = useState('');
   const [extracting, setExtracting] = useState(false);
   const [extractError, setExtractError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const [metaDesc, setMetaDesc] = useState('');
+  const [ogImage, setOgImage] = useState('');
+  const [metaSaving, setMetaSaving] = useState(false);
+  const user = getCurrentUser();
+
+  useEffect(() => {
+    if (landing) {
+      setMetaDesc(landing.metaDescription ?? '');
+      setOgImage(landing.ogImageUrl ?? '');
+    }
+  }, [landing?.id]);
+
+  const saveMeta = async () => {
+    if (!user?.tenantId || !landing?.id) return;
+    setMetaSaving(true);
+    try {
+      await updateLandingMeta(user.tenantId, landing.id, {
+        metaDescription: metaDesc || undefined,
+        ogImageUrl: ogImage || undefined,
+      });
+    } finally {
+      setMetaSaving(false);
+    }
+  };
 
   const handleExtract = (src: string) => {
     setExtracting(true);
@@ -380,6 +406,45 @@ export const PageStylesPanel: FC = () => {
                 <option key={t.value} value={t.value}>{t.label}</option>
               ))}
             </select>
+          </div>
+        </div>
+      </details>
+
+      {/* Meta SEO */}
+      <details className="group">
+        <summary className="f-mono text-[9px] uppercase text-ink-3 tracking-wider cursor-pointer list-none flex items-center gap-1">
+          <span className="group-open:rotate-90 transition-transform inline-block">▶</span>
+          Meta SEO &amp; Xarxes socials
+          {metaSaving && <span className="ml-auto text-ink-3 text-[8px]">Guardant...</span>}
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div>
+            <label className="f-mono text-label uppercase text-ink-2 block mb-1">
+              Meta description
+              <span className="ml-1 text-ink-3 normal-case">{metaDesc.length}/160</span>
+            </label>
+            <textarea
+              rows={3}
+              maxLength={160}
+              placeholder="Descripció breu que apareix a Google (max 160 caràcters)..."
+              value={metaDesc}
+              onChange={(e) => setMetaDesc(e.target.value)}
+              onBlur={saveMeta}
+              className="w-full bg-[#0d0d1a] border border-border-medium rounded p-2 text-xs text-ink-0 placeholder:text-ink-3 resize-none"
+            />
+            <div className="f-mono text-[9px] text-ink-3 mt-0.5">Apareix a Google i quan es comparteix a xarxes. Desa automàticament en sortir.</div>
+          </div>
+          <div>
+            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Imatge OG (Open Graph)</label>
+            <input
+              type="url"
+              placeholder="https://..."
+              value={ogImage}
+              onChange={(e) => setOgImage(e.target.value)}
+              onBlur={saveMeta}
+              className="w-full bg-[#0d0d1a] border border-border-medium rounded p-2 text-xs text-ink-0 placeholder:text-ink-3"
+            />
+            <div className="f-mono text-[9px] text-ink-3 mt-0.5">Imatge que apareix quan es comparteix el link a WhatsApp, Facebook, etc. (1200×630px recomanat)</div>
           </div>
         </div>
       </details>

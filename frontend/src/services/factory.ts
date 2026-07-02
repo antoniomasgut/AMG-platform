@@ -98,6 +98,9 @@ export interface LandingDetail {
   publicUrl: string;
   customDomain: string | null;
   domainVerified: boolean;
+  metaDescription?: string | null;
+  ogImageUrl?: string | null;
+  previewToken?: string | null;
   versions: VersionResponse[];
   createdAt: string;
   updatedAt: string;
@@ -223,6 +226,24 @@ export async function deleteLanding(tenantId: string, landingId: string): Promis
 export async function generatePreviewToken(tenantId: string, landingId: string): Promise<{ token: string; previewUrl: string }> {
   return apiFetch<{ token: string; previewUrl: string }>(
     `/engine/tenants/${tenantId}/landings/${landingId}/preview-token`,
+    { method: 'POST' }
+  );
+}
+
+export async function updateLandingMeta(
+  tenantId: string,
+  landingId: string,
+  data: { metaDescription?: string; ogImageUrl?: string }
+): Promise<void> {
+  await apiFetch<unknown>(`/engine/tenants/${tenantId}/landings/${landingId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function duplicateLanding(tenantId: string, landingId: string): Promise<LandingDetail> {
+  return apiFetch<LandingDetail>(
+    `/engine/tenants/${tenantId}/landings/${landingId}/duplicate`,
     { method: 'POST' }
   );
 }
