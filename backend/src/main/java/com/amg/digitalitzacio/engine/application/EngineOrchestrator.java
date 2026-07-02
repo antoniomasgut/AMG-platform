@@ -52,6 +52,7 @@ public class EngineOrchestrator implements EngineService {
     private final com.amg.digitalitzacio.billing.application.PostAcceptanceService postAcceptanceService;
     private final GoogleBusinessReviewSyncService googleBusinessReviewSyncService;
     private final TenantVariableResolver tenantVariableResolver;
+    private final AutoTranslationService autoTranslationService;
 
     // --- Landings ---
 
@@ -480,6 +481,39 @@ public class EngineOrchestrator implements EngineService {
         return toLandingResponse(landing);
     }
 
+    @Override
+    @Transactional
+    public List<VersionResponse> autoTranslate(UUID tenantId, UUID landingId,
+                                               String sourceLocale, List<String> targetLocales) {
+        var landing = findLanding(tenantId, landingId);
+        var src = landingVersionRepository
+                .findByLandingIdAndLocaleAndStatus(landing.getId(), sourceLocale, VersionStatus.PUBLISHED)
+                .or(() -> landingVersionRepository.findTopByLandingIdAndLocaleAndStatusOrderByVersionNumberDesc(
+                        landing.getId(), sourceLocale, VersionStatus.DRAFT))
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No s'ha trobat versió " + sourceLocale + " per traduir"));
+
+        var results = new ArrayList<VersionResponse>();
+        for (var targetLocale : targetLocales) {
+            if (targetLocale.equals(sourceLocale)) continue;
+            var translatedContent = autoTranslationService.translateContent(
+                    src.getContent(), sourceLocale, targetLocale);
+            var versionCount = landingVersionRepository.countByLandingIdAndLocale(landingId, targetLocale);
+            var v = LandingVersion.builder()
+                    .landingId(landingId)
+                    .versionNumber((int) versionCount + 1)
+                    .locale(targetLocale)
+                    .status(VersionStatus.DRAFT)
+                    .content(translatedContent)
+                    .styles(src.getStyles())
+                    .build();
+            v = landingVersionRepository.save(v);
+            results.add(toVersionResponse(v));
+            log.info("Versió {} creada per landing {} (traducció de {})", targetLocale, landingId, sourceLocale);
+        }
+        return results;
+    }
+
     /**
      * Build initial version content from template defaults, with tenant variable injection.
      * Returns {"blocks":[]} if no template or no sections.
@@ -752,7 +786,22 @@ public class EngineOrchestrator implements EngineService {
         final String heroPreload = heroImageUrl.isBlank() ? "" :
                 "<link rel=\"preload\" as=\"image\" href=\"" + escapeHtml(heroImageUrl) + "\">";
 
-        return "<!DOCTYPE html><html lang=\"" + escapeHtml(lang) + "\"><head>" +
+        // Idioma real de la versió servida (preferit per sobre del camp 'language' dels styles)
+        var currentLocale = (version.getLocale() != null && !version.getLocale().isBlank())
+                ? version.getLocale() : lang;
+        // Locales publicades per a hreflang i widget selector d'idioma
+        var publishedLocales = landingVersionRepository.findByLandingIdAndStatus(
+                        landing.getId(), VersionStatus.PUBLISHED)
+                .stream()
+                .map(LandingVersion::getLocale)
+                .filter(l -> l != null && !l.isBlank())
+                .distinct()
+                .sorted()
+                .toList();
+        var hreflangTags = buildHreflangTags(publicUrl, publishedLocales);
+        var langWidget   = buildLangWidget(publicUrl, publishedLocales, currentLocale, sv);
+
+        return "<!DOCTYPE html><html lang=\"" + escapeHtml(currentLocale) + "\"><head>" +
                "<meta charset=\"UTF-8\">" +
                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
                "<meta name=\"robots\" content=\"index, follow\">" +
@@ -763,7 +812,7 @@ public class EngineOrchestrator implements EngineService {
                (landing.getOgImageUrl() != null ? "<meta property=\"og:image\" content=\"" + escapeHtml(landing.getOgImageUrl()) + "\">" : "") +
                "<meta property=\"og:url\" content=\"" + escapeHtml(publicUrl) + "\">" +
                "<meta property=\"og:type\" content=\"website\">" +
-               "<meta property=\"og:locale\" content=\"" + escapeHtml(lang) + "_ES\">" +
+               "<meta property=\"og:locale\" content=\"" + escapeHtml(currentLocale) + "_ES\">" +
                // Twitter Card
                "<meta name=\"twitter:card\" content=\"summary_large_image\">" +
                "<meta name=\"twitter:title\" content=\"" + escapeHtml(landing.getTitle()) + "\">" +
@@ -772,6 +821,7 @@ public class EngineOrchestrator implements EngineService {
                "<link rel=\"canonical\" href=\"" + escapeHtml(publicUrl) + "\">" +
                // Preload imatge hero (millora LCP)
                heroPreload +
+               hreflangTags +
                "<title>" + escapeHtml(landing.getTitle()) + "</title>" +
                googleFontsLink +
                gaScript +
@@ -784,6 +834,7 @@ public class EngineOrchestrator implements EngineService {
                "</style>" +
                "</head><body>" +
                stickyNav +
+               langWidget +
                blocksHtml +
                // Lightbox global (galeries d'imatges)
                "<div id=\"lb-ov\" onclick=\"if(event.target===this)closeLb()\">" +
@@ -1007,6 +1058,39 @@ public class EngineOrchestrator implements EngineService {
         }
         html.append("</div></div></section>");
         return html.toString();
+    }
+
+    private String buildHreflangTags(String baseUrl, List<String> locales) {
+        if (locales.size() <= 1) return "";
+        var sb = new StringBuilder();
+        sb.append("<link rel=\"alternate\" hreflang=\"x-default\" href=\"").append(escapeHtml(baseUrl)).append("\">");
+        for (var loc : locales) {
+            sb.append("<link rel=\"alternate\" hreflang=\"").append(escapeHtml(loc)).append("\"")
+              .append(" href=\"").append(escapeHtml(baseUrl)).append("?lang=").append(escapeHtml(loc)).append("\">");
+        }
+        return sb.toString();
+    }
+
+    private String buildLangWidget(String baseUrl, List<String> locales, String currentLocale, StyleVars sv) {
+        if (locales.size() <= 1) return "";
+        var labels = Map.of("ca", "CA", "es", "ES", "en", "EN", "de", "DE");
+        var sb = new StringBuilder();
+        sb.append("<div style=\"position:fixed;top:72px;right:12px;z-index:9500;display:flex;gap:3px;")
+          .append("background:rgba(255,255,255,.92);backdrop-filter:blur(8px);")
+          .append("padding:4px 6px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,.12)\">");
+        for (var loc : locales) {
+            var label    = labels.getOrDefault(loc, loc.toUpperCase());
+            var isActive = loc.equals(currentLocale);
+            var style    = isActive
+                    ? "background:" + sv.primary() + ";color:#fff;"
+                    : "background:transparent;color:#555;";
+            sb.append("<a href=\"").append(escapeHtml(baseUrl)).append("?lang=").append(escapeHtml(loc)).append("\"")
+              .append(" style=\"").append(style)
+              .append("padding:4px 9px;border-radius:14px;text-decoration:none;font-size:.7rem;font-weight:700;")
+              .append("transition:background .2s\">").append(label).append("</a>");
+        }
+        sb.append("</div>");
+        return sb.toString();
     }
 
     private String buildStickyNav(String businessName, String logoUrl, StyleVars s) {

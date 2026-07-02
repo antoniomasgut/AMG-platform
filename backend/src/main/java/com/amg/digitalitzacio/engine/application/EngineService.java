@@ -27,4 +27,5 @@ public interface EngineService {
     ContactResponse submitContact(String slug, ContactRequest request);
     LandingStatsResponse getLandingStats(UUID tenantId, UUID landingId);
     Map<String, Long> getGlobalLandingsSummary();
+    List<VersionResponse> autoTranslate(UUID tenantId, UUID landingId, String sourceLocale, List<String> targetLocales);
 }

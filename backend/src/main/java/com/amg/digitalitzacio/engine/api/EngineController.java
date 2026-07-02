@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -144,11 +145,37 @@ public class EngineController {
 
     // --- Render (public) ---
 
+    private static final List<String> SUPPORTED_LOCALES = List.of("ca", "es", "en", "de");
+
+    private String resolveLocale(String lang, String acceptLanguage) {
+        if (lang != null && SUPPORTED_LOCALES.contains(lang)) return lang;
+        if (acceptLanguage != null && !acceptLanguage.isBlank()) {
+            return Arrays.stream(acceptLanguage.split(","))
+                .map(part -> part.split(";")[0].trim().toLowerCase())
+                .map(tag -> tag.length() >= 2 ? tag.substring(0, 2) : tag)
+                .filter(SUPPORTED_LOCALES::contains)
+                .findFirst()
+                .orElse("ca");
+        }
+        return "ca";
+    }
+
     @GetMapping(value = "/render/{slug}", produces = MediaType.TEXT_HTML_VALUE)
     public String renderLanding(@PathVariable String slug,
                                 @RequestHeader(value = "Host", required = false) String host,
-                                @RequestParam(defaultValue = "ca") String lang) {
-        return engineService.renderLanding(slug, host, lang);
+                                @RequestParam(required = false) String lang,
+                                @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage) {
+        return engineService.renderLanding(slug, host, resolveLocale(lang, acceptLanguage));
+    }
+
+    // --- Auto-translate ---
+
+    @PostMapping("/tenants/{tenantId}/landings/{landingId}/auto-translate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")
+    public List<VersionResponse> autoTranslate(@PathVariable UUID tenantId,
+                                               @PathVariable UUID landingId,
+                                               @RequestBody AutoTranslateRequest request) {
+        return engineService.autoTranslate(tenantId, landingId, request.sourceLocale(), request.targetLocales());
     }
 
     @GetMapping(value = "/render/{slug}/{locale}", produces = MediaType.TEXT_HTML_VALUE)
