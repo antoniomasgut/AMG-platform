@@ -30,6 +30,9 @@ spring:
     baseline-version: 1
     out-of-order: false
     validate-on-migrate: true
+    # Els JSON de les migracions de plantilles (V79/V80/V82) contenen "${"
+    # que Flyway interpretaria com a placeholder — cap migració usa placeholders reals
+    placeholder-replacement: false
 
   servlet:
     multipart:
