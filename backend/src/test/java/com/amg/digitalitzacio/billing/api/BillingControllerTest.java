@@ -259,7 +259,7 @@ class BillingControllerTest {
         mockMvc.perform(get("/api/v1/billing/tenants/{tenantId}/budgets", tenant.getId())
                 .header("Authorization", "Bearer " + superAdminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$.content", hasSize(1)));
     }
 
     /* ── TC-11: Cancel·lar pressupost — DRAFT → CANCELLED ── */

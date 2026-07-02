@@ -4,6 +4,7 @@ import com.amg.digitalitzacio.agents.domain.KnowledgeBaseRepository;
 import com.amg.digitalitzacio.agents.domain.KnowledgeEntryRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.api.dto.*;
+import com.amg.digitalitzacio.auth.application.ClientUserProvisioningService;
 import com.amg.digitalitzacio.auth.application.PhaseActivationService;
 import com.amg.digitalitzacio.auth.application.PhaseHealthService;
 import com.amg.digitalitzacio.auth.application.TenantService;
@@ -11,6 +12,8 @@ import com.amg.digitalitzacio.auth.domain.TenantPhaseActivation;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.billing.application.PostAcceptanceService;
 import com.amg.digitalitzacio.billing.domain.BudgetSetupIntakeRepository;
+import com.amg.digitalitzacio.engine.domain.LandingRepository;
+import com.amg.digitalitzacio.engine.domain.LandingStatus;
 import com.amg.digitalitzacio.hosting.domain.WebSiteRepository;
 import com.amg.digitalitzacio.hosting.domain.WebsiteStatus;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
@@ -48,6 +51,8 @@ public class TenantController {
     private final TenantChatLinkRepository chatLinkRepository;
     private final BudgetSetupIntakeRepository intakeRepository;
     private final WebSiteRepository webSiteRepository;
+    private final LandingRepository landingRepository;
+    private final ClientUserProvisioningService clientUserProvisioningService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
@@ -168,8 +173,10 @@ public class TenantController {
     public ResponseEntity<ReadinessResponse> getReadiness(@PathVariable UUID id) {
         boolean intakeCompleted = intakeRepository.existsByTenantIdAndStatus(id, "COMPLETE");
 
+        // Landing del motor (producte estàndard, mòduls 04/05) o web allotjada/importada (mòdul 29)
         var websites = webSiteRepository.findByTenantId(id);
-        boolean hasLanding = websites.stream().anyMatch(w -> w.getStatus() == WebsiteStatus.ACTIVE);
+        boolean hasLanding = landingRepository.countByTenantIdAndStatus(id, LandingStatus.PUBLISHED) > 0
+                || websites.stream().anyMatch(w -> w.getStatus() == WebsiteStatus.ACTIVE);
 
         boolean hasKbEntries = knowledgeBaseRepository.findByTenantId(id)
                 .map(kb -> knowledgeEntryRepository.countByKnowledgeBaseId(kb.getId()) > 0)
@@ -179,6 +186,7 @@ public class TenantController {
         boolean hasChannel = chatLink != null && (
                 Boolean.TRUE.equals(chatLink.getWhatsappEnabled()) ||
                 Boolean.TRUE.equals(chatLink.getEmailEnabled()) ||
+                Boolean.TRUE.equals(chatLink.getWidgetEnabled()) ||
                 chatLink.getTelegramChatId() != null
         );
 
@@ -189,24 +197,44 @@ public class TenantController {
     @PostMapping("/{id}/go-live")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void goLive(@PathVariable UUID id) {
+    public void goLive(@PathVariable UUID id, @AuthenticationPrincipal UserPrincipal principal) {
         var tenant = tenantRepository.findById(id)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Tenant not found: " + id));
-        if (tenant.getContractedPhases() != null && !tenant.getContractedPhases().isBlank()) {
-            tenant.setActivePhases(tenant.getContractedPhases());
-            tenantRepository.save(tenant);
+        if (tenant.getContractedPhases() == null || tenant.getContractedPhases().isBlank()) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.CONFLICT,
+                    "El tenant no té fases contractades — assigna-les abans del go-live");
         }
+        tenant.setActivePhases(tenant.getContractedPhases());
+        if (tenant.getBillingStartDate() == null && !Boolean.TRUE.equals(tenant.getIsFree())) {
+            tenant.setBillingStartDate(java.time.LocalDate.now());
+        }
+        tenantRepository.save(tenant);
+        // Historial de fases (idempotent si ja constaven actives des del pagament)
+        for (String phase : tenant.getContractedPhases().split(",")) {
+            phaseActivationService.recordActivation(id, phase.trim(), "GO_LIVE", null,
+                    principal != null ? principal.email() : null);
+        }
+        // Usuari CLIENT + invitació per establir contrasenya (si encara no en té)
+        clientUserProvisioningService.provisionForTenant(id);
         postAcceptanceService.onGoLive(id);
     }
 
     @PostMapping("/{id}/suspend")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void suspend(@PathVariable UUID id) {
+    public void suspend(@PathVariable UUID id, @AuthenticationPrincipal UserPrincipal principal) {
         var tenant = tenantRepository.findById(id)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Tenant not found: " + id));
+        // Registrar desactivació de les fases operatives (activePhases null = totes les contractades)
+        String effective = tenant.getActivePhases() != null ? tenant.getActivePhases() : tenant.getContractedPhases();
+        if (effective != null && !effective.isBlank()) {
+            for (String phase : effective.split(",")) {
+                phaseActivationService.recordDeactivation(id, phase.trim(),
+                        principal != null ? principal.email() : null);
+            }
+        }
         tenant.setActivePhases("");
         tenantRepository.save(tenant);
     }

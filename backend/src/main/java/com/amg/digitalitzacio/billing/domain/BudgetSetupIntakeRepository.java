@@ -15,5 +15,7 @@ public interface BudgetSetupIntakeRepository extends JpaRepository<BudgetSetupIn
 
     List<BudgetSetupIntake> findByStatusAndCompletedAtBefore(String status, Instant before);
 
+    List<BudgetSetupIntake> findByStatusInAndCreatedAtBefore(List<String> statuses, Instant before);
+
     boolean existsByTenantIdAndStatus(UUID tenantId, String status);
 }

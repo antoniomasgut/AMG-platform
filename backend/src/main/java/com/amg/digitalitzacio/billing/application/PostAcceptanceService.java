@@ -294,6 +294,59 @@ public class PostAcceptanceService {
         }
     }
 
+    /**
+     * El client va acceptar però no ha omplert la fitxa de configuració en 48h:
+     * recordatori amable al client per email + alerta a l'equip AMG.
+     */
+    public void onIntakePending(BudgetSetupIntake intake, long hoursWaiting) {
+        String intakeUrl = "https://amgdl.com/setup-intake/" + intake.getToken();
+
+        // Recordatori al client
+        try {
+            var tenant = tenantRepository.findById(intake.getTenantId()).orElse(null);
+            String clientEmail = tenant != null ? tenant.getEmail() : null;
+            String clientName  = tenant != null && tenant.getName() != null ? tenant.getName() : "client";
+            if (clientEmail != null && !clientEmail.isBlank()) {
+                String body = """
+                        Hola %s,
+
+                        Fa un parell de dies vas confirmar el teu servei amb AMG Digitalització — genial!
+
+                        Per poder-ho preparar tot, només ens falta que omplis la fitxa de configuració
+                        (triga uns 5 minuts):
+
+                        %s
+
+                        Si tens qualsevol dubte o prefereixes que ho fem junts per telèfon,
+                        respon a aquest correu o escriu-nos per WhatsApp.
+
+                        L'equip d'AMG Digitalització
+                        """.formatted(clientName, intakeUrl);
+                emailService.sendEmail(clientEmail, "Només et falta un pas — fitxa de configuració", body);
+            }
+        } catch (Exception e) {
+            log.warn("[PostAcceptance] No s'ha pogut enviar recordatori d'intake a tenant {}: {}",
+                    intake.getTenantId(), e.getMessage());
+        }
+
+        // Alerta interna
+        try {
+            String msg = """
+                    ⏳ <b>Fitxa de configuració sense omplir</b>
+                    👤 %s · %s
+                    ⏱ Fa %d hores que el client no l'omple (recordatori enviat)
+                    📋 <a href="%s">Fitxa →</a>
+                    """.formatted(
+                    intake.getTenantName() != null ? intake.getTenantName() : "Desconegut",
+                    intake.getSector() != null ? intake.getSector() : "—",
+                    hoursWaiting, intakeUrl);
+            sendToSalesChat(msg);
+        } catch (Exception e) {
+            log.warn("[PostAcceptance] Error notificant intake pendent tenant {}: {}",
+                    intake.getTenantId(), e.getMessage());
+        }
+    }
+
     public void onSetupSlaExpired(com.amg.digitalitzacio.billing.domain.BudgetSetupIntake intake, long hoursWaiting) {
         try {
             String tenantUrl = "https://amgdl.com/portal/admin/tenants/" + intake.getTenantId() + "/wizard";
@@ -411,10 +464,10 @@ public class PostAcceptanceService {
 
                 Hem rebut la confirmació del teu pressupost. Gràcies per confiar en nosaltres!
 
-                En les properes 48 hores:
+                Un cop completat el setup (i el pagament, si escau), en menys de 48 hores:
                 ✅ Activarem el teu agent IA
                 ✅ Configurarem els canals de comunicació
-                ✅ T'enviarem accés al teu panel de gestió
+                ✅ T'enviarem l'accés al teu panel de gestió
 
                 Per anar avançant, pots omplir ara la fitxa de configuració
                 (triga uns 5 minuts i ens permet preparar-ho tot):

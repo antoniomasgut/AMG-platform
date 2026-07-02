@@ -80,6 +80,8 @@ public class OnboardingSequenceScheduler {
     private void processActivation(TenantPhaseActivation activation, int day, String logType) {
         var tenant = tenantRepository.findById(activation.getTenantId()).orElse(null);
         if (tenant == null) return;
+        // Tenant suspès (activePhases = "" explícit): no enviar consells d'onboarding
+        if (tenant.getActivePhases() != null && tenant.getActivePhases().isBlank()) return;
 
         String clientName  = tenant.getName() != null ? tenant.getName() : "client";
         String clientEmail = tenant.getEmail();

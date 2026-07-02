@@ -16,6 +16,7 @@ public interface LandingRepository extends JpaRepository<Landing, UUID> {
     Optional<Landing> findByPreviewToken(String previewToken);
     boolean existsByTenantIdAndSlug(UUID tenantId, String slug);
     long countByTenantId(UUID tenantId);
+    long countByTenantIdAndStatus(UUID tenantId, LandingStatus status);
     long countByStatus(LandingStatus status);
 
     @Query("SELECT l FROM Landing l WHERE l.tenantId = :tenantId AND " +

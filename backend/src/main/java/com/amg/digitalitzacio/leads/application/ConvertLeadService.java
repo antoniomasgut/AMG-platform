@@ -45,6 +45,10 @@ public class ConvertLeadService {
                 ? req.billingAddress() + (req.billingCity() != null ? ", " + req.billingCity() : "")
                 : req.billingCity();
 
+        // Fases per defecte segons sector — sense fases el tenant queda inoperatiu
+        // (go-live bloquejat, isPhaseActive sempre fals, integracions F2/F3 mortes)
+        var defaultPhases = defaultPhasesForSector(req.sector());
+
         var newTenant = tenantService.createTenant(new CreateTenantRequest(
                 req.tenantName(), slug,
                 req.billingEmail(), req.billingPhone(),
@@ -53,7 +57,7 @@ public class ConvertLeadService {
                 req.billingPhone(),
                 null,
                 req.sector(), req.businessSize(),
-                null, null, false
+                defaultPhases, null, false
         ));
         UUID newTenantId = newTenant.id();
         log.info("Tenant creat des de lead {}: tenantId={}", leadId, newTenantId);
@@ -118,6 +122,20 @@ public class ConvertLeadService {
         leadRepo.save(lead);
 
         return new ConvertLeadResult(newTenantId, newTenant.name(), stripeUrl, goCardlessUrl, holdedInvoiceId);
+    }
+
+    // Mateix criteri que BillingOrchestrator.nexePhasesForSector (SP1):
+    // sectors amb agenda → F1+F2; sectors amb pressupostos → F1+F3; resta → F1
+    private java.util.List<String> defaultPhasesForSector(String sector) {
+        if (sector == null) return java.util.List.of("F1");
+        return switch (sector.toUpperCase()) {
+            case "FISIOTERAPEUTA", "PSICOLEG", "NUTRICIONISTA",
+                 "PERRUQUERIA", "ESTETICA", "VETERINARI", "PERRUQUERIA_CANINA",
+                 "RESTAURANTE", "GESTORIA", "ACADEMIA", "INMOBILIARIA" -> java.util.List.of("F1", "F2");
+            case "PINTOR", "ELECTRICISTA", "FONTANER", "JARDINER",
+                 "NETEJA", "TALLER_MECANIC" -> java.util.List.of("F1", "F3");
+            default -> java.util.List.of("F1");
+        };
     }
 
     private String toSlug(String name) {

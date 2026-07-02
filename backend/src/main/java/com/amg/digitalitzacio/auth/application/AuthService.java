@@ -162,8 +162,7 @@ public class AuthService {
                 .build();
         resetTokenRepository.save(resetToken);
 
-        var resetLink = "https://" + (user.getTenantId() != null ? "app" : "admin")
-                + ".amgdigitalitzacio.com/reset-password?token=" + token;
+        var resetLink = "https://amgdl.com/ca/reset-password?token=" + token;
         emailService.sendPasswordResetEmail(request.email(), resetLink);
     }
 

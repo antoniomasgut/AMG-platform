@@ -14,13 +14,16 @@ import java.time.temporal.ChronoUnit;
 import java.util.Set;
 
 // Comprova cada hora si hi ha setups completats sense activar en més de 24h
+// i fitxes de configuració que el client no ha omplert en més de 48h
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class SlaMonitorScheduler {
 
     private static final String LOG_TYPE = "SLA_SETUP_EXPIRED";
+    private static final String LOG_TYPE_INTAKE = "INTAKE_PENDING_48H";
     private static final long SLA_SETUP_TO_ACTIVE_HOURS = 24;
+    private static final long INTAKE_PENDING_HOURS = 48;
 
     private final BudgetSetupIntakeRepository intakeRepository;
     private final TenantRepository tenantRepository;
@@ -61,6 +64,32 @@ public class SlaMonitorScheduler {
             log2.setType(LOG_TYPE);
             log2.setEntityId(intake.getId());
             followupLogRepository.save(log2);
+        }
+    }
+
+    /**
+     * Fitxes de configuració que el client no ha omplert en 48h des de l'acceptació:
+     * recordatori al client (email) + alerta a l'equip AMG (Telegram). Un sol avís per intake.
+     */
+    @Scheduled(cron = "0 30 * * * *")
+    public void checkIntakePendingSla() {
+        Instant deadline = Instant.now().minus(INTAKE_PENDING_HOURS, ChronoUnit.HOURS);
+        var pending = intakeRepository.findByStatusInAndCreatedAtBefore(
+                java.util.List.of("PENDING", "IN_PROGRESS"), deadline);
+
+        for (var intake : pending) {
+            if (followupLogRepository.existsByTenantIdAndTypeAndEntityId(
+                    intake.getTenantId(), LOG_TYPE_INTAKE, intake.getId())) continue;
+
+            long hoursWaiting = ChronoUnit.HOURS.between(intake.getCreatedAt(), Instant.now());
+            log.warn("[SLA] Fitxa de configuració sense omplir fa {}h — tenant {}", hoursWaiting, intake.getTenantId());
+            postAcceptanceService.onIntakePending(intake, hoursWaiting);
+
+            var entry = new FollowupLog();
+            entry.setTenantId(intake.getTenantId());
+            entry.setType(LOG_TYPE_INTAKE);
+            entry.setEntityId(intake.getId());
+            followupLogRepository.save(entry);
         }
     }
 }

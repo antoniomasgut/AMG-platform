@@ -13,6 +13,7 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
+    boolean existsByTenantIdAndRole(UUID tenantId, Role role);
 
     @Query("""
             SELECT u FROM User u
