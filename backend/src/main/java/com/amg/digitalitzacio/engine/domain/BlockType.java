@@ -15,5 +15,12 @@ public enum BlockType {
     PRICING,
     TEAM,
     VIDEO,
-    REVIEWS
+    REVIEWS,
+    TRUST_BAR,
+    CHAT_CTA;
+
+    /** Nom del tipus de bloc per al JSON de la landing (guions, no guions baixos). */
+    public String typeName() {
+        return name().toLowerCase().replace('_', '-');
+    }
 }

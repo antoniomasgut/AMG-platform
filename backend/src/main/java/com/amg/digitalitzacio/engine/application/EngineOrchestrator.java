@@ -482,7 +482,7 @@ public class EngineOrchestrator implements EngineService {
                 .map(section -> {
                     Map<String, Object> block = new LinkedHashMap<>();
                     block.put("id", "blk_" + UUID.randomUUID().toString().substring(0, 8));
-                    block.put("type", section.getBlockType().name().toLowerCase());
+                    block.put("type", section.getBlockType().typeName());
                     Map<String, Object> props = new LinkedHashMap<>();
                     if (section.getDefaultProps() != null && !section.getDefaultProps().isBlank()) {
                         var parsed = fromJson(section.getDefaultProps());
@@ -511,7 +511,7 @@ public class EngineOrchestrator implements EngineService {
                 .map(section -> {
                     Map<String, Object> block = new LinkedHashMap<>();
                     block.put("id", "blk_" + UUID.randomUUID().toString().substring(0, 8));
-                    block.put("type", section.getBlockType().name().toLowerCase());
+                    block.put("type", section.getBlockType().typeName());
                     // Merge: start with defaultProps, overlay with filled content
                     Map<String, Object> props = new LinkedHashMap<>();
                     if (section.getDefaultProps() != null && !section.getDefaultProps().isBlank()) {
