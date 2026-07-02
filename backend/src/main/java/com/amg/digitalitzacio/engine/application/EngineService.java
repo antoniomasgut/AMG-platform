@@ -28,4 +28,5 @@ public interface EngineService {
     LandingStatsResponse getLandingStats(UUID tenantId, UUID landingId);
     Map<String, Long> getGlobalLandingsSummary();
     List<VersionResponse> autoTranslate(UUID tenantId, UUID landingId, String sourceLocale, List<String> targetLocales);
+    LandingDefaultsResponse getLandingDefaults(UUID tenantId);
 }

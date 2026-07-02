@@ -178,6 +178,12 @@ public class EngineController {
         return engineService.autoTranslate(tenantId, landingId, request.sourceLocale(), request.targetLocales());
     }
 
+    @GetMapping("/tenants/{tenantId}/landing-defaults")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")
+    public LandingDefaultsResponse getLandingDefaults(@PathVariable UUID tenantId) {
+        return engineService.getLandingDefaults(tenantId);
+    }
+
     @GetMapping(value = "/render/{slug}/{locale}", produces = MediaType.TEXT_HTML_VALUE)
     public String renderLandingLocale(@PathVariable String slug, @PathVariable String locale,
                                       @RequestHeader(value = "Host", required = false) String host) {

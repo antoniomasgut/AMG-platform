@@ -524,6 +524,32 @@ public class EngineOrchestrator implements EngineService {
         return results;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public LandingDefaultsResponse getLandingDefaults(UUID tenantId) {
+        var vars    = tenantVariableResolver.buildVariables(tenantId);
+        var name    = vars.getOrDefault("BUSINESS_NAME", "");
+        var phone   = vars.getOrDefault("PHONE", "");
+        var email   = vars.getOrDefault("EMAIL", "");
+        var address = vars.getOrDefault("ADDRESS", "");
+        var city    = vars.getOrDefault("CITY", "");
+        var sector  = vars.getOrDefault("SECTOR", "");
+
+        var heroSuggestions = new java.util.HashMap<String, String>();
+        if (!name.isBlank()) {
+            heroSuggestions.put("title", name + (city.isBlank() ? "" : " · " + city));
+            heroSuggestions.put("subtitle", "Contacta amb nosaltres per a més informació.");
+        }
+        var contactSuggestions = new java.util.HashMap<String, String>();
+        contactSuggestions.put("phone", phone);
+        contactSuggestions.put("email", email);
+        contactSuggestions.put("address", address);
+
+        return new LandingDefaultsResponse(name, phone, email, address, city, sector, phone,
+                java.util.Collections.unmodifiableMap(heroSuggestions),
+                java.util.Collections.unmodifiableMap(contactSuggestions));
+    }
+
     /**
      * Build initial version content from template defaults, with tenant variable injection.
      * Returns {"blocks":[]} if no template or no sections.
@@ -1018,7 +1044,16 @@ public class EngineOrchestrator implements EngineService {
                "#lb-p,#lb-n{position:absolute;top:50%;transform:translateY(-50%);color:#fff;font-size:1.8rem;cursor:pointer;background:rgba(255,255,255,.15);border:none;padding:14px 20px;border-radius:8px;line-height:1;user-select:none;transition:background .2s}" +
                "#lb-p:hover,#lb-n:hover{background:rgba(255,255,255,.3)}" +
                "#lb-p{left:12px}#lb-n{right:12px}" +
-               "@media(max-width:640px){#lb-p,#lb-n{padding:10px 14px;font-size:1.4rem}}";
+               "@media(max-width:640px){#lb-p,#lb-n{padding:10px 14px;font-size:1.4rem}}" +
+               // Before/After slider
+               ".ba-wrap{position:relative;overflow:hidden;border-radius:12px;max-width:900px;margin:0 auto;user-select:none;cursor:col-resize}" +
+               ".ba-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}" +
+               ".ba-after{clip-path:inset(0 50% 0 0);transition:clip-path .05s}" +
+               ".ba-divider{position:absolute;top:0;bottom:0;left:50%;width:3px;background:#fff;transform:translateX(-50%);z-index:3}" +
+               ".ba-handle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:42px;height:42px;background:#fff;border-radius:50%;box-shadow:0 2px 12px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;z-index:4;font-size:18px;color:#374151}" +
+               ".ba-label{position:absolute;top:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:4px 10px;border-radius:4px;z-index:2}" +
+               ".ba-label-before{left:12px;background:rgba(0,0,0,.5);color:#fff}" +
+               ".ba-label-after{right:12px;background:var(--p);color:#fff}";
     }
 
     @SuppressWarnings("unchecked")
@@ -1129,6 +1164,62 @@ public class EngineOrchestrator implements EngineService {
         }
         html.append("</div></div></section>");
         return html.toString();
+    }
+
+    private String renderBeforeAfter(Map<String, Object> props, StyleVars s) {
+        var beforeImg   = str(props, "beforeImage", "");
+        var afterImg    = str(props, "afterImage", "");
+        var title       = str(props, "title", "");
+        var beforeLbl   = str(props, "beforeLabel", "Abans");
+        var afterLbl    = str(props, "afterLabel", "Després");
+        var aspectRatio = str(props, "aspectRatio", "56.25");
+        var id = "ba-" + Math.abs((beforeImg + afterImg).hashCode());
+
+        var inner = new StringBuilder();
+        if (!title.isBlank()) {
+            inner.append("<h2 class=\"sec-title\" data-anim>").append(escapeHtml(title)).append("</h2>");
+        }
+        inner.append("<div class=\"ba-wrap\" id=\"").append(id)
+             .append("\" style=\"padding-top:").append(escapeHtml(aspectRatio)).append("%\">");
+        if (!beforeImg.isBlank()) {
+            inner.append("<img class=\"ba-img\" src=\"").append(escapeHtml(beforeImg))
+                 .append("\" alt=\"").append(escapeHtml(beforeLbl)).append("\" loading=\"lazy\">");
+        }
+        if (!afterImg.isBlank()) {
+            inner.append("<img class=\"ba-img ba-after\" id=\"").append(id).append("-after\" src=\"")
+                 .append(escapeHtml(afterImg)).append("\" alt=\"").append(escapeHtml(afterLbl))
+                 .append("\" loading=\"lazy\">");
+        }
+        inner.append("<div class=\"ba-divider\" id=\"").append(id).append("-div\"></div>");
+        inner.append("<div class=\"ba-handle\" id=\"").append(id).append("-hdl\">&#8644;</div>");
+        inner.append("<span class=\"ba-label ba-label-before\">").append(escapeHtml(beforeLbl)).append("</span>");
+        inner.append("<span class=\"ba-label ba-label-after\">").append(escapeHtml(afterLbl)).append("</span>");
+        inner.append("</div>");
+
+        inner.append("<script>(function(){")
+             .append("var wrap=document.getElementById('").append(id).append("');")
+             .append("var after=document.getElementById('").append(id).append("-after');")
+             .append("var div=document.getElementById('").append(id).append("-div');")
+             .append("var hdl=document.getElementById('").append(id).append("-hdl');")
+             .append("if(!wrap||!after)return;")
+             .append("function setPos(pct){var p=Math.max(0,Math.min(100,pct));")
+             .append("after.style.clipPath='inset(0 '+(100-p)+'% 0 0)';")
+             .append("div.style.left=p+'%';hdl.style.left=p+'%';}")
+             .append("function getX(e){return e.touches?e.touches[0].clientX:e.clientX;}")
+             .append("var drag=false;")
+             .append("function start(e){drag=true;e.preventDefault();}")
+             .append("function move(e){if(!drag)return;var r=wrap.getBoundingClientRect();setPos((getX(e)-r.left)/r.width*100);}")
+             .append("function end(){drag=false;}")
+             .append("hdl.addEventListener('mousedown',start);")
+             .append("hdl.addEventListener('touchstart',start,{passive:false});")
+             .append("document.addEventListener('mousemove',move);")
+             .append("document.addEventListener('touchmove',move,{passive:false});")
+             .append("document.addEventListener('mouseup',end);")
+             .append("document.addEventListener('touchend',end);")
+             .append("setPos(50);")
+             .append("})();</script>");
+
+        return "<section class=\"sec\"><div class=\"w\">" + inner + "</div></section>";
     }
 
     private String buildHreflangTags(String baseUrl, List<String> locales) {
@@ -1248,6 +1339,7 @@ public class EngineOrchestrator implements EngineService {
             case "trust-bar"     -> renderTrustBar(props, s);
             case "gallery"       -> renderGallery(props, s);
             case "steps"         -> renderSteps(props, s);
+            case "before-after"  -> renderBeforeAfter(props, s);
             default              -> "";
         };
     }
