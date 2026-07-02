@@ -21,6 +21,7 @@ services:
       JASYPT_ENCRYPTOR_PASSWORD: ${JASYPT_ENCRYPTOR_PASSWORD}
       VAULT_MASTER_KEY: ${VAULT_MASTER_KEY}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS}
+      DEMO_TENANT_ID: ${DEMO_TENANT_ID}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`api.amgdl.com`)"
