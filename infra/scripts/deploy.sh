@@ -106,6 +106,9 @@ ssh "$PROD_HOST" "
 "
 ok "Contenidors actualitzats"
 
+# Traefik necessita reinici per actualitzar la IP dels contenidors recreats
+ssh "$PROD_HOST" "docker restart coolify-proxy > /dev/null 2>&1 || true"
+
 # ── 7. Netejar imatges antigues ───────────────────────────────────────────
 ssh "$PROD_HOST" "docker image prune -f > /dev/null 2>&1 || true"
 ok "Imatges dangling eliminades"

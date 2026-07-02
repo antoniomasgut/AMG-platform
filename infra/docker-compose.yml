@@ -113,6 +113,7 @@ services:
       JASYPT_ENCRYPTOR_PASSWORD: ${JASYPT_ENCRYPTOR_PASSWORD:?JASYPT_ENCRYPTOR_PASSWORD required}
       VAULT_MASTER_KEY: ${VAULT_MASTER_KEY:?VAULT_MASTER_KEY required}
       HOSTING_DATA_PATH: /data/websites
+      DEMO_TENANT_ID: ${DEMO_TENANT_ID}
     volumes:
       # SECURITY: RW Docker socket necessari per DockerService.createStaticContainer()
       # (crea contenidors Nginx per landings). Migrar a docker-java SDK per eliminar-lo.
