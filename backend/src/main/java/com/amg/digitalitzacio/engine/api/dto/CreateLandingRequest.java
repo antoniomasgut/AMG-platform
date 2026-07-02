@@ -9,5 +9,6 @@ public record CreateLandingRequest(
     String landingType,
     UUID serviceId,
     UUID templateId,
-    String styles
+    String styles,
+    String ogImageUrl
 ) {}

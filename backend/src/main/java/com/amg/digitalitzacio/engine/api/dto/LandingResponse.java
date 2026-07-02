@@ -19,6 +19,8 @@ public record LandingResponse(
     String domainOwnerName,
     String domainOwnerEmail,
     String domainOwnerPhone,
+    String metaDescription,
+    String ogImageUrl,
     List<VersionResponse> versions,
     String previewToken,
     Instant createdAt,

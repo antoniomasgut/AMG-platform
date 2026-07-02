@@ -31,4 +31,5 @@ public interface EngineService {
     LandingDefaultsResponse getLandingDefaults(UUID tenantId);
     Map<String, String> generatePreviewToken(UUID tenantId, UUID landingId);
     String renderLandingByPreviewToken(String token, String locale);
+    LandingResponse duplicateLanding(UUID tenantId, UUID landingId);
 }

@@ -191,6 +191,13 @@ public class EngineController {
         return engineService.generatePreviewToken(tenantId, landingId);
     }
 
+    @PostMapping("/tenants/{tenantId}/landings/{landingId}/duplicate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LandingResponse duplicateLanding(@PathVariable UUID tenantId, @PathVariable UUID landingId) {
+        return engineService.duplicateLanding(tenantId, landingId);
+    }
+
     @GetMapping(value = "/preview/{token}", produces = MediaType.TEXT_HTML_VALUE)
     public String renderPreview(@PathVariable String token,
                                 @RequestParam(required = false) String lang,

@@ -131,6 +131,7 @@ public class EngineOrchestrator implements EngineService {
             landing.setSlug(request.slug());
         }
         if (request.metaDescription() != null) landing.setMetaDescription(request.metaDescription());
+        if (request.ogImageUrl() != null) landing.setOgImageUrl(request.ogImageUrl());
         if (request.landingType() != null) landing.setLandingType(parseLandingType(request.landingType()));
 
         landing = landingRepository.save(landing);
@@ -586,6 +587,43 @@ public class EngineOrchestrator implements EngineService {
         return html.replaceFirst("(<body[^>]*>)", "$1" + banner);
     }
 
+    @Override
+    @Transactional
+    public LandingResponse duplicateLanding(UUID tenantId, UUID originalId) {
+        var original = findLanding(tenantId, originalId);
+        var baseSlug = original.getSlug() + "-copia";
+        var slug = baseSlug;
+        int attempt = 1;
+        while (landingRepository.existsByTenantIdAndSlug(tenantId, slug)) {
+            attempt++;
+            slug = baseSlug + "-" + attempt;
+        }
+        var copy = Landing.builder()
+                .tenantId(tenantId)
+                .serviceId(original.getServiceId())
+                .title(original.getTitle() + " (còpia)")
+                .slug(slug)
+                .metaDescription(original.getMetaDescription())
+                .ogImageUrl(original.getOgImageUrl())
+                .landingType(original.getLandingType())
+                .templateId(original.getTemplateId())
+                .status(LandingStatus.DRAFT)
+                .build();
+        copy = landingRepository.save(copy);
+        var srcVersion = landingVersionRepository
+                .findTopByLandingIdOrderByVersionNumberDesc(original.getId())
+                .orElse(null);
+        var versionBuilder = LandingVersion.builder()
+                .landingId(copy.getId())
+                .versionNumber(1)
+                .status(VersionStatus.DRAFT);
+        if (srcVersion != null) {
+            versionBuilder.content(srcVersion.getContent()).styles(srcVersion.getStyles());
+        }
+        landingVersionRepository.save(versionBuilder.build());
+        return toLandingResponse(copy);
+    }
+
     /**
      * Build initial version content from template defaults, with tenant variable injection.
      * Returns {"blocks":[]} if no template or no sections.
@@ -735,6 +773,8 @@ public class EngineOrchestrator implements EngineService {
                 landing.getDomainOwnerName(),
                 landing.getDomainOwnerEmail(),
                 landing.getDomainOwnerPhone(),
+                landing.getMetaDescription(),
+                landing.getOgImageUrl(),
                 versions,
                 landing.getPreviewToken(),
                 landing.getCreatedAt(),
