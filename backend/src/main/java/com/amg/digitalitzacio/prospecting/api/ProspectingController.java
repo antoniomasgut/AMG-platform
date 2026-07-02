@@ -237,6 +237,12 @@ public class ProspectingController {
         return service.generateDemo(id);
     }
 
+    @PostMapping("/prospects/{id}/send-pitch")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public Map<String, String> sendPitch(@PathVariable UUID id) {
+        return service.sendPitch(id);
+    }
+
     @PostMapping(value = "/campaigns/{id}/import-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public ResponseEntity<Map<String, Integer>> importCsv(

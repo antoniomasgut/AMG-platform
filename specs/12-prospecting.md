@@ -1,7 +1,7 @@
 # Mòdul 12: Prospecting — Cerca i Gestió de Clients Potencials
 
-> **Versió:** 2.0
-> **Data:** 2026-06-30
+> **Versió:** 2.2
+> **Data:** 2026-07-02
 > **Dependències:** Mòdul 01 (Auth), Mòdul 03 (Leads), Mòdul 15 (Demo), Mòdul 30 (Chat Widget), Mòdul 41 (Agent Tool Calling)
 > **Canvis v2:** Scoring ampliat (0-100), web scraping profund, detecció de xarxes socials, informe IA, demo automàtica, generació de widget JS, missatge personalitzat IA, classificació per rang, dashboard
 
@@ -596,7 +596,27 @@ Retorna grups de prospects duplicats entre campanyes del sistema:
 
 ---
 
-## 22. Pendents (⚠️)
+## 22. Indicadors visuals a la llista de prospects
+
+### 22.1 Badge "ja digitalitzat"
+
+A la llista de prospects, quan `has_chat_widget = true` (el negoci ja té un chat widget detectat a la seva web), es mostra un badge visual **"ja digitalitzat"**.
+
+- **Propòsit**: identificar ràpidament prospects que ja han pres mesures de digitalització i que, per tant, podrien ser menys receptius a la proposta de chat widget, però potencialment receptius a un servei millor (agent IA vs. widget genèric)
+- **Implementació**: camp `hasChatWidget` del DTO `ProspectResponse`; renderitzat al component de llista del frontend
+- **Scoring relacionat**: el senyal `NO_CHAT` (§5.2) no aplica si `has_chat_widget = true`
+
+### 22.2 URL de la demo del prospect
+
+El camp `demo_url` d'un `Prospect` apunta a la **landing renderitzada** pel motor:
+```
+https://api.amgdl.com/api/v1/engine/render/demo-{token}
+```
+No apunta mai a `/demo/inbox/{token}` (ruta legacy interna). La URL pública de la landing és l'única que es comparteix amb el prospect.
+
+---
+
+## 23. Pendents (⚠️)
 
 - **GBP API** (Google Business Profile): ressenyes, Q&A, popularitat — pendent d'integrar V71 amb el pipeline de prospecció
 - **Enviament automàtic de pitch**: el canal és detectat però l'enviament real (email/WhatsApp) no s'executa automàticament — pendent d'integrar amb Spec 20/43

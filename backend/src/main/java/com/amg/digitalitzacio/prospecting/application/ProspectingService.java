@@ -47,4 +47,7 @@ public interface ProspectingService {
     Map<String, Integer> importCsv(UUID campaignId, MultipartFile file);
     List<DuplicateGroupResponse> findDuplicates();
     void trackPitchOpen(UUID prospectId);
+
+    // Spec 12 v2.2 — enviament automàtic de pitch
+    Map<String, String> sendPitch(UUID prospectId);
 }

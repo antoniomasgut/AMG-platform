@@ -1,7 +1,7 @@
 # Mòdul 15: Demo — Landing interactiva amb agent IA per sector
 
-> **Versió:** 2.0
-> **Data:** 2026-06-08
+> **Versió:** 2.1
+> **Data:** 2026-07-02
 > **Dependències:** Mòdul 04 (Engine), Mòdul 26 (RAG/SectorTemplate), Mòdul 30 (Chat Widget), Mòdul 01 (Auth)
 
 ---
@@ -145,6 +145,7 @@ Les rutes `/api/v1/demo/inbox/**` i `/api/v1/admin/demo/inbox` segueixen funcion
 | PERRUQUERIA_CANINA | El teu millor amic mereix el millor |
 | INMOBILIARIA | La teva llar ideal t'espera |
 | AGENCIA_IA | Automatitza el teu negoci amb IA |
+| PINTOR | Pintura professional, acabats impecables |
 
 ---
 

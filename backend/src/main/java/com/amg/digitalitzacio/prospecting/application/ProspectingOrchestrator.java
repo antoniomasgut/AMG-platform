@@ -40,6 +40,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     private final ProspectDemoGeneratorService prospectDemoGeneratorService;
     private final ProspectMessageGeneratorService prospectMessageGeneratorService;
     private final ProspectCsvImportService prospectCsvImportService;
+    private final ProspectPitchSenderService prospectPitchSenderService;
 
     private static final int TIER_PRIORITY = 81;
     private static final int TIER_DEMO = 61;
@@ -83,6 +84,7 @@ public class ProspectingOrchestrator implements ProspectingService {
                 .createdBy(createdBy)
                 .scheduledNextRun(request.scheduledNextRun())
                 .repeatIntervalDays(request.repeatIntervalDays())
+                .autoSendEmail(Boolean.TRUE.equals(request.autoSendEmail()))
                 .build();
         campaign = campaignRepository.save(campaign);
         return toCampaignResponse(campaign);
@@ -120,6 +122,7 @@ public class ProspectingOrchestrator implements ProspectingService {
         if (request.scheduled() != null) campaign.setStatus(request.scheduled() ? CampaignStatus.SCHEDULED : CampaignStatus.DRAFT);
         if (request.scheduledNextRun() != null) campaign.setScheduledNextRun(request.scheduledNextRun());
         if (request.repeatIntervalDays() != null) campaign.setRepeatIntervalDays(request.repeatIntervalDays());
+        if (request.autoSendEmail() != null) campaign.setAutoSendEmail(request.autoSendEmail());
         campaign = campaignRepository.save(campaign);
         return toCampaignResponse(campaign);
     }
@@ -505,7 +508,7 @@ public class ProspectingOrchestrator implements ProspectingService {
         return new CampaignResponse(c.getId(), c.getName(), c.getSector(), c.getLocation(),
                 c.getSource().name(), c.getStatus().name(), c.getTotalFound(), c.getTotalExported(),
                 c.getSearchParams(), c.getNotes(), c.getCreatedBy(), c.getCreatedAt(), c.getUpdatedAt(),
-                c.getScheduledNextRun(), c.getRepeatIntervalDays());
+                c.getScheduledNextRun(), c.getRepeatIntervalDays(), c.getAutoSendEmail());
     }
 
     @Override
@@ -722,6 +725,11 @@ public class ProspectingOrchestrator implements ProspectingService {
         prospectRepository.save(p);
         // Genera demo automàticament si és PRIORITY
         prospectDemoGeneratorService.generateIfEligible(p);
+        // Envia pitch per email si la campanya té autoSendEmail activat
+        var campaign = campaignRepository.findById(p.getCampaignId()).orElse(null);
+        if (campaign != null && Boolean.TRUE.equals(campaign.getAutoSendEmail())) {
+            prospectPitchSenderService.send(p);
+        }
         return toProspectResponse(p);
     }
 
@@ -776,6 +784,20 @@ public class ProspectingOrchestrator implements ProspectingService {
     @Override
     public Map<String, Integer> importCsv(UUID campaignId, MultipartFile file) {
         return prospectCsvImportService.importCsv(campaignId, file);
+    }
+
+    @Override
+    @Transactional
+    public Map<String, String> sendPitch(UUID prospectId) {
+        var p = prospectRepository.findById(prospectId)
+                .orElseThrow(() -> new com.amg.digitalitzacio.shared.exception.ResourceNotFoundException("Prospect not found: " + prospectId));
+        var result = prospectPitchSenderService.send(p);
+        return Map.of(
+                "channel", result.channel(),
+                "target",  result.target()  != null ? result.target()  : "",
+                "status",  result.status(),
+                "reason",  result.reason()  != null ? result.reason()  : ""
+        );
     }
 
     @Override

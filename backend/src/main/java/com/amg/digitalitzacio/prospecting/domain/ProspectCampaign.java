@@ -64,6 +64,10 @@ public class ProspectCampaign {
     @Builder.Default
     private Integer totalDiscarded = 0;
 
+    // Enviament automàtic de pitch per email al generar l'informe IA
+    @Builder.Default
+    private Boolean autoSendEmail = false;
+
     // Seqüència automàtica de follow-up
     @Builder.Default
     private Boolean autoSequenceEnabled = false;

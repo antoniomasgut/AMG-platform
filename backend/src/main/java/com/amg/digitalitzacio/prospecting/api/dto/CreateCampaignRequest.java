@@ -15,5 +15,6 @@ public record CreateCampaignRequest(
         String notes,
         Boolean scheduled,
         Instant scheduledNextRun,
-        Integer repeatIntervalDays
+        Integer repeatIntervalDays,
+        Boolean autoSendEmail
 ) {}

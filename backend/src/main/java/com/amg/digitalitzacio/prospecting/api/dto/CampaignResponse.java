@@ -8,5 +8,6 @@ public record CampaignResponse(
         String source, String status, Integer totalFound, Integer totalExported,
         String searchParams, String notes, UUID createdBy,
         Instant createdAt, Instant updatedAt,
-        Instant scheduledNextRun, Integer repeatIntervalDays
+        Instant scheduledNextRun, Integer repeatIntervalDays,
+        Boolean autoSendEmail
 ) {}
