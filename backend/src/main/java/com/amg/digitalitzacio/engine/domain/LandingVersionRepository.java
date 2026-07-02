@@ -26,6 +26,8 @@ public interface LandingVersionRepository extends JpaRepository<LandingVersion, 
     Optional<LandingVersion> findByLandingIdAndLocaleAndStatus(
             UUID landingId, String locale, VersionStatus status);
 
+    Optional<LandingVersion> findTopByLandingIdOrderByVersionNumberDesc(UUID landingId);
+
     long countByLandingId(UUID landingId);
 
     long countByLandingIdAndLocale(UUID landingId, String locale);

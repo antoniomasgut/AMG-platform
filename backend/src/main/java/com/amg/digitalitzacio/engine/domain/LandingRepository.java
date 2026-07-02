@@ -13,6 +13,7 @@ public interface LandingRepository extends JpaRepository<Landing, UUID> {
     Page<Landing> findByTenantId(UUID tenantId, Pageable pageable);
     Optional<Landing> findByTenantIdAndId(UUID tenantId, UUID id);
     Optional<Landing> findBySlug(String slug);
+    Optional<Landing> findByPreviewToken(String previewToken);
     boolean existsByTenantIdAndSlug(UUID tenantId, String slug);
     long countByTenantId(UUID tenantId);
     long countByStatus(LandingStatus status);

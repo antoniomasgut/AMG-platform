@@ -29,4 +29,6 @@ public interface EngineService {
     Map<String, Long> getGlobalLandingsSummary();
     List<VersionResponse> autoTranslate(UUID tenantId, UUID landingId, String sourceLocale, List<String> targetLocales);
     LandingDefaultsResponse getLandingDefaults(UUID tenantId);
+    Map<String, String> generatePreviewToken(UUID tenantId, UUID landingId);
+    String renderLandingByPreviewToken(String token, String locale);
 }

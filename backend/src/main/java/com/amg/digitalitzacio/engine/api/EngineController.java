@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -182,6 +183,19 @@ public class EngineController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")
     public LandingDefaultsResponse getLandingDefaults(@PathVariable UUID tenantId) {
         return engineService.getLandingDefaults(tenantId);
+    }
+
+    @PostMapping("/tenants/{tenantId}/landings/{landingId}/preview-token")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")
+    public Map<String, String> generatePreviewToken(@PathVariable UUID tenantId, @PathVariable UUID landingId) {
+        return engineService.generatePreviewToken(tenantId, landingId);
+    }
+
+    @GetMapping(value = "/preview/{token}", produces = MediaType.TEXT_HTML_VALUE)
+    public String renderPreview(@PathVariable String token,
+                                @RequestParam(required = false) String lang,
+                                @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage) {
+        return engineService.renderLandingByPreviewToken(token, resolveLocale(lang, acceptLanguage));
     }
 
     @GetMapping(value = "/render/{slug}/{locale}", produces = MediaType.TEXT_HTML_VALUE)

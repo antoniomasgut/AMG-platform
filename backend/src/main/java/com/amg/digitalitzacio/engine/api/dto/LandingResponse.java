@@ -20,6 +20,7 @@ public record LandingResponse(
     String domainOwnerEmail,
     String domainOwnerPhone,
     List<VersionResponse> versions,
+    String previewToken,
     Instant createdAt,
     Instant updatedAt
 ) {}

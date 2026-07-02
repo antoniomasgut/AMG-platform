@@ -39,6 +39,7 @@ public class Landing {
     @Enumerated(EnumType.STRING) @Builder.Default @Column(name = "landing_type", nullable = false, length = 10) private LandingType landingType = LandingType.MICRO;
     @Builder.Default @Column(name = "is_active", nullable = false) private Boolean isActive = true;
     @Builder.Default @Column(name = "view_count", nullable = false) private Long viewCount = 0L;
+    @Column(name = "preview_token", unique = true, length = 64) private String previewToken;
     @CreatedDate @Column(updatable = false) private Instant createdAt;
     @LastModifiedDate private Instant updatedAt;
 }

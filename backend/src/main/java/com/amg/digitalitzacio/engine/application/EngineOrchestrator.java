@@ -550,6 +550,42 @@ public class EngineOrchestrator implements EngineService {
                 java.util.Collections.unmodifiableMap(contactSuggestions));
     }
 
+    @Override
+    @Transactional
+    public Map<String, String> generatePreviewToken(UUID tenantId, UUID landingId) {
+        var landing = findLanding(tenantId, landingId);
+        if (landing.getPreviewToken() == null) {
+            landing.setPreviewToken(java.util.UUID.randomUUID().toString().replace("-", ""));
+            landingRepository.save(landing);
+        }
+        var token = landing.getPreviewToken();
+        return Map.of("token", token, "previewUrl", "/api/v1/engine/preview/" + token);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String renderLandingByPreviewToken(String token, String locale) {
+        var landing = landingRepository.findByPreviewToken(token)
+                .orElseThrow(() -> new com.amg.digitalitzacio.shared.exception.ResourceNotFoundException("Preview no trobat"));
+        var version = landingVersionRepository
+                .findTopByLandingIdAndStatusOrderByVersionNumberDesc(landing.getId(), VersionStatus.DRAFT)
+                .or(() -> landingVersionRepository.findTopByLandingIdOrderByVersionNumberDesc(landing.getId()))
+                .orElseThrow(() -> new com.amg.digitalitzacio.shared.exception.ResourceNotFoundException("No s'ha trobat cap versió"));
+        // Assignar el locale demanat a la versió abans de renderitzar (no persitit, només per al render)
+        if (version.getLocale() == null || version.getLocale().isBlank()) {
+            version.setLocale(locale);
+        }
+        var html = buildHtmlPage(landing, version);
+        var banner = "<div style=\"position:fixed;top:0;left:0;right:0;z-index:99999;background:#FF6B00;color:#fff;" +
+                     "padding:10px 20px;text-align:center;font-family:system-ui,sans-serif;font-size:13px;font-weight:600;" +
+                     "display:flex;align-items:center;justify-content:center;gap:12px;\">" +
+                     "👁 Previsualització — aquesta pàgina no és pública encara" +
+                     "<span style=\"opacity:.7;font-weight:400\">|</span>" +
+                     "<span style=\"opacity:.7;font-weight:400\">v" + version.getVersionNumber() + " · Esborrany</span>" +
+                     "</div><div style=\"height:44px\"></div>";
+        return html.replaceFirst("(<body[^>]*>)", "$1" + banner);
+    }
+
     /**
      * Build initial version content from template defaults, with tenant variable injection.
      * Returns {"blocks":[]} if no template or no sections.
@@ -700,6 +736,7 @@ public class EngineOrchestrator implements EngineService {
                 landing.getDomainOwnerEmail(),
                 landing.getDomainOwnerPhone(),
                 versions,
+                landing.getPreviewToken(),
                 landing.getCreatedAt(),
                 landing.getUpdatedAt()
         );
