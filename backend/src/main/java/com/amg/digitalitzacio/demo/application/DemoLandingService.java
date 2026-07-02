@@ -185,7 +185,23 @@ public class DemoLandingService {
             "Contacte directe",
             List.of(new ServiceItem("Automatitzacions", "Workflows que treballen per tu"),
                     new ServiceItem("Agents IA", "Atenció al client 24/7 amb IA"),
-                    new ServiceItem("Integracions", "CRM, WhatsApp, Google i molt més"))))
+                    new ServiceItem("Integracions", "CRM, WhatsApp, Google i molt més")))),
+        Map.entry("PINTOR", new SectorConfig("🎨", "#1e40af",
+            "Pintura i lacats professionals a Mallorca", "Pressupost gratuït en menys de 24h — respon el nostre agent",
+            "Els nostres serveis", "💬 Demana pressupost gratuït",
+            "Pressupost sense compromís", "Et responem avui mateix", "Demanar pressupost",
+            "Contacte directe",
+            List.of(new ServiceItem("Pintura interior i exterior", "Habitatges, locals i façanes amb acabats professionals"),
+                    new ServiceItem("Lacats i esmalts", "Mobles, portes i fusteria amb cabines pressuritzades"),
+                    new ServiceItem("Protecció de fusta", "Tractaments i vernissos per a llarga durada")))),
+        Map.entry("PINTORS", new SectorConfig("🎨", "#1e40af",
+            "Pintura i lacats professionals a Mallorca", "Pressupost gratuït en menys de 24h — respon el nostre agent",
+            "Els nostres serveis", "💬 Demana pressupost gratuït",
+            "Pressupost sense compromís", "Et responem avui mateix", "Demanar pressupost",
+            "Contacte directe",
+            List.of(new ServiceItem("Pintura interior i exterior", "Habitatges, locals i façanes amb acabats professionals"),
+                    new ServiceItem("Lacats i esmalts", "Mobles, portes i fusteria amb cabines pressuritzades"),
+                    new ServiceItem("Protecció de fusta", "Tractaments i vernissos per a llarga durada"))))
     );
 
     // ── Spanish content ──────────────────────────────────────────────────────
@@ -336,7 +352,15 @@ public class DemoLandingService {
             "Contacto directo",
             List.of(new ServiceItem("Automatizaciones", "Workflows que trabajan por ti"),
                     new ServiceItem("Agentes IA", "Atención al cliente 24/7 con IA"),
-                    new ServiceItem("Integraciones", "CRM, WhatsApp, Google y mucho más"))))
+                    new ServiceItem("Integraciones", "CRM, WhatsApp, Google y mucho más")))),
+        Map.entry("PINTOR", new SectorConfig("🎨", "#1e40af",
+            "Pintores profesionales en Mallorca", "Presupuesto gratuito en menos de 24h — responde nuestro agente",
+            "Nuestros servicios", "💬 Pide presupuesto gratuito",
+            "Presupuesto sin compromiso", "Te respondemos hoy mismo", "Pedir presupuesto",
+            "Contacto directo",
+            List.of(new ServiceItem("Pintura interior y exterior", "Viviendas, locales y fachadas con acabados profesionales"),
+                    new ServiceItem("Lacados y esmaltes", "Muebles, puertas y carpintería con cabinas presurizadas"),
+                    new ServiceItem("Protección de madera", "Tratamientos y barnices para larga duración"))))
     );
 
     // ── English content ──────────────────────────────────────────────────────
