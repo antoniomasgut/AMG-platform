@@ -22,8 +22,8 @@ public class ProspectDemoGeneratorService {
     private final DemoInboxService demoInboxService;
     private final ProspectRepository prospectRepository;
 
-    @Value("${app.base-url:https://amgdl.com}")
-    private String baseUrl;
+    @Value("${app.api.base-url:https://api.amgdl.com}")
+    private String apiBaseUrl;
 
     /**
      * Genera una demo de forma síncrona (per a invocació manual des d'endpoint).
@@ -63,7 +63,7 @@ public class ProspectDemoGeneratorService {
 
             var session = demoInboxService.createSession(email, companyName, agentContext, sector, "ca");
 
-            String demoUrl = baseUrl + "/demo/inbox/" + session.getToken();
+            String demoUrl = apiBaseUrl + "/api/v1/engine/render/demo-" + session.getToken() + "/ca";
             prospect.setDemoUrl(demoUrl);
             prospectRepository.save(prospect);
 
