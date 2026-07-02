@@ -41,6 +41,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     private final ProspectMessageGeneratorService prospectMessageGeneratorService;
     private final ProspectCsvImportService prospectCsvImportService;
     private final ProspectPitchSenderService prospectPitchSenderService;
+    private final ProspectOptOutRepository prospectOptOutRepository;
 
     private static final int TIER_PRIORITY = 81;
     private static final int TIER_DEMO = 61;
@@ -181,6 +182,11 @@ public class ProspectingOrchestrator implements ProspectingService {
             }
             toSave.add(prospect);
         }
+        // Scoring + tier inicials amb les dades del scraper (Spec 12 §2: el flux
+        // scraping → scoring → tier és automàtic; s'afina després amb analyze-web)
+        for (var prospect : toSave) {
+            applyScoreAndTier(prospect);
+        }
         prospectRepository.saveAll(toSave);
         int count = toSave.size();
         log.info("Campaign {}: {} prospects saved, {} duplicates skipped", campaignId, count, skipped);
@@ -219,7 +225,7 @@ public class ProspectingOrchestrator implements ProspectingService {
         }
         if (request.address() != null) prospect.setAddress(request.address().isBlank() ? null : request.address());
         if (request.city()    != null) prospect.setCity(request.city().isBlank() ? null : request.city());
-        prospect.setScore(calculateScore(prospect));
+        applyScoreAndTier(prospect);
         prospect = prospectRepository.save(prospect);
         return toProspectResponse(prospect);
     }
@@ -247,7 +253,7 @@ public class ProspectingOrchestrator implements ProspectingService {
         if (enrichment.instagram() != null) prospect.setInstagram(enrichment.instagram());
         if (enrichment.hasWhatsapp() != null) prospect.setHasWhatsapp(enrichment.hasWhatsapp());
 
-        prospect.setScore(calculateScore(prospect));
+        applyScoreAndTier(prospect);
         prospect = prospectRepository.save(prospect);
         return toProspectResponse(prospect);
     }
@@ -256,7 +262,7 @@ public class ProspectingOrchestrator implements ProspectingService {
     public List<ProspectResponse> scoreProspects(UUID campaignId) {
         var prospects = prospectRepository.findByCampaignId(campaignId);
         for (var p : prospects) {
-            p.setScore(calculateScore(p));
+            applyScoreAndTier(p);
         }
         prospectRepository.saveAll(prospects);
         log.info("Scored {} prospects in campaign {}", prospects.size(), campaignId);
@@ -296,7 +302,7 @@ public class ProspectingOrchestrator implements ProspectingService {
         for (var prospect : candidates) {
             try {
                 applyDetails(prospect, scraper.fetchDetails(prospect.getGooglePlaceId()));
-                prospect.setScore(calculateScore(prospect));
+                applyScoreAndTier(prospect);
                 prospectRepository.save(prospect);
                 qualified++;
             } catch (Exception e) {
@@ -330,10 +336,16 @@ public class ProspectingOrchestrator implements ProspectingService {
         return Math.max(0, Math.min(100, score));
     }
 
-    private void recalculateAndSave(Prospect p) {
+    // Score i tier sempre van junts: un score sense tier deixa el prospect
+    // fora de la cadena automàtica de demos (Spec 12 §5.4)
+    private void applyScoreAndTier(Prospect p) {
         int score = calculateScore(p);
         p.setScore(score);
         p.setProspectTier(computeTier(score));
+    }
+
+    private void recalculateAndSave(Prospect p) {
+        applyScoreAndTier(p);
         prospectRepository.save(p);
     }
 
@@ -388,7 +400,7 @@ public class ProspectingOrchestrator implements ProspectingService {
                     changed = true;
                 }
                 if (changed) {
-                    prospect.setScore(calculateScore(prospect));
+                    applyScoreAndTier(prospect);
                     prospectRepository.save(prospect);
                     enriched++;
                 }
@@ -686,6 +698,7 @@ public class ProspectingOrchestrator implements ProspectingService {
             .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
         webAnalyzerService.analyze(p);
         recalculateAndSave(p);
+        prospectDemoGeneratorService.generateIfEligible(p);
         log.info("Web analyzed for prospect {}: cms={}, ssl={}, score={}", p.getId(), p.getCmsDetected(), p.getHasSsl(), p.getScore());
         return toProspectResponse(p);
     }
@@ -702,6 +715,7 @@ public class ProspectingOrchestrator implements ProspectingService {
             try {
                 webAnalyzerService.analyze(p);
                 recalculateAndSave(p);
+                prospectDemoGeneratorService.generateIfEligible(p);
                 analyzed++;
                 Thread.sleep(1500);
             } catch (Exception e) {
@@ -723,7 +737,7 @@ public class ProspectingOrchestrator implements ProspectingService {
             p.setWidgetCode(widgetCodeGeneratorService.generate(p));
         }
         prospectRepository.save(p);
-        // Genera demo automàticament si és PRIORITY
+        // Genera demo automàticament si és DEMO o PRIORITY (Spec 12 §5.4)
         prospectDemoGeneratorService.generateIfEligible(p);
         // Envia pitch per email si la campanya té autoSendEmail activat
         var campaign = campaignRepository.findById(p.getCampaignId()).orElse(null);
@@ -833,6 +847,25 @@ public class ProspectingOrchestrator implements ProspectingService {
         });
 
         return result;
+    }
+
+    @Override
+    @Transactional
+    public void unsubscribe(UUID prospectId) {
+        prospectRepository.findById(prospectId).ifPresent(p -> {
+            if (p.getEmail() != null && !p.getEmail().isBlank()) {
+                String email = p.getEmail().toLowerCase().trim();
+                if (!prospectOptOutRepository.existsById(email)) {
+                    var optOut = new ProspectOptOut();
+                    optOut.setEmail(email);
+                    optOut.setProspectId(p.getId());
+                    prospectOptOutRepository.save(optOut);
+                }
+            }
+            p.setStatus(ProspectStatus.DISCARDED);
+            prospectRepository.save(p);
+            log.info("Prospect {} donat de baixa (opt-out)", prospectId);
+        });
     }
 
     @Override

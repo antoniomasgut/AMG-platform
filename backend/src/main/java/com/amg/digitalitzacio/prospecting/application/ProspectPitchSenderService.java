@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.prospecting.application;
 
 import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.prospecting.domain.Prospect;
+import com.amg.digitalitzacio.prospecting.domain.ProspectOptOutRepository;
 import com.amg.digitalitzacio.prospecting.domain.ProspectRepository;
 import com.amg.digitalitzacio.prospecting.domain.ProspectStatus;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class ProspectPitchSenderService {
     private final ProspectRepository prospectRepository;
     private final ProspectChannelDetectorService channelDetector;
     private final EmailService emailService;
+    private final ProspectOptOutRepository optOutRepository;
 
     public record SendResult(String channel, String target, String status, String reason) {}
 
@@ -46,6 +48,10 @@ public class ProspectPitchSenderService {
     }
 
     private SendResult sendEmail(Prospect prospect, String email) {
+        // Llista de supressió global (LSSI art. 21): mai contactar qui ha demanat la baixa
+        if (optOutRepository.existsById(email.toLowerCase().trim())) {
+            return new SendResult("EMAIL", email, "SKIPPED", "Email a la llista de supressió (opt-out)");
+        }
         try {
             String subject = "Una proposta per a " + prospect.getName() + " — AMG Digitalització";
             String html = buildHtmlEmail(prospect);
@@ -90,8 +96,18 @@ public class ProspectPitchSenderService {
                   AMG Digitalització · Toni Mas<br>
                   <a href="https://amgdl.com" style="color:#888">amgdl.com</a> · +34 614 492 062 · info@amgdl.com
                 </p>
+                <p style="font-size:11px;color:#aaa;line-height:1.5">
+                  Aquest és un missatge comercial d'AMG Digitalització (LSSI-CE art. 21).
+                  Les dades de contacte del vostre negoci provenen de fonts públiques
+                  (Google Maps i la vostra pàgina web) i s'usen únicament per a aquesta
+                  comunicació (RGPD art. 14, interès legítim art. 6.1.f).
+                  Si no voleu rebre més comunicacions,
+                  <a href="https://api.amgdl.com/api/v1/prospecting/unsubscribe/%s" style="color:#aaa">doneu-vos de baixa aquí</a>
+                  i no us tornarem a contactar. Podeu exercir els drets d'accés, rectificació
+                  i supressió a info@amgdl.com.
+                </p>
                 <img src="https://api.amgdl.com/api/v1/prospecting/track/%s/open" width="1" height="1" style="display:none" alt="">
                 </body></html>
-                """.formatted(pitchHtml, demoButton, p.getId());
+                """.formatted(pitchHtml, demoButton, p.getId(), p.getId());
     }
 }

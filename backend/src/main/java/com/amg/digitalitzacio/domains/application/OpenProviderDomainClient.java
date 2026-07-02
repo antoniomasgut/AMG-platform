@@ -5,6 +5,7 @@ import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -22,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 // i els mètodes d'escriptura llancen IllegalStateException.
 @Slf4j
 @Component
+@Profile("!test")   // en tests s'usa MockDomainRegistrarClient
 @RequiredArgsConstructor
 public class OpenProviderDomainClient implements DomainRegistrarClient {
 

@@ -50,4 +50,7 @@ public interface ProspectingService {
 
     // Spec 12 v2.2 — enviament automàtic de pitch
     Map<String, String> sendPitch(UUID prospectId);
+
+    // Baixa de comunicacions comercials (LSSI art. 21) — llista de supressió global
+    void unsubscribe(UUID prospectId);
 }

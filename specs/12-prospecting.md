@@ -381,6 +381,7 @@ Prefix base: `/api/v1/prospecting`
 | POST | `/campaigns/{id}/import-csv` | Importa prospects des de CSV (màx 500 files) |
 | GET | `/duplicates` | Llista grups de prospects duplicats cross-campanya |
 | GET | `/track/{prospectId}/open` | Pixel 1x1 tracking obertura de pitch (públic) |
+| GET | `/unsubscribe/{prospectId}` | Baixa de comunicacions comercials — LSSI art. 21 (públic, enllaçat des de l'email) |
 
 ---
 
@@ -616,8 +617,33 @@ No apunta mai a `/demo/inbox/{token}` (ruta legacy interna). La URL pública de 
 
 ---
 
-## 23. Pendents (⚠️)
+## 23. Compliment LSSI/RGPD de l'email de pitch (✅ V85)
+
+L'email de pitch inclou obligatòriament:
+- Identificació com a comunicació comercial (LSSI-CE art. 21)
+- Origen de les dades: fonts públiques — Google Maps i web del negoci (RGPD art. 14, interès legítim art. 6.1.f)
+- Enllaç de baixa → `GET /unsubscribe/{prospectId}` (públic)
+- Contacte per exercir drets: info@amgdl.com
+
+**Llista de supressió global** (`prospect_optouts`, migració V85): la baixa es registra per email
+(no per prospect) i es comprova abans de **cada** enviament — un email donat de baixa no es torna
+a contactar mai, ni des de campanyes futures. La baixa també marca el prospect com a `DISCARDED`.
+
+---
+
+## 24. Cadena automàtica score → tier → demo (✅)
+
+- El scoring i el tier es calculen **sempre junts** (`applyScoreAndTier`): a la creació via scraper (`runCampaign`), a l'enriquiment, a la qualificació i a l'anàlisi web
+- `generateIfEligible` genera demo per a tiers **DEMO i PRIORITY** (abans només PRIORITY) i s'invoca des d'`analyzeWeb`, `analyzeAllWeb` i `generateAiReport`
+- Per a PRIORITY: notificació Telegram al canal de plataforma (`TELEGRAM_CHAT_ID`) amb score, sector, telèfon i URL de demo
+- TTL de les demos de prospecció: 7 dies (config `PROSPECTING_DEMO_TTL_DAYS`); les demos internes segueixen a 24h
+
+---
+
+## 25. Pendents (⚠️)
 
 - **GBP API** (Google Business Profile): ressenyes, Q&A, popularitat — pendent d'integrar V71 amb el pipeline de prospecció
-- **Enviament automàtic de pitch**: el canal és detectat però l'enviament real (email/WhatsApp) no s'executa automàticament — pendent d'integrar amb Spec 20/43
+- **Enviament automàtic per WhatsApp**: només email automatitzat; WhatsApp requereix template HSM aprovat per Meta
 - **Tracking obertura demo**: `demoOpenedAt` disponible a la BD però el widget de demo no envia l'event encara
+- **Detecció de resposta del prospect**: si contesta l'email, l'estat no canvia automàticament (cal passar-lo a QUALIFIED a mà; si no, el follow-up scheduler segueix notificant)
+- **Pesos de scoring configurables**: l'spec §5 diu SystemConfig però són hardcoded a `detectSignals` (les claus §14 excepte `PROSPECTING_DEMO_TTL_DAYS` no s'usen)

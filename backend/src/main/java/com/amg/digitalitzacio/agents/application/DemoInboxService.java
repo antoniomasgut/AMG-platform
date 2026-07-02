@@ -47,6 +47,16 @@ public class DemoInboxService {
     @Transactional
     public DemoSession createSession(String prospectEmail, String companyName,
                                      String agentContext, String sector, String locale) {
+        return createSession(prospectEmail, companyName, agentContext, sector, locale, DEMO_TTL_HOURS);
+    }
+
+    /**
+     * Variant amb TTL explícit: les demos de prospecció (Spec 12 §7) viuen 7 dies,
+     * les demos internes 24h.
+     */
+    @Transactional
+    public DemoSession createSession(String prospectEmail, String companyName,
+                                     String agentContext, String sector, String locale, int ttlHours) {
         UUID token = UUID.randomUUID();
         String loc = locale != null && !locale.isBlank() ? locale : "ca";
 
@@ -64,7 +74,7 @@ public class DemoInboxService {
                 .locale(loc)
                 .landingSlug(landingSlug)
                 .isActive(true)
-                .expiresAt(Instant.now().plus(DEMO_TTL_HOURS, ChronoUnit.HOURS))
+                .expiresAt(Instant.now().plus(ttlHours, ChronoUnit.HOURS))
                 .build();
         return demoSessionRepository.save(session);
     }

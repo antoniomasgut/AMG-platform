@@ -279,4 +279,29 @@ public class ProspectingController {
                 .header("Cache-Control", "no-store, no-cache")
                 .body(pixel);
     }
+
+    /** Baixa de comunicacions comercials (LSSI art. 21). Enllaçat des del peu de l'email de pitch. */
+    @GetMapping("/unsubscribe/{prospectId}")
+    public ResponseEntity<String> unsubscribe(@PathVariable UUID prospectId) {
+        service.unsubscribe(prospectId);
+        String html = """
+                <!DOCTYPE html>
+                <html lang="ca"><head><meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>Baixa confirmada — AMG Digitalització</title></head>
+                <body style="font-family:Arial,sans-serif;max-width:480px;margin:80px auto;padding:0 20px;text-align:center;color:#222">
+                  <h1 style="font-size:22px">Baixa confirmada</h1>
+                  <p style="line-height:1.6;color:#555">
+                    No rebreu més comunicacions comercials d'AMG Digitalització.
+                    El vostre email s'ha afegit a la nostra llista de supressió.
+                  </p>
+                  <p style="font-size:12px;color:#999">
+                    Per a qualsevol qüestió: info@amgdl.com
+                  </p>
+                </body></html>
+                """;
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(html);
+    }
 }

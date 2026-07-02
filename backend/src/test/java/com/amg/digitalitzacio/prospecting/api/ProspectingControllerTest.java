@@ -86,7 +86,7 @@ class ProspectingControllerTest {
         mockMvc.perform(get("/api/v1/prospecting/campaigns")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+                .andExpect(jsonPath("$.content", hasSize(0)));
     }
 
     @Test
