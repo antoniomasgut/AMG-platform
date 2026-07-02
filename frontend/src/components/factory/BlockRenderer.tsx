@@ -524,6 +524,45 @@ export const BlockRenderer: FC<Props> = ({
           </section>
         );
 
+      case 'before-after': {
+        const beforeImg = s(p.beforeImage, '');
+        const afterImg  = s(p.afterImage, '');
+        const beforeLbl = s(p.beforeLabel, 'Abans');
+        const afterLbl  = s(p.afterLabel, 'Després');
+        return (
+          <section style={{ background: bg, fontFamily: fontB }} onClick={handleClick}>
+            {removeBtn}
+            <div style={{ maxWidth: 900, margin: '0 auto', padding: '80px 24px' }}>
+              {s(p.title, '') && (
+                <ET tag="h2" value={s(p.title, '')} editable={editable} onSave={upd('title')}
+                  style={{ fontFamily: fontH, fontSize: '2rem', fontWeight: 700, color: text, textAlign: 'center', marginBottom: 32 }}
+                />
+              )}
+              <div style={{ position: 'relative', borderRadius: radius, overflow: 'hidden', aspectRatio: '16/9', background: '#1a1a2e' }}>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
+                  <div style={{ flex: 1, background: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {beforeImg
+                      ? <img src={beforeImg} alt={beforeLbl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ color: '#9ca3af', fontSize: '0.8rem' }}>Imatge "Abans"</span>}
+                  </div>
+                  <div style={{ width: 3, background: '#fff', flexShrink: 0 }} />
+                  <div style={{ flex: 1, background: '#4b5563', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                    {afterImg
+                      ? <img src={afterImg} alt={afterLbl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ color: '#9ca3af', fontSize: '0.8rem' }}>Imatge "Després"</span>}
+                  </div>
+                </div>
+                <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', pointerEvents: 'none' }}>
+                  <span style={{ background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.7rem', padding: '3px 10px', borderRadius: 4, fontFamily: 'monospace' }}>{beforeLbl}</span>
+                  <span style={{ background: primary, color: '#fff', fontSize: '0.7rem', padding: '3px 10px', borderRadius: 4, fontFamily: 'monospace' }}>{afterLbl}</span>
+                </div>
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 36, height: 36, background: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.3)', fontSize: 16, color: '#374151', pointerEvents: 'none' }}>⇆</div>
+              </div>
+            </div>
+          </section>
+        );
+      }
+
       default:
         return <div style={{ padding: 16, color: '#94a3b8' }}>Bloc desconegut: {block.type}</div>;
     }

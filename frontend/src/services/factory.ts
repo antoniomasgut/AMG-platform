@@ -7,7 +7,7 @@ import { apiFetch } from './api';
 export type BlockType =
   | 'hero' | 'text' | 'services' | 'gallery' | 'contact-form'
   | 'faq' | 'testimonials' | 'cta' | 'footer' | 'map' | 'opening-hours'
-  | 'pricing' | 'team' | 'video' | 'reviews' | 'chat-cta';
+  | 'pricing' | 'team' | 'video' | 'reviews' | 'chat-cta' | 'before-after';
 
 export interface Block {
   id: string;
@@ -163,10 +163,16 @@ export async function getLanding(tenantId: string, landingId: string): Promise<L
   return apiFetch<LandingDetail>(`/engine/tenants/${tenantId}/landings/${landingId}`);
 }
 
-export async function createLanding(tenantId: string, title: string, slug: string, templateId?: string): Promise<LandingDetail> {
+export async function createLanding(
+  tenantId: string,
+  title: string,
+  slug: string,
+  templateId?: string,
+  styles?: Record<string, string>
+): Promise<LandingDetail> {
   return apiFetch<LandingDetail>(`/engine/tenants/${tenantId}/landings`, {
     method: 'POST',
-    body: JSON.stringify({ title, slug, templateId }),
+    body: JSON.stringify({ title, slug, templateId, styles: styles ? JSON.stringify(styles) : undefined }),
   });
 }
 
@@ -243,6 +249,24 @@ export async function saveChatContext(landingId: string, data: {
 
 export async function deleteChatContext(landingId: string): Promise<void> {
   return apiFetch<void>(`/engine/landings/${landingId}/chat`, { method: 'DELETE' });
+}
+
+// --- Landing defaults (auto-fill) ---
+
+export interface LandingDefaults {
+  businessName: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  sector: string;
+  whatsappNumber: string;
+  heroSuggestions: { title?: string; subtitle?: string };
+  contactSuggestions: { phone?: string; email?: string; address?: string };
+}
+
+export async function getLandingDefaults(tenantId: string): Promise<LandingDefaults> {
+  return apiFetch<LandingDefaults>(`/engine/tenants/${tenantId}/landing-defaults`);
 }
 
 // --- Block templates ---
@@ -364,6 +388,18 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
       subtitle: 'Xateja amb el nostre assistent i respon en menys d\'1 minut',
       buttonText: 'Parla amb nosaltres',
       accentColor: '',
+    },
+  },
+  'before-after': {
+    label: 'Abans / Després',
+    icon: '⇆',
+    defaultProps: {
+      title: 'El nostre treball',
+      beforeImage: '',
+      afterImage: '',
+      beforeLabel: 'Abans',
+      afterLabel: 'Després',
+      aspectRatio: '56.25',
     },
   },
 };

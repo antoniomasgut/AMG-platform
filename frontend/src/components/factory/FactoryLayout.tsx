@@ -26,6 +26,7 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('blocks');
   const [statusMsg, setStatusMsg] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
 
   const landing = useEditorStore((s) => s.landing);
   const versionId = useEditorStore((s) => s.versionId);
@@ -174,10 +175,18 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
           </button>
         )}
         <button
-          onClick={() => setShowPreview(!showPreview)}
-          className="f-mono text-label uppercase px-3 h-8 rounded text-ink-1 hover:text-white transition"
+          onClick={() => { setPreviewDevice('desktop'); setShowPreview(true); }}
+          title="Preview escriptori"
+          className="f-mono text-label uppercase px-2 h-8 rounded text-ink-1 hover:text-white transition"
         >
-          Preview
+          🖥
+        </button>
+        <button
+          onClick={() => { setPreviewDevice('mobile'); setShowPreview(true); }}
+          title="Preview mòbil"
+          className="f-mono text-label uppercase px-2 h-8 rounded text-ink-1 hover:text-white transition"
+        >
+          📱
         </button>
       </div>
 
@@ -212,11 +221,34 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
       {/* Preview overlay */}
       {showPreview && (
         <div
-          className="fixed inset-0 z-40 bg-black/90 flex items-center justify-center"
+          className="fixed inset-0 z-40 bg-black/90 flex flex-col items-center justify-start pt-6 overflow-auto"
           onClick={() => setShowPreview(false)}
         >
+          {/* Device toggle */}
+          <div className="flex justify-center gap-2 mb-4 shrink-0" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewDevice('desktop')}
+              className={`px-3 py-1.5 rounded f-mono text-xs transition ${previewDevice === 'desktop' ? 'bg-[#FF6B00] text-black font-bold' : 'bg-white/10 text-white hover:bg-white/20'}`}
+            >
+              🖥 Escriptori
+            </button>
+            <button
+              onClick={() => setPreviewDevice('mobile')}
+              className={`px-3 py-1.5 rounded f-mono text-xs transition ${previewDevice === 'mobile' ? 'bg-[#FF6B00] text-black font-bold' : 'bg-white/10 text-white hover:bg-white/20'}`}
+            >
+              📱 Mòbil
+            </button>
+            <button
+              onClick={() => setShowPreview(false)}
+              className="px-3 py-1.5 rounded f-mono text-xs bg-white/10 text-white hover:bg-white/20 transition ml-4"
+            >
+              ✕ Tancar
+            </button>
+          </div>
           <div
-            className="w-full max-w-4xl max-h-screen overflow-auto m-8"
+            className={previewDevice === 'mobile'
+              ? 'w-[390px] max-h-[844px] overflow-auto rounded-[40px] border-4 border-[#2d2d2d] shadow-2xl mb-8'
+              : 'w-full max-w-4xl overflow-auto mx-8 mb-8'}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-white shadow-2xl" style={{ fontFamily: styles.fontBody || styles.fontHeading }}>

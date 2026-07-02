@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type FC } from 'react';
 import { useEditorStore } from '@/store/editor';
-import { BLOCK_TEMPLATES, generateBlock, listAIModels, type AIModelInfo } from '@/services/factory';
+import { BLOCK_TEMPLATES, generateBlock, listAIModels, getLandingDefaults, type AIModelInfo } from '@/services/factory';
 import { ImagePicker } from './ImagePicker';
 import { IconSet } from '@/components/ui/icons';
 import { useAuth } from '@/lib/auth-context';
@@ -18,6 +18,8 @@ export const BlockProperties: FC = () => {
   const [showJson, setShowJson] = useState(false);
   const [syncingReviews, setSyncingReviews] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
+  const [autoFilling, setAutoFilling] = useState(false);
+  const [autoFillMsg, setAutoFillMsg] = useState('');
 
   // IA generation state
   const [aiOpen, setAiOpen] = useState(false);
@@ -90,6 +92,42 @@ export const BlockProperties: FC = () => {
     }
   };
 
+  const handleAutoFill = async () => {
+    if (!user?.tenantId || !block) return;
+    setAutoFilling(true);
+    setAutoFillMsg('');
+    try {
+      const defaults = await getLandingDefaults(user.tenantId);
+      const updates: Record<string, unknown> = {};
+      if (block.type === 'hero') {
+        if (defaults.heroSuggestions.title && !block.props.title) updates.title = defaults.heroSuggestions.title;
+        if (defaults.heroSuggestions.subtitle && !block.props.subtitle) updates.subtitle = defaults.heroSuggestions.subtitle;
+      }
+      if (block.type === 'contact-form') {
+        if (defaults.phone && !block.props.phone) updates.phone = defaults.phone;
+        if (defaults.email && !block.props.email) updates.email = defaults.email;
+        if (defaults.address && !block.props.address) updates.address = defaults.address;
+      }
+      if (block.type === 'footer') {
+        if (defaults.phone && !block.props.phone) updates.phone = defaults.phone;
+        if (defaults.email && !block.props.email) updates.email = defaults.email;
+        if (defaults.address && !block.props.address) updates.address = defaults.address;
+        if (defaults.businessName && !block.props.businessName) updates.businessName = defaults.businessName;
+      }
+      if (Object.keys(updates).length > 0) {
+        updateBlockProps(block.id, updates);
+        setAutoFillMsg(`${Object.keys(updates).length} camps omplerts`);
+      } else {
+        setAutoFillMsg('Ja estan omplerts');
+      }
+      setTimeout(() => setAutoFillMsg(''), 3000);
+    } catch {
+      setAutoFillMsg('Error en carregar les dades');
+    } finally {
+      setAutoFilling(false);
+    }
+  };
+
   const renderField = (key: string, value: unknown) => {
     // Rich text body
     if (key === 'body') {
@@ -106,12 +144,13 @@ export const BlockProperties: FC = () => {
     }
 
     // Image URL field with picker button
-    if (key === 'bgImage' || key === 'ogImage') {
+    if (key === 'bgImage' || key === 'ogImage' || key === 'beforeImage' || key === 'afterImage') {
       const imgVal = String(value || '');
+      const imgLabel = key === 'ogImage' ? 'Imatge OG' : key === 'beforeImage' ? 'Imatge Abans' : key === 'afterImage' ? 'Imatge Després' : 'Imatge de fons';
       return (
         <div key={key} className="mb-3">
           <label className="f-mono text-label uppercase text-ink-3 block mb-1">
-            {key === 'ogImage' ? 'Imatge OG' : 'Imatge de fons'}
+            {imgLabel}
           </label>
           {imgVal ? (
             <div className="rounded overflow-hidden bg-[#0d0d1a] border border-border-base relative group">
@@ -282,9 +321,25 @@ export const BlockProperties: FC = () => {
 
   const aiBlockTypes = ['hero','text','services','faq','cta','testimonials','pricing','team','reviews'];
   const canGenerate = aiBlockTypes.includes(block.type);
+  const canAutoFill = ['hero', 'contact-form', 'footer'].includes(block.type);
 
   return (
     <div className="p-3">
+      {canAutoFill && (
+        <div className="mb-3 flex items-center gap-2">
+          <button
+            onClick={handleAutoFill}
+            disabled={autoFilling}
+            className="flex items-center gap-1.5 px-2 py-1 rounded text-xs f-mono bg-[rgba(255,107,0,0.1)] text-accent-light hover:bg-[rgba(255,107,0,0.2)] transition disabled:opacity-40"
+          >
+            {autoFilling
+              ? <span className="w-3 h-3 border-2 border-accent-light border-t-transparent rounded-full animate-spin inline-block" />
+              : '↓'}
+            Auto-omplir
+          </button>
+          {autoFillMsg && <span className="f-mono text-[9px] text-green-400">{autoFillMsg}</span>}
+        </div>
+      )}
       <div className="flex items-center justify-between mb-3">
         <div className="f-mono text-label uppercase tracking-widest text-accent-light">
           {tpl?.label || block.type}
