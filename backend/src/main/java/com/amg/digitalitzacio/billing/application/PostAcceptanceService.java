@@ -14,6 +14,10 @@ import com.amg.digitalitzacio.billing.domain.BudgetSetupIntake;
 import com.amg.digitalitzacio.billing.domain.BudgetSetupIntakeRepository;
 import com.amg.digitalitzacio.booking.application.BookingService;
 import com.amg.digitalitzacio.documents.delivery.domain.TenantDocumentPreferencesRepository;
+import com.amg.digitalitzacio.finops.application.FinOpsService;
+import com.amg.digitalitzacio.gocardless.application.GoCardlessService;
+import com.amg.digitalitzacio.gocardless.domain.GoCardlessMandateRepository;
+import com.amg.digitalitzacio.gocardless.domain.GoCardlessMandateStatus;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +51,13 @@ public class PostAcceptanceService {
     private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final TenantChatLinkRepository chatLinkRepository;
     private final SectorKbSeederService sectorKbSeederService;
+    // @Lazy: GoCardless/FinOps arrosseguen ConversationalAgentService que depèn
+    // d'aquest servei — es trenca el cicle diferint la resolució del bean
+    @org.springframework.context.annotation.Lazy
+    private final FinOpsService finOpsService;
+    @org.springframework.context.annotation.Lazy
+    private final GoCardlessService goCardlessService;
+    private final GoCardlessMandateRepository goCardlessMandateRepository;
 
     public void onSetupPaymentRequested(Budget budget, String paymentUrl) {
         try {
@@ -212,6 +223,48 @@ public class PostAcceptanceService {
         }
     }
 
+    /**
+     * Post-pagament del setup: demanar la domiciliació SEPA per als mensuals.
+     * Sense mandat actiu, la factura mensual es genera però no es cobra mai.
+     */
+    public void onSetupPaid(Budget budget) {
+        try {
+            var tenantId = budget.getTenantId();
+            if (goCardlessMandateRepository.findByTenantIdAndStatus(tenantId, GoCardlessMandateStatus.ACTIVE).isPresent()) {
+                return; // ja té domiciliació activa
+            }
+            var tenant = tenantRepository.findById(tenantId).orElse(null);
+            if (tenant == null || tenant.getEmail() == null || tenant.getEmail().isBlank()) return;
+
+            String returnUrl = "https://api.amgdl.com/api/v1/gocardless/tenants/" + tenantId + "/mandate/complete";
+            var mandate = goCardlessService.initiateMandate(tenantId, returnUrl);
+
+            String clientName = tenant.getName() != null ? tenant.getName() : "client";
+            String body = """
+                    Hola %s,
+
+                    Gràcies pel pagament! Només queda un últim pas: configurar la domiciliació
+                    bancària per a la quota mensual del servei (triga 2 minuts):
+
+                    %s
+
+                    És el sistema segur de domiciliació SEPA — el mateix que usen Netflix o Spotify.
+
+                    L'equip d'AMG Digitalització
+                    """.formatted(clientName, mandate.redirectUrl());
+            emailService.sendEmail(tenant.getEmail(), "Configura la domiciliació de la quota mensual", body);
+            log.info("[PostAcceptance] Mandat SEPA iniciat i enviat a tenant {}", tenantId);
+        } catch (Exception e) {
+            log.warn("[PostAcceptance] No s'ha pogut iniciar el mandat SEPA per budget {}: {}",
+                    budget.getId(), e.getMessage());
+            sendToSalesChat("""
+                    ⚠️ <b>Mandat SEPA no iniciat</b>
+                    El pagament del setup s'ha completat però no s'ha pogut enviar la domiciliació al client.
+                    Tenant: %s — revisa la configuració de GoCardless.
+                    """.formatted(budget.getTenantId()));
+        }
+    }
+
     public void onSetupCompleted(UUID tenantId, String tenantName, String sector, String intakeUrl) {
         // Sembrar la KB amb contingut base del sector mentre l'equip prepara la implementació
         try {
@@ -238,6 +291,18 @@ public class PostAcceptanceService {
     }
 
     public void onGoLive(UUID tenantId) {
+        // Preparar la facturació mensual (HoldedConfig + contacte); si falla, avisar l'equip
+        try {
+            if (!finOpsService.ensureTenantBillingSetup(tenantId)) {
+                sendToSalesChat("""
+                        ⚠️ <b>Tenant actiu sense facturació configurada</b>
+                        No s'ha pogut crear la config Holded — les factures mensuals NO es generaran.
+                        🔗 <a href="https://amgdl.com/portal/admin/tenants/%s">Veure tenant →</a>
+                        """.formatted(tenantId));
+            }
+        } catch (Exception e) {
+            log.warn("[PostAcceptance] Error preparant facturació al go-live tenant {}: {}", tenantId, e.getMessage());
+        }
         try {
             var tenant = tenantRepository.findById(tenantId).orElse(null);
             if (tenant == null) return;

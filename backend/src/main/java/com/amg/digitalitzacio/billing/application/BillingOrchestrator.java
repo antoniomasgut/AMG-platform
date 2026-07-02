@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.billing.application;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.agents.application.TenantBudgetDefaultsService;
 import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.auth.application.PhaseActivationService;
 import com.amg.digitalitzacio.auth.domain.*;
@@ -59,6 +60,7 @@ public class BillingOrchestrator implements BillingService {
     private final NexePricingFormula pricingFormula;
     private final LeadRepository leadRepository;
     private final PhaseActivationService phaseActivationService;
+    private final TenantBudgetDefaultsService tenantBudgetDefaultsService;
     private final PostAcceptanceService postAcceptanceService;
     private final WhatsAppChannel whatsAppChannel;
     private final WhatsAppMetaChannel whatsAppMetaChannel;
@@ -670,6 +672,15 @@ public class BillingOrchestrator implements BillingService {
         for (String phase : newPhases) {
             phaseActivationService.recordActivation(tenantId, phase, "BUDGET_ACCEPTED", null, null);
         }
+        // Quotes de despesa IA/WhatsApp per fase i mida (mòdul 41) — abans només
+        // s'aplicaven a la creació manual del tenant, mai al flux de pressupost
+        if (tenant.getBusinessSize() != null) {
+            try {
+                tenantBudgetDefaultsService.applyDefaults(tenantId);
+            } catch (Exception e) {
+                log.warn("No s'han pogut aplicar les quotes IA per defecte al tenant {}: {}", tenantId, e.getMessage());
+            }
+        }
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -692,6 +703,8 @@ public class BillingOrchestrator implements BillingService {
                 new org.springframework.transaction.support.TransactionSynchronizationAdapter() {
                     @Override public void afterCommit() {
                         postAcceptanceService.onBudgetAccepted(finalBudget);
+                        // Demanar la domiciliació SEPA per als mensuals
+                        postAcceptanceService.onSetupPaid(finalBudget);
                     }
                 });
     }

@@ -45,6 +45,7 @@ class PaymentControllerTest {
     @Autowired private JwtProvider jwtProvider;
     @Autowired private StripeConfigRepository stripeConfigRepository;
     @Autowired private PaymentRepository paymentRepository;
+    @Autowired private com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService systemConfigService;
     @Autowired private BudgetRepository budgetRepository;
     @Autowired private BudgetLineRepository budgetLineRepository;
 
@@ -266,9 +267,11 @@ class PaymentControllerTest {
 
     @Test
     void tc14_webhookPublic_returns200() throws Exception {
+        systemConfigService.setInternal("STRIPE_WEBHOOK_SECRET", "test-webhook-secret");
         var request = new WebhookRequest("checkout.session.completed", "sess_mock_001", "pi_mock_001");
 
         mockMvc.perform(post("/api/v1/payments/webhook")
+                        .header("X-Webhook-Token", "test-webhook-secret")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -286,9 +289,11 @@ class PaymentControllerTest {
                 .status(PaymentStatus.PENDING)
                 .build());
 
+        systemConfigService.setInternal("STRIPE_WEBHOOK_SECRET", "test-webhook-secret");
         var webhookRequest = new WebhookRequest("checkout.session.completed", "sess_mock_002", "pi_mock_002");
 
         mockMvc.perform(post("/api/v1/payments/webhook")
+                        .header("X-Webhook-Token", "test-webhook-secret")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(webhookRequest)))
                 .andExpect(status().isOk());

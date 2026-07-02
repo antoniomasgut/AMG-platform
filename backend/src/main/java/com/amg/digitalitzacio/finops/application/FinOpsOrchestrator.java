@@ -60,12 +60,39 @@ public class FinOpsOrchestrator implements FinOpsService {
     @Transactional
     public HoldedConfigResponse syncContact(UUID tenantId) {
         var config = findConfig(tenantId);
-        var contactId = finOpsClient.createContact("tenant-" + tenantId, null, null, null);
+        // Contacte Holded amb les dades reals del tenant (nom, email, telèfon, NIF)
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
+        var contactId = finOpsClient.createContact(
+                tenant != null && tenant.getName() != null ? tenant.getName() : "tenant-" + tenantId,
+                tenant != null ? tenant.getEmail() : null,
+                tenant != null ? tenant.getPhone() : null,
+                tenant != null ? tenant.getNif() : null);
         config.setHoldedContactId(contactId);
         config.setIsSynced(true);
         config.setLastSyncAt(Instant.now());
         config = holdedConfigRepository.save(config);
         return toConfigResponse(config);
+    }
+
+    @Override
+    @Transactional
+    public boolean ensureTenantBillingSetup(UUID tenantId) {
+        try {
+            var config = holdedConfigRepository.findByTenantId(tenantId)
+                    .orElseGet(() -> holdedConfigRepository.save(HoldedConfig.builder()
+                            .tenantId(tenantId)
+                            .isActive(true)
+                            .build()));
+            if (Boolean.TRUE.equals(config.getIsSynced()) && config.getHoldedContactId() != null) {
+                return true;
+            }
+            syncContact(tenantId);
+            return true;
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(FinOpsOrchestrator.class)
+                    .warn("[FinOps] No s'ha pogut preparar la facturació del tenant {}: {}", tenantId, e.getMessage());
+            return false;
+        }
     }
 
     @Override

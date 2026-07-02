@@ -11,6 +11,13 @@ public interface FinOpsService {
     HoldedConfigResponse getConfig(UUID tenantId);
     HoldedConfigResponse syncContact(UUID tenantId);
 
+    /**
+     * Assegura que el tenant té la configuració de facturació mensual llesta:
+     * crea la HoldedConfig si no existeix i sincronitza el contacte amb dades reals.
+     * @return true si ha quedat llest; false si Holded no està operatiu
+     */
+    boolean ensureTenantBillingSetup(UUID tenantId);
+
     Page<InvoiceResponse> listInvoices(UUID tenantId, String status, int page, int size);
     InvoiceResponse getInvoice(UUID invoiceId, UUID currentTenantId);
     String getInvoicePdfUrl(UUID invoiceId, UUID currentTenantId);
