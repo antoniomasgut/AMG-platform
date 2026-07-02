@@ -51,6 +51,23 @@ public class ProspectingOrchestrator implements ProspectingService {
         "MARE_DE_DIA", "CLINICA", "ACADEMIA"
     );
 
+    // Indicadors de retail/venda de productes — no són clients d'AMG (serveis)
+    private static final Set<String> RETAIL_KEYWORDS = Set.of(
+        "ferreteria", "ferreter", "bricolaje", "bricol", "manualidades",
+        "materials de construcció", "materials construccio", "pintures i vernissos",
+        "venda de pintures", "venda de materials", "home depot", "leroy merlin",
+        "leroymerlin", "bauhaus", "aki ", " aki", "brico depot", "bricodepot",
+        "cadena de", "grandes almacenes", "gran superficie", "supermercat",
+        "distribuidor de", "distribuïdor de", "mayorista", "magatzem de",
+        "almacén de", "shop", "store", "tienda de", "tenda de"
+    );
+
+    private static boolean isRetailBusiness(Prospect p) {
+        String text = ((p.getName() != null ? p.getName() : "") + " " +
+                       (p.getDescription() != null ? p.getDescription() : "")).toLowerCase();
+        return RETAIL_KEYWORDS.stream().anyMatch(text::contains);
+    }
+
     @Override
     @Transactional
     public CampaignResponse createCampaign(CreateCampaignRequest request, UUID createdBy) {
@@ -642,6 +659,9 @@ public class ProspectingOrchestrator implements ProspectingService {
         }
 
         // ── Penalitzacions ────────────────────────────────────────────────────
+        if (isRetailBusiness(p)) {
+            signals.add(signal("RETAIL_NOT_SERVICE", "Sembla una tenda o distribuïdor (no servei)", "Verificar manualment — pot no ser el client objectiu d'AMG", "danger", -40));
+        }
         if (Boolean.TRUE.equals(p.getHasWebsite()) && p.getWebLoadMs() != null && p.getWebLoadMs() < 0) {
             signals.add(signal("DOMAIN_DOWN", "Domini no accessible", "Cal verificar manualment", "danger", -50));
         }
