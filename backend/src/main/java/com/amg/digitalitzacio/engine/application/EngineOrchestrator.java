@@ -962,6 +962,15 @@ public class EngineOrchestrator implements EngineService {
                "input:focus,textarea:focus{border-color:var(--p)}" +
                // Responsive
                "@media(max-width:640px){.sec{padding:56px 0}.sec-title{margin-bottom:32px}.nav-cta{padding:9px 16px;font-size:.82rem}.trust-bar-inner{gap:28px 40px}.trust-value{font-size:1.8rem}}" +
+               // Hero split layout
+               ".hero-split{display:flex;min-height:520px;position:relative;clip-path:polygon(0 0,100% 0,100% 93%,0 100%)}" +
+               ".hero-split-text{flex:1;display:flex;align-items:center;padding:70px 48px}" +
+               ".hero-split-img{flex:1;background-size:cover;background-position:center;min-height:340px}" +
+               "@media(max-width:768px){.hero-split{flex-direction:column}.hero-split-text{padding:56px 24px}.hero-split-img{min-height:240px;flex:none}}" +
+               // Hero minimal (fons blanc, text fosc)
+               ".hero-minimal{padding:90px 0 70px;text-align:center;clip-path:polygon(0 0,100% 0,100% 93%,0 100%)}" +
+               ".hero-minimal h1{color:var(--tx)}" +
+               ".hero-minimal p{color:var(--tx);opacity:.7}" +
                // Animació scroll
                "[data-anim]{opacity:0;transform:translateY(28px);transition:opacity .55s ease,transform .55s ease}" +
                "[data-anim].visible{opacity:1;transform:none}" +
@@ -1189,6 +1198,7 @@ public class EngineOrchestrator implements EngineService {
         var ctaSecText = str(props, "ctaSecondaryText", "");
         var ctaSecUrl  = str(props, "ctaSecondaryLink", str(props, "ctaSecondaryUrl", "#contact"));
         var bgImage    = str(props, "bgImage", str(props, "bgImageUrl", ""));
+        var layout     = str(props, "layout", "center");
 
         var bgCss = bgImage.isBlank()
                 ? "background:linear-gradient(135deg," + s.accent() + " 0%," + s.primary() + " 100%)"
@@ -1207,10 +1217,42 @@ public class EngineOrchestrator implements EngineService {
         String ctasHtml = (ctaPrimary + ctaSecondary).isBlank() ? ""
                 : "<div style=\"display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:36px\">" + ctaPrimary + ctaSecondary + "</div>";
 
+        return switch (layout) {
+            case "split"   -> renderHeroSplit(title, subtitle, ctasHtml, bgImage, s);
+            case "minimal" -> renderHeroMinimal(title, subtitle, ctasHtml);
+            default        -> renderHeroCenter(title, subtitle, ctasHtml, bgCss);
+        };
+    }
+
+    private String renderHeroCenter(String title, String subtitle, String ctasHtml, String bgCss) {
         return "<section style=\"" + bgCss + ";color:#fff;position:relative;clip-path:polygon(0 0,100% 0,100% 93%,0 100%);padding-bottom:40px\">" +
                "<div class=\"w\" style=\"padding:110px 20px 80px;text-align:center\">" +
                "<h1 style=\"font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:20px;text-shadow:0 2px 20px rgba(0,0,0,.25)\">" + escapeHtml(title) + "</h1>" +
                "<p style=\"font-size:clamp(1rem,2.5vw,1.25rem);opacity:.9;max-width:640px;margin:0 auto;line-height:1.75;text-shadow:0 1px 8px rgba(0,0,0,.2)\">" + escapeHtml(subtitle) + "</p>" +
+               ctasHtml +
+               "</div></section>";
+    }
+
+    private String renderHeroSplit(String title, String subtitle, String ctasHtml, String bgImage, StyleVars s) {
+        var imgStyle = bgImage.isBlank()
+                ? "background:linear-gradient(135deg," + s.accent() + " 0%," + s.accent() + "88 100%)"
+                : "background-image:url('" + escapeHtml(bgImage) + "');background-size:cover;background-position:center";
+        return "<div class=\"hero-split\">" +
+               "<div class=\"hero-split-text\" style=\"background:linear-gradient(150deg," + s.primary() + " 0%," + s.primary() + "e8 100%);color:#fff\">" +
+               "<div>" +
+               "<h1 style=\"font-size:clamp(1.8rem,4vw,3rem);font-weight:800;margin-bottom:20px;line-height:1.15\">" + escapeHtml(title) + "</h1>" +
+               "<p style=\"font-size:clamp(.95rem,2vw,1.15rem);opacity:.88;line-height:1.75;margin-bottom:8px\">" + escapeHtml(subtitle) + "</p>" +
+               ctasHtml +
+               "</div></div>" +
+               "<div class=\"hero-split-img\" style=\"" + imgStyle + "\"></div>" +
+               "</div>";
+    }
+
+    private String renderHeroMinimal(String title, String subtitle, String ctasHtml) {
+        return "<section class=\"hero-minimal\">" +
+               "<div class=\"w\">" +
+               "<h1 style=\"font-size:clamp(2rem,5vw,3.4rem);font-weight:800;margin-bottom:20px\">" + escapeHtml(title) + "</h1>" +
+               "<p style=\"font-size:clamp(1rem,2.5vw,1.2rem);max-width:620px;margin:0 auto 8px;line-height:1.75\">" + escapeHtml(subtitle) + "</p>" +
                ctasHtml +
                "</div></section>";
     }

@@ -11,6 +11,7 @@ public record LandingTemplateResponse(
     String description,
     boolean isActive,
     String defaultStyles,
+    String colorSchemes,
     List<LandingTemplateSectionView> sections,
     Instant createdAt,
     Instant updatedAt

@@ -4,5 +4,6 @@ public record CreateTemplateRequest(
     String name,
     String slug,
     String description,
-    String defaultStyles
+    String defaultStyles,
+    String colorSchemes
 ) {}

@@ -32,6 +32,10 @@ public class LandingTemplate {
     @Column(name = "default_styles", columnDefinition = "TEXT")
     private String defaultStyles;
 
+    /** Paletes de color+tipografia predefinides (JSON array de {name, primary, accent, fontHeading, fontBody}). */
+    @Column(name = "color_schemes", columnDefinition = "TEXT")
+    private String colorSchemes;
+
     @Builder.Default
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;

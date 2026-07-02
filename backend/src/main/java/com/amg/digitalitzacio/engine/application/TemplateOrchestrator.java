@@ -25,6 +25,7 @@ public class TemplateOrchestrator implements TemplateService {
                 .slug(request.slug())
                 .description(request.description())
                 .defaultStyles(request.defaultStyles())
+                .colorSchemes(request.colorSchemes())
                 .build();
         template = templateRepository.save(template);
         return toFullResponse(template, List.of());
@@ -59,6 +60,7 @@ public class TemplateOrchestrator implements TemplateService {
         if (request.slug() != null) template.setSlug(request.slug());
         if (request.description() != null) template.setDescription(request.description());
         if (request.defaultStyles() != null) template.setDefaultStyles(request.defaultStyles());
+        if (request.colorSchemes() != null) template.setColorSchemes(request.colorSchemes());
         template = templateRepository.save(template);
         var sections = sectionRepository.findByTemplateIdOrderBySortOrder(template.getId());
         return toFullResponse(template, sections);
@@ -126,6 +128,6 @@ public class TemplateOrchestrator implements TemplateService {
         return new LandingTemplateResponse(
                 template.getId(), template.getName(), template.getSlug(),
                 template.getDescription(), template.getIsActive(), template.getDefaultStyles(),
-                sectionViews, template.getCreatedAt(), template.getUpdatedAt());
+                template.getColorSchemes(), sectionViews, template.getCreatedAt(), template.getUpdatedAt());
     }
 }
