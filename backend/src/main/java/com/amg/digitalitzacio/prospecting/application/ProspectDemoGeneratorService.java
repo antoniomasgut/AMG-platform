@@ -63,7 +63,7 @@ public class ProspectDemoGeneratorService {
 
             var session = demoInboxService.createSession(email, companyName, agentContext, sector, "ca");
 
-            String demoUrl = baseUrl + "/ca/demo/" + session.getToken();
+            String demoUrl = baseUrl + "/demo/inbox/" + session.getToken();
             prospect.setDemoUrl(demoUrl);
             prospectRepository.save(prospect);
 
