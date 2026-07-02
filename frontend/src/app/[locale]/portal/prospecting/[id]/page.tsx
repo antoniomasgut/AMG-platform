@@ -1033,7 +1033,12 @@ export default function CampaignDetailPage() {
                           />
                         </td>
                         <td className="px-4 sm:px-5 py-2.5">
-                          <div className="f-display font-bold text-sm">{p.name}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="f-display font-bold text-sm">{p.name}</div>
+                            {p.hasChatWidget && (
+                              <span title="Ja té chatbot — pot no necessitar F1" className="f-mono text-[9px] px-1.5 py-0.5 bg-ink-2/20 text-ink-2 rounded">ja digitalitzat</span>
+                            )}
+                          </div>
                           {p.city && <div className="f-mono text-[10px] text-ink-3 mt-0.5">{p.city}</div>}
                         </td>
                         <td className="px-4 sm:px-5 py-2.5 f-mono text-xs text-ink-1">
