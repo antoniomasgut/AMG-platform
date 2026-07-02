@@ -51,6 +51,7 @@ public class EngineOrchestrator implements EngineService {
     private final com.amg.digitalitzacio.engine.infrastructure.TraefikConfigWriter traefikConfigWriter;
     private final com.amg.digitalitzacio.billing.application.PostAcceptanceService postAcceptanceService;
     private final GoogleBusinessReviewSyncService googleBusinessReviewSyncService;
+    private final TenantVariableResolver tenantVariableResolver;
 
     // --- Landings ---
 
@@ -77,7 +78,7 @@ public class EngineOrchestrator implements EngineService {
         landing = landingRepository.save(landing);
 
         // Create initial DRAFT version — populate from template defaults if templateId provided
-        var initialContent = buildTemplateDefaultContent(request.templateId());
+        var initialContent = buildTemplateDefaultContent(request.templateId(), tenantId);
         var version = LandingVersion.builder()
                 .landingId(landing.getId())
                 .versionNumber(1)
@@ -455,14 +456,24 @@ public class EngineOrchestrator implements EngineService {
                 .build();
         landing = landingRepository.save(landing);
 
-        // Build content from template sections + filled content
-        var content = buildFilledContent(request.templateId(), request.filledSections());
+        // Build content from template sections + filled content, with tenant variable injection
+        var content = buildFilledContent(request.templateId(), request.filledSections(), tenantId);
+        // Use template's defaultStyles as fallback when caller does not provide styles
+        String stylesJson = null;
+        if (request.styles() != null) {
+            stylesJson = toJson(request.styles());
+        } else if (request.templateId() != null) {
+            var tpl = landingTemplateRepository.findById(request.templateId());
+            if (tpl.isPresent() && tpl.get().getDefaultStyles() != null) {
+                stylesJson = tpl.get().getDefaultStyles();
+            }
+        }
         var version = LandingVersion.builder()
                 .landingId(landing.getId())
                 .versionNumber(1)
                 .status(VersionStatus.DRAFT)
                 .content(content)
-                .styles(request.styles() != null ? toJson(request.styles()) : null)
+                .styles(stylesJson)
                 .build();
         landingVersionRepository.save(version);
 
@@ -470,22 +481,24 @@ public class EngineOrchestrator implements EngineService {
     }
 
     /**
-     * Build initial version content from template defaults.
+     * Build initial version content from template defaults, with tenant variable injection.
      * Returns {"blocks":[]} if no template or no sections.
      */
-    private String buildTemplateDefaultContent(UUID templateId) {
+    private String buildTemplateDefaultContent(UUID templateId, UUID tenantId) {
         if (templateId == null) return "{\"blocks\":[]}";
         var sections = templateSectionRepository.findByTemplateIdOrderBySortOrder(templateId);
         if (sections.isEmpty()) return "{\"blocks\":[]}";
 
+        var vars = tenantVariableResolver.buildVariables(tenantId);
         var blocks = sections.stream()
                 .map(section -> {
                     Map<String, Object> block = new LinkedHashMap<>();
                     block.put("id", "blk_" + UUID.randomUUID().toString().substring(0, 8));
                     block.put("type", section.getBlockType().typeName());
                     Map<String, Object> props = new LinkedHashMap<>();
-                    if (section.getDefaultProps() != null && !section.getDefaultProps().isBlank()) {
-                        var parsed = fromJson(section.getDefaultProps());
+                    var rawProps = tenantVariableResolver.resolveProps(section.getDefaultProps(), vars);
+                    if (rawProps != null && !rawProps.isBlank()) {
+                        var parsed = fromJson(rawProps);
                         if (parsed != null) props.putAll(parsed);
                     }
                     block.put("props", props);
@@ -500,22 +513,24 @@ public class EngineOrchestrator implements EngineService {
 
     /**
      * Build version content from template sections + ADMIN-filled content per section.
-     * filledSections is a Map<sectionId, props>.
+     * Applies tenant variable injection on default props before merging filled content.
      */
-    private String buildFilledContent(UUID templateId, Map<String, Map<String, Object>> filledSections) {
+    private String buildFilledContent(UUID templateId, Map<String, Map<String, Object>> filledSections, UUID tenantId) {
         if (templateId == null) return "{\"blocks\":[]}";
         var sections = templateSectionRepository.findByTemplateIdOrderBySortOrder(templateId);
         if (sections.isEmpty()) return "{\"blocks\":[]}";
 
+        var vars = tenantVariableResolver.buildVariables(tenantId);
         var blocks = sections.stream()
                 .map(section -> {
                     Map<String, Object> block = new LinkedHashMap<>();
                     block.put("id", "blk_" + UUID.randomUUID().toString().substring(0, 8));
                     block.put("type", section.getBlockType().typeName());
-                    // Merge: start with defaultProps, overlay with filled content
+                    // Merge: start with defaultProps (with variable injection), overlay with filled content
                     Map<String, Object> props = new LinkedHashMap<>();
-                    if (section.getDefaultProps() != null && !section.getDefaultProps().isBlank()) {
-                        var parsed = fromJson(section.getDefaultProps());
+                    var rawProps = tenantVariableResolver.resolveProps(section.getDefaultProps(), vars);
+                    if (rawProps != null && !rawProps.isBlank()) {
+                        var parsed = fromJson(rawProps);
                         if (parsed != null) props.putAll(parsed);
                     }
                     var filled = filledSections != null ? filledSections.get(section.getId().toString()) : null;

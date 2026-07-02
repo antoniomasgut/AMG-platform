@@ -10,6 +10,7 @@ public record LandingTemplateResponse(
     String slug,
     String description,
     boolean isActive,
+    String defaultStyles,
     List<LandingTemplateSectionView> sections,
     Instant createdAt,
     Instant updatedAt

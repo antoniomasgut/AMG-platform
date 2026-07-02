@@ -28,6 +28,10 @@ public class LandingTemplate {
     @Column(length = 255)
     private String description;
 
+    /** Estils visuals per defecte (JSON): primaryColor, accentColor, fontHeading, fontBody, etc. */
+    @Column(name = "default_styles", columnDefinition = "TEXT")
+    private String defaultStyles;
+
     @Builder.Default
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
