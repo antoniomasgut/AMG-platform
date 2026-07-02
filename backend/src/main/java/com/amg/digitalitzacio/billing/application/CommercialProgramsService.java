@@ -16,6 +16,7 @@ public class CommercialProgramsService {
     private final EarlyAdopterProgramRepository earlyAdopterProgramRepository;
     private final ReferralCodeRepository referralCodeRepository;
     private final DiscountRepository discountRepository;
+    private final com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService systemConfigService;
 
     public EarlyAdopterProgram getEarlyAdopterStatus() {
         return earlyAdopterProgramRepository.findFirstByOrderByUpdatedAtDesc()
@@ -150,13 +151,14 @@ public class CommercialProgramsService {
         referralCode.setUsedAt(Instant.now());
         referralCodeRepository.save(referralCode);
 
-        // Crear descompte per al referit
+        // Crear descompte per al referit — percentatge configurable (System Config, per defecte 50%)
+        BigDecimal setupPct = referralSetupDiscountPct();
         Discount discountForReferred = Discount.builder()
             .type(DiscountType.PERCENTAGE)
-            .value(BigDecimal.valueOf(100))
+            .value(setupPct)
             .appliesTo(DiscountAppliesTo.BUDGET)
             .tenantId(newTenantId)
-            .label("Referit - Setup gratuït")
+            .label("Referit - " + setupPct.stripTrailingZeros().toPlainString() + "% setup")
             .program(DiscountProgram.REFERRAL)
             .appliesToSetup(true)
             .appliesToMonthly(false)
@@ -175,6 +177,17 @@ public class CommercialProgramsService {
 
     public Optional<ReferralCode> getTenantReferral(UUID tenantId) {
         return referralCodeRepository.findByOwnerTenantId(tenantId);
+    }
+
+    private BigDecimal referralSetupDiscountPct() {
+        try {
+            String v = systemConfigService.get("REFERRAL_SETUP_DISCOUNT_PCT");
+            if (v != null && !v.isBlank()) {
+                var pct = new BigDecimal(v.trim());
+                if (pct.signum() > 0 && pct.compareTo(BigDecimal.valueOf(100)) <= 0) return pct;
+            }
+        } catch (Exception ignored) {}
+        return BigDecimal.valueOf(50);
     }
 
     private String generateReferralCode() {

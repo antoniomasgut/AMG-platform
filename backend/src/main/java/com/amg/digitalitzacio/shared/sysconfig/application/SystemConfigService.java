@@ -37,6 +37,7 @@ public class SystemConfigService {
         new KnownKey("TELEGRAM_WEBHOOK_SECRET", "Telegram Webhook Secret",    "Token secret per verificar peticions del webhook de Telegram (X-Telegram-Bot-Api-Secret-Token). Configurar a setWebhook?secret_token=<valor>", "AGENTS", true, "secret", null, null, 41),
         new KnownKey("TELEGRAM_CHAT_ID",        "Telegram Chat ID (InfraOps)","ID del chat on enviar alertes d'infraestructura", "INFRAOPS", false, "string", null, null, 10),
         new KnownKey("AMG_SALES_CHAT_ID",       "Telegram Chat ID (Vendes)", "ID del chat Telegram per a alertes comercials (pressupostos, clients nous)", "VENDES", false, "string", "614492062", null, 10),
+        new KnownKey("REFERRAL_SETUP_DISCOUNT_PCT", "Descompte setup referits (%)", "Percentatge de descompte al setup per al client nou que arriba amb codi de referit", "VENDES", false, "string", "50", null, 20),
         new KnownKey("PLATFORM_TENANT_ID",      "Platform Tenant ID",         "UUID del tenant AMG per a leads del formulari web (opcional)", "GENERAL", false, "string", null, null, 10),
         new KnownKey("TWILIO_ACCOUNT_SID",      "Twilio Account SID",         "SID del compte Twilio per a WhatsApp Business", "AGENTS",    false, "string", null, null, 50),
         new KnownKey("TWILIO_AUTH_TOKEN",       "Twilio Auth Token",          "Token d'autenticació Twilio", "AGENTS",                        true,  "secret", null, null, 60),
