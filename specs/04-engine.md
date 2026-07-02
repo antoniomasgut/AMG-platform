@@ -202,9 +202,10 @@ Tipus de blocs suportats al render:
 
 | Bloc | Props | Descripció |
 |------|-------|-----------|
-| `hero` | title, subtitle, ctaText, ctaUrl, bgImageUrl | Capçalera amb CTA |
+| `hero` | title, subtitle, ctaText, ctaUrl, bgImageUrl, ctaSecondaryText, ctaSecondaryUrl | Capçalera amb CTA principal + CTA secundari (outline) |
 | `text` | title, body, textAlign | Bloc de text simple |
-| `services` | title, items[{icon, title, description}] | Graella de serveis |
+| `services` | title, items[{icon, title, description}] | Graella de serveis amb icones SVG (nom, URL o emoji) |
+| `trust-bar` | items[{value, label, icon?}] | Barra horitzontal de stats (clients, anys, rating, etc.) sobre fons primari |
 | `gallery` | title, images[{url, alt, caption}] | Galeria d'imatges |
 | `contact-form` | title, email, phone, address | Formulari de contacte |
 | `faq` | title, items[{question, answer}] | Preguntes freqüents |
@@ -213,6 +214,8 @@ Tipus de blocs suportats al render:
 | `footer` | companyName, email, phone, socialLinks | Peu de pàgina |
 | `map` | address, lat, lng | Mapa incrustat (OpenStreetMap) |
 | `reviews` | title, source, minRating, maxItems, googleMapsUrl, items[] | Ressenyes (manual o sync GBP — veure baix) |
+
+**Nav sticky:** totes les landings inclouen una barra de navegació fixa (`position:sticky;top:0`) amb el nom del negoci (o logo si `styles.logoUrl` és present) i un CTA "Contacta'ns" que llisca a `#contact`. Es pot desactivar amb `styles.showNav: false`.
 
 **Bloc `reviews` — font de dades (PRO):**
 

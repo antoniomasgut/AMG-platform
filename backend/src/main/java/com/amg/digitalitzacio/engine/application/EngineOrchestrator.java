@@ -689,6 +689,8 @@ public class EngineOrchestrator implements EngineService {
         var bizType      = styles != null ? styles.getOrDefault("businessType", "LocalBusiness") : "LocalBusiness";
         var gaId         = styles != null ? styles.getOrDefault("gaId", "")            : "";
         var customCss    = styles != null ? styles.getOrDefault("customCss", "")       : "";
+        var logoUrl      = styles != null ? styles.getOrDefault("logoUrl", "").toString() : "";
+        var showNav      = styles == null || !Boolean.FALSE.equals(styles.get("showNav"));
         // Idioma de la pàgina (ca per defecte)
         var lang         = styles != null ? styles.getOrDefault("language", "ca").toString() : "ca";
         // URL base de les pàgines legals (per defecte apunta al portal AMG)
@@ -727,6 +729,7 @@ public class EngineOrchestrator implements EngineService {
         var schemaJson   = buildSchemaOrg(landing.getTitle(), publicUrl, phone.toString(), address.toString(), bizType.toString());
         boolean hasChatWidget = chatEnabled || hasChatCta;
         var waButton     = buildWhatsAppButton(waNumber, hasChatWidget);
+        var stickyNav    = showNav ? buildStickyNav(landing.getTitle(), logoUrl, sv) : "";
         // GA4: s'injecta però s'activa NOMÉS quan l'usuari accepta cookies
         var gaScript     = buildGa4ScriptDeferred(gaId.toString());
         var chatWidget   = hasChatWidget ? buildChatWidget(landing.getSlug(), sv.primary(), chatBizName) : "";
@@ -765,6 +768,7 @@ public class EngineOrchestrator implements EngineService {
                (customCss.toString().isBlank() ? "" : customCss.toString()) +
                "</style>" +
                "</head><body>" +
+               stickyNav +
                blocksHtml +
                "<footer class=\"legal-footer\"><div class=\"w\">" +
                "<p>&copy; " + java.time.Year.now() + " " + escapeHtml(landing.getTitle()) + ". Tots els drets reservats.</p>" +
@@ -850,26 +854,94 @@ public class EngineOrchestrator implements EngineService {
                ".w{max-width:1100px;margin:0 auto;padding:0 20px}" +
                ".sec{padding:80px 0}" +
                ".sec-title{font-size:clamp(1.5rem,3vw,2rem);font-weight:700;text-align:center;margin-bottom:48px;color:var(--tx)}" +
-               ".btn{display:inline-block;padding:14px 36px;background:var(--p);color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:1rem;transition:opacity .2s}" +
-               ".btn:hover{opacity:.85}" +
+               // Botons
+               ".btn{display:inline-block;padding:14px 36px;background:var(--p);color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:1rem;transition:opacity .2s,transform .15s}" +
+               ".btn:hover{opacity:.88;transform:translateY(-1px)}" +
                ".btn-inv{background:#fff;color:var(--p)}" +
-               ".card{background:#fff;border-radius:8px;padding:28px 24px;box-shadow:0 2px 12px rgba(0,0,0,.08)}" +
+               ".btn-outline{background:transparent;border:2px solid #fff;color:#fff}" +
+               ".btn-outline:hover{background:rgba(255,255,255,.12)}" +
+               // Cards i grids
+               ".card{background:#fff;border-radius:12px;padding:32px 28px;box-shadow:0 2px 16px rgba(0,0,0,.07);transition:transform .2s,box-shadow .2s}" +
+               ".card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.12)}" +
                ".grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}" +
                ".grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}" +
+               // Icona de servei
+               ".svc-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:1.6rem;background:var(--p)12}" +
+               ".svc-icon svg{display:block}" +
+               // Nav sticky
+               "#amg-nav{position:sticky;top:0;z-index:8999;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(0,0,0,.07);transition:box-shadow .25s}" +
+               "#amg-nav.scrolled{box-shadow:0 2px 20px rgba(0,0,0,.1)}" +
+               ".nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}" +
+               ".nav-brand{text-decoration:none;display:flex;align-items:center;gap:10px;font-family:" + s.fontH() + ";font-weight:700;font-size:1.05rem;color:var(--p)}" +
+               ".nav-logo{height:36px;object-fit:contain}" +
+               ".nav-cta{padding:10px 22px;font-size:.88rem}" +
+               // Trust bar
+               ".trust-bar{padding:44px 0;background:var(--p)}" +
+               ".trust-bar-inner{display:flex;justify-content:center;flex-wrap:wrap;gap:40px 60px;text-align:center}" +
+               ".trust-stat{min-width:90px}" +
+               ".trust-value{font-family:" + s.fontH() + ";font-size:2.4rem;font-weight:800;line-height:1;color:#fff}" +
+               ".trust-label{font-size:.8rem;opacity:.82;margin-top:6px;text-transform:uppercase;letter-spacing:.06em;color:#fff}" +
+               // Footer legal
                ".legal-footer{background:#f8fafc;border-top:1px solid #e2e8f0;padding:24px;text-align:center;font-size:14px;color:#718096}" +
                ".legal-footer a{color:var(--p);text-decoration:underline}" +
+               // Inputs
                "input,textarea{width:100%;padding:12px 16px;border:1px solid #d1d5db;border-radius:8px;font-family:" + s.fontB() + ";font-size:.95rem;margin-bottom:12px;outline:none}" +
                "input:focus,textarea:focus{border-color:var(--p)}" +
-               "@media(max-width:640px){.sec{padding:56px 0}.sec-title{margin-bottom:32px}}" +
-               "[data-anim]{opacity:0;transform:translateY(32px);transition:opacity .6s ease,transform .6s ease}" +
+               // Responsive
+               "@media(max-width:640px){.sec{padding:56px 0}.sec-title{margin-bottom:32px}.nav-cta{padding:9px 16px;font-size:.82rem}.trust-bar-inner{gap:28px 40px}.trust-value{font-size:1.8rem}}" +
+               // Animació scroll
+               "[data-anim]{opacity:0;transform:translateY(28px);transition:opacity .55s ease,transform .55s ease}" +
                "[data-anim].visible{opacity:1;transform:none}";
     }
 
+    @SuppressWarnings("unchecked")
+    private String renderTrustBar(Map<String, Object> props, StyleVars s) {
+        var items = props.getOrDefault("items", List.of());
+        var html = new StringBuilder();
+        html.append("<section class=\"trust-bar\"><div class=\"w trust-bar-inner\">");
+        if (items instanceof List<?> list) {
+            for (var item : list) {
+                if (item instanceof Map m) {
+                    var im = (Map<String, Object>) m;
+                    var value = str(im, "value", "");
+                    var label = str(im, "label", "");
+                    var icon  = str(im, "icon", "");
+                    String iconPart = icon.isBlank() ? ""
+                            : "<div style=\"font-size:1.6rem;margin-bottom:6px\">" + escapeHtml(icon) + "</div>";
+                    html.append("<div class=\"trust-stat\" data-anim>")
+                        .append(iconPart)
+                        .append("<div class=\"trust-value\">").append(escapeHtml(value)).append("</div>")
+                        .append("<div class=\"trust-label\">").append(escapeHtml(label)).append("</div>")
+                        .append("</div>");
+                }
+            }
+        }
+        html.append("</div></section>");
+        return html.toString();
+    }
+
+    private String buildStickyNav(String businessName, String logoUrl, StyleVars s) {
+        String brand = (logoUrl != null && !logoUrl.isBlank())
+                ? "<img src=\"" + escapeHtml(logoUrl) + "\" alt=\"" + escapeHtml(businessName) + "\" class=\"nav-logo\">"
+                : escapeHtml(businessName);
+        return "<nav id=\"amg-nav\" role=\"navigation\">" +
+               "<div class=\"w nav-inner\">" +
+               "<a href=\"#\" class=\"nav-brand\">" + brand + "</a>" +
+               "<a href=\"#contact\" class=\"btn nav-cta\">Contacta'ns</a>" +
+               "</div></nav>";
+    }
+
     private String buildScrollAnimScript() {
-        return "<script>(function(){var io=new IntersectionObserver(function(e){" +
+        return "<script>(function(){" +
+               // Animació scroll
+               "var io=new IntersectionObserver(function(e){" +
                "e.forEach(function(x){if(x.isIntersecting){x.target.classList.add('visible');" +
-               "io.unobserve(x.target)}})},{threshold:0.12});" +
-               "document.querySelectorAll('[data-anim]').forEach(function(el){io.observe(el)})})();</script>";
+               "io.unobserve(x.target)}})},{threshold:0.1});" +
+               "document.querySelectorAll('[data-anim]').forEach(function(el){io.observe(el)});" +
+               // Nav shadow en scroll
+               "var nav=document.getElementById('amg-nav');" +
+               "if(nav){window.addEventListener('scroll',function(){nav.classList.toggle('scrolled',window.scrollY>30);},{passive:true});}" +
+               "})();</script>";
     }
 
     private String renderBlock(Map<String, Object> block, StyleVars s, String slug, UUID tenantId) {
@@ -898,34 +970,42 @@ public class EngineOrchestrator implements EngineService {
             case "team"          -> renderTeam(props, s);
             case "video"         -> renderVideo(props, s);
             case "reviews"       -> renderReviews(props, s, tenantId);
+            case "trust-bar"     -> renderTrustBar(props, s);
             default              -> "";
         };
     }
 
     private String renderHero(Map<String, Object> props, StyleVars s) {
-        var title     = str(props, "title", "");
-        var subtitle  = str(props, "subtitle", "");
-        var ctaText   = str(props, "ctaText", "");
-        var ctaUrl    = str(props, "ctaLink", str(props, "ctaUrl", "#contact"));
-        var ctaAction = str(props, "ctaAction", "link");
-        var bgImage   = str(props, "bgImage", str(props, "bgImageUrl", ""));
+        var title      = str(props, "title", "");
+        var subtitle   = str(props, "subtitle", "");
+        var ctaText    = str(props, "ctaText", "");
+        var ctaUrl     = str(props, "ctaLink", str(props, "ctaUrl", "#contact"));
+        var ctaAction  = str(props, "ctaAction", "link");
+        var ctaSecText = str(props, "ctaSecondaryText", "");
+        var ctaSecUrl  = str(props, "ctaSecondaryLink", str(props, "ctaSecondaryUrl", "#contact"));
+        var bgImage    = str(props, "bgImage", str(props, "bgImageUrl", ""));
 
         var bgCss = bgImage.isBlank()
                 ? "background:linear-gradient(135deg," + s.accent() + " 0%," + s.primary() + " 100%)"
-                : "background:linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)),url('" + escapeHtml(bgImage) + "') center/cover";
+                : "background:linear-gradient(rgba(0,0,0,.48),rgba(0,0,0,.48)),url('" + escapeHtml(bgImage) + "') center/cover no-repeat";
 
-        String ctaHtml = "";
+        String ctaPrimary = "";
         if (!ctaText.isBlank()) {
-            ctaHtml = "chat".equals(ctaAction)
+            ctaPrimary = "chat".equals(ctaAction)
                 ? "<button class=\"btn btn-inv\" onclick=\"openChatWidget()\">" + escapeHtml(ctaText) + "</button>"
                 : "<a href=\"" + escapeHtml(ctaUrl) + "\" class=\"btn btn-inv\">" + escapeHtml(ctaText) + "</a>";
         }
+        String ctaSecondary = ctaSecText.isBlank() ? ""
+                : "<a href=\"" + escapeHtml(ctaSecUrl) + "\" class=\"btn btn-outline\">" + escapeHtml(ctaSecText) + "</a>";
+
+        String ctasHtml = (ctaPrimary + ctaSecondary).isBlank() ? ""
+                : "<div style=\"display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:36px\">" + ctaPrimary + ctaSecondary + "</div>";
 
         return "<section style=\"" + bgCss + ";color:#fff\">" +
-               "<div class=\"w\" style=\"padding:100px 20px;text-align:center\">" +
+               "<div class=\"w\" style=\"padding:100px 20px 90px;text-align:center\">" +
                "<h1 style=\"font-size:clamp(2rem,5vw,3.5rem);font-weight:800;margin-bottom:20px\">" + escapeHtml(title) + "</h1>" +
-               "<p style=\"font-size:clamp(1rem,2.5vw,1.25rem);opacity:.9;max-width:600px;margin:0 auto 36px\">" + escapeHtml(subtitle) + "</p>" +
-               ctaHtml +
+               "<p style=\"font-size:clamp(1rem,2.5vw,1.2rem);opacity:.88;max-width:620px;margin:0 auto;line-height:1.7\">" + escapeHtml(subtitle) + "</p>" +
+               ctasHtml +
                "</div></section>";
     }
 
@@ -1152,15 +1232,59 @@ public class EngineOrchestrator implements EngineService {
                     var im = (Map<String, Object>) m;
                     var name = str(im, "title", str(im, "name", ""));
                     var desc = str(im, "description", str(im, "desc", ""));
-                    html.append("<div class=\"card\" data-anim style=\"border-top:4px solid ").append(s.primary()).append("\">")
-                        .append("<h3 style=\"font-weight:700;margin-bottom:10px;color:").append(s.text()).append("\">").append(escapeHtml(name)).append("</h3>")
-                        .append("<p style=\"opacity:.65;font-size:.95rem;line-height:1.6\">").append(escapeHtml(desc)).append("</p>")
+                    var icon = str(im, "icon", "");
+                    String iconHtml = buildServiceIconHtml(icon, s.primary());
+                    html.append("<div class=\"card\" data-anim>")
+                        .append(iconHtml)
+                        .append("<h3 style=\"font-weight:700;margin-bottom:10px;color:").append(s.text()).append(";font-size:1.05rem\">").append(escapeHtml(name)).append("</h3>")
+                        .append("<p style=\"opacity:.65;font-size:.93rem;line-height:1.65\">").append(escapeHtml(desc)).append("</p>")
                         .append("</div>");
                 }
             }
         }
         html.append("</div></div></section>");
         return html.toString();
+    }
+
+    private String buildServiceIconHtml(String icon, String primaryColor) {
+        if (icon == null || icon.isBlank()) {
+            return "<div class=\"svc-icon\" style=\"background:" + primaryColor + "18\">" + svgIcon("star", primaryColor) + "</div>";
+        }
+        if (icon.startsWith("http://") || icon.startsWith("https://")) {
+            return "<div class=\"svc-icon\" style=\"background:transparent\"><img src=\"" + escapeHtml(icon) + "\" alt=\"\" style=\"width:48px;height:48px;object-fit:contain\"></div>";
+        }
+        // Emoji o text curt (≤4 caràcters)
+        if (icon.length() <= 4) {
+            return "<div class=\"svc-icon\" style=\"background:" + primaryColor + "18;font-size:1.8rem\">" + escapeHtml(icon) + "</div>";
+        }
+        // Nom d'icona coneguda
+        return "<div class=\"svc-icon\" style=\"background:" + primaryColor + "18\">" + svgIcon(icon.toLowerCase(), primaryColor) + "</div>";
+    }
+
+    private String svgIcon(String name, String color) {
+        String c = escapeHtml(color);
+        String path = switch (name) {
+            case "calendar"    -> "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z";
+            case "clock"       -> "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z";
+            case "phone"       -> "M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z";
+            case "heart"       -> "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z";
+            case "user"        -> "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z";
+            case "scissors"    -> "M6 9l6 6m0 0l6-6m-6 6V3m0 12v6";
+            case "check"       -> "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z";
+            case "star"        -> "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z";
+            case "home"        -> "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6";
+            case "wrench","tool"-> "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z";
+            case "leaf","plant" -> "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z";
+            case "shield"      -> "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z";
+            case "award"       -> "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z";
+            case "zap","bolt"  -> "M13 10V3L4 14h7v7l9-11h-7z";
+            case "map-pin","location" -> "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z";
+            case "smile"       -> "M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z";
+            case "graduation-cap","cap" -> "M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z";
+            default            -> "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z";
+        };
+        return "<svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"" + c +
+               "\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"" + path + "\"/></svg>";
     }
 
     private String renderContactForm(Map<String, Object> props, StyleVars s, String slug) {
