@@ -303,6 +303,33 @@ function AcceptBudgetContent() {
   const selMonthlyTotal = selectedPhases.reduce((s, p) => s + p.phaseMonthlyTotal, 0);
   const addonsSetup = budget.addons.reduce((s, a) => s + a.unitPrice, 0);
 
+  // ── Plans Bàsic / Recomanat / Complet (només NexeLocal amb prou fases) ──
+  const recKeys = (budget.recommendedPhaseIds ?? [])
+    .map(id => budget.phases.find(p => p.phaseId === id)?.phaseKey ?? id)
+    .filter(k => allPhaseKeys.includes(k));
+  const basicKeys = allPhaseKeys.slice(0, 1);
+  const showTiers = isNexeLocal
+    && allPhaseKeys.length >= 3
+    && recKeys.length > basicKeys.length
+    && recKeys.length < allPhaseKeys.length;
+
+  const tierTotals = (keys: string[]) => {
+    const phs = budget.phases.filter(p => keys.includes(p.phaseKey ?? p.phaseId ?? ''));
+    return {
+      setup: phs.reduce((s, p) => s + p.phaseTotal, 0),
+      monthly: phs.reduce((s, p) => s + p.phaseMonthlyTotal, 0),
+      names: phs.map(p => p.name),
+    };
+  };
+  const sameSet = (keys: string[]) =>
+    keys.length === selectedPhaseKeys.size && keys.every(k => selectedPhaseKeys.has(k));
+
+  const tiers = showTiers ? [
+    { id: 'basic',    label: 'Bàsic',     keys: basicKeys,    highlight: false, ...tierTotals(basicKeys) },
+    { id: 'recomanat', label: 'Recomanat', keys: recKeys,      highlight: true,  ...tierTotals(recKeys) },
+    { id: 'complet',  label: 'Complet',   keys: allPhaseKeys, highlight: false, ...tierTotals(allPhaseKeys) },
+  ] : [];
+
   const sectorLabel = budget.sector ? (SECTOR_LABELS[budget.sector] ?? budget.sector) : null;
 
   return (
@@ -390,12 +417,60 @@ function AcceptBudgetContent() {
           </div>
         )}
 
+        {/* Plans Bàsic / Recomanat / Complet */}
+        {showTiers && (
+          <div>
+            <h2 className="text-base font-bold text-gray-900 mb-1">Tria el teu pla</h2>
+            <p className="text-gray-400 text-xs mb-3">Pots personalitzar les fases més avall</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {tiers.map(tier => {
+                const active = sameSet(tier.keys);
+                return (
+                  <button
+                    key={tier.id}
+                    type="button"
+                    onClick={() => setSelectedPhaseKeys(new Set(tier.keys))}
+                    className={`relative text-left rounded-2xl border-2 p-4 transition bg-white ${
+                      active
+                        ? 'border-[#FF6B00] shadow-md'
+                        : tier.highlight
+                          ? 'border-orange-200 hover:border-[#FF6B00]'
+                          : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    {tier.highlight && (
+                      <span className="absolute -top-2.5 left-4 bg-[#FF6B00] text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                        Recomanat
+                      </span>
+                    )}
+                    <div className="text-sm font-bold text-gray-900 mb-1 mt-1">{tier.label}</div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {tier.monthly.toFixed(0)}<span className="text-sm font-semibold text-gray-500">€/mes</span>
+                    </div>
+                    <div className="text-[11px] text-gray-400 mb-2">+ {tier.setup.toFixed(0)}€ de posada en marxa</div>
+                    <ul className="space-y-0.5">
+                      {tier.names.map(n => (
+                        <li key={n} className="text-[11px] text-gray-500 flex items-start gap-1">
+                          <span className="text-[#FF6B00] mt-px">✓</span>{n}
+                        </li>
+                      ))}
+                    </ul>
+                    {active && (
+                      <div className="mt-2 text-[11px] font-semibold text-[#FF6B00]">Seleccionat</div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Phases */}
         {budget.phases.length > 0 && (
           <div>
             <div className="flex items-end justify-between mb-3">
               <div>
-                <h2 className="text-base font-bold text-gray-900">Fases disponibles</h2>
+                <h2 className="text-base font-bold text-gray-900">{showTiers ? 'Detall de les fases' : 'Fases disponibles'}</h2>
                 <p className="text-gray-400 text-xs mt-0.5">Selecciona les que vols activar</p>
               </div>
               {budget.phases.length > 1 && (
