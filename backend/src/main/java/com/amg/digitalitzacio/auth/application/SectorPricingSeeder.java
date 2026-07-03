@@ -70,7 +70,7 @@ public class SectorPricingSeeder implements CommandLineRunner {
             entry(BusinessSector.TALLER_MECANIC,     BusinessSize.MITJA,    325, 109, 30, 30, 15, 15),
             entry(BusinessSector.VETERINARI,         BusinessSize.AUTONOMO, 175,  69, 20, 20, 15, 15),
             entry(BusinessSector.VETERINARI,         BusinessSize.PETIT,    325, 109, 40, 40, 20, 20),
-            entry(BusinessSector.PERRUQUERIA_CANINA, BusinessSize.AUTONOMO, 150,  49, 20, 20, 15, 15),
+            entry(BusinessSector.PERRUQUERIA_CANINA, BusinessSize.AUTONOMO, 150,  59, 20, 20, 15, 15),
             // Restauració
             entry(BusinessSector.RESTAURANTE,        BusinessSize.AUTONOMO, 150,  64, 20, 20, 15, 15),
             entry(BusinessSector.RESTAURANTE,        BusinessSize.PETIT,    275, 104, 20, 30, 15, 15),
