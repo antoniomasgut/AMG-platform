@@ -27,6 +27,8 @@ public class GoCardlessOrchestrator implements GoCardlessService {
     private final GoCardlessMandateRepository mandateRepository;
     private final GoCardlessPaymentRepository paymentRepository;
     private final MonthlyInvoiceRepository monthlyInvoiceRepository;
+    // @Lazy: PostAcceptanceService depèn de GoCardlessService — trenca el cicle de beans
+    @org.springframework.context.annotation.Lazy
     private final com.amg.digitalitzacio.billing.application.PostAcceptanceService postAcceptanceService;
 
     @Override

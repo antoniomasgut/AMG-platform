@@ -6,6 +6,9 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
+# lombok.config és imprescindible: sense ell Lombok no copia @Lazy als
+# constructors i Spring falla amb cicles de beans que localment no existeixen
+COPY lombok.config .
 COPY src ./src
 RUN mvn package -B -DskipTests
 
