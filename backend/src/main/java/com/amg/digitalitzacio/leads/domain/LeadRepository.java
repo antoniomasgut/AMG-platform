@@ -87,6 +87,8 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
     @Query("SELECT COUNT(l) FROM Lead l WHERE l.tenantId = :tenantId AND l.isActive = true")
     long countByTenantId(@Param("tenantId") UUID tenantId);
 
+    long countByCreatedAtAfterAndIsActiveTrue(Instant after);
+
     @Query("SELECT COUNT(l) FROM Lead l WHERE l.isActive = true")
     long countActive();
 

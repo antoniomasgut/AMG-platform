@@ -11,4 +11,5 @@ public interface GoCardlessPaymentRepository extends JpaRepository<GoCardlessPay
     Page<GoCardlessPayment> findByTenantId(UUID tenantId, Pageable pageable);
     Optional<GoCardlessPayment> findByGcPaymentId(String gcPaymentId);
     Optional<GoCardlessPayment> findByMonthlyInvoiceId(UUID monthlyInvoiceId);
+    java.util.List<GoCardlessPayment> findByStatusAndCreatedAtAfter(GoCardlessPaymentStatus status, java.time.Instant after);
 }

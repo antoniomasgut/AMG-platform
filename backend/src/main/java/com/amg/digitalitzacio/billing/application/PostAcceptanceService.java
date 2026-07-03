@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -136,6 +137,10 @@ public class PostAcceptanceService {
     }
 
     public void onLeadCreated(UUID tenantId, String leadName, String contact, String source) {
+        onLeadCreated(tenantId, null, leadName, contact, source);
+    }
+
+    public void onLeadCreated(UUID tenantId, UUID leadId, String leadName, String contact, String source) {
         if (!isEnabled("AMG_NOTIFY_LEAD_CREATED")) return;
         try {
             String tenantName = resolveTenantName(tenantId);
@@ -144,9 +149,14 @@ public class PostAcceptanceService {
                     📛 %s
                     📞 %s
                     📡 Font: %s
-                    🔗 <a href="https://amgdl.com/portal/admin/leads">Veure leads →</a>
                     """.formatted(tenantName, leadName, contact, source != null ? source : "—");
-            sendToSalesChat(msg);
+            if (leadId != null) {
+                sendToSalesChatWithButtons(msg, java.util.List.of(
+                        Map.of("text", "✓ Contactat", "callback_data", "lead_done:" + leadId),
+                        Map.of("text", "Veure fitxa", "url", "https://amgdl.com/portal/admin/leads")));
+            } else {
+                sendToSalesChat(msg + "🔗 <a href=\"https://amgdl.com/portal/admin/leads\">Veure leads →</a>");
+            }
         } catch (Exception e) {
             log.warn("[PostAcceptance] Error notificant nou lead tenant={}: {}", tenantId, e.getMessage());
         }
@@ -615,6 +625,19 @@ public class PostAcceptanceService {
             return val == null || "true".equalsIgnoreCase(val.trim());
         } catch (Exception e) {
             return true;
+        }
+    }
+
+    private void sendToSalesChatWithButtons(String message, java.util.List<Map<String, String>> buttons) {
+        try {
+            String chatIdStr = systemConfigService.get("AMG_SALES_CHAT_ID");
+            if (chatIdStr == null || chatIdStr.isBlank()) {
+                log.warn("[PostAcceptance] AMG_SALES_CHAT_ID no configurat");
+                return;
+            }
+            telegramBotClient.sendMessageWithButtons(Long.parseLong(chatIdStr.trim()), message, buttons);
+        } catch (Exception e) {
+            log.warn("[PostAcceptance] Error enviant Telegram amb botons: {}", e.getMessage());
         }
     }
 

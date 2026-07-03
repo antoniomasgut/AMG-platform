@@ -53,6 +53,22 @@ public class TelegramWebhookController {
             }
         }
         try {
+            // Callback dels botons inline (p. ex. "✓ Contactat" al xat de vendes)
+            if (payload.get("callback_query") instanceof Map<?, ?> callback) {
+                String callbackId = callback.get("id") instanceof String cid ? cid : null;
+                String data = callback.get("data") instanceof String d ? d : "";
+                Long cbChatId = null;
+                if (callback.get("message") instanceof Map<?, ?> cbMsg
+                        && cbMsg.get("chat") instanceof Map<?, ?> cbChat
+                        && cbChat.get("id") instanceof Number cbId) {
+                    cbChatId = cbId.longValue();
+                }
+                if (cbChatId != null && callbackId != null && amgAdminCommandService.isAdminChat(cbChatId)) {
+                    amgAdminCommandService.handleCallback(cbChatId, data, callbackId);
+                }
+                return ResponseEntity.ok("ok");
+            }
+
             var message = extractMessage(payload);
             if (message == null) {
                 return ResponseEntity.ok("ok");

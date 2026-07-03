@@ -1,13 +1,17 @@
 package com.amg.digitalitzacio.agents.application;
 
+import com.amg.digitalitzacio.agents.domain.NotificationOutbox;
+import com.amg.digitalitzacio.agents.domain.NotificationOutboxRepository;
 import com.amg.digitalitzacio.shared.exception.MissingApiKeyException;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import com.amg.digitalitzacio.telegram.application.TenantTelegramService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -18,18 +22,81 @@ public class TelegramBotClient {
     private final SystemConfigService sysConfig;
     private final TenantTelegramService tenantTelegramService;
     private final ChannelUsageService channelUsageService;
+    private final NotificationOutboxRepository outboxRepository;
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     public TelegramBotClient(SystemConfigService sysConfig,
                              TenantTelegramService tenantTelegramService,
-                             @Lazy ChannelUsageService channelUsageService) {
+                             @Lazy ChannelUsageService channelUsageService,
+                             NotificationOutboxRepository outboxRepository) {
         this.sysConfig = sysConfig;
         this.tenantTelegramService = tenantTelegramService;
         this.channelUsageService = channelUsageService;
+        this.outboxRepository = outboxRepository;
     }
 
-    /** Envia missatge usant el bot global de la plataforma */
+    /**
+     * Envia missatge usant el bot global de la plataforma.
+     * Si falla, el missatge queda a la cua de reintents (notification_outbox).
+     */
     public boolean sendMessage(Long chatId, String text) {
-        return sendWithToken(chatId, text, getPlatformToken());
+        boolean sent = sendWithToken(chatId, text, getPlatformToken());
+        if (!sent) enqueue(chatId, text, null);
+        return sent;
+    }
+
+    /**
+     * Envia missatge del bot de plataforma amb botons inline.
+     * Cada botó és un Map amb "text" + ("callback_data" o "url").
+     * Exemple: List.of(Map.of("text","✓ Fet","callback_data","lead_done:ID"))
+     */
+    public boolean sendMessageWithButtons(Long chatId, String text, List<Map<String, String>> buttons) {
+        String markup = buildInlineKeyboard(buttons);
+        boolean sent = sendRaw(chatId, text, markup, getPlatformToken());
+        if (!sent) enqueue(chatId, text, markup);
+        return sent;
+    }
+
+    /** Respon un callback_query (treu l'spinner del botó i mostra un toast a Telegram). */
+    public void answerCallbackQuery(String callbackQueryId, String text) {
+        try {
+            var client = RestClient.builder()
+                    .baseUrl("https://api.telegram.org/bot" + getPlatformToken())
+                    .build();
+            client.post().uri("/answerCallbackQuery")
+                    .body(Map.of("callback_query_id", callbackQueryId, "text", text))
+                    .retrieve().toBodilessEntity();
+        } catch (Exception e) {
+            log.warn("Error responent callback query: {}", e.getMessage());
+        }
+    }
+
+    /** Reintenta un missatge de l'outbox. Retorna true si s'ha enviat. */
+    public boolean retryOutboxEntry(NotificationOutbox entry) {
+        String token = getPlatformTokenOrNull();
+        if (token == null) return false;
+        return sendRaw(entry.getChatId(), entry.getMessage(), entry.getReplyMarkup(), token);
+    }
+
+    private void enqueue(Long chatId, String text, String replyMarkup) {
+        try {
+            var entry = new NotificationOutbox();
+            entry.setChatId(chatId);
+            entry.setMessage(text);
+            entry.setReplyMarkup(replyMarkup);
+            outboxRepository.save(entry);
+            log.info("Notificació TG encuada per reintent (chat {})", chatId);
+        } catch (Exception e) {
+            log.error("No s'ha pogut encuar la notificació TG: {}", e.getMessage());
+        }
+    }
+
+    private String buildInlineKeyboard(List<Map<String, String>> buttons) {
+        try {
+            return JSON.writeValueAsString(Map.of("inline_keyboard", List.of(buttons)));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /** Envia missatge usant el bot configurat per al tenant (o el global com a fallback) */
@@ -48,11 +115,21 @@ public class TelegramBotClient {
     }
 
     private boolean sendWithToken(Long chatId, String text, String token) {
+        return sendRaw(chatId, text, null, token);
+    }
+
+    private boolean sendRaw(Long chatId, String text, String replyMarkup, String token) {
         try {
             var client = RestClient.builder()
                     .baseUrl("https://api.telegram.org/bot" + token)
                     .build();
-            var body = Map.of("chat_id", chatId, "text", text, "parse_mode", "HTML");
+            var body = new java.util.HashMap<String, Object>();
+            body.put("chat_id", chatId);
+            body.put("text", text);
+            body.put("parse_mode", "HTML");
+            if (replyMarkup != null && !replyMarkup.isBlank()) {
+                body.put("reply_markup", JSON.readTree(replyMarkup));
+            }
             client.post().uri("/sendMessage").body(body).retrieve().toBodilessEntity();
             log.debug("Missatge TG enviat a chat {}", chatId);
             return true;

@@ -94,7 +94,7 @@ public class MetaLeadWebhookService {
 
             String metaContact = lead.getEmail() != null ? lead.getEmail()
                     : lead.getPhone() != null ? lead.getPhone() : "—";
-            postAcceptanceService.onLeadCreated(tenantId,
+            postAcceptanceService.onLeadCreated(tenantId, lead.getId(),
                     lead.getName() != null ? lead.getName() : "—",
                     metaContact, "META_ADS");
 

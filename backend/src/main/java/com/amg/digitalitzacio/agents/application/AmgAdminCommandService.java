@@ -62,6 +62,31 @@ public class AmgAdminCommandService {
         return chatStr.equals(salesChatId) || chatStr.equals(infraChatId);
     }
 
+    /** Processa un callback de botó inline (p. ex. "lead_done:{uuid}" del botó ✓ Contactat). */
+    public void handleCallback(Long chatId, String data, String callbackQueryId) {
+        try {
+            if (data != null && data.startsWith("lead_done:")) {
+                var leadId = java.util.UUID.fromString(data.substring("lead_done:".length()));
+                var lead = leadRepository.findById(leadId).orElse(null);
+                if (lead == null) {
+                    telegramBotClient.answerCallbackQuery(callbackQueryId, "Lead no trobat");
+                    return;
+                }
+                if (lead.getStage() == PipelineStage.NEW) {
+                    lead.setStage(PipelineStage.CONTACTED);
+                    leadRepository.save(lead);
+                }
+                telegramBotClient.answerCallbackQuery(callbackQueryId, "✓ " +
+                        (lead.getName() != null ? lead.getName() : "Lead") + " marcat com a contactat");
+                return;
+            }
+            telegramBotClient.answerCallbackQuery(callbackQueryId, "Acció desconeguda");
+        } catch (Exception e) {
+            log.warn("[AmgAdmin] Error processant callback '{}': {}", data, e.getMessage());
+            telegramBotClient.answerCallbackQuery(callbackQueryId, "Error processant l'acció");
+        }
+    }
+
     /** Processa la comanda: si és coneguda respon directament, sinó delega a la IA */
     public void handle(Long chatId, String text) {
         String cmd = text.trim().toLowerCase();

@@ -102,7 +102,7 @@ public class LeadService {
                 "contact", contact,
                 "stage",   "Nou"));
 
-        postAcceptanceService.onLeadCreated(tenantId,
+        postAcceptanceService.onLeadCreated(tenantId, lead.getId(),
                 request.name() != null ? request.name() : "—",
                 contact,
                 source.name());
