@@ -89,8 +89,11 @@ public class TokenBudgetService {
      */
     public long whatsappCostMicros(String channel) {
         if ("WHATSAPP_META".equals(channel)) {
+            // Meta Cloud API amb WABA propi del tenant: Meta factura directament al
+            // tenant, AMG no té cost per missatge. Si mai AMG passa a BSP (Meta
+            // factura a AMG), posar el cost real a WHATSAPP_META_COST_EUR_MICROS.
             String val = sysConfig.get("WHATSAPP_META_COST_EUR_MICROS");
-            return parseLong(val, 50_000); // default €0.05/missatge
+            return parseLong(val, 0);
         } else {
             String val = sysConfig.get("WHATSAPP_TWILIO_COST_EUR_MICROS");
             return parseLong(val, 55_000); // default €0.055/missatge (Twilio + Meta)
