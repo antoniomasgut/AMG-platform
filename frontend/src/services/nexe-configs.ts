@@ -399,15 +399,24 @@ export function getPressupostosDefaults(sector?: string | null): PressupostosCon
 
 // ── Seguiment / F4 (service key intern: FIDELITZACIO) ─────────
 
+export interface SeasonalCampaign {
+  id: string;
+  name: string;
+  send_date: string;   // YYYY-MM-DD
+  message: string;
+}
+
 export interface FidelitzacioConfig {
   google_reviews_url: string;
   followup_days: number;
   followup_template: string;
   reengagement_months: number;
   reengagement_template: string;
+  seasonal_campaigns?: SeasonalCampaign[];
 }
 
 export const DEFAULT_FIDELITZACIO: FidelitzacioConfig = {
+  seasonal_campaigns: [],
   google_reviews_url: '',
   followup_days: 3,
   followup_template: "Hola {{nom}}, com va anar el servei? Si us plau deixa'ns una ressenya: {{url_ressenya}}",

@@ -11,7 +11,7 @@ import {
   provisionCalendar, getCalendarOAuthUrl, getCalendarSaEmail, validateCalendarId,
   AgendaConfig, AgendaMode, getAgendaMode, getAgendaDefaults,
   PressupostosConfig, QuoteMode, getQuoteMode, getPressupostosDefaults, ServiceItem,
-  FidelitzacioConfig, DEFAULT_FIDELITZACIO,
+  FidelitzacioConfig, DEFAULT_FIDELITZACIO, type SeasonalCampaign,
   EquipConfig, DEFAULT_EQUIP, TeamMember,
   ClientQuestion,
 } from '@/services/nexe-configs';
@@ -735,6 +735,49 @@ function FidelitzacioForm({ tenantId }: { tenantId: string }) {
             value={cfg.reengagement_template}
             onChange={e => setCfg(c => ({ ...c, reengagement_template: e.target.value }))} />
         </Field>
+      </SectionCard>
+
+      <SectionCard title="Campanyes estacionals">
+        <p className="f-mono text-xs text-ink-3 mb-3">
+          Missatges puntuals (Nadal, estiu, rebaixes...) que s&apos;envien el dia indicat
+          als clients amb activitat durant l&apos;últim any. Variables: {'{{nom}}'}
+        </p>
+        <div className="space-y-2 mb-3">
+          {(cfg.seasonal_campaigns ?? []).map((camp, i) => (
+            <div key={camp.id} className="bg-surface-base border border-border-base rounded p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="f-mono text-xs text-ink-3">Campanya {i + 1}</span>
+                <button type="button"
+                  onClick={() => setCfg(c => ({ ...c, seasonal_campaigns: (c.seasonal_campaigns ?? []).filter(x => x.id !== camp.id) }))}
+                  className="text-ink-3 hover:text-red-400 transition-colors">
+                  <IconSet.X size={12} />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Nom">
+                  <input className={inp} placeholder="Ex: Promoció de Nadal"
+                    value={camp.name}
+                    onChange={e => setCfg(c => ({ ...c, seasonal_campaigns: (c.seasonal_campaigns ?? []).map(x => x.id === camp.id ? { ...x, name: e.target.value } : x) }))} />
+                </Field>
+                <Field label="Data d'enviament">
+                  <input className={inp} type="date"
+                    value={camp.send_date}
+                    onChange={e => setCfg(c => ({ ...c, seasonal_campaigns: (c.seasonal_campaigns ?? []).map(x => x.id === camp.id ? { ...x, send_date: e.target.value } : x) }))} />
+                </Field>
+              </div>
+              <Field label="Missatge">
+                <textarea className={`${inp} h-20 resize-none`}
+                  placeholder="Hola {{nom}}! Aquest desembre..."
+                  value={camp.message}
+                  onChange={e => setCfg(c => ({ ...c, seasonal_campaigns: (c.seasonal_campaigns ?? []).map(x => x.id === camp.id ? { ...x, message: e.target.value } : x) }))} />
+              </Field>
+            </div>
+          ))}
+        </div>
+        <AMGButton type="button" variant="ghost" size="sm"
+          onClick={() => setCfg(c => ({ ...c, seasonal_campaigns: [...(c.seasonal_campaigns ?? []), { id: crypto.randomUUID(), name: '', send_date: '', message: '' }] }))}>
+          + Afegir campanya
+        </AMGButton>
       </SectionCard>
 
       <SaveRow isPending={mut.isPending} isSuccess={mut.isSuccess} isError={mut.isError} />
