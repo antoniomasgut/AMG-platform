@@ -53,6 +53,8 @@ public class LeadFollowUpScheduler {
         log.info("[F1-LeadFollowUp] Comprovant leads paralitzats per {} tenants", tenants.size());
 
         for (var tenant : tenants) {
+            // Fase suspesa o desactivada: no executar l'automatisme (nomes contractada no basta)
+            if (!tenant.isPhaseActive("F4")) continue;
             try {
                 processFollowUps(tenant.getId());
             } catch (Exception e) {

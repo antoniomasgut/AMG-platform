@@ -51,6 +51,8 @@ public class ReactivationScheduler {
         log.info("[F4-Reactivation] Executant reactivació de clients per {} tenants", tenants.size());
 
         for (var tenant : tenants) {
+            // Fase suspesa o desactivada: no executar l'automatisme (nomes contractada no basta)
+            if (!tenant.isPhaseActive("F4")) continue;
             try {
                 processReactivations(tenant.getId());
             } catch (Exception e) {

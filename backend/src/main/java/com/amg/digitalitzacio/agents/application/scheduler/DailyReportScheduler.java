@@ -42,6 +42,8 @@ public class DailyReportScheduler {
         log.info("[F5] Enviant informe diari per {} tenants", tenants.size());
 
         for (var tenant : tenants) {
+            // Fase suspesa o desactivada: no executar l'automatisme (nomes contractada no basta)
+            if (!tenant.isPhaseActive("F5")) continue;
             try {
                 sendReport(tenant.getId(), tenant.getName());
             } catch (Exception e) {

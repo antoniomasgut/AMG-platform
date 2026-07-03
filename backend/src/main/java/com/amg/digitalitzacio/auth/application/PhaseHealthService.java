@@ -24,6 +24,7 @@ public class PhaseHealthService {
     private final GoCardlessConfigRepository goCardlessConfigRepository;
     private final SystemConfigService systemConfigService;
     private final PhasePrerequisiteValidator prerequisiteValidator;
+    private final com.amg.digitalitzacio.agents.application.NexeServiceConfigService nexeConfigService;
 
     @Transactional(readOnly = true)
     public TenantPhaseHealthResponse checkHealth(UUID tenantId) {
@@ -56,8 +57,8 @@ public class PhaseHealthService {
             case "F1" -> checkF1(tenantId);
             case "F2" -> checkF2(tenantId);
             case "F3" -> checkF3(tenantId);
-            case "F4" -> checkF4();
-            case "F5" -> checkF5();
+            case "F4" -> checkF4(tenantId);
+            case "F5" -> checkF5(tenantId);
             default   -> new PhaseHealthResponse(phase, true, List.of(), List.of());
         };
     }
@@ -138,14 +139,38 @@ public class PhaseHealthService {
         return new PhaseHealthResponse("F3", issues.isEmpty(), issues, warnings);
     }
 
-    // F4 — Fidelització: funciona amb leads i scheduling intern, sense claus externes obligatòries
-    private PhaseHealthResponse checkF4() {
-        return new PhaseHealthResponse("F4", true, List.of(), List.of());
+    // F4 — Fidelització: tots els automatismes llegeixen la config FIDELITZACIO;
+    // sense config (o sense URL de ressenyes) la fase no fa res
+    private PhaseHealthResponse checkF4(UUID tenantId) {
+        var issues = new ArrayList<String>();
+        var warnings = new ArrayList<String>();
+        var config = nexeConfigService.get(tenantId, "FIDELITZACIO");
+        if (config.isEmpty()) {
+            issues.add("Config FIDELITZACIO no creada — cap automatisme de fidelització s'executarà");
+        } else {
+            String json = config.get().getConfigJson();
+            if (json == null || !json.contains("google_reviews_url")
+                    || json.contains("\"google_reviews_url\":\"\"")) {
+                warnings.add("Sense URL de ressenyes de Google — no es demanaran ressenyes");
+            }
+        }
+        return new PhaseHealthResponse("F4", issues.isEmpty(), issues, warnings);
     }
 
-    // F5 — Equip/Docs: beneficia de MinIO però no és bloquejant
-    private PhaseHealthResponse checkF5() {
+    // F5 — Equip: necessita la config EQUIP amb el grup de Telegram de l'equip
+    private PhaseHealthResponse checkF5(UUID tenantId) {
+        var issues = new ArrayList<String>();
         var warnings = new ArrayList<String>();
-        return new PhaseHealthResponse("F5", true, List.of(), warnings);
+        var config = nexeConfigService.get(tenantId, "EQUIP");
+        if (config.isEmpty()) {
+            issues.add("Config EQUIP no creada — ni informes diaris ni alertes d'equip s'enviaran");
+        } else {
+            String json = config.get().getConfigJson();
+            if (json == null || !json.contains("telegram_group_id")
+                    || json.contains("\"telegram_group_id\":\"\"")) {
+                issues.add("Sense grup de Telegram configurat — el bot no pot avisar l'equip");
+            }
+        }
+        return new PhaseHealthResponse("F5", issues.isEmpty(), issues, warnings);
     }
 }

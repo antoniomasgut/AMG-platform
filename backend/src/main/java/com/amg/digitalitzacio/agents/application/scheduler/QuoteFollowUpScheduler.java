@@ -50,6 +50,8 @@ public class QuoteFollowUpScheduler {
         log.info("[F3] Executant follow-up de pressupostos per {} tenants", tenants.size());
 
         for (var tenant : tenants) {
+            // Fase suspesa o desactivada: no executar l'automatisme (nomes contractada no basta)
+            if (!tenant.isPhaseActive("F3")) continue;
             try {
                 processFollowUps(tenant.getId());
             } catch (Exception e) {

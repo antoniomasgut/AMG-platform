@@ -5,6 +5,7 @@ import com.amg.digitalitzacio.agents.application.AgentRegistry;
 import com.amg.digitalitzacio.agents.application.AmgAdminCommandService;
 import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
 import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
+import com.amg.digitalitzacio.agents.application.SpeechToTextService;
 import com.amg.digitalitzacio.agents.application.TeamGrowthService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
@@ -37,6 +38,7 @@ public class TelegramWebhookController {
     private final SystemConfigService systemConfigService;
     private final SocialPublisherOrchestrator socialOrchestrator;
     private final NexeServiceConfigService nexeServiceConfigService;
+    private final SpeechToTextService speechToTextService;
 
     private static final java.util.regex.Pattern SOCIAL_TRIGGER = java.util.regex.Pattern.compile(
         "(?i)\\b(publica|publicar|post|instagram|facebook|penja|penjar|xarxes)\\b");
@@ -92,6 +94,14 @@ public class TelegramWebhookController {
                     text = cap.trim();
                 }
             }
+            // Nota de veu (F5): transcriure-la i tractar-la com a text
+            String voiceFileId = null;
+            if (message.get("voice") instanceof Map<?, ?> voice) {
+                voiceFileId = voice.get("file_id") instanceof String vf ? vf : null;
+            } else if (message.get("audio") instanceof Map<?, ?> audio) {
+                voiceFileId = audio.get("file_id") instanceof String af ? af : null;
+            }
+
             Long fromUserId = null;
             String firstName = "Usuari";
             if (message.get("from") instanceof Map<?, ?> from) {
@@ -101,6 +111,20 @@ public class TelegramWebhookController {
 
             if (chatId == null) {
                 return ResponseEntity.ok("ok");
+            }
+
+            if (voiceFileId != null && text.isBlank()) {
+                if (!speechToTextService.isConfigured()) {
+                    return ResponseEntity.ok(okTgReply(chatId,
+                            "🎙 He rebut la teva nota de veu, però la transcripció encara no està activada. Escriu-me el missatge en text, si us plau."));
+                }
+                var transcription = speechToTextService.transcribeTelegramVoice(voiceFileId);
+                if (transcription.isEmpty()) {
+                    return ResponseEntity.ok(okTgReply(chatId,
+                            "🎙 No he pogut entendre la nota de veu — prova de nou o escriu-m'ho en text."));
+                }
+                text = transcription.get();
+                log.info("Nota de veu transcrita per chat {}: {} chars", chatId, text.length());
             }
 
             log.info("Missatge TG rebut de chat {}: {}", chatId, text);

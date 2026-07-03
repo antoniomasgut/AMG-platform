@@ -56,6 +56,8 @@ public class AppointmentReminderScheduler {
         log.debug("[F2-Reminder] Comprovant recordatoris de cites per {} tenants", tenants.size());
 
         for (var tenant : tenants) {
+            // Fase suspesa o desactivada: no executar l'automatisme (nomes contractada no basta)
+            if (!tenant.isPhaseActive("F2")) continue;
             try {
                 processReminders(tenant.getId());
             } catch (Exception e) {
