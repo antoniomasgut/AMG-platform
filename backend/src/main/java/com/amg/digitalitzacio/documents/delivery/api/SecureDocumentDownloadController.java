@@ -38,17 +38,27 @@ public class SecureDocumentDownloadController {
             .body(view);
     }
 
-    /** Acceptació del pressupost. */
+    /** Acceptació del pressupost. Retorna paymentUrl si el tenant té el cobrament online actiu (Mòdul 53). */
     @PostMapping("/api/v1/documents/view/{token}/accept")
     public ResponseEntity<?> accept(@PathVariable String token,
                                     @Valid @RequestBody AcceptRequest req,
                                     HttpServletRequest request) {
         try {
-            viewService.accept(token, req, resolveClientIp(request));
-            return ResponseEntity.ok().build();
+            String paymentUrl = viewService.accept(token, req, resolveClientIp(request));
+            return ResponseEntity.ok(java.util.Collections.singletonMap("paymentUrl", paymentUrl));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    /** Retorn del checkout de Stripe (Mòdul 53): verifica el pagament i redirigeix al document. */
+    @GetMapping("/api/v1/documents/view/{token}/payment-return")
+    public ResponseEntity<Void> paymentReturn(@PathVariable String token,
+                                              @RequestParam(name = "session_id", required = false) String sessionId) {
+        String redirect = viewService.handlePaymentReturn(token, sessionId);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(java.net.URI.create(redirect))
+                .build();
     }
 
     /** Descàrrega del PDF. */

@@ -18,7 +18,7 @@ export const getDocumentView = (token: string): Promise<DocumentViewResponse> =>
       return r.json() as Promise<DocumentViewResponse>;
     });
 
-export const acceptDocument = (token: string, signerName: string): Promise<void> =>
+export const acceptDocument = (token: string, signerName: string): Promise<{ paymentUrl: string | null }> =>
   fetch(`${BASE}/documents/view/${token}/accept`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -27,6 +27,11 @@ export const acceptDocument = (token: string, signerName: string): Promise<void>
     if (!r.ok) {
       const text = await r.text();
       throw new Error(text || 'Error acceptant el document');
+    }
+    try {
+      return await r.json() as { paymentUrl: string | null };
+    } catch {
+      return { paymentUrl: null };
     }
   });
 

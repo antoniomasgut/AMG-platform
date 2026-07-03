@@ -185,6 +185,7 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 50 | Sales & Implementation Pipeline (prospecció → activació amb etapes, SLAs i onboarding) | ✅ Completat | specs/50-sales-pipeline.md |
 | 51 | Agency Multichannel Contact (Widget IA + WhatsApp Business per a la landing d'AMG) | 🔧 Parcial (widget+WA personal actius; WABA pendent config) | specs/51-agency-multichannel-contact.md |
 | 52 | Social Publisher (publicació multi-xarxa via Telegram + IA) | 📋 Spec | specs/52-social-publisher.md |
+| 53 | F3 Cobrament Online (Stripe del tenant a l'acceptació de documents) | ✅ Completat | specs/53-f3-cobrament-online.md |
 
 ---
 

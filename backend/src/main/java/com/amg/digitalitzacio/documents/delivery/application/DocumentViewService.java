@@ -9,6 +9,7 @@ import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.booking.application.BookingService;
 import com.amg.digitalitzacio.booking.domain.BookingToken;
 import com.amg.digitalitzacio.comm.application.CommunicationTemplateService;
+import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.documents.builder.domain.DocumentStatus;
 import com.amg.digitalitzacio.documents.builder.domain.GeneratedDocumentRepository;
 import com.amg.digitalitzacio.documents.delivery.api.dto.AcceptRequest;
@@ -17,6 +18,8 @@ import com.amg.digitalitzacio.documents.delivery.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import com.amg.digitalitzacio.whatsapp.domain.WhatsAppWabaConfigRepository;
+import com.amg.digitalitzacio.payments.application.TenantStripeCheckoutService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,6 +48,12 @@ public class DocumentViewService {
     private final WhatsAppWabaConfigRepository wabaConfigRepo;
     private final EmailService emailService;
     private final SystemConfigService sysConfig;
+    private final NexeServiceConfigService nexeConfigService;
+    private final TenantStripeCheckoutService tenantStripeCheckoutService;
+    private final ObjectMapper objectMapper;
+
+    @org.springframework.beans.factory.annotation.Value("${app.api.base-url:https://api.amgdl.com}")
+    private String apiBaseUrl;
 
     @Transactional
     public DocumentViewResponse view(String tokenValue, String ip, String ua) {
@@ -66,8 +75,9 @@ public class DocumentViewService {
         );
     }
 
+    /** @return URL de pagament de Stripe si el tenant té el cobrament online actiu; null si no */
     @Transactional
-    public void accept(String tokenValue, AcceptRequest req, String ip) {
+    public String accept(String tokenValue, AcceptRequest req, String ip) {
         var token = resolveToken(tokenValue);
         if (token == null) throw new ResourceNotFoundException("Document no accessible");
 
@@ -113,7 +123,129 @@ public class DocumentViewService {
             }
         }
 
+        // Mòdul 53: cobrament online opcional amb l'Stripe del tenant
+        String paymentUrl = tryCreatePaymentCheckout(token);
+
         notifyTenantAcceptance(token, req.signerName(), bookingSent);
+        return paymentUrl;
+    }
+
+    /**
+     * Crea el checkout de pagament si la config PRESSUPOSTOS del tenant ho demana.
+     * Mai llança: si Stripe no està operatiu, l'acceptació es completa sense pagament.
+     */
+    private String tryCreatePaymentCheckout(SecureDocumentToken token) {
+        try {
+            var configOpt = nexeConfigService.get(token.getTenantId(), "PRESSUPOSTOS");
+            if (configOpt.isEmpty()) return null;
+            var config = objectMapper.readTree(configOpt.get().getConfigJson());
+            String mode = config.path("online_payment_mode").asText("OFF");
+            if (!"FULL".equals(mode) && !"DEPOSIT".equals(mode)) return null;
+
+            java.math.BigDecimal total = resolveDocumentTotal(token);
+            if (total == null || total.signum() <= 0) return null;
+
+            java.math.BigDecimal amount = total;
+            String concept;
+            String docName = token.getFileName() != null
+                ? token.getFileName().replaceFirst("\\.pdf$", "") : "Pressupost";
+            String businessName = tenantRepo.findById(token.getTenantId())
+                .map(t -> t.getName() != null ? t.getName() : "").orElse("");
+            if ("DEPOSIT".equals(mode)) {
+                int pct = config.path("deposit_percent").asInt(30);
+                pct = Math.max(5, Math.min(90, pct));
+                amount = total.multiply(java.math.BigDecimal.valueOf(pct))
+                        .divide(java.math.BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+                concept = "Paga i senyal (" + pct + "%) — " + docName
+                        + (businessName.isBlank() ? "" : " · " + businessName);
+            } else {
+                concept = docName + (businessName.isBlank() ? "" : " · " + businessName);
+            }
+
+            String appBase = sysConfig.get("APP_BASE_URL");
+            if (appBase == null || appBase.isBlank()) appBase = "https://amgdl.com";
+            String successUrl = apiBaseUrl + "/api/v1/documents/view/" + token.getToken()
+                    + "/payment-return?session_id={CHECKOUT_SESSION_ID}";
+            String cancelUrl = appBase + "/ca/documents/view/" + token.getToken();
+
+            var checkout = tenantStripeCheckoutService.createCheckout(
+                    token.getTenantId(), amount, concept, token.getId().toString(), successUrl, cancelUrl);
+            if (checkout.isEmpty()) return null;
+
+            token.setPaymentStatus("PENDING");
+            token.setPaymentSessionId(checkout.get().sessionId());
+            token.setPaymentAmount(amount);
+            tokenRepo.save(token);
+            log.info("[SecureDoc] Checkout de {} € creat per document {} (tenant {})",
+                    amount, token.getId(), token.getTenantId());
+            return checkout.get().url();
+        } catch (Exception e) {
+            log.warn("[SecureDoc] No s'ha pogut crear el cobrament online per document {}: {}",
+                    token.getId(), e.getMessage());
+            return null;
+        }
+    }
+
+    /** Total del document des del JSON `calculated` del GeneratedDocument. */
+    private java.math.BigDecimal resolveDocumentTotal(SecureDocumentToken token) {
+        if (token.getSourceEntityType() != SourceEntityType.GENERATED_DOCUMENT
+                || token.getSourceEntityId() == null) return null;
+        return generatedDocumentRepo.findById(token.getSourceEntityId())
+            .map(doc -> {
+                try {
+                    var calc = objectMapper.readTree(doc.getCalculated());
+                    if (calc.has("total") && calc.get("total").isNumber()) {
+                        return java.math.BigDecimal.valueOf(calc.get("total").asDouble());
+                    }
+                } catch (Exception ignored) {}
+                return null;
+            }).orElse(null);
+    }
+
+    /**
+     * Retorn del checkout: verifica la sessió amb la clau del tenant i marca el pagament.
+     * @return URL del frontend on redirigir (?paid=1|0). Idempotent.
+     */
+    @Transactional
+    public String handlePaymentReturn(String tokenValue, String sessionId) {
+        String appBase = sysConfig.get("APP_BASE_URL");
+        if (appBase == null || appBase.isBlank()) appBase = "https://amgdl.com";
+        var token = tokenRepo.findByToken(tokenValue).orElse(null);
+        if (token == null) return appBase + "/ca/documents/view/" + tokenValue + "?paid=0";
+
+        String docUrl = appBase + "/ca/documents/view/" + token.getToken();
+        if ("PAID".equals(token.getPaymentStatus())) {
+            return docUrl + "?paid=1"; // idempotent — ja processat
+        }
+        if (token.getPaymentSessionId() == null
+                || !token.getPaymentSessionId().equals(sessionId)) {
+            return docUrl + "?paid=0";
+        }
+        boolean paid = tenantStripeCheckoutService.isSessionPaid(token.getTenantId(), sessionId);
+        if (!paid) return docUrl + "?paid=0";
+
+        token.setPaymentStatus("PAID");
+        token.setPaymentPaidAt(Instant.now());
+        tokenRepo.save(token);
+        log.info("[SecureDoc] Pagament confirmat: {} € del document {} (tenant {})",
+                token.getPaymentAmount(), token.getId(), token.getTenantId());
+        notifyTenantPayment(token);
+        return docUrl + "?paid=1";
+    }
+
+    private void notifyTenantPayment(SecureDocumentToken token) {
+        try {
+            var chatLink = chatLinkRepo.findByTenantId(token.getTenantId()).orElse(null);
+            if (chatLink == null || chatLink.getTelegramChatId() == null) return;
+            String msg = "💳 <b>Pagament rebut!</b>\n"
+                    + "Import: " + (token.getPaymentAmount() != null ? token.getPaymentAmount().toPlainString() : "—") + " €\n"
+                    + "Document: " + (token.getFileName() != null ? token.getFileName() : "—") + "\n"
+                    + "Client: " + (token.getRecipientName() != null ? token.getRecipientName() : "—");
+            telegramBotClient.sendMessage(chatLink.getTelegramChatId(), msg);
+        } catch (Exception e) {
+            log.warn("[SecureDoc] Error notificant pagament al tenant {}: {}",
+                    token.getTenantId(), e.getMessage());
+        }
     }
 
     private boolean agendaIsActive(UUID tenantId) {

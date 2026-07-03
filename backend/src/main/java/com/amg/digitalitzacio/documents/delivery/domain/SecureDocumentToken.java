@@ -100,6 +100,19 @@ public class SecureDocumentToken {
     @Column(length = 45)
     private String signerIp;
 
+    // Mòdul 53: cobrament online opcional (Stripe del tenant)
+    @Column(length = 20)
+    private String paymentStatus;          // null | PENDING | PAID
+
+    @Column(length = 120)
+    private String paymentSessionId;
+
+    @Column(precision = 10, scale = 2)
+    private java.math.BigDecimal paymentAmount;
+
+    @Column
+    private Instant paymentPaidAt;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 

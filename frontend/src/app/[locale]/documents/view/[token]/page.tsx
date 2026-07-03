@@ -50,8 +50,13 @@ function AcceptForm({
     setAccepting(true);
     setError(null);
     try {
-      await acceptDocument(token, signerName.trim());
+      const res = await acceptDocument(token, signerName.trim());
       onAccepted(signerName.trim());
+      // Mòdul 53: cobrament online — redirigir al checkout d'Stripe del negoci
+      if (res.paymentUrl) {
+        window.location.href = res.paymentUrl;
+        return;
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error en acceptar el document');
     } finally {
@@ -139,8 +144,32 @@ function ErrorState({ type }: { type: 'not_found' | 'expired' | 'error' }) {
   );
 }
 
+function PaymentBanner({ paid }: { paid: boolean }) {
+  return paid ? (
+    <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+      <span className="text-xl">💳</span>
+      <div>
+        <div className="text-sm font-semibold text-green-800">Pagament completat</div>
+        <p className="text-xs text-green-700">Hem rebut el teu pagament correctament. Gràcies!</p>
+      </div>
+    </div>
+  ) : (
+    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+      <span className="text-xl">⚠️</span>
+      <div>
+        <div className="text-sm font-semibold text-amber-800">Pagament no completat</div>
+        <p className="text-xs text-amber-700">El pressupost ha quedat acceptat, però el pagament no s&apos;ha completat. El negoci es posarà en contacte amb tu.</p>
+      </div>
+    </div>
+  );
+}
+
 export default function DocumentViewPage() {
   const { token } = useParams<{ token: string }>();
+  const [paidParam, setPaidParam] = useState<string | null>(null);
+  useEffect(() => {
+    setPaidParam(new URLSearchParams(window.location.search).get('paid'));
+  }, []);
   const [doc, setDoc] = useState<DocumentViewResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorType, setErrorType] = useState<'not_found' | 'expired' | 'error' | null>(null);
@@ -190,6 +219,8 @@ export default function DocumentViewPage() {
 
         {doc && !loading && (
           <>
+            {paidParam !== null && <PaymentBanner paid={paidParam === '1'} />}
+
             {/* Document HTML */}
             {doc.htmlContent ? (
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 overflow-x-auto">

@@ -230,9 +230,14 @@ export interface PressupostosConfig {
   quote_followup_enabled: boolean;
   quote_followup_days: number;
   quote_followup_message: string;
+  /** Mòdul 53: cobrament online amb l'Stripe del tenant en acceptar el document */
+  online_payment_mode?: 'OFF' | 'FULL' | 'DEPOSIT';
+  deposit_percent?: number;
 }
 
 export const DEFAULT_PRESSUPOSTOS: PressupostosConfig = {
+  online_payment_mode: 'OFF',
+  deposit_percent: 30,
   quote_validity_days: 30,
   quote_header: '',
   quote_footer: 'Gràcies per confiar en nosaltres.',

@@ -634,6 +634,31 @@ function PressupostosForm({ tenantId, sector }: { tenantId: string; sector?: str
         </AMGButton>
       </SectionCard>
 
+      <SectionCard title="Cobrament online en acceptar">
+        <p className="f-mono text-xs text-ink-3 mb-3">
+          Quan el client accepta el pressupost, se'l pot redirigir a pagar amb targeta
+          (Stripe del client — els diners van directes al seu compte). Requereix tenir
+          l&apos;Stripe del negoci configurat a la secció de pagaments.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Mode de cobrament">
+            <select className={inp} value={cfg.online_payment_mode ?? 'OFF'}
+              onChange={e => setCfg(c => ({ ...c, online_payment_mode: e.target.value as 'OFF' | 'FULL' | 'DEPOSIT' }))}>
+              <option value="OFF">Sense cobrament (només acceptació)</option>
+              <option value="FULL">Cobrar el total en acceptar</option>
+              <option value="DEPOSIT">Paga i senyal (percentatge)</option>
+            </select>
+          </Field>
+          {(cfg.online_payment_mode ?? 'OFF') === 'DEPOSIT' && (
+            <Field label="Percentatge de paga i senyal (%)">
+              <input className={inp} type="number" min={5} max={90}
+                value={cfg.deposit_percent ?? 30}
+                onChange={e => setCfg(c => ({ ...c, deposit_percent: +e.target.value }))} />
+            </Field>
+          )}
+        </div>
+      </SectionCard>
+
       <SectionCard title="Seguiment de pressupostos no contestats">
         <Field label="">
           <label className="flex items-center gap-2 cursor-pointer">
