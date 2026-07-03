@@ -208,15 +208,24 @@ Tots els endpoints porten prefix `/api/v1/finops`. Tots requereixen JWT + autent
 4. Holded envia automàticament a Verifactu
 5. L'Invoice passa a SENT
 
-**Factura mensual** — job programat `@Scheduled(cron = "0 0 1 * * ?")` (dia 1 de cada mes):
-1. Obtenir tots els tenants amb almenys 1 `TenantService` en estat `IMPLEMENTATION_ACCEPTED`
-2. Per cada tenant, calcular l'import mensual via `BillingCalculator.calculateMonthlyAmount(tenantId, period)`
-   - Pro-rata per serveis activats durant el mes anterior
-   - Import complet per serveis activats en mesos previs
+**Factura mensual** — job programat `MonthlyBillingJob` (dia 1 de cada mes, 02:00):
+1. Obtenir tots els tenants amb `HoldedConfig` (creada automàticament al go-live via `ensureTenantBillingSetup`)
+2. Per cada tenant, calcular l'import mensual via `BillingCalculator.calculateMonthlyAmount(tenantId, period, billingStartDate)` seguint el **model de preus per fases (mòdul 22)**:
+   - **Quota de fases**: `SectorPricing.totalMonthly(contractedPhases)` per sector + mida de negoci
+   - **+ serveis independents de fases** (`TenantService` amb `phaseId = null` i `isEnabled`): landings, dominis
+   - **− descomptes actius** amb `appliesToMonthly = true` (taula `discounts`): permanents (`isLifetime`), temporals (`validFrom`/`validUntil`) i per N mesos (`maxApplications` — crèdits de referit)
+   - Els serveis lligats a fases (`phaseId != null`) NO sumen preu propi — el tier de la fase els cobreix
+   - `isFree = true` o `billingStartDate = null` → 0 €
+   - Pro-rata del primer mes segons `billingStartDate`
 3. Crear `MonthlyInvoice` a la BD (status PENDING)
-4. Crear factura a Holded via `HoldedClient.createInvoice()` amb línies per servei
-5. Si el tenant té `SepaMandate` actiu → `sepaCollectionDate = dia 5 del mes actual`
+4. Crear factura a Holded via `HoldedClient.createInvoice()`
+5. Si el tenant té mandat GoCardless actiu → cobrament automàtic (`chargeMonthlyInvoices`)
 6. `MonthlyInvoice.status = SENT`
+7. **Resum Telegram** al canal de vendes: factures generades, import total, i tenants actius que NO es poden facturar (sense `HoldedConfig`) o cobrar (sense mandat SEPA actiu)
+
+**Preparació automàtica de la facturació:**
+- **Al pagar el setup** (`PostAcceptanceService.onSetupPaid`): s'inicia el mandat GoCardless i s'envia el link de domiciliació al client per email
+- **Al go-live** (`FinOpsService.ensureTenantBillingSetup`): es crea la `HoldedConfig` si falta i se sincronitza el contacte Holded amb les dades reals del tenant (nom, email, telèfon, NIF)
 
 **Generació SEPA XML** — sota demanda via `GET /api/v1/finops/sepa/export?period=`:
 1. Recollir totes les `MonthlyInvoice` del període amb `sepaCollected = false` i tenant amb mandat actiu

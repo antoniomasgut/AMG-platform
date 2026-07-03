@@ -309,3 +309,35 @@ FASE C — Pipeline complet:
 [ ] SLA expirat → alerta Telegram SUPER_ADMIN
 [ ] Historial de transicions visible a /pipeline/[leadId]/events
 ```
+
+---
+
+## 15. Go-live i activació (addendum 2026-07-03)
+
+Fixes de l'auditoria del procés d'alta de tenants:
+
+### 15.1 Readiness (`GET /tenants/{id}/readiness`)
+- `hasLanding` = landing del motor **publicada** (mòduls 04/05) **o** website activa (mòdul 29)
+- `hasChannel` = WhatsApp, email, Telegram **o chat widget** habilitats al `TenantChatLink`
+
+### 15.2 Go-live (`POST /tenants/{id}/go-live`)
+1. **409** si el tenant no té `contractedPhases` (abans fallava en silenci amb 204)
+2. `activePhases = contractedPhases`
+3. `billingStartDate = avui` si era null i el tenant no és `isFree`
+4. Registra `TenantPhaseActivation` per fase (source `GO_LIVE`, idempotent)
+5. **Crea l'usuari CLIENT** si no existeix (`ClientUserProvisioningService`): usuari amb l'email del tenant + email d'invitació amb enllaç per establir contrasenya (token reset, TTL 7 dies)
+6. Prepara la facturació (`ensureTenantBillingSetup`, vegeu spec 08 §4) — si falla, alerta Telegram
+7. Notificació onGoLive al client (WhatsApp → email)
+
+### 15.3 Suspend (`POST /tenants/{id}/suspend`)
+- Registra `recordDeactivation` per cada fase operativa abans de buidar `activePhases`
+- El scheduler d'onboarding D3/D7 omet tenants suspesos (`activePhases = ""`)
+
+### 15.4 SLA d'intake pendent
+- `SlaMonitorScheduler` (cada hora, :30): intake `PENDING`/`IN_PROGRESS` creat fa > 48h →
+  email recordatori al client amb el link de la fitxa + alerta Telegram AMG
+- Un sol avís per intake (`followup_logs`, type `INTAKE_PENDING_48H`)
+
+### 15.5 Conversió de lead (`ConvertLeadService`)
+- Assigna fases per defecte segons sector: agenda → `F1,F2` · pressupostos → `F1,F3` · resta → `F1`
+  (mateix criteri que `BillingOrchestrator.nexePhasesForSector`)
