@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AMG · Formulari de contingut per a la teva web</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent: #FF6B00;
+  --dark:   #13132a;
+  --bg:     #f8f9fc;
+  --white:  #ffffff;
+  --border: #e2e8f0;
+  --text:   #1e2a3b;
+  --muted:  #64748b;
+  --green:  #16a34a;
+  --blue:   #0891b2;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 13px; line-height: 1.6; }
+
+header { background: var(--dark); padding: 24px 48px 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.header-left { display: flex; align-items: center; gap: 20px; }
+.logo { font-family: 'Orbitron', monospace; font-weight: 700; font-size: 18px; color: var(--accent); letter-spacing: 2px; }
+.header-badge { background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.35); border-radius: 6px; padding: 6px 14px; color: var(--accent); font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+.header-right { text-align: right; color: #8896aa; font-size: 11px; line-height: 1.8; }
+.header-right strong { display: block; color: #e2e8f0; font-size: 14px; font-weight: 600; }
+
+.hero-banner { background: linear-gradient(135deg, var(--accent) 0%, #c45200 100%); padding: 24px 48px; }
+.hero-banner h1 { color: #fff; font-size: 22px; font-weight: 700; }
+.hero-banner p  { color: rgba(255,255,255,0.82); font-size: 12px; margin-top: 4px; max-width: 640px; }
+
+.intro-box { background: #fffbf5; border-left: 4px solid var(--accent); padding: 14px 20px; margin: 28px 0 0; border-radius: 0 8px 8px 0; font-size: 12px; color: var(--muted); line-height: 1.7; }
+.intro-box strong { color: var(--text); }
+
+main { max-width: 880px; margin: 0 auto; padding: 32px 40px 60px; }
+
+/* Section */
+.section { margin-bottom: 32px; }
+.section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+.section-num  { width: 26px; height: 26px; background: var(--dark); color: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', monospace; font-size: 9px; font-weight: 700; flex-shrink: 0; }
+.section-title { font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); }
+.section-sub { font-size: 11px; color: var(--muted); margin-left: auto; }
+
+/* Card */
+.card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 12px; }
+
+/* Fields */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px 20px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.field .line { border-bottom: 1.5px solid var(--border); min-height: 26px; width: 100%; }
+.field .line-lg { border-bottom: 1.5px solid var(--border); height: 26px; width: 100%; margin-bottom: 8px; }
+.field .hint { font-size: 10px; color: #94a3b8; margin-top: 1px; }
+.field-full { grid-column: 1 / -1; }
+
+/* Textarea style */
+.area { border: 1px solid var(--border); border-radius: 6px; min-height: 56px; width: 100%; background: #fafbfc; }
+
+/* Numbered list */
+.numbered-list { display: flex; flex-direction: column; gap: 14px; }
+.num-row { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
+.num-badge { width: 22px; height: 22px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 3px; }
+.num-fields { display: flex; flex-direction: column; gap: 4px; }
+
+/* Hours table */
+.hours-grid { display: grid; grid-template-columns: 90px 1fr 30px 1fr 60px; gap: 6px 10px; align-items: center; }
+.hours-grid .day-label { font-size: 11px; font-weight: 600; color: var(--text); }
+.hours-grid .sep { text-align: center; color: var(--muted); font-size: 11px; }
+.hours-grid .closed-label { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+/* Stats */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.stat-box { border: 1.5px dashed var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.stat-box label { font-size: 10px; text-transform: uppercase; color: var(--muted); letter-spacing: 1px; }
+.stat-box .val { border-bottom: 1.5px solid var(--border); min-height: 22px; }
+.stat-box .ex { font-size: 9px; color: #94a3b8; }
+
+/* Image checklist */
+.img-checklist { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.img-item { border: 1.5px dashed var(--border); border-radius: 8px; padding: 12px; }
+.img-item .img-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 6px; }
+.img-item .img-hint  { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+.checkbox-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text); }
+.checkbox-row input[type="checkbox"] { accent-color: var(--accent); width: 13px; height: 13px; }
+
+/* Faq */
+.faq-row { background: #fafbfc; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+.faq-q { display: flex; align-items: center; gap: 6px; }
+.faq-q span { background: var(--dark); color: var(--accent); font-size: 10px; font-family: 'Orbitron', monospace; border-radius: 4px; padding: 2px 6px; }
+
+/* Optional badge */
+.badge-opt { background: #f1f5f9; color: var(--muted); border: 1px solid var(--border); border-radius: 12px; padding: 1px 8px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 6px; }
+.badge-imp { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; border-radius: 12px; padding: 1px 8px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 6px; }
+
+/* Footer */
+footer { background: var(--dark); padding: 20px 48px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.footer-text { color: #64748b; font-size: 11px; line-height: 1.8; }
+.footer-contact { text-align: right; font-size: 11px; color: #94a3b8; line-height: 1.8; }
+.footer-contact strong { color: var(--accent); }
+
+@media print {
+  body { font-size: 11px; }
+  header { padding: 14px 24px; }
+  main { padding: 18px 24px 32px; }
+  .section { margin-bottom: 20px; }
+  .card { padding: 14px 16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">AMG</div>
+    <div class="header-badge">Digitalització</div>
+  </div>
+  <div class="header-right">
+    <strong>Formulari de contingut web</strong>
+    +34 614 492 062 · info@amgdl.com
+  </div>
+</header>
+
+<div class="hero-banner">
+  <h1>Contingut per a la teva pàgina web</h1>
+  <p>Ompliu aquest formulari amb la informació del vostre negoci. Com més detalls ens doneu, millor quedarà la web. No cal que sigui perfecte — nosaltres ho ajustem.</p>
+</div>
+
+<main>
+
+  <div class="intro-box">
+    <strong>Com funciona?</strong> Ompliu cada secció amb la informació que teniu disponible. Els camps marcats <span style="color:#c2410c;font-weight:700;font-size:10px;">OBLIGATORI</span> són essencials per poder fer la web. La resta millora el resultat però no és imprescindible. Podeu enviar-nos el formulari per WhatsApp, email o entregar-lo en paper.
+  </div>
+
+  <!-- 1. Dades bàsiques -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div class="section-title">Dades del negoci</div>
+      <span class="badge-imp">Obligatori</span>
+    </div>
+    <div class="card">
+      <div class="grid-2">
+        <div class="field">
+          <label>Nom comercial (com apareixerà a la web)</label>
+          <div class="line"></div>
+        </div>
+        <div class="field">
+          <label>Sector / Especialitat</label>
+          <div class="line"></div>
+          <div class="hint">Ex: Pintor, Fisioterapeuta, Restaurant...</div>
+        </div>
+        <div class="field">
+          <label>Telèfon de contacte</label>
+          <div class="line"></div>
+          <div class="hint">El número principal per rebre trucades</div>
+        </div>
+        <div class="field">
+          <label>WhatsApp per al botó de la web</label>
+          <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;">
+            <div class="checkbox-row"><input type="checkbox"> Sí, el mateix número que el telèfon</div>
+            <div class="checkbox-row"><input type="checkbox"> Sí, número diferent → <span style="flex:1;border-bottom:1.5px solid var(--border);display:inline-block;min-width:140px;margin-left:4px;"></span></div>
+            <div class="checkbox-row"><input type="checkbox"> No tinc WhatsApp (no es mostrarà el botó)</div>
+          </div>
+          <div style="margin-top:8px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:8px 10px;font-size:10px;color:#0369a1;">
+            <strong>Tinc WhatsApp Business?</strong> Obre WhatsApp al mòbil: si a dalt posa "Business" o veus una icona de maletí 💼, tens WhatsApp Business. Si no, tens WhatsApp normal — tots dos funcionen igual per al botó de la web.
+          </div>
+        </div>
+        <div class="field">
+          <label>Email de contacte</label>
+          <div class="line"></div>
+        </div>
+        <div class="field">
+          <label>Web actual (si en teniu)</label>
+          <div class="line"></div>
+        </div>
+        <div class="field field-full">
+          <label>Adreça completa</label>
+          <div class="line"></div>
+        </div>
+        <div class="field">
+          <label>Localitat / Barri</label>
+          <div class="line"></div>
+          <div class="hint">Ex: Palma, Inca, Manacor, Sóller...</div>
+        </div>
+        <div class="field">
+          <label>Zona de servei (si treballen a domicili)</label>
+          <div class="line"></div>
+          <div class="hint">Ex: Tota Mallorca, Palma i Calvià...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Presentació -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div class="section-title">Presentació del negoci</div>
+      <span class="badge-imp">Obligatori</span>
+    </div>
+    <div class="card">
+      <div class="numbered-list">
+        <div class="field">
+          <label>Títol principal / Eslògan <span class="hint" style="display:inline;">(la primera cosa que llegirà el client)</span></label>
+          <div class="line"></div>
+          <div class="hint">Ex: "El pintor professional que necessites a Palma" · Màxim 12-15 paraules</div>
+        </div>
+        <div class="field">
+          <label>Descripció breu del negoci</label>
+          <div class="area"></div>
+          <div class="hint">2-3 frases. Qui sou, què feu, per a qui. Ex: "Servei de fisioteràpia especialitzat en lesions esportives i recuperació postoperatòria. Atenem a domicili i a la clínica."</div>
+        </div>
+        <div class="field">
+          <label>Per què triar-vos? (el vostre diferencial)</label>
+          <div class="area"></div>
+          <div class="hint">Allò que us fa especials: experiència, precio, rapidesa, garantia, tracte personal...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Xifres destacades -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div class="section-title">Xifres i mèrits destacats</div>
+      <span class="badge-opt">Opcional</span>
+    </div>
+    <div class="card">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:14px;">Apareixeran en una franja visual destacada. Poseu els que tingueu — no cal omplir tots quatre.</p>
+      <div class="stats-row">
+        <div class="stat-box">
+          <label>Xifra 1</label>
+          <div class="val"></div>
+          <div class="ex">Ex: 15+</div>
+          <label style="margin-top:4px;">Etiqueta</label>
+          <div class="val"></div>
+          <div class="ex">Ex: anys d'experiència</div>
+        </div>
+        <div class="stat-box">
+          <label>Xifra 2</label>
+          <div class="val"></div>
+          <div class="ex">Ex: 500+</div>
+          <label style="margin-top:4px;">Etiqueta</label>
+          <div class="val"></div>
+          <div class="ex">Ex: clients satisfets</div>
+        </div>
+        <div class="stat-box">
+          <label>Xifra 3</label>
+          <div class="val"></div>
+          <div class="ex">Ex: 4.9★</div>
+          <label style="margin-top:4px;">Etiqueta</label>
+          <div class="val"></div>
+          <div class="ex">Ex: valoració Google</div>
+        </div>
+        <div class="stat-box">
+          <label>Xifra 4</label>
+          <div class="val"></div>
+          <div class="ex">Ex: 24h</div>
+          <label style="margin-top:4px;">Etiqueta</label>
+          <div class="val"></div>
+          <div class="ex">Ex: resposta garantida</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Serveis -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div class="section-title">Serveis que ofereixes</div>
+      <span class="badge-imp">Obligatori</span>
+    </div>
+    <div class="card">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:16px;">Descriviu fins a 6 serveis principals. Per a cada un: nom breu i una descripció d'1-2 frases.</p>
+      <div class="numbered-list">
+        <div class="num-row">
+          <div class="num-badge">1</div>
+          <div class="num-fields">
+            <div class="field">
+              <label>Nom del servei</label>
+              <div class="line-lg"></div>
+            </div>
+            <div class="field">
+              <label>Descripció</label>
+              <div class="line-lg"></div>
+            </div>
+          </div>
+        </div>
+        <div class="num-row">
+          <div class="num-badge">2</div>
+          <div class="num-fields">
+            <div class="field"><label>Nom del servei</label><div class="line-lg"></div></div>
+            <div class="field"><label>Descripció</label><div class="line-lg"></div></div>
+          </div>
+        </div>
+        <div class="num-row">
+          <div class="num-badge">3</div>
+          <div class="num-fields">
+            <div class="field"><label>Nom del servei</label><div class="line-lg"></div></div>
+            <div class="field"><label>Descripció</label><div class="line-lg"></div></div>
+          </div>
+        </div>
+        <div class="num-row">
+          <div class="num-badge">4</div>
+          <div class="num-fields">
+            <div class="field"><label>Nom del servei</label><div class="line-lg"></div></div>
+            <div class="field"><label>Descripció</label><div class="line-lg"></div></div>
+          </div>
+        </div>
+        <div class="num-row">
+          <div class="num-badge">5</div>
+          <div class="num-fields">
+            <div class="field"><label>Nom del servei</label><div class="line-lg"></div></div>
+            <div class="field"><label>Descripció</label><div class="line-lg"></div></div>
+          </div>
+        </div>
+        <div class="num-row">
+          <div class="num-badge">6</div>
+          <div class="num-fields">
+            <div class="field"><label>Nom del servei</label><div class="line-lg"></div></div>
+            <div class="field"><label>Descripció</label><div class="line-lg"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Imatges -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div class="section-title">Imatges</div>
+      <span class="badge-imp">Obligatori</span>
+    </div>
+    <div class="card">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:16px;">Les imatges marquen la diferència. Enviau-les per WhatsApp o Google Drive. <strong style="color:var(--text);">Orientació horitzontal i bona qualitat</strong> sempre que sigui possible.</p>
+      <div class="img-checklist">
+        <div class="img-item">
+          <div class="img-label">📸 Foto principal (Hero)</div>
+          <div class="img-hint">La imatge de portada. Ha de transmetre professionalitat. Obra realitzada, local, equip treballant...</div>
+          <div style="margin-top:10px;border-bottom:1.5px solid var(--border);min-height:20px;"></div>
+          <div class="img-hint" style="margin-top:4px;">Nom fitxer o descripció:</div>
+        </div>
+        <div class="img-item">
+          <div class="img-label">🖼 Galeria de feines (mínim 3)</div>
+          <div class="img-hint">Fotos dels vostres treballs, productes o servei en acció. Com més millors.</div>
+          <div style="margin-top:10px;">
+            <div class="checkbox-row"><input type="checkbox"> Foto 1</div>
+            <div class="checkbox-row"><input type="checkbox"> Foto 2</div>
+            <div class="checkbox-row"><input type="checkbox"> Foto 3</div>
+            <div class="checkbox-row"><input type="checkbox"> Foto 4</div>
+            <div class="checkbox-row"><input type="checkbox"> Foto 5+</div>
+          </div>
+        </div>
+        <div class="img-item">
+          <div class="img-label">🏷 Logo del negoci</div>
+          <div class="img-hint">Format PNG amb fons transparent preferentment. Si no en teniu, ho creem nosaltres.</div>
+          <div style="margin-top:10px;">
+            <div class="checkbox-row"><input type="checkbox"> Tinc logo (PNG/SVG)</div>
+            <div class="checkbox-row"><input type="checkbox"> Tinc logo (JPG)</div>
+            <div class="checkbox-row"><input type="checkbox"> No tinc logo</div>
+          </div>
+        </div>
+        <div class="img-item">
+          <div class="img-label">👤 Foto de l'equip <span class="badge-opt" style="margin-left:0;">Optional</span></div>
+          <div class="img-hint">Foto vostra o de l'equip. Genera confiança i proximitat.</div>
+          <div style="margin-top:10px;">
+            <div class="checkbox-row"><input type="checkbox"> Tinc foto de l'equip</div>
+            <div class="checkbox-row"><input type="checkbox"> No tinc / no vull</div>
+          </div>
+        </div>
+        <div class="img-item">
+          <div class="img-label">🌈 Colors de marca <span class="badge-opt" style="margin-left:0;">Optional</span></div>
+          <div class="img-hint">Si teniu colors corporatius, digueu-nos-los. Si no, nosaltres en triem uns que encaixin amb el vostre sector.</div>
+          <div class="field" style="margin-top:10px;">
+            <label>Color principal (hex o nom)</label>
+            <div class="line"></div>
+          </div>
+        </div>
+        <div class="img-item">
+          <div class="img-label">🗺 Google Maps <span class="badge-opt" style="margin-left:0;">Optional</span></div>
+          <div class="img-hint">Enganxeu l'enllaç del vostre negoci a Google Maps. Millora el posicionament local.</div>
+          <div class="field" style="margin-top:10px;">
+            <label>Enllaç Google Maps</label>
+            <div class="line"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Horari -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <div class="section-title">Horari d'atenció</div>
+      <span class="badge-opt">Opcional</span>
+    </div>
+    <div class="card">
+      <div class="hours-grid">
+        <div class="day-label">Dilluns</div>
+        <div class="line"></div>
+        <div class="sep">–</div>
+        <div class="line"></div>
+        <div class="closed-label"><input type="checkbox"> Tancat</div>
+
+        <div class="day-label">Dimarts</div>
+        <div class="line"></div>
+        <div class="sep">–</div>
+        <div class="line"></div>
+        <div class="closed-label"><input type="checkbox"> Tancat</div>
+
+        <div class="day-label">Dimecres</div>
+        <div class="line"></div>
+        <div class="sep">–</div>
+        <div class="line"></div>
+        <div class="closed-label"><input type="checkbox"> Tancat</div>
+
+        <div class="day-label">Dijous</div>
+        <div class="line"></div>
+        <div class="sep">–</div>
+        <div class="line"></div>
+        <div class="closed-label"><input type="checkbox"> Tancat</div>
+
+        <div class="day-label">Divendres</div>
+        <div class="line"></div>
+        <div class="sep">–</div>
+        <div class="line"></div>
+        <div class="closed-label"><input type="checkbox"> Tancat</div>
+
+        <div class="day-label">Dissabte</div>
+        <div class="line"></div>
+        <div class="sep">–</div>
+        <div class="line"></div>
+        <div class="closed-label"><input type="checkbox"> Tancat</div>
+
+        <div class="day-label">Diumenge</div>
+        <div class="line"></div>
+        <div class="sep">–</div>
+        <div class="line"></div>
+        <div class="closed-label"><input type="checkbox"> Tancat</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Testimonis -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <div class="section-title">Testimonis de clients</div>
+      <span class="badge-opt">Opcional</span>
+    </div>
+    <div class="card">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:16px;">Si teniu comentaris positius de clients (reals o adaptats), els podem posar a la web. Nom + text del comentari.</p>
+      <div class="numbered-list">
+        <div class="num-row">
+          <div class="num-badge">1</div>
+          <div class="num-fields">
+            <div class="grid-2">
+              <div class="field"><label>Nom del client</label><div class="line-lg"></div></div>
+              <div class="field"><label>Valoració (1-5 estrelles)</label><div class="line-lg"></div></div>
+            </div>
+            <div class="field"><label>Comentari</label><div class="area"></div></div>
+          </div>
+        </div>
+        <div class="num-row">
+          <div class="num-badge">2</div>
+          <div class="num-fields">
+            <div class="grid-2">
+              <div class="field"><label>Nom del client</label><div class="line-lg"></div></div>
+              <div class="field"><label>Valoració</label><div class="line-lg"></div></div>
+            </div>
+            <div class="field"><label>Comentari</label><div class="area"></div></div>
+          </div>
+        </div>
+        <div class="num-row">
+          <div class="num-badge">3</div>
+          <div class="num-fields">
+            <div class="grid-2">
+              <div class="field"><label>Nom del client</label><div class="line-lg"></div></div>
+              <div class="field"><label>Valoració</label><div class="line-lg"></div></div>
+            </div>
+            <div class="field"><label>Comentari</label><div class="area"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Preguntes freqüents -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">08</div>
+      <div class="section-title">Preguntes freqüents</div>
+      <span class="badge-opt">Opcional</span>
+    </div>
+    <div class="card">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:16px;">Les preguntes que us fan sovint els clients. Si no ompliu aquesta secció, posem les preguntes típiques del vostre sector.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="faq-row">
+          <div class="faq-q"><span>P1</span> <div class="line" style="flex:1"></div></div>
+          <div class="faq-q" style="margin-top:6px;align-items:flex-start;"><span style="background:#f1f5f9;color:var(--muted);">R</span> <div class="area" style="flex:1"></div></div>
+        </div>
+        <div class="faq-row">
+          <div class="faq-q"><span>P2</span> <div class="line" style="flex:1"></div></div>
+          <div class="faq-q" style="margin-top:6px;align-items:flex-start;"><span style="background:#f1f5f9;color:var(--muted);">R</span> <div class="area" style="flex:1"></div></div>
+        </div>
+        <div class="faq-row">
+          <div class="faq-q"><span>P3</span> <div class="line" style="flex:1"></div></div>
+          <div class="faq-q" style="margin-top:6px;align-items:flex-start;"><span style="background:#f1f5f9;color:var(--muted);">R</span> <div class="area" style="flex:1"></div></div>
+        </div>
+        <div class="faq-row">
+          <div class="faq-q"><span>P4</span> <div class="line" style="flex:1"></div></div>
+          <div class="faq-q" style="margin-top:6px;align-items:flex-start;"><span style="background:#f1f5f9;color:var(--muted);">R</span> <div class="area" style="flex:1"></div></div>
+        </div>
+        <div class="faq-row">
+          <div class="faq-q"><span>P5</span> <div class="line" style="flex:1"></div></div>
+          <div class="faq-q" style="margin-top:6px;align-items:flex-start;"><span style="background:#f1f5f9;color:var(--muted);">R</span> <div class="area" style="flex:1"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. Xarxes socials -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">09</div>
+      <div class="section-title">Xarxes socials</div>
+      <span class="badge-opt">Opcional</span>
+    </div>
+    <div class="card">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Posau els enllaços o noms d'usuari de les xarxes que tingueu actives.</p>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 12px;font-size:10px;color:#166534;margin-bottom:14px;">
+        <strong>Important:</strong> Només apareixeran a la web les xarxes que ompliu. Les que deixeu en blanc no sortiran. Si no teniu perfil a una xarxa, millor no posar-la que posar-ne un de buit o inactiu.
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>📷 Instagram</label>
+          <div class="line"></div>
+          <div class="hint">@nomdusuari o URL completa</div>
+        </div>
+        <div class="field">
+          <label>👍 Facebook</label>
+          <div class="line"></div>
+          <div class="hint">Nom de la pàgina o URL</div>
+        </div>
+        <div class="field">
+          <label>🎵 TikTok</label>
+          <div class="line"></div>
+          <div class="hint">@nomdusuari</div>
+        </div>
+        <div class="field">
+          <label>▶️ YouTube</label>
+          <div class="line"></div>
+          <div class="hint">Nom del canal o URL</div>
+        </div>
+        <div class="field">
+          <label>💼 LinkedIn</label>
+          <div class="line"></div>
+          <div class="hint">Perfil personal o pàgina d'empresa</div>
+        </div>
+        <div class="field">
+          <label>🗺 Google Business Profile</label>
+          <div class="line"></div>
+          <div class="hint">Ja teniu el negoci a Google Maps verificat?
+            <span style="display:flex;gap:10px;margin-top:3px;">
+              <span class="checkbox-row"><input type="checkbox"> Sí</span>
+              <span class="checkbox-row"><input type="checkbox"> No</span>
+              <span class="checkbox-row"><input type="checkbox"> No sé</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. Domini i altres -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">10</div>
+      <div class="section-title">Domini web i altres</div>
+      <span class="badge-opt">Opcional</span>
+    </div>
+    <div class="card">
+      <div class="grid-2">
+        <div class="field">
+          <label>Domini desitjat per a la web</label>
+          <div class="line"></div>
+          <div class="hint">Ex: nomdelmeunegoci.com · Si ja el teniu, digueu-nos el proveïdor (GoDaddy, 1&1...)</div>
+        </div>
+        <div class="field">
+          <label>Idioma principal de la web</label>
+          <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
+            <span class="checkbox-row"><input type="checkbox"> Català</span>
+            <span class="checkbox-row"><input type="checkbox"> Castellà</span>
+            <span class="checkbox-row"><input type="checkbox"> Anglès</span>
+            <span class="checkbox-row"><input type="checkbox"> Alemany</span>
+          </div>
+          <div class="hint" style="margin-top:4px;">La web es pot traduir automàticament als 4 idiomes</div>
+        </div>
+        <div class="field field-full">
+          <label>Alguna cosa més que volgueu afegir a la web?</label>
+          <div class="area"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signatura / Data -->
+  <div class="card" style="margin-top:8px;">
+    <div class="grid-3">
+      <div class="field">
+        <label>Nom i cognoms</label>
+        <div class="line"></div>
+      </div>
+      <div class="field">
+        <label>Data</label>
+        <div class="line"></div>
+      </div>
+      <div class="field">
+        <label>Signatura</label>
+        <div class="line"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-text">
+    AMG Digitalització · Solucions digitals per a negocis locals<br>
+    La vostra web estarà llesta en 48-72 hores des que rebem tota la informació.
+  </div>
+  <div class="footer-contact">
+    <strong>+34 614 492 062</strong><br>
+    info@amgdl.com<br>
+    WhatsApp disponible
+  </div>
+</footer>
+
+</body>
+</html>

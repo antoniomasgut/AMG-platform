@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AMG · Full de configuració · Mare de Dia</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent: #FF6B00;
+  --dark:   #13132a;
+  --bg:     #f8f9fc;
+  --white:  #ffffff;
+  --border: #e2e8f0;
+  --text:   #1e2a3b;
+  --muted:  #64748b;
+  --green:  #16a34a;
+  --rose:   #db2777;
+  --blue:   #0891b2;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 13px; line-height: 1.6; }
+
+header { background: var(--dark); padding: 24px 48px 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.header-left { display: flex; align-items: center; gap: 20px; }
+.header-badge { background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.35); border-radius: 6px; padding: 6px 14px; color: var(--accent); font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; }
+.header-right { text-align: right; color: #8896aa; font-size: 11px; line-height: 1.8; }
+.header-right strong { display: block; color: #e2e8f0; font-size: 15px; font-weight: 600; }
+
+.sector-banner { background: linear-gradient(135deg, #db2777 0%, #be185d 100%); padding: 20px 48px; display: flex; align-items: center; gap: 16px; }
+.sector-emoji { font-size: 32px; }
+.sector-info h1 { color: #fff; font-size: 22px; font-weight: 700; }
+.sector-info p  { color: rgba(255,255,255,0.75); font-size: 12px; margin-top: 2px; }
+
+main { max-width: 960px; margin: 0 auto; padding: 32px 40px 60px; }
+
+.client-card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px; }
+.field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); display: block; margin-bottom: 4px; }
+.field .line { border-bottom: 1.5px solid var(--border); height: 26px; width: 100%; }
+
+.section { margin-bottom: 28px; }
+.section-title { font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); padding-bottom: 6px; border-bottom: 2px solid var(--border); margin-bottom: 14px; }
+
+.places-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 0; }
+.place-box { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.place-box .lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 4px; }
+.place-box .line { border-bottom: 1.5px solid var(--border); height: 22px; }
+
+.phases { display: flex; flex-direction: column; gap: 10px; }
+.phase-row { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.phase-row.recommended { border-left: 3px solid var(--green); }
+.phase-row.optional    { border-left: 3px solid #cbd5e1; opacity: 0.75; }
+.phase-main { padding: 12px 16px; display: grid; grid-template-columns: 32px 1fr auto auto; align-items: center; gap: 12px; }
+.phase-num { width: 28px; height: 28px; background: var(--dark); color: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', monospace; font-size: 9px; font-weight: 700; }
+.phase-name { font-weight: 600; font-size: 13px; }
+.phase-sub  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.phase-price { text-align: right; white-space: nowrap; }
+.phase-price .amount { font-weight: 700; font-size: 15px; color: var(--text); }
+.phase-price .period  { font-size: 10px; color: var(--muted); }
+.badge-rec { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; border-radius: 4px; padding: 2px 7px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; }
+.badge-opt { background: #f8fafc; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; font-size: 9px; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+
+.phase-detail { background: #f8fafc; border-top: 1px dashed var(--border); padding: 10px 16px 12px 58px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+.detail-row { display: flex; flex-direction: column; gap: 2px; }
+.detail-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+.detail-val { font-size: 11px; color: var(--text); line-height: 1.5; }
+.detail-val .opt { display: inline-block; margin-right: 8px; color: var(--muted); }
+.detail-val .opt.chosen { color: var(--green); font-weight: 600; }
+.detail-val .opt.chosen::before { content: '✓ '; }
+.detail-val .opt::before { content: '○ '; }
+
+.addons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.addon-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 12px; }
+.addon-card.disabled { opacity: 0.45; }
+.addon-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+.addon-icon.orange { background: rgba(255,107,0,0.12); }
+.addon-icon.blue   { background: rgba(8,145,178,0.12); }
+.addon-icon.green  { background: rgba(22,163,74,0.12); }
+.addon-icon.purple { background: rgba(124,58,237,0.12); }
+.addon-icon.rose   { background: rgba(219,39,119,0.12); }
+.addon-name  { font-weight: 600; font-size: 12px; }
+.addon-desc  { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+.addon-check { margin-left: auto; width: 18px; height: 18px; border: 1.5px solid var(--border); border-radius: 4px; flex-shrink: 0; margin-top: 4px; }
+
+.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.config-item { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; }
+.config-key  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 6px; }
+.config-val  { font-size: 12px; color: var(--text); line-height: 1.5; }
+.config-line { border-bottom: 1.5px dashed var(--border); height: 22px; margin-top: 6px; }
+.config-opts { margin-top: 5px; display: flex; flex-direction: column; gap: 2px; }
+.config-opt  { font-size: 11px; color: var(--muted); }
+.config-opt.chosen { color: var(--green); font-weight: 600; }
+.config-opt.chosen::before { content: '✓ '; }
+.config-opt::before { content: '○ '; }
+
+.checklist { display: flex; flex-direction: column; gap: 8px; }
+.check-item { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 11px 14px; display: flex; align-items: flex-start; gap: 10px; }
+.check-item .cb { width: 16px; height: 16px; border: 1.5px solid var(--border); border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+.check-content { flex: 1; }
+.check-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--text); }
+.actor-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; border-radius: 3px; padding: 1px 5px; flex-shrink: 0; text-transform: uppercase; }
+.actor-badge.amg    { background: rgba(255,107,0,0.10); color: #FF6B00; border: 1px solid rgba(255,107,0,0.28); }
+.actor-badge.client { background: rgba(8,145,178,0.10); color: #0891b2; border: 1px solid rgba(8,145,178,0.28); }
+.step-time { margin-left: auto; font-size: 10px; font-weight: 500; color: var(--muted); background: #f1f5f9; border-radius: 4px; padding: 2px 7px; font-family: monospace; flex-shrink: 0; }
+.check-title .step { color: var(--accent); font-weight: 700; font-size: 10px; min-width: 20px; font-family: monospace; flex-shrink: 0; }
+.check-note { font-size: 11px; color: var(--muted); line-height: 1.55; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #e8ecf0; }
+.check-note strong { color: var(--text); font-weight: 600; }
+.check-note em { color: var(--blue); font-style: normal; }
+
+.legal-box { background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 14px 16px; font-size: 11px; color: #9f1239; line-height: 1.6; }
+
+.pricing-box { background: var(--dark); border-radius: 10px; padding: 24px 28px; margin-top: 28px; }
+.pricing-title { font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.pricing-rows { display: flex; flex-direction: column; gap: 8px; }
+.pricing-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #aab4c4; }
+.pricing-row span:last-child { font-weight: 600; color: #e2e8f0; }
+.pricing-divider { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0; }
+.pricing-total { display: flex; justify-content: space-between; align-items: center; padding-top: 4px; }
+.pricing-total .label  { color: #e2e8f0; font-weight: 600; font-size: 13px; }
+.pricing-total .amount { color: var(--accent); font-weight: 700; font-size: 22px; font-family: 'Orbitron', monospace; }
+.pricing-monthly { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.06); border-radius: 6px; padding: 10px 14px; }
+.pricing-monthly .label  { color: #aab4c4; font-size: 12px; }
+.pricing-monthly .amount { color: #e2e8f0; font-weight: 700; font-size: 18px; font-family: 'Orbitron', monospace; }
+.pricing-note { margin-top: 10px; font-size: 10px; color: #6b7a8f; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); }
+
+.signature-area { margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.sig-block label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); display: block; margin-bottom: 6px; }
+.sig-line { border-bottom: 1.5px solid var(--border); height: 40px; }
+.sig-name { margin-top: 4px; font-size: 10px; color: var(--muted); text-align: center; }
+
+footer { text-align: center; padding: 20px 40px; color: var(--muted); font-size: 10px; border-top: 1px solid var(--border); }
+
+@media print {
+  body { background: #fff; font-size: 11px; }
+  header, .sector-banner, .pricing-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .phase-row.recommended { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  main { padding: 20px 28px 40px; }
+  .section { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <svg width="200" height="56" viewBox="0 0 260 60" xmlns="http://www.w3.org/2000/svg" aria-label="AMG Digitalitzacions">
+      <text x="0" y="36" font-family="Orbitron, 'Share Tech Mono', monospace" font-size="32" font-weight="700" fill="#FF6B00" letter-spacing="4">AMG</text>
+      <text x="0" y="54" font-family="'Space Grotesk', system-ui, sans-serif" font-size="10" font-weight="400" fill="#94a3b8" letter-spacing="4.5">DIGITALITZACIONS</text>
+      <line x1="0" y1="42" x2="84" y2="42" stroke="#FF6B00" stroke-width="1.5" stroke-opacity="0.3"/>
+      <circle cx="86" cy="7" r="3" fill="#FF6B00" opacity="0.15"/>
+    </svg>
+    <div class="header-badge">Full de configuració</div>
+  </div>
+  <div class="header-right">
+    <strong>Mare de Dia · Autònom</strong>
+    Data: _____ / _____ / 2026<br/>
+    Referència: MDIA-_______
+  </div>
+</header>
+
+<div class="sector-banner">
+  <div class="sector-emoji">🧸</div>
+  <div class="sector-info">
+    <h1>Mare de Dia / Llar d'Infants</h1>
+    <p>Sector: Mare de Dia / Llar d'Infants · Mida: Autònom · Màx. 5 infants</p>
+  </div>
+</div>
+
+<main>
+
+  <!-- ── Dades del centre ── -->
+  <div class="section">
+    <div class="section-title">Dades del centre</div>
+    <div class="client-card">
+      <div class="field"><label>Nom del centre</label><div class="line"></div></div>
+      <div class="field"><label>Nom de la responsable</label><div class="line"></div></div>
+      <div class="field"><label>Telèfon WhatsApp (comunicació amb pares)</label><div class="line"></div></div>
+      <div class="field"><label>Email de contacte</label><div class="line"></div></div>
+      <div class="field"><label>Adreça del centre</label><div class="line"></div></div>
+      <div class="field"><label>Domini web desitjat</label><div class="line"></div></div>
+    </div>
+  </div>
+
+  <!-- ── Capacitat ── -->
+  <div class="section">
+    <div class="section-title">Capacitat del centre</div>
+    <div class="places-grid">
+      <div class="place-box"><div class="lbl">Places totals</div><div class="line"></div></div>
+      <div class="place-box"><div class="lbl">Places lliures ara</div><div class="line"></div></div>
+      <div class="place-box"><div class="lbl">Edat mínima</div><div class="line"></div></div>
+      <div class="place-box"><div class="lbl">Edat màxima</div><div class="line"></div></div>
+    </div>
+  </div>
+
+  <!-- ── Informació a recollir ── -->
+  <div class="section">
+    <div class="section-title">Informació a recollir del client (abans de començar)</div>
+    <div class="config-grid">
+
+      <div class="config-item">
+        <div class="config-key">Tarifa mensual i modalitats</div>
+        <div class="config-val">
+          L'agent informarà les famílies d'aquests preus. Omplir per franges:
+          <div class="config-line"></div>
+          <em style="color:var(--muted);font-size:10px;">Ex: Jornada completa (07:30–17:00) — 400€/mes · Mitja jornada (07:30–13:00) — 270€/mes · Inclou: àpats, material, bolquers fins 2 anys</em>
+        </div>
+      </div>
+
+      <div class="config-item">
+        <div class="config-key">Horari del centre</div>
+        <div class="config-val">
+          Obertura i tancament per dia de la setmana:
+          <div class="config-line"></div>
+          <em style="color:var(--muted);font-size:10px;">Ex: Dl–Dv 07:30–17:00 · Agost tancat · Festius locals tancats</em><br/>
+          Dies de tancament anual: <div class="config-line"></div>
+        </div>
+      </div>
+
+      <div class="config-item">
+        <div class="config-key">Menú i inclusió d'àpats</div>
+        <div class="config-val">
+          L'agent respon preguntes habituals de pares sobre alimentació.
+          <div class="config-opts">
+            <div class="config-opt">Àpats inclosos al preu mensual</div>
+            <div class="config-opt">Àpats amb suplement (indicar import)</div>
+            <div class="config-opt">El nen porta el menjar de casa</div>
+          </div>
+          Menú setmanal: <div class="config-line"></div>
+        </div>
+      </div>
+
+      <div class="config-item">
+        <div class="config-key">Política d'absències i baixes</div>
+        <div class="config-val">
+          Definir clarament per evitar conflictes amb les famílies:
+          <div class="config-line"></div>
+          <em style="color:var(--muted);font-size:10px;">Ex: "Les absències per malaltia no es descompten. Les vacances familiars no es descompten si el centre continua obert. Baixa total: avisar amb 30 dies."</em>
+        </div>
+      </div>
+
+      <div class="config-item">
+        <div class="config-key">Al·lèrgies i necessitats especials</div>
+        <div class="config-val">
+          ⚠️ <strong>RGPD Art. 9 — Dades sensibles</strong>: les al·lèrgies i condicions de salut dels infants son dades de categoria especial. <strong>L'agent NO pot recollir ni emmagatzemar dades de salut.</strong><br/>
+          Procediment: l'agent diu "Si tens alguna al·lèrgia o necessitat especial, comunica-ho directament durant la visita de coneixença."
+        </div>
+      </div>
+
+      <div class="config-item">
+        <div class="config-key">Procés d'admissió</div>
+        <div class="config-val">
+          Definir els passos que seguirà cada família interessada:
+          <div class="config-opts">
+            <div class="config-opt chosen">1. Contacte inicial per WhatsApp (agent IA)</div>
+            <div class="config-opt chosen">2. Visita de coneixença (meeting)</div>
+            <div class="config-opt chosen">3. Reserva de plaça + signatura contracte</div>
+            <div class="config-opt">4. Període d'adaptació (definir durada)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Avís legal ── -->
+  <div class="section">
+    <div class="section-title">Avís sobre protecció de dades i menors</div>
+    <div class="legal-box">
+      <strong>⚠️ RGPD Art. 8 i 9 — Dades de menors i dades sensibles:</strong><br/>
+      · Les <strong>fotos i vídeos dels infants</strong> requereixen consentiment explícit i documentat dels pares/tutors. Obtenir permisos d'imatge signats <strong>abans</strong> d'activar Social Publisher o qualsevol canal amb imatges.<br/>
+      · Les dades de <strong>salut</strong> (al·lèrgies, medicació, condicions mèdiques) son dades de categoria especial i <strong>mai s'han d'enviar per WhatsApp</strong> ni emmagatzemar al sistema. Han d'estar en documents físics o xifrats al centre.<br/>
+      · El sistema pot gestionar l'enviament i signatura digital dels <strong>permisos d'imatge</strong> via el mòdul de lliurament segur (DPA). Activar-lo abans del go-live si es vol usar Social Publisher.
+    </div>
+  </div>
+
+  <!-- ── Serveis activats ── -->
+  <div class="section">
+    <div class="section-title">Serveis activats</div>
+    <div class="phases">
+
+      <div class="phase-row recommended">
+        <div class="phase-main">
+          <div class="phase-num">01</div>
+          <div>
+            <div class="phase-name">Agent IA — Informació i gestió de llista d'espera</div>
+            <div class="phase-sub">WhatsApp + Chat Widget · Respon pares 24/7: places, horaris, preus, llista d'espera · Mai revela dades d'altres famílies</div>
+          </div>
+          <span class="badge-rec">✓ Inclòs</span>
+          <div class="phase-price"><div class="amount">59€</div><div class="period">/mes</div></div>
+        </div>
+        <div class="phase-detail">
+          <div class="detail-row">
+            <div class="detail-label">Preguntes habituals que respon l'agent</div>
+            <div class="detail-val">"Hi ha places disponibles?" (respon amb places actuals), "Quina és la tarifa?" (informa per franges), "Quin és l'horari?" (informa horari), "Tinc el nen de 4 mesos, accepteu?" (compara amb edat mínima), "Com és el procés d'admissió?" (explica els 4 passos).</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Gestió de llista d'espera</div>
+            <div class="detail-val">Quan no hi ha places, l'agent recull nom + edat del nen + telèfon i diu: "No tenim plaça disponible ara, però t'apuntem a la llista d'espera. T'avisarem quan n'hi hagi." La responsable rep notificació per Telegram amb les dades.</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Límits de l'agent (RGPD)</div>
+            <div class="detail-val">L'agent <strong>mai</strong> dona informació sobre altres famílies, noms d'infants, o dades de salut. Si una família pregunta per un altre infant, respon: "Per a informació individual, parla directament amb la responsable."</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">To de comunicació</div>
+            <div class="detail-val">Càlid i tranquil·litzador: "Hola! Soc l'assistent de [NOM CENTRE]. Estic aquí per resoldre els teus dubtes sobre el centre 🌟". Recomanar un nom amable per l'agent.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-row recommended">
+        <div class="phase-main">
+          <div class="phase-num">02</div>
+          <div>
+            <div class="phase-name">Agenda — Visita de coneixença</div>
+            <div class="phase-sub">Mode: <strong>meeting</strong> · La família visita el centre i coneix la responsable · Pas previ obligatori a l'admissió</div>
+          </div>
+          <span class="badge-rec">✓ Recomanat</span>
+          <div class="phase-price"><div class="amount">20€</div><div class="period">/mes</div></div>
+        </div>
+        <div class="phase-detail">
+          <div class="detail-row">
+            <div class="detail-label">Per què mode "meeting" i no "appointment"</div>
+            <div class="detail-val">Mode <strong>meeting</strong> indica una reunió presencial sense durada de servei fix: la família pot venir amb el nen, fer preguntes i veure les instal·lacions. No hi ha tractament ni servei durant la visita. Diferent d'una cita de fisioteràpia (appointment) on hi ha un servei concret.</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Durada de la visita</div>
+            <div class="detail-val">
+              <span class="opt chosen">30–45 min (recomanat: temps suficient per veure el centre i resoldre dubtes)</span>
+              <span class="opt">60 min (si sol fer reunions llargues o ha d'explicar molt)</span>
+            </div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Horari de visites (diferent de l'horari del centre)</div>
+            <div class="detail-val">Les visites es fan típicament fora de l'horari d'acollida per no interferir amb els infants. Exemples: "Dimarts i dijous 17:30–19:00" o "Dissabtes 10:00–12:00". La responsable defineix quins dies pot rebre famílies noves.</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Recordatoris automàtics</div>
+            <div class="detail-val">La família rep WhatsApp <strong>24h abans</strong> (confirmació de l'hora, adreça i nom de la responsable) + <strong>2h abans</strong> (recordatori). Redueix no-shows. Si cancel·len, allibera el slot.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-row recommended">
+        <div class="phase-main">
+          <div class="phase-num">04</div>
+          <div>
+            <div class="phase-name">Comunicació periòdica i recordatoris de pagament</div>
+            <div class="phase-sub">Circular mensual d'activitats · Recordatori de pagament el dia 1 · Sol·licitud ressenyes Google a famílies satisfetes</div>
+          </div>
+          <span class="badge-rec">✓ Recomanat</span>
+          <div class="phase-price"><div class="amount">15€</div><div class="period">/mes</div></div>
+        </div>
+        <div class="phase-detail">
+          <div class="detail-row">
+            <div class="detail-label">Recordatori de pagament mensual</div>
+            <div class="detail-val">El dia 1 de cada mes, el sistema envia automàticament per WhatsApp a totes les famílies actives: "Hola [NOM FAMÍLIA] 👋 Recordatori de la quota mensual del mes en curs: [IMPORT]€. Gràcies per la vostra confiança!" Elimina la incomoditat de demanar-ho personalment.</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Circular mensual d'activitats</div>
+            <div class="detail-val">A principis de mes, la responsable pot enviar una circular per WhatsApp a totes les famílies des del portal: menú de la setmana, activitats programades, dies festius, comunicats importants. Alternativa als grups de WhatsApp desorganitzats.</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Ressenyes Google</div>
+            <div class="detail-val">Cada 3–6 mesos, el sistema envia un missatge a les famílies actives: "Si esteu contents amb el centre, una ressenya de Google ens ajuda molt! [URL]". Les ressenyes son clau per a noves famílies que busquen online.</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Per a quin tipus de "fidelització" serveix aquí</div>
+            <div class="detail-val">A diferència del fisio (on un pacient pot marxar), les famílies de mare de dia son estables per 1–3 anys. El valor de F4 aquí es basa en la <strong>comunicació regular</strong> i el <strong>cobrament automàtic</strong>, no en reactivació.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-row optional">
+        <div class="phase-main">
+          <div class="phase-num">03</div>
+          <div>
+            <div class="phase-name">Pressupostos / Proposta de servei</div>
+            <div class="phase-sub">Mode: <strong>formal</strong> · Proposta d'acollida amb condicions, jornada i preu · Poc habitual: la tarifa és fixa i igual per a tothom</div>
+          </div>
+          <span class="badge-opt">Opcional</span>
+          <div class="phase-price"><div class="amount">20€</div><div class="period">/mes</div></div>
+        </div>
+        <div class="phase-detail">
+          <div class="detail-row">
+            <div class="detail-label">Quan té sentit activar-lo</div>
+            <div class="detail-val">Si la responsable vol enviar una proposta formal signada digitalment (condicions d'admissió, jornada contractada, preu, política de pagament) abans de signar el contracte. Útil si el document existeix en paper i vol digitalitzar-lo.</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Quan no cal</div>
+            <div class="detail-val">Si cobra una tarifa fixa i igual per a totes les famílies, el contracte ja és un document físic existent, o prefereix fer la paperassa en paper. En aquest cas, F1+F2+F4 ja cobreix totes les necessitats digitals principals.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase-row optional">
+        <div class="phase-main">
+          <div class="phase-num">05</div>
+          <div>
+            <div class="phase-name">Equip — Auxiliar educadora</div>
+            <div class="phase-sub">Coordinació si treballa amb una auxiliar o educadora de suport</div>
+          </div>
+          <span class="badge-opt">Si aplica</span>
+          <div class="phase-price"><div class="amount">15€</div><div class="period">/mes</div></div>
+        </div>
+        <div class="phase-detail">
+          <div class="detail-row">
+            <div class="detail-label">Quan activar-lo</div>
+            <div class="detail-val">Si la mare de dia té una auxiliar educadora (sigui fixa o esporàdica). Permet coordinar horaris i comunicació via grup Telegram compartit. Per a la majoria de mares de dia que treballen soles, no cal.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Addons ── -->
+  <div class="section">
+    <div class="section-title">Serveis addicionals (setup únic, marcar els contractats)</div>
+    <div class="addons">
+
+      <div class="addon-card">
+        <div class="addon-icon orange">🌐</div>
+        <div>
+          <div class="addon-name">Landing Pro — Web del centre</div>
+          <div class="addon-desc">80€ setup + 15€/mes. Inclou: fotos del centre, descripció dels serveis i horaris, formulari d'inscripció a la llista d'espera, i Chat Widget IA. La web ajuda les famílies a trobar el centre a Google i transmet confiança amb fotos reals. <strong>Recomanat.</strong></div>
+        </div>
+        <div class="addon-check"></div>
+      </div>
+
+      <div class="addon-card">
+        <div class="addon-icon green">💬</div>
+        <div>
+          <div class="addon-name">WhatsApp Business API</div>
+          <div class="addon-desc">50€ setup. Canal principal de comunicació amb les famílies: agent IA, recordatoris de visita i recordatoris de pagament. Imprescindible per al funcionament del sistema. Requereix un número dedicat al centre (diferent del personal).</div>
+        </div>
+        <div class="addon-check"></div>
+      </div>
+
+      <div class="addon-card">
+        <div class="addon-icon purple">📱</div>
+        <div>
+          <div class="addon-name">Social Publisher — Fotos d'activitats</div>
+          <div class="addon-desc">50€ setup. La responsable envia una foto d'activitat al bot de Telegram → el sistema la publica a Instagram. <strong>⚠️ Requereix permís d'imatge signat per CADA família</strong> (RGPD Art. 8 — menors). Activar-lo sols si ja tens els permisos recollits o has activat primer el mòdul DPA per recollir-los digitalment.</div>
+        </div>
+        <div class="addon-check"></div>
+      </div>
+
+      <div class="addon-card">
+        <div class="addon-icon orange">🔗</div>
+        <div>
+          <div class="addon-name">Domini gestionat</div>
+          <div class="addon-desc">60€ (inclou 1r any) + 15€/any renovació. AMG gestiona el domini, DNS i SSL. Moltes mares de dia no tenen nom comercial registrat — ajudar a triar un domini senzill i professional (ex: maredediacancatera.com o infants-palma.com).</div>
+        </div>
+        <div class="addon-check"></div>
+      </div>
+
+      <div class="addon-card">
+        <div class="addon-icon rose">🤖</div>
+        <div>
+          <div class="addon-name">Bot IA avançat (RAG)</div>
+          <div class="addon-desc">100€ setup. Amplia la base de coneixement amb documents complets: normativa del centre, menús mensuals, calendari de festius, projecte educatiu. L'agent pot respondre preguntes detallades sobre el projecte pedagògic del centre. Opcional però molt valorat per famílies exigents.</div>
+        </div>
+        <div class="addon-check"></div>
+      </div>
+
+      <div class="addon-card disabled">
+        <div class="addon-icon blue">📧</div>
+        <div>
+          <div class="addon-name">SMTP Corporatiu</div>
+          <div class="addon-desc">25€ setup. <strong>No recomanat per a mares de dia</strong>: WhatsApp és el canal principal de comunicació amb les famílies. L'email corporatiu és redundant per a aquest perfil. Activar únicament si usa email per enviar factures a empreses o si activa F3 (pressupostos).</div>
+        </div>
+        <div class="addon-check"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Configuració ── -->
+  <div class="section">
+    <div class="section-title">Paràmetres de configuració al portal</div>
+    <div class="config-grid">
+
+      <div class="config-item">
+        <div class="config-key">Mode d'agenda</div>
+        <div class="config-val">
+          Sempre <strong>meeting</strong> per a mares de dia: visita al centre per conèixer les instal·lacions i la responsable.
+          <div class="config-opts">
+            <div class="config-opt chosen">meeting — Reunió de coneixença (correcte per a mares de dia) ✓</div>
+            <div class="config-opt">appointment — Cita de servei (no aplica)</div>
+            <div class="config-opt">inspection — Visita d'inspecció (no aplica)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="config-item">
+        <div class="config-key">Durada i horari de visites</div>
+        <div class="config-val">
+          Durada estàndard de la visita de coneixença:
+          <div class="config-opts">
+            <div class="config-opt chosen">30–45 min (recomanat)</div>
+            <div class="config-opt">60 min</div>
+          </div>
+          Dies i hores disponibles per a visites:
+          <div class="config-line"></div>
+        </div>
+      </div>
+
+      <div class="config-item">
+        <div class="config-key">Dia de recordatori de pagament</div>
+        <div class="config-val">
+          L'automatisme envia el recordatori de la quota cada mes.
+          <div class="config-opts">
+            <div class="config-opt chosen">Dia 1 del mes (recomanat: el primer dia del mes en curs)</div>
+            <div class="config-opt">Dia 25 del mes anterior (avís anticipat)</div>
+            <div class="config-opt">Dia personalitzat: <span style="border-bottom:1px dashed #cbd5e1;display:inline-block;width:40px;">&nbsp;</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="config-item">
+        <div class="config-key">Horari d'acollida</div>
+        <div class="config-val">
+          L'agent informarà les famílies d'aquests horaris:
+          <div class="config-line"></div>
+          <em style="color:var(--muted);font-size:10px;">Ex: Dl–Dv 07:30–17:00. Agost tancat. Avisar amb 24h si el nen no vindrà.</em>
+        </div>
+      </div>
+
+      <div class="config-item">
+        <div class="config-key">URL Google Reviews</div>
+        <div class="config-val">
+          Google Business Profile → Compartir perfil → Deixar una ressenya:<br/>
+          <div class="config-line"></div>
+          Si no té perfil Google, crear-lo ara (gratis, verificació 3–7 dies per carta).
+        </div>
+      </div>
+
+      <div class="config-item">
+        <div class="config-key">Telegram — notificacions</div>
+        <div class="config-val">
+          La responsable rebrà alertes al bot de la plataforma AMG. El Chat ID es configura automàticament quan la responsable fa el pas 03 del checklist (obre el bot → escriu → vinculació).<br/>
+          No cal omplir res aquí manualment. Si vol veure l'estat: portal del tenant → <strong>Agents → Canals → Telegram</strong> → "Vinculat" ✅.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Checklist ── -->
+  <div class="section">
+    <div class="section-title">Checklist de posada en marxa</div>
+    <div class="checklist">
+
+      <div class="check-item">
+        <div class="cb"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="step">01</span><span class="actor-badge amg">AMG</span> Crear el tenant al portal<span class="step-time">~5 min</span></div>
+          <div class="check-note">
+            Portal: <strong>Admin → Tenants → Nou tenant</strong>. Sector = <strong>MARE_DE_DIA</strong>, Mida = <strong>AUTONOMO</strong>. Emplenar nom del centre, email i telèfon. El sistema crearà la KB buida amb les categories específiques del sector (places, horaris, tarifa, admissió).
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="cb"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="step">02</span><span class="actor-badge client">Client</span> Configurar WhatsApp Business API<span class="step-time">~30 min</span></div>
+          <div class="check-note">
+            <strong>Situació habitual de les mares de dia:</strong> solen gestionar tot des d'un mòbil personal i usen WhatsApp personal per parlar amb les famílies. Cal separar canals.<br/>
+            · <em>Opció A (recomanada):</em> SIM nova dedicada al centre (Yoigo/OMV, ~6€/mes). El número del centre resta separat del personal. Les famílies escriuen al número del centre i l'agent respon; la responsable pot seguir amb el personal per a les seves converses privades.<br/>
+            · <em>Opció B:</em> Migrar el número actual al sistema (deixa de funcionar com WA personal). Menys recomanat perquè la responsable no podria usar WA normal en aquell número.<br/>
+            <strong>Procés Meta:</strong> Business Manager → WhatsApp → Afegir número → SMS de verificació → Aprovació nom. Temps: 24–72h.
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="cb"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="step">03</span><span class="actor-badge client">Client</span> Crear el bot de Telegram i vincular la responsable<span class="step-time">~10 min</span></div>
+          <div class="check-note">
+            <strong>Pas 1 — Crear el bot del centre (fa AMG, ~5 min):</strong> Obre Telegram → busca <em>@BotFather</em> → <em>/newbot</em> → nom (ex: "Can Catera Infants") + username (ex: <em>cancaterainfants_bot</em>, ha d'acabar en _bot). @BotFather retornarà un token del tipus <em>1234567890:ABCdef...</em> — copiar-lo.<br/>
+            <strong>Pas 2 — Registrar el bot al portal:</strong> Portal: <strong>Admin → Tenants → [id del centre] → scroll fins a "Telegram Bot" → "Configurar bot"</strong> → enganxar el token → "Desar i registrar webhook". El portal mostrarà l'estat "Connectat" i el link <em>t.me/[nombot]</em>. Aquest bot és el canal de Telegram per a les famílies que vulguin contactar via l'agent IA.<br/>
+            <strong>Pas 3 — Vincular la responsable per a les notificacions:</strong> Al portal del tenant: <strong>Agents → Canals → Telegram</strong> → botó "Obrir bot de Telegram →". Enviar l'URL a la responsable per WhatsApp. La responsable l'obre a Telegram → escriu qualsevol missatge → vinculació confirmada. Des d'ara rebrà alertes de:<br/>
+            · Families noves que contacten (nom, edat del nen, interès en plaça)<br/>
+            · Visites de coneixença reservades<br/>
+            · Famílies apuntades a la llista d'espera
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="cb"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="step">04</span><span class="actor-badge amg">AMG</span> Crear la Landing Pro<span class="step-time">~20 min</span></div>
+          <div class="check-note">
+            <strong>Material imprescindible del client:</strong> fotos del centre (sala d'activitats, zona de son, espai exterior si en té), foto de la responsable, breu descripció del projecte educatiu, llista de serveis inclosos (àpats, activitats, etc.) i horaris.<br/>
+            <strong>Important:</strong> <em>no usar fotos d'infants a la landing sense permís d'imatge</em>. Fer fotos de les instal·lacions buides o amb joguines/materials.<br/>
+            <strong>Seccions de la landing:</strong> Hero (foto del centre + CTA "Consulta places"), Sobre el centre (filosofia, anys d'experiència), Serveis inclosos, Horaris i tarifes, Formulari de contacte/llista d'espera, Mapa de localització.
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="cb"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="step">05</span><span class="actor-badge amg">AMG</span> Activar l'Agent IA i configurar la base de coneixement<span class="step-time">~30 min</span></div>
+          <div class="check-note">
+            Portal: <strong>Tenant → Setup → Agent IA → Activar</strong>. Anar a <strong>Tenant → IA → Base de coneixement</strong>.<br/>
+            <strong>Contingut crític de la base de coneixement per a mares de dia:</strong><br/>
+            · Places totals i places disponibles ara (actualitzar quan canviï)<br/>
+            · Rang d'edat acceptat (ex: 0 a 3 anys, o 4 mesos a 3 anys)<br/>
+            · Tarifa mensual per modalitats (jornada completa / mitja jornada)<br/>
+            · Horari d'atenció del centre<br/>
+            · Procés d'admissió: 4 passos (contacte → visita → reserva → adaptació)<br/>
+            · Política d'absències i baixes<br/>
+            · Si inclou àpats i de quin tipus<br/>
+            · Mesos tancats (agost, Nadal...)<br/>
+            <strong>⚠️ No afegir a la KB:</strong> dades de salut, noms d'infants actuals ni dades personals de les famílies.
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="cb"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="step">06</span><span class="actor-badge amg">AMG</span> Activar l'Agenda de visites de coneixença<span class="step-time">~15 min</span></div>
+          <div class="check-note">
+            Portal: <strong>Tenant → Setup → Agenda → Activar → mode: meeting</strong>.<br/>
+            Configurar: durada (30–45 min), dies i hores disponibles per a visites (típicament tardes de dilluns a divendres o dissabtes al matí), recordatoris 24h + 2h.<br/>
+            <strong>Comportament del sistema:</strong> quan una família pregunta per una plaça i hi ha disponibilitat, l'agent pregunta si volen agendar una visita al centre. Si diuen que sí, mostra els slots disponibles i la família escull. La responsable rep confirmació per Telegram amb: nom família, edat del nen/a i hora de la visita.
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="cb"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="step">07</span><span class="actor-badge amg">AMG</span> Activar la Comunicació automàtica<span class="step-time">~10 min</span></div>
+          <div class="check-note">
+            Portal: <strong>Tenant → Setup → Fidelització → Activar</strong>.<br/>
+            Configurar dues automatitzacions principals:<br/>
+            1. <strong>Recordatori mensual de pagament:</strong> dia del mes, import mensual (o variable per infant), missatge personalitzat. El sistema envia a totes les famílies actives automàticament.<br/>
+            2. <strong>Ressenyes Google:</strong> aconseguir l'URL de Google Reviews (Google Business Profile → Compartir → Deixar ressenya). El sistema enviarà la petició de ressenya cada 3–6 mesos a les famílies actives.<br/>
+            Si no té perfil de Google My Business, crear-lo ara (gratuït, verificació per carta 3–7 dies).
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="cb"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="step">08</span><span class="actor-badge client">Client</span> Recollir permisos d'imatge de totes les famílies (si activa Social Publisher)<span class="step-time">variable</span></div>
+          <div class="check-note">
+            <strong>Obligatori per llei (RGPD Art. 8) si es publicaran fotos amb infants.</strong><br/>
+            Opcions per recollir els permisos:<br/>
+            · <em>Via mòdul DPA del portal:</em> Portal → Tenant → Documents → Nou document de tipus "Permís d'imatge" → enviar per WhatsApp a cada família → firmen digitalment des del mòbil.<br/>
+            · <em>En paper:</em> imprimir el document i recollir signatura física en la visita de coneixença o el primer dia.<br/>
+            El permís ha d'especificar: on es publicaran les fotos (Instagram, web del centre), qui les publicarà (AMG / la responsable), que les fotos podran ser eliminades si la família ho sol·licita.
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="cb"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="step">09</span><span class="actor-badge amg">AMG</span> Prova funcional: família demana plaça per WhatsApp<span class="step-time">~10 min</span></div>
+          <div class="check-note">
+            Simular una família interessada: Enviar WhatsApp: <em>"Hola, tinc un nen de 8 mesos. Teniu places disponibles per a setembre?"</em><br/>
+            <strong>Verificar que l'agent:</strong> (1) respon amb la informació de places disponibles, (2) informa la tarifa i horaris, (3) proposa agendar una visita de coneixença, (4) si es confirma la visita, la responsable rep alerta per Telegram amb les dades de la família.<br/>
+            Si l'agent no respon correctament, revisar el contingut de la KB (places actualitzades, tarifa, rang d'edat).
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="cb"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="step">10</span><span class="actor-badge amg">AMG</span> Configurar recordatori mensual de pagament<span class="step-time">~10 min</span></div>
+          <div class="check-note">
+            Portal: <strong>Tenant → Setup → Fidelització → Recordatori de pagament</strong>.<br/>
+            Definir: dia del mes (recomanat dia 1), import a recordar, missatge personalitzat.<br/>
+            <strong>Exemple de missatge:</strong> "Hola família [NOM]! 👋 Recordatori de la quota del mes d'[MES]: [IMPORT]€. Si tens alguna qüestió, escriu-me. Gràcies per la vostra confiança! 🌟"<br/>
+            Verificar que funciona creant un recordatori de prova i comprovant que arriba al WhatsApp d'una família de prova.
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="cb"></div>
+        <div class="check-content">
+          <div class="check-title"><span class="step">11</span><span class="actor-badge client">Client</span> Go-live i supervisió primera setmana<span class="step-time">1a setmana</span></div>
+          <div class="check-note">
+            Activar el Chat Widget a la landing (Portal → Landing → Widget → Copiar codi). Comunicar a la responsable que el sistema és actiu.<br/>
+            <strong>Primers dies:</strong> revisar que l'agent respon correctament les preguntes de famílies noves, que les visites es reserven bé i que la responsable rep les alertes per Telegram.<br/>
+            Si sorgeix una pregunta que l'agent no sap respondre, afegir la resposta a la KB immediatament. En 1–2 setmanes l'agent estarà calibrat per a les preguntes habituals del sector.<br/>
+            <strong>Compartir la URL de la landing:</strong> enviar-la a les famílies actuals perquè la comparteixin, posar-la a Google Business i als grups de mares de la zona.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Preus ── -->
+  <div class="pricing-box">
+    <div class="pricing-title">Resum econòmic</div>
+    <div class="pricing-rows">
+      <div class="pricing-row"><span>Setup Agent IA</span><span>175€</span></div>
+      <div class="pricing-row"><span>Landing Pro</span><span>80€</span></div>
+      <div class="pricing-row"><span>WhatsApp Business API</span><span>50€</span></div>
+      <div class="pricing-row"><span>Domini gestionat (1r any inclòs)</span><span>60€</span></div>
+    </div>
+    <hr class="pricing-divider"/>
+    <div class="pricing-total">
+      <div class="label">Total setup (únic)</div>
+      <div class="amount">365€</div>
+    </div>
+    <div class="pricing-monthly">
+      <div class="label">Quota mensual · Agent IA + Agenda + Comunicació + Landing Pro</div>
+      <div class="amount">109€/mes</div>
+    </div>
+    <div class="pricing-note">
+      ℹ️ Ingressos màxims del sector (5 infants × 400€) = 2.000€/mes · Quota = 5,5% d'ingressos.<br/>
+      F3 Pressupostos i SMTP Corporatiu exclosos: tarifa fixa mensual, WhatsApp és el canal principal.
+    </div>
+  </div>
+
+  <div class="signature-area">
+    <div class="sig-block">
+      <label>Signat per AMG Digitalitzacions</label>
+      <div class="sig-line"></div>
+      <div class="sig-name">info@amgdl.com · +34 614 492 062</div>
+    </div>
+    <div class="sig-block">
+      <label>Signat pel client</label>
+      <div class="sig-line"></div>
+      <div class="sig-name">Data: _____ / _____ / 2026</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  AMG Digitalitzacions · amgdl.com · info@amgdl.com · +34 614 492 062 ·
+  AMG Digitalitzacions · 2026
+</footer>
+
+</body>
+</html>
