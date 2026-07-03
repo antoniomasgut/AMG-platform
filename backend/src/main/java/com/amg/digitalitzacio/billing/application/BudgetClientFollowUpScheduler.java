@@ -98,7 +98,7 @@ public class BudgetClientFollowUpScheduler {
                     Pots accedir al teu portal per veure'l i acceptar-lo:
                     %s
 
-                    Si tens alguna pregunta, escriu-nos a info@amgdl.com o per WhatsApp al +34 614 492 062.
+                    Si tens alguna pregunta, escriu-nos a info@amgdl.com o per WhatsApp al +34 654 048 164.
 
                     Una salutació,
                     L'equip AMG Digitalitzacions
@@ -111,7 +111,7 @@ public class BudgetClientFollowUpScheduler {
                     Si tens dubtes sobre el pressupost o vols modificar alguna cosa, estem a la teva disposició.
                     Pots contactar-nos directament:
                     · Email: info@amgdl.com
-                    · WhatsApp: +34 614 492 062
+                    · WhatsApp: +34 654 048 164
                     · Portal: %s
 
                     Si has decidit no continuar, no cal que facis res; tanquem el pressupost automàticament als 10 dies.

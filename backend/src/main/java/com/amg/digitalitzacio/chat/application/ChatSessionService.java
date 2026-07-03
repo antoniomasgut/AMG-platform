@@ -289,7 +289,7 @@ public class ChatSessionService {
                     }
                 }
                 // Fallback als valors fixos d'AMG si no hi ha config al DB
-                if (whatsapp == null || whatsapp.isBlank()) whatsapp = "614492062";
+                if (whatsapp == null || whatsapp.isBlank()) whatsapp = "654048164";
                 if (email    == null || email.isBlank())    email    = "info@amgdl.com";
             } else {
                 // Sessió de landing d'un tenant: busca la seva config

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 
-const WHATSAPP_URL = 'https://wa.me/34614492062';
+const WHATSAPP_URL = 'https://wa.me/34654048164';
 
 export function AltresNegocisSection() {
   const t = useTranslations('altresNegocis');

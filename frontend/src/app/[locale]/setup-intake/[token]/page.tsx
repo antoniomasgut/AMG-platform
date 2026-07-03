@@ -390,7 +390,7 @@ function WABAInfoCallout() {
           </div>
           <div className="text-xs text-orange-600">
             Dubtes? Escriviu-nos a{' '}
-            <a href="https://wa.me/34614492062" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+            <a href="https://wa.me/34654048164" target="_blank" rel="noopener noreferrer" className="underline font-medium">
               +34 614 492 062
             </a>
           </div>

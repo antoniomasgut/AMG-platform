@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { AMGLogo } from '@/components/ui/AMGLogo';
 import { getProjectStatus, type ProjectStatus } from '@/services/projectStatus';
 
-const WHATSAPP_URL = 'https://wa.me/34614492062';
+const WHATSAPP_URL = 'https://wa.me/34654048164';
 
 function fmtDate(iso: string | null): string {
   if (!iso) return '';
@@ -183,7 +183,7 @@ export default function ProjectStatusPage() {
                 </span>
                 <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
                   className="font-mono text-[11px] text-[#ff6b00] hover:text-orange-300 transition-colors uppercase tracking-wider">
-                  WhatsApp +34 614 492 062 →
+                  WhatsApp +34 654 048 164 →
                 </a>
               </div>
             </>

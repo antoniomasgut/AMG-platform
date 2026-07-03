@@ -64,7 +64,7 @@ export function CTASection() {
             {/* Quick CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
               <a
-                href="https://wa.me/34614492062"
+                href="https://wa.me/34654048164"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-clip bg-accent hover:bg-accent-light text-black font-semibold f-mono text-xs uppercase px-8 h-11 flex items-center gap-2 transition-colors"

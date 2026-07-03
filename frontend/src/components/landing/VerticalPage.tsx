@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { VerticalFAQ } from './VerticalFAQ';
 
-const WHATSAPP_URL = 'https://wa.me/34614492062';
+const WHATSAPP_URL = 'https://wa.me/34654048164';
 
 function WhatsAppIcon({ size = 16 }: { size?: number }) {
   return (
