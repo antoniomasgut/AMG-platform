@@ -28,11 +28,34 @@ export interface BillingDashboard {
 }
 
 export interface DiscountResponse {
-  id: string; code: string; description: string;
+  id: string; tenantId: string | null;
   type: 'PERCENTAGE' | 'FIXED'; value: number;
+  appliesTo: string; referenceId: string | null; label: string | null;
   isActive: boolean; validFrom: string | null; validUntil: string | null;
-  appliesTo: string | null;
+  maxApplications: number | null; appliedCount: number | null; createdAt: string;
+  appliesToSetup: boolean; appliesToMonthly: boolean; isLifetime: boolean;
+  program: string | null;
 }
+
+export interface CreateDiscountRequest {
+  tenantId: string;
+  type: 'PERCENTAGE' | 'FIXED';
+  value: number;
+  appliesTo: 'BUDGET' | 'PHASE' | 'SERVICE';
+  label: string;
+  validFrom?: string;
+  validUntil?: string;
+  appliesToSetup?: boolean;
+  appliesToMonthly?: boolean;
+  isLifetime?: boolean;
+  maxApplications?: number;
+}
+
+export const createDiscount = (data: CreateDiscountRequest) =>
+  apiFetch<DiscountResponse>('/billing/discounts', { method: 'POST', body: JSON.stringify(data) });
+
+export const deactivateDiscount = (id: string) =>
+  apiFetch<void>(`/billing/discounts/${id}`, { method: 'DELETE' });
 
 export const getBillingDashboard = (tenantId: string) =>
   apiFetch<BillingDashboard>(`/billing/tenants/${tenantId}/dashboard`);

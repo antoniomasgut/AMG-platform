@@ -28,6 +28,10 @@ public class DiscountManager implements DiscountService {
                 .label(request.label())
                 .validFrom(request.validFrom())
                 .validUntil(request.validUntil())
+                .appliesToSetup(request.appliesToSetup() == null || request.appliesToSetup())
+                .appliesToMonthly(Boolean.TRUE.equals(request.appliesToMonthly()))
+                .isLifetime(Boolean.TRUE.equals(request.isLifetime()))
+                .maxApplications(request.maxApplications())
                 .createdBy(createdBy)
                 .build();
         discount = discountRepository.save(discount);
@@ -75,6 +79,7 @@ public class DiscountManager implements DiscountService {
         return new DiscountResponse(d.getId(), d.getTenantId(), d.getType().name(), d.getValue(),
                 d.getAppliesTo().name(), d.getReferenceId(), d.getLabel(), d.getIsActive(),
                 d.getValidFrom(), d.getValidUntil(), d.getMaxApplications(), d.getAppliedCount(),
-                d.getCreatedAt());
+                d.getCreatedAt(), d.getAppliesToSetup(), d.getAppliesToMonthly(), d.getIsLifetime(),
+                d.getProgram() != null ? d.getProgram().name() : null);
     }
 }

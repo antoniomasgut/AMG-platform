@@ -107,7 +107,7 @@ class BillingControllerTest {
     @Test
     void tc01_crearDescompte_Returns201() throws Exception {
         var request = new CreateDiscountRequest(tenant.getId(), "PERCENTAGE", BigDecimal.TEN,
-                "BUDGET", null, "Test 10%", LocalDate.now(), LocalDate.now().plusMonths(1));
+                "BUDGET", null, "Test 10%", LocalDate.now(), LocalDate.now().plusMonths(1), null, null, null, null);
 
         mockMvc.perform(post("/api/v1/billing/discounts")
                 .header("Authorization", "Bearer " + superAdminToken)
@@ -144,7 +144,7 @@ class BillingControllerTest {
     @Test
     void tc03_adminPotCrearDescompte_Returns201() throws Exception {
         var request = new CreateDiscountRequest(tenant.getId(), "FIXED", BigDecimal.valueOf(25),
-                "BUDGET", null, "25€ OFF", LocalDate.now(), LocalDate.now().plusMonths(1));
+                "BUDGET", null, "25€ OFF", LocalDate.now(), LocalDate.now().plusMonths(1), null, null, null, null);
 
         mockMvc.perform(post("/api/v1/billing/discounts")
                 .header("Authorization", "Bearer " + adminToken)
@@ -157,7 +157,7 @@ class BillingControllerTest {
     @Test
     void tc04_clientNoPotCrearDescompte_Returns403() throws Exception {
         var request = new CreateDiscountRequest(tenant.getId(), "PERCENTAGE", BigDecimal.TEN,
-                "BUDGET", null, "Test", LocalDate.now(), LocalDate.now().plusMonths(1));
+                "BUDGET", null, "Test", LocalDate.now(), LocalDate.now().plusMonths(1), null, null, null, null);
 
         mockMvc.perform(post("/api/v1/billing/discounts")
                 .header("Authorization", "Bearer " + clientToken)

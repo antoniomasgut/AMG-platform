@@ -25,7 +25,7 @@ import {
   type GoCardlessConfig, type GoCardlessMandate, type GoCardlessPaymentItem,
   type ProviderSummary, type DeleteTenantCheck,
 } from '@/services/admin';
-import { createBudget, listBudgets, sendBudget, cancelBudget, updateBudget, type BudgetResponse, type CreateBudgetRequest } from '@/services/billing';
+import { createBudget, listBudgets, sendBudget, cancelBudget, updateBudget, listDiscounts, createDiscount, deactivateDiscount, type BudgetResponse, type CreateBudgetRequest, type DiscountResponse } from '@/services/billing';
 import { getDpaStatus, sendDpaRequest, type DpaStatus } from '@/services/dpa';
 import { createIntake, getIntakeByBudget, type IntakeResponse as SetupIntakeResponse } from '@/services/setupIntake';
 import { getMetaAdsConfig, saveMetaAdsConfig, syncMetaAds } from '@/services/meta-ads';
@@ -1261,6 +1261,159 @@ function LifecycleSection({ tenant, onRefresh }: { tenant: TenantResponse; onRef
 }
 
 
+
+function DiscountsSection({ tenantId }: { tenantId: string }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    label: '', type: 'FIXED' as 'FIXED' | 'PERCENTAGE', value: '',
+    target: 'monthly' as 'monthly' | 'setup',
+    duration: 'lifetime' as 'lifetime' | 'until' | 'months',
+    validUntil: '', months: '',
+  });
+
+  const { data: discounts = [], isLoading } = useQuery({
+    queryKey: ['tenant-discounts', tenantId],
+    queryFn: () => listDiscounts(tenantId),
+  });
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['tenant-discounts', tenantId] });
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = parseFloat(form.value);
+    if (!form.label.trim() || isNaN(value) || value <= 0) {
+      toast('error', 'Introdueix una descripció i un import vàlid');
+      return;
+    }
+    setSaving(true);
+    try {
+      await createDiscount({
+        tenantId,
+        type: form.type,
+        value,
+        appliesTo: 'BUDGET',
+        label: form.label.trim(),
+        appliesToSetup: form.target === 'setup',
+        appliesToMonthly: form.target === 'monthly',
+        isLifetime: form.duration === 'lifetime',
+        validUntil: form.duration === 'until' && form.validUntil ? form.validUntil : undefined,
+        maxApplications: form.duration === 'months' && form.months ? parseInt(form.months) : undefined,
+      });
+      toast('success', 'Descompte creat');
+      setForm({ label: '', type: 'FIXED', value: '', target: 'monthly', duration: 'lifetime', validUntil: '', months: '' });
+      setShowForm(false);
+      invalidate();
+    } catch {
+      toast('error', 'Error creant el descompte');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeactivate = async (id: string) => {
+    try {
+      await deactivateDiscount(id);
+      toast('success', 'Descompte desactivat');
+      invalidate();
+    } catch {
+      toast('error', 'Error desactivant el descompte');
+    }
+  };
+
+  const describeDuration = (d: DiscountResponse) => {
+    if (d.isLifetime) return 'Permanent';
+    if (d.maxApplications) return `${d.maxApplications} mesos`;
+    if (d.validUntil) return `Fins ${new Date(d.validUntil).toLocaleDateString('ca-ES')}`;
+    return 'Sense límit';
+  };
+
+  return (
+    <div className="p-4 sm:p-5 border-t border-border-base">
+      <div className="flex items-center justify-between mb-3">
+        <div className="f-mono text-label uppercase tracking-wider text-ink-3">Descomptes</div>
+        <AMGButton size="sm" variant="ghost" onClick={() => setShowForm(!showForm)}>
+          {showForm ? 'Cancel·lar' : '+ Nou descompte'}
+        </AMGButton>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleCreate} className="border border-border-base rounded p-3 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-bg-0">
+          <input
+            className="amg-input col-span-full" placeholder="Descripció (ex: Acord telefònic juny)"
+            value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })}
+          />
+          <div className="flex gap-2">
+            <input
+              className="amg-input flex-1" type="number" step="0.01" min="0" placeholder="Import"
+              value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })}
+            />
+            <select className="amg-input w-20" value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value as 'FIXED' | 'PERCENTAGE' })}>
+              <option value="FIXED">€</option>
+              <option value="PERCENTAGE">%</option>
+            </select>
+          </div>
+          <select className="amg-input" value={form.target}
+            onChange={(e) => setForm({ ...form, target: e.target.value as 'monthly' | 'setup' })}>
+            <option value="monthly">Sobre la quota mensual</option>
+            <option value="setup">Sobre el setup (pressupostos)</option>
+          </select>
+          <select className="amg-input" value={form.duration}
+            onChange={(e) => setForm({ ...form, duration: e.target.value as 'lifetime' | 'until' | 'months' })}>
+            <option value="lifetime">Permanent</option>
+            <option value="until">Fins a una data</option>
+            <option value="months">N mesos</option>
+          </select>
+          {form.duration === 'until' && (
+            <input className="amg-input" type="date" value={form.validUntil}
+              onChange={(e) => setForm({ ...form, validUntil: e.target.value })} />
+          )}
+          {form.duration === 'months' && (
+            <input className="amg-input" type="number" min="1" placeholder="Nombre de mesos"
+              value={form.months} onChange={(e) => setForm({ ...form, months: e.target.value })} />
+          )}
+          <div className="col-span-full">
+            <AMGButton size="sm" type="submit" loading={saving}>Crear descompte</AMGButton>
+          </div>
+        </form>
+      )}
+
+      {isLoading ? (
+        <div className="text-ui text-ink-2">Carregant...</div>
+      ) : discounts.length === 0 ? (
+        <div className="text-ui text-ink-2">Cap descompte per aquest client</div>
+      ) : (
+        <div className="space-y-2">
+          {discounts.map((d) => (
+            <div key={d.id}
+              className={`flex items-center justify-between border border-border-base rounded px-3 py-2 ${!d.isActive ? 'opacity-50' : ''}`}>
+              <div>
+                <span className="text-sm font-semibold text-ink-0">
+                  {d.type === 'PERCENTAGE' ? `${d.value}%` : `${d.value} €`}
+                </span>
+                <span className="text-ui text-ink-1 ml-2">{d.label ?? d.program ?? '—'}</span>
+                <div className="f-mono text-[10px] text-ink-3 mt-0.5">
+                  {d.appliesToMonthly ? 'Mensual' : 'Setup'} · {describeDuration(d)}
+                  {d.program && d.program !== 'MANUAL' ? ` · ${d.program}` : ''}
+                  {!d.isActive ? ' · DESACTIVAT' : ''}
+                </div>
+              </div>
+              {d.isActive && (
+                <button onClick={() => handleDeactivate(d.id)}
+                  className="f-mono text-[10px] text-ink-3 hover:text-warning transition">
+                  Desactivar
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const WA_STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'neutral'> = {
   CONNECTED: 'success', PENDING: 'warning', ERROR: 'danger', DISCONNECTED: 'neutral',
@@ -3527,6 +3680,7 @@ export default function TenantDetailPage() {
         >
           <div className="amg-card card-clip">
             <LifecycleSection tenant={tenant} onRefresh={invalidateTenant} />
+            <DiscountsSection tenantId={tenant.id} />
           </div>
         </CollapsibleSection>
 

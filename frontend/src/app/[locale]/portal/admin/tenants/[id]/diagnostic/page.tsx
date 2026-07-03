@@ -630,7 +630,7 @@ export default function DiagnosticPage() {
                       <option value="">— Sense descompte —</option>
                       {(discounts as DiscountResponse[]).map(d => (
                         <option key={d.id} value={d.id}>
-                          {d.code} — {d.type === 'PERCENTAGE' ? `${d.value}%` : `${d.value} €`} {d.description ? `· ${d.description}` : ''}
+                          {d.label ?? d.program ?? 'Descompte'} — {d.type === 'PERCENTAGE' ? `${d.value}%` : `${d.value} €`}
                         </option>
                       ))}
                     </select>

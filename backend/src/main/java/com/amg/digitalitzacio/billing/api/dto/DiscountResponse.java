@@ -8,4 +8,6 @@ import java.util.UUID;
 public record DiscountResponse(UUID id, UUID tenantId, String type, BigDecimal value, String appliesTo,
                                 UUID referenceId, String label, Boolean isActive,
                                 LocalDate validFrom, LocalDate validUntil,
-                                Integer maxApplications, Integer appliedCount, Instant createdAt) {}
+                                Integer maxApplications, Integer appliedCount, Instant createdAt,
+                                Boolean appliesToSetup, Boolean appliesToMonthly, Boolean isLifetime,
+                                String program) {}
