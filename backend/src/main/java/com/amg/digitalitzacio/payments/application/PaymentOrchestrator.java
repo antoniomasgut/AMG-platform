@@ -8,6 +8,7 @@ import com.amg.digitalitzacio.gocardless.application.GoCardlessService;
 import com.amg.digitalitzacio.payments.api.dto.*;
 import com.amg.digitalitzacio.payments.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
+import com.amg.digitalitzacio.vault.application.VaultEncryption;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,7 @@ import java.util.UUID;
 public class PaymentOrchestrator implements PaymentService {
 
     private final StripeClient stripeClient;
+    private final VaultEncryption vaultEncryption;
     private final StripeConfigRepository stripeConfigRepository;
     private final PaymentRepository paymentRepository;
     private final BudgetRepository budgetRepository;
@@ -45,7 +47,12 @@ public class PaymentOrchestrator implements PaymentService {
         var config = existing.orElseGet(() -> StripeConfig.builder()
                 .tenantId(request.tenantId())
                 .build());
-        config.setApiKeyRef(request.apiKeyRef());
+        // Xifrar la clau si arriba en pla (sk_...) — el checkout del tenant la desxifra amb el vault
+        String keyRef = request.apiKeyRef();
+        if (keyRef != null && keyRef.startsWith("sk_")) {
+            keyRef = vaultEncryption.encrypt(keyRef);
+        }
+        config.setApiKeyRef(keyRef);
         config.setWebhookSecret(request.webhookSecret());
         config.setIsActive(true);
         config = stripeConfigRepository.save(config);
