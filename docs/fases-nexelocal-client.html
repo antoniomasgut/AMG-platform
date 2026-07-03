@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMG · Les 5 Fases de Digitalització</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d1a;
+    --card: #14142a;
+    --accent: #FF6B00;
+    --accent-soft: rgba(255,107,0,0.12);
+    --text: #e8e8f0;
+    --muted: #9a9ab0;
+    --border: rgba(255,255,255,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 13px; line-height: 1.6;
+  }
+  .page { max-width: 800px; margin: 0 auto; padding: 40px 32px; }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .logo { font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 700; letter-spacing: 3px; }
+  .logo span { color: var(--accent); }
+  .header-badge {
+    background: var(--accent-soft); border: 1px solid rgba(255,107,0,0.35);
+    border-radius: 6px; padding: 6px 14px; color: var(--accent);
+    font-family: 'Orbitron', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  }
+  .intro { margin: 24px 0 8px; }
+  .intro h1 { font-size: 26px; font-weight: 700; line-height: 1.25; margin-bottom: 10px; }
+  .intro h1 em { color: var(--accent); font-style: normal; }
+  .intro p { color: var(--muted); max-width: 620px; }
+  .intro .note {
+    margin-top: 14px; display: inline-block; background: var(--accent-soft);
+    border-left: 3px solid var(--accent); padding: 8px 14px; border-radius: 0 6px 6px 0;
+    color: var(--text); font-size: 12px;
+  }
+
+  /* Phase cards */
+  .phases { margin-top: 28px; display: grid; gap: 18px; }
+  .phase {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px 24px; page-break-inside: avoid;
+  }
+  .phase-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; }
+  .phase-num {
+    font-family: 'Orbitron', monospace; font-size: 24px; font-weight: 700;
+    color: var(--accent); min-width: 42px;
+  }
+  .phase-title { font-size: 17px; font-weight: 700; }
+  .phase-tag { color: var(--muted); font-size: 12px; margin-left: 56px; margin-bottom: 12px; }
+  .phase-body { margin-left: 56px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; }
+  .phase-body li {
+    list-style: none; padding-left: 18px; position: relative;
+    color: var(--text); font-size: 12.5px; padding-top: 2px; padding-bottom: 2px;
+  }
+  .phase-body li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+  .phase-foot {
+    margin-left: 56px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border);
+    font-size: 11.5px; color: var(--muted);
+  }
+  .phase-foot strong { color: var(--text); }
+
+  /* Extras + footer */
+  .extras {
+    margin-top: 24px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px 24px; page-break-inside: avoid;
+  }
+  .extras h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 8px; }
+  .extras p { color: var(--muted); font-size: 12px; }
+
+  .pricing-note {
+    margin-top: 24px; text-align: center; padding: 18px;
+    border: 1px solid rgba(255,107,0,0.3); border-radius: 12px; background: var(--accent-soft);
+    page-break-inside: avoid;
+  }
+  .pricing-note .big { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .pricing-note .big em { color: var(--accent); font-style: normal; }
+  .pricing-note p { color: var(--muted); font-size: 11.5px; max-width: 520px; margin: 0 auto; }
+
+  .footer {
+    margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+    color: var(--muted); font-size: 11.5px;
+  }
+  .footer .contact strong { color: var(--text); }
+  .footer .contact span { margin-right: 16px; }
+
+  /* Print (Desa com a PDF des del navegador) */
+  @media print {
+    body { background: var(--bg) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 12px; }
+    .page { padding: 16px 20px; max-width: none; }
+    .intro { margin: 14px 0 4px; }
+    .intro h1 { font-size: 22px; }
+    .phases { margin-top: 18px; gap: 10px; }
+    .phase { padding: 13px 18px; }
+    .phase-num { font-size: 20px; min-width: 38px; }
+    .phase-title { font-size: 15px; }
+    .phase-tag, .phase-body, .phase-foot { margin-left: 50px; }
+    .phase-tag { margin-bottom: 8px; }
+    .phase-body li { font-size: 11px; padding-top: 1px; padding-bottom: 1px; }
+    .phase-foot { margin-top: 8px; padding-top: 6px; font-size: 10.5px; }
+    .extras { margin-top: 14px; padding: 12px 18px; }
+    .pricing-note { margin-top: 14px; padding: 12px; }
+    .footer { margin-top: 16px; padding-top: 10px; }
+    @page { size: A4; margin: 8mm; }
+  }
+  @media (max-width: 640px) {
+    .phase-body { grid-template-columns: 1fr; }
+    .phase-tag, .phase-body, .phase-foot { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="logo">AMG<span>.</span></div>
+    <div class="header-badge">Digitalització de negocis</div>
+  </div>
+
+  <div class="intro">
+    <h1>Les 5 fases per digitalitzar<br>el teu negoci, <em>sense complicacions</em></h1>
+    <p>
+      Cada fase resol un problema concret del dia a dia. No cal contractar-les totes:
+      comences per la que més et fa falta i n'afegeixes quan vulguis. Tot funciona pel
+      WhatsApp que ja fas servir — sense aplicacions noves ni formació complicada.
+    </p>
+    <div class="note">🤝 Suport en català, en persona i sense lletra petita — tot inclòs a la quota.</div>
+  </div>
+
+  <div class="phases">
+
+    <div class="phase">
+      <div class="phase-head">
+        <div class="phase-num">F1</div>
+        <div class="phase-title">Captació · Agent IA</div>
+      </div>
+      <div class="phase-tag">Un assistent que atén els teus clients 24 hores, també quan tu no pots</div>
+      <ul class="phase-body">
+        <li>Respon WhatsApp, web i email al moment, dia i nit</li>
+        <li>WhatsApp Business oficial del teu negoci</li>
+        <li>Parla català, castellà, anglès i alemany</li>
+        <li>Coneix els teus serveis, preus i horaris</li>
+        <li>Xat a la teva pàgina web</li>
+        <li>Cap consulta perduda: tot queda registrat</li>
+        <li>T'avisa al mòbil de cada client nou</li>
+        <li>Tu decideixes quan intervens personalment</li>
+      </ul>
+      <div class="phase-foot"><strong>El problema que resol:</strong> els clients que escriuen fora d'horari i no reben resposta acaben trucant a la competència.</div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head">
+        <div class="phase-num">F2</div>
+        <div class="phase-title">Agenda i Cites</div>
+      </div>
+      <div class="phase-tag">Les cites es reserven soles — tu només treballes</div>
+      <ul class="phase-body">
+        <li>El client reserva per WhatsApp o web, sense trucar</li>
+        <li>L'assistent mostra els forats lliures i confirma</li>
+        <li>Sincronitzat amb el teu Google Calendar</li>
+        <li>Recordatoris automàtics: adeu a les cites oblidades</li>
+        <li>Canvis i cancel·lacions gestionats sols</li>
+        <li>Si tu faltes un dia, reprograma tota la cascada</li>
+        <li>Adaptat al teu ofici: cita, visita a domicili o taller</li>
+        <li>Resum diari de l'agenda al teu mòbil</li>
+      </ul>
+      <div class="phase-foot"><strong>El problema que resol:</strong> les hores penjat al telèfon quadrant cites i els forats buits per cites oblidades.</div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head">
+        <div class="phase-num">F3</div>
+        <div class="phase-title">Pressupostos i Cobraments</div>
+      </div>
+      <div class="phase-tag">Del "ja t'ho passaré" al pressupost enviat el mateix dia</div>
+      <ul class="phase-body">
+        <li>Pressupostos professionals en PDF amb la teva marca</li>
+        <li>Enviats per WhatsApp o email amb un clic</li>
+        <li>El client accepta amb un botó, des del mòbil</li>
+        <li>Recordatoris automàtics dels pendents de resposta</li>
+        <li>Numeració i historial ordenat de tot</li>
+        <li>En acceptar, es reserva sola la primera visita</li>
+        <li>Mode llista de preus per a serveis fixos</li>
+        <li>Sabràs quins pressupostos s'obren i quins no</li>
+      </ul>
+      <div class="phase-foot"><strong>El problema que resol:</strong> pressupostos que triguen dies a sortir i clients que es refreden esperant.</div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head">
+        <div class="phase-num">F4</div>
+        <div class="phase-title">Fidelització i Seguiment</div>
+      </div>
+      <div class="phase-tag">Que el client d'avui torni demà — i porti algú</div>
+      <ul class="phase-body">
+        <li>Missatge de seguiment després de cada servei</li>
+        <li>Petició de ressenya de Google al moment just</li>
+        <li>Detecta clients que fa temps que no venen</li>
+        <li>Els reactiva amb un missatge personalitzat</li>
+        <li>Campanyes estacionals (estiu, Nadal, rebaixes...)</li>
+        <li>Més ressenyes = més visibilitat a Google</li>
+      </ul>
+      <div class="phase-foot"><strong>El problema que resol:</strong> clients satisfets que desapareixen perquè ningú els torna a contactar.</div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-head">
+        <div class="phase-num">F5</div>
+        <div class="phase-title">Equip i Documentació</div>
+      </div>
+      <div class="phase-tag">Tot l'equip coordinat des d'un sol grup de xat</div>
+      <ul class="phase-body">
+        <li>Grup de Telegram amb l'assistent per a l'equip</li>
+        <li>Avís instantani de feina nova, cites i canvis</li>
+        <li>Dictes una nota de veu i queda documentada</li>
+        <li>Repartiment i seguiment de tasques</li>
+        <li>Alertes d'incidències al moment</li>
+        <li>Historial de feina consultable des del xat</li>
+      </ul>
+      <div class="phase-foot"><strong>El problema que resol:</strong> el "no m'ho van dir" i la informació que es perd entre trucades i papers.</div>
+    </div>
+
+  </div>
+
+  <div class="extras">
+    <h2>I si necessites pàgina web?</h2>
+    <p>
+      També fem la teva presència a internet: <strong style="color:var(--text)">pàgina web professional</strong> en 4 idiomes,
+      amb formulari de contacte, xat integrat i el teu domini propi (elteunegoci.com).
+      Es contracta a part de les fases — demana'ns-ho i t'ho incloem a la proposta.
+    </p>
+  </div>
+
+  <div class="pricing-note">
+    <div class="big">Primera fase des de <em>59 €/mes</em> · cada fase addicional des de <em>15 €/mes</em></div>
+    <p>
+      El preu exacte depèn del teu sector i la mida del negoci. Demana'ns una proposta
+      personalitzada sense compromís — inclou una demostració feta a mida per al teu negoci.
+    </p>
+  </div>
+
+  <div class="footer">
+    <div class="contact">
+      <span><strong>📞 +34 614 492 062</strong> (trucada o WhatsApp)</span>
+      <span><strong>✉️ info@amgdl.com</strong></span>
+      <span><strong>🌐 amgdl.com</strong></span>
+    </div>
+    <div>AMG Digitalització · Mallorca</div>
+  </div>
+
+</div>
+</body>
+</html>
