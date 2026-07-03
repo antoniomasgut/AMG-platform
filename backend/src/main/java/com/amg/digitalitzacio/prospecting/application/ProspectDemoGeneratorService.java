@@ -96,7 +96,9 @@ public class ProspectDemoGeneratorService {
 
     private void notifyPriority(Prospect prospect) {
         try {
-            String chatIdStr = sysConfig.get("TELEGRAM_CHAT_ID");
+            String flag = sysConfig.get("AMG_NOTIFY_PROSPECT_PRIORITY");
+            if (flag != null && "false".equalsIgnoreCase(flag.trim())) return;
+            String chatIdStr = sysConfig.get("AMG_SALES_CHAT_ID");
             if (chatIdStr == null || chatIdStr.isBlank()) return;
 
             String text = String.format(

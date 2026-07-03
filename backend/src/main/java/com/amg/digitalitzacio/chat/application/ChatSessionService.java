@@ -157,7 +157,9 @@ public class ChatSessionService {
 
     private void notifyAdminNewChatSession(String businessName, String slug, String name, String phone) {
         try {
-            var adminChatId = sysConfig.get("TELEGRAM_CHAT_ID");
+            var flag = sysConfig.get("AMG_NOTIFY_WIDGET_VISIT");
+            if (flag != null && "false".equalsIgnoreCase(flag.trim())) return;
+            var adminChatId = sysConfig.get("AMG_SALES_CHAT_ID");
             if (adminChatId == null || adminChatId.isBlank()) return;
             long chatId = Long.parseLong(adminChatId.trim());
             String msg = "💬 *Nou visitant al widget de xat*\n"

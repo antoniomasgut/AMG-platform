@@ -99,7 +99,7 @@ public class ProspectFollowUpScheduler {
 
     private void sendFollowUpNotification(Prospect prospect, int followupNumber) {
         try {
-            String chatIdStr = sysConfig.get("TELEGRAM_CHAT_ID");
+            String chatIdStr = sysConfig.get("AMG_SALES_CHAT_ID");
             if (chatIdStr == null || chatIdStr.isBlank()) return;
 
             Long chatId = Long.parseLong(chatIdStr.trim());

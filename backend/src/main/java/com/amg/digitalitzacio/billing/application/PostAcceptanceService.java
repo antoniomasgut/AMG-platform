@@ -186,8 +186,18 @@ public class PostAcceptanceService {
         }
     }
 
+    // Cooldown per no metrallar el xat quan un agent falla en bucle
+    private static final long AGENT_ERROR_COOLDOWN_SECONDS = 1800;
+    private final java.util.concurrent.ConcurrentHashMap<UUID, Instant> lastAgentErrorAt =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     public void onAgentError(UUID tenantId, String errorMsg) {
         if (!isEnabled("AMG_NOTIFY_AGENT_ERROR")) return;
+        var last = lastAgentErrorAt.get(tenantId);
+        if (last != null && last.isAfter(Instant.now().minusSeconds(AGENT_ERROR_COOLDOWN_SECONDS))) {
+            return; // ja avisat fa menys de 30 min per aquest tenant
+        }
+        lastAgentErrorAt.put(tenantId, Instant.now());
         try {
             String tenantName = resolveTenantName(tenantId);
             String msg = """
@@ -409,6 +419,42 @@ public class PostAcceptanceService {
         } catch (Exception e) {
             log.warn("[PostAcceptance] Error notificant intake pendent tenant {}: {}",
                     intake.getTenantId(), e.getMessage());
+        }
+    }
+
+    /** Cobrament SEPA fallit: morositat que necessita acció immediata. */
+    public void onSepaPaymentFailed(UUID tenantId, BigDecimal amount, String reason) {
+        try {
+            String tenantName = resolveTenantName(tenantId);
+            String msg = """
+                    🔴 <b>Cobrament SEPA fallit</b>
+                    👤 %s
+                    💰 %s €
+                    📋 %s
+                    🔗 <a href="https://amgdl.com/portal/admin/tenants/%s">Veure tenant →</a>
+                    """.formatted(tenantName,
+                    amount != null ? amount.toPlainString() : "—",
+                    reason != null ? reason : "sense detall",
+                    tenantId);
+            sendToSalesChat(msg);
+        } catch (Exception e) {
+            log.warn("[PostAcceptance] Error notificant SEPA fallit tenant={}: {}", tenantId, e.getMessage());
+        }
+    }
+
+    /** Mandat SEPA cancel·lat pel client: els cobraments futurs deixaran de funcionar. */
+    public void onSepaMandateCancelled(UUID tenantId) {
+        try {
+            String tenantName = resolveTenantName(tenantId);
+            String msg = """
+                    ⚠️ <b>Mandat SEPA cancel·lat</b>
+                    👤 %s
+                    Els cobraments mensuals NO es podran fer fins que el client torni a domiciliar.
+                    🔗 <a href="https://amgdl.com/portal/admin/tenants/%s">Veure tenant →</a>
+                    """.formatted(tenantName, tenantId);
+            sendToSalesChat(msg);
+        } catch (Exception e) {
+            log.warn("[PostAcceptance] Error notificant mandat cancel·lat tenant={}: {}", tenantId, e.getMessage());
         }
     }
 

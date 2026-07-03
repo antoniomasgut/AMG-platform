@@ -187,6 +187,8 @@ public class GoCardlessOrchestrator implements GoCardlessService {
                     payment.setFailureReason("GoCardless payment failed");
                     paymentRepository.save(payment);
                     log.warn("GoCardless: payment {} failed for tenant {}", gcPaymentId, payment.getTenantId());
+                    postAcceptanceService.onSepaPaymentFailed(
+                            payment.getTenantId(), payment.getAmount(), event.action());
                 }
                 case "cancelled" -> {
                     payment.setStatus(GoCardlessPaymentStatus.CANCELLED);
@@ -211,6 +213,7 @@ public class GoCardlessOrchestrator implements GoCardlessService {
                     mandate.setStatus(GoCardlessMandateStatus.CANCELLED);
                     mandateRepository.save(mandate);
                     log.warn("GoCardless: mandate {} cancelled for tenant {}", gcMandateId, mandate.getTenantId());
+                    postAcceptanceService.onSepaMandateCancelled(mandate.getTenantId());
                 }
                 case "expired" -> {
                     mandate.setStatus(GoCardlessMandateStatus.EXPIRED);

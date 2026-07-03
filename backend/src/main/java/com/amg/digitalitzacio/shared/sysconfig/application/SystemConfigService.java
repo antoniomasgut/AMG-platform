@@ -112,7 +112,10 @@ public class SystemConfigService {
         new KnownKey("AMG_NOTIFY_BUDGET_ACCEPTED",   "Notificar: pressupost acceptat", "Enviar Telegram a vendes quan un client accepta un pressupost.", "VENDES", false, "boolean", "true", null, 40),
         new KnownKey("AMG_NOTIFY_PAYMENT_RECEIVED",  "Notificar: pagament rebut",      "Enviar Telegram a vendes quan es confirma un pagament (Stripe o GoCardless).", "VENDES", false, "boolean", "true", null, 50),
         new KnownKey("AMG_NOTIFY_AGENT_ERROR",       "Notificar: error d'agent",       "Enviar Telegram a vendes quan un agent IA falla de forma crítica.", "VENDES", false, "boolean", "true", null, 60),
-        new KnownKey("AMG_NOTIFY_CONTACT_FORM",      "Notificar: formulari de contacte","Enviar Telegram a vendes quan s'envia un formulari des d'una landing.", "VENDES", false, "boolean", "true", null, 70)
+        new KnownKey("AMG_NOTIFY_CONTACT_FORM",      "Notificar: formulari de contacte","Enviar Telegram a vendes quan s'envia un formulari des d'una landing.", "VENDES", false, "boolean", "true", null, 70),
+        new KnownKey("AMG_NOTIFY_WEB_CONTACT",       "Notificar: consulta web amgdl.com","Enviar Telegram a vendes quan arriba una consulta del formulari d'amgdl.com.", "VENDES", false, "boolean", "true", null, 71),
+        new KnownKey("AMG_NOTIFY_WIDGET_VISIT",      "Notificar: visitant al widget",  "Enviar Telegram a vendes per cada sessió nova del chat widget. Desactivar si genera soroll.", "VENDES", false, "boolean", "true", null, 72),
+        new KnownKey("AMG_NOTIFY_PROSPECT_PRIORITY", "Notificar: prospect PRIORITY",   "Enviar Telegram a vendes quan un prospect arriba a tier PRIORITY (score 81+).", "VENDES", false, "boolean", "true", null, 73)
     );
 
     public String get(String key) {

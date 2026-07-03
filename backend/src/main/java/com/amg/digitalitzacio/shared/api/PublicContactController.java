@@ -61,10 +61,12 @@ public class PublicContactController {
             log.warn("Could not create lead from web form (non-fatal): {}", e.getMessage());
         }
 
-        // Notificació Telegram
+        // Notificació Telegram (xat de vendes — és un lead calent)
         try {
-            String chatIdStr = sysConfig.get("TELEGRAM_CHAT_ID");
-            if (chatIdStr != null && !chatIdStr.isBlank()) {
+            String flag = sysConfig.get("AMG_NOTIFY_WEB_CONTACT");
+            boolean enabled = flag == null || !"false".equalsIgnoreCase(flag.trim());
+            String chatIdStr = sysConfig.get("AMG_SALES_CHAT_ID");
+            if (enabled && chatIdStr != null && !chatIdStr.isBlank()) {
                 Long chatId = Long.parseLong(chatIdStr.trim());
                 String tgText = "📩 <b>Nova consulta web</b>\n\n" +
                         "<b>Nom:</b> " + escapeHtml(name) + "\n" +
