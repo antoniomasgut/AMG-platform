@@ -179,21 +179,30 @@ class SecurityTest {
                 .andExpect(status().isBadRequest());
     }
 
-    /* ─────────── LIM-01: Contrasenya exactament 4 caràcters → login correcte ─────────── */
+    /* ─────────── LIM-01: Frontera de contrasenya — el mínim actual és 8 caràcters ─────────── */
     @Test
-    void lim01_passwordExactly4Chars_Returns200() throws Exception {
-        var user4 = userRepository.save(User.builder()
-                .email("fourchar@test.com")
-                .passwordHash(passwordEncoder.encode("abcd"))
-                .name("Four Char")
+    void lim01_passwordExactly8Chars_Returns200() throws Exception {
+        var user8 = userRepository.save(User.builder()
+                .email("eightchar@test.com")
+                .passwordHash(passwordEncoder.encode("abcd1234"))
+                .name("Eight Char")
                 .role(Role.CLIENT)
                 .isActive(true).isBlocked(false).failedAttempts(0)
                 .build());
 
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(new LoginRequest("fourchar@test.com", "abcd"))))
+                .content(objectMapper.writeValueAsString(new LoginRequest("eightchar@test.com", "abcd1234"))))
                 .andExpect(status().isOk());
+    }
+
+    /* ─────────── LIM-01b: 7 caràcters → rebutjat per validació ─────────── */
+    @Test
+    void lim01b_password7Chars_Returns400() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest("eightchar@test.com", "abcd123"))))
+                .andExpect(status().isBadRequest());
     }
 
     /* ─────────── LIM-02: Email de 254 caràcters ─────────── */
