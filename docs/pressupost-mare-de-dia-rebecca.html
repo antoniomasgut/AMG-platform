@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<title>Proposta de serveis — Mare de dia</title>
+<style>
+  @page { size: A4; margin: 16mm 18mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 13px;
+    color: #111;
+    line-height: 1.55;
+    background: #fff;
+  }
+
+  /* ── CAPÇALERA ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 18px;
+    border-bottom: 3px solid #FF6B00;
+    margin-bottom: 26px;
+  }
+  .brand { font-size: 28px; font-weight: 900; letter-spacing: -1px; color: #111; }
+  .brand span { color: #FF6B00; }
+  .brand-tagline { font-size: 10px; color: #999; letter-spacing: .1em; text-transform: uppercase; margin-top: 3px; }
+  .contact-info { text-align: right; font-size: 11px; color: #666; line-height: 1.8; }
+  .contact-info strong { color: #111; }
+
+  /* ── TÍTOL DOCUMENT ── */
+  .doc-type {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: #FF6B00;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .doc-title {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -.5px;
+    color: #111;
+    margin-bottom: 20px;
+    line-height: 1.2;
+  }
+
+  /* ── QUADRE METADADES ── */
+  .meta-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 28px;
+  }
+  .meta-cell {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f0f0f0;
+    border-right: 1px solid #f0f0f0;
+  }
+  .meta-cell:nth-child(2n) { border-right: none; }
+  .meta-cell:nth-last-child(-n+2) { border-bottom: none; }
+  .meta-label {
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #aaa;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .meta-value { font-size: 13px; font-weight: 600; color: #111; }
+
+  /* ── SERVEIS ── */
+  .section-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #999;
+    font-weight: 700;
+    margin: 0 0 10px;
+  }
+
+  .services-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 6px;
+  }
+  .services-table thead tr {
+    background: #111;
+    color: #fff;
+  }
+  .services-table thead th {
+    padding: 8px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .services-table thead th:last-child,
+  .services-table thead th:nth-last-child(2) { text-align: right; }
+
+  .services-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+  .services-table tbody tr:hover { background: #fafafa; }
+  .services-table tbody tr.group-header td {
+    background: #f5f5f5;
+    font-weight: 700;
+    font-size: 12px;
+    color: #333;
+    padding: 7px 14px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .services-table tbody td {
+    padding: 8px 14px;
+    font-size: 13px;
+    color: #222;
+    vertical-align: top;
+  }
+  .services-table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .services-table td.desc { color: #555; font-size: 12px; padding-top: 1px; }
+  .badge {
+    display: inline-block;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-left: 7px;
+    vertical-align: middle;
+  }
+  .badge-f1 { background: #fff3e8; color: #c85a00; }
+  .badge-f2 { background: #e8f0ff; color: #1a4bcc; }
+  .badge-f4 { background: #e8fff0; color: #1a7a3a; }
+  .badge-web { background: #f5e8ff; color: #6b1acc; }
+
+  /* ── TOTALS ── */
+  .totals-wrap {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .total-card {
+    border: 2px solid #e0e0e0;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .total-card.highlight-setup {
+    border-color: #111;
+    background: #111;
+    color: #fff;
+  }
+  .total-card.highlight-monthly {
+    border-color: #FF6B00;
+    background: #FF6B00;
+    color: #fff;
+  }
+  .total-card .tc-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-weight: 700;
+    opacity: .75;
+  }
+  .total-card .tc-value {
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .total-card .tc-sub {
+    font-size: 11px;
+    opacity: .7;
+    margin-top: 2px;
+  }
+
+  /* ── QUÈ INCLOU ── */
+  .includes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .include-card {
+    border: 1px solid #e8e8e8;
+    padding: 13px 15px;
+  }
+  .include-card .ic-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .include-card .ic-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .include-card .ic-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: #111;
+  }
+  .include-card .ic-phase {
+    font-size: 9.5px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-left: auto;
+  }
+  .include-card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .include-card ul li {
+    font-size: 11.5px;
+    color: #444;
+    padding: 2px 0;
+    padding-left: 12px;
+    position: relative;
+  }
+  .include-card ul li::before {
+    content: '·';
+    position: absolute;
+    left: 0;
+    color: #FF6B00;
+    font-weight: 900;
+  }
+
+  /* ── SIGNATURES ── */
+  .signatures {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    margin-top: 36px;
+    padding-top: 12px;
+    border-top: 1px solid #ddd;
+  }
+  .sig-block .sig-line {
+    border-bottom: 1px solid #aaa;
+    height: 40px;
+    margin-bottom: 8px;
+  }
+  .sig-block .sig-label {
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+  }
+  .sig-block .sig-name {
+    font-size: 11px;
+    color: #555;
+    margin-top: 2px;
+  }
+
+  /* ── PEU ── */
+  .footer {
+    margin-top: 28px;
+    padding-top: 10px;
+    border-top: 1px solid #ebebeb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: #bbb;
+  }
+  .footer .footer-brand { font-weight: 700; color: #999; letter-spacing: .05em; }
+  .validity-note {
+    background: #fffbf5;
+    border: 1px solid #ffe0c0;
+    border-left: 3px solid #FF6B00;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #7a4a00;
+    margin-bottom: 24px;
+    margin-top: -8px;
+  }
+
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── CAPÇALERA ── -->
+<div class="header">
+  <div>
+    <div class="brand">AMG<span>DL</span></div>
+    <div class="brand-tagline">Digitalització de negocis locals</div>
+  </div>
+  <div class="contact-info">
+    <strong>amgdl.com</strong> · info@amgdl.com<br>
+    +34 654 048 164 (WhatsApp)<br>
+    +34 614 492 062 (Trucades)
+  </div>
+</div>
+
+<!-- ── TÍTOL ── -->
+<div class="doc-type">Proposta comercial</div>
+<div class="doc-title">Pla de digitalització<br>per a la teva mare de dia</div>
+
+<!-- ── METADADES ── -->
+<div class="meta-box">
+  <div class="meta-cell">
+    <div class="meta-label">Preparada per a</div>
+    <div class="meta-value">Can Rebecca · Mare de dia</div>
+  </div>
+  <div class="meta-cell">
+    <div class="meta-label">Data d'emissió</div>
+    <div class="meta-value">4 de juliol de 2026</div>
+  </div>
+  <div class="meta-cell">
+    <div class="meta-label">Responsable AMG</div>
+    <div class="meta-value">Antoni Mas Gut</div>
+  </div>
+  <div class="meta-cell">
+    <div class="meta-label">Oferta vàlida fins</div>
+    <div class="meta-value">4 d'agost de 2026</div>
+  </div>
+</div>
+
+<div class="validity-note">
+  Proposta personalitzada per a negocis de criança en llar familiar (fins a 5 infants). Tots els serveis funcionen des del primer dia d'alta, sense contracte de permanència.
+</div>
+
+<!-- ── TAULA DE SERVEIS ── -->
+<div class="section-title">Serveis inclosos</div>
+
+<table class="services-table">
+  <thead>
+    <tr>
+      <th style="width:55%">Servei</th>
+      <th style="width:22%">Inversió inicial</th>
+      <th style="width:23%">Quota mensual</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <tr class="group-header">
+      <td colspan="3">Agent IA · Assistència automàtica 24/7 <span class="badge badge-f1">F1</span></td>
+    </tr>
+    <tr>
+      <td>Chatbot per a WhatsApp i web</td>
+      <td class="num">149 €</td>
+      <td class="num">49 €/mes</td>
+    </tr>
+    <tr>
+      <td class="desc" colspan="3">Respon consultes de pares automàticament (horaris, places, metodologia, preus), recull contactes nous i t'avisa per Telegram.</td>
+    </tr>
+
+    <tr class="group-header">
+      <td colspan="3">Agenda Digital · Gestió de places <span class="badge badge-f2">F2</span></td>
+    </tr>
+    <tr>
+      <td>Reserves i gestió de places per a pares</td>
+      <td class="num">87 €</td>
+      <td class="num">30 €/mes</td>
+    </tr>
+    <tr>
+      <td class="desc" colspan="3">Els pares poden reservar o consultar la disponibilitat de places directament. Recordatoris automàtics i gestió des del mòbil.</td>
+    </tr>
+
+    <tr class="group-header">
+      <td colspan="3">Fidelització · Ressenyes i comunicació <span class="badge badge-f4">F4</span></td>
+    </tr>
+    <tr>
+      <td>Google Reviews + missatges estacionals</td>
+      <td class="num">49 €</td>
+      <td class="num">15 €/mes</td>
+    </tr>
+    <tr>
+      <td class="desc" colspan="3">Sol·licita ressenyes de Google automàticament a les famílies. Envia missatges estacionals (inici de curs, Nadal, vacances d'estiu).</td>
+    </tr>
+
+    <tr class="group-header">
+      <td colspan="3">Landing Pro · Web professional <span class="badge badge-web">Web</span></td>
+    </tr>
+    <tr>
+      <td>Web a mida + formulari de contacte + WhatsApp</td>
+      <td class="num">80 €</td>
+      <td class="num">15 €/mes</td>
+    </tr>
+    <tr>
+      <td class="desc" colspan="3">Web professional amb la teva identitat: qui ets, metodologia, rutina del dia, testimonis i formulari de contacte. Optimitzada per a mòbil i Google.</td>
+    </tr>
+
+  </tbody>
+</table>
+
+<!-- ── TOTALS ── -->
+<div class="totals-wrap">
+  <div class="total-card highlight-setup">
+    <div class="tc-label">Inversió inicial (únic pagament)</div>
+    <div class="tc-value">365 €</div>
+    <div class="tc-sub">Setup de tots els serveis · pagament únic</div>
+  </div>
+  <div class="total-card highlight-monthly">
+    <div class="tc-label">Quota mensual recurrent</div>
+    <div class="tc-value">109 €/mes</div>
+    <div class="tc-sub">Tots els serveis actius · sense permanència</div>
+  </div>
+</div>
+
+<!-- ── QUÈ INCLOU ── -->
+<div class="section-title">El que poses en marxa des del primer dia</div>
+
+<div class="includes-grid">
+  <div class="include-card">
+    <div class="ic-header">
+      <div class="ic-dot" style="background:#FF6B00"></div>
+      <div class="ic-name">Presència digital professional</div>
+      <div class="ic-phase">Web</div>
+    </div>
+    <ul>
+      <li>Web amb la teva imatge de marca</li>
+      <li>Aparèixes a Google quan cerquen "mare de dia" + la teva localitat</li>
+      <li>Formulari de contacte que arriba al teu Telegram</li>
+      <li>Botó d'WhatsApp directe</li>
+    </ul>
+  </div>
+
+  <div class="include-card">
+    <div class="ic-header">
+      <div class="ic-dot" style="background:#c85a00"></div>
+      <div class="ic-name">Agent IA per a WhatsApp</div>
+      <div class="ic-phase">F1</div>
+    </div>
+    <ul>
+      <li>Respon automàticament consultes de pares</li>
+      <li>Disponible 24/7, fins i tot cap de setmana</li>
+      <li>T'envia una notificació quan un pare vol parlar amb tu</li>
+      <li>S'actualitza amb la informació que tu li dones</li>
+    </ul>
+  </div>
+
+  <div class="include-card">
+    <div class="ic-header">
+      <div class="ic-dot" style="background:#1a4bcc"></div>
+      <div class="ic-name">Gestió de places</div>
+      <div class="ic-phase">F2</div>
+    </div>
+    <ul>
+      <li>Els pares veuen la disponibilitat en temps real</li>
+      <li>Sol·licituds de plaça directament al mòbil</li>
+      <li>Recordatoris automàtics a les famílies</li>
+      <li>Calendari connectat amb el teu Google Calendar</li>
+    </ul>
+  </div>
+
+  <div class="include-card">
+    <div class="ic-header">
+      <div class="ic-dot" style="background:#1a7a3a"></div>
+      <div class="ic-name">Ressenyes i fidelització</div>
+      <div class="ic-phase">F4</div>
+    </div>
+    <ul>
+      <li>Sol·licita ressenyes de Google automàticament</li>
+      <li>Missatge de benvinguda a les noves famílies</li>
+      <li>Comunicats estacionals (inici de curs, estiu...)</li>
+      <li>Seguiment de la reputació en línia</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ── SIGNATURES ── -->
+<div class="signatures">
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">AMG Digitalització · Data i signatura</div>
+    <div class="sig-name">Antoni Mas Gut · amgdl.com</div>
+  </div>
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">Client · Conforme i acceptació</div>
+    <div class="sig-name">Can Rebecca · Mare de dia</div>
+  </div>
+</div>
+
+<!-- ── PEU ── -->
+<div class="footer">
+  <div>
+    <span class="footer-brand">AMGDL</span> · Antoni Mas Gut · info@amgdl.com · +34 654 048 164
+  </div>
+  <div>Proposta vàlida fins al 4 d'agost de 2026</div>
+</div>
+
+</body>
+</html>

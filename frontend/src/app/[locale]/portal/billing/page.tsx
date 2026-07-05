@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DOMPurify from 'dompurify';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -328,25 +327,191 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
   };
 
   const handlePrint = () => {
-    const el = document.getElementById(`budget-print-${budget.id}`);
-    if (!el) return;
-    const win = window.open('', '_blank', 'width=800,height=900');
+    const win = window.open('', '_blank', 'width=860,height=1000');
     if (!win) return;
-    win.document.write(`<!DOCTYPE html><html><head><title>Pressupost ${budget.budgetNumber}</title>
-      <style>
-        body{font-family:sans-serif;color:#111;padding:32px;max-width:700px;margin:0 auto}
-        h1{font-size:22px;margin-bottom:4px}.meta{color:#666;font-size:13px;margin-bottom:24px}
-        .section-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888;font-weight:700;margin:20px 0 8px}
-        .phase-header{display:flex;justify-content:space-between;background:#f5f5f5;padding:8px 12px;font-weight:700;font-size:14px}
-        .line{display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid #eee;font-size:13px}
-        .prices{display:flex;gap:24px;color:#444}
-        .totals{border:1px solid #ddd;border-radius:6px;padding:12px;margin-top:24px}
-        .total-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
-        .total-row.bold{font-weight:700;font-size:16px;border-top:1px solid #ddd;padding-top:8px;margin-top:4px}
-      </style></head><body>${DOMPurify.sanitize(el.innerHTML)}</body></html>`);
+
+    const fmtEur = (n: number) =>
+      new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(n);
+
+    const phasesHtml = budget.phases.map(phase => `
+      <div class="phase-block">
+        <div class="phase-header">
+          <span>${phase.name}</span>
+          <span>${fmtEur(phase.phaseTotal)}</span>
+        </div>
+        <table class="lines-table">
+          <thead>
+            <tr>
+              <th class="tl">Servei</th>
+              <th class="tr">Setup</th>
+              <th class="tr">Mensual</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${phase.lines.map(l => `
+              <tr>
+                <td>${l.serviceName}</td>
+                <td class="tr mono">${fmtEur(l.setupPrice)}</td>
+                <td class="tr mono">${l.monthlyPrice > 0 ? fmtEur(l.monthlyPrice) + '/mes' : '—'}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`).join('');
+
+    const addonsHtml = budget.addons.length > 0 ? `
+      <div class="section-label">Addons</div>
+      <table class="lines-table">
+        <tbody>
+          ${budget.addons.map(a => `
+            <tr>
+              <td>${a.serviceName}</td>
+              <td class="tr mono" colspan="2">${fmtEur(a.unitPrice)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>` : '';
+
+    const customLinesHtml = (budget.customLines?.length ?? 0) > 0 ? `
+      <div class="section-label">Serveis addicionals</div>
+      <table class="lines-table">
+        <thead><tr><th class="tl">Descripció</th><th class="tr">Qty</th><th class="tr">Preu u.</th><th class="tr">Mensual</th><th class="tr">Total</th></tr></thead>
+        <tbody>
+          ${(budget.customLines ?? []).map(cl => `
+            <tr>
+              <td>${cl.description}</td>
+              <td class="tr mono">${cl.quantity}</td>
+              <td class="tr mono">${fmtEur(cl.unitPrice)}</td>
+              <td class="tr mono">${cl.monthlyPrice > 0 ? fmtEur(cl.monthlyPrice) : '—'}</td>
+              <td class="tr mono bold">${fmtEur(cl.total)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>` : '';
+
+    const discountRow = budget.discountTotal > 0
+      ? `<tr><td>Descompte aplicat</td><td class="tr mono">−${fmtEur(budget.discountTotal)}</td></tr>` : '';
+
+    const notesHtml = budget.clientNotes
+      ? `<div class="notes-box"><div class="section-label" style="margin-bottom:6px">Observacions</div><p style="margin:0;font-size:13px;color:#444">${budget.clientNotes}</p></div>` : '';
+
+    win.document.write(`<!DOCTYPE html>
+<html lang="ca"><head>
+<meta charset="utf-8">
+<title>Pressupost ${budget.budgetNumber}${budget.tenantName ? ' — ' + budget.tenantName : ''}</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111; font-size: 13px; line-height: 1.5; }
+  /* ── CAPÇALERA ── */
+  .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 20px; border-bottom: 3px solid #FF6B00; margin-bottom: 24px; }
+  .brand { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; color: #111; }
+  .brand span { color: #FF6B00; }
+  .brand-sub { font-size: 10px; color: #888; letter-spacing: .08em; text-transform: uppercase; margin-top: 2px; }
+  .contact-block { text-align: right; font-size: 11px; color: #555; line-height: 1.7; }
+  /* ── TÍTOL DOCUMENT ── */
+  .doc-title { font-size: 18px; font-weight: 800; letter-spacing: -.3px; margin-bottom: 16px; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8f8f8; padding: 14px 16px; border-left: 3px solid #FF6B00; margin-bottom: 24px; }
+  .meta-item { }
+  .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #999; font-weight: 700; }
+  .meta-value { font-size: 13px; font-weight: 600; color: #111; }
+  /* ── FASES ── */
+  .section-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #999; font-weight: 700; margin: 20px 0 8px; }
+  .phase-block { margin-bottom: 16px; border: 1px solid #e5e5e5; }
+  .phase-header { display: flex; justify-content: space-between; background: #111; color: #fff; padding: 8px 14px; font-weight: 700; font-size: 13px; }
+  .lines-table { width: 100%; border-collapse: collapse; }
+  .lines-table th { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #888; font-weight: 700; padding: 6px 14px; border-bottom: 1px solid #eee; }
+  .lines-table td { padding: 7px 14px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #222; }
+  .lines-table tr:last-child td { border-bottom: none; }
+  .tl { text-align: left; }
+  .tr { text-align: right; }
+  .mono { font-variant-numeric: tabular-nums; }
+  .bold { font-weight: 700; }
+  /* ── TOTALS ── */
+  .totals-box { border: 1px solid #e5e5e5; margin-top: 24px; }
+  .totals-box table { width: 100%; border-collapse: collapse; }
+  .totals-box td { padding: 8px 16px; font-size: 13px; }
+  .totals-box tr:not(:last-child) td { border-bottom: 1px solid #f0f0f0; }
+  .totals-box .total-setup { font-weight: 700; font-size: 15px; background: #111; color: #fff; }
+  .totals-box .total-monthly { font-weight: 700; font-size: 14px; background: #FF6B00; color: #fff; }
+  /* ── NOTES ── */
+  .notes-box { border: 1px solid #e5e5e5; border-left: 3px solid #FF6B00; padding: 14px 16px; margin-top: 20px; }
+  /* ── SIGNATURES ── */
+  .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 48px; padding-top: 12px; border-top: 1px solid #ddd; }
+  .sig-block { }
+  .sig-line { border-bottom: 1px solid #aaa; height: 36px; margin-bottom: 6px; }
+  .sig-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: .06em; }
+  /* ── PEU ── */
+  .footer { margin-top: 32px; padding-top: 10px; border-top: 1px solid #e5e5e5; font-size: 10px; color: #aaa; display: flex; justify-content: space-between; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head><body>
+
+<div class="header">
+  <div>
+    <div class="brand">AMG<span>DL</span></div>
+    <div class="brand-sub">Digitalització de negocis locals</div>
+  </div>
+  <div class="contact-block">
+    amgdl.com · info@amgdl.com<br>
+    +34 654 048 164 (WhatsApp)<br>
+    +34 614 492 062 (Trucades)
+  </div>
+</div>
+
+<div class="doc-title">Proposta de serveis digitals</div>
+
+<div class="meta-grid">
+  <div class="meta-item">
+    <div class="meta-label">Número de pressupost</div>
+    <div class="meta-value">${budget.budgetNumber}</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">Data d'emissió</div>
+    <div class="meta-value">${fmtDate(budget.createdAt)}</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">Client</div>
+    <div class="meta-value">${budget.tenantName ?? '—'}</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">Vàlid fins</div>
+    <div class="meta-value">${fmtDate(budget.validUntil)}</div>
+  </div>
+</div>
+
+${budget.phases.length > 0 ? '<div class="section-label">Serveis contractats</div>' + phasesHtml : ''}
+${addonsHtml}
+${customLinesHtml}
+
+<div class="totals-box">
+  <table>
+    <tr><td>Subtotal</td><td class="tr mono">${fmtEur(budget.subtotal)}</td></tr>
+    ${discountRow}
+    <tr class="total-setup"><td>Total d'inversió inicial (setup)</td><td class="tr mono">${fmtEur(budget.total)}</td></tr>
+    <tr class="total-monthly"><td>Quota mensual recurrent</td><td class="tr mono">${fmtEur(budget.monthlyTotal ?? 0)}/mes</td></tr>
+  </table>
+</div>
+
+${notesHtml}
+
+<div class="signatures">
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">AMG Digitalització · Data i signatura</div>
+  </div>
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">Client · Conforme i acceptació</div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>AMGDL · Antoni Mas Gut · info@amgdl.com</span>
+  <span>Pressupost ${budget.budgetNumber} · Emès ${fmtDate(budget.createdAt)}</span>
+</div>
+
+</body></html>`);
     win.document.close();
     win.focus();
-    setTimeout(() => win.print(), 400);
+    setTimeout(() => win.print(), 500);
   };
 
   const row = (label: string, value: string, bold = false) => (
@@ -363,31 +528,6 @@ function BudgetDetailModal({ budget, onClose, onRefresh }: {
 
   return (
     <>
-      <div id={`budget-print-${budget.id}`} style={{ display: 'none' }}>
-        <h1>Pressupost {budget.budgetNumber}</h1>
-        <div className="meta">Creat: {fmtDate(budget.createdAt)} · Vàlid fins: {fmtDate(budget.validUntil)} · Estat: {budget.status}{budget.tenantName ? ` · Client: ${budget.tenantName}` : ''}</div>
-        {budget.phases.map((phase, pi) => (
-          <div key={pi}>
-            <div className="section-title">Fase</div>
-            <div className="phase-header"><span>{phase.name}</span><span>{phase.phaseTotal.toFixed(2)} €</span></div>
-            {phase.lines.map((line, li) => (
-              <div key={li} className="line"><span>{line.serviceName}</span><div className="prices"><span>{line.setupPrice.toFixed(2)} €</span><span>{line.monthlyPrice.toFixed(2)} €/mes</span></div></div>
-            ))}
-          </div>
-        ))}
-        {budget.addons.length > 0 && (
-          <div>
-            <div className="section-title">Addons</div>
-            {budget.addons.map((a, i) => <div key={i} className="line"><span>{a.serviceName}</span><span>{a.unitPrice.toFixed(2)} €</span></div>)}
-          </div>
-        )}
-        <div className="totals">
-          <div className="total-row"><span>Subtotal</span><span>{budget.subtotal.toFixed(2)} €</span></div>
-          {budget.discountTotal > 0 && <div className="total-row"><span>Descompte</span><span>-{budget.discountTotal.toFixed(2)} €</span></div>}
-          <div className="total-row bold"><span>Total</span><span>{budget.total.toFixed(2)} €</span></div>
-        </div>
-      </div>
-
       <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
         <div className="amg-card card-clip w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
 

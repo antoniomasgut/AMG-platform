@@ -7,6 +7,7 @@ import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
 import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.SpeechToTextService;
 import com.amg.digitalitzacio.agents.application.TeamGrowthService;
+import com.amg.digitalitzacio.agents.application.TenantAgendaQueryService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.documents.delivery.application.BudgetWorkflowService;
@@ -39,6 +40,7 @@ public class TelegramWebhookController {
     private final SocialPublisherOrchestrator socialOrchestrator;
     private final NexeServiceConfigService nexeServiceConfigService;
     private final SpeechToTextService speechToTextService;
+    private final TenantAgendaQueryService tenantAgendaQueryService;
 
     private static final java.util.regex.Pattern SOCIAL_TRIGGER = java.util.regex.Pattern.compile(
         "(?i)\\b(publica|publicar|post|instagram|facebook|penja|penjar|xarxes)\\b");
@@ -184,6 +186,12 @@ public class TelegramWebhookController {
                 // Comanda de festiu: /festiu [data]
                 if (text.toLowerCase().startsWith("/festiu")) {
                     var reply = absenceRescheduleService.handleHolidayCommand(tenantId, text);
+                    return ResponseEntity.ok(okTgReply(chatId, reply));
+                }
+
+                // Comanda d'agenda: /agenda [avui|demà|setmana|YYYY-MM-DD]
+                if (text.toLowerCase().startsWith("/agenda")) {
+                    var reply = tenantAgendaQueryService.handleCommand(tenantId, text);
                     return ResponseEntity.ok(okTgReply(chatId, reply));
                 }
 
