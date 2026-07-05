@@ -4,6 +4,7 @@ import com.amg.digitalitzacio.agents.application.channel.EmailChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
 import com.amg.digitalitzacio.agents.domain.*;
+import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.booking.domain.BookingToken;
 import com.amg.digitalitzacio.booking.domain.BookingTokenRepository;
@@ -43,6 +44,7 @@ public class TenantTelegramCommandService {
     private final BookingTokenRepository bookingTokenRepository;
     private final GeneratedDocumentRepository documentRepository;
     private final GoogleBusinessReviewSyncService reviewSyncService;
+    private final NexeServiceConfigService nexeServiceConfigService;
     private final WhatsAppChannel whatsAppChannel;
     private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final EmailChannel emailChannel;
@@ -95,6 +97,16 @@ public class TenantTelegramCommandService {
         if (hasF4) {
             sb.append("<b>Ressenyes</b>\n");
             sb.append("  /reviews — darreres ressenyes de Google\n\n");
+        }
+
+        boolean hasSocialPublisher = nexeServiceConfigService.get(tenantId, "SOCIAL_PUBLISHER").isPresent();
+        if (hasSocialPublisher) {
+            sb.append("<b>Xarxes socials</b>\n");
+            sb.append("  /publica — publicar a Instagram, Facebook i Google Business\n\n");
+        }
+
+        if (!hasF1 && !hasF2 && !hasF3 && !hasF4 && !hasSocialPublisher) {
+            return "ℹ️ Encara no tens cap servei actiu. Contacta l'administrador per activar els teus serveis.";
         }
 
         return sb.toString().trim();

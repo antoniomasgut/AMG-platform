@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.documents.delivery.application;
 
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.documents.builder.api.dto.GenerateRequest;
 import com.amg.digitalitzacio.documents.builder.application.DocumentBuilderService;
 import com.amg.digitalitzacio.documents.builder.domain.DocumentStatus;
@@ -43,6 +44,7 @@ public class BudgetWorkflowService {
     private final SecureDocumentService secureDocumentService;
     private final TelegramBotClient telegramBotClient;
     private final TenantChatLinkRepository chatLinkRepo;
+    private final TenantRepository tenantRepository;
     private final StringRedisTemplate redis;
     private final ObjectMapper objectMapper;
 
@@ -53,6 +55,11 @@ public class BudgetWorkflowService {
      */
     @Transactional
     public String handleCommand(UUID tenantId, Long chatId, String commandText) {
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
+        if (tenant == null || !tenant.isPhaseActive("F3")) {
+            return "ℹ️ La gestió de documents (F3) no està activada per al teu compte.";
+        }
+
         var parts = parseCommand(commandText);
         if (parts == null) {
             return "Format incorrecte.\nUsa: <code>/pressupost email@client.com Nom Cognom [notes]</code>";
