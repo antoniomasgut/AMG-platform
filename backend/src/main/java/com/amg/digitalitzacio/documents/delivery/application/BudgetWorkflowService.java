@@ -175,6 +175,8 @@ public class BudgetWorkflowService {
     }
 
     public boolean hasPendingApproval(UUID tenantId, Long chatId) {
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
+        if (tenant == null || !tenant.isPhaseActive("F3")) return false;
         return redis.hasKey(redisKey(tenantId, chatId));
     }
 

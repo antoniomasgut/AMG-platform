@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -48,11 +49,17 @@ public class AbsenceRescheduleService {
     @Transactional
     public String handleAbsenceCommand(UUID tenantId, String commandText, Long chatId, Long triggeredBy) {
         var dateArg = commandText.replaceFirst("(?i)/absencia\\s*", "").trim();
+
+        // Rang: "/absencia 2026-07-14 al 2026-07-20"
+        if (dateArg.toLowerCase().contains(" al ")) {
+            return handleAbsenceRange(tenantId, dateArg, chatId, triggeredBy);
+        }
+
         LocalDate absenceDate;
         try {
             absenceDate = parseDate(dateArg);
         } catch (Exception e) {
-            return "⚠️ Format de data no reconegut. Exemples:\n/absencia 2026-06-10\n/absencia avui\n/absencia demà";
+            return "⚠️ Format de data no reconegut. Exemples:\n/absencia 2026-06-10\n/absencia avui\n/absencia demà\n/absencia 2026-07-14 al 2026-07-20";
         }
 
         var tenant = tenantRepository.findById(tenantId).orElse(null);
@@ -62,6 +69,50 @@ public class AbsenceRescheduleService {
         var chatLink = chatLinkRepository.findByTenantId(tenantId).orElse(null);
         var result = runCancellationCascade(tenantId, absenceDate, CancellationReason.ABSENCE, chatLink, tenant, triggeredBy);
         return buildSummary("📋 Absència registrada", absenceDate, result[0], result[1], hasPhase(tenant, "F4"));
+    }
+
+    private String handleAbsenceRange(UUID tenantId, String dateArg, Long chatId, Long triggeredBy) {
+        var parts = dateArg.toLowerCase().split("\\s+al\\s+");
+        if (parts.length != 2) {
+            return "⚠️ Format de rang no reconegut. Exemple: /absencia 2026-07-14 al 2026-07-20";
+        }
+        LocalDate startDate, endDate;
+        try {
+            startDate = LocalDate.parse(parts[0].trim());
+            endDate   = LocalDate.parse(parts[1].trim());
+        } catch (Exception e) {
+            return "⚠️ Format de dates no reconegut. Exemple: /absencia 2026-07-14 al 2026-07-20";
+        }
+        if (endDate.isBefore(startDate)) return "⚠️ La data final ha de ser posterior a la inicial.";
+        if (ChronoUnit.DAYS.between(startDate, endDate) > 30) return "⚠️ El rang màxim d'absència és de 30 dies.";
+
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
+        if (tenant == null) return "Error intern: tenant no trobat.";
+        if (!hasPhase(tenant, "F2")) return "ℹ️ La gestió d'absències requereix tenir l'Agenda (F2) activada.";
+
+        var chatLink = chatLinkRepository.findByTenantId(tenantId).orElse(null);
+        int totalAffected = 0, totalNotified = 0;
+        var cursor = startDate;
+        while (!cursor.isAfter(endDate)) {
+            var r = runCancellationCascade(tenantId, cursor, CancellationReason.ABSENCE, chatLink, tenant, triggeredBy);
+            totalAffected += r[0];
+            totalNotified += r[1];
+            cursor = cursor.plusDays(1);
+        }
+
+        long days = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        var sb = new StringBuilder();
+        sb.append("📋 Absència registrada: ").append(startDate).append(" al ").append(endDate).append("\n");
+        sb.append("• Dies processats: ").append(days).append("\n");
+        sb.append("• Cites afectades: ").append(totalAffected).append("\n");
+        sb.append("• Pacients notificats: ").append(totalNotified).append("\n");
+        if (totalAffected > totalNotified) {
+            sb.append("⚠️ ").append(totalAffected - totalNotified).append(" cita(es) sense notificar (revisar manualment)\n");
+        }
+        if (hasPhase(tenant, "F4") && totalAffected > 0) {
+            sb.append("• Seguiment de reprogramació programat per a 48h\n");
+        }
+        return sb.toString();
     }
 
     /**

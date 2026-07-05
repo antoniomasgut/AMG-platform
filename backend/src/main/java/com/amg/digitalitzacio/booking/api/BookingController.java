@@ -133,6 +133,12 @@ public class BookingController {
                         .toList());
     }
 
+    @PostMapping("/{token}/cancel")
+    public ResponseEntity<Map<String, String>> cancelBooking(@PathVariable String token) {
+        bookingService.cancelBooking(token);
+        return ResponseEntity.ok(Map.of("message", "La teva cita ha estat cancel·lada correctament."));
+    }
+
     @PostMapping("/{token}/confirm")
     public ResponseEntity<Map<String, Object>> confirm(
             @PathVariable String token,

@@ -2,6 +2,8 @@ package com.amg.digitalitzacio.booking.application;
 
 import com.amg.digitalitzacio.agents.application.GoogleCalendarService;
 import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
+import com.amg.digitalitzacio.agents.application.TelegramBotClient;
+import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.booking.domain.*;
 import com.amg.digitalitzacio.leads.domain.*;
@@ -31,6 +33,8 @@ public class BookingService {
     private final EmailService emailService;
     private final SystemConfigService sysConfig;
     private final NexeServiceConfigService nexeServiceConfigService;
+    private final TelegramBotClient telegramBotClient;
+    private final TenantChatLinkRepository chatLinkRepository;
     private final ObjectMapper objectMapper;
 
     private static final ZoneId ZONE = ZoneId.of("Europe/Madrid");
@@ -200,6 +204,7 @@ public class BookingService {
         }
 
         sendConfirmationEmails(bt, slotLocal, meetLink, s);
+        notifyTenantViaTelegram(bt, slotLocal, meetLink);
 
         return new BookingResult(meetLink, slotLocal);
     }
@@ -220,9 +225,50 @@ public class BookingService {
 
     // ── Emails ───────────────────────────────────────────────────
 
+    private void notifyTenantViaTelegram(BookingToken bt, LocalDateTime slot, String meetLink) {
+        try {
+            chatLinkRepository.findByTenantId(bt.getTenantId()).ifPresent(chatLink -> {
+                if (chatLink.getTelegramChatId() == null) return;
+                String name = bt.getRecipientName() != null ? bt.getRecipientName() : bt.getLeadName();
+                String msg = "📅 Nova reserva!\n"
+                    + "👤 " + name + "\n"
+                    + "📆 " + formatDateTime(slot)
+                    + (meetLink != null ? "\n🔗 " + meetLink : "");
+                telegramBotClient.sendMessage(chatLink.getTelegramChatId(), msg);
+            });
+        } catch (Exception e) {
+            log.warn("No s'ha pogut notificar la nova reserva per Telegram: {}", e.getMessage());
+        }
+    }
+
+    @Transactional
+    public String cancelBooking(String token) {
+        BookingToken bt = findValidToken(token);
+        if (!bt.isConfirmed()) throw new IllegalStateException("La cita no estava confirmada");
+        bt.setConfirmed(false);
+        bt.setMeetingAt(null);
+        tokenRepo.save(bt);
+        notifyTenantCancellationViaTelegram(bt);
+        return bt.getRecipientName() != null ? bt.getRecipientName() : bt.getLeadName();
+    }
+
+    private void notifyTenantCancellationViaTelegram(BookingToken bt) {
+        try {
+            chatLinkRepository.findByTenantId(bt.getTenantId()).ifPresent(chatLink -> {
+                if (chatLink.getTelegramChatId() == null) return;
+                String name = bt.getRecipientName() != null ? bt.getRecipientName() : bt.getLeadName();
+                telegramBotClient.sendMessage(chatLink.getTelegramChatId(),
+                    "❌ Cita cancel·lada pel client: " + name);
+            });
+        } catch (Exception e) {
+            log.warn("No s'ha pogut notificar la cancel·lació per Telegram: {}", e.getMessage());
+        }
+    }
+
     private void sendConfirmationEmails(BookingToken bt, LocalDateTime slot, String meetLink, MeetingSettings s) {
         String dateStr = formatDateTime(slot);
         String meetLine = meetLink != null ? "\nEnllaç Google Meet: " + meetLink : "";
+        String cancelUrl = "https://amgdl.com/ca/book/" + bt.getToken() + "/cancel";
 
         if (bt.getLeadEmail() != null && !bt.getLeadEmail().isBlank()) {
             try {
@@ -233,6 +279,7 @@ public class BookingService {
                         + "Data: " + dateStr + "\n"
                         + "Durada: " + s.getSlotDurationMinutes() + " minuts" + meetLine + "\n\n"
                         + "No necessites instal·lar res — el link de Google Meet s'obre directament al navegador.\n\n"
+                        + "Si necessites cancel·lar la cita: " + cancelUrl + "\n\n"
                         + "Fins aviat!\nEquip AMG Digitalitzacions");
             } catch (Exception e) {
                 log.warn("No s'ha pogut enviar confirmació al lead {}: {}", bt.getLeadEmail(), e.getMessage());
