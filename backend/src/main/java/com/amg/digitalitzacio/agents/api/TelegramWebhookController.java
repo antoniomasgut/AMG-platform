@@ -8,6 +8,7 @@ import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.SpeechToTextService;
 import com.amg.digitalitzacio.agents.application.TeamGrowthService;
 import com.amg.digitalitzacio.agents.application.TenantAgendaQueryService;
+import com.amg.digitalitzacio.agents.application.TenantTelegramCommandService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.documents.delivery.application.BudgetWorkflowService;
@@ -41,6 +42,7 @@ public class TelegramWebhookController {
     private final NexeServiceConfigService nexeServiceConfigService;
     private final SpeechToTextService speechToTextService;
     private final TenantAgendaQueryService tenantAgendaQueryService;
+    private final TenantTelegramCommandService tenantCommandService;
 
     private static final java.util.regex.Pattern SOCIAL_TRIGGER = java.util.regex.Pattern.compile(
         "(?i)\\b(publica|publicar|post|instagram|facebook|penja|penjar|xarxes)\\b");
@@ -189,10 +191,47 @@ public class TelegramWebhookController {
                     return ResponseEntity.ok(okTgReply(chatId, reply));
                 }
 
+                // /ajuda — llista de comandes disponibles
+                if (text.equalsIgnoreCase("/ajuda") || text.equalsIgnoreCase("/help")
+                        || text.equalsIgnoreCase("/start help")) {
+                    return ResponseEntity.ok(okTgReply(chatId,
+                            tenantCommandService.handleAjuda(tenantId)));
+                }
+
+                // /mode [auto|manual|hybrid] — canviar mode agent (F1)
+                if (text.toLowerCase().startsWith("/mode")) {
+                    return ResponseEntity.ok(okTgReply(chatId,
+                            tenantCommandService.handleMode(tenantId, text)));
+                }
+
+                // /stats — resum d'activitat (F1)
+                if (text.equalsIgnoreCase("/stats") || text.equalsIgnoreCase("/resum")) {
+                    return ResponseEntity.ok(okTgReply(chatId,
+                            tenantCommandService.handleStats(tenantId)));
+                }
+
+                // /pendents — documents sense resposta (F3)
+                if (text.equalsIgnoreCase("/pendents")) {
+                    return ResponseEntity.ok(okTgReply(chatId,
+                            tenantCommandService.handlePendents(tenantId)));
+                }
+
+                // /cancel [hora] — cancel·lar cita (F2)
+                if (text.toLowerCase().startsWith("/cancel")) {
+                    return ResponseEntity.ok(okTgReply(chatId,
+                            tenantCommandService.handleCancel(tenantId, text)));
+                }
+
+                // /reviews — darreres ressenyes Google (F4)
+                if (text.equalsIgnoreCase("/reviews") || text.equalsIgnoreCase("/ressenyes")) {
+                    return ResponseEntity.ok(okTgReply(chatId,
+                            tenantCommandService.handleReviews(tenantId)));
+                }
+
                 // Comanda d'agenda: /agenda [avui|demà|setmana|YYYY-MM-DD]
                 if (text.toLowerCase().startsWith("/agenda")) {
-                    var reply = tenantAgendaQueryService.handleCommand(tenantId, text);
-                    return ResponseEntity.ok(okTgReply(chatId, reply));
+                    return ResponseEntity.ok(okTgReply(chatId,
+                            tenantAgendaQueryService.handleCommand(tenantId, text)));
                 }
 
                 // Comanda de pressupost: /pressupost email nom [notes]
