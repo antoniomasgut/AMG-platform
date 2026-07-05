@@ -122,3 +122,11 @@ export const getSlotsForDay = (token: string, date: string) =>
 
 export const confirmBooking = (token: string, slotDatetime: string) =>
   publicPost<BookingResult>(`/booking/${token}/confirm`, { slotDatetime });
+
+export const cancelBooking = async (token: string): Promise<void> => {
+  const res = await fetch(`${BASE}/api/v1/booking/${token}/cancel`, { method: 'POST' });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || res.statusText);
+  }
+};
