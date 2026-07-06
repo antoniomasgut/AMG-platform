@@ -1,5 +1,7 @@
 package com.amg.digitalitzacio.google.application;
 
+import com.amg.digitalitzacio.agents.application.TelegramBotClient;
+import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.google.domain.GoogleBusinessReview;
 import com.amg.digitalitzacio.google.domain.GoogleBusinessReviewRepository;
 import com.amg.digitalitzacio.google.domain.GoogleModuleConfig;
@@ -16,6 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -34,23 +37,82 @@ public class GoogleBusinessReviewSyncService {
     private final GoogleBusinessReviewRepository reviewRepo;
     private final GoogleTokenService tokenService;
     private final ObjectMapper objectMapper;
+    private final TelegramBotClient telegramBotClient;
+    private final TenantChatLinkRepository chatLinkRepository;
 
-    /** Sync diari automàtic a les 03:00 */
+    /** Sync diari complet a les 03:00 (full-resync de l'històric) */
     @Scheduled(cron = "0 0 3 * * *")
     public void syncAll() {
-        var configs = configRepo.findAll().stream()
-            .filter(GoogleModuleConfig::isBusinessEnabled)
-            .filter(c -> c.getBusinessLocationId() != null && !c.getBusinessLocationId().isBlank())
-            .toList();
-
-        log.info("GBP review sync: {} tenants to sync", configs.size());
-        for (var config : configs) {
+        for (var config : enabledConfigs()) {
             try {
                 sync(config.getTenantId());
             } catch (Exception e) {
                 log.warn("GBP sync failed for tenant {}: {}", config.getTenantId(), e.getMessage());
             }
         }
+    }
+
+    /** Detecció de ressenyes noves cada hora + notificació Telegram al tenant (Mòdul 54) */
+    @Scheduled(cron = "0 0 * * * *")
+    public void syncAndNotifyAll() {
+        for (var config : enabledConfigs()) {
+            try {
+                sync(config.getTenantId());
+                notifyNewReviews(config.getTenantId());
+            } catch (Exception e) {
+                log.warn("GBP sync+notify failed for tenant {}: {}", config.getTenantId(), e.getMessage());
+            }
+        }
+    }
+
+    private List<GoogleModuleConfig> enabledConfigs() {
+        var configs = configRepo.findAll().stream()
+            .filter(GoogleModuleConfig::isBusinessEnabled)
+            .filter(c -> c.getBusinessLocationId() != null && !c.getBusinessLocationId().isBlank())
+            .toList();
+        log.info("GBP review sync: {} tenants enabled", configs.size());
+        return configs;
+    }
+
+    /** Envia una notificació Telegram (amb botó "Respondre") per cada ressenya no notificada */
+    @Transactional
+    public void notifyNewReviews(UUID tenantId) {
+        var pending = reviewRepo.findByTenantIdAndNotifiedAtIsNullOrderByReviewTimeDesc(tenantId);
+        if (pending.isEmpty()) return;
+
+        var chatLink = chatLinkRepository.findByTenantId(tenantId).orElse(null);
+        Long chatId = chatLink != null ? chatLink.getTelegramChatId() : null;
+
+        for (var review : pending) {
+            if (chatId != null) {
+                var text = buildReviewMessage(review);
+                var button = Map.of("text", "✍️ Respondre", "callback_data", "grev:" + review.getReviewId());
+                telegramBotClient.sendMessageWithButtons(chatId, text, List.of(button));
+            }
+            review.setNotifiedAt(Instant.now());
+            reviewRepo.save(review);
+        }
+        log.info("GBP: {} ressenyes noves notificades al tenant {}", pending.size(), tenantId);
+    }
+
+    private String buildReviewMessage(GoogleBusinessReview r) {
+        var stars = "★".repeat(r.getRating()) + "☆".repeat(5 - r.getRating());
+        var sb = new StringBuilder();
+        sb.append("⭐ <b>Nova ressenya a Google</b> · ").append(stars)
+          .append(" (").append(r.getRating()).append("/5)\n");
+        if (r.getAuthorName() != null && !r.getAuthorName().isBlank()) {
+            sb.append("👤 ").append(escapeHtml(r.getAuthorName())).append("\n");
+        }
+        if (r.getComment() != null && !r.getComment().isBlank()) {
+            String c = r.getComment().length() > 300 ? r.getComment().substring(0, 297) + "…" : r.getComment();
+            sb.append("\"").append(escapeHtml(c)).append("\"\n");
+        }
+        sb.append("\nToca <b>✍️ Respondre</b> per contestar-la des d'aquí.");
+        return sb.toString();
+    }
+
+    private String escapeHtml(String s) {
+        return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     /** Sincronització manual per a un tenant concret */
@@ -88,10 +150,13 @@ public class GoogleBusinessReviewSyncService {
             var reviews = root.path("reviews");
             if (!reviews.isArray()) return 0;
 
+            // Primer sync del tenant: marca l'històric com a notificat per no fer spam
+            boolean backfill = reviewRepo.countByTenantId(tenantId) == 0;
+
             int synced = 0;
             for (JsonNode r : reviews) {
                 try {
-                    upsertReview(tenantId, r);
+                    upsertReview(tenantId, r, backfill);
                     synced++;
                 } catch (Exception e) {
                     log.debug("Failed to upsert review: {}", e.getMessage());
@@ -106,6 +171,50 @@ public class GoogleBusinessReviewSyncService {
         }
     }
 
+    /**
+     * Publica una resposta a una ressenya de Google Business (PUT reviewReply)
+     * i actualitza la còpia local. Retorna true si s'ha publicat.
+     */
+    @Transactional
+    public boolean replyToReview(UUID tenantId, String reviewId, String text) {
+        if (text == null || text.isBlank()) return false;
+
+        var config = configRepo.findById(tenantId)
+            .filter(GoogleModuleConfig::isBusinessEnabled)
+            .filter(c -> c.getBusinessLocationId() != null)
+            .orElseThrow(() -> new IllegalStateException("Google Business Profile no configurat per tenant " + tenantId));
+
+        var review = reviewRepo.findByTenantIdAndReviewId(tenantId, reviewId)
+            .orElseThrow(() -> new IllegalStateException("Ressenya no trobada: " + reviewId));
+
+        GoogleTokenService.GoogleCredentials creds = tokenService.getValidCredentials(tenantId);
+
+        var locationName = config.getBusinessLocationId();
+        if (!locationName.startsWith("accounts/")) {
+            locationName = "accounts/-/locations/" + locationName;
+        }
+
+        var client = WebClient.builder().baseUrl(GBP_BASE).build();
+        try {
+            client.put()
+                .uri("/{loc}/reviews/{reviewId}/reply", locationName, reviewId)
+                .header("Authorization", "Bearer " + creds.accessToken())
+                .bodyValue(Map.of("comment", text))
+                .retrieve()
+                .bodyToMono(String.class)
+                .timeout(java.time.Duration.ofSeconds(15))
+                .block();
+        } catch (Exception e) {
+            log.warn("GBP reply error tenant {} review {}: {}", tenantId, reviewId, e.getMessage());
+            throw new RuntimeException("Error publicant la resposta: " + e.getMessage());
+        }
+
+        review.setReply(text);
+        reviewRepo.save(review);
+        log.info("GBP: resposta publicada per tenant {} a la ressenya {}", tenantId, reviewId);
+        return true;
+    }
+
     /** Retorna les ressenyes cacheades per al renderer de landings */
     public List<GoogleBusinessReview> getReviews(UUID tenantId, int minRating, int maxItems) {
         var reviews = reviewRepo
@@ -113,12 +222,19 @@ public class GoogleBusinessReviewSyncService {
         return reviews.stream().limit(maxItems).toList();
     }
 
-    private void upsertReview(UUID tenantId, JsonNode r) {
+    private void upsertReview(UUID tenantId, JsonNode r, boolean backfill) {
         var reviewId = r.path("reviewId").asText(null);
         if (reviewId == null) return;
 
-        var existing = reviewRepo.findByTenantIdAndReviewId(tenantId, reviewId)
+        var existingOpt = reviewRepo.findByTenantIdAndReviewId(tenantId, reviewId);
+        boolean isNew = existingOpt.isEmpty();
+        var existing = existingOpt
             .orElseGet(() -> GoogleBusinessReview.builder().tenantId(tenantId).reviewId(reviewId).build());
+
+        // Ressenya nova (i no és el primer sync de backfill) → pendent de notificar
+        if (isNew && backfill) {
+            existing.setNotifiedAt(Instant.now());
+        }
 
         var ratingStr = r.path("starRating").asText("ONE");
         existing.setRating(starRatingToInt(ratingStr));

@@ -36,7 +36,9 @@ public class GoogleAuthService {
         "drive", "https://www.googleapis.com/auth/drive.file",
         "gmail", "https://www.googleapis.com/auth/gmail.send",
         "calendar", "https://www.googleapis.com/auth/calendar",
-        "sheets", "https://www.googleapis.com/auth/spreadsheets"
+        "sheets", "https://www.googleapis.com/auth/spreadsheets",
+        // Ressenyes de Google Business (llegir + respondre) — Mòdul 54
+        "business", "https://www.googleapis.com/auth/business.manage"
     );
 
     private static final HttpClient HTTP = HttpClient.newHttpClient();
@@ -153,6 +155,7 @@ public class GoogleAuthService {
         if (modules.contains("gmail"))    config.setGmailEnabled(true);
         if (modules.contains("calendar")) config.setCalendarEnabled(true);
         if (modules.contains("sheets"))   config.setSheetsEnabled(true);
+        if (modules.contains("business")) config.setBusinessEnabled(true);
         moduleConfigRepo.save(config);
     }
 

@@ -43,6 +43,8 @@ public class TelegramWebhookController {
     private final SpeechToTextService speechToTextService;
     private final TenantAgendaQueryService tenantAgendaQueryService;
     private final TenantTelegramCommandService tenantCommandService;
+    private final com.amg.digitalitzacio.agents.application.TelegramBotClient telegramBotClient;
+    private final com.amg.digitalitzacio.google.application.GoogleReviewReplyService reviewReplyService;
 
     private static final java.util.regex.Pattern SOCIAL_TRIGGER = java.util.regex.Pattern.compile(
         "(?i)\\b(publica|publicar|post|instagram|facebook|penja|penjar|xarxes)\\b");
@@ -69,6 +71,21 @@ public class TelegramWebhookController {
                         && cbChat.get("id") instanceof Number cbId) {
                     cbChatId = cbId.longValue();
                 }
+                // Botó "✍️ Respondre" d'una ressenya de Google (Mòdul 54)
+                if (cbChatId != null && data.startsWith("grev:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        String reviewId = data.substring("grev:".length());
+                        reviewReplyService.startReply(cbChatId, reviewId);
+                        if (callbackId != null) {
+                            telegramBotClient.answerCallbackQuery(callbackId, "Escriu la resposta");
+                        }
+                        telegramBotClient.sendMessage(cbChatId,
+                                "✍️ Escriu la resposta que vols publicar a aquesta ressenya de Google:");
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
                 if (cbChatId != null && callbackId != null && amgAdminCommandService.isAdminChat(cbChatId)) {
                     amgAdminCommandService.handleCallback(cbChatId, data, callbackId);
                 }
@@ -172,6 +189,12 @@ public class TelegramWebhookController {
             if (chatLinkOpt.isPresent() && chatLinkOpt.get().getIsActive()) {
                 var link = chatLinkOpt.get();
                 var tenantId = link.getTenantId();
+
+                // Resposta pendent a una ressenya de Google (Mòdul 54) — té prioritat
+                if (!text.startsWith("/") && reviewReplyService.hasPending(chatId)) {
+                    var reply = reviewReplyService.submitReply(tenantId, chatId, text);
+                    if (reply != null) return ResponseEntity.ok(okTgReply(chatId, reply));
+                }
 
                 // Detecció de creixement d'equip (upsell F5 si 2a+ persona)
                 if (fromUserId != null) {

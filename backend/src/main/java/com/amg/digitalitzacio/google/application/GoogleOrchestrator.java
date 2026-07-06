@@ -41,6 +41,7 @@ public class GoogleOrchestrator {
         return new GoogleStatusResponse(true, conn.email(),
             config.isDriveEnabled(), config.isGmailEnabled(),
             config.isCalendarEnabled(), config.isSheetsEnabled(),
+            config.isBusinessEnabled(), config.getBusinessLocationId(),
             config.getDriveFolderId());
     }
 
@@ -52,6 +53,8 @@ public class GoogleOrchestrator {
         config.setGmailEnabled(req.gmailEnabled());
         config.setCalendarEnabled(req.calendarEnabled());
         config.setSheetsEnabled(req.sheetsEnabled());
+        config.setBusinessEnabled(req.businessEnabled());
+        if (req.businessLocationId() != null) config.setBusinessLocationId(req.businessLocationId());
         if (req.driveFolderId() != null) config.setDriveFolderId(req.driveFolderId());
         return moduleConfigRepo.save(config);
     }

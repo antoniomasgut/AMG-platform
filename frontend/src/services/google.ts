@@ -9,6 +9,8 @@ export interface GoogleStatus {
   gmailEnabled: boolean;
   calendarEnabled: boolean;
   sheetsEnabled: boolean;
+  businessEnabled: boolean;
+  businessLocationId?: string | null;
   driveFolderId?: string | null;
 }
 
@@ -22,6 +24,8 @@ export interface ModuleConfigRequest {
   gmailEnabled: boolean;
   calendarEnabled: boolean;
   sheetsEnabled: boolean;
+  businessEnabled: boolean;
+  businessLocationId?: string | null;
   driveFolderId?: string | null;
 }
 

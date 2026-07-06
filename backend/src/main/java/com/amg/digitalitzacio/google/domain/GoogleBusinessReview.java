@@ -38,4 +38,8 @@ public class GoogleBusinessReview {
 
     @Column(name = "synced_at")
     private Instant syncedAt;
+
+    /** Quan s'ha notificat el tenant per Telegram (NULL = pendent de notificar) — Mòdul 54 */
+    @Column(name = "notified_at")
+    private Instant notifiedAt;
 }

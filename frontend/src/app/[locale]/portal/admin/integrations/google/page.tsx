@@ -300,8 +300,9 @@ export default function GoogleIntegrationPage() {
 
   const [status, setStatus] = useState<GoogleStatus | null>(null);
   const [loading, setLoading] = useState(false);
-  const [modules, setModules] = useState({ drive: false, gmail: false, calendar: false, sheets: false });
+  const [modules, setModules] = useState({ drive: false, gmail: false, calendar: false, sheets: false, business: false });
   const [driveFolderId, setDriveFolderId] = useState('');
+  const [businessLocationId, setBusinessLocationId] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('config');
 
   const load = useCallback(async () => {
@@ -310,8 +311,9 @@ export default function GoogleIntegrationPage() {
     try {
       const s = await getGoogleStatus(tenantId);
       setStatus(s);
-      setModules({ drive: s.driveEnabled, gmail: s.gmailEnabled, calendar: s.calendarEnabled, sheets: s.sheetsEnabled });
+      setModules({ drive: s.driveEnabled, gmail: s.gmailEnabled, calendar: s.calendarEnabled, sheets: s.sheetsEnabled, business: s.businessEnabled });
       setDriveFolderId(s.driveFolderId ?? '');
+      setBusinessLocationId(s.businessLocationId ?? '');
     } catch {
       setStatus(null);
     } finally {
@@ -342,6 +344,8 @@ export default function GoogleIntegrationPage() {
         gmailEnabled: modules.gmail,
         calendarEnabled: modules.calendar,
         sheetsEnabled: modules.sheets,
+        businessEnabled: modules.business,
+        businessLocationId: businessLocationId || null,
         driveFolderId: driveFolderId || null,
       });
       toast('success', 'Configuració desada');
@@ -377,6 +381,7 @@ export default function GoogleIntegrationPage() {
     { key: 'gmail' as const,    label: 'Gmail',           desc: 'Envia correus des del teu compte' },
     { key: 'calendar' as const, label: 'Google Calendar', desc: 'Crea events al teu calendari' },
     { key: 'sheets' as const,   label: 'Google Sheets',   desc: 'Llegeix dades dels teus fulls' },
+    { key: 'business' as const, label: 'Google Business',  desc: 'Ressenyes: avís i resposta per Telegram' },
   ];
 
   const TABS: { id: Tab; label: string; disabled?: boolean }[] = [
@@ -480,6 +485,25 @@ export default function GoogleIntegrationPage() {
                       />
                       <p className="f-mono text-[10px] text-ink-3 mt-1">
                         L&apos;ID es troba a la URL de Google Drive: drive.google.com/drive/folders/<span className="text-ink-1">ID</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Google Business location ID */}
+                  {modules.business && (
+                    <div>
+                      <label className="f-mono text-[10px] text-ink-3 uppercase tracking-wider block mb-1">
+                        Business Location ID <span className="normal-case text-ink-3">(ID de la fitxa de Google Business)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={businessLocationId}
+                        onChange={e => setBusinessLocationId(e.target.value)}
+                        placeholder="p.ex. 12345678901234567890 o accounts/123/locations/456"
+                        className="w-full bg-bg-1 border border-border-base text-ink-0 px-3 h-9 f-mono text-xs focus:outline-none focus:border-accent"
+                      />
+                      <p className="f-mono text-[10px] text-ink-3 mt-1">
+                        Necessari per sincronitzar ressenyes. El tenant rebrà un avís per Telegram de cada ressenya nova i podrà respondre-la des d&apos;allà.
                       </p>
                     </div>
                   )}

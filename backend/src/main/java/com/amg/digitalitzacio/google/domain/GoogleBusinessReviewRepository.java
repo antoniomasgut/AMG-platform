@@ -11,4 +11,6 @@ public interface GoogleBusinessReviewRepository extends JpaRepository<GoogleBusi
     Optional<GoogleBusinessReview> findByTenantIdAndReviewId(UUID tenantId, String reviewId);
     void deleteByTenantId(UUID tenantId);
     int countByTenantId(UUID tenantId);
+    // Ressenyes noves pendents de notificar per Telegram (Mòdul 54)
+    List<GoogleBusinessReview> findByTenantIdAndNotifiedAtIsNullOrderByReviewTimeDesc(UUID tenantId);
 }
