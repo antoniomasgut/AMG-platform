@@ -84,6 +84,50 @@ public class WidgetController {
   'use strict';
   var SITE_ID = '%s';
   var API = '%s';
+  // Interceptor de formularis de contacte — s'executa sempre, independentment del chat/WA
+  function amgIntercept() {
+    document.querySelectorAll('form').forEach(function(f) {
+      var act = (f.getAttribute('action') || '').toLowerCase();
+      if (act.indexOf('/api/v1/') !== -1) return;  // ja és un endpoint AMG
+      if (act.indexOf('search') !== -1) return;      // formulari de cerca
+      if (f.querySelector('[type="password"]')) return; // login/registre
+      if (f.dataset.amgDone) return;
+      f.dataset.amgDone = '1';
+      f.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var q = function(s) { return f.querySelector(s); };
+        var nf = q('[name="name"],[name="nom"],[name="nombre"],[name="full_name"],[name="firstname"],[name="first_name"]') || q('[type="text"]');
+        var ef = q('[type="email"],[name="email"],[name="correu"],[name="correo"]');
+        var pf = q('[type="tel"],[name="phone"],[name="tel"],[name="telefon"],[name="telefono"],[name="mobile"],[name="movil"]');
+        var mf = q('textarea') || q('[name="message"],[name="missatge"],[name="mensaje"],[name="msg"],[name="comment"]');
+        var body = new URLSearchParams({
+          name:    nf ? nf.value.trim() : '',
+          email:   ef ? ef.value.trim() : '',
+          phone:   pf ? pf.value.trim() : '',
+          message: mf ? mf.value.trim() : ''
+        }).toString();
+        fetch(API + '/api/v1/widget/' + SITE_ID + '/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body
+        }).then(function() {
+          var ok = document.createElement('div');
+          ok.setAttribute('style', 'padding:14px 18px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;color:#166534;font-family:sans-serif;font-size:14px;margin-top:8px');
+          ok.textContent = 'Missatge enviat. Ens posarem en contacte aviat!';
+          f.style.display = 'none';
+          if (f.parentNode) f.parentNode.insertBefore(ok, f.nextSibling);
+        }).catch(function() {
+          delete f.dataset.amgDone;
+          f.submit();
+        });
+      }, { once: true });
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', amgIntercept);
+  } else {
+    amgIntercept();
+  }
   fetch(API + '/api/v1/widget/' + SITE_ID + '/config')
     .then(function(r) { return r.json(); })
     .then(function(cfg) {
