@@ -375,6 +375,28 @@ export const PageStylesPanel: FC = () => {
             <div className="f-mono text-[9px] text-ink-3 mt-0.5">Apareix com a botó flotant a la landing publicada</div>
           </div>
           <div>
+            <label className="f-mono text-label uppercase text-ink-2 flex items-center justify-between mb-1">
+              <span>Widget de xat IA</span>
+              <button
+                type="button"
+                onClick={() => setStyles({ chatEnabled: !styles.chatEnabled })}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${styles.chatEnabled ? 'bg-[#FF6B00]' : 'bg-[#2a2a50]'}`}
+              >
+                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${styles.chatEnabled ? 'translate-x-4' : 'translate-x-1'}`} />
+              </button>
+            </label>
+            {styles.chatEnabled && (
+              <input
+                type="text"
+                placeholder="Nom del negoci al widget"
+                value={styles.chatBusinessName ?? ''}
+                onChange={(e) => setStyles({ chatBusinessName: e.target.value })}
+                className="w-full bg-[#0d0d1a] border border-border-medium rounded p-2 text-xs text-ink-0 placeholder:text-ink-3 mt-1"
+              />
+            )}
+            <div className="f-mono text-[9px] text-ink-3 mt-0.5">Requereix F1 (agent IA) actiu al tenant</div>
+          </div>
+          <div>
             <label className="f-mono text-label uppercase text-ink-2 block mb-1">Telèfon</label>
             <input
               type="tel"
