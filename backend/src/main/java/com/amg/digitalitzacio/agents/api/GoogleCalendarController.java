@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -107,9 +109,10 @@ public class GoogleCalendarController {
     // ── Fase 2: OAuth — el client autoritza amb el seu propi compte Google ──
 
     @GetMapping("/oauth-url")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     public ResponseEntity<Map<String, String>> getOAuthUrl(
             @PathVariable UUID tenantId,
+            @AuthenticationPrincipal UserPrincipal principal,
             HttpServletRequest request) {
 
         if (!calendarService.isOAuthConfigured()) {

@@ -46,8 +46,10 @@ public class DocumentBuilderController {
     }
 
     @GetMapping("/templates/{id}")
-    public ResponseEntity<TemplateResponse> getTemplate(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.getTemplate(id));
+    public ResponseEntity<TemplateResponse> getTemplate(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(service.getTemplate(id, user));
     }
 
     @PutMapping("/templates/{id}")
@@ -76,13 +78,17 @@ public class DocumentBuilderController {
     }
 
     @GetMapping("/templates/{id}/versions")
-    public ResponseEntity<List<VersionResponse>> listVersions(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.listVersions(id));
+    public ResponseEntity<List<VersionResponse>> listVersions(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(service.listVersions(id, user));
     }
 
     @GetMapping("/templates/{id}/versions/{version}")
-    public ResponseEntity<VersionResponse> getVersion(@PathVariable UUID id, @PathVariable Integer version) {
-        return ResponseEntity.ok(service.getVersion(id, version));
+    public ResponseEntity<VersionResponse> getVersion(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable UUID id, @PathVariable Integer version) {
+        return ResponseEntity.ok(service.getVersion(id, version, user));
     }
 
     @PostMapping("/templates/{id}/restore/{version}")
@@ -94,8 +100,10 @@ public class DocumentBuilderController {
     }
 
     @GetMapping("/templates/{id}/preview")
-    public ResponseEntity<String> previewTemplate(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.previewTemplate(id));
+    public ResponseEntity<String> previewTemplate(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(service.previewTemplate(id, user));
     }
 
     @PostMapping("/generate")
@@ -126,8 +134,10 @@ public class DocumentBuilderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DocumentResponse> getDocument(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.getDocument(id));
+    public ResponseEntity<DocumentResponse> getDocument(
+            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(service.getDocument(id, user));
     }
 
     @PostMapping("/ai/apply")

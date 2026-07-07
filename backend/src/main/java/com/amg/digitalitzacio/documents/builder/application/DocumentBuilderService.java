@@ -80,9 +80,10 @@ public class DocumentBuilderService {
         return toTemplateResponse(saved);
     }
 
-    public TemplateResponse getTemplate(UUID id) {
+    public TemplateResponse getTemplate(UUID id, UserPrincipal user) {
         var t = templateRepo.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Template not found: " + id));
+        assertOwner(t, user);
         return toTemplateResponse(t);
     }
 
@@ -128,14 +129,20 @@ public class DocumentBuilderService {
         return toTemplateResponse(saved);
     }
 
-    public List<VersionResponse> listVersions(UUID templateId) {
+    public List<VersionResponse> listVersions(UUID templateId, UserPrincipal user) {
+        var t = templateRepo.findById(templateId)
+            .orElseThrow(() -> new NoSuchElementException("Template not found: " + templateId));
+        assertOwner(t, user);
         return versionRepo.findByTemplateIdOrderByVersionDesc(templateId).stream()
             .map(v -> new VersionResponse(v.getId(), v.getTemplateId(), v.getVersion(),
                 v.getLayout(), v.getDataBindings(), v.getStyles(), v.getNotes(), v.getCreatedAt()))
             .collect(Collectors.toList());
     }
 
-    public VersionResponse getVersion(UUID templateId, Integer version) {
+    public VersionResponse getVersion(UUID templateId, Integer version, UserPrincipal user) {
+        var t = templateRepo.findById(templateId)
+            .orElseThrow(() -> new NoSuchElementException("Template not found: " + templateId));
+        assertOwner(t, user);
         var v = versionRepo.findByTemplateIdAndVersion(templateId, version)
             .orElseThrow(() -> new NoSuchElementException("Version not found"));
         return new VersionResponse(v.getId(), v.getTemplateId(), v.getVersion(),
@@ -158,7 +165,15 @@ public class DocumentBuilderService {
         return toTemplateResponse(saved);
     }
 
-    public String previewTemplate(UUID id) {
+    public String previewTemplate(UUID id, UserPrincipal user) {
+        var t = templateRepo.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("Template not found: " + id));
+        assertOwner(t, user);
+        return renderPreviewHtml(id);
+    }
+
+    // Renderitza el preview sense comprovar propietat — només per a ús intern (export, generació).
+    private String renderPreviewHtml(UUID id) {
         var t = templateRepo.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Template not found: " + id));
         Map<String, Object> ctx = new HashMap<>();
@@ -260,9 +275,12 @@ public class DocumentBuilderService {
             .collect(Collectors.toList());
     }
 
-    public DocumentResponse getDocument(UUID id) {
+    public DocumentResponse getDocument(UUID id, UserPrincipal user) {
         var d = documentRepo.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Document not found: " + id));
+        if (!"SUPER_ADMIN".equals(user.role()) && !d.getTenantId().equals(user.tenantId())) {
+            throw new SecurityException("Access denied to document " + d.getId());
+        }
         return toDocumentResponse(d);
     }
 
@@ -685,7 +703,7 @@ public class DocumentBuilderService {
     public ExportDriveResult exportTemplateToDrive(UUID templateId, UUID tenantId) {
         var t = templateRepo.findById(templateId)
                 .orElseThrow(() -> new NoSuchElementException("Template not found: " + templateId));
-        String html = previewTemplate(templateId);
+        String html = renderPreviewHtml(templateId);
         String title = t.getName() + " — plantilla";
         var result = googleOrchestrator.exportHtmlToGoogleDocs(tenantId, html, title);
         return new ExportDriveResult(result.fileId(), result.webViewLink(), title);
@@ -696,7 +714,7 @@ public class DocumentBuilderService {
                 .orElseThrow(() -> new NoSuchElementException("Template not found: " + templateId));
         var tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new NoSuchElementException("Tenant not found: " + tenantId));
-        String html = previewTemplate(templateId);
+        String html = renderPreviewHtml(templateId);
         String title = t.getName() + " — plantilla";
         String tenantName = tenant.getName() != null ? tenant.getName() : tenantId.toString();
         try {

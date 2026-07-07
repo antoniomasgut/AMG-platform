@@ -25,6 +25,7 @@ interface Props {
 export const FactoryLayout: FC<Props> = ({ landingId }) => {
   const router = useRouter();
   const user = getCurrentUser();
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('blocks');
   const [statusMsg, setStatusMsg] = useState('');
   const [showPreview, setShowPreview] = useState(false);
@@ -258,22 +259,28 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
         >
           {isSaving ? 'Guardant...' : isDirty ? 'Guardar' : 'Desat'}
         </button>
-        {landing?.status === 'PUBLISHED' ? (
-          <button
-            onClick={handleUnpublish}
-            disabled={isSaving}
-            className="f-mono text-label uppercase px-3 h-8 rounded border border-border-base text-ink-1 hover:text-warning hover:border-warning disabled:opacity-50 transition"
-          >
-            Desactivar
-          </button>
+        {isAdmin ? (
+          landing?.status === 'PUBLISHED' ? (
+            <button
+              onClick={handleUnpublish}
+              disabled={isSaving}
+              className="f-mono text-label uppercase px-3 h-8 rounded border border-border-base text-ink-1 hover:text-warning hover:border-warning disabled:opacity-50 transition"
+            >
+              Desactivar
+            </button>
+          ) : (
+            <button
+              onClick={handlePublish}
+              disabled={isSaving}
+              className="f-mono text-label uppercase px-4 h-8 rounded bg-[#FF6B00] text-black font-semibold hover:bg-[#FF9A3C] disabled:opacity-50 transition"
+            >
+              Publicar
+            </button>
+          )
         ) : (
-          <button
-            onClick={handlePublish}
-            disabled={isSaving}
-            className="f-mono text-label uppercase px-4 h-8 rounded bg-[#FF6B00] text-black font-semibold hover:bg-[#FF9A3C] disabled:opacity-50 transition"
-          >
-            Publicar
-          </button>
+          <span className="f-mono text-[10px] text-ink-3 px-2" title="Els canvis desats els revisa i publica el teu tècnic">
+            {landing?.status === 'PUBLISHED' ? 'Publicada' : 'Pendent de publicar'}
+          </span>
         )}
         <button
           onClick={() => { setPreviewDevice('desktop'); setShowPreview(true); }}

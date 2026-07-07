@@ -33,6 +33,7 @@ export default function LandingsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const user = getCurrentUser();
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const { data: landings = [], isLoading } = useQuery({
@@ -78,9 +79,11 @@ export default function LandingsPage() {
           <span className="f-mono text-label uppercase text-accent-light tracking-widest">/ portal / landings /</span>
           <div className="f-display font-bold text-xl mt-1">Les meves landings</div>
         </div>
-        <AMGButton size="sm" icon={IconSet.Plus} onClick={() => router.push('/portal/landings/new')}>
-          Nova landing
-        </AMGButton>
+        {isAdmin && (
+          <AMGButton size="sm" icon={IconSet.Plus} onClick={() => router.push('/portal/landings/new')}>
+            Nova landing
+          </AMGButton>
+        )}
       </div>
 
       {isLoading ? (
@@ -91,10 +94,14 @@ export default function LandingsPage() {
         <div className="amg-card card-clip p-8 text-center">
           <IconSet.Globe size={32} stroke="#64748b" className="mx-auto mb-3" />
           <div className="f-display font-bold text-base mb-1">Cap landing creada</div>
-          <p className="text-ui text-ink-1 mb-4">Crea la teva primera landing per començar</p>
-          <AMGButton size="sm" icon={IconSet.Plus} onClick={() => router.push('/portal/landings/new')}>
-            Crear landing
-          </AMGButton>
+          <p className="text-ui text-ink-1 mb-4">
+            {isAdmin ? 'Crea la teva primera landing per començar' : 'El teu tècnic crearà la landing per a tu'}
+          </p>
+          {isAdmin && (
+            <AMGButton size="sm" icon={IconSet.Plus} onClick={() => router.push('/portal/landings/new')}>
+              Crear landing
+            </AMGButton>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -129,14 +136,16 @@ export default function LandingsPage() {
                     >
                       Veure
                     </AMGButton>
-                    <AMGButton
-                      size="sm"
-                      variant="ghost"
-                      loading={unpublishMutation.isPending && unpublishMutation.variables === l.id}
-                      onClick={() => unpublishMutation.mutate(l.id)}
-                    >
-                      Desactivar
-                    </AMGButton>
+                    {isAdmin && (
+                      <AMGButton
+                        size="sm"
+                        variant="ghost"
+                        loading={unpublishMutation.isPending && unpublishMutation.variables === l.id}
+                        onClick={() => unpublishMutation.mutate(l.id)}
+                      >
+                        Desactivar
+                      </AMGButton>
+                    )}
                   </>
                 )}
                 <button
@@ -147,7 +156,7 @@ export default function LandingsPage() {
                 >
                   {duplicateMutation.isPending && duplicateMutation.variables === l.id ? 'Duplicant...' : '⧉ Duplicar'}
                 </button>
-                {confirmDelete === l.id ? (
+                {isAdmin && (confirmDelete === l.id ? (
                   <div className="flex gap-1 items-center">
                     <span className="f-mono text-[10px] text-warning">Segur?</span>
                     <button
@@ -172,7 +181,7 @@ export default function LandingsPage() {
                   >
                     Eliminar
                   </button>
-                )}
+                ))}
               </div>
             </div>
           ))}

@@ -172,29 +172,33 @@ public class EngineController {
     // --- Auto-translate ---
 
     @PostMapping("/tenants/{tenantId}/landings/{landingId}/auto-translate")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     public List<VersionResponse> autoTranslate(@PathVariable UUID tenantId,
                                                @PathVariable UUID landingId,
-                                               @RequestBody AutoTranslateRequest request) {
+                                               @RequestBody AutoTranslateRequest request,
+                                               @AuthenticationPrincipal UserPrincipal principal) {
         return engineService.autoTranslate(tenantId, landingId, request.sourceLocale(), request.targetLocales());
     }
 
     @GetMapping("/tenants/{tenantId}/landing-defaults")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")
-    public LandingDefaultsResponse getLandingDefaults(@PathVariable UUID tenantId) {
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public LandingDefaultsResponse getLandingDefaults(@PathVariable UUID tenantId,
+                                                      @AuthenticationPrincipal UserPrincipal principal) {
         return engineService.getLandingDefaults(tenantId);
     }
 
     @PostMapping("/tenants/{tenantId}/landings/{landingId}/preview-token")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")
-    public Map<String, String> generatePreviewToken(@PathVariable UUID tenantId, @PathVariable UUID landingId) {
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public Map<String, String> generatePreviewToken(@PathVariable UUID tenantId, @PathVariable UUID landingId,
+                                                     @AuthenticationPrincipal UserPrincipal principal) {
         return engineService.generatePreviewToken(tenantId, landingId);
     }
 
     @PostMapping("/tenants/{tenantId}/landings/{landingId}/duplicate")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','CLIENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     @ResponseStatus(HttpStatus.CREATED)
-    public LandingResponse duplicateLanding(@PathVariable UUID tenantId, @PathVariable UUID landingId) {
+    public LandingResponse duplicateLanding(@PathVariable UUID tenantId, @PathVariable UUID landingId,
+                                             @AuthenticationPrincipal UserPrincipal principal) {
         return engineService.duplicateLanding(tenantId, landingId);
     }
 
@@ -229,10 +233,11 @@ public class EngineController {
     }
 
     @GetMapping("/tenants/{tenantId}/landings/{landingId}/stats")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'CLIENT')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     public LandingStatsResponse getLandingStats(
             @PathVariable UUID tenantId,
-            @PathVariable UUID landingId) {
+            @PathVariable UUID landingId,
+            @AuthenticationPrincipal UserPrincipal principal) {
         return engineService.getLandingStats(tenantId, landingId);
     }
 
