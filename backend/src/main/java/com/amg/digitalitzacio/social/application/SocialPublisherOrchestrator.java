@@ -49,6 +49,7 @@ public class SocialPublisherOrchestrator {
     private final InstagramPublisherService instagramPublisher;
     private final FacebookPublisherService facebookPublisher;
     private final GoogleBusinessPublisherService googleBusinessPublisher;
+    private final LinkedInPublisherService linkedInPublisher;
     private final TelegramMediaUploadService telegramMediaUploadService;
 
     /** Retorna true si hi ha un draft actiu per a aquest chatId */
@@ -105,16 +106,23 @@ public class SocialPublisherOrchestrator {
         boolean ig = upper.contains("I");
         boolean fb = upper.contains("F");
         boolean gb = upper.contains("G");
+        boolean li = upper.contains("L");
 
-        if (!ig && !fb && !gb) {
+        if (!ig && !fb && !gb && !li) {
             telegramBotClient.sendMessage(chatId,
                 "⚠️ Indica almenys una xarxa: <b>I</b> (Instagram), <b>F</b> (Facebook), <b>G</b> (Google Business).");
             return;
         }
 
+        // LinkedIn només per al tenant propietari amb connexió activa
+        if (li && !isLinkedInAvailable(UUID.fromString(draft.get("tenantId")))) {
+            li = false;
+        }
+
         draft.put("ig", ig ? "1" : "0");
         draft.put("fb", fb ? "1" : "0");
         draft.put("gb", gb ? "1" : "0");
+        draft.put("li", li ? "1" : "0");
         draft.put("step", "AWAIT_TYPE");
         saveDraft(chatId, draft);
 
@@ -123,7 +131,15 @@ public class SocialPublisherOrchestrator {
             + (ig ? "📸 <code>FOTO</code> — Foto amb caption\n" : "")
             + (fb ? "📝 <code>TEXT</code> — Missatge de text\n   📸 <code>FOTO</code> — Foto amb caption\n" : "")
             + (gb ? "🗺 <code>NOTICIES</code> — Notícia\n   🎉 <code>OFERTA</code> — Oferta\n" : "")
+            + (li ? "💼 <code>TEXT</code> — Publicació a LinkedIn\n" : "")
             + "\nEscriu el tipus (p.ex. <code>FOTO</code>):");
+    }
+
+    /** LinkedIn només disponible per al tenant propietari amb connexió activa (Mòdul 56 F4) */
+    private boolean isLinkedInAvailable(UUID tenantId) {
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
+        boolean owner = tenant != null && Boolean.TRUE.equals(tenant.getIsOwner());
+        return owner && linkedInPublisher.isConnected(tenantId);
     }
 
     private void handleType(Long chatId, String text, Map<String, String> draft) {
@@ -301,6 +317,7 @@ public class SocialPublisherOrchestrator {
         if ("1".equals(draft.get("ig"))) list.add("INSTAGRAM");
         if ("1".equals(draft.get("fb"))) list.add("FACEBOOK");
         if ("1".equals(draft.get("gb"))) list.add("GOOGLE_BUSINESS");
+        if ("1".equals(draft.get("li"))) list.add("LINKEDIN");
         return list;
     }
 
@@ -366,6 +383,7 @@ public class SocialPublisherOrchestrator {
         draft.put("ig", "INSTAGRAM".equals(scheduledPost.getNetwork())      ? "1" : "0");
         draft.put("fb", "FACEBOOK".equals(scheduledPost.getNetwork())       ? "1" : "0");
         draft.put("gb", "GOOGLE_BUSINESS".equals(scheduledPost.getNetwork()) ? "1" : "0");
+        draft.put("li", "LINKEDIN".equals(scheduledPost.getNetwork())        ? "1" : "0");
         draft.put("postType", scheduledPost.getPostType());
         draft.put("caption",  scheduledPost.getCaption() != null ? scheduledPost.getCaption() : "");
         if (scheduledPost.getMediaUrl() != null) draft.put("mediaUrl", scheduledPost.getMediaUrl());
@@ -378,6 +396,7 @@ public class SocialPublisherOrchestrator {
         boolean ig = "1".equals(draft.get("ig"));
         boolean fb = "1".equals(draft.get("fb"));
         boolean gb = "1".equals(draft.get("gb"));
+        boolean li = "1".equals(draft.get("li"));
 
         try {
             if (ig && metaConfigOpt.isPresent()) {
@@ -406,6 +425,9 @@ public class SocialPublisherOrchestrator {
                     }
                 }
             }
+            if (li) {
+                linkedInPublisher.publishText(tenantId, caption != null ? caption : "");
+            }
             scheduledPost.setStatus("PUBLISHED");
             scheduledPost.setPublishedAt(Instant.now());
         } catch (Exception e) {
@@ -421,6 +443,7 @@ public class SocialPublisherOrchestrator {
         boolean ig = "1".equals(draft.get("ig"));
         boolean fb = "1".equals(draft.get("fb"));
         boolean gb = "1".equals(draft.get("gb"));
+        boolean li = "1".equals(draft.get("li"));
         String postType  = draft.get("postType");
         String caption   = draft.get("caption");
         String mediaUrl  = draft.get("mediaUrl");
@@ -481,6 +504,17 @@ public class SocialPublisherOrchestrator {
             }
         }
 
+        if (li) {
+            try {
+                String extId = linkedInPublisher.publishText(tenantId, caption != null ? caption : "");
+                savePost(tenantId, "LINKEDIN", postType, caption, mediaUrl, extId, null, "PUBLISHED");
+                results.append("✅ LinkedIn publicat\n");
+            } catch (Exception e) {
+                savePost(tenantId, "LINKEDIN", postType, caption, mediaUrl, null, e.getMessage(), "FAILED");
+                results.append("❌ LinkedIn: ").append(e.getMessage()).append("\n");
+            }
+        }
+
         if (chatId != null) {
             telegramBotClient.sendMessage(chatId, results.toString());
         } else {
@@ -501,6 +535,7 @@ public class SocialPublisherOrchestrator {
         if (hasIg) sb.append("📷 <b>I</b> — Instagram\n");
         if (hasFb) sb.append("👥 <b>F</b> — Facebook Page\n");
         if (hasGb) sb.append("🗺 <b>G</b> — Google Business\n");
+        if (isLinkedInAvailable(tenantId)) sb.append("💼 <b>L</b> — LinkedIn\n");
 
         if (sb.isEmpty()) sb.append("⚠️ Cap xarxa configurada. Contacta l'administrador.\n");
         return sb.toString();
@@ -511,6 +546,7 @@ public class SocialPublisherOrchestrator {
         if ("1".equals(draft.get("ig"))) list.append("Instagram ");
         if ("1".equals(draft.get("fb"))) list.append("Facebook ");
         if ("1".equals(draft.get("gb"))) list.append("Google Business ");
+        if ("1".equals(draft.get("li"))) list.append("LinkedIn ");
         return list.toString().trim();
     }
 

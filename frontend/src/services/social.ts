@@ -3,7 +3,7 @@ import { apiFetch } from './api';
 export interface SocialPost {
   id: string;
   tenantId: string;
-  network: 'INSTAGRAM' | 'FACEBOOK' | 'GOOGLE_BUSINESS';
+  network: 'INSTAGRAM' | 'FACEBOOK' | 'GOOGLE_BUSINESS' | 'LINKEDIN';
   postType: string;
   caption: string | null;
   mediaUrl: string | null;
@@ -33,6 +33,20 @@ export interface MetaConfigRequest {
   tokenExpiresAt?: string | null;
   pagesManagedPosts?: boolean;
   igContentPublish?: boolean;
+}
+
+// ─── LinkedIn (Mòdul 56 F4 — només tenant propietari) ────────────────────────
+
+export interface LinkedInStatus {
+  connected: boolean;
+}
+
+export async function getLinkedInStatus(tenantId: string): Promise<LinkedInStatus> {
+  return apiFetch(`/api/v1/social/tenants/${tenantId}/linkedin/status`);
+}
+
+export async function getLinkedInAuthUrl(tenantId: string): Promise<{ authUrl: string }> {
+  return apiFetch(`/api/v1/social/tenants/${tenantId}/linkedin/authorize`);
 }
 
 export async function listSocialPosts(tenantId: string): Promise<SocialPost[]> {

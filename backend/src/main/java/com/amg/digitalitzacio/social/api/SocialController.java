@@ -28,6 +28,9 @@ public class SocialController {
     private final SocialMetaConfigRepository metaConfigRepo;
     private final VaultEncryption vaultEncryption;
     private final SocialFeatureService featureService;
+    private final com.amg.digitalitzacio.social.application.LinkedInAuthService linkedInAuthService;
+    private final com.amg.digitalitzacio.social.application.LinkedInPublisherService linkedInPublisher;
+    private final com.amg.digitalitzacio.auth.domain.TenantRepository tenantRepository;
 
     /** Historial de posts per tenant */
     @GetMapping("/tenants/{tenantId}/posts")
@@ -124,7 +127,8 @@ public class SocialController {
             "commentsToTelegram", f.commentsToTelegram(),
             "weeklyAnalytics",    f.weeklyAnalytics(),
             "aiSuggestions",      f.aiSuggestions(),
-            "autoPostReviews",    f.autoPostReviews()
+            "autoPostReviews",    f.autoPostReviews(),
+            "dmsToInbox",         f.dmsToInbox()
         ));
     }
 
@@ -140,6 +144,32 @@ public class SocialController {
         }
         featureService.update(tenantId, req);
         return ResponseEntity.noContent().build();
+    }
+
+    // ─── LinkedIn (Mòdul 56 F4) — només tenant propietari AMG ──────────────────
+
+    /** Genera la URL d'autorització OAuth de LinkedIn (només tenant propietari) */
+    @GetMapping("/tenants/{tenantId}/linkedin/authorize")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Map<String, String>> linkedInAuthorize(@PathVariable UUID tenantId) {
+        if (!isOwnerTenant(tenantId)) {
+            return ResponseEntity.status(403).build();
+        }
+        var res = linkedInAuthService.generateAuthUrl(tenantId);
+        return ResponseEntity.ok(Map.of("authUrl", res.authUrl()));
+    }
+
+    /** Estat de connexió LinkedIn del tenant */
+    @GetMapping("/tenants/{tenantId}/linkedin/status")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<Map<String, Object>> linkedInStatus(@PathVariable UUID tenantId) {
+        return ResponseEntity.ok(Map.of("connected", linkedInPublisher.isConnected(tenantId)));
+    }
+
+    private boolean isOwnerTenant(UUID tenantId) {
+        return tenantRepository.findById(tenantId)
+            .map(t -> Boolean.TRUE.equals(t.getIsOwner()))
+            .orElse(false);
     }
 
     public record MetaConfigRequest(

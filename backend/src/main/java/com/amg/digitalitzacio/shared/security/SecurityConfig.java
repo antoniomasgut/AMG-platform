@@ -85,6 +85,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/agents/email/inbound").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/nexe/calendar/oauth-callback").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/google/callback").permitAll()
+                        // Webhook de Meta (leads + comentaris + DMs IG/Messenger) — protegit per HMAC, no per JWT
+                        .requestMatchers(HttpMethod.GET, "/api/v1/leads/meta-webhook").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/leads/meta-webhook").permitAll()
+                        // Callback OAuth de LinkedIn (Mòdul 56 F4)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/social/linkedin/callback").permitAll()
                         .requestMatchers(HttpMethod.GET, "/oauth/meta/whatsapp/callback").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/meta/whatsapp/oauth-session/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/whatsapp/webhook").permitAll()

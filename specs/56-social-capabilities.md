@@ -1,6 +1,6 @@
 # Spec 56 · Social Capabilities (extensió dels Mòduls 52/54/55)
 
-**Estat:** 🔧 En construcció
+**Estat:** ✅ Completat (F1 ✅ · F2 ✅ · F3 ✅ ja existent · F4 ✅ — activació real de F2/F4 depèn d'aprovacions externes)
 **Depèn de:** Mòdul 25 (Omnichannel Inbox), Mòdul 42 (Meta OAuth), Mòdul 52 (Social Publisher), Mòdul 54/55 (Reviews & Engagement), Mòdul 20 (Agents Telegram)
 
 ---
@@ -28,10 +28,12 @@ Ampliar el que es pot fer amb les xarxes, per a **tots els tenants** (inclòs el
 - **JA IMPLEMENTAT** per `PostAppointmentFollowUpScheduler` (F2→F4): després d'una cita passada, si el tenant té F4 activa, envia WhatsApp/Email amb l'enllaç `google_reviews_url` de la config FIDELITZACIO. Dedup via Redis + `FollowupLog`, multi-canal.
 - Acció operativa: cada tenant F4 ha de tenir `google_reviews_url` a la config FIDELITZACIO. No cal codi nou.
 
-### F4 · LinkedIn (només tenant AMG)
-- Nou canal del Social Publisher, actiu només per al tenant propietari (`isOwner`).
-- OAuth `w_member_social` (perfil personal — assolible) com a primera fase; pàgina d'empresa (`w_organization_social`) requereix Marketing Developer Platform de LinkedIn (fase posterior).
-- Publicació via `POST /v2/ugcPosts` o Posts API.
+### F4 · LinkedIn (només tenant AMG) ✅
+- Nou canal del Social Publisher (opció **L**), actiu només per al tenant propietari (`isOwner`) amb connexió activa.
+- OAuth `openid profile w_member_social` (perfil personal). `LinkedInAuthService` (estat a Redis 10 min), token xifrat al Vault (`linkedin_connections`, Flyway V92). Person URN via `/v2/userinfo` (`sub`).
+- Publicació via `POST /v2/ugcPosts` (`LinkedInPublisherService.publishText`), integrada a `SocialPublisherOrchestrator` (flux i programats).
+- Endpoints: `GET /api/v1/social/tenants/{id}/linkedin/authorize` (SUPER_ADMIN + owner), `/linkedin/status`, callback `GET /api/v1/social/linkedin/callback` (permitAll). Frontend: `/portal/admin/social/linkedin`.
+- Config sistema: `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`, `LINKEDIN_REDIRECT_URI`. Pàgina d'empresa (`w_organization_social`) requereix Marketing Developer Platform (fase posterior).
 
 ## 3. Ordre d'implementació
 1. F1 Respostes IA suggerides (extén M54/M55, risc baix) ✅ — botons `grevai:`/`grevpub:` (ressenyes) i `cmtai:`/`cmtpub:` (comentaris); esborrany IA a Redis, publicació sempre amb confirmació.
