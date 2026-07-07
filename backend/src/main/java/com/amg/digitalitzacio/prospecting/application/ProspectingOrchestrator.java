@@ -234,20 +234,26 @@ public class ProspectingOrchestrator implements ProspectingService {
     public ProspectResponse enrichProspect(UUID prospectId) {
         var prospect = prospectRepository.findById(prospectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
-        enrichOne(prospect);
+        // Individual: l'usuari tria un prospect concret, sí que val la pena gastar
+        // una crida a Places Details per completar el telèfon si falta.
+        enrichOne(prospect, true);
         applyScoreAndTier(prospect);
         prospect = prospectRepository.save(prospect);
         return toProspectResponse(prospect);
     }
 
     /**
-     * Enriqueix un prospect (telèfon via Place Details si cal, email, web, Instagram, WhatsApp).
-     * Lògica compartida entre l'enriquiment individual i el massiu perquè siguin idèntics.
-     * No desa ni recalcula score: ho fa el cridador.
+     * Enriqueix un prospect via scraping web (gratis): email, web, Instagram, WhatsApp.
+     * Si {@code fetchPlaceDetails} és true, a més completa el telèfon via Google Places
+     * Details API (crida de pagament) quan no en té. Lògica compartida entre l'enriquiment
+     * individual i el massiu. No desa ni recalcula score: ho fa el cridador.
      */
-    private void enrichOne(Prospect prospect) {
-        // Fase 2: obtenir telèfon i web via Place Details si no tenim telèfon
-        if ((prospect.getPhone() == null || prospect.getPhone().isBlank()) && prospect.getGooglePlaceId() != null) {
+    private void enrichOne(Prospect prospect, boolean fetchPlaceDetails) {
+        // Places Details es paga per crida → només quan el cridador ho autoritza
+        // (individual, o operacions de qualificació sobre els millors prospects).
+        if (fetchPlaceDetails
+                && (prospect.getPhone() == null || prospect.getPhone().isBlank())
+                && prospect.getGooglePlaceId() != null) {
             applyDetails(prospect, scraper.fetchDetails(prospect.getGooglePlaceId()));
         }
         // Netejar emails placeholder abans d'enriquir
@@ -379,17 +385,19 @@ public class ProspectingOrchestrator implements ProspectingService {
 
     @Override
     public int enrichAllProspects(UUID campaignId) {
-        // Mateixa lògica que l'enriquiment individual (enrichOne), aplicada a tots
-        // els prospects no exportats de la campanya. Abans un filtre excloïa els que
-        // ja tenien web+email, així que "enriquir tots" no els tocava mai (ni Instagram
-        // ni WhatsApp) — divergia de l'enriquiment individual.
+        // Scraping web (gratis) de tots els prospects no exportats: email, Instagram,
+        // WhatsApp. NO gasta crides a Places Details (de pagament) — aquestes es
+        // reserven a les operacions de qualificació (qualifyTop / qualifyByMinScore),
+        // que les fan només sobre els prospects de més puntuació.
+        // Abans un filtre excloïa els que ja tenien web+email (la majoria), així que
+        // "enriquir tots" no els tocava mai ni els detectava Instagram/WhatsApp.
         var prospects = prospectRepository.findByCampaignId(campaignId).stream()
                 .filter(p -> p.getStatus() != ProspectStatus.EXPORTED)
                 .toList();
         int enriched = 0;
         for (var prospect : prospects) {
             try {
-                enrichOne(prospect);
+                enrichOne(prospect, false);
                 applyScoreAndTier(prospect);
                 prospectRepository.save(prospect);
                 enriched++;
