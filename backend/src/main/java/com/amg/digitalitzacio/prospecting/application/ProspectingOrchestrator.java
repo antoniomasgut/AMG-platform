@@ -684,28 +684,35 @@ public class ProspectingOrchestrator implements ProspectingService {
 
         // El cas estrella: rep missatges per Messenger però no té cap agent/xat
         // → probablement no els contesta a temps (o no se n'assabenta).
+        // Pes moderat (+7): dispara sovint (les pàgines de FB són ubiqües) i
+        // se solapa parcialment amb NO_CHAT (+10); tot i així és el senyal social
+        // més valuós perquè apunta directament a la F1.
         if (Boolean.TRUE.equals(p.getHasFacebook()) && !Boolean.TRUE.equals(p.getHasChatWidget())) {
             signals.add(signal("SOCIAL_INBOX_NO_AGENT",
                 "Rep missatges per Messenger sense agent",
-                "Agent IA (F1) que contesta els DMs 24/7 → no es perd cap consulta", "warning", 8));
+                "Agent IA (F1) que contesta els DMs 24/7 → no es perd cap consulta", "warning", 7));
         }
-        // Inverteix en xarxes però no té web pròpia → capta atenció i la perd
+        // Inverteix en xarxes però no té web pròpia → capta atenció i la perd.
+        // L'oportunitat més clara: ja fa màrqueting, només li falta on convertir.
         if (socialNetworks > 0 && !Boolean.TRUE.equals(p.getHasWebsite())) {
             signals.add(signal("SOCIAL_NO_WEBSITE",
                 "Actiu a xarxes però sense web pròpia",
-                "Landing AMG + agent → convertir els seguidors en clients", "opportunity", 7));
+                "Landing AMG + agent → convertir els seguidors en clients", "opportunity", 8));
         }
-        // Present a 2+ xarxes → negoci que ja creu en el digital, venda més fàcil
+        // Present a 2+ xarxes → negoci que ja creu en el digital, venda més fàcil.
         if (socialNetworks >= 2) {
             signals.add(signal("MULTI_SOCIAL",
                 "Present a " + socialNetworks + " xarxes socials",
                 "Maduresa digital → Social Publisher (Spec 52) + agent centralitzat", "opportunity", 5));
         }
-        // Sense cap presència a xarxes → necessitat de digitalització
-        if (socialNetworks == 0) {
+        // Sense cap presència a xarxes → necessitat de digitalització, però
+        // convertibilitat més incerta (potser no li interessa el digital): pes baix.
+        // Només si s'ha analitzat de veritat: sense anàlisi els camps són NULL i
+        // "zero xarxes" seria falta de dades, no absència real de presència.
+        if (socialNetworks == 0 && p.getWebAnalyzedAt() != null) {
             signals.add(signal("ZERO_SOCIAL",
                 "Sense presència a xarxes socials",
-                "Presència digital de zero → Social Publisher + landing", "warning", 6));
+                "Presència digital de zero → Social Publisher + landing", "warning", 4));
         }
 
         // ── Penalitzacions ────────────────────────────────────────────────────

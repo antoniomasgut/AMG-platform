@@ -210,12 +210,14 @@ Basat **només** en la presència detectada (links a la web, sense scraping de s
 
 | Senyal | Condició | Punts | Tona |
 |--------|---------|-------|------|
-| `SOCIAL_INBOX_NO_AGENT` | Té Facebook (Messenger) però cap chat widget → rep DMs que probablement contesta a mà o no veu | +8 | warning |
-| `SOCIAL_NO_WEBSITE` | Present a ≥1 xarxa però sense web pròpia → capta atenció i la perd | +7 | opportunity |
+| `SOCIAL_INBOX_NO_AGENT` | Té Facebook (Messenger) però cap chat widget → rep DMs que probablement contesta a mà o no veu | +7 | warning |
+| `SOCIAL_NO_WEBSITE` | Present a ≥1 xarxa però sense web pròpia → capta atenció i la perd | +8 | opportunity |
 | `MULTI_SOCIAL` | Present a ≥2 xarxes (IG/FB/LinkedIn/TikTok) → maduresa digital, venda més fàcil | +5 | opportunity |
-| `ZERO_SOCIAL` | Cap presència a xarxes → necessitat de digitalització de zero | +6 | warning |
+| `ZERO_SOCIAL` | Cap presència a xarxes **i ja analitzat** (`web_analyzed_at` no nul) → necessitat de digitalització de zero | +4 | warning |
 
-> **Angle comercial clau (`SOCIAL_INBOX_NO_AGENT`):** un negoci amb Facebook/Messenger sovint **no s'assabenta** que té missatges pendents o triga dies a respondre. És el cas d'ús exacte de l'agent IA (F1): contesta els DMs 24/7 a l'instant.
+> **Angle comercial clau (`SOCIAL_INBOX_NO_AGENT`):** un negoci amb Facebook/Messenger sovint **no s'assabenta** que té missatges pendents o triga dies a respondre. És el cas d'ús exacte de l'agent IA (F1): contesta els DMs 24/7 a l'instant. Pes moderat (+7) perquè es solapa parcialment amb `NO_CHAT` (+10) i dispara sovint.
+
+> **Guard anti-soroll:** `ZERO_SOCIAL` només s'activa si el prospect ja ha passat per l'anàlisi web. Sense anàlisi, els camps socials són `NULL` i "zero xarxes" seria falta de dades, no absència real de presència. Els altres senyals disparen sobre valors `TRUE`, així que un `NULL` simplement no els activa (sense falsos positius).
 
 ### 5.3 Penalitzacions
 
