@@ -38,6 +38,7 @@ public class MetaLeadWebhookController {
     private final SystemConfigService sysConfig;
     private final MetaLeadWebhookService metaLeadWebhookService;
     private final com.amg.digitalitzacio.social.application.SocialCommentService socialCommentService;
+    private final com.amg.digitalitzacio.social.application.SocialDmService socialDmService;
     private final ObjectMapper objectMapper;
 
     /** Verificació del webhook per part de Meta (han de rebre el challenge de tornada). */
@@ -98,11 +99,14 @@ public class MetaLeadWebhookController {
 
     @SuppressWarnings("unchecked")
     private void processPayload(Map<String, Object> payload) {
-        if (!"page".equals(payload.get("object"))) return;
+        var object = String.valueOf(payload.get("object"));
+        boolean isPage = "page".equals(object);
+        boolean isInstagram = "instagram".equals(object);
+        if (!isPage && !isInstagram) return;
 
         var entries = (List<Map<String, Object>>) payload.getOrDefault("entry", List.of());
         for (var entry : entries) {
-            var pageId = String.valueOf(entry.get("id"));
+            var entryId = String.valueOf(entry.get("id"));
             var changes = (List<Map<String, Object>>) entry.getOrDefault("changes", List.of());
             for (var change : changes) {
                 var field = String.valueOf(change.get("field"));
@@ -112,11 +116,45 @@ public class MetaLeadWebhookController {
                 if ("leadgen".equals(field)) {
                     var leadgenId = String.valueOf(value.get("leadgen_id"));
                     var formId = String.valueOf(value.get("form_id"));
-                    metaLeadWebhookService.processLead(pageId, leadgenId, formId);
+                    metaLeadWebhookService.processLead(entryId, leadgenId, formId);
                 } else if ("feed".equals(field)) {
-                    processFeedComment(pageId, value);
+                    processFeedComment(entryId, value);
                 }
             }
+
+            // DMs (Mòdul 56 F2): arriben a entry[].messaging[], no a changes[]
+            var messaging = (List<Map<String, Object>>) entry.getOrDefault("messaging", List.of());
+            for (var event : messaging) {
+                processMessagingEvent(entryId, event, isInstagram);
+            }
+        }
+    }
+
+    /** Missatges directes de Messenger / Instagram (Mòdul 56 F2) */
+    @SuppressWarnings("unchecked")
+    private void processMessagingEvent(String entryId, Map<String, Object> event, boolean isInstagram) {
+        var messageObj = (Map<String, Object>) event.get("message");
+        if (messageObj == null) return;
+        // Ignora els ecos dels missatges enviats per la pròpia pàgina/compte
+        if (Boolean.TRUE.equals(messageObj.get("is_echo"))) return;
+
+        var text = messageObj.get("text") != null ? String.valueOf(messageObj.get("text")) : null;
+        if (text == null || text.isBlank()) return;
+
+        String senderId = null;
+        if (event.get("sender") instanceof Map<?, ?> sender && sender.get("id") != null) {
+            senderId = String.valueOf(sender.get("id"));
+        }
+        if (senderId == null) return;
+
+        try {
+            if (isInstagram) {
+                socialDmService.handleInstagramDm(entryId, senderId, null, text);
+            } else {
+                socialDmService.handleMessengerDm(entryId, senderId, null, text);
+            }
+        } catch (Exception e) {
+            log.warn("Error processant DM (entry {}): {}", entryId, e.getMessage());
         }
     }
 

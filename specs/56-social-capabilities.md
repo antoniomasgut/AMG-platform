@@ -17,15 +17,16 @@ Ampliar el que es pot fer amb les xarxes, per a **tots els tenants** (inclòs el
 - Reutilitza els fluxos de publicació existents (`replyToReview`, `replyToComment`).
 - Esborrany desat a Redis (TTL 15 min). Per a comentaris, el text del comentari es desa a Redis en notificar (`cmt:text:<id>`, TTL 1h) perquè no es persisteix.
 
-### F2 · DMs Instagram + Messenger → Inbox
-- Webhook Meta camp `messages` (IG) i `messaging` (Messenger) → crear/actualitzar conversa al Mòdul 25 Omnichannel Inbox.
-- Resposta des de l'Inbox via Graph API (`POST /{page}/messages`).
-- Requereix permisos `instagram_manage_messages` / `pages_messaging` (App Review Meta).
+### F2 · DMs Instagram + Messenger → Inbox ✅ (híbrid IA + aprovació)
+- Webhook Meta `entry[].messaging[]` (Messenger, `object=page`) i (IG, `object=instagram`) → `SocialDmService` resol el tenant (`findByFacebookPageId` / `findByInstagramAccountId`).
+- Gate per tenant: toggle `dms_to_inbox` (SocialFeatureService). L'agent IA prepara la resposta (`ConversationalAgentService.generateDmDraft`), persistida a l'Inbox (Mòdul 25) com a `pendingApproval`.
+- Avís al Telegram del tenant amb l'esborrany + botons **✅ Enviar** (`dmok:`) / **✍️ Escriure** (`dmwr:`). L'enviament real via `MetaMessagingChannel.sendMessage` (`POST /{page}/messages`). Context del DM desat a Redis (`dm:ctx:<id>`, TTL 24h); resposta manual pendent a `dm:pending:<chatId>`.
+- Si l'agent no està actiu o no hi ha Telegram enllaçat, la conversa queda a l'Inbox per respondre des del portal.
+- Requereix permisos `instagram_manage_messages` / `pages_messaging` (App Review Meta) per a l'activació real.
 
-### F3 · Sol·licitud automàtica de ressenyes
-- En tancar un servei (F2/F3), enviar WhatsApp/Email al client amb enllaç per deixar ressenya a Google.
-- Reutilitza plantilles de comunicació (Mòdul 43) + booking/document lifecycle.
-- Toggle per tenant; cooldown per no spamejar el mateix client.
+### F3 · Sol·licitud automàtica de ressenyes ✅ (ja existent)
+- **JA IMPLEMENTAT** per `PostAppointmentFollowUpScheduler` (F2→F4): després d'una cita passada, si el tenant té F4 activa, envia WhatsApp/Email amb l'enllaç `google_reviews_url` de la config FIDELITZACIO. Dedup via Redis + `FollowupLog`, multi-canal.
+- Acció operativa: cada tenant F4 ha de tenir `google_reviews_url` a la config FIDELITZACIO. No cal codi nou.
 
 ### F4 · LinkedIn (només tenant AMG)
 - Nou canal del Social Publisher, actiu només per al tenant propietari (`isOwner`).
@@ -34,8 +35,8 @@ Ampliar el que es pot fer amb les xarxes, per a **tots els tenants** (inclòs el
 
 ## 3. Ordre d'implementació
 1. F1 Respostes IA suggerides (extén M54/M55, risc baix) ✅ — botons `grevai:`/`grevpub:` (ressenyes) i `cmtai:`/`cmtpub:` (comentaris); esborrany IA a Redis, publicació sempre amb confirmació.
-2. F3 Sol·licitud automàtica de ressenyes (reutilitza M43)
-3. F2 DMs → Inbox (requereix App Review Meta)
+2. F3 Sol·licitud automàtica de ressenyes (reutilitza M43) ✅ (ja existent)
+3. F2 DMs → Inbox (híbrid IA + aprovació) ✅ — codi llest; activació real requereix App Review Meta.
 4. F4 LinkedIn AMG (nou OAuth)
 
 ## 4. Notes de producció

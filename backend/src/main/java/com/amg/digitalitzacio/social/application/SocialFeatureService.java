@@ -30,7 +30,8 @@ public class SocialFeatureService {
         boolean commentsToTelegram,
         boolean weeklyAnalytics,
         boolean aiSuggestions,
-        boolean autoPostReviews
+        boolean autoPostReviews,
+        boolean dmsToInbox
     ) {}
 
     /** true si el mòdul Social Publisher està activat per al tenant */
@@ -44,7 +45,8 @@ public class SocialFeatureService {
             flag(config, "comments_to_telegram"),
             flag(config, "weekly_analytics"),
             flag(config, "ai_suggestions"),
-            flag(config, "auto_post_reviews")
+            flag(config, "auto_post_reviews"),
+            flag(config, "dms_to_inbox")
         );
     }
 
@@ -55,6 +57,7 @@ public class SocialFeatureService {
         config.put("weekly_analytics", f.weeklyAnalytics());
         config.put("ai_suggestions", f.aiSuggestions());
         config.put("auto_post_reviews", f.autoPostReviews());
+        config.put("dms_to_inbox", f.dmsToInbox());
         try {
             nexeConfigService.save(tenantId, SERVICE_KEY, objectMapper.writeValueAsString(config));
         } catch (Exception e) {

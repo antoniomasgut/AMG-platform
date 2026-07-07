@@ -48,6 +48,7 @@ public class TelegramWebhookController {
     private final com.amg.digitalitzacio.google.application.GoogleReviewReplyService reviewReplyService;
     private final com.amg.digitalitzacio.social.application.ReviewSocialShareService reviewSocialShareService;
     private final com.amg.digitalitzacio.social.application.SocialCommentReplyService commentReplyService;
+    private final com.amg.digitalitzacio.social.application.SocialDmService socialDmService;
 
     private static final java.util.regex.Pattern SOCIAL_TRIGGER = java.util.regex.Pattern.compile(
         "(?i)\\b(publica|publicar|post|instagram|facebook|penja|penjar|xarxes)\\b");
@@ -214,6 +215,34 @@ public class TelegramWebhookController {
                     return ResponseEntity.ok("ok");
                 }
 
+                // Botó "✅ Enviar" d'un DM (Mòdul 56 F2): aprova i envia l'esborrany IA
+                if (cbChatId != null && data.startsWith("dmok:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        String dmId = data.substring("dmok:".length());
+                        if (callbackId != null) {
+                            telegramBotClient.answerCallbackQuery(callbackId, "Enviant...");
+                        }
+                        String msg = socialDmService.approveDraft(cbChatId, dmId);
+                        telegramBotClient.sendMessage(cbChatId, msg);
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Botó "✍️ Escriure/Respondre" d'un DM (Mòdul 56 F2): activa resposta manual
+                if (cbChatId != null && data.startsWith("dmwr:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        String dmId = data.substring("dmwr:".length());
+                        socialDmService.startManualReply(cbChatId, dmId);
+                        if (callbackId != null) {
+                            telegramBotClient.answerCallbackQuery(callbackId, "Escriu la resposta");
+                        }
+                        telegramBotClient.sendMessage(cbChatId, "✍️ Escriu la teva resposta i l'enviaré al client.");
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
                 if (cbChatId != null && callbackId != null && amgAdminCommandService.isAdminChat(cbChatId)) {
                     amgAdminCommandService.handleCallback(cbChatId, data, callbackId);
                 }
@@ -327,6 +356,12 @@ public class TelegramWebhookController {
                 // Resposta pendent a un comentari de Facebook (Mòdul 55, feature 1)
                 if (!text.startsWith("/") && commentReplyService.hasPending(chatId)) {
                     var reply = commentReplyService.submitReply(tenantId, chatId, text);
+                    if (reply != null) return ResponseEntity.ok(okTgReply(chatId, reply));
+                }
+
+                // Resposta manual pendent a un DM d'IG/Messenger (Mòdul 56 F2)
+                if (!text.startsWith("/") && socialDmService.hasPending(chatId)) {
+                    var reply = socialDmService.submitManualReply(chatId, text);
                     if (reply != null) return ResponseEntity.ok(okTgReply(chatId, reply));
                 }
 

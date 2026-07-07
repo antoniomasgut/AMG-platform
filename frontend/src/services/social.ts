@@ -52,6 +52,7 @@ export interface SocialFeatures {
   weeklyAnalytics: boolean;
   aiSuggestions: boolean;
   autoPostReviews: boolean;
+  dmsToInbox: boolean;
 }
 
 export interface SocialFeaturesStatus extends SocialFeatures {

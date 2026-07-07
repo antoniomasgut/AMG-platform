@@ -5,5 +5,7 @@ public enum ConversationChannel {
     WHATSAPP_META,
     TELEGRAM,
     EMAIL,
-    WIDGET
+    WIDGET,
+    MESSENGER,
+    INSTAGRAM
 }

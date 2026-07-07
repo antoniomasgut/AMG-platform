@@ -129,6 +129,37 @@ public class ConversationalAgentService {
     }
 
     /**
+     * Genera un esborrany de resposta per a un DM (Messenger/Instagram) sense enviar-lo (Mòdul 56 F2).
+     * Persista el missatge USER i la resposta ASSISTANT com a pendent d'aprovació.
+     * Retorna el text de l'esborrany, o null si l'agent no està actiu o no hi ha resposta.
+     */
+    public String generateDmDraft(UUID tenantId, String identifier, ConversationChannel channel, String text) {
+        try {
+            if (text != null && text.length() > MAX_INCOMING_TEXT_LENGTH) {
+                text = text.substring(0, MAX_INCOMING_TEXT_LENGTH);
+            }
+            var prepOpt = helper.prepareIncoming(tenantId, identifier, channel, text);
+            if (prepOpt.isEmpty()) return null;
+            var prep = prepOpt.get();
+
+            String systemPrompt = promptBuilder.build(tenantId, prep.context());
+            var chatHistory = prep.context().recentMessages().stream()
+                    .map(c -> new ChatMessage(c.getRole().name(), c.getContent()))
+                    .toList();
+
+            String aiResponse = callAI(tenantId, prep, systemPrompt, chatHistory, text);
+            if (aiResponse == null || aiResponse.isBlank()) return null;
+
+            var booking = processBookingTag(aiResponse, tenantId, identifier, channel);
+            helper.persistResponse(tenantId, identifier, channel, booking.cleanedResponse(), true, booking.reminderTask());
+            return booking.cleanedResponse();
+        } catch (Exception e) {
+            log.error("Error generant esborrany DM per tenant {}: {}", tenantId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Punt d'entrada per al canal WIDGET. Sempre retorna una resposta immediata.
      * Retorna null si l'agent no està actiu.
      */

@@ -22,6 +22,7 @@ const FEATURE_LIST: { key: keyof SocialFeatures; label: string; desc: string }[]
   { key: 'autoPostReviews',    label: 'Compartir ressenyes 5★',      desc: 'Botó per publicar les ressenyes de 5 estrelles a xarxes' },
   { key: 'weeklyAnalytics',    label: 'Resum setmanal d\'analítiques', desc: 'Abast, likes i comentaris dels posts publicats' },
   { key: 'commentsToTelegram', label: 'Comentaris → Telegram',       desc: 'Rep i respon comentaris de xarxes des de Telegram' },
+  { key: 'dmsToInbox',         label: 'DMs IG/Messenger → Inbox',    desc: 'Els missatges directes arriben a l\'Inbox; l\'IA prepara la resposta i tu l\'aproves per Telegram' },
 ];
 
 export default function SocialConnectionPage() {
@@ -77,6 +78,7 @@ export default function SocialConnectionPage() {
       weeklyAnalytics:    features.weeklyAnalytics,
       aiSuggestions:      features.aiSuggestions,
       autoPostReviews:    features.autoPostReviews,
+      dmsToInbox:         features.dmsToInbox,
       [key]: value,
     });
   };
