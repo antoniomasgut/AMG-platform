@@ -234,28 +234,36 @@ public class ProspectingOrchestrator implements ProspectingService {
     public ProspectResponse enrichProspect(UUID prospectId) {
         var prospect = prospectRepository.findById(prospectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Prospect not found: " + prospectId));
+        enrichOne(prospect);
+        applyScoreAndTier(prospect);
+        prospect = prospectRepository.save(prospect);
+        return toProspectResponse(prospect);
+    }
 
+    /**
+     * Enriqueix un prospect (telèfon via Place Details si cal, email, web, Instagram, WhatsApp).
+     * Lògica compartida entre l'enriquiment individual i el massiu perquè siguin idèntics.
+     * No desa ni recalcula score: ho fa el cridador.
+     */
+    private void enrichOne(Prospect prospect) {
         // Fase 2: obtenir telèfon i web via Place Details si no tenim telèfon
         if ((prospect.getPhone() == null || prospect.getPhone().isBlank()) && prospect.getGooglePlaceId() != null) {
             applyDetails(prospect, scraper.fetchDetails(prospect.getGooglePlaceId()));
         }
-
         // Netejar emails placeholder abans d'enriquir
         if (isPlaceholderEmail(prospect.getEmail())) prospect.setEmail(null);
-
-        // Enriquiment web: extreure email, Instagram
+        // Enriquiment web: extreure email, web, Instagram, WhatsApp
         var enrichment = scraper.enrich(prospect.getName(), prospect.getWebsite(), prospect.getEmail());
         if (enrichment.email() != null && !enrichment.email().isBlank()) prospect.setEmail(enrichment.email());
         if (enrichment.website() != null && !enrichment.website().isBlank()) {
             prospect.setWebsite(enrichment.website());
             prospect.setHasWebsite(true);
         }
-        if (enrichment.instagram() != null) prospect.setInstagram(enrichment.instagram());
+        if (enrichment.instagram() != null) {
+            prospect.setInstagram(enrichment.instagram());
+            prospect.setHasInstagram(true);
+        }
         if (enrichment.hasWhatsapp() != null) prospect.setHasWhatsapp(enrichment.hasWhatsapp());
-
-        applyScoreAndTier(prospect);
-        prospect = prospectRepository.save(prospect);
-        return toProspectResponse(prospect);
     }
 
     @Override
@@ -371,39 +379,20 @@ public class ProspectingOrchestrator implements ProspectingService {
 
     @Override
     public int enrichAllProspects(UUID campaignId) {
+        // Mateixa lògica que l'enriquiment individual (enrichOne), aplicada a tots
+        // els prospects no exportats de la campanya. Abans un filtre excloïa els que
+        // ja tenien web+email, així que "enriquir tots" no els tocava mai (ni Instagram
+        // ni WhatsApp) — divergia de l'enriquiment individual.
         var prospects = prospectRepository.findByCampaignId(campaignId).stream()
                 .filter(p -> p.getStatus() != ProspectStatus.EXPORTED)
-                .filter(p -> (p.getWebsite() == null || p.getWebsite().isBlank())
-                          || (p.getEmail() == null || p.getEmail().isBlank())
-                          || isPlaceholderEmail(p.getEmail()))
                 .toList();
         int enriched = 0;
         for (var prospect : prospects) {
             try {
-                // Netejar emails placeholder abans d'enriquir
-                boolean changed = false;
-                if (isPlaceholderEmail(prospect.getEmail())) {
-                    prospect.setEmail(null);
-                    changed = true;
-                }
-
-                var enrichment = scraper.enrich(prospect.getName(), prospect.getWebsite(), prospect.getEmail());
-                if (enrichment.email() != null && !enrichment.email().isBlank()
-                        && (prospect.getEmail() == null || prospect.getEmail().isBlank())) {
-                    prospect.setEmail(enrichment.email());
-                    changed = true;
-                }
-                if (enrichment.website() != null && !enrichment.website().isBlank()
-                        && (prospect.getWebsite() == null || prospect.getWebsite().isBlank())) {
-                    prospect.setWebsite(enrichment.website());
-                    prospect.setHasWebsite(true);
-                    changed = true;
-                }
-                if (changed) {
-                    applyScoreAndTier(prospect);
-                    prospectRepository.save(prospect);
-                    enriched++;
-                }
+                enrichOne(prospect);
+                applyScoreAndTier(prospect);
+                prospectRepository.save(prospect);
+                enriched++;
             } catch (Exception e) {
                 log.debug("Enrich failed for prospect {}: {}", prospect.getId(), e.getMessage());
             }
