@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AMG · Kit de configuració · Landing</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent: #FF6B00;
+  --dark:   #13132a;
+  --bg:     #f8f9fc;
+  --white:  #ffffff;
+  --border: #e2e8f0;
+  --text:   #1e2a3b;
+  --muted:  #64748b;
+  --green:  #16a34a;
+  --blue:   #0891b2;
+  --red:    #dc2626;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 12px; line-height: 1.55; }
+
+.toolbar { background: var(--dark); padding: 10px 24px; display: flex; justify-content: flex-end; position: sticky; top: 0; z-index: 10; }
+.toolbar button { background: var(--accent); border: none; color: #fff; font-weight: 600; border-radius: 6px; padding: 6px 14px; font-size: 11px; font-family: inherit; cursor: pointer; }
+
+.page { max-width: 860px; margin: 0 auto; background: var(--white); }
+
+header { background: var(--dark); padding: 18px 40px 15px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand-name { font-family: 'Orbitron', monospace; font-size: 15px; color: #fff; letter-spacing: 1px; }
+.brand-name b { color: var(--accent); }
+.header-badge { background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.35); border-radius: 6px; padding: 5px 12px; color: var(--accent); font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+.header-right { text-align: right; color: #8896aa; font-size: 10px; line-height: 1.6; }
+
+main { padding: 22px 40px 30px; }
+
+.doc-title { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+.doc-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+
+.meta-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; margin-bottom: 18px; display: grid; grid-template-columns: 1.4fr 1fr 1fr 0.8fr; gap: 8px 24px; }
+.field label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); display: block; margin-bottom: 2px; }
+.field .line { border-bottom: 1.5px solid var(--border); height: 20px; width: 100%; }
+
+.prereq { background: #fff7ed; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 14px; margin-bottom: 18px; font-size: 11.5px; }
+.prereq strong { color: #9a3412; }
+.prereq code { font-family: monospace; font-size: 10px; background: rgba(255,107,0,0.08); padding: 1px 5px; border-radius: 3px; }
+
+.section { margin-bottom: 18px; break-inside: avoid; }
+.section-title { font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); padding-bottom: 4px; border-bottom: 2px solid var(--border); margin-bottom: 10px; }
+
+.checklist { display: flex; flex-direction: column; gap: 7px; }
+.check-item { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: flex; align-items: flex-start; gap: 10px; }
+.check-item .cb { width: 16px; height: 16px; border: 1.5px solid #94a3b8; border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+.check-content { flex: 1; }
+.check-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--text); flex-wrap: wrap; }
+.actor-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; border-radius: 3px; padding: 1px 5px; flex-shrink: 0; text-transform: uppercase; }
+.actor-badge.amg    { background: rgba(255,107,0,0.10); color: #FF6B00; border: 1px solid rgba(255,107,0,0.28); }
+.actor-badge.client { background: rgba(8,145,178,0.10); color: #0891b2; border: 1px solid rgba(8,145,178,0.28); }
+.step-time { margin-left: auto; font-size: 10px; font-weight: 500; color: var(--muted); background: #f1f5f9; border-radius: 4px; padding: 2px 7px; font-family: monospace; flex-shrink: 0; }
+.check-note { font-size: 11px; color: var(--muted); line-height: 1.55; margin-top: 5px; }
+.check-note code, .check-title code { font-family: monospace; font-size: 10px; background: #f1f5f9; padding: 1px 5px; border-radius: 3px; color: var(--blue); }
+.check-note strong { color: var(--text); }
+
+.warn { background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 6px 10px; margin-top: 6px; font-size: 10.5px; color: #991b1b; }
+
+.verify { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; }
+.verify h3 { font-size: 12px; font-weight: 700; color: var(--green); margin-bottom: 8px; }
+.verify .v-item { display: flex; align-items: flex-start; gap: 8px; font-size: 11px; margin-bottom: 5px; }
+.verify .cb { width: 14px; height: 14px; border: 1.5px solid #86efac; border-radius: 3px; flex-shrink: 0; margin-top: 1px; }
+
+footer { border-top: 2px solid var(--border); padding: 12px 40px 18px; display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  body { background: #fff; }
+  .toolbar { display: none; }
+  .page { max-width: none; zoom: 0.8; }
+  .section, .check-item, .verify, .prereq, .meta-card { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar"><button onclick="window.print()">🖨️ Imprimir</button></div>
+
+<div class="page">
+
+<header>
+  <div style="display:flex;align-items:baseline;gap:10px;">
+    <div class="brand-name">AMG <b>Digitalització</b></div>
+    <div class="header-badge">Kit intern · Configuració de landing</div>
+  </div>
+  <div class="header-right">Guia operativa AMG · no lliurar al client</div>
+</header>
+
+<main>
+
+<div class="doc-title">Kit de configuració · Landing</div>
+<div class="doc-sub">Checklist complet per posar en marxa una landing (Micro-landing o Landing Pro), del contingut al domini amb SSL. Temps total estimat: 2-4 hores repartides en 2-3 dies.</div>
+
+<div class="meta-card">
+  <div class="field"><label>Client / negoci</label><div class="line"></div></div>
+  <div class="field"><label>Tenant ID</label><div class="line"></div></div>
+  <div class="field"><label>Tipus (Micro / Pro)</label><div class="line"></div></div>
+  <div class="field"><label>Data inici</label><div class="line"></div></div>
+</div>
+
+<div class="prereq">
+  <strong>Prerequisits:</strong> tenant creat al portal (si no, primer el <code>kit-config-tenant.html</code>) · si és <strong>Landing Pro amb xat IA</strong>, el tenant ha de tenir <strong>F1 actiu</strong> · formulari de contingut enviat al client (<code>docs/formulari-web-client.html</code>).
+</div>
+
+<div class="section">
+  <div class="section-title">1 · Contingut (abans de tocar el portal)</div>
+  <div class="checklist">
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Recollir el formulari de contingut omplert <span class="actor-badge client">Client</span><span class="step-time">1-2 dies</span></div>
+      <div class="check-note">Presentació, serveis, xifres/mèrits, horaris, testimonis, FAQ, xarxes, domini desitjat. Si triga: recordatori per WhatsApp; en última instància, omplim nosaltres des de la seva web/Instagram/Google Business i li passem a validar.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Recollir imatges i logo <span class="actor-badge client">Client</span><span class="step-time">amb el formulari</span></div>
+      <div class="check-note">Logo (fons transparent si pot ser), 5-10 fotos reals del negoci/feines. Sense fotos reals la landing perd la meitat de la força — insistir. Si no n'hi ha: sessió ràpida amb el mòbil el dia de la visita.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Pujar assets al portal <span class="actor-badge amg">AMG</span><span class="step-time">10 min</span></div>
+      <div class="check-note">A <code>/portal/assets</code> (MinIO). Redimensionar i comprimir abans de pujar: les fotos de mòbil de 8 MB maten el temps de càrrega.</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">2 · Creació al Factory</div>
+  <div class="checklist">
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Crear la landing <span class="actor-badge amg">AMG</span><span class="step-time">5 min</span></div>
+      <div class="check-note"><code>/portal/landings/new</code> → seleccionar el tenant i la <strong>plantilla del sector</strong> (les plantilles sectorials ja porten blocs i textos base coherents amb l'ofici).</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Configurar blocs i continguts <span class="actor-badge amg">AMG</span><span class="step-time">45-60 min</span></div>
+      <div class="check-note">A l'editor (<code>/portal/landings/[id]/edit</code>): hero amb la descripció del formulari, serveis (un bloc per servei amb foto), xifres/mèrits, testimonis, FAQ, horari, mapa/contacte. <strong>Micro-landing</strong>: blocs bàsics + formulari email. <strong>Landing Pro</strong>: tots els blocs.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Estils: colors, fonts i logo <span class="actor-badge amg">AMG</span><span class="step-time">15 min</span></div>
+      <div class="check-note">Panell d'estils: ColorScheme a partir del color de marca del client (o proposar-ne un pel sector), tipografia, logo a la capçalera. Comprovar contrast en mode fosc/clar de la plantilla.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Canals de contacte <span class="actor-badge amg">AMG</span><span class="step-time">10 min</span></div>
+      <div class="check-note">Al panell d'estils: <strong>telèfon</strong>, <strong>botó WhatsApp</strong> (número del formulari) i — només Landing Pro — <strong>toggle «Widget de xat IA»</strong> + nom del negoci al widget. El widget requereix F1 actiu al tenant; si no ho està, el toggle no té efecte.</div>
+      <div class="warn">⚠️ Formulari de contacte: comprovar que els leads arriben a <code>/portal/leads</code> del tenant, no al d'AMG.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Traduccions (4 idiomes) <span class="actor-badge amg">AMG</span><span class="step-time">20 min</span></div>
+      <div class="check-note">CA és el contingut mestre; generar/revisar <strong>ES, EN i DE</strong>. Repassar sobretot: noms de serveis, CTA i FAQ. A Mallorca el DE no és opcional per a restauració, estètica i immobiliària.</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">3 · SEO i legal</div>
+  <div class="checklist">
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">SEO bàsic per idioma <span class="actor-badge amg">AMG</span><span class="step-time">15 min</span></div>
+      <div class="check-note">Title i meta description per als 4 idiomes amb el patró <strong>«[Servei] a [Poble/Zona]»</strong>. Comprovar que el Schema.org del sector (LocalBusiness) queda generat amb adreça, telèfon i horaris correctes.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Pàgines legals RGPD/LSSI <span class="actor-badge amg">AMG</span><span class="step-time">10 min</span></div>
+      <div class="check-note">Avís legal, política de privacitat i cookies amb les dades fiscals del client (NIF, adreça del formulari d'inici de servei). Banner de cookies actiu si hi ha analítica.</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">4 · Validació amb el client</div>
+  <div class="checklist">
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Enviar preview al client <span class="actor-badge amg">AMG</span><span class="step-time">2 min</span></div>
+      <div class="check-note">URL de <code>/portal/landings/[id]/preview</code> per WhatsApp. Demanar que ho miri <strong>al mòbil</strong> — és on ho veuran els seus clients.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Recollir canvis i aplicar-los <span class="actor-badge client">Client</span><span class="step-time">1 dia màx</span></div>
+      <div class="check-note"><strong>Una sola ronda de canvis</strong> abans de publicar — si no, s'eternitza. Canvis posteriors: es fan igualment, però ja amb la web publicada.</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">5 · Domini i publicació</div>
+  <div class="checklist">
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Domini <span class="actor-badge amg">AMG</span><span class="step-time">15 min + propagació</span></div>
+      <div class="check-note"><strong>Gestionat</strong> (60€ setup, 15€/any): registrar des de <code>/portal/admin/domains</code>. <strong>Autogestionat</strong> (30€): el client té el domini; li passem els registres DNS (A → IP del servidor) i ho apunta ell o el seu proveïdor. Propagació: fins a 24h.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Publicar la landing <span class="actor-badge amg">AMG</span><span class="step-time">5 min</span></div>
+      <div class="check-note">Publicar des de l'editor. Traefik emet el certificat SSL automàticament quan el DNS ja apunta — si el candau no surt, esperar la propagació abans de tocar res.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Alta a Google <span class="actor-badge amg">AMG</span><span class="step-time">10 min</span></div>
+      <div class="check-note">Search Console (verificació per DNS si el domini és gestionat) + enllaçar la web a la fitxa de Google Business del client si en té.</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">6 · Verificació final (go-live)</div>
+  <div class="verify">
+    <h3>✅ Tot això, comprovat des d'un mòbil amb dades (no wifi del despatx):</h3>
+    <div class="v-item"><span class="cb"></span> El domini carrega amb https i candau, amb www i sense</div>
+    <div class="v-item"><span class="cb"></span> Els 4 idiomes es veuen i el selector funciona</div>
+    <div class="v-item"><span class="cb"></span> El formulari de contacte envia → el lead apareix a <code>/portal/leads</code> del tenant</div>
+    <div class="v-item"><span class="cb"></span> El botó de WhatsApp obre el xat amb el número correcte</div>
+    <div class="v-item"><span class="cb"></span> (Pro) El widget de xat respon com el negoci i pot agendar una cita</div>
+    <div class="v-item"><span class="cb"></span> (Pro) La notificació de la cita de prova arriba al Telegram del tenant</div>
+    <div class="v-item"><span class="cb"></span> Les pàgines legals s'obren des del peu</div>
+    <div class="v-item"><span class="cb"></span> Temps de càrrega raonable amb 4G (imatges comprimides)</div>
+    <div class="v-item"><span class="cb"></span> Missatge al client: «ja estàs en marxa» + enllaç + mini-guia de com veure els seus leads</div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <div>AMG Digitalització · Kit intern de configuració de landing</div>
+  <div>Relacionats: formulari-web-client.html · kit-config-tenant.html</div>
+</footer>
+
+</div>
+
+</body>
+</html>

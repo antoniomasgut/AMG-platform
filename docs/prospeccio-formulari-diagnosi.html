@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AMG · Formulari de diagnosi del negoci</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent: #FF6B00;
+  --dark:   #13132a;
+  --bg:     #f8f9fc;
+  --white:  #ffffff;
+  --border: #e2e8f0;
+  --text:   #1e2a3b;
+  --muted:  #64748b;
+  --green:  #16a34a;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 12px; line-height: 1.5; }
+
+.toolbar { background: var(--dark); padding: 10px 24px; display: flex; justify-content: flex-end; position: sticky; top: 0; z-index: 10; }
+.toolbar button { background: var(--accent); border: none; color: #fff; font-weight: 600; border-radius: 6px; padding: 6px 14px; font-size: 11px; font-family: inherit; cursor: pointer; }
+
+.page { max-width: 820px; margin: 0 auto; background: var(--white); }
+
+header { background: var(--dark); padding: 18px 40px 15px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand-name { font-family: 'Orbitron', monospace; font-size: 15px; color: #fff; letter-spacing: 1px; }
+.brand-name b { color: var(--accent); }
+.header-badge { background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.35); border-radius: 6px; padding: 5px 12px; color: var(--accent); font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+.header-right { text-align: right; color: #8896aa; font-size: 10px; line-height: 1.6; }
+
+main { padding: 20px 40px 30px; }
+
+.doc-title { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+.doc-sub { font-size: 11px; color: var(--muted); margin-bottom: 18px; }
+
+.section { margin-bottom: 18px; }
+.section-title { font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); padding-bottom: 4px; border-bottom: 2px solid var(--border); margin-bottom: 10px; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 20px; }
+.field label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); display: block; margin-bottom: 2px; }
+.field .line { border-bottom: 1.5px solid var(--border); height: 28px; width: 100%; }
+.field .line.tall { height: 30px; }
+
+.opts { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.opt { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text); }
+.opt .cb { width: 13px; height: 13px; border: 1.5px solid #94a3b8; border-radius: 3px; flex-shrink: 0; }
+.opt-note { font-size: 10px; color: var(--muted); margin-top: 4px; }
+.opt-inline { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+.opt-inline .lbl { font-size: 10px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.opt-inline .line { border-bottom: 1.5px solid var(--border); height: 18px; flex: 1; }
+
+.q-block { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; }
+.q-block .q { font-size: 11.5px; font-weight: 600; margin-bottom: 6px; }
+.q-block .q .hint { font-weight: 400; color: var(--muted); font-size: 10px; }
+
+.numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.num-card { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 9px 12px; }
+.num-card .n-label { font-size: 9.5px; font-weight: 600; color: #9a3412; line-height: 1.35; min-height: 26px; }
+.num-card .n-line { border-bottom: 2px solid #fdba74; height: 30px; margin-top: 4px; font-size: 16px; }
+
+.problems .p-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 10px; }
+.problems .p-num { width: 22px; height: 22px; background: var(--dark); color: var(--accent); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.problems .p-line { border-bottom: 1.5px solid var(--border); height: 30px; flex: 1; }
+
+.next-meeting { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 8px 20px; }
+.next-meeting .field label { color: var(--green); }
+
+.rgpd { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-top: 14px; }
+.rgpd .r-row { display: flex; align-items: flex-start; gap: 8px; }
+.rgpd .cb { width: 14px; height: 14px; border: 1.5px solid #94a3b8; border-radius: 3px; flex-shrink: 0; margin-top: 1px; }
+.rgpd p { font-size: 9.5px; color: var(--muted); line-height: 1.5; }
+.rgpd .sign-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 12px; }
+.rgpd .sign-row .line { border-bottom: 1.5px solid var(--border); height: 34px; }
+.rgpd .sign-row label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); display: block; margin-bottom: 2px; }
+
+footer { border-top: 2px solid var(--border); padding: 12px 40px 18px; display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  body { background: #fff; }
+  .toolbar { display: none; }
+  .page { max-width: none; zoom: 0.85; }
+  .section, .q-block, .rgpd, .next-meeting { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar"><button onclick="window.print()">🖨️ Imprimir</button></div>
+
+<div class="page">
+
+<header>
+  <div style="display:flex;align-items:baseline;gap:10px;">
+    <div class="brand-name">AMG <b>Digitalització</b></div>
+    <div class="header-badge">Diagnosi del negoci</div>
+  </div>
+  <div class="header-right">Toni Mas · +34 614 492 062 · info@amgdl.com</div>
+</header>
+
+<main>
+
+<div class="doc-title">Coneguem el teu negoci</div>
+<div class="doc-sub">10 minuts de conversa per entendre com treballes avui i on et podem fer guanyar temps i clients. Cap compromís.</div>
+
+<div class="section">
+  <div class="section-title">1 · El negoci</div>
+  <div class="grid-2">
+    <div class="field"><label>Nom del negoci</label><div class="line"></div></div>
+    <div class="field"><label>Activitat / sector</label><div class="line"></div></div>
+    <div class="field"><label>Persona de contacte i càrrec</label><div class="line"></div></div>
+    <div class="field"><label>Telèfon / WhatsApp</label><div class="line"></div></div>
+    <div class="field"><label>Email</label><div class="line"></div></div>
+    <div class="field"><label>Adreça / zona</label><div class="line"></div></div>
+    <div class="field"><label>Quantes persones sou</label><div class="line"></div></div>
+    <div class="field"><label>Horari habitual</label><div class="line"></div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">2 · Per on et contacten els clients</div>
+  <div class="q-block">
+    <div class="q">Canals actius <span class="hint">(marca tots els que facis servir)</span></div>
+    <div class="opts">
+      <div class="opt"><span class="cb"></span> Telèfon</div>
+      <div class="opt"><span class="cb"></span> WhatsApp personal</div>
+      <div class="opt"><span class="cb"></span> WhatsApp Business</div>
+      <div class="opt"><span class="cb"></span> Instagram</div>
+      <div class="opt"><span class="cb"></span> Facebook</div>
+      <div class="opt"><span class="cb"></span> Web pròpia</div>
+      <div class="opt"><span class="cb"></span> Google (fitxa/ressenyes)</div>
+      <div class="opt"><span class="cb"></span> Boca-orella</div>
+    </div>
+    <div class="opt-inline"><span class="lbl">El que més fas servir:</span><div class="line"></div><span class="lbl">Qui contesta:</span><div class="line"></div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">3 · Com ho gestiones avui</div>
+  <div class="q-block">
+    <div class="q">Les cites / reserves</div>
+    <div class="opts">
+      <div class="opt"><span class="cb"></span> No en faig</div>
+      <div class="opt"><span class="cb"></span> Llibreta / agenda de paper</div>
+      <div class="opt"><span class="cb"></span> Google Calendar</div>
+      <div class="opt"><span class="cb"></span> Una app / programa</div>
+      <div class="opt"><span class="cb"></span> De memòria</div>
+    </div>
+  </div>
+  <div class="q-block">
+    <div class="q">Els pressupostos</div>
+    <div class="opts">
+      <div class="opt"><span class="cb"></span> No en faig</div>
+      <div class="opt"><span class="cb"></span> De paraula</div>
+      <div class="opt"><span class="cb"></span> Paper / nota</div>
+      <div class="opt"><span class="cb"></span> Word / Excel</div>
+      <div class="opt"><span class="cb"></span> Un programa</div>
+    </div>
+  </div>
+  <div class="q-block">
+    <div class="q">Les consultes fora d'horari (vespres, caps de setmana)</div>
+    <div class="opts">
+      <div class="opt"><span class="cb"></span> Contesto igualment, a qualsevol hora</div>
+      <div class="opt"><span class="cb"></span> Contesto quan puc, l'endemà</div>
+      <div class="opt"><span class="cb"></span> Sovint queden sense resposta</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">4 · Els teus números <span style="color:var(--muted);letter-spacing:1px;">(aproximats — no cal exactitud)</span></div>
+  <div class="numbers">
+    <div class="num-card"><div class="n-label">Consultes noves per setmana (trucades + missatges)</div><div class="n-line"></div></div>
+    <div class="num-card"><div class="n-label">Quantes queden sense resposta o arriben tard</div><div class="n-line"></div></div>
+    <div class="num-card"><div class="n-label">Cites o feines per setmana</div><div class="n-line"></div></div>
+    <div class="num-card"><div class="n-label">Clients que no es presenten (al mes)</div><div class="n-line"></div></div>
+    <div class="num-card"><div class="n-label">Tiquet / tarifa mitjana per client (€)</div><div class="n-line"></div></div>
+    <div class="num-card"><div class="n-label">Hores per setmana dedicades a mòbil i papers</div><div class="n-line"></div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">5 · Què et treu més temps o clients</div>
+  <div class="problems">
+    <div class="p-row"><div class="p-num">1</div><div class="p-line"></div></div>
+    <div class="p-row"><div class="p-num">2</div><div class="p-line"></div></div>
+    <div class="p-row"><div class="p-num">3</div><div class="p-line"></div></div>
+  </div>
+  <div class="field" style="margin-top:4px;">
+    <label>Si demà poguessis arreglar una sola cosa, quina seria?</label>
+    <div class="line tall"></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">6 · Pròxima passa</div>
+  <div class="next-meeting">
+    <div class="field"><label>Dia i hora</label><div class="line"></div></div>
+    <div class="field"><label>Lloc</label><div class="line"></div></div>
+    <div class="field"><label>Què portarem</label><div style="font-size:10.5px;color:var(--text);line-height:1.5;">Proposta a mida amb pla, resultats esperats i preu — sense compromís.</div></div>
+  </div>
+
+  <div class="rgpd">
+    <div class="r-row">
+      <span class="cb"></span>
+      <p><strong>Consentiment de contacte (RGPD):</strong> autoritzo AMG Digitalització (Toni Mas, info@amgdl.com) a guardar les dades d'aquest full i a contactar-me per telèfon, WhatsApp o email en relació amb aquesta proposta. Puc retirar el consentiment en qualsevol moment escrivint a info@amgdl.com. Les dades no es cediran a tercers.</p>
+    </div>
+    <div class="sign-row">
+      <div><label>Signatura</label><div class="line"></div></div>
+      <div><label>Data</label><div class="line"></div></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <div>AMG Digitalització · Toni Mas · amgdl.com</div>
+  <div>+34 614 492 062 · info@amgdl.com</div>
+</footer>
+
+</div>
+
+</body>
+</html>

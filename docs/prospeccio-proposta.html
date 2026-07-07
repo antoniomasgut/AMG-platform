@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AMG · Proposta de digitalització</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent: #FF6B00;
+  --dark:   #13132a;
+  --bg:     #f8f9fc;
+  --white:  #ffffff;
+  --border: #e2e8f0;
+  --text:   #1e2a3b;
+  --muted:  #64748b;
+  --green:  #16a34a;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 12px; line-height: 1.5; }
+
+.toolbar { background: var(--dark); padding: 10px 24px; display: flex; justify-content: flex-end; position: sticky; top: 0; z-index: 10; }
+.toolbar button { background: var(--accent); border: none; color: #fff; font-weight: 600; border-radius: 6px; padding: 6px 14px; font-size: 11px; font-family: inherit; cursor: pointer; }
+
+.page { max-width: 820px; margin: 0 auto; background: var(--white); }
+
+header { background: var(--dark); padding: 18px 40px 15px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand-name { font-family: 'Orbitron', monospace; font-size: 15px; color: #fff; letter-spacing: 1px; }
+.brand-name b { color: var(--accent); }
+.header-badge { background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.35); border-radius: 6px; padding: 5px 12px; color: var(--accent); font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+.header-right { text-align: right; color: #8896aa; font-size: 10px; line-height: 1.6; }
+
+main { padding: 22px 40px 30px; }
+
+.doc-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
+.doc-title span { color: var(--accent); }
+
+.client-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: grid; grid-template-columns: 1.2fr 1fr 0.8fr; gap: 8px 24px; }
+.field label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); display: block; margin-bottom: 2px; }
+.field .line { border-bottom: 1.5px solid var(--border); height: 20px; width: 100%; }
+
+.section { margin-bottom: 20px; }
+.section-title { font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); padding-bottom: 4px; border-bottom: 2px solid var(--border); margin-bottom: 10px; }
+
+.summary-lines .s-line { border-bottom: 1.5px solid var(--border); height: 24px; margin-bottom: 8px; }
+
+.cost-calc { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 14px 18px; }
+.cost-calc .cc-title { font-size: 12px; font-weight: 700; color: #9a3412; margin-bottom: 10px; }
+.cost-row { display: grid; grid-template-columns: 1fr 90px 30px 1fr 90px; align-items: end; gap: 8px; margin-bottom: 10px; font-size: 11px; color: #7c2d12; }
+.cost-row .c-line { border-bottom: 2px solid #fdba74; height: 22px; }
+.cost-row .c-op { text-align: center; font-size: 15px; font-weight: 700; padding-bottom: 2px; }
+.cost-total { display: flex; align-items: end; gap: 12px; border-top: 1px dashed #fdba74; padding-top: 10px; font-size: 12px; font-weight: 700; color: #9a3412; }
+.cost-total .c-line { border-bottom: 2px solid #ea580c; height: 26px; flex: 0 0 140px; }
+.cost-note { font-size: 9.5px; color: #9a3412; opacity: 0.75; margin-top: 6px; }
+
+table.services { width: 100%; border-collapse: collapse; }
+table.services th { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--border); }
+table.services th.num, table.services td.num { text-align: right; width: 90px; }
+table.services td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+table.services .cb { width: 15px; height: 15px; border: 1.5px solid #94a3b8; border-radius: 3px; display: inline-block; }
+table.services .sv-name { font-weight: 600; font-size: 12px; }
+table.services .sv-desc { font-size: 10px; color: var(--muted); margin-top: 1px; line-height: 1.4; }
+table.services .p-line { border-bottom: 1.5px solid var(--border); height: 18px; min-width: 70px; }
+table.services tr.total-row td { border-bottom: none; border-top: 2px solid var(--dark); padding-top: 10px; font-weight: 700; font-size: 13px; }
+table.services tr.total-row .p-line { border-bottom: 2px solid var(--accent); height: 22px; }
+
+.discounts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.disc-card { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 14px; }
+.disc-card .d-title { font-size: 11.5px; font-weight: 700; color: var(--green); margin-bottom: 4px; }
+.disc-card p { font-size: 10.5px; color: var(--text); line-height: 1.5; }
+.disc-card .d-line { display: inline-block; border-bottom: 1.5px solid #86efac; min-width: 60px; height: 15px; vertical-align: bottom; }
+
+.timeline { display: flex; flex-direction: column; gap: 8px; }
+.tl-row { display: flex; gap: 12px; align-items: flex-start; background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; }
+.tl-week { width: 76px; flex-shrink: 0; background: var(--dark); color: var(--accent); border-radius: 6px; text-align: center; font-family: 'Orbitron', monospace; font-size: 9px; font-weight: 700; padding: 6px 4px; }
+.tl-content { flex: 1; }
+.tl-title { font-size: 12px; font-weight: 600; }
+.tl-desc { font-size: 10.5px; color: var(--muted); line-height: 1.45; margin-top: 1px; }
+.tl-who { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 3px; padding: 2px 6px; flex-shrink: 0; align-self: center; }
+.tl-who.amg { background: rgba(255,107,0,0.10); color: var(--accent); border: 1px solid rgba(255,107,0,0.28); }
+.tl-who.both { background: rgba(8,145,178,0.10); color: #0891b2; border: 1px solid rgba(8,145,178,0.28); }
+
+table.kpis { width: 100%; border-collapse: collapse; }
+table.kpis th { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--border); }
+table.kpis td { padding: 7px 10px; border-bottom: 1px solid var(--border); font-size: 11.5px; }
+table.kpis td.fill { width: 130px; }
+table.kpis .k-line { border-bottom: 1.5px solid var(--border); height: 16px; }
+table.kpis td.goal { color: var(--green); font-weight: 600; width: 190px; }
+
+.guarantees { display: flex; gap: 10px; }
+.g-item { flex: 1; display: flex; align-items: flex-start; gap: 8px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 10.5px; line-height: 1.45; }
+.g-item .g-emoji { font-size: 15px; flex-shrink: 0; }
+.g-item strong { display: block; font-size: 11px; }
+
+.decision { background: var(--dark); border-radius: 10px; padding: 16px 20px; margin-top: 6px; }
+.decision .d-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.decision .d-head .emoji { font-size: 20px; }
+.decision h3 { color: #fff; font-size: 14px; font-weight: 700; }
+.decision p { color: #a0a0c0; font-size: 11px; line-height: 1.5; margin-bottom: 12px; }
+.decision .d-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+.decision .field label { color: #8896aa; }
+.decision .field .line { border-bottom: 1.5px solid #3a3a60; height: 24px; }
+.decision .d-validity { color: #6060a0; font-size: 9.5px; margin-top: 10px; }
+
+.sign-block { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 18px; }
+.sign-block .s-col label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); display: block; margin-bottom: 4px; }
+.sign-block .s-col .line { border-bottom: 1.5px solid var(--border); height: 44px; }
+
+footer { border-top: 2px solid var(--border); padding: 12px 40px 18px; display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  body { background: #fff; }
+  .toolbar { display: none; }
+  .page { max-width: none; zoom: 0.85; }
+  .page-break { break-before: page; }
+  .section, .client-card { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar"><button onclick="window.print()">🖨️ Imprimir</button></div>
+
+<div class="page">
+
+<header>
+  <div style="display:flex;align-items:baseline;gap:10px;">
+    <div class="brand-name">AMG <b>Digitalització</b></div>
+    <div class="header-badge">Proposta a mida</div>
+  </div>
+  <div class="header-right">Toni Mas · +34 614 492 062 · info@amgdl.com</div>
+</header>
+
+<main>
+
+<div class="doc-title">Proposta de digitalització per a <span>el teu negoci</span></div>
+
+<div class="client-card">
+  <div class="field"><label>Negoci</label><div class="line"></div></div>
+  <div class="field"><label>Persona de contacte</label><div class="line"></div></div>
+  <div class="field"><label>Data</label><div class="line"></div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">1 · El que ens vas explicar</div>
+  <div class="summary-lines">
+    <div class="s-line"></div>
+    <div class="s-line"></div>
+    <div class="s-line"></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">2 · Què et costa no fer res</div>
+  <div class="cost-calc">
+    <div class="cc-title">Amb els números que ens vas donar:</div>
+    <div class="cost-row">
+      <div>Consultes perdudes o tardanes per setmana</div><div class="c-line"></div>
+      <div class="c-op">×</div>
+      <div>Tiquet mitjà (€)</div><div class="c-line"></div>
+    </div>
+    <div class="cost-row">
+      <div>Hores de gestió per setmana</div><div class="c-line"></div>
+      <div class="c-op">×</div>
+      <div>El que val la teva hora (€)</div><div class="c-line"></div>
+    </div>
+    <div class="cost-total">
+      <span>Cost estimat cada mes:</span><div class="c-line"></div><span>€/mes</span>
+    </div>
+    <div class="cost-note">* Estimació orientativa a partir de les dades del full de diagnosi. Encara que només se'n recuperi una part, la inversió es paga sola.</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">3 · Què proposem</div>
+  <table class="services">
+    <thead>
+      <tr><th style="width:26px;"></th><th>Servei</th><th class="num">Posada en marxa</th><th class="num">Mensual</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="cb"></span></td>
+        <td><div class="sv-name">🤖 Assistent d'IA (atenció al client)</div><div class="sv-desc">Respon per WhatsApp i al xat de la web, 24/7, amb la informació del teu negoci. T'avisa de tot al mòbil.</div></td>
+        <td class="num"><div class="p-line"></div></td>
+        <td class="num"><div class="p-line"></div></td>
+      </tr>
+      <tr>
+        <td><span class="cb"></span></td>
+        <td><div class="sv-name">📅 Agenda automàtica</div><div class="sv-desc">Els clients demanen hora sols, amb confirmació i recordatoris. Reprogramació automàtica si no poden venir.</div></td>
+        <td class="num"><div class="p-line"></div></td>
+        <td class="num"><div class="p-line"></div></td>
+      </tr>
+      <tr>
+        <td><span class="cb"></span></td>
+        <td><div class="sv-name">📄 Pressupostos i documents</div><div class="sv-desc">Pressupostos professionals amb la teva marca, enviats per WhatsApp o email, amb acceptació amb un clic.</div></td>
+        <td class="num"><div class="p-line"></div></td>
+        <td class="num"><div class="p-line"></div></td>
+      </tr>
+      <tr>
+        <td><span class="cb"></span></td>
+        <td><div class="sv-name">🔁 Seguiment de clients</div><div class="sv-desc">Recordatoris de revisions, felicitacions, reactivació de clients que fa temps que no venen.</div></td>
+        <td class="num"><div class="p-line"></div></td>
+        <td class="num"><div class="p-line"></div></td>
+      </tr>
+      <tr>
+        <td><span class="cb"></span></td>
+        <td><div class="sv-name">🌐 Web / Landing amb xat inclòs</div><div class="sv-desc">Pàgina professional en 4 idiomes amb formulari, WhatsApp i l'assistent d'IA integrat. Domini inclòs si cal.</div></td>
+        <td class="num"><div class="p-line"></div></td>
+        <td class="num"><div class="p-line"></div></td>
+      </tr>
+      <tr>
+        <td><span class="cb"></span></td>
+        <td><div class="sv-name">➕ Altres</div><div class="sv-desc" style="border-bottom:1.5px solid var(--border);height:18px;"></div></td>
+        <td class="num"><div class="p-line"></div></td>
+        <td class="num"><div class="p-line"></div></td>
+      </tr>
+      <tr class="total-row">
+        <td></td>
+        <td>Total</td>
+        <td class="num"><div class="p-line"></div></td>
+        <td class="num"><div class="p-line"></div></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">4 · Condicions especials</div>
+  <div class="discounts">
+    <div class="disc-card">
+      <div class="d-title">🚀 Primers negocis de la zona</div>
+      <p>Per ser dels primers a confiar en nosaltres: <strong><span class="d-line"></span> % de descompte</strong> a la posada en marxa. Vàlid si acceptes abans del <span class="d-line"></span>.</p>
+    </div>
+    <div class="disc-card">
+      <div class="d-title">🤝 Si ens recomanes</div>
+      <p>Per cada negoci que vingui de part teva i es doni d'alta: <strong><span class="d-line"></span></strong> de descompte a la teva quota. Sense límit.</p>
+    </div>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<div class="section">
+  <div class="section-title">5 · Pla de posada en marxa</div>
+  <div class="timeline">
+    <div class="tl-row">
+      <div class="tl-week">Setmana 1</div>
+      <div class="tl-content"><div class="tl-title">Configuració i continguts</div><div class="tl-desc">Recollim la informació del negoci (serveis, preus, horaris, to de resposta) i ho configurem tot. Tu només has de dedicar-hi una estona per validar-ho.</div></div>
+      <div class="tl-who both">AMG + Tu</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-week">Setmana 2</div>
+      <div class="tl-content"><div class="tl-title">Posada en marxa i proves</div><div class="tl-desc">Activem l'assistent i l'agenda en real. Fem proves junts: tu fas de client i comproves que respon com tu voldries.</div></div>
+      <div class="tl-who amg">AMG</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-week">Setmanes 3-4</div>
+      <div class="tl-content"><div class="tl-title">Ajustos i acompanyament</div><div class="tl-desc">Afinem les respostes amb converses reals, t'ensenyem a veure-ho tot des del mòbil i quedem disponibles per WhatsApp per a qualsevol dubte.</div></div>
+      <div class="tl-who both">AMG + Tu</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">6 · Resultats que mesurarem</div>
+  <table class="kpis">
+    <thead>
+      <tr><th>Indicador</th><th style="width:130px;">Avui</th><th style="width:190px;">Objectiu (90 dies)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Consultes respostes en menys d'1 minut</td><td class="fill"><div class="k-line"></div></td><td class="goal">100 % (24/7)</td></tr>
+      <tr><td>Consultes perdudes o sense resposta</td><td class="fill"><div class="k-line"></div></td><td class="goal">Pràcticament zero</td></tr>
+      <tr><td>Clients que no es presenten a la cita</td><td class="fill"><div class="k-line"></div></td><td class="goal">−50 % amb recordatoris</td></tr>
+      <tr><td>Hores de gestió per setmana (mòbil i papers)</td><td class="fill"><div class="k-line"></div></td><td class="goal">La meitat o menys</td></tr>
+      <tr><td>Cites / feines noves al mes</td><td class="fill"><div class="k-line"></div></td><td class="goal"><div class="k-line"></div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">7 · Compromisos per part nostra</div>
+  <div class="guarantees">
+    <div class="g-item"><span class="g-emoji">🔓</span><div><strong>Sense permanència</strong>Pagues mes a mes. Si no et convenç, ho deixes quan vulguis.</div></div>
+    <div class="g-item"><span class="g-emoji">📱</span><div><strong>Suport directe</strong>Parles amb nosaltres per WhatsApp, no amb un call center.</div></div>
+    <div class="g-item"><span class="g-emoji">🔐</span><div><strong>Les dades són teves</strong>Clients i converses són del teu negoci. Complim l'RGPD.</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">8 · Pròxima passa</div>
+  <div class="decision">
+    <div class="d-head"><span class="emoji">🗓️</span><h3>Dia de decisió</h3></div>
+    <p>Per no allargar-ho ni deixar-ho a l'aire: quedem un dia concret per confirmar el sí o el no. Si és que sí, comencem aquella mateixa setmana.</p>
+    <div class="d-grid">
+      <div class="field"><label>Dia i hora</label><div class="line"></div></div>
+      <div class="field"><label>Com (visita / trucada / WhatsApp)</label><div class="line"></div></div>
+      <div class="field"><label>Si és que sí, comencem el</label><div class="line"></div></div>
+    </div>
+    <div class="d-validity">Aquesta proposta i les condicions especials són vàlides fins a la data de decisió indicada.</div>
+  </div>
+  <div class="sign-block">
+    <div class="s-col"><label>Pel negoci (nom i signatura)</label><div class="line"></div></div>
+    <div class="s-col"><label>Per AMG Digitalització</label><div class="line"></div></div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <div>AMG Digitalització · Toni Mas · amgdl.com</div>
+  <div>+34 614 492 062 · info@amgdl.com</div>
+</footer>
+
+</div>
+
+</body>
+</html>

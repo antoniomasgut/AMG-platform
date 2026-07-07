@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AMG · Kit de configuració · Tenant</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent: #FF6B00;
+  --dark:   #13132a;
+  --bg:     #f8f9fc;
+  --white:  #ffffff;
+  --border: #e2e8f0;
+  --text:   #1e2a3b;
+  --muted:  #64748b;
+  --green:  #16a34a;
+  --blue:   #0891b2;
+  --red:    #dc2626;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 12px; line-height: 1.55; }
+
+.toolbar { background: var(--dark); padding: 10px 24px; display: flex; justify-content: flex-end; position: sticky; top: 0; z-index: 10; }
+.toolbar button { background: var(--accent); border: none; color: #fff; font-weight: 600; border-radius: 6px; padding: 6px 14px; font-size: 11px; font-family: inherit; cursor: pointer; }
+
+.page { max-width: 860px; margin: 0 auto; background: var(--white); }
+
+header { background: var(--dark); padding: 18px 40px 15px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand-name { font-family: 'Orbitron', monospace; font-size: 15px; color: #fff; letter-spacing: 1px; }
+.brand-name b { color: var(--accent); }
+.header-badge { background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.35); border-radius: 6px; padding: 5px 12px; color: var(--accent); font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+.header-right { text-align: right; color: #8896aa; font-size: 10px; line-height: 1.6; }
+
+main { padding: 22px 40px 30px; }
+
+.doc-title { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+.doc-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+
+.meta-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; margin-bottom: 18px; display: grid; grid-template-columns: 1.4fr 1fr 1fr 0.8fr; gap: 8px 24px; }
+.field label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); display: block; margin-bottom: 2px; }
+.field .line { border-bottom: 1.5px solid var(--border); height: 20px; width: 100%; }
+
+.prereq { background: #fff7ed; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 14px; margin-bottom: 18px; font-size: 11.5px; }
+.prereq strong { color: #9a3412; }
+.prereq code { font-family: monospace; font-size: 10px; background: rgba(255,107,0,0.08); padding: 1px 5px; border-radius: 3px; }
+
+.section { margin-bottom: 18px; break-inside: avoid; }
+.section-title { font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); padding-bottom: 4px; border-bottom: 2px solid var(--border); margin-bottom: 10px; }
+.section-title .cond { color: var(--muted); letter-spacing: 1px; }
+
+.checklist { display: flex; flex-direction: column; gap: 7px; }
+.check-item { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: flex; align-items: flex-start; gap: 10px; }
+.check-item .cb { width: 16px; height: 16px; border: 1.5px solid #94a3b8; border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+.check-content { flex: 1; }
+.check-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--text); flex-wrap: wrap; }
+.actor-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; border-radius: 3px; padding: 1px 5px; flex-shrink: 0; text-transform: uppercase; }
+.actor-badge.amg    { background: rgba(255,107,0,0.10); color: #FF6B00; border: 1px solid rgba(255,107,0,0.28); }
+.actor-badge.client { background: rgba(8,145,178,0.10); color: #0891b2; border: 1px solid rgba(8,145,178,0.28); }
+.step-time { margin-left: auto; font-size: 10px; font-weight: 500; color: var(--muted); background: #f1f5f9; border-radius: 4px; padding: 2px 7px; font-family: monospace; flex-shrink: 0; }
+.check-note { font-size: 11px; color: var(--muted); line-height: 1.55; margin-top: 5px; }
+.check-note code, .check-title code { font-family: monospace; font-size: 10px; background: #f1f5f9; padding: 1px 5px; border-radius: 3px; color: var(--blue); }
+.check-note strong { color: var(--text); }
+
+.warn { background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 6px 10px; margin-top: 6px; font-size: 10.5px; color: #991b1b; }
+
+.verify { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; }
+.verify h3 { font-size: 12px; font-weight: 700; color: var(--green); margin-bottom: 8px; }
+.verify .v-item { display: flex; align-items: flex-start; gap: 8px; font-size: 11px; margin-bottom: 5px; }
+.verify .cb { width: 14px; height: 14px; border: 1.5px solid #86efac; border-radius: 3px; flex-shrink: 0; margin-top: 1px; }
+
+footer { border-top: 2px solid var(--border); padding: 12px 40px 18px; display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  body { background: #fff; }
+  .toolbar { display: none; }
+  .page { max-width: none; zoom: 0.8; }
+  .section, .check-item, .verify, .prereq, .meta-card { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar"><button onclick="window.print()">🖨️ Imprimir</button></div>
+
+<div class="page">
+
+<header>
+  <div style="display:flex;align-items:baseline;gap:10px;">
+    <div class="brand-name">AMG <b>Digitalització</b></div>
+    <div class="header-badge">Kit intern · Configuració de tenant</div>
+  </div>
+  <div class="header-right">Guia operativa AMG · no lliurar al client</div>
+</header>
+
+<main>
+
+<div class="doc-title">Kit de configuració · Tenant nou</div>
+<div class="doc-sub">Checklist complet des del pressupost acceptat fins al go-live: alta, fases, agent IA, canals i prova end-to-end. Temps AMG estimat: 2-3 hores + esperes del client.</div>
+
+<div class="meta-card">
+  <div class="field"><label>Client / negoci</label><div class="line"></div></div>
+  <div class="field"><label>Sector · Mida (AUTONOMO/PETIT/MITJA)</label><div class="line"></div></div>
+  <div class="field"><label>Fases contractades</label><div class="line"></div></div>
+  <div class="field"><label>Data inici</label><div class="line"></div></div>
+</div>
+
+<div class="prereq">
+  <strong>Prerequisits:</strong> pressupost <strong>acceptat</strong> (Mòdul 07/44) · <strong>formulari d'inici de servei omplert</strong> (<code>docs/formulari-client.html</code>) — sense les seccions 05-06 (serveis, preus i info pràctica de l'agent) no es pot configurar el bot · full de configuració sectorial si n'hi ha (<code>docs/config-client-[sector].html</code>).
+</div>
+
+<div class="section">
+  <div class="section-title">1 · Alta al portal</div>
+  <div class="checklist">
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Crear el tenant <span class="actor-badge amg">AMG</span><span class="step-time">5 min</span></div>
+      <div class="check-note"><code>/portal/admin/tenants/new</code> → nom comercial, <strong>sector</strong> (determina el playbook de l'agent i les tarifes) i <strong>mida del negoci</strong> (determina els preus de setup). Idioma principal del tenant.</div>
+      <div class="warn">⚠️ El sector és difícil de canviar després: arrossega preus, plantilles i el prompt de l'agent. Confirmar-lo bé ara.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Crear l'usuari CLIENT <span class="actor-badge amg">AMG</span><span class="step-time">3 min</span></div>
+      <div class="check-note"><code>/portal/admin/users/new</code> → email del responsable, rol <strong>CLIENT</strong>, vinculat al tenant. Li arriba l'email d'activació de compte.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Activar les fases contractades <span class="actor-badge amg">AMG</span><span class="step-time">5 min</span></div>
+      <div class="check-note"><code>/portal/admin/tenants/[id]/activate</code> → activar exactament les fases del pressupost. Recordar: les fases <strong>no són acumulatives</strong> — el mensual es calcula per tiers en ordre de contractació. Aplicar-hi els descomptes pactats (early adopter, referits) a la fitxa del tenant.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Obrir el Setup Wizard <span class="actor-badge amg">AMG</span><span class="step-time">—</span></div>
+      <div class="check-note"><code>/portal/admin/tenants/[id]/wizard</code> és el hub que marca què queda pendent per fase. La resta d'aquest kit segueix el mateix ordre — usar el wizard com a control de progrés.</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">2 · Agent IA <span class="cond">(F1 — el cor del servei)</span></div>
+  <div class="checklist">
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Serveis i preus de l'agent <span class="actor-badge amg">AMG</span><span class="step-time">20 min</span></div>
+      <div class="check-note">Bolcar les seccions 05-06 del formulari d'inici: serveis amb preus orientatius, política de cancel·lació, informació pràctica. El prompt sectorial ja porta el rol i les preguntes clau del sector; aquí només hi va <strong>el que és específic d'aquest negoci</strong>.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Base de coneixement (RAG) <span class="actor-badge amg">AMG</span><span class="step-time">15 min</span></div>
+      <div class="check-note"><code>/portal/admin/knowledge</code> → pujar el que el client tingui: tarifes en PDF, FAQ, condicions, catàleg. Si ha contractat <strong>Bot IA avançat (RAG)</strong>, això és el gruix del valor — dedicar-hi temps.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Feature toggles i límits <span class="actor-badge amg">AMG</span><span class="step-time">5 min</span></div>
+      <div class="check-note">Revisar els toggles de funcions de l'agent (Mòdul 31) segons el que ha contractat, i el <strong>pressupost d'IA i de missatges WhatsApp</strong> de la fase (ve per defecte de <code>sector_phases</code>; ajustar si el cas ho demana).</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Prova de conversa interna <span class="actor-badge amg">AMG</span><span class="step-time">10 min</span></div>
+      <div class="check-note">Des de l'inbox (<code>/portal/agents/inbox</code>): fer 5-6 preguntes de client real (preus, horaris, «teniu hora demà?», una de trampa fora d'àmbit). Ajustar el que grinyoli <strong>abans</strong> que el client ho vegi.</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">3 · Canals</div>
+  <div class="checklist">
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Telegram del tenant (canal intern) <span class="actor-badge amg">AMG</span> <span class="actor-badge client">Client</span><span class="step-time">10 min</span></div>
+      <div class="check-note">Seguir <code>docs/telegram-setup.md</code>: el client s'instal·la Telegram, vincula el xat amb el bot i — si té F5 — es crea el <strong>grup d'equip compartit</strong>. Per aquí li arribaran cites, leads i alertes, i hi podrà donar ordres (absències, etc.).</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">WhatsApp Business <span class="actor-badge amg">AMG</span> <span class="actor-badge client">Client</span><span class="step-time">30-60 min</span></div>
+      <div class="check-note">Si l'ha contractat (50€ setup): onboarding Meta Cloud per tenant (<code>/portal/admin/integrations/whatsapp</code>, OAuth del Mòdul 42). Cal que el client tingui el número disponible (no vinculat a una app WhatsApp personal activa) i accés al seu Facebook Business o el creem.</div>
+      <div class="warn">⚠️ La verificació de Meta pot trigar. Engegar aquest pas el primer dia, no al final.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Notificacions del tenant <span class="actor-badge amg">AMG</span><span class="step-time">5 min</span></div>
+      <div class="check-note"><code>/portal/admin/tenants/[id]/notifications</code> (Mòdul 32): activar Telegram + email segons preferència del client.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Plantilles de comunicació <span class="actor-badge amg">AMG</span><span class="step-time">10 min</span></div>
+      <div class="check-note"><code>/portal/admin/comm-templates</code> (Mòdul 43): revisar les plantilles WhatsApp/email de les accions que farà servir (cites, pressupostos, documents) <strong>en l'idioma del tenant</strong>. Les per defecte solen valer; personalitzar el to si el client ho demana.</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">4 · Serveis per fase <span class="cond">(només les contractades)</span></div>
+  <div class="checklist">
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">F2 · Agenda <span class="actor-badge amg">AMG</span><span class="step-time">15 min</span></div>
+      <div class="check-note"><code>/portal/admin/tenants/[id]/nexe/agenda</code> → mode segons sector (<strong>appointment / inspection / vehicle / meeting</strong>). Booking settings: dies laborables, horari, durada del slot, buffer, antelacions (del formulari d'inici §6). Si el client usa Google Calendar: connexió a <code>/portal/admin/integrations/google</code> i seleccionar el calendari.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">F3 · Pressupostos i documents <span class="actor-badge amg">AMG</span><span class="step-time">15 min</span></div>
+      <div class="check-note"><code>/portal/admin/tenants/[id]/nexe/pressupostos</code> → mode <strong>formal</strong> (pressupost complet) o <strong>pricelist</strong> segons sector. Dades fiscals, validesa, condicions de pagament i text legal (formulari §7). Si té <strong>cobrament online</strong>: configurar l'Stripe del tenant (Mòdul 53) i fer un pagament de prova en test.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">F4 · Seguiment / fidelització <span class="actor-badge amg">AMG</span><span class="step-time">10 min</span></div>
+      <div class="check-note"><code>/portal/admin/tenants/[id]/nexe/fidelitzacio</code> → cadències de seguiment i reactivació segons sector (ex.: perruqueria canina cada 6-8 setmanes, fisio post-tractament).</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">F5 · Alertes i equip <span class="actor-badge amg">AMG</span><span class="step-time">10 min</span></div>
+      <div class="check-note"><code>/portal/admin/tenants/[id]/nexe/equip</code> → membres de l'equip i grup de Telegram compartit (<code>telegram_group_id</code>, no Telegram per membre).</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Serveis addicionals <span class="actor-badge amg">AMG</span><span class="step-time">variable</span></div>
+      <div class="check-note">Segons pressupost: automatitzacions n8n · SMTP corporatiu · Google Analytics · <strong>Social Publisher</strong> (connectar Instagram/Facebook/Google Business, Mòdul 52) · Google Workspace (Drive/Gmail/Sheets, Mòdul 40).</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">5 · Facturació</div>
+  <div class="checklist">
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Cobrament del setup + domiciliació <span class="actor-badge amg">AMG</span> <span class="actor-badge client">Client</span><span class="step-time">10 min</span></div>
+      <div class="check-note">Factura del setup segons pressupost acceptat. Quota mensual: donar d'alta la <strong>domiciliació SEPA</strong> (GoCardless, Mòdul 09b) — el client signa el mandat online. Verificar que els descomptes pactats consten a la fitxa.</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">6 · Go-live i lliurament</div>
+  <div class="checklist">
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Prova end-to-end completa <span class="actor-badge amg">AMG</span><span class="step-time">15 min</span></div>
+      <div class="check-note">Fent de client real, de fora: consulta pel canal principal → l'agent respon bé → demanar cita → confirmar-la → arriba la <strong>notificació al Telegram del tenant</strong> → cancel·lar la cita amb l'enllaç → arriba la notificació de cancel·lació.</div>
+    </div></div>
+    <div class="check-item"><span class="cb"></span><div class="check-content">
+      <div class="check-title">Sessió de formació amb el client <span class="actor-badge amg">AMG</span> <span class="actor-badge client">Client</span><span class="step-time">30-45 min</span></div>
+      <div class="check-note">Al seu negoci o per videotrucada: com llegir el Telegram, com veure leads i agenda al portal (l'onboarding del Mòdul 16 el guia el primer cop), com avisar d'absències, i <strong>a qui escriure quan alguna cosa no rutlli</strong> (el nostre WhatsApp).</div>
+    </div></div>
+  </div>
+  <div style="height:10px;"></div>
+  <div class="verify">
+    <h3>✅ Checklist final abans de donar-ho per tancat:</h3>
+    <div class="v-item"><span class="cb"></span> El client ha entrat al portal amb el seu usuari almenys un cop</div>
+    <div class="v-item"><span class="cb"></span> L'agent respon correctament les 5 preguntes més probables del sector</div>
+    <div class="v-item"><span class="cb"></span> Una cita de prova ha fet el cicle complet (reserva → notificació → cancel·lació)</div>
+    <div class="v-item"><span class="cb"></span> El client rep notificacions al seu Telegram (no al nostre)</div>
+    <div class="v-item"><span class="cb"></span> Mandat SEPA signat i primera factura emesa</div>
+    <div class="v-item"><span class="cb"></span> Health checks del tenant en verd a <code>/portal/ops</code></div>
+    <div class="v-item"><span class="cb"></span> Tenant apuntat al full de seguiment + data de revisió als 30 dies</div>
+    <div class="v-item"><span class="cb"></span> Demanar-li: «coneixes algú a qui li aniria bé?» (descompte per referits)</div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <div>AMG Digitalització · Kit intern de configuració de tenant</div>
+  <div>Relacionats: formulari-client.html · config-client-[sector].html · kit-config-landing.html</div>
+</footer>
+
+</div>
+
+</body>
+</html>

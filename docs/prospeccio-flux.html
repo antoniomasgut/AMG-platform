@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AMG · Flux de prospecció — guia interna</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent: #FF6B00;
+  --dark:   #13132a;
+  --bg:     #f8f9fc;
+  --white:  #ffffff;
+  --border: #e2e8f0;
+  --text:   #1e2a3b;
+  --muted:  #64748b;
+  --green:  #16a34a;
+  --blue:   #0891b2;
+  --red:    #dc2626;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 12px; line-height: 1.55; }
+
+.toolbar { background: var(--dark); padding: 10px 24px; display: flex; justify-content: flex-end; position: sticky; top: 0; z-index: 10; }
+.toolbar button { background: var(--accent); border: none; color: #fff; font-weight: 600; border-radius: 6px; padding: 6px 14px; font-size: 11px; font-family: inherit; cursor: pointer; }
+
+.page { max-width: 820px; margin: 0 auto; background: var(--white); }
+
+header { background: var(--dark); padding: 18px 40px 15px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand-name { font-family: 'Orbitron', monospace; font-size: 15px; color: #fff; letter-spacing: 1px; }
+.brand-name b { color: var(--accent); }
+.header-badge { background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.35); border-radius: 6px; padding: 5px 12px; color: var(--accent); font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+.header-right { text-align: right; color: #8896aa; font-size: 10px; line-height: 1.6; }
+
+main { padding: 22px 40px 30px; }
+
+.doc-title { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+.doc-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+
+.principle { background: #fff7ed; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 10px 14px; margin-bottom: 20px; font-size: 12px; }
+.principle strong { color: #9a3412; }
+
+.docs-map { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+.doc-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; border-top: 3px solid var(--accent); }
+.doc-card .d-emoji { font-size: 18px; margin-bottom: 4px; }
+.doc-card h3 { font-size: 12px; font-weight: 700; }
+.doc-card .d-file { font-family: monospace; font-size: 9px; color: var(--blue); margin: 2px 0 5px; word-break: break-all; }
+.doc-card p { font-size: 10.5px; color: var(--muted); line-height: 1.45; }
+.doc-card .d-mission { margin-top: 6px; font-size: 10px; font-weight: 600; color: var(--accent); }
+
+.stage { margin-bottom: 18px; break-inside: avoid; }
+.stage-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.stage-num { width: 30px; height: 30px; background: var(--dark); color: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.stage-head h2 { font-size: 14px; font-weight: 700; }
+.stage-head .s-meta { margin-left: auto; font-size: 9.5px; color: var(--muted); background: #f1f5f9; border-radius: 4px; padding: 3px 8px; font-family: monospace; white-space: nowrap; }
+
+.steps { border-left: 2px solid var(--border); margin-left: 15px; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }
+.step { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 9px 13px; position: relative; }
+.step::before { content: ''; position: absolute; left: -27px; top: 14px; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+.step .st-title { font-size: 11.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.step .st-desc { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 3px; }
+.step .st-desc strong { color: var(--text); }
+
+.tag { font-size: 8.5px; font-weight: 700; letter-spacing: 0.5px; border-radius: 3px; padding: 1.5px 6px; text-transform: uppercase; white-space: nowrap; }
+.tag.doc    { background: rgba(255,107,0,0.10); color: var(--accent); border: 1px solid rgba(255,107,0,0.28); }
+.tag.eina   { background: rgba(8,145,178,0.10); color: var(--blue); border: 1px solid rgba(8,145,178,0.28); }
+.tag.regla  { background: rgba(220,38,38,0.08); color: var(--red); border: 1px solid rgba(220,38,38,0.25); }
+
+.fork { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.fork-opt { border-radius: 8px; padding: 9px 12px; font-size: 10.5px; line-height: 1.5; }
+.fork-opt.no  { background: #fef2f2; border: 1px solid #fecaca; }
+.fork-opt.yes { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.fork-opt .f-head { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.fork-opt.no .f-head  { color: var(--red); }
+.fork-opt.yes .f-head { color: var(--green); }
+
+.phrase { background: var(--dark); border-radius: 8px; padding: 10px 14px; margin-top: 6px; }
+.phrase .p-label { font-family: 'Orbitron', monospace; font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+.phrase p { color: #e2e8f0; font-size: 11.5px; font-style: italic; line-height: 1.5; }
+
+.rules { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rule { display: flex; gap: 8px; align-items: flex-start; background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 10.5px; line-height: 1.45; }
+.rule .r-emoji { font-size: 14px; flex-shrink: 0; }
+.rule strong { display: block; font-size: 11px; }
+
+footer { border-top: 2px solid var(--border); padding: 12px 40px 18px; display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  body { background: #fff; }
+  .toolbar { display: none; }
+  .page { max-width: none; zoom: 0.8; }
+  .stage, .docs-map, .rules, .principle { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar"><button onclick="window.print()">🖨️ Imprimir</button></div>
+
+<div class="page">
+
+<header>
+  <div style="display:flex;align-items:baseline;gap:10px;">
+    <div class="brand-name">AMG <b>Digitalització</b></div>
+    <div class="header-badge">Guia interna · Prospecció</div>
+  </div>
+  <div class="header-right">Toni Mas · +34 614 492 062 · info@amgdl.com</div>
+</header>
+
+<main>
+
+<div class="doc-title">Flux de prospecció a porta freda</div>
+<div class="doc-sub">Del carrer al client actiu en 2 reunions + 1 data de decisió. Guia d'ús dels 3 documents de prospecció.</div>
+
+<div class="principle">
+  <strong>Principi de fons:</strong> cada document tanca una sola porta. El one-pager només ha d'aconseguir la reunió. El formulari només ha de treure números i la data de la reunió 2. La proposta només ha d'aconseguir el sí — o una data de decisió. Cap document fa la feina del següent: <strong>per això no hi ha cap preu fins a la reunió 2.</strong>
+</div>
+
+<div class="docs-map">
+  <div class="doc-card">
+    <div class="d-emoji">📄</div>
+    <h3>One-pager</h3>
+    <div class="d-file">docs/prospeccio-one-pager.html</div>
+    <p>Full per deixar. 19 variants de sector (desplegable). QR → xat IA d'amgdl.com + QR WhatsApp. Sense preus.</p>
+    <div class="d-mission">Missió: aconseguir els 20 minuts</div>
+  </div>
+  <div class="doc-card">
+    <div class="d-emoji">📋</div>
+    <h3>Formulari de diagnosi</h3>
+    <div class="d-file">docs/prospeccio-formulari-diagnosi.html</div>
+    <p>S'omple a mà durant la reunió 1. Canals, gestió actual, números del negoci, problemes 1-2-3, consentiment RGPD.</p>
+    <div class="d-mission">Missió: números + data reunió 2</div>
+  </div>
+  <div class="doc-card">
+    <div class="d-emoji">💼</div>
+    <h3>Proposta</h3>
+    <div class="d-file">docs/prospeccio-proposta.html</div>
+    <p>Es prepara entre reunions amb els números del formulari. Cost de no fer res, serveis, preus, descomptes, pla, KPIs.</p>
+    <div class="d-mission">Missió: el sí — o data de decisió</div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="stage-head">
+    <div class="stage-num">0</div>
+    <h2>Abans de sortir</h2>
+    <div class="s-meta">10 min · el vespre abans</div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="st-title">Tria zona i sector dominant del dia <span class="tag doc">One-pager</span></div>
+      <div class="st-desc">Obre el one-pager, selecciona el sector al desplegable i imprimeix-ne un grapat. Afegeix-hi uns quants del <strong>genèric</strong> per als negocis que no encaixin. Pensa les <strong>hores valls</strong> del sector: mai un restaurant a les 13h ni una perruqueria dissabte al matí.</div>
+    </div>
+    <div class="step">
+      <div class="st-title">Prepara la demo al mòbil <span class="tag eina">Mòdul 15</span></div>
+      <div class="st-desc">Una pestanya amb la <strong>landing demo del sector</strong> (widget de xat actiu) i una altra amb <strong>amgdl.com</strong>. Assaja la seqüència: el client escriu → la IA respon → agenda una cita → arriba la notificació. Ha de sortir en <strong>menys de 2 minuts</strong>.</div>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="stage-head">
+    <div class="stage-num">1</div>
+    <h2>Visita a porta freda</h2>
+    <div class="s-meta">2-5 min per negoci</div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="st-title">Presenta't i demana per l'encarregat <span class="tag regla">No venguis al taulell</span></div>
+      <div class="st-desc">L'únic objectiu és aconseguir els 20 minuts amb qui decideix — ara, o amb cita per tornar. Si intentes explicar la IA al taulell, mors allà.</div>
+      <div class="phrase">
+        <div class="p-label">Frase d'entrada</div>
+        <p>«Bon dia! Som en Toni, de aquí de Mallorca. He engegat un negoci per ajudar empreses petites com aquesta a no perdre clients pel WhatsApp i el telèfon. Hi ha l'encarregat? Són 2 minuts.»</p>
+      </div>
+      <div class="fork">
+        <div class="fork-opt no">
+          <div class="f-head">No hi és / no pot</div>
+          Deixa el <strong>one-pager</strong> amb el nom de l'encarregat apuntat a mà («per en Joan, de part d'en Toni»). El QR fa la feina: si escaneja, parla amb la IA sense que hi siguis. Apunta el negoci al pipeline i marxa.
+        </div>
+        <div class="fork-opt yes">
+          <div class="f-head">Hi és i t'escolta</div>
+          Conversa curta i natural — cap guió memoritzat. Tanca els 20 minuts: ara si en té, o dia i hora per tornar. Deixa el one-pager igualment com a recordatori.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="stage-head">
+    <div class="stage-num">2</div>
+    <h2>Reunió 1 · Descoberta</h2>
+    <div class="s-meta">20-30 min · ZERO diners</div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="st-title">Obre amb la demo en directe (5 min) <span class="tag eina">Demo sector</span></div>
+      <div class="st-desc">El xat responent com si fos <strong>el seu negoci</strong>, agendant una cita. Deixa que ho toqui ell — la demo és la presentació. Cap PowerPoint: per a un negoci de 1-5 persones crea distància.</div>
+    </div>
+    <div class="step">
+      <div class="st-title">Omple el formulari mentre conversa <span class="tag doc">Formulari</span></div>
+      <div class="st-desc">L'omples <strong>tu</strong>, no ell — és el guió de la conversa disfressat de formulari. Prioritat absoluta: la <strong>secció 4 (els seus números)</strong> — consultes perdudes, no-shows, tiquet mitjà, hores de gestió. Sense això no hi ha proposta.</div>
+    </div>
+    <div class="step">
+      <div class="st-title">Tanca amb data i signatura <span class="tag doc">Formulari §6</span></div>
+      <div class="st-desc">Data i hora de la <strong>reunió 2 (d'aquí 1-2 dies)</strong> + signatura del <strong>consentiment RGPD</strong>, que legitima el WhatsApp de seguiment.</div>
+    </div>
+    <div class="step">
+      <div class="st-title">Si pregunta preus <span class="tag regla">Regla d'or</span></div>
+      <div class="phrase">
+        <div class="p-label">Resposta</div>
+        <p>«Demà t'ho porto tot calculat per al teu cas concret — avui només vull entendre com treballes.»</p>
+      </div>
+      <div class="st-desc" style="margin-top:6px;">El document t'hi ajuda: no hi ha cap preu enlloc.</div>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="stage-head">
+    <div class="stage-num">3</div>
+    <h2>Entre reunions</h2>
+    <div class="s-meta">aquell mateix vespre</div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="st-title">WhatsApp de gràcies + confirmació de cita</div>
+      <div class="st-desc">Curt i sense vendre. Ja tens el consentiment signat per fer-ho.</div>
+    </div>
+    <div class="step">
+      <div class="st-title">Prepara la proposta amb el formulari al davant <span class="tag doc">Proposta</span> <span class="tag eina">sector_pricing</span></div>
+      <div class="st-desc">Els seus números al càlcul <strong>«què et costa no fer res»</strong> · només els serveis que resolen <strong>els seus 3 problemes</strong> (no tot el catàleg) · preus de la tarifa del sector · data límit del descompte early-adopter = <strong>la data de decisió</strong>.</div>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="stage-head">
+    <div class="stage-num">4</div>
+    <h2>Reunió 2 · Proposta</h2>
+    <div class="s-meta">20 min</div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="st-title">Recorre la proposta en ordre <span class="tag doc">Proposta</span></div>
+      <div class="st-desc">«El que ens vas explicar» (ell es reconeix) → què li costa no fer res (<strong>els seus propis números</strong>) → què proposem → condicions especials → pla de 3 setmanes → KPIs.</div>
+    </div>
+    <div class="step">
+      <div class="st-title">Tanca amb el «Dia de decisió» <span class="tag regla">Sempre amb data</span></div>
+      <div class="st-desc">Data, canal i data d'inici si és que sí — imprès i signat. Si diu que sí allà mateix, millor. Si no, <strong>no persegueixes: tens una cita</strong>. La validesa de l'oferta caduca aquell dia.</div>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="stage-head">
+    <div class="stage-num">5</div>
+    <h2>Dia de decisió</h2>
+    <div class="s-meta">el dia pactat</div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="st-title">Sí o no — les dues són victòria</div>
+      <div class="fork">
+        <div class="fork-opt yes">
+          <div class="f-head">SÍ</div>
+          Alta al portal i arrenca la <strong>setmana 1</strong> del pla imprès aquella mateixa setmana. El pla de la proposta és el compromís.
+        </div>
+        <div class="fork-opt no">
+          <div class="f-head">NO</div>
+          Demana el <strong>perquè</strong> (or pur per ajustar el discurs) i deixa'l al pipeline amb seguiment d'aquí a <strong>3 mesos</strong>. Un no d'avui és un client de la tardor.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="stage-head">
+    <div class="stage-num">✓</div>
+    <h2>Regles permanents</h2>
+  </div>
+  <div class="rules">
+    <div class="rule"><span class="r-emoji">📇</span><div><strong>Tot al pipeline (Mòdul 50)</strong>Cada visita, encara que sigui «no hi era». La porta freda rendeix a la 2a i 3a passada pel mateix carrer.</div></div>
+    <div class="rule"><span class="r-emoji">🕐</span><div><strong>Hores valls per sector</strong>El moment d'arribada importa més que el guió. Mapeja quan cada sector pot atendre't.</div></div>
+    <div class="rule"><span class="r-emoji">💶</span><div><strong>Zero preus fins a la reunió 2</strong>Cap document previ en porta, i tu tampoc. «Demà t'ho porto calculat» sempre funciona.</div></div>
+    <div class="rule"><span class="r-emoji">✍️</span><div><strong>Itera el one-pager</strong>Després de 10 visites d'un sector, ajusta el «Et sona?» amb les paraules exactes que fan servir ells.</div></div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <div>AMG Digitalització · Guia interna de prospecció</div>
+  <div>Documents: docs/prospeccio-*.html</div>
+</footer>
+
+</div>
+
+</body>
+</html>
