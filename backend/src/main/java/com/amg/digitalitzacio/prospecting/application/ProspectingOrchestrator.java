@@ -609,6 +609,16 @@ public class ProspectingOrchestrator implements ProspectingService {
         return new com.amg.digitalitzacio.prospecting.api.dto.ProspectSignal(code, label, pitch, tone, points);
     }
 
+    /** Nombre de xarxes socials on el negoci té presència detectada (Instagram/Facebook/LinkedIn/TikTok). */
+    private static int countSocialNetworks(Prospect p) {
+        int n = 0;
+        if (Boolean.TRUE.equals(p.getHasInstagram())) n++;
+        if (Boolean.TRUE.equals(p.getHasFacebook())) n++;
+        if (Boolean.TRUE.equals(p.getHasLinkedin())) n++;
+        if (Boolean.TRUE.equals(p.getHasTiktok())) n++;
+        return n;
+    }
+
     private List<ProspectSignal> detectSignals(Prospect p) {
         var signals = new ArrayList<ProspectSignal>();
 
@@ -669,8 +679,33 @@ public class ProspectingOrchestrator implements ProspectingService {
         if (!Boolean.TRUE.equals(p.getHasWebsite())) {
             signals.add(signal("NO_WEBSITE", "Sense web gestionada", "Landing AMG = base per a chat, formularis i Meta Pixel", "warning", 3));
         }
-        if (!Boolean.TRUE.equals(p.getHasInstagram())) {
-            signals.add(signal("NO_INSTAGRAM", "Sense Instagram detectat", "Presència digital + Social Publisher (Spec 52)", "neutral", 1));
+        // ── Patró de presència a xarxes socials (Mòdul 12 — afinament scoring) ──
+        int socialNetworks = countSocialNetworks(p);
+
+        // El cas estrella: rep missatges per Messenger però no té cap agent/xat
+        // → probablement no els contesta a temps (o no se n'assabenta).
+        if (Boolean.TRUE.equals(p.getHasFacebook()) && !Boolean.TRUE.equals(p.getHasChatWidget())) {
+            signals.add(signal("SOCIAL_INBOX_NO_AGENT",
+                "Rep missatges per Messenger sense agent",
+                "Agent IA (F1) que contesta els DMs 24/7 → no es perd cap consulta", "warning", 8));
+        }
+        // Inverteix en xarxes però no té web pròpia → capta atenció i la perd
+        if (socialNetworks > 0 && !Boolean.TRUE.equals(p.getHasWebsite())) {
+            signals.add(signal("SOCIAL_NO_WEBSITE",
+                "Actiu a xarxes però sense web pròpia",
+                "Landing AMG + agent → convertir els seguidors en clients", "opportunity", 7));
+        }
+        // Present a 2+ xarxes → negoci que ja creu en el digital, venda més fàcil
+        if (socialNetworks >= 2) {
+            signals.add(signal("MULTI_SOCIAL",
+                "Present a " + socialNetworks + " xarxes socials",
+                "Maduresa digital → Social Publisher (Spec 52) + agent centralitzat", "opportunity", 5));
+        }
+        // Sense cap presència a xarxes → necessitat de digitalització
+        if (socialNetworks == 0) {
+            signals.add(signal("ZERO_SOCIAL",
+                "Sense presència a xarxes socials",
+                "Presència digital de zero → Social Publisher + landing", "warning", 6));
         }
 
         // ── Penalitzacions ────────────────────────────────────────────────────

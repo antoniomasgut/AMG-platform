@@ -204,6 +204,19 @@ El scoring és **configurable sense modificar codi**: els pesos es llegeixen de 
 | `NO_FAQ` | Sense secció FAQ | +5 |
 | `NO_FORM` | Sense formulari de contacte | +10 |
 
+### 5.2b Patró de presència a xarxes socials (afinament)
+
+Basat **només** en la presència detectada (links a la web, sense scraping de seguidors ni activitat — prohibit per ToS). El senyal antic `NO_INSTAGRAM` (+1) es substitueix per aquest bloc.
+
+| Senyal | Condició | Punts | Tona |
+|--------|---------|-------|------|
+| `SOCIAL_INBOX_NO_AGENT` | Té Facebook (Messenger) però cap chat widget → rep DMs que probablement contesta a mà o no veu | +8 | warning |
+| `SOCIAL_NO_WEBSITE` | Present a ≥1 xarxa però sense web pròpia → capta atenció i la perd | +7 | opportunity |
+| `MULTI_SOCIAL` | Present a ≥2 xarxes (IG/FB/LinkedIn/TikTok) → maduresa digital, venda més fàcil | +5 | opportunity |
+| `ZERO_SOCIAL` | Cap presència a xarxes → necessitat de digitalització de zero | +6 | warning |
+
+> **Angle comercial clau (`SOCIAL_INBOX_NO_AGENT`):** un negoci amb Facebook/Messenger sovint **no s'assabenta** que té missatges pendents o triga dies a respondre. És el cas d'ús exacte de l'agent IA (F1): contesta els DMs 24/7 a l'instant.
+
 ### 5.3 Penalitzacions
 
 | Senyal | Condició | Punts |
