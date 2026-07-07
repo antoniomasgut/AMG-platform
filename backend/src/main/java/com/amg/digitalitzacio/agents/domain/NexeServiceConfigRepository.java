@@ -10,5 +10,7 @@ public interface NexeServiceConfigRepository extends JpaRepository<NexeServiceCo
 
     List<NexeServiceConfig> findByTenantId(UUID tenantId);
 
+    List<NexeServiceConfig> findByServiceKey(String serviceKey);
+
     Optional<NexeServiceConfig> findByTenantIdAndServiceKey(UUID tenantId, String serviceKey);
 }

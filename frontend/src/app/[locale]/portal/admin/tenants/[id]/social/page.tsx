@@ -11,8 +11,18 @@ import { getTenant } from '@/services/admin';
 import {
   getMetaStatus,
   saveMetaConfig,
+  getSocialFeatures,
+  updateSocialFeatures,
   type MetaConfigRequest,
+  type SocialFeatures,
 } from '@/services/social';
+
+const FEATURE_LIST: { key: keyof SocialFeatures; label: string; desc: string }[] = [
+  { key: 'aiSuggestions',      label: 'Suggeriments IA setmanals',   desc: 'Cada dilluns, una idea de post al Telegram del tenant' },
+  { key: 'autoPostReviews',    label: 'Compartir ressenyes 5★',      desc: 'Botó per publicar les ressenyes de 5 estrelles a xarxes' },
+  { key: 'weeklyAnalytics',    label: 'Resum setmanal d\'analítiques', desc: 'Abast, likes i comentaris dels posts publicats' },
+  { key: 'commentsToTelegram', label: 'Comentaris → Telegram',       desc: 'Rep i respon comentaris de xarxes des de Telegram' },
+];
 
 export default function SocialConnectionPage() {
   const { id } = useParams<{ id: string }>();
@@ -46,6 +56,30 @@ export default function SocialConnectionPage() {
     },
     onError: (e: Error) => toast('error', e.message),
   });
+
+  const { data: features } = useQuery({
+    queryKey: ['social-features', id],
+    queryFn: () => getSocialFeatures(id),
+  });
+
+  const toggleFeature = useMutation({
+    mutationFn: (next: SocialFeatures) => updateSocialFeatures(id, next),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['social-features', id] });
+    },
+    onError: (e: Error) => toast('error', e.message),
+  });
+
+  const onToggle = (key: keyof SocialFeatures, value: boolean) => {
+    if (!features) return;
+    toggleFeature.mutate({
+      commentsToTelegram: features.commentsToTelegram,
+      weeklyAnalytics:    features.weeklyAnalytics,
+      aiSuggestions:      features.aiSuggestions,
+      autoPostReviews:    features.autoPostReviews,
+      [key]: value,
+    });
+  };
 
   const tenantName = tenant?.name ?? id;
 
@@ -177,6 +211,43 @@ export default function SocialConnectionPage() {
               {saveMeta.isPending ? 'Desant…' : 'Desar configuració Meta'}
             </AMGButton>
           </div>
+        </section>
+
+        {/* Extensions socials (Mòdul 55) */}
+        <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <div>
+            <h2 className="font-semibold text-lg">Funcionalitats socials</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Activa o desactiva cada extensió per a aquest tenant.
+            </p>
+          </div>
+
+          {!features?.enabled ? (
+            <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              El servei Social Publisher no està actiu per a aquest tenant. Activa'l primer per gestionar aquestes funcionalitats.
+            </p>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {FEATURE_LIST.map(({ key, label, desc }) => (
+                <div key={key} className="flex items-center justify-between py-3 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{label}</p>
+                    <p className="text-xs text-gray-500">{desc}</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={features[key]}
+                      disabled={toggleFeature.isPending}
+                      onChange={e => onToggle(key, e.target.checked)}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+                  </label>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Google Business */}

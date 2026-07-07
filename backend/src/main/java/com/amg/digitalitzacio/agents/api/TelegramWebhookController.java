@@ -21,6 +21,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -45,6 +46,8 @@ public class TelegramWebhookController {
     private final TenantTelegramCommandService tenantCommandService;
     private final com.amg.digitalitzacio.agents.application.TelegramBotClient telegramBotClient;
     private final com.amg.digitalitzacio.google.application.GoogleReviewReplyService reviewReplyService;
+    private final com.amg.digitalitzacio.social.application.ReviewSocialShareService reviewSocialShareService;
+    private final com.amg.digitalitzacio.social.application.SocialCommentReplyService commentReplyService;
 
     private static final java.util.regex.Pattern SOCIAL_TRIGGER = java.util.regex.Pattern.compile(
         "(?i)\\b(publica|publicar|post|instagram|facebook|penja|penjar|xarxes)\\b");
@@ -71,6 +74,18 @@ public class TelegramWebhookController {
                         && cbChat.get("id") instanceof Number cbId) {
                     cbChatId = cbId.longValue();
                 }
+                // Botó "📢 Crear aquest post" d'un suggeriment social (Mòdul 55)
+                if (cbChatId != null && "sugg:new".equals(data)) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        if (callbackId != null) {
+                            telegramBotClient.answerCallbackQuery(callbackId, "Preparant...");
+                        }
+                        socialOrchestrator.startFlow(link.get().getTenantId(), cbChatId);
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
                 // Botó "✍️ Respondre" d'una ressenya de Google (Mòdul 54)
                 if (cbChatId != null && data.startsWith("grev:")) {
                     var link = chatLinkRepository.findByTelegramChatId(cbChatId);
@@ -82,6 +97,119 @@ public class TelegramWebhookController {
                         }
                         telegramBotClient.sendMessage(cbChatId,
                                 "✍️ Escriu la resposta que vols publicar a aquesta ressenya de Google:");
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Botó "🤖 Suggerir resposta" d'una ressenya (Mòdul 56 F1)
+                if (cbChatId != null && data.startsWith("grevai:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        String reviewId = data.substring("grevai:".length());
+                        if (callbackId != null) {
+                            telegramBotClient.answerCallbackQuery(callbackId, "Generant resposta...");
+                        }
+                        var draft = reviewReplyService.generateAndStoreDraft(cbChatId, link.get().getTenantId(), reviewId);
+                        if (draft != null) {
+                            var btn = Map.of("text", "✅ Publicar", "callback_data", "grevpub:" + reviewId);
+                            telegramBotClient.sendMessageWithButtons(cbChatId,
+                                    "🤖 <b>Resposta suggerida</b>\n\n" + draft
+                                    + "\n\nPublica-la o escriu-ne una de teva.", List.of(btn));
+                        } else {
+                            telegramBotClient.sendMessage(cbChatId, "⚠️ No he pogut generar una resposta ara mateix.");
+                        }
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Botó "✅ Publicar" de l'esborrany IA d'una ressenya (Mòdul 56 F1)
+                if (cbChatId != null && data.startsWith("grevpub:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        String reviewId = data.substring("grevpub:".length());
+                        if (callbackId != null) {
+                            telegramBotClient.answerCallbackQuery(callbackId, "Publicant...");
+                        }
+                        var msg = reviewReplyService.publishDraft(link.get().getTenantId(), cbChatId, reviewId);
+                        telegramBotClient.sendMessage(cbChatId, msg);
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Botó "✍️ Respondre" d'un comentari de Facebook (Mòdul 55, feature 1)
+                if (cbChatId != null && data.startsWith("cmt:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        String commentId = data.substring("cmt:".length());
+                        commentReplyService.startReply(cbChatId, commentId);
+                        if (callbackId != null) {
+                            telegramBotClient.answerCallbackQuery(callbackId, "Escriu la resposta");
+                        }
+                        telegramBotClient.sendMessage(cbChatId,
+                                "✍️ Escriu la resposta que vols publicar a aquest comentari:");
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Botó "🤖 Suggerir resposta" d'un comentari (Mòdul 56 F1)
+                if (cbChatId != null && data.startsWith("cmtai:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        String commentId = data.substring("cmtai:".length());
+                        if (callbackId != null) {
+                            telegramBotClient.answerCallbackQuery(callbackId, "Generant resposta...");
+                        }
+                        var draft = commentReplyService.generateAndStoreDraft(cbChatId, commentId);
+                        if (draft != null) {
+                            var btn = Map.of("text", "✅ Publicar", "callback_data", "cmtpub:" + commentId);
+                            telegramBotClient.sendMessageWithButtons(cbChatId,
+                                    "🤖 <b>Resposta suggerida</b>\n\n" + draft
+                                    + "\n\nPublica-la o escriu-ne una de teva.", List.of(btn));
+                        } else {
+                            telegramBotClient.sendMessage(cbChatId, "⚠️ No he pogut generar una resposta ara mateix.");
+                        }
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Botó "✅ Publicar" de l'esborrany IA d'un comentari (Mòdul 56 F1)
+                if (cbChatId != null && data.startsWith("cmtpub:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        String commentId = data.substring("cmtpub:".length());
+                        if (callbackId != null) {
+                            telegramBotClient.answerCallbackQuery(callbackId, "Publicant...");
+                        }
+                        var msg = commentReplyService.publishDraft(link.get().getTenantId(), cbChatId, commentId);
+                        telegramBotClient.sendMessage(cbChatId, msg);
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Botó "📢 Compartir a xarxes" d'una ressenya 5★ (Mòdul 55, feature 4)
+                if (cbChatId != null && data.startsWith("gshare:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        String reviewId = data.substring("gshare:".length());
+                        if (callbackId != null) {
+                            telegramBotClient.answerCallbackQuery(callbackId, "Preparant el post...");
+                        }
+                        reviewSocialShareService.preview(link.get().getTenantId(), cbChatId, reviewId);
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Botó "✅ Publicar" del post generat des d'una ressenya (Mòdul 55, feature 4)
+                if (cbChatId != null && data.startsWith("gpub:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        try {
+                            var postId = java.util.UUID.fromString(data.substring("gpub:".length()));
+                            if (callbackId != null) {
+                                telegramBotClient.answerCallbackQuery(callbackId, "Publicant...");
+                            }
+                            reviewSocialShareService.publish(cbChatId, postId);
+                        } catch (IllegalArgumentException ignored) {}
                     }
                     return ResponseEntity.ok("ok");
                 }
@@ -193,6 +321,12 @@ public class TelegramWebhookController {
                 // Resposta pendent a una ressenya de Google (Mòdul 54) — té prioritat
                 if (!text.startsWith("/") && reviewReplyService.hasPending(chatId)) {
                     var reply = reviewReplyService.submitReply(tenantId, chatId, text);
+                    if (reply != null) return ResponseEntity.ok(okTgReply(chatId, reply));
+                }
+
+                // Resposta pendent a un comentari de Facebook (Mòdul 55, feature 1)
+                if (!text.startsWith("/") && commentReplyService.hasPending(chatId)) {
+                    var reply = commentReplyService.submitReply(tenantId, chatId, text);
                     if (reply != null) return ResponseEntity.ok(okTgReply(chatId, reply));
                 }
 

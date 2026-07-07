@@ -15,4 +15,9 @@ public interface SocialPostRepository extends JpaRepository<SocialPost, UUID> {
     List<SocialPost> findDueScheduled(Instant now);
 
     List<SocialPost> findByTenantIdAndNetworkOrderByCreatedAtDesc(UUID tenantId, String network);
+
+    // Mòdul 55 feature 2: posts publicats en un rang (per al resum setmanal i sync de mètriques)
+    @Query("SELECT p FROM SocialPost p WHERE p.tenantId = :tenantId AND p.status = 'PUBLISHED' "
+            + "AND p.publishedAt >= :since ORDER BY p.publishedAt DESC")
+    List<SocialPost> findPublishedSince(UUID tenantId, Instant since);
 }

@@ -8,4 +8,8 @@ import java.util.UUID;
 public interface SocialMetaConfigRepository extends JpaRepository<SocialMetaConfig, UUID> {
 
     Optional<SocialMetaConfig> findByTenantId(UUID tenantId);
+
+    Optional<SocialMetaConfig> findByFacebookPageId(String facebookPageId);
+
+    Optional<SocialMetaConfig> findByInstagramAccountId(String instagramAccountId);
 }

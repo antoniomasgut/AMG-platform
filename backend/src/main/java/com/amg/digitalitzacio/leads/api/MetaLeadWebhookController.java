@@ -37,6 +37,7 @@ public class MetaLeadWebhookController {
 
     private final SystemConfigService sysConfig;
     private final MetaLeadWebhookService metaLeadWebhookService;
+    private final com.amg.digitalitzacio.social.application.SocialCommentService socialCommentService;
     private final ObjectMapper objectMapper;
 
     /** Verificació del webhook per part de Meta (han de rebre el challenge de tornada). */
@@ -104,14 +105,39 @@ public class MetaLeadWebhookController {
             var pageId = String.valueOf(entry.get("id"));
             var changes = (List<Map<String, Object>>) entry.getOrDefault("changes", List.of());
             for (var change : changes) {
-                if (!"leadgen".equals(change.get("field"))) continue;
+                var field = String.valueOf(change.get("field"));
                 var value = (Map<String, Object>) change.get("value");
                 if (value == null) continue;
 
-                var leadgenId = String.valueOf(value.get("leadgen_id"));
-                var formId = String.valueOf(value.get("form_id"));
-                metaLeadWebhookService.processLead(pageId, leadgenId, formId);
+                if ("leadgen".equals(field)) {
+                    var leadgenId = String.valueOf(value.get("leadgen_id"));
+                    var formId = String.valueOf(value.get("form_id"));
+                    metaLeadWebhookService.processLead(pageId, leadgenId, formId);
+                } else if ("feed".equals(field)) {
+                    processFeedComment(pageId, value);
+                }
             }
+        }
+    }
+
+    /** Comentaris nous d'una pàgina (Mòdul 55, feature 1) */
+    @SuppressWarnings("unchecked")
+    private void processFeedComment(String pageId, Map<String, Object> value) {
+        // Només comentaris afegits (no likes, edicions ni esborrats)
+        if (!"comment".equals(String.valueOf(value.get("item")))) return;
+        if (!"add".equals(String.valueOf(value.get("verb")))) return;
+
+        var commentId = value.get("comment_id") != null ? String.valueOf(value.get("comment_id")) : null;
+        var message = value.get("message") != null ? String.valueOf(value.get("message")) : null;
+        String fromId = null, fromName = null;
+        if (value.get("from") instanceof Map<?, ?> from) {
+            fromId = from.get("id") != null ? String.valueOf(from.get("id")) : null;
+            fromName = from.get("name") != null ? String.valueOf(from.get("name")) : null;
+        }
+        try {
+            socialCommentService.processFacebookComment(pageId, commentId, message, fromId, fromName);
+        } catch (Exception e) {
+            log.warn("Error processant comentari de la pàgina {}: {}", pageId, e.getMessage());
         }
     }
 }

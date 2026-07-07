@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.google.application;
 
+import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.google.domain.GoogleBusinessReview;
@@ -39,6 +40,7 @@ public class GoogleBusinessReviewSyncService {
     private final ObjectMapper objectMapper;
     private final TelegramBotClient telegramBotClient;
     private final TenantChatLinkRepository chatLinkRepository;
+    private final NexeServiceConfigService nexeConfigService;
 
     /** Sync diari complet a les 03:00 (full-resync de l'històric) */
     @Scheduled(cron = "0 0 3 * * *")
@@ -83,11 +85,19 @@ public class GoogleBusinessReviewSyncService {
         var chatLink = chatLinkRepository.findByTenantId(tenantId).orElse(null);
         Long chatId = chatLink != null ? chatLink.getTelegramChatId() : null;
 
+        // Mòdul 55 feature 4: compartir automàticament ressenyes 5★ a xarxes (opt-in)
+        boolean autoPostReviews = autoPostReviewsEnabled(tenantId);
+
         for (var review : pending) {
             if (chatId != null) {
                 var text = buildReviewMessage(review);
-                var button = Map.of("text", "✍️ Respondre", "callback_data", "grev:" + review.getReviewId());
-                telegramBotClient.sendMessageWithButtons(chatId, text, List.of(button));
+                var buttons = new java.util.ArrayList<Map<String, String>>();
+                buttons.add(Map.of("text", "✍️ Respondre", "callback_data", "grev:" + review.getReviewId()));
+                buttons.add(Map.of("text", "🤖 Suggerir resposta", "callback_data", "grevai:" + review.getReviewId()));
+                if (autoPostReviews && review.getRating() != null && review.getRating() == 5) {
+                    buttons.add(Map.of("text", "📢 Compartir a xarxes", "callback_data", "gshare:" + review.getReviewId()));
+                }
+                telegramBotClient.sendMessageWithButtons(chatId, text, buttons);
             }
             review.setNotifiedAt(Instant.now());
             reviewRepo.save(review);
@@ -113,6 +123,24 @@ public class GoogleBusinessReviewSyncService {
 
     private String escapeHtml(String s) {
         return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    /** Llegeix el toggle `auto_post_reviews` de la config SOCIAL_PUBLISHER del tenant */
+    private boolean autoPostReviewsEnabled(UUID tenantId) {
+        try {
+            return nexeConfigService.get(tenantId, "SOCIAL_PUBLISHER")
+                .map(c -> {
+                    try {
+                        var json = objectMapper.readTree(c.getConfigJson());
+                        return json.path("auto_post_reviews").asBoolean(false);
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
+                .orElse(false);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /** Sincronització manual per a un tenant concret */

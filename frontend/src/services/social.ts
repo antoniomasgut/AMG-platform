@@ -47,6 +47,29 @@ export async function cancelSocialPost(tenantId: string, postId: string): Promis
   return apiFetch(`/api/v1/social/tenants/${tenantId}/posts/${postId}`, { method: 'DELETE' });
 }
 
+export interface SocialFeatures {
+  commentsToTelegram: boolean;
+  weeklyAnalytics: boolean;
+  aiSuggestions: boolean;
+  autoPostReviews: boolean;
+}
+
+export interface SocialFeaturesStatus extends SocialFeatures {
+  enabled: boolean;
+}
+
+export async function getSocialFeatures(tenantId: string): Promise<SocialFeaturesStatus> {
+  return apiFetch(`/api/v1/social/tenants/${tenantId}/features`);
+}
+
+export async function updateSocialFeatures(tenantId: string, features: SocialFeatures): Promise<void> {
+  return apiFetch(`/api/v1/social/tenants/${tenantId}/features`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(features),
+  });
+}
+
 export async function getMetaStatus(tenantId: string): Promise<MetaStatus> {
   return apiFetch(`/api/v1/social/tenants/${tenantId}/meta/status`);
 }

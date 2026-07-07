@@ -52,6 +52,12 @@ public class SocialPost {
     @Column(columnDefinition = "TEXT")
     private String errorMessage;
 
+    // Mètriques d'engagement (Mòdul 55, feature 2) — sincronitzades des de Graph API
+    private Integer reach;
+    private Integer likes;
+    private Integer comments;
+    private Instant metricsSyncedAt;
+
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();

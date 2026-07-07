@@ -2,6 +2,8 @@ package com.amg.digitalitzacio.social.api;
 
 import com.amg.digitalitzacio.social.domain.SocialMetaConfig;
 import com.amg.digitalitzacio.social.domain.SocialMetaConfigRepository;
+import com.amg.digitalitzacio.social.application.SocialFeatureService;
+import com.amg.digitalitzacio.social.application.SocialFeatureService.SocialFeatures;
 import com.amg.digitalitzacio.social.domain.SocialPost;
 import com.amg.digitalitzacio.social.domain.SocialPostRepository;
 import com.amg.digitalitzacio.vault.application.VaultEncryption;
@@ -25,6 +27,7 @@ public class SocialController {
     private final SocialPostRepository postRepository;
     private final SocialMetaConfigRepository metaConfigRepo;
     private final VaultEncryption vaultEncryption;
+    private final SocialFeatureService featureService;
 
     /** Historial de posts per tenant */
     @GetMapping("/tenants/{tenantId}/posts")
@@ -105,6 +108,37 @@ public class SocialController {
         config.setUpdatedAt(Instant.now());
 
         metaConfigRepo.save(config);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Toggles de les extensions socials (Mòdul 55) */
+    @GetMapping("/tenants/{tenantId}/features")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public ResponseEntity<Map<String, Object>> getFeatures(
+            @PathVariable UUID tenantId,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal
+                com.amg.digitalitzacio.shared.security.UserPrincipal principal) {
+        var f = featureService.get(tenantId);
+        return ResponseEntity.ok(Map.of(
+            "enabled",            featureService.isEnabled(tenantId),
+            "commentsToTelegram", f.commentsToTelegram(),
+            "weeklyAnalytics",    f.weeklyAnalytics(),
+            "aiSuggestions",      f.aiSuggestions(),
+            "autoPostReviews",    f.autoPostReviews()
+        ));
+    }
+
+    @PutMapping("/tenants/{tenantId}/features")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
+    public ResponseEntity<Void> updateFeatures(
+            @PathVariable UUID tenantId,
+            @RequestBody SocialFeatures req,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal
+                com.amg.digitalitzacio.shared.security.UserPrincipal principal) {
+        if (!featureService.isEnabled(tenantId)) {
+            return ResponseEntity.badRequest().build();
+        }
+        featureService.update(tenantId, req);
         return ResponseEntity.noContent().build();
     }
 
