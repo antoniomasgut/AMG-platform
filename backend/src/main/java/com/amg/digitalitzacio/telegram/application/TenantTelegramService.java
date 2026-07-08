@@ -5,6 +5,7 @@ import com.amg.digitalitzacio.telegram.api.dto.TelegramConnectRequest;
 import com.amg.digitalitzacio.telegram.domain.TelegramConnectionStatus;
 import com.amg.digitalitzacio.telegram.domain.TenantTelegramConfig;
 import com.amg.digitalitzacio.telegram.domain.TenantTelegramConfigRepository;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import com.amg.digitalitzacio.vault.application.VaultEncryption;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class TenantTelegramService {
 
     private final TenantTelegramConfigRepository configRepository;
     private final VaultEncryption vaultEncryption;
+    private final SystemConfigService systemConfigService;
 
     @Value("${APP_DOMAIN:amgdl.com}")
     private String appDomain;
@@ -138,13 +140,22 @@ public class TenantTelegramService {
 
     @SuppressWarnings("unchecked")
     private boolean registerWebhook(String token, String webhookUrl) {
+        // Si hi ha TELEGRAM_WEBHOOK_SECRET configurat, cal registrar el webhook amb el
+        // secret_token perquè Telegram enviï el header X-Telegram-Bot-Api-Secret-Token;
+        // sense això el controlador rebutjaria (401) les peticions d'aquest bot.
+        var body = new java.util.HashMap<String, Object>();
+        body.put("url", webhookUrl);
+        String secret = systemConfigService.get("TELEGRAM_WEBHOOK_SECRET");
+        if (secret != null && !secret.isBlank()) {
+            body.put("secret_token", secret);
+        }
         var result = RestClient.builder()
                 .baseUrl("https://api.telegram.org/bot" + token)
                 .build()
                 .post()
                 .uri("/setWebhook")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("url", webhookUrl))
+                .body(body)
                 .retrieve()
                 .body(Map.class);
         return result != null && Boolean.TRUE.equals(result.get("ok"));
