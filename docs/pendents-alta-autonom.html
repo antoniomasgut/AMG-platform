@@ -155,6 +155,42 @@
     color: var(--blau);
     font-weight: 600;
   }
+  section.guia { border-top: 5px solid #6d28d9; }
+  section.guia > h2 { color: #6d28d9; }
+  .pas {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .pas-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .pas-num {
+    flex: none;
+    width: 26px; height: 26px;
+    background: #6d28d9; color: #fff;
+    border-radius: 50%;
+    text-align: center; line-height: 26px;
+    font-size: .82rem; font-weight: 700;
+  }
+  .pas-head h4 { font-size: 1rem; color: var(--blau); }
+  .pas .meta { color: var(--gris); font-size: .82rem; margin: 2px 0 10px 34px; }
+  ol.steps { margin: 0 0 0 34px; padding-left: 18px; }
+  ol.steps li { font-size: .92rem; padding: 3px 0; }
+  ol.steps code { overflow-wrap: anywhere; word-break: break-word; }
+  .pas .nota {
+    margin: 10px 0 0 34px;
+    padding: 8px 12px;
+    background: #fef9c3;
+    border-left: 3px solid #ca8a04;
+    border-radius: 4px;
+    font-size: .86rem;
+  }
+  .pas .nota.warn { background: #fee2e2; border-left-color: #dc2626; }
   footer {
     text-align: center;
     color: var(--gris);
@@ -168,8 +204,9 @@
     section { box-shadow: none; border: 1px solid #e2e8f0; padding: 16px 20px; margin-bottom: 14px; }
     section, .resum { break-inside: auto; }
     ul.check li, h3 { break-inside: avoid; }
-    section.despres { break-before: page; }
-    .etiqueta { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    section.despres, section.guia { break-before: page; }
+    .pas, .inici { break-inside: avoid; }
+    .etiqueta, .temps { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
   @page { size: A4; margin: 12mm; }
 </style>
@@ -289,7 +326,103 @@
   </ul>
 </section>
 
-<footer>AMG Digitalització · document intern · generat el 07/07/2026</footer>
+<!-- ══════════════ GUIA PAS A PAS ══════════════ -->
+<section class="guia">
+  <h2>🧭 Guia pas a pas (els 7 punts configurables ara)</h2>
+  <p class="sub">Instruccions detallades per a cada punt del bloc «Per on començar». Els camins del portal són reals; els dels panells externs (Meta, Google, LinkedIn) poden variar lleugerament d'etiqueta segons la versió.</p>
+
+  <div class="pas">
+    <div class="pas-head"><span class="pas-num">1</span><h4>Configurar <code>META_APP_SECRET</code></h4></div>
+    <div class="meta">⏱️ 5 min · Seguretat — abans d'obrir el webhook a trànsit real</div>
+    <ol class="steps">
+      <li>Obre <a href="https://developers.facebook.com/apps">developers.facebook.com/apps</a> i entra a la teva app.</li>
+      <li>Menú lateral: <b>App settings → Basic</b> (Configuració → Bàsica).</li>
+      <li>Al camp <b>App Secret</b>, clica <b>Show</b>, verifica't i copia el valor.</li>
+      <li>Al portal AMG: <code>/portal/admin/config</code> → categoria <b>Meta / Social</b> → clau <code>META_APP_SECRET</code> → enganxa el valor → <b>Desar</b>.</li>
+      <li>Comprova que l'estat de la clau passa de <code>MISSING</code> a <code>OK</code>.</li>
+    </ol>
+    <div class="nota warn">Sense aquesta clau el webhook de Meta no verifica la signatura HMAC i acceptaria comentaris/DMs falsos. És el primer que cal fer.</div>
+  </div>
+
+  <div class="pas">
+    <div class="pas-head"><span class="pas-num">2</span><h4>Configurar <code>TELEGRAM_WEBHOOK_SECRET</code></h4></div>
+    <div class="meta">⏱️ 10 min · Seguretat del canal intern (comandes de tenants + DMs)</div>
+    <ol class="steps">
+      <li>Genera un token aleatori (mín. 16 caràcters, lletres+números). Ex: amb <code>openssl rand -hex 24</code>.</li>
+      <li>Al portal: <code>/portal/admin/config</code> → categoria <b>Agents</b> → clau <code>TELEGRAM_WEBHOOK_SECRET</code> → enganxa el token → <b>Desar</b>.</li>
+      <li><b>Bot de la plataforma (AMG):</b> registra'l manualment amb el secret cridant una vegada aquesta URL al navegador (substitueix <code>&lt;TOKEN_BOT&gt;</code> i <code>&lt;SECRET&gt;</code>):<br/>
+        <code>https://api.telegram.org/bot&lt;TOKEN_BOT&gt;/setWebhook?url=https://api.amgdl.com/api/v1/agents/telegram/webhook&amp;secret_token=&lt;SECRET&gt;</code></li>
+      <li><b>Bots dels tenants:</b> per cada tenant amb Telegram connectat, entra a <b>Admin → Tenants → [tenant] → Telegram Bot</b> i clica <b>«Re-registrar webhook»</b>. Així el bot es torna a registrar amb el secret nou.</li>
+    </ol>
+    <div class="nota warn">Ordre important: primer desa el secret al portal, després re-registra els bots. Un bot registrat abans del secret enviarà peticions sense el header i rebrà 401 fins que el re-registris.</div>
+  </div>
+
+  <div class="pas">
+    <div class="pas-head"><span class="pas-num">3</span><h4>Re-autoritzar Google Business + <code>businessLocationId</code></h4></div>
+    <div class="meta">⏱️ ~10 min per tenant F4 · Desbloqueja ressenyes (M54), ressenya negativa (M57) i festius→Google (M57)</div>
+    <ol class="steps">
+      <li>Al portal: <code>/portal/admin/integrations/google</code> del tenant.</li>
+      <li>Marca el mòdul <b>«Google Business»</b> (a més dels que ja tingués: Drive, Gmail, Calendar, Sheets).</li>
+      <li>Clica <b>Connectar / Re-autoritzar</b> i completa el consentiment de Google amb el compte del negoci. El scope nou és <code>business.manage</code>.</li>
+      <li>Obtén el <b>Business Location ID</b>: a Google Business Profile, o via l'API, és l'identificador de la fitxa (número o camí <code>locations/123…</code>). Si només tens el número, enganxa'l tal qual.</li>
+      <li>Al mateix formulari, omple el camp <b>Business Location ID</b> → <b>Desar</b>.</li>
+      <li>Verifica: a la propera hora hauria de sincronitzar ressenyes; pots forçar-ho amb el botó de sync si hi és.</li>
+    </ol>
+    <div class="nota">Sense re-autoritzar amb l'scope nou, ni el polling de ressenyes ni la publicació de festius a Google Maps funcionen — encara que abans semblés connectat.</div>
+  </div>
+
+  <div class="pas">
+    <div class="pas-head"><span class="pas-num">4</span><h4>Subscriure la pàgina de Facebook (feed + messages) i verificar IDs</h4></div>
+    <div class="meta">⏱️ 15 min · Desbloqueja comentaris (M55) i DMs IG/Messenger (M56)</div>
+    <ol class="steps">
+      <li>A <a href="https://developers.facebook.com/apps">developers.facebook.com/apps</a> → la teva app → <b>Webhooks</b> (o Messenger/Instagram → Webhooks).</li>
+      <li>Objecte <b>Page</b>: subscriu els camps <code>feed</code> i <code>messages</code> (i mantén <code>leadgen</code>).</li>
+      <li>Objecte <b>Instagram</b>: subscriu <code>messages</code> per als DMs d'IG.</li>
+      <li>URL de callback (si la demana): <code>https://api.amgdl.com/api/v1/leads/meta-webhook</code>; el verify token, el que tinguis configurat.</li>
+      <li>Al portal, config social del tenant (<code>/portal/admin/tenants/[id]/social</code>): comprova que <b>Facebook Page ID</b> i <b>Instagram Account ID</b> estan plens.</li>
+    </ol>
+    <div class="nota">Sense els IDs socials plens, el webhook no pot resoldre a quin tenant pertany cada comentari o DM i els descarta.</div>
+  </div>
+
+  <div class="pas">
+    <div class="pas-head"><span class="pas-num">5</span><h4>LinkedIn (Social Publisher d'AMG)</h4></div>
+    <div class="meta">⏱️ 20 min · Només per al tenant propietari (AMG)</div>
+    <ol class="steps">
+      <li>A <a href="https://www.linkedin.com/developers/apps">linkedin.com/developers/apps</a> crea una app associada a la pàgina d'empresa d'AMG.</li>
+      <li>A <b>Products</b>, sol·licita <b>«Share on LinkedIn»</b> (i <b>«Sign In with LinkedIn using OpenID Connect»</b>).</li>
+      <li>A <b>Auth</b>: copia <b>Client ID</b> i <b>Client Secret</b>; afegeix la <b>Redirect URL</b>: <code>https://api.amgdl.com/api/v1/social/linkedin/callback</code>.</li>
+      <li>Al portal: <code>/portal/admin/config</code> → clau <code>LINKEDIN_CLIENT_ID</code>, <code>LINKEDIN_CLIENT_SECRET</code> i <code>LINKEDIN_REDIRECT_URI</code> (aquesta última = la Redirect URL de dalt) → <b>Desar</b>.</li>
+      <li>Ves a <code>/portal/admin/social/linkedin</code> i clica <b>Connectar amb LinkedIn</b>; completa el consentiment.</li>
+    </ol>
+    <div class="nota">La publicació real requereix que el producte «Share on LinkedIn» estigui <b>aprovat</b> per LinkedIn (pot trigar uns dies).</div>
+  </div>
+
+  <div class="pas">
+    <div class="pas-head"><span class="pas-num">6</span><h4>Configurar <code>STT_API_KEY</code> (notes de veu F5)</h4></div>
+    <div class="meta">⏱️ 10 min · Transcripció de missatges de veu a Telegram</div>
+    <ol class="steps">
+      <li>Crea un compte a <a href="https://console.groq.com">console.groq.com</a> (gratuït) i genera una <b>API Key</b>. Alternativa: OpenAI.</li>
+      <li>Al portal: <code>/portal/admin/config</code> → clau <code>STT_API_KEY</code> → enganxa la clau.</li>
+      <li>Si uses Groq, omple també <code>STT_BASE_URL</code> (<code>https://api.groq.com/openai/v1</code>) i <code>STT_MODEL</code> (ex: <code>whisper-large-v3</code>). Amb OpenAI pots deixar-les buides.</li>
+      <li>Prova: envia una nota de veu al bot del tenant i comprova que es transcriu i es processa com a text.</li>
+    </ol>
+  </div>
+
+  <div class="pas">
+    <div class="pas-head"><span class="pas-num">7</span><h4>Provar el cicle complet en Stripe Test mode</h4></div>
+    <div class="meta">⏱️ 30 min · Validació sense moure diners reals</div>
+    <ol class="steps">
+      <li>Assegura't que Stripe està en <b>Test mode</b> (clau <code>sk_test_…</code> a System Config).</li>
+      <li>Crea un lead de prova i converteix-lo, o genera un pressupost des de <b>Billing</b>.</li>
+      <li>Accepta el pressupost com a client (link segur) i, si té F3, paga amb una <b>targeta de prova</b> de Stripe (<code>4242 4242 4242 4242</code>, qualsevol data futura i CVC).</li>
+      <li>Completa el <b>setup wizard</b> i fes el <b>go-live</b>; verifica que es crea l'usuari CLIENT i arriben les notificacions.</li>
+      <li>En paral·lel: fes una campanya de <b>prospecció</b> i envia una <b>demo</b> per sector per validar el flux comercial complet.</li>
+    </ol>
+    <div class="nota">Tot el cicle es pot validar en Test mode; el pas a Live (cobrar de veritat) queda per després de l'alta d'autònom.</div>
+  </div>
+</section>
+
+<footer>AMG Digitalització · document intern · generat el 08/07/2026</footer>
 
 </div>
 </body>
