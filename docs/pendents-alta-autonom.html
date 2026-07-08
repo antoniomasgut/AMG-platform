@@ -159,6 +159,8 @@
 
   <h3>Meta (Mòduls 55/56 — comentaris i DMs)</h3>
   <ul class="check">
+    <li><b>Configurar <code>META_APP_SECRET</code> a System Config</b> — ⚠️ seguretat, fer-ho ABANS d'obrir el webhook a trànsit real<span class="etiqueta et-config">config</span>
+      <span class="on">Sense aquest secret el webhook de Meta (<code>/api/v1/leads/meta-webhook</code>) <b>no verifica la signatura HMAC</b> i processa qualsevol payload: un atacant podria injectar comentaris/DMs falsos que disparen respostes IA i enviaments. Meta App Dashboard → Settings → Basic → App Secret</span></li>
     <li><b>Subscriure la pàgina de Facebook als camps <code>feed</code> i <code>messages</code>/<code>messaging</code></b> (a més de <code>leadgen</code>)<span class="etiqueta et-extern">extern</span>
       <span class="on">Meta App Dashboard → Webhooks — mateix endpoint <code>/api/v1/leads/meta-webhook</code>; sense això no arriben comentaris ni DMs</span></li>
     <li><b>Verificar que <code>facebookPageId</code> i <code>instagramAccountId</code></b> estan plens a la config social dels tenants<span class="etiqueta et-config">config</span>
