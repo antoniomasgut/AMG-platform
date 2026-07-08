@@ -82,7 +82,7 @@ public class SocialDmService {
         }
 
         String id = UUID.randomUUID().toString().substring(0, 8);
-        storeContext(id, tenantId, channel, senderId, draft);
+        storeContext(id, tenantId, chatId, channel, senderId, draft);
 
         var sb = new StringBuilder();
         sb.append("✉️ <b>Nou missatge directe · ").append(channelLabel).append("</b>\n");
@@ -112,6 +112,7 @@ public class SocialDmService {
     public String approveDraft(Long chatId, String id) {
         var ctx = loadContext(id);
         if (ctx == null) return "⚠️ El missatge ha caducat.";
+        if (!ownsContext(ctx, chatId)) return "⚠️ Aquest missatge no és accessible des d'aquest xat.";
         String draft = ctx.path("draft").asText(null);
         if (draft == null || draft.isBlank()) return "⚠️ No hi ha cap esborrany per enviar.";
         return send(ctx, draft);
@@ -119,6 +120,9 @@ public class SocialDmService {
 
     /** El tenant vol escriure la seva pròpia resposta → activa estat pendent */
     public void startManualReply(Long chatId, String id) {
+        var ctx = loadContext(id);
+        // Només el xat propietari del context pot iniciar la resposta manual
+        if (ctx == null || !ownsContext(ctx, chatId)) return;
         redis.opsForValue().set(PENDING_KEY.formatted(chatId), id, TTL_HOURS, TimeUnit.HOURS);
     }
 
@@ -134,7 +138,16 @@ public class SocialDmService {
         redis.delete(key);
         var ctx = loadContext(id);
         if (ctx == null) return "⚠️ El missatge ha caducat.";
+        // El PENDING_KEY ja està lligat a aquest chatId, però revalidem el context per coherència
+        if (!ownsContext(ctx, chatId)) return "⚠️ Aquest missatge no és accessible des d'aquest xat.";
         return send(ctx, text);
+    }
+
+    /** El context de DM només és accionable pel xat de Telegram del tenant propietari */
+    private boolean ownsContext(ObjectNode ctx, Long chatId) {
+        if (chatId == null) return false;
+        long ownerChatId = ctx.path("chatId").asLong(0);
+        return ownerChatId != 0 && ownerChatId == chatId;
     }
 
     private String send(ObjectNode ctx, String text) {
@@ -144,9 +157,10 @@ public class SocialDmService {
         return ok ? "✅ Missatge enviat." : "⚠️ No s'ha pogut enviar el missatge.";
     }
 
-    private void storeContext(String id, UUID tenantId, ConversationChannel channel, String recipientId, String draft) {
+    private void storeContext(String id, UUID tenantId, Long chatId, ConversationChannel channel, String recipientId, String draft) {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("tenantId", tenantId.toString());
+        node.put("chatId", chatId);
         node.put("channel", channel.name());
         node.put("recipientId", recipientId);
         if (draft != null) node.put("draft", draft);
