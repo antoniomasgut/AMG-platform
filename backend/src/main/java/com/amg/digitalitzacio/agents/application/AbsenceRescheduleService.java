@@ -9,6 +9,7 @@ import com.amg.digitalitzacio.booking.application.AvailabilityService;
 import com.amg.digitalitzacio.booking.application.BookingService;
 import com.amg.digitalitzacio.booking.domain.BookingToken;
 import com.amg.digitalitzacio.booking.domain.BookingTokenRepository;
+import com.amg.digitalitzacio.google.application.GoogleBusinessHoursService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,7 @@ public class AbsenceRescheduleService {
     private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final TelegramBotClient telegramBotClient;
     private final ObjectMapper objectMapper;
+    private final GoogleBusinessHoursService googleBusinessHoursService;
 
     /**
      * Processa la comanda /absencia del grup de Telegram.
@@ -68,7 +70,8 @@ public class AbsenceRescheduleService {
 
         var chatLink = chatLinkRepository.findByTenantId(tenantId).orElse(null);
         var result = runCancellationCascade(tenantId, absenceDate, CancellationReason.ABSENCE, chatLink, tenant, triggeredBy);
-        return buildSummary("📋 Absència registrada", absenceDate, result[0], result[1], hasPhase(tenant, "F4"));
+        var summary = buildSummary("📋 Absència registrada", absenceDate, result[0], result[1], hasPhase(tenant, "F4"));
+        return appendGoogleClosedLine(summary, tenantId, absenceDate, absenceDate);
     }
 
     private String handleAbsenceRange(UUID tenantId, String dateArg, Long chatId, Long triggeredBy) {
@@ -112,7 +115,7 @@ public class AbsenceRescheduleService {
         if (hasPhase(tenant, "F4") && totalAffected > 0) {
             sb.append("• Seguiment de reprogramació programat per a 48h\n");
         }
-        return sb.toString();
+        return appendGoogleClosedLine(sb.toString(), tenantId, startDate, endDate);
     }
 
     /**
@@ -165,7 +168,8 @@ public class AbsenceRescheduleService {
         if (alreadyMarked && result[0] == 0) {
             return "ℹ️ El dia " + dateStr + " ja estava marcat com a festiu i no hi havia cites pendents.";
         }
-        return buildSummary("📅 Festiu registrat", holidayDate, result[0], result[1], hasPhase(tenant, "F4"));
+        var summary = buildSummary("📅 Festiu registrat", holidayDate, result[0], result[1], hasPhase(tenant, "F4"));
+        return appendGoogleClosedLine(summary, tenantId, holidayDate, holidayDate);
     }
 
     private enum CancellationReason { ABSENCE, HOLIDAY }
@@ -343,6 +347,21 @@ public class AbsenceRescheduleService {
 
     private boolean hasPhase(Tenant tenant, String phase) {
         return tenant.isPhaseActive(phase);
+    }
+
+    /**
+     * Publica el rang com a tancat als special hours de Google Business (Mòdul 57 F1).
+     * No bloquejant: si el tenant no té GBP configurat o falla, el resum queda igual.
+     */
+    private String appendGoogleClosedLine(String summary, UUID tenantId, LocalDate start, LocalDate end) {
+        try {
+            if (googleBusinessHoursService.markClosed(tenantId, start, end)) {
+                return summary + "• 🗓️ Dies publicats com a tancat a Google\n";
+            }
+        } catch (Exception e) {
+            log.warn("No s'han pogut publicar els special hours a Google per tenant {}: {}", tenantId, e.getMessage());
+        }
+        return summary;
     }
 
     private String buildSummary(String header, LocalDate date, int affected, int notified, boolean hasF4) {

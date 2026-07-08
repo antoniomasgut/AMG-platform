@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMG · Pendents — abans i després de l'alta d'autònom</title>
+<style>
+  :root {
+    --blau: #1e3a5f;
+    --verd: #16a34a;
+    --taronja: #ea580c;
+    --gris: #64748b;
+    --fons: #f8fafc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: var(--fons);
+    color: #1e293b;
+    line-height: 1.55;
+    padding: 32px 16px;
+  }
+  .full {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  header {
+    background: var(--blau);
+    color: #fff;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+  }
+  header h1 { font-size: 1.5rem; margin-bottom: 6px; }
+  header p { opacity: .85; font-size: .95rem; }
+  .resum {
+    background: #fff;
+    border-left: 4px solid var(--blau);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    font-size: .95rem;
+  }
+  section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.07);
+  }
+  section.ara { border-top: 5px solid var(--verd); }
+  section.despres { border-top: 5px solid var(--taronja); }
+  section > h2 {
+    font-size: 1.15rem;
+    margin-bottom: 4px;
+  }
+  section.ara > h2 { color: var(--verd); }
+  section.despres > h2 { color: var(--taronja); }
+  section > .sub {
+    color: var(--gris);
+    font-size: .9rem;
+    margin-bottom: 18px;
+  }
+  h3 {
+    font-size: .95rem;
+    color: var(--blau);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin: 22px 0 10px;
+  }
+  h3:first-of-type { margin-top: 0; }
+  ul.check { list-style: none; }
+  ul.check li {
+    padding: 9px 0 9px 34px;
+    position: relative;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: .95rem;
+  }
+  ul.check li:last-child { border-bottom: none; }
+  ul.check li::before {
+    content: '☐';
+    position: absolute;
+    left: 6px;
+    top: 7px;
+    font-size: 1.1rem;
+    color: var(--gris);
+  }
+  li b { color: var(--blau); }
+  li .on {
+    display: block;
+    color: var(--gris);
+    font-size: .85rem;
+    margin-top: 2px;
+  }
+  .etiqueta {
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: 1px;
+  }
+  .et-dev { background: #dbeafe; color: #1d4ed8; }
+  .et-config { background: #dcfce7; color: #15803d; }
+  .et-extern { background: #fef3c7; color: #b45309; }
+  .et-legal { background: #ffe4e6; color: #be123c; }
+  footer {
+    text-align: center;
+    color: var(--gris);
+    font-size: .82rem;
+    margin-top: 8px;
+  }
+  @media print {
+    body { background: #fff; padding: 0; font-size: 12px; }
+    .full { max-width: none; }
+    header { border-radius: 0; padding: 18px 24px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    section { box-shadow: none; border: 1px solid #e2e8f0; padding: 16px 20px; margin-bottom: 14px; }
+    section, .resum { break-inside: auto; }
+    ul.check li, h3 { break-inside: avoid; }
+    section.despres { break-before: page; }
+    .etiqueta { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @page { size: A4; margin: 12mm; }
+</style>
+</head>
+<body>
+<div class="full">
+
+<header>
+  <h1>📋 Pendents del projecte AMG</h1>
+  <p>Separats entre el que pots fer <b>ara mateix</b> i el que queda <b>bloquejat fins a l'alta d'autònom</b> · Actualitzat: 7 de juliol de 2026</p>
+</header>
+
+<div class="resum">
+  <b>Resum:</b> gairebé tot el pendent <b>tècnic</b> es pot fer ara sense estar donat d'alta. L'alta d'autònom desbloqueja bàsicament <b>cobrar</b> (Stripe Live, SEPA, factures) i les <b>verificacions de negoci</b> de Meta i Stripe, que demanen documentació fiscal.
+</div>
+
+<!-- ══════════════ SENSE ALTA ══════════════ -->
+<section class="ara">
+  <h2>✅ Ho pots fer ARA (sense alta d'autònom)</h2>
+  <p class="sub">Configuració tècnica, comptes de desenvolupador i preparació comercial. Cap pas demana NIF d'activitat ni documentació fiscal.</p>
+
+  <h3>Configuració de la plataforma</h3>
+  <ul class="check">
+    <li><b>Secrets de webhook</b> a System Config (surten com a <code>MISSING</code>)<span class="etiqueta et-config">config</span>
+      <span class="on">Portal → <code>/portal/admin/system-config</code>: <code>TELEGRAM_WEBHOOK_SECRET</code> (token arbitrari + cridar <code>setWebhook?secret_token=...</code>), <code>STRIPE_WEBHOOK_SECRET</code> (en Test mode ja es pot), <code>MAILGUN_WEBHOOK_SIGNING_KEY</code>, <code>HOLDED_WEBHOOK_SECRET</code>, <code>GOCARDLESS_WEBHOOK_SECRET</code> (sandbox)</span></li>
+    <li><b>STT_API_KEY</b> per activar les notes de veu de F5 (transcripció Whisper)<span class="etiqueta et-config">config</span>
+      <span class="on">Groq (gratuït) o OpenAI → clau a System Config (<code>STT_API_KEY</code>, opcionalment <code>STT_BASE_URL</code>/<code>STT_MODEL</code>)</span></li>
+  </ul>
+
+  <h3>Google (Mòdul 54 — ressenyes → Telegram)</h3>
+  <ul class="check">
+    <li><b>Re-autoritzar les connexions Google existents</b> amb el mòdul «Google Business» marcat<span class="etiqueta et-extern">extern</span>
+      <span class="on">El scope <code>business.manage</code> és nou — sense re-autorització no funciona ni la lectura ni la resposta de ressenyes (i probablement el polling antic tampoc anava)</span></li>
+    <li><b>Omplir el <code>businessLocationId</code></b> de cada tenant amb F4 activa<span class="etiqueta et-config">config</span>
+      <span class="on">Portal → <code>/portal/admin/integrations/google</code></span></li>
+  </ul>
+
+  <h3>Meta (Mòduls 55/56 — comentaris i DMs)</h3>
+  <ul class="check">
+    <li><b>Subscriure la pàgina de Facebook als camps <code>feed</code> i <code>messages</code>/<code>messaging</code></b> (a més de <code>leadgen</code>)<span class="etiqueta et-extern">extern</span>
+      <span class="on">Meta App Dashboard → Webhooks — mateix endpoint <code>/api/v1/leads/meta-webhook</code>; sense això no arriben comentaris ni DMs</span></li>
+    <li><b>Verificar que <code>facebookPageId</code> i <code>instagramAccountId</code></b> estan plens a la config social dels tenants<span class="etiqueta et-config">config</span>
+      <span class="on">Sense aquests IDs el webhook no pot resoldre a quin tenant pertany l'event</span></li>
+    <li><b>Preparar els materials de l'App Review de Meta</b> (screencasts, descripcions d'ús)<span class="etiqueta et-extern">extern</span>
+      <span class="on">La preparació es pot fer ara; l'enviament segurament esperarà a la verificació de negoci (vegeu llista taronja)</span></li>
+  </ul>
+
+  <h3>LinkedIn (Mòdul 56 F4 — Social Publisher AMG)</h3>
+  <ul class="check">
+    <li><b>Crear l'app de LinkedIn i activar el producte «Share on LinkedIn»</b> (self-service, compte personal de desenvolupador)<span class="etiqueta et-extern">extern</span>
+      <span class="on">Després posar <code>LINKEDIN_CLIENT_ID</code> / <code>LINKEDIN_CLIENT_SECRET</code> / <code>LINKEDIN_REDIRECT_URI</code> a System Config i connectar des de <code>/portal/admin/social/linkedin</code></span></li>
+  </ul>
+
+  <h3>Desenvolupament pendent</h3>
+  <ul class="check">
+    <li><b>UI de descomptes per tenant</b> a la fitxa (<code>/portal/admin/tenants/[id]</code>)<span class="etiqueta et-dev">dev</span>
+      <span class="on">El backend CRUD de descomptes ja existeix; només falta la pantalla</span></li>
+    <li><b>Mòdul 51 (contacte multicanal de l'agència)</b>: part WABA pendent de config<span class="etiqueta et-dev">dev</span>
+      <span class="on">Widget + WhatsApp personal ja actius; el WABA real depèn de la verificació de negoci de Meta (llista taronja)</span></li>
+  </ul>
+
+  <h3>Comercial (tot menys cobrar)</h3>
+  <ul class="check">
+    <li><b>Prospecció completa</b>: cerca, scoring, enriquiment, one-pager, formulari de diagnosi i proposta<span class="etiqueta et-config">llest</span>
+      <span class="on">Tot el flux del Mòdul 12/50 + els documents de <code>docs/</code> ja estan operatius</span></li>
+    <li><b>Enviar demos per sector</b> (TTL 24h) i propostes a prospectes<span class="etiqueta et-config">llest</span></li>
+    <li><b>Provar el cicle sencer amb Stripe en Test mode</b>: pressupost → acceptació → setup → go-live<span class="etiqueta et-config">llest</span>
+      <span class="on">Es pot validar tota la cadena sense moure diners reals</span></li>
+  </ul>
+</section>
+
+<!-- ══════════════ AMB ALTA ══════════════ -->
+<section class="despres">
+  <h2>🔒 Bloquejat fins a l'ALTA D'AUTÒNOM</h2>
+  <p class="sub">Tot el que implica cobrar diners reals o verificacions de negoci que demanen documentació fiscal (NIF d'activitat, alta censal).</p>
+
+  <h3>Cobraments</h3>
+  <ul class="check">
+    <li><b>Stripe Live mode</b> — verificació de negoci al Dashboard<span class="etiqueta et-legal">legal</span>
+      <span class="on">Després: canviar <code>STRIPE_API_KEY</code> → <code>sk_live_...</code>, recrear el webhook en Live i actualitzar <code>STRIPE_WEBHOOK_SECRET</code> → <code>whsec_...</code></span></li>
+    <li><b>GoCardless en producció</b> — donar-se d'alta com a creditor SEPA (demana identitat fiscal)<span class="etiqueta et-legal">legal</span>
+      <span class="on">Desbloqueja les domiciliacions automàtiques del Mòdul 09b (mandats + cobrament mensual)</span></li>
+    <li><b>Cobrar setups i quotes mensuals als clients</b> — qualsevol ingrés recurrent real<span class="etiqueta et-legal">legal</span></li>
+  </ul>
+
+  <h3>Facturació i contractes</h3>
+  <ul class="check">
+    <li><b>Holded amb dades fiscals reals</b> — emetre factures legals amb IVA/IRPF<span class="etiqueta et-legal">legal</span>
+      <span class="on">Activa tota la cadena: go-live → contacte Holded → <code>MonthlyBillingJob</code> (dia 1) → factures + resum Telegram</span></li>
+    <li><b>Contractes de serveis i DPAs amb clients</b> (RGPD — encarregat del tractament)<span class="etiqueta et-legal">legal</span>
+      <span class="on">El sistema de signatures DPA (V56) ja és al codi; falta la identitat legal per signar-los</span></li>
+  </ul>
+
+  <h3>Verificacions de negoci</h3>
+  <ul class="check">
+    <li><b>Meta Business Verification</b><span class="etiqueta et-legal">legal</span>
+      <span class="on">Necessària per: App Review d'accés avançat (<code>pages_messaging</code>, <code>instagram_manage_messages</code> per als DMs del M56, <code>read_insights</code> per al reach del M55), WhatsApp Business API (WABA de l'agència — M51 — i el flux per tenant del M42)</span></li>
+    <li><b>Meta Tech Provider / BSP</b> (futur, a partir de ~20 tenants amb WhatsApp actiu)<span class="etiqueta et-legal">legal</span></li>
+  </ul>
+</section>
+
+<footer>AMG Digitalització · document intern · generat el 07/07/2026</footer>
+
+</div>
+</body>
+</html>

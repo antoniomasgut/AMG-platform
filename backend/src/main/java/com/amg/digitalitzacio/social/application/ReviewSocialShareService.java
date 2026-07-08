@@ -63,11 +63,11 @@ public class ReviewSocialShareService {
         telegramBotClient.sendMessageWithButtons(chatId, text, List.of(button));
     }
 
-    /** Publica el draft creat des de la ressenya */
+    /** Publica el draft creat des de la ressenya. Verifica que el post pertany al tenant del xat. */
     @Async
-    public void publish(Long chatId, UUID postId) {
+    public void publish(UUID tenantId, Long chatId, UUID postId) {
         var post = postRepository.findById(postId).orElse(null);
-        if (post == null || !"DRAFT".equals(post.getStatus())) {
+        if (post == null || !"DRAFT".equals(post.getStatus()) || !post.getTenantId().equals(tenantId)) {
             telegramBotClient.sendMessage(chatId, "⚠️ Aquest post ja no està disponible.");
             return;
         }

@@ -209,7 +209,7 @@ public class TelegramWebhookController {
                             if (callbackId != null) {
                                 telegramBotClient.answerCallbackQuery(callbackId, "Publicant...");
                             }
-                            reviewSocialShareService.publish(cbChatId, postId);
+                            reviewSocialShareService.publish(link.get().getTenantId(), cbChatId, postId);
                         } catch (IllegalArgumentException ignored) {}
                     }
                     return ResponseEntity.ok("ok");

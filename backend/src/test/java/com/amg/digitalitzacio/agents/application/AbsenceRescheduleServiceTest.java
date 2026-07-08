@@ -9,6 +9,7 @@ import com.amg.digitalitzacio.booking.application.AvailabilityService;
 import com.amg.digitalitzacio.booking.application.BookingService;
 import com.amg.digitalitzacio.booking.domain.BookingToken;
 import com.amg.digitalitzacio.booking.domain.BookingTokenRepository;
+import com.amg.digitalitzacio.google.application.GoogleBusinessHoursService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +44,7 @@ class AbsenceRescheduleServiceTest {
     @Mock WhatsAppMetaChannel whatsAppMetaChannel;
     @Mock TelegramBotClient telegramBotClient;
     @Mock ObjectMapper objectMapper;
+    @Mock GoogleBusinessHoursService googleBusinessHoursService;
 
     @InjectMocks AbsenceRescheduleService service;
 
@@ -185,5 +187,62 @@ class AbsenceRescheduleServiceTest {
 
         assertThat(result).contains("Format de data no reconegut");
         assertThat(result).contains("2026-07-14 al 2026-07-20");
+    }
+
+    // ── Google Business special hours (Mòdul 57 F1) ───────────────────────────
+
+    @Test
+    void singleDay_gbpConfigured_appendsGoogleLine() {
+        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenantWithF2()));
+        when(chatLinkRepository.findByTenantId(TENANT_ID)).thenReturn(Optional.empty());
+        stubCascadeForNoBookings();
+        when(googleBusinessHoursService.markClosed(eq(TENANT_ID), any(), any())).thenReturn(true);
+
+        String result = service.handleAbsenceCommand(TENANT_ID, "/absencia 2026-07-10", null, null);
+
+        assertThat(result).contains("tancat a Google");
+        verify(googleBusinessHoursService).markClosed(TENANT_ID,
+                java.time.LocalDate.parse("2026-07-10"), java.time.LocalDate.parse("2026-07-10"));
+    }
+
+    @Test
+    void singleDay_gbpNotConfigured_noGoogleLine() {
+        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenantWithF2()));
+        when(chatLinkRepository.findByTenantId(TENANT_ID)).thenReturn(Optional.empty());
+        stubCascadeForNoBookings();
+        when(googleBusinessHoursService.markClosed(eq(TENANT_ID), any(), any())).thenReturn(false);
+
+        String result = service.handleAbsenceCommand(TENANT_ID, "/absencia 2026-07-10", null, null);
+
+        assertThat(result).contains("Absència registrada");
+        assertThat(result).doesNotContain("tancat a Google");
+    }
+
+    @Test
+    void range_gbpConfigured_marksWholeRangeOnce() {
+        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenantWithF2()));
+        when(chatLinkRepository.findByTenantId(TENANT_ID)).thenReturn(Optional.empty());
+        stubCascadeForNoBookings();
+        when(googleBusinessHoursService.markClosed(eq(TENANT_ID), any(), any())).thenReturn(true);
+
+        String result = service.handleAbsenceCommand(TENANT_ID, "/absencia 2026-07-14 al 2026-07-16", null, null);
+
+        assertThat(result).contains("tancat a Google");
+        verify(googleBusinessHoursService, times(1)).markClosed(TENANT_ID,
+                java.time.LocalDate.parse("2026-07-14"), java.time.LocalDate.parse("2026-07-16"));
+    }
+
+    @Test
+    void singleDay_gbpThrows_summaryStillReturned() {
+        when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenantWithF2()));
+        when(chatLinkRepository.findByTenantId(TENANT_ID)).thenReturn(Optional.empty());
+        stubCascadeForNoBookings();
+        when(googleBusinessHoursService.markClosed(eq(TENANT_ID), any(), any()))
+                .thenThrow(new RuntimeException("boom"));
+
+        String result = service.handleAbsenceCommand(TENANT_ID, "/absencia 2026-07-10", null, null);
+
+        assertThat(result).contains("Absència registrada");
+        assertThat(result).doesNotContain("tancat a Google");
     }
 }

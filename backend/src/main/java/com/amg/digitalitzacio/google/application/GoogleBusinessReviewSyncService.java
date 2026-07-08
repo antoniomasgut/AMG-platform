@@ -2,6 +2,8 @@ package com.amg.digitalitzacio.google.application;
 
 import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
+import com.amg.digitalitzacio.agents.domain.FollowupLog;
+import com.amg.digitalitzacio.agents.domain.FollowupLogRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.google.domain.GoogleBusinessReview;
 import com.amg.digitalitzacio.google.domain.GoogleBusinessReviewRepository;
@@ -41,6 +43,7 @@ public class GoogleBusinessReviewSyncService {
     private final TelegramBotClient telegramBotClient;
     private final TenantChatLinkRepository chatLinkRepository;
     private final NexeServiceConfigService nexeConfigService;
+    private final FollowupLogRepository followupLogRepository;
 
     /** Sync diari complet a les 03:00 (full-resync de l'històric) */
     @Scheduled(cron = "0 0 3 * * *")
@@ -106,10 +109,15 @@ public class GoogleBusinessReviewSyncService {
     }
 
     private String buildReviewMessage(GoogleBusinessReview r) {
+        boolean negative = isNegative(r);
         var stars = "★".repeat(r.getRating()) + "☆".repeat(5 - r.getRating());
         var sb = new StringBuilder();
-        sb.append("⭐ <b>Nova ressenya a Google</b> · ").append(stars)
-          .append(" (").append(r.getRating()).append("/5)\n");
+        if (negative) {
+            sb.append("🚨 <b>Ressenya negativa a Google</b> · ");
+        } else {
+            sb.append("⭐ <b>Nova ressenya a Google</b> · ");
+        }
+        sb.append(stars).append(" (").append(r.getRating()).append("/5)\n");
         if (r.getAuthorName() != null && !r.getAuthorName().isBlank()) {
             sb.append("👤 ").append(escapeHtml(r.getAuthorName())).append("\n");
         }
@@ -117,8 +125,56 @@ public class GoogleBusinessReviewSyncService {
             String c = r.getComment().length() > 300 ? r.getComment().substring(0, 297) + "…" : r.getComment();
             sb.append("\"").append(escapeHtml(c)).append("\"\n");
         }
-        sb.append("\nToca <b>✍️ Respondre</b> per contestar-la des d'aquí.");
+        if (negative) {
+            sb.append("\n⏱️ Respondre-la aviat i amb bon to és la millor manera de protegir la teva reputació — la resposta la veu tothom que llegeixi la ressenya.");
+        } else {
+            sb.append("\nToca <b>✍️ Respondre</b> per contestar-la des d'aquí.");
+        }
         return sb.toString();
+    }
+
+    private boolean isNegative(GoogleBusinessReview r) {
+        return r.getRating() != null && r.getRating() <= 3;
+    }
+
+    /**
+     * Recordatori de ressenyes negatives sense resposta (Mòdul 57 F2).
+     * Cada dia a les 09:45: ressenyes ≤3★ notificades fa més de 48h i encara sense reply
+     * → un únic recordatori Telegram (dedupe via followup_logs NEGREV_48H).
+     */
+    @Scheduled(cron = "0 45 9 * * *")
+    public void remindUnansweredNegativeReviews() {
+        for (var config : enabledConfigs()) {
+            var tenantId = config.getTenantId();
+            try {
+                var chatLink = chatLinkRepository.findByTenantId(tenantId).orElse(null);
+                if (chatLink == null || chatLink.getTelegramChatId() == null) continue;
+
+                var threshold = Instant.now().minus(java.time.Duration.ofHours(48));
+                var unanswered = reviewRepo
+                    .findByTenantIdAndRatingLessThanEqualAndReplyIsNullAndNotifiedAtBefore(tenantId, 3, threshold);
+
+                for (var review : unanswered) {
+                    if (followupLogRepository.existsByTenantIdAndTypeAndEntityId(tenantId, "NEGREV_48H", review.getId())) {
+                        continue;
+                    }
+                    var text = "⏰ <b>Recordatori</b> · Aquesta ressenya negativa segueix sense resposta des de fa 2 dies:\n\n"
+                        + buildReviewMessage(review);
+                    var buttons = List.of(
+                        Map.of("text", "✍️ Respondre", "callback_data", "grev:" + review.getReviewId()),
+                        Map.of("text", "🤖 Suggerir resposta", "callback_data", "grevai:" + review.getReviewId()));
+                    telegramBotClient.sendMessageWithButtons(chatLink.getTelegramChatId(), text, buttons);
+
+                    var entry = new FollowupLog();
+                    entry.setTenantId(tenantId);
+                    entry.setType("NEGREV_48H");
+                    entry.setEntityId(review.getId());
+                    followupLogRepository.save(entry);
+                }
+            } catch (Exception e) {
+                log.warn("Recordatori de ressenyes negatives fallat per tenant {}: {}", tenantId, e.getMessage());
+            }
+        }
     }
 
     private String escapeHtml(String s) {
