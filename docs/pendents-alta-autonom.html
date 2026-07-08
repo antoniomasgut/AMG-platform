@@ -105,6 +105,56 @@
   .et-config { background: #dcfce7; color: #15803d; }
   .et-extern { background: #fef3c7; color: #b45309; }
   .et-legal { background: #ffe4e6; color: #be123c; }
+  .temps {
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: 1px;
+    background: #ede9fe;
+    color: #6d28d9;
+  }
+  .inici {
+    background: #fff;
+    border: 2px solid var(--blau);
+    border-radius: 12px;
+    padding: 20px 26px;
+    margin-bottom: 28px;
+  }
+  .inici h2 { font-size: 1.1rem; color: var(--blau); margin-bottom: 4px; }
+  .inici .sub { color: var(--gris); font-size: .88rem; margin-bottom: 14px; }
+  ol.prio { list-style: none; counter-reset: p; }
+  ol.prio li {
+    counter-increment: p;
+    position: relative;
+    padding: 8px 0 8px 40px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: .93rem;
+  }
+  ol.prio li:last-child { border-bottom: none; }
+  ol.prio li::before {
+    content: counter(p);
+    position: absolute;
+    left: 4px;
+    top: 7px;
+    width: 24px;
+    height: 24px;
+    background: var(--blau);
+    color: #fff;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 24px;
+    font-size: .8rem;
+    font-weight: 700;
+  }
+  .inici .total {
+    margin-top: 12px;
+    font-size: .9rem;
+    color: var(--blau);
+    font-weight: 600;
+  }
   footer {
     text-align: center;
     color: var(--gris);
@@ -129,11 +179,27 @@
 
 <header>
   <h1>📋 Pendents del projecte AMG</h1>
-  <p>Separats entre el que pots fer <b>ara mateix</b> i el que queda <b>bloquejat fins a l'alta d'autònom</b> · Actualitzat: 7 de juliol de 2026</p>
+  <p>Separats entre el que pots fer <b>ara mateix</b> i el que queda <b>bloquejat fins a l'alta d'autònom</b> · Actualitzat: 8 de juliol de 2026</p>
 </header>
 
 <div class="resum">
   <b>Resum:</b> gairebé tot el pendent <b>tècnic</b> es pot fer ara sense estar donat d'alta. L'alta d'autònom desbloqueja bàsicament <b>cobrar</b> (Stripe Live, SEPA, factures) i les <b>verificacions de negoci</b> de Meta i Stripe, que demanen documentació fiscal.
+</div>
+
+<!-- ══════════════ PER ON COMENÇAR ══════════════ -->
+<div class="inici">
+  <h2>🚀 Per on començar (ordre recomanat)</h2>
+  <p class="sub">Prioritat: primer tapar forats de seguretat, després fer que la feina ja desplegada funcioni de veritat. El temps és de configuració efectiva, sense comptar esperes de verificació externa.</p>
+  <ol class="prio">
+    <li><b>Configurar <code>META_APP_SECRET</code></b> — el webhook de Meta falla obert sense ell <span class="temps">⏱️ 5 min</span></li>
+    <li><b>Configurar <code>TELEGRAM_WEBHOOK_SECRET</code></b> — protegeix comandes de tenants i DMs <span class="temps">⏱️ 10 min</span></li>
+    <li><b>Re-autoritzar Google Business</b> (scope <code>business.manage</code>) + <code>businessLocationId</code> per tenant F4 — desbloqueja ressenyes, ressenya negativa i festius→Google <span class="temps">⏱️ 10 min/tenant</span></li>
+    <li><b>Subscriure la pàgina de Facebook</b> als camps <code>feed</code> i <code>messages</code> + verificar IDs socials — desbloqueja comentaris i DMs <span class="temps">⏱️ 15 min</span></li>
+    <li><b>LinkedIn</b>: crear app + «Share on LinkedIn» + claus a System Config <span class="temps">⏱️ 20 min</span></li>
+    <li><b><code>STT_API_KEY</code></b> (Groq gratuït) per a notes de veu de F5 <span class="temps">⏱️ 10 min</span></li>
+    <li><b>Provar el cicle en Stripe Test mode</b> (pressupost → go-live) + prospecció/demos <span class="temps">⏱️ 30 min</span></li>
+  </ol>
+  <div class="total">Total configuració (punts 1–6, un tenant): ~1 h 10 min · + 10 min per cada tenant F4 addicional</div>
 </div>
 
 <!-- ══════════════ SENSE ALTA ══════════════ -->
