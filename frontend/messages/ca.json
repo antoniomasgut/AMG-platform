@@ -92,6 +92,18 @@
           "title": "Modificacions i evolució",
           "description": "El teu negoci canvia i el sistema s'hi adapta. Implementem millores i ajustos quan els necessites.",
           "tag": "Iteració · Millores"
+        },
+        {
+          "icon": "🖥️",
+          "title": "Web Professional",
+          "description": "Web a mida en català, sense IA",
+          "tag": "des de 390€"
+        },
+        {
+          "icon": "📱",
+          "title": "Gestió de xarxes",
+          "description": "Publicacions i comunitat en català",
+          "tag": "des de 49€/mes"
         }
       ]
     },
@@ -2145,5 +2157,22 @@
     "messagePlaceholder": "Escriu un missatge…",
     "errorStart": "No s'ha pogut iniciar el xat. Torna-ho a provar.",
     "errorSend": "Error de connexió. Torna-ho a provar."
+  },
+  "felanitxGrant": {
+    "badge": "Ajut · Ajuntament de Felanitx",
+    "title": "50% subvencionat per modernitzar el teu comerç",
+    "deadline": "Sol·licituds fins al 27 de juliol de 2026",
+    "intro": "L'Ajuntament de Felanitx subvenciona la modernització digital dels comerços locals. Nosaltres t'ho muntam tot i t'ajudam amb tota la tramitació.",
+    "services": [
+      "Webs professionals en català",
+      "Gestió de xarxes socials",
+      "Assistent d'IA que atén clients per WhatsApp",
+      "Automatitzacions, reserva de cites i pressupostos",
+      "Gestió de ressenyes de Google"
+    ],
+    "covers": "L'ajut cobreix web, allotjament i xarxes socials (fins al 50%, màxim 1.000€).",
+    "eligibility": "Per a comerços de Felanitx amb activitat elegible (comerç al detall i alguns serveis).",
+    "phone": "614 492 062",
+    "whatsapp": "654 048 164"
   }
 }

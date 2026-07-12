@@ -8,6 +8,8 @@ import { ServicesSection } from '@/components/landing/ServicesSection';
 import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
 import { SectorsSection } from '@/components/landing/SectorsSection';
 import { AltresNegocisSection } from '@/components/landing/AltresNegocisSection';
+import { PortalSection } from '@/components/landing/PortalSection';
+import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { CTASection } from '@/components/landing/CTASection';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 
@@ -28,6 +30,8 @@ export default function LandingPage() {
       <HowItWorksSection />
       <SectorsSection />
       <AltresNegocisSection />
+      <PortalSection />
+      <TestimonialsSection />
       <CTASection />
       <LandingFooter />
       <AgencyChatWidget />

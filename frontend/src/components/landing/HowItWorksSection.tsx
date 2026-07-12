@@ -1,12 +1,17 @@
 import { useTranslations } from 'next-intl';
 
 export function HowItWorksSection() {
-  const t = useTranslations('howItWorks');
-  const steps = t.raw('steps') as Array<{ number: string; title: string; desc: string }>;
+  const t = useTranslations('landing.howItWorks');
+  const steps = t.raw('steps') as Array<{ number: string; title: string; description: string }>;
 
   return (
     <section id="how-it-works" className="py-24 px-6 border-t border-border-subtle">
       <div className="max-w-4xl mx-auto">
+        <div className="flex items-center gap-2 mb-6">
+          <div className="w-1.5 h-1.5 bg-accent" />
+          <span className="f-mono text-label uppercase tracking-widest text-accent-light">{t('badge')}</span>
+        </div>
+
         <h2 className="f-display font-black text-3xl sm:text-4xl lg:text-5xl leading-[1.1] tracking-display mb-16 whitespace-pre-line">
           {t('title')}
         </h2>
@@ -27,7 +32,7 @@ export function HowItWorksSection() {
               {/* Content */}
               <div className="pb-16">
                 <h3 className="f-display font-black text-xl mb-2">{step.title}</h3>
-                <p className="text-ui text-ink-1 leading-relaxed">{step.desc}</p>
+                <p className="text-ui text-ink-1 leading-relaxed">{step.description}</p>
               </div>
             </div>
           ))}

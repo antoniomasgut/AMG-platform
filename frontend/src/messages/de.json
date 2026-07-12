@@ -99,30 +99,6 @@
           "Finanz-Dashboard",
           "Schulung und Begleitung"
         ]
-      },
-      {
-        "name": "Professionelle Website",
-        "tagline": "Maßgeschneidert, ohne KI",
-        "price": "ab 390€",
-        "features": [
-          "Individuelles Design auf Katalanisch",
-          "Verfasster Inhalt",
-          "Galerie und Abschnitte",
-          "SEO und Formular",
-          "WhatsApp-Button"
-        ]
-      },
-      {
-        "name": "Social-Media-Management",
-        "tagline": "Deine Social-Präsenz",
-        "price": "ab 49€/Monat",
-        "features": [
-          "Beiträge auf Katalanisch",
-          "Content-Planung",
-          "Kommentarverwaltung",
-          "Monatsbericht",
-          "Multi-Netzwerk"
-        ]
       }
     ]
   },

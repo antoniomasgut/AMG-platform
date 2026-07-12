@@ -99,30 +99,6 @@
           "Dashboard financer",
           "Formació i acompanyament"
         ]
-      },
-      {
-        "name": "Web Professional",
-        "tagline": "Web a mida, sense IA",
-        "price": "des de 390€",
-        "features": [
-          "Disseny a mida en català",
-          "Contingut redactat",
-          "Galeria i seccions",
-          "SEO i formulari",
-          "Botó WhatsApp"
-        ]
-      },
-      {
-        "name": "Gestió de xarxes",
-        "tagline": "La teva presència social",
-        "price": "des de 49€/mes",
-        "features": [
-          "Publicacions en català",
-          "Planificació de contingut",
-          "Gestió de comentaris",
-          "Informe mensual",
-          "Multi-xarxa"
-        ]
       }
     ]
   },

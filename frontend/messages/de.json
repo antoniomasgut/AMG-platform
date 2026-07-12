@@ -92,6 +92,18 @@
           "title": "Änderungen & Weiterentwicklung",
           "description": "Ihr Unternehmen ändert sich und das System passt sich an. Wir implementieren Verbesserungen, wenn Sie diese benötigen.",
           "tag": "Iteration · Verbesserungen"
+        },
+        {
+          "icon": "🖥️",
+          "title": "Professionelle Website",
+          "description": "Maßgeschneidert auf Katalanisch, ohne KI",
+          "tag": "ab 390€"
+        },
+        {
+          "icon": "📱",
+          "title": "Social Media",
+          "description": "Beiträge und Community auf Katalanisch",
+          "tag": "ab 49€/Monat"
         }
       ]
     },
@@ -2145,5 +2157,22 @@
     "messagePlaceholder": "Nachricht schreiben…",
     "errorStart": "Der Chat konnte nicht gestartet werden. Bitte erneut versuchen.",
     "errorSend": "Verbindungsfehler. Bitte erneut versuchen."
+  },
+  "felanitxGrant": {
+    "badge": "Zuschuss · Rathaus Felanitx",
+    "title": "50% gefördert für die Modernisierung deines Geschäfts",
+    "deadline": "Anträge bis zum 27. Juli 2026",
+    "intro": "Das Rathaus von Felanitx fördert die digitale Modernisierung lokaler Geschäfte. Wir richten alles ein und helfen dir bei der gesamten Antragstellung.",
+    "services": [
+      "Professionelle Websites auf Katalanisch",
+      "Social-Media-Management",
+      "KI-Assistent, der Kunden per WhatsApp betreut",
+      "Automatisierungen, Terminbuchung und Angebote",
+      "Google-Bewertungsmanagement"
+    ],
+    "covers": "Der Zuschuss deckt Website, Hosting und Social Media ab (bis zu 50%, max. 1.000 €).",
+    "eligibility": "Für Geschäfte in Felanitx mit förderfähiger Tätigkeit (Einzelhandel und einige Dienstleistungen).",
+    "phone": "614 492 062",
+    "whatsapp": "654 048 164"
   }
 }

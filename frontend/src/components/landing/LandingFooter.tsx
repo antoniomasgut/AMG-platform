@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { AMGLogo } from '@/components/ui/AMGLogo';
 
 export function LandingFooter() {
-  const t = useTranslations('footer');
+  const t = useTranslations('landing.footer');
   const locale = useLocale();
   const year = new Date().getFullYear();
 
@@ -23,17 +23,18 @@ export function LandingFooter() {
           <div>
             <div className="f-mono text-label uppercase text-ink-3 mb-3 tracking-widest">{t('legal')}</div>
             <div className="flex flex-col gap-2">
-              {([
+              {[
                 { key: 'avisLegal', href: `/${locale}/legal/avis-legal` },
                 { key: 'privacitat', href: `/${locale}/legal/privacitat` },
+                { key: 'cookies', href: `/${locale}/legal/cookies` },
                 { key: 'termes', href: `/${locale}/legal/termes-servei` },
-              ] as const).map(({ key, href }) => (
+              ].map(({ key, href }) => (
                 <Link
                   key={key}
                   href={href}
                   className="f-mono text-label text-ink-3 hover:text-ink-1 transition-colors"
                 >
-                  {t(key)}
+                  {t(`links.${key}` as 'links.avisLegal' | 'links.privacitat' | 'links.cookies' | 'links.termes')}
                 </Link>
               ))}
             </div>
@@ -41,7 +42,7 @@ export function LandingFooter() {
 
           {/* Contact */}
           <div>
-            <div className="f-mono text-label uppercase text-ink-3 mb-3 tracking-widest">{t('contacte')}</div>
+            <div className="f-mono text-label uppercase text-ink-3 mb-3 tracking-widest">{t('contact')}</div>
             <div className="flex flex-col gap-2">
               <a href="mailto:info@amgdl.com" className="f-mono text-label text-ink-3 hover:text-ink-1 transition-colors">
                 info@amgdl.com
