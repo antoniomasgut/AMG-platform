@@ -208,6 +208,15 @@ public class EngineOrchestrator implements EngineService {
                 .findTopByLandingIdAndLocaleAndStatusOrderByVersionNumberDesc(landingId, loc, VersionStatus.DRAFT)
                 .orElseThrow(() -> new IllegalArgumentException("No DRAFT version to publish for locale: " + loc));
 
+        // Demota les versions ja publicades d'aquest locale (només una PUBLISHED per landing+locale),
+        // altrament el render acumula duplicats i peta amb NonUniqueResultException.
+        landingVersionRepository.findByLandingIdAndStatus(landingId, VersionStatus.PUBLISHED).stream()
+                .filter(v -> loc.equals(v.getLocale()) && !v.getId().equals(draft.getId()))
+                .forEach(v -> {
+                    v.setStatus(VersionStatus.ARCHIVED);
+                    landingVersionRepository.save(v);
+                });
+
         draft.setStatus(VersionStatus.PUBLISHED);
         draft.setPublishedAt(Instant.now());
         landingVersionRepository.save(draft);
@@ -334,10 +343,12 @@ public class EngineOrchestrator implements EngineService {
         }
 
         var loc = locale != null && !locale.isBlank() ? locale : "ca";
-        // Fallback: requested locale → 'ca'
+        // Fallback: requested locale → 'ca'. Usem findTop...OrderByVersionNumberDesc (no la
+        // variant Optional) per ser resilients a versions publicades duplicades: agafem la
+        // més recent en comptes de petar amb NonUniqueResultException.
         var version = landingVersionRepository
-                .findByLandingIdAndLocaleAndStatus(landing.getId(), loc, VersionStatus.PUBLISHED)
-                .or(() -> landingVersionRepository.findByLandingIdAndLocaleAndStatus(landing.getId(), "ca", VersionStatus.PUBLISHED))
+                .findTopByLandingIdAndLocaleAndStatusOrderByVersionNumberDesc(landing.getId(), loc, VersionStatus.PUBLISHED)
+                .or(() -> landingVersionRepository.findTopByLandingIdAndLocaleAndStatusOrderByVersionNumberDesc(landing.getId(), "ca", VersionStatus.PUBLISHED))
                 // legacy fallback: use published_version_id directly
                 .or(() -> landing.getPublishedVersionId() != null
                         ? landingVersionRepository.findById(landing.getPublishedVersionId())
@@ -498,7 +509,7 @@ public class EngineOrchestrator implements EngineService {
                                                String sourceLocale, List<String> targetLocales) {
         var landing = findLanding(tenantId, landingId);
         var src = landingVersionRepository
-                .findByLandingIdAndLocaleAndStatus(landing.getId(), sourceLocale, VersionStatus.PUBLISHED)
+                .findTopByLandingIdAndLocaleAndStatusOrderByVersionNumberDesc(landing.getId(), sourceLocale, VersionStatus.PUBLISHED)
                 .or(() -> landingVersionRepository.findTopByLandingIdAndLocaleAndStatusOrderByVersionNumberDesc(
                         landing.getId(), sourceLocale, VersionStatus.DRAFT))
                 .orElseThrow(() -> new ResourceNotFoundException(
