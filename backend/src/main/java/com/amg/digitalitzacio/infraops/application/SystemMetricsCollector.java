@@ -23,10 +23,14 @@ public class SystemMetricsCollector {
         double cpuPercent = -1;
         long totalRamBytes = -1;
         long freeRamBytes = -1;
+        long totalSwapBytes = -1;
+        long freeSwapBytes = -1;
         if (osMxBean instanceof com.sun.management.OperatingSystemMXBean sunOs) {
             cpuPercent = sunOs.getCpuLoad() * 100;
             totalRamBytes = sunOs.getTotalMemorySize();
             freeRamBytes = sunOs.getFreeMemorySize();
+            totalSwapBytes = sunOs.getTotalSwapSpaceSize();
+            freeSwapBytes = sunOs.getFreeSwapSpaceSize();
         }
 
         // Disc
@@ -60,7 +64,9 @@ public class SystemMetricsCollector {
                 totalDiskBytes / (1024 * 1024 * 1024),
                 activeConn,
                 maxConn,
-                dbPercent
+                dbPercent,
+                totalSwapBytes >= 0 ? totalSwapBytes / (1024 * 1024) : -1,
+                (totalSwapBytes > 0 && freeSwapBytes >= 0) ? (totalSwapBytes - freeSwapBytes) / (1024 * 1024) : 0
         );
     }
 
@@ -74,6 +80,8 @@ public class SystemMetricsCollector {
             long diskTotalGb,
             int dbActiveConnections,
             int dbMaxConnections,
-            double dbConnectionPercent
+            double dbConnectionPercent,
+            long swapTotalMb,
+            long swapUsedMb
     ) {}
 }

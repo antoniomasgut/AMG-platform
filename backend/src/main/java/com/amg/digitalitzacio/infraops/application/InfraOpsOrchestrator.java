@@ -117,6 +117,7 @@ public class InfraOpsOrchestrator implements InfraOpsService {
         snapshot = snapshotRepository.save(snapshot);
 
         evaluateAndNotify(snapshot);
+        checkSwap(metrics, activeTenants);
         cleanupOldSnapshots();
 
         return toStatusResponse(snapshot);
@@ -125,6 +126,15 @@ public class InfraOpsOrchestrator implements InfraOpsService {
     private void evaluateAndNotify(InfraMetricSnapshot latest) {
         var now30mAgo = Instant.now().minus(30, ChronoUnit.MINUTES);
         var now15mAgo = Instant.now().minus(15, ChronoUnit.MINUTES);
+
+        // Llindars: SystemConfig els pot sobreescriure (INFRAOPS_*_WARN/CRIT); si no, s'usa el default de config.
+        double cpuWarn = cfg("INFRAOPS_CPU_WARN", this.cpuWarn);
+        double cpuCrit = cfg("INFRAOPS_CPU_CRIT", this.cpuCrit);
+        double ramWarn = cfg("INFRAOPS_RAM_WARN", this.ramWarn);
+        double ramCrit = cfg("INFRAOPS_RAM_CRIT", this.ramCrit);
+        double diskWarn = cfg("INFRAOPS_DISK_WARN", this.diskWarn);
+        double diskCrit = cfg("INFRAOPS_DISK_CRIT", this.diskCrit);
+        double dbConnWarn = cfg("INFRAOPS_DB_WARN", this.dbConnWarn);
 
         // CPU — sustained 30 min
         var avgCpu = snapshotRepository.avgCpuSince(now30mAgo);
@@ -160,6 +170,21 @@ public class InfraOpsOrchestrator implements InfraOpsService {
                     tenants,
                     "💡 <b>Recomanació: SEPARATE_N8N</b>\n\n%d tenants actius (límit recomanat: %d)\n\nConsulta separar n8n a un VPS dedicat per alliberar recursos".formatted(tenants, tenantsN8nWarn));
         }
+    }
+
+    /** Llindar sobreescrivible per SystemConfig (numèric); si no hi és o no és vàlid, s'usa el default. */
+    private double cfg(String key, double def) {
+        String v = systemConfigService.get(key);
+        if (v == null || v.isBlank()) return def;
+        try { return Double.parseDouble(v.trim()); } catch (NumberFormatException e) { return def; }
+    }
+
+    /** Alerta si el servidor no té swap i la RAM està sota pressió (risc d'OOM, p. ex. durant builds). */
+    private void checkSwap(SystemMetricsCollector.ServerMetrics metrics, int activeTenants) {
+        double value = metrics.swapTotalMb() == 0 ? metrics.ramPercent() : 0;
+        checkAndNotify(RecommendationType.MEMORY_NO_SWAP, value, cfg("INFRAOPS_RAM_WARN", ramWarn), cfg("INFRAOPS_RAM_CRIT", ramCrit),
+                activeTenants,
+                "🟡 <b>Recomanació: MEMORY_NO_SWAP</b>\n\nRAM al <b>%.1f%%</b> i el servidor <b>no té swap</b>. Sense coixí de memòria, un pic (p. ex. un build) pot causar un OOM.\n\n💡 Afegeix 2-4 GB de swap com a xarxa de seguretat.".formatted(metrics.ramPercent()));
     }
 
     /** Tipus de recomanació desactivats via SystemConfig INFRAOPS_DISABLED_RECS (noms separats per coma). */

@@ -6,5 +6,6 @@ public enum RecommendationType {
     UPGRADE_DISK,
     SEPARATE_DB,
     SEPARATE_N8N,
-    MIGRATE_HETZNER_CLOUD
+    MIGRATE_HETZNER_CLOUD,
+    MEMORY_NO_SWAP
 }
