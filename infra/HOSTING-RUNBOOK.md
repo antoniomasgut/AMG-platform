@@ -24,56 +24,38 @@ Portal (admin aprova import) → WebHostingService.deployContainerSite()
   coolify-proxy encamina el domini → proxy → contenidor upstream del client
 ```
 
-## Instal·lació al host (una sola vegada)
+## Routing automàtic (com funciona, ja instal·lat)
 
-### 1. DNS — wildcard de subdominis (ACCIÓ AL REGISTRADOR)
-Afegir al proveïdor DNS de `amgdl.com`:
-```
-*.webs.amgdl.com.   A   65.108.148.62
-```
-Sense això, els subdominis gratuïts (casos A i B) no resolen.
+El backend **no escriu mai** la config de coolify-proxy. En publicar/despublicar una
+landing o desplegar/esborrar un estàtic, escriu un manifest a `websites_data/_desired/`:
+- `route-<domini>.json` → l'agent genera un router concret a `amg-sites-auto.yml`.
+- `<container>.json` (kind container-proxy) → l'agent crea el contenidor (cas C).
 
-### 2. coolify-proxy — router wildcard cap al backend (casos A + B)
-Afegir un fitxer de config dinàmica al Traefik de Coolify (dir del file-provider, típic
-`/data/coolify/proxy/dynamic/`), p. ex. `amg-sites.yaml`:
-```yaml
-http:
-  routers:
-    amg-sites:
-      rule: "HostRegexp(`{sub:[a-z0-9-]+}.webs.amgdl.com`)"
-      entryPoints: [https]
-      tls:
-        certResolver: letsencrypt
-      middlewares: [amg-sites-prefix]
-      service: amg-sites
-  middlewares:
-    amg-sites-prefix:
-      addPrefix:
-        prefix: "/api/v1/sites/serve"
-  services:
-    amg-sites:
-      loadBalancer:
-        servers:
-          - url: "http://amg-backend:8080"
-```
-> `amg-backend` és l'àlies del backend a la xarxa `coolify` (veure docker-compose.yml).
-> Els imports CONTAINER (cas C) NO passen per aquest router: el seu contenidor porta el
-> seu propi label `Host(...)` amb més prioritat.
+L'agent (`/etc/cron.d/amg-hosting-agent`, cada 2 min) valida el domini
+(**anti-hijacking**: només `*.webs.amgdl.com` o domini propi que NO sigui de `amgdl.com`)
+i regenera `amg-sites-auto.yml` de forma atòmica. Traefik (file-provider) recarrega en calent
+i obté el cert HTTP-01 per cada `Host(...)` concret.
 
-### 3. Agent de reconciliació (cas C)
-```
-cp /opt/amg/infra/scripts/hosting-reconciler-agent.py /opt/amg/infra/scripts/
-cat >/etc/cron.d/amg-hosting-agent <<'EOF'
-*/2 * * * * root /usr/bin/python3 /opt/amg/infra/scripts/hosting-reconciler-agent.py >> /var/log/amg-hosting-agent.log 2>&1
-EOF
-```
-No cal secret: l'agent només llegeix un directori del volum i crea contenidors nginx amb
-noms/dominis validats (regex) — no executa res del manifest com a shell.
+### Estat de la infraestructura (2026-07-12)
+- **DNS wildcard `*.webs.amgdl.com` → 65.108.148.62**: ✅ ja existeix al proveïdor.
+- **Agent + cron**: ✅ instal·lat (`/opt/amg/infra/scripts/hosting-reconciler-agent.py`).
+- **`amg.yml`** (coolify dynamic): només routers core (amgdl.com, api.amgdl.com). Els routers
+  de landing es generen a `amg-sites-auto.yml` (gestionat per l'agent — no editar a mà).
+- **Permisos del volum**: `/var/lib/docker/volumes/infra_websites_data/_data` ha de ser
+  propietat de l'usuari del backend (**uid 100:101 / amg**), altrament el backend no pot
+  escriure els manifests. Aplicat amb:
+  ```
+  chown -R 100:101 /var/lib/docker/volumes/infra_websites_data/_data && chmod 775 ...
+  ```
+  Persisteix (volum amb nom). Si es recrea el volum, tornar-ho a aplicar.
 
 ## Verificació
-- **A**: publica una landing amb slug `demo` → `https://demo.webs.amgdl.com` mostra la landing.
-- **B**: puja un ZIP amb domini `demo.webs.amgdl.com` i aprova → serveix `index.html`.
-- **C**: aprova un import CONTAINER → en <2 min l'agent crea `site-*-pro-proxy`, i el domini respon.
+- **A** (verificat ✅): `estetica-mireia|fisio-llevant|nutricio-sa-salut.webs.amgdl.com` → 200.
+  Publica una landing nova → en <2 min el seu subdomini respon (cert automàtic).
+- **B**: puja un ZIP amb domini `x.webs.amgdl.com` i aprova → l'agent crea el router amb
+  prefix, i el backend serveix `index.html` des del volum.
+- **C**: aprova un import CONTAINER → en <2 min l'agent crea `site-*-pro-proxy` a la xarxa
+  coolify, i el domini respon.
 
 ## Notes de seguretat
 - El backend no té accés a Docker (socket eliminat). Superfície d'atac reduïda.
