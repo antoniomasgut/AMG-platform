@@ -1016,6 +1016,9 @@ function ContractSection({ tenant, onRefresh }: { tenant: TenantResponse; onRefr
   const [saving, setSaving] = useState(false);
   const [editSector, setEditSector] = useState(tenant.sector ?? '');
   const [editSize, setEditSize] = useState(tenant.businessSize ?? '');
+  const [editingPrompt, setEditingPrompt] = useState(false);
+  const [savingPrompt, setSavingPrompt] = useState(false);
+  const [editPrompt, setEditPrompt] = useState(tenant.agentSystemPrompt ?? '');
 
   const { data: pricing } = useQuery({
     queryKey: ['pricing', tenant.sector, tenant.businessSize],
@@ -1044,6 +1047,29 @@ function ContractSection({ tenant, onRefresh }: { tenant: TenantResponse; onRefr
       toast('error', 'Error desant els canvis');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSavePrompt = async () => {
+    setSavingPrompt(true);
+    try {
+      await updateTenant(tenant.id, { agentSystemPrompt: editPrompt });
+      toast('success', 'Prompt de l\'agent actualitzat');
+      onRefresh();
+      setEditingPrompt(false);
+    } catch {
+      toast('error', 'Error desant el prompt');
+    } finally {
+      setSavingPrompt(false);
+    }
+  };
+
+  const handleCopyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(tenant.agentSystemPrompt ?? '');
+      toast('success', 'Prompt copiat al porta-retalls');
+    } catch {
+      toast('error', 'No s\'ha pogut copiar');
     }
   };
 
@@ -1161,14 +1187,43 @@ function ContractSection({ tenant, onRefresh }: { tenant: TenantResponse; onRefr
                 </div>
               </div>
             )}
-            {tenant.agentSystemPrompt && (
-              <div className="border-t border-border-base pt-4">
-                <div className="f-mono text-label uppercase text-ink-3 mb-2">Prompt agent IA</div>
+            <div className="border-t border-border-base pt-4">
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <div className="f-mono text-label uppercase text-ink-3">Prompt agent IA</div>
+                {!editingPrompt && (
+                  <div className="flex gap-1">
+                    {tenant.agentSystemPrompt && (
+                      <AMGButton size="sm" variant="ghost" icon={IconSet.Copy} onClick={handleCopyPrompt}>
+                        Copiar
+                      </AMGButton>
+                    )}
+                    <AMGButton size="sm" variant="ghost" icon={IconSet.Edit} onClick={() => { setEditPrompt(tenant.agentSystemPrompt ?? ''); setEditingPrompt(true); }}>
+                      Editar
+                    </AMGButton>
+                  </div>
+                )}
+              </div>
+              {editingPrompt ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={editPrompt}
+                    onChange={(e) => setEditPrompt(e.target.value)}
+                    rows={12}
+                    className="w-full text-xs f-mono text-ink-1 whitespace-pre-wrap bg-[rgba(255,255,255,0.02)] border border-border-base rounded p-3 focus:outline-none focus:border-accent resize-y"
+                  />
+                  <div className="flex gap-2">
+                    <AMGButton size="sm" onClick={handleSavePrompt} loading={savingPrompt} disabled={savingPrompt}>Desar</AMGButton>
+                    <AMGButton size="sm" variant="outline" onClick={() => setEditingPrompt(false)}>Cancel·lar</AMGButton>
+                  </div>
+                </div>
+              ) : tenant.agentSystemPrompt ? (
                 <pre className="text-xs f-mono text-ink-2 whitespace-pre-wrap bg-[rgba(255,255,255,0.02)] border border-border-base rounded p-3 max-h-48 overflow-y-auto">
                   {tenant.agentSystemPrompt}
                 </pre>
-              </div>
-            )}
+              ) : (
+                <p className="text-xs text-ink-3 italic">Sense prompt personalitzat (usa el per defecte).</p>
+              )}
+            </div>
           </>
         )}
       </div>
