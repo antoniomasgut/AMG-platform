@@ -14,5 +14,6 @@ public interface InfraOpsService {
     List<RecommendationResponse> getActiveRecommendations();
     List<RecommendationResponse> getRecommendationHistory();
     RecommendationResponse resolveRecommendation(UUID id);
+    void deleteRecommendation(UUID id);
     InfraStatusResponse collectNow();
 }

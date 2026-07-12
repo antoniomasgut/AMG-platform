@@ -35,6 +35,7 @@ export interface Recommendation {
   severity: string;
   message: string;
   resolved: boolean;
+  createdAt: string;
 }
 
 export const getInfraStatus = () =>
@@ -47,3 +48,6 @@ export const getInfraMetrics = (hours?: number) => {
 
 export const getRecommendations = () =>
   apiFetch<Recommendation[]>('/infraops/recommendations');
+
+export const deleteRecommendation = (id: string) =>
+  apiFetch<void>(`/infraops/recommendations/${id}`, { method: 'DELETE' });

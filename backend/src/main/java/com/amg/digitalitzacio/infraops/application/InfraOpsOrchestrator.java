@@ -30,6 +30,7 @@ public class InfraOpsOrchestrator implements InfraOpsService {
     private final ScalingRecommendationRepository recommendationRepository;
     private final TenantRepository tenantRepository;
     private final TelegramNotifier telegramNotifier;
+    private final com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService systemConfigService;
 
     @Value("${app.infraops.thresholds.cpu-warn:80}") private double cpuWarn;
     @Value("${app.infraops.thresholds.cpu-crit:95}") private double cpuCrit;
@@ -83,6 +84,15 @@ public class InfraOpsOrchestrator implements InfraOpsService {
         rec.setResolvedAt(Instant.now());
         rec.setIsActive(false);
         return toRecommendationResponse(recommendationRepository.save(rec));
+    }
+
+    @Override
+    @Transactional
+    public void deleteRecommendation(UUID id) {
+        if (!recommendationRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Recommendation not found: " + id);
+        }
+        recommendationRepository.deleteById(id);
     }
 
     @Override
@@ -152,8 +162,20 @@ public class InfraOpsOrchestrator implements InfraOpsService {
         }
     }
 
+    /** Tipus de recomanació desactivats via SystemConfig INFRAOPS_DISABLED_RECS (noms separats per coma). */
+    private boolean isRecommendationDisabled(RecommendationType type) {
+        String disabled = systemConfigService.get("INFRAOPS_DISABLED_RECS");
+        if (disabled == null || disabled.isBlank()) return false;
+        return java.util.Arrays.stream(disabled.split(","))
+                .map(String::trim)
+                .anyMatch(t -> t.equalsIgnoreCase(type.name()));
+    }
+
     private void checkAndNotify(RecommendationType type, double value, double warn, double crit,
                                  int activeTenants, String messageTemplate) {
+        // Tipus de recomanació desactivats per config (INFRAOPS_DISABLED_RECS, separats per coma).
+        // Ex: desactivar SEPARATE_N8N si no s'usa n8n.
+        if (isRecommendationDisabled(type)) return;
         if (value < warn) {
             // Si estava actiu, marcar com resolt
             recommendationRepository.findTopByTypeOrderByCreatedAtDesc(type)

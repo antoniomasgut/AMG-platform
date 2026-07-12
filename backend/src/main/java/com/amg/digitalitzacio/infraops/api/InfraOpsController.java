@@ -48,6 +48,11 @@ public class InfraOpsController {
         return infraOpsService.resolveRecommendation(id);
     }
 
+    @DeleteMapping("/recommendations/{id}")
+    public void deleteRecommendation(@PathVariable UUID id) {
+        infraOpsService.deleteRecommendation(id);
+    }
+
     @PostMapping("/collect")
     public InfraStatusResponse collectNow() {
         return infraOpsService.collectNow();

@@ -1,8 +1,9 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
-import { getInfraStatus, getRecommendations, type InfraStatus, type Recommendation } from '@/services/infraops';
+import { useToast } from '@/lib/toast-context';
+import { getInfraStatus, getRecommendations, deleteRecommendation, type InfraStatus, type Recommendation } from '@/services/infraops';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGStat } from '@/components/ui/stat';
@@ -14,6 +15,11 @@ const SEVERITY_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 
   HIGH: 'danger',
   CRITICAL: 'danger',
 };
+
+function fmtDate(d: string | null) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
 
 function metricTone(percent: number): 'success' | 'info' | 'danger' | 'accent' {
   if (percent >= 90) return 'danger';
@@ -53,6 +59,14 @@ export default function InfraOpsPage() {
     queryFn: getRecommendations,
     enabled: !!user && isSuperAdmin,
     refetchInterval: 60000,
+  });
+
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const delMut = useMutation({
+    mutationFn: (id: string) => deleteRecommendation(id),
+    onSuccess: () => { toast('success', 'Missatge esborrat'); qc.invalidateQueries({ queryKey: ['infra-recommendations'] }); },
+    onError: () => toast('error', 'Error esborrant el missatge'),
   });
 
   if (!user || !isSuperAdmin) return null;
@@ -152,12 +166,21 @@ export default function InfraOpsPage() {
                 <div key={rec.id} className={`px-4 sm:px-5 py-4 flex items-start gap-3 ${rec.resolved ? 'opacity-50' : ''}`}>
                   <AMGBadge tone={SEVERITY_TONE[rec.severity] ?? 'neutral'}>{rec.severity}</AMGBadge>
                   <div className="flex-1 min-w-0">
-                    <div className="f-mono text-label text-ink-2 uppercase tracking-wider mb-1">{rec.type}</div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="f-mono text-label text-ink-2 uppercase tracking-wider">{rec.type}</span>
+                      {rec.createdAt && <span className="f-mono text-label text-ink-3">· {fmtDate(rec.createdAt)}</span>}
+                    </div>
                     <p className="text-sm text-ink-1">{rec.message}</p>
                   </div>
-                  {rec.resolved && (
-                    <AMGBadge tone="success">Resolt</AMGBadge>
-                  )}
+                  {rec.resolved && <AMGBadge tone="success">Resolt</AMGBadge>}
+                  <button
+                    onClick={() => delMut.mutate(rec.id)}
+                    disabled={delMut.isPending}
+                    title="Esborrar aquest missatge"
+                    className="shrink-0 text-ink-3 hover:text-danger transition-colors disabled:opacity-50 mt-0.5"
+                  >
+                    <IconSet.Trash size={16} />
+                  </button>
                 </div>
               ))}
             </div>
