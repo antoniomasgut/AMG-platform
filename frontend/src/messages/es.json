@@ -1756,5 +1756,22 @@
     "messagePlaceholder": "Escribe un mensaje…",
     "errorStart": "No se ha podido iniciar el chat. Inténtalo de nuevo.",
     "errorSend": "Error de conexión. Inténtalo de nuevo."
+  },
+  "felanitxGrant": {
+    "badge": "Ayuda · Ayuntamiento de Felanitx",
+    "title": "50% subvencionado para modernizar tu comercio",
+    "deadline": "Solicitudes hasta el 27 de julio de 2026",
+    "intro": "El Ayuntamiento de Felanitx subvenciona la modernización digital de los comercios locales. Nosotros te lo montamos todo y te ayudamos con toda la tramitación.",
+    "services": [
+      "Webs profesionales en catalán",
+      "Gestión de redes sociales",
+      "Asistente de IA que atiende clientes por WhatsApp",
+      "Automatizaciones, reserva de citas y presupuestos",
+      "Gestión de reseñas de Google"
+    ],
+    "covers": "La ayuda cubre web, alojamiento y redes sociales (hasta el 50%, máximo 1.000€).",
+    "eligibility": "Para comercios de Felanitx con actividad elegible (comercio minorista y algunos servicios).",
+    "phone": "614 492 062",
+    "whatsapp": "654 048 164"
   }
 }

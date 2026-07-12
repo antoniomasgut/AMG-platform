@@ -1,6 +1,7 @@
 import dynamic from 'next/dynamic';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { HeroSection } from '@/components/landing/HeroSection';
+import { FelanitxGrantSection } from '@/components/landing/FelanitxGrantSection';
 import { ProblemSection } from '@/components/landing/ProblemSection';
 import { PricingSection } from '@/components/landing/PricingSection';
 import { ServicesSection } from '@/components/landing/ServicesSection';
@@ -22,6 +23,7 @@ export default function LandingPage() {
     <div className="bg-bg-0 text-ink-0">
       <LandingHeader />
       <HeroSection />
+      <FelanitxGrantSection />
       <ProblemSection />
       <PricingSection />
       <ServicesSection />
