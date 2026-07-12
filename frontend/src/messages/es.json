@@ -99,6 +99,30 @@
           "Dashboard financiero",
           "Formación y acompañamiento"
         ]
+      },
+      {
+        "name": "Web Profesional",
+        "tagline": "Web a medida, sin IA",
+        "price": "desde 390€",
+        "features": [
+          "Diseño a medida en catalán",
+          "Contenido redactado",
+          "Galería y secciones",
+          "SEO y formulario",
+          "Botón WhatsApp"
+        ]
+      },
+      {
+        "name": "Gestión de redes",
+        "tagline": "Tu presencia social",
+        "price": "desde 49€/mes",
+        "features": [
+          "Publicaciones en catalán",
+          "Planificación de contenido",
+          "Gestión de comentarios",
+          "Informe mensual",
+          "Multi-red"
+        ]
       }
     ]
   },

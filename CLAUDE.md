@@ -209,6 +209,8 @@ Cada fase té un cost de **setup individual** (varia per `businessSize`: AUTONOM
 |--------|-------|---------|
 | Micro-landing | 30€ | 9€/mes | Blocs bàsics + formulari de contacte (email) |
 | Landing Pro | 80€ | 15€/mes | Tots els blocs + formulari + botó WhatsApp + chat widget IA (requereix F1) |
+| Web Professional (sense IA) Estàndard | 390€ | 15€/mes | Web a mida en català, multi-secció, contingut redactat, SEO, form + WhatsApp. Sense agent IA |
+| Web Professional (sense IA) Plus | 590€ | 15€/mes | Multi-pàgina (5-8), més contingut, galeria, SEO treballat. Sense agent IA |
 | Domini autogestionat | 30€ | — (client gestiona renovació) |
 | Domini gestionat | 60€ (inclou 1r any) | 15€/any (renovació) |
 
@@ -224,6 +226,14 @@ Cada fase té un cost de **setup individual** (varia per `businessSize`: AUTONOM
 | SMTP Corporatiu | 25€ |
 | Google Analytics | 25€ |
 | Social Publisher (Instagram + Facebook + Google Business via Telegram IA) | 50€ |
+
+**Gestió mensual de xarxes socials (servei gestionat, en català — no autoservei):**
+
+| Nivell | Mensual | Inclou |
+|--------|---------|--------|
+| Bàsic | 49€/mes | 4-6 publicacions/mes, 1-2 xarxes, contingut IA en català |
+| Gestió | 99€/mes | 8-12 publicacions/mes, multi-xarxa, gestió de comentaris/DMs, informe |
+| Premium | 149€/mes | +publicacions, campanyes estacionals, més xarxes |
 
 ---
 

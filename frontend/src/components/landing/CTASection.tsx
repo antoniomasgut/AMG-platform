@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 
 export function CTASection() {
-  const t = useTranslations('landing.cta');
+  const t = useTranslations('cta');
   const locale = useLocale();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

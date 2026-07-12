@@ -99,6 +99,30 @@
           "Financial dashboard",
           "Training & support"
         ]
+      },
+      {
+        "name": "Professional Website",
+        "tagline": "Custom site, no AI",
+        "price": "from €390",
+        "features": [
+          "Custom design in Catalan",
+          "Written content",
+          "Gallery and sections",
+          "SEO and form",
+          "WhatsApp button"
+        ]
+      },
+      {
+        "name": "Social media management",
+        "tagline": "Your social presence",
+        "price": "from €49/mo",
+        "features": [
+          "Posts in Catalan",
+          "Content planning",
+          "Comment management",
+          "Monthly report",
+          "Multi-network"
+        ]
       }
     ]
   },
