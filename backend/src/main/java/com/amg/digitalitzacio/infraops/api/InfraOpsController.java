@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.infraops.api;
 
+import com.amg.digitalitzacio.infraops.api.dto.ContainerStatus;
 import com.amg.digitalitzacio.infraops.api.dto.InfraStatusResponse;
 import com.amg.digitalitzacio.infraops.api.dto.MetricSnapshotResponse;
 import com.amg.digitalitzacio.infraops.api.dto.RecommendationResponse;
@@ -51,6 +52,11 @@ public class InfraOpsController {
     @DeleteMapping("/recommendations/{id}")
     public void deleteRecommendation(@PathVariable UUID id) {
         infraOpsService.deleteRecommendation(id);
+    }
+
+    @GetMapping("/containers")
+    public List<ContainerStatus> getContainers() {
+        return infraOpsService.getContainerStatuses();
     }
 
     @PostMapping("/collect")

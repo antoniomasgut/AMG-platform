@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { getInfraStatus, getRecommendations, deleteRecommendation, type InfraStatus, type Recommendation } from '@/services/infraops';
+import { getInfraStatus, getRecommendations, deleteRecommendation, getContainers, type InfraStatus, type Recommendation, type ContainerStatus } from '@/services/infraops';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { AMGBadge } from '@/components/ui/badge';
 import { AMGStat } from '@/components/ui/stat';
@@ -19,6 +19,10 @@ const SEVERITY_TONE: Record<string, 'neutral' | 'info' | 'success' | 'danger' | 
 function fmtDate(d: string | null) {
   if (!d) return '';
   return new Date(d).toLocaleDateString('ca-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+function containerHealthy(c: ContainerStatus) {
+  return c.state?.toLowerCase() === 'running' && !c.status?.toLowerCase().includes('unhealthy');
 }
 
 function metricTone(percent: number): 'success' | 'info' | 'danger' | 'accent' {
@@ -59,6 +63,13 @@ export default function InfraOpsPage() {
     queryFn: getRecommendations,
     enabled: !!user && isSuperAdmin,
     refetchInterval: 60000,
+  });
+
+  const { data: containers = [] } = useQuery({
+    queryKey: ['infra-containers'],
+    queryFn: getContainers,
+    enabled: !!user && isSuperAdmin,
+    refetchInterval: 30000,
   });
 
   const qc = useQueryClient();
@@ -140,6 +151,38 @@ export default function InfraOpsPage() {
             </div>
           </>
         ) : null}
+
+        {/* Contenidors */}
+        <div className="amg-card card-clip">
+          <div className="p-4 sm:p-5 border-b border-border-base flex items-center justify-between">
+            <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Contenidors</div>
+            {(containers as ContainerStatus[]).length > 0 && (
+              <AMGBadge tone={(containers as ContainerStatus[]).every(containerHealthy) ? 'success' : 'danger'}>
+                {(containers as ContainerStatus[]).filter((c) => !containerHealthy(c)).length === 0
+                  ? 'Tots OK'
+                  : `${(containers as ContainerStatus[]).filter((c) => !containerHealthy(c)).length} amb problemes`}
+              </AMGBadge>
+            )}
+          </div>
+          {(containers as ContainerStatus[]).length === 0 ? (
+            <div className="p-6 text-center f-mono text-label text-ink-3">
+              Sense dades de l&apos;agent. Configura l&apos;agent del host i la clau INFRAOPS_AGENT_TOKEN.
+            </div>
+          ) : (
+            <div className="divide-y divide-border-base">
+              {(containers as ContainerStatus[]).map((c) => {
+                const ok = containerHealthy(c);
+                return (
+                  <div key={c.name} className="px-4 sm:px-5 py-3 flex items-center gap-3">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${ok ? 'bg-success' : 'bg-danger'}`} />
+                    <span className="text-sm text-ink-1 font-semibold flex-1 min-w-0 truncate">{c.name}</span>
+                    <span className="f-mono text-label text-ink-3 truncate max-w-[45%]">{c.status}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Recomanacions */}
         <div className="amg-card card-clip">

@@ -44,6 +44,7 @@ public class SystemConfigService {
         new KnownKey("INFRAOPS_DISK_WARN",      "InfraOps — Disc avís (%)",  "Llindar d'avís de disc (default 75).", "GENERAL", false, "number", "75", null, 205),
         new KnownKey("INFRAOPS_DISK_CRIT",      "InfraOps — Disc crític (%)","Llindar crític de disc (default 90).", "GENERAL", false, "number", "90", null, 206),
         new KnownKey("INFRAOPS_DB_WARN",        "InfraOps — Connexions DB avís (%)", "Llindar d'avís de connexions DB (default 80).", "GENERAL", false, "number", "80", null, 207),
+        new KnownKey("INFRAOPS_AGENT_TOKEN",    "InfraOps — Token de l'agent de contenidors", "Secret compartit amb l'agent del host que reporta l'estat dels contenidors (capçalera X-Agent-Token).", "GENERAL", true, "secret", null, null, 208),
         new KnownKey("STT_BASE_URL",            "Speech-to-Text Base URL",    "Endpoint compatible OpenAI (per defecte: https://api.openai.com/v1; Groq: https://api.groq.com/openai/v1)", "AGENTS", false, "url", "https://api.openai.com/v1", null, 46),
         new KnownKey("STT_MODEL",               "Speech-to-Text Model",       "Model de transcripció (whisper-1 a OpenAI; whisper-large-v3-turbo a Groq)", "AGENTS", false, "string", "whisper-1", null, 47),
         new KnownKey("TELEGRAM_CHAT_ID",        "Telegram Chat ID (InfraOps)","ID del chat on enviar alertes d'infraestructura", "INFRAOPS", false, "string", null, null, 10),

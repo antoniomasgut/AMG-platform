@@ -15,5 +15,7 @@ public interface InfraOpsService {
     List<RecommendationResponse> getRecommendationHistory();
     RecommendationResponse resolveRecommendation(UUID id);
     void deleteRecommendation(UUID id);
+    void reportContainerStatus(java.util.List<com.amg.digitalitzacio.infraops.api.dto.ContainerStatus> containers);
+    java.util.List<com.amg.digitalitzacio.infraops.api.dto.ContainerStatus> getContainerStatuses();
     InfraStatusResponse collectNow();
 }

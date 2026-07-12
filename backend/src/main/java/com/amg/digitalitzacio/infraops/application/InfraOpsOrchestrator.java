@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.infraops.application;
 
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
+import com.amg.digitalitzacio.infraops.api.dto.ContainerStatus;
 import com.amg.digitalitzacio.infraops.api.dto.InfraStatusResponse;
 import com.amg.digitalitzacio.infraops.api.dto.MetricSnapshotResponse;
 import com.amg.digitalitzacio.infraops.api.dto.RecommendationResponse;
@@ -31,6 +32,10 @@ public class InfraOpsOrchestrator implements InfraOpsService {
     private final TenantRepository tenantRepository;
     private final TelegramNotifier telegramNotifier;
     private final com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService systemConfigService;
+
+    // Estat de contenidors reportat per l'agent del host (docker ps → POST). El backend no toca Docker.
+    private volatile List<ContainerStatus> lastContainerReport = List.of();
+    private volatile Instant lastContainerReportAt = null;
 
     @Value("${app.infraops.thresholds.cpu-warn:80}") private double cpuWarn;
     @Value("${app.infraops.thresholds.cpu-crit:95}") private double cpuCrit;
@@ -93,6 +98,44 @@ public class InfraOpsOrchestrator implements InfraOpsService {
             throw new ResourceNotFoundException("Recommendation not found: " + id);
         }
         recommendationRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void reportContainerStatus(List<ContainerStatus> containers) {
+        lastContainerReport = containers != null ? containers : List.of();
+        lastContainerReportAt = Instant.now();
+        evaluateContainers(lastContainerReport);
+    }
+
+    @Override
+    public List<ContainerStatus> getContainerStatuses() {
+        return lastContainerReport;
+    }
+
+    /** Genera/resol una recomanació CONTAINER_UNHEALTHY segons l'últim report de l'agent. */
+    private void evaluateContainers(List<ContainerStatus> containers) {
+        var bad = containers.stream().filter(c -> !c.healthy()).map(ContainerStatus::name).toList();
+        var active = recommendationRepository.findTopByTypeOrderByCreatedAtDesc(RecommendationType.CONTAINER_UNHEALTHY)
+                .filter(r -> Boolean.TRUE.equals(r.getIsActive()));
+        if (bad.isEmpty()) {
+            active.ifPresent(r -> { r.setIsActive(false); r.setResolvedAt(Instant.now()); recommendationRepository.save(r); });
+            return;
+        }
+        if (isRecommendationDisabled(RecommendationType.CONTAINER_UNHEALTHY)) return;
+        var cooldownSince = Instant.now().minus(cooldownHours, ChronoUnit.HOURS);
+        if (recommendationRepository.existsByTypeAndSentAtAfter(RecommendationType.CONTAINER_UNHEALTHY, cooldownSince)) return;
+        var message = "🔴 <b>Contenidors amb problemes</b>\n\n" + String.join(", ", bad)
+                + "\n\n💡 Revisa'ls al servidor: docker ps · docker logs <nom>";
+        var rec = ScalingRecommendation.builder()
+                .type(RecommendationType.CONTAINER_UNHEALTHY)
+                .severity(RecommendationSeverity.CRITICAL)
+                .message(message)
+                .sentAt(Instant.now())
+                .isActive(true)
+                .build();
+        recommendationRepository.save(rec);
+        telegramNotifier.send(message);
     }
 
     @Override

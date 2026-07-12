@@ -7,5 +7,6 @@ public enum RecommendationType {
     SEPARATE_DB,
     SEPARATE_N8N,
     MIGRATE_HETZNER_CLOUD,
-    MEMORY_NO_SWAP
+    MEMORY_NO_SWAP,
+    CONTAINER_UNHEALTHY
 }

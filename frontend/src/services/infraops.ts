@@ -51,3 +51,12 @@ export const getRecommendations = () =>
 
 export const deleteRecommendation = (id: string) =>
   apiFetch<void>(`/infraops/recommendations/${id}`, { method: 'DELETE' });
+
+export interface ContainerStatus {
+  name: string;
+  state: string;
+  status: string;
+}
+
+export const getContainers = () =>
+  apiFetch<ContainerStatus[]>('/infraops/containers');
