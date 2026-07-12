@@ -40,7 +40,7 @@ public class WebHostingService {
 
     private final WebSiteRepository webSiteRepository;
     private final TenantRepository tenantRepository;
-    private final DockerService dockerService;
+    private final HostingManifestService manifestService;
     private final EmailService emailService;
 
     @Value("${app.hosting.data-path:/data/websites}")
@@ -198,14 +198,11 @@ public class WebHostingService {
         }
         WebSite site = findSite(siteId);
 
-        if (site.getStatus() == WebsiteStatus.ACTIVE) {
-            if (dockerService.containerExists(site.getContainerName())) {
-                dockerService.stopAndRemoveContainer(site.getContainerName());
-            }
-            String proxyName = site.getContainerName() + "-proxy";
-            if (dockerService.containerExists(proxyName)) {
-                dockerService.stopAndRemoveContainer(proxyName);
-            }
+        // Els sites CONTAINER tenen un proxy gestionat per l'agent del host: en demanem
+        // l'eliminació via manifest. Els STATIC no tenen contenidor (els serveix el backend);
+        // en esborrar la fila, el backend deixa de servir-los.
+        if (site.getType() == WebsiteType.CONTAINER) {
+            manifestService.requestRemoval(site.getContainerName() + "-proxy");
         }
 
         webSiteRepository.delete(site);
@@ -256,15 +253,13 @@ public class WebHostingService {
     }
 
     private void deployStaticSite(WebSite site) {
+        // Els sites estàtics NO necessiten contenidor: els serveix el backend
+        // (PublicSiteController) directament des del volum, resolent pel Host.
         Path htmlDir = Path.of(dataPath, site.getTenantId().toString(), "html");
-        if (dockerService.containerExists(site.getContainerName())) {
-            dockerService.stopAndRemoveContainer(site.getContainerName());
-        }
         injectWidgetScript(htmlDir, site.getId());
-        dockerService.createStaticContainer(site.getContainerName(), site.getDomain(), htmlDir);
     }
 
-    private void deployContainerSite(WebSite site) throws java.io.IOException {
+    private void deployContainerSite(WebSite site) {
         String upstream = site.getUpstreamContainer();
         int port = site.getUpstreamPort() != null ? site.getUpstreamPort() : 80;
         if (upstream == null || upstream.isBlank()) {
@@ -272,13 +267,14 @@ public class WebHostingService {
                 "upstreamContainer no definit per site " + site.getId() + " — no es pot crear el proxy");
         }
         String proxyName = site.getContainerName() + "-proxy";
-        if (dockerService.containerExists(proxyName)) {
-            dockerService.stopAndRemoveContainer(proxyName);
-        }
-        Path confDir = Path.of(dataPath, site.getTenantId().toString(), "proxy");
+        String tenant = site.getTenantId().toString();
+        String confSubPath = tenant + "/proxy/nginx-proxy.conf";
+        String confAbsolute = Path.of(dataPath, confSubPath).toString();
         String widgetUrl = apiBaseUrl + "/api/v1/widget/" + site.getId() + "/loader";
-        dockerService.createNginxProxyContainer(proxyName, site.getDomain(), confDir, upstream, port, widgetUrl);
-        log.info("[Hosting] Proxy creat per site {} → {}:{}", site.getId(), upstream, port);
+        // El backend només escriu el manifest; l'agent del host crea el contenidor.
+        manifestService.requestContainerProxy(proxyName, site.getDomain(), upstream, port,
+                widgetUrl, confSubPath, confAbsolute);
+        log.info("[Hosting] Manifest de proxy demanat per site {} → {}:{}", site.getId(), upstream, port);
     }
 
     private void injectWidgetScript(Path htmlDir, java.util.UUID siteId) {

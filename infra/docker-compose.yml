@@ -98,11 +98,12 @@ services:
       HOSTING_DATA_PATH: /data/websites
       DEMO_TENANT_ID: ${DEMO_TENANT_ID}
     volumes:
-      # SEGURETAT (2026-07-12): socket de Docker ELIMINAT. Era root-al-host per a DockerService
-      # (hosting de webs importades), una funció NO usada (0 webs a producció) i ja trencada
-      # (la imatge del backend no té el CLI `docker`). Si mai es reactiva el hosting, fer-ho amb
-      # un mecanisme segur (agent al host o docker-java via socket-proxy limitat), MAI muntant
-      # el socket cru en un servei que processa input no confiable (webhooks, IA, uploads).
+      # SEGURETAT (2026-07-12): socket de Docker ELIMINAT del backend. El hosting d'imports
+      # s'ha rearquitecturat de forma segura: el backend NO toca mai Docker. Els imports
+      # ESTÀTICS i les landings del motor els serveix el propi backend (PublicSiteController,
+      # per Host), sense contenidor. Els imports de tipus CONTAINER: el backend escriu un
+      # manifest a websites_data/_desired/ i l'agent del host (infra/scripts/hosting-reconciler-agent.py,
+      # cron) crea el contenidor a la xarxa `coolify`. Veure infra/HOSTING-RUNBOOK.md.
       - websites_data:/data/websites
     networks:
       amg_net: {}
