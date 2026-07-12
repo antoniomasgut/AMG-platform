@@ -1,27 +1,10 @@
 services:
 
-  traefik:
-    image: traefik:v3.2
-    container_name: amg_traefik
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
-      - ./traefik/certs:/certs
-    networks:
-      - amg_net
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${APP_DOMAIN}`)"
-      - "traefik.http.routers.traefik-dashboard.tls=true"
-      - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.traefik-dashboard.service=api@internal"
-      - "traefik.http.routers.traefik-dashboard.middlewares=secureHeaders,auth"
-      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH}"
+  # NOTA (2026-07-12): el servei `traefik` (amg_traefik) s'ha ELIMINAT. No podia arrencar
+  # (conflicte de ports 80/443 amb coolify-proxy, el Traefik de Coolify que ja encamina tot
+  # el trànsit real) i, per tant, era un contenidor mort permanent. El routing va per
+  # coolify-proxy (labels traefik.docker.network=coolify a backend/frontend). Si mai es volen
+  # landings de domini propi, cal encaminar-les per coolify-proxy, no per un Traefik propi.
 
   postgres:
     image: postgres:16-alpine
@@ -115,9 +98,11 @@ services:
       HOSTING_DATA_PATH: /data/websites
       DEMO_TENANT_ID: ${DEMO_TENANT_ID}
     volumes:
-      # SECURITY: RW Docker socket necessari per DockerService.createStaticContainer()
-      # (crea contenidors Nginx per landings). Migrar a docker-java SDK per eliminar-lo.
-      - /var/run/docker.sock:/var/run/docker.sock
+      # SEGURETAT (2026-07-12): socket de Docker ELIMINAT. Era root-al-host per a DockerService
+      # (hosting de webs importades), una funció NO usada (0 webs a producció) i ja trencada
+      # (la imatge del backend no té el CLI `docker`). Si mai es reactiva el hosting, fer-ho amb
+      # un mecanisme segur (agent al host o docker-java via socket-proxy limitat), MAI muntant
+      # el socket cru en un servei que processa input no confiable (webhooks, IA, uploads).
       - websites_data:/data/websites
     networks:
       amg_net: {}
