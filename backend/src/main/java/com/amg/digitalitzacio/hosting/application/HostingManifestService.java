@@ -69,6 +69,41 @@ public class HostingManifestService {
         }
     }
 
+    /**
+     * Demana una ruta de coolify-proxy per a un site servit pel backend (sense contenidor):
+     * landings del motor (routeKind="landing", servida a l'arrel) o imports estàtics
+     * (routeKind="static", servits amb prefix /api/v1/sites/serve). L'agent del host valida
+     * el domini i genera el router concret (amb cert HTTP-01). El backend NO escriu mai config
+     * del proxy.
+     */
+    public void requestSiteRoute(String domain, String routeKind) {
+        if (domain == null || domain.isBlank()) return;
+        Map<String, Object> manifest = new LinkedHashMap<>();
+        manifest.put("action", "deploy");
+        manifest.put("kind", "route");
+        manifest.put("routeKind", routeKind);
+        manifest.put("domain", domain);
+        try {
+            writeManifest("route-" + domain, manifest);
+        } catch (IOException e) {
+            log.warn("[Hosting] No s'ha pogut escriure el manifest de ruta de {}: {}", domain, e.getMessage());
+        }
+    }
+
+    /** Demana l'eliminació de la ruta d'un site (landing despublicada o estàtic esborrat). */
+    public void removeSiteRoute(String domain) {
+        if (domain == null || domain.isBlank()) return;
+        Map<String, Object> manifest = new LinkedHashMap<>();
+        manifest.put("action", "remove");
+        manifest.put("kind", "route");
+        manifest.put("domain", domain);
+        try {
+            writeManifest("route-" + domain, manifest);
+        } catch (IOException e) {
+            log.warn("[Hosting] No s'ha pogut escriure el manifest d'eliminació de ruta {}: {}", domain, e.getMessage());
+        }
+    }
+
     /** Demana l'eliminació d'un contenidor gestionat. */
     public void requestRemoval(String containerName) {
         Map<String, Object> manifest = new LinkedHashMap<>();

@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.engine.infrastructure;
 import com.amg.digitalitzacio.engine.domain.Landing;
 import com.amg.digitalitzacio.engine.domain.LandingRepository;
 import com.amg.digitalitzacio.engine.domain.LandingStatus;
+import com.amg.digitalitzacio.hosting.application.HostingManifestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,30 +11,27 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 /**
- * Escriu /traefik-dynamic/landings.yml quan es publica o despublica una landing.
- * Traefik (file provider) detecta el canvi i actualitza les rutes al moment.
+ * Genera les rutes de coolify-proxy per a les landings publicades, de forma SEGURA:
+ * el backend NO escriu mai la config del proxy. Escriu manifests d'estat desitjat
+ * (via HostingManifestService, al volum websites_data/_desired/) i l'agent del host
+ * (hosting-reconciler-agent.py) valida el domini i genera el router concret amb cert
+ * HTTP-01. Es crida en publicar/despublicar i a l'arrencada (reconciliació completa).
  *
- * Si TRAEFIK_DYNAMIC_DIR no està configurat, el servei queda desactivat (útil en dev).
+ * Declaratiu: per a cada landing PUBLISHED escriu una ruta deploy; per a la resta, remove.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class TraefikConfigWriter {
 
-    @Value("${app.traefik.dynamic-config-dir:}")
-    private String configDir;
-
     @Value("${app.landing.base-domain:webs.amgdl.com}")
     private String landingBaseDomain;
 
     private final LandingRepository landingRepository;
+    private final HostingManifestService manifestService;
 
     @EventListener(ApplicationReadyEvent.class)
     public void onStartup() {
@@ -41,65 +39,18 @@ public class TraefikConfigWriter {
     }
 
     public void regenerate(List<Landing> allLandings) {
-        if (configDir == null || configDir.isBlank()) return;
-
-        var published = allLandings.stream()
-                .filter(l -> l.getStatus() == LandingStatus.PUBLISHED)
-                .toList();
-
-        var yaml = buildYaml(published);
-        write(yaml);
+        for (var l : allLandings) {
+            String domain = domainOf(l);
+            if (l.getStatus() == LandingStatus.PUBLISHED) {
+                manifestService.requestSiteRoute(domain, "landing");
+            } else {
+                manifestService.removeSiteRoute(domain);
+            }
+        }
     }
 
-    private String buildYaml(List<Landing> landings) {
-        if (landings.isEmpty()) {
-            return "# cap landing publicada\n";
-        }
-
-        var sb = new StringBuilder();
-        sb.append("http:\n");
-        sb.append("  routers:\n");
-
-        for (var l : landings) {
-            var slug = l.getSlug();
-            var host = l.getCustomDomain() != null ? l.getCustomDomain()
-                    : slug + "." + landingBaseDomain;
-            var key = "landing-" + slug.replaceAll("[^a-zA-Z0-9]", "-");
-
-            sb.append("    ").append(key).append(":\n");
-            sb.append("      rule: \"Host(`").append(host).append("`)\"\n");
-            sb.append("      entrypoints:\n");
-            sb.append("        - https\n");
-            sb.append("      tls:\n");
-            sb.append("        certResolver: letsencrypt\n");
-            sb.append("      service: amg-landings-svc\n");
-
-            sb.append("    ").append(key).append("-http:\n");
-            sb.append("      rule: \"Host(`").append(host).append("`)\"\n");
-            sb.append("      entrypoints:\n");
-            sb.append("        - http\n");
-            sb.append("      middlewares:\n");
-            sb.append("        - https-redirect@file\n");
-            sb.append("      service: amg-landings-svc\n");
-        }
-
-        sb.append("  services:\n");
-        sb.append("    amg-landings-svc:\n");
-        sb.append("      loadBalancer:\n");
-        sb.append("        servers:\n");
-        sb.append("          - url: \"http://amg-backend:8080\"\n");
-
-        return sb.toString();
-    }
-
-    private void write(String yaml) {
-        try {
-            var path = Path.of(configDir, "landings.yml");
-            Files.createDirectories(path.getParent());
-            Files.writeString(path, yaml, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            log.info("Traefik landings.yml actualitzat: {} rutes", yaml.lines().filter(l -> l.contains("certResolver")).count());
-        } catch (IOException e) {
-            log.error("No s'ha pogut escriure landings.yml: {}", e.getMessage());
-        }
+    private String domainOf(Landing l) {
+        return l.getCustomDomain() != null ? l.getCustomDomain()
+                : l.getSlug() + "." + landingBaseDomain;
     }
 }

@@ -203,6 +203,8 @@ public class WebHostingService {
         // en esborrar la fila, el backend deixa de servir-los.
         if (site.getType() == WebsiteType.CONTAINER) {
             manifestService.requestRemoval(site.getContainerName() + "-proxy");
+        } else if (site.getType() == WebsiteType.STATIC) {
+            manifestService.removeSiteRoute(site.getDomain());
         }
 
         webSiteRepository.delete(site);
@@ -257,6 +259,8 @@ public class WebHostingService {
         // (PublicSiteController) directament des del volum, resolent pel Host.
         Path htmlDir = Path.of(dataPath, site.getTenantId().toString(), "html");
         injectWidgetScript(htmlDir, site.getId());
+        // Ruta a coolify-proxy amb prefix /api/v1/sites/serve (la genera l'agent del host)
+        manifestService.requestSiteRoute(site.getDomain(), "static");
     }
 
     private void deployContainerSite(WebSite site) {
