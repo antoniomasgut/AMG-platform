@@ -3,7 +3,9 @@ package com.amg.digitalitzacio.content.application;
 import com.amg.digitalitzacio.content.domain.ContentItemStatus;
 import com.amg.digitalitzacio.content.domain.ContentPlanItem;
 import com.amg.digitalitzacio.content.domain.ContentPlanItemRepository;
+import com.amg.digitalitzacio.google.domain.GoogleModuleConfigRepository;
 import com.amg.digitalitzacio.social.application.SocialPublisherOrchestrator;
+import com.amg.digitalitzacio.social.domain.SocialMetaConfigRepository;
 import com.amg.digitalitzacio.social.domain.SocialPost;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Publica un item del planner a les seves xarxes (Spec 58 §7). Crea un SocialPost per
@@ -27,12 +30,22 @@ public class ContentPlanPublishService {
 
     private final SocialPublisherOrchestrator orchestrator;
     private final ContentPlanItemRepository itemRepository;
+    private final SocialMetaConfigRepository metaConfigRepository;
+    private final GoogleModuleConfigRepository googleConfigRepository;
 
     public ContentPlanItem publishItem(ContentPlanItem item) {
         List<String> networks = parseNetworks(item.getNetworks());
         if (networks.isEmpty()) {
             item.setStatus(ContentItemStatus.FAILED);
             item.setError("Cap xarxa definida");
+            return itemRepository.save(item);
+        }
+
+        // Sense cap destí connectat, publishNow no publicaria res però marcaria PUBLISHED
+        // (fals positiu). Ho evitem: SKIPPED amb missatge clar (i el reintent no el toca).
+        if (!hasConnectedTarget(item.getTenantId(), networks)) {
+            item.setStatus(ContentItemStatus.SKIPPED);
+            item.setError("Cap xarxa connectada — connecta Instagram/Facebook o Google Business des del portal.");
             return itemRepository.save(item);
         }
 
@@ -63,6 +76,25 @@ public class ContentPlanPublishService {
             item.setError(null);
         }
         return itemRepository.save(item);
+    }
+
+    /** Cert si el tenant té connectada almenys una de les xarxes de l'item. */
+    private boolean hasConnectedTarget(UUID tenantId, List<String> networks) {
+        for (String n : networks) {
+            switch (n) {
+                case "INSTAGRAM", "FACEBOOK" -> {
+                    var mc = metaConfigRepository.findByTenantId(tenantId);
+                    if (mc.isPresent() && mc.get().getPageAccessTokenEncrypted() != null) return true;
+                }
+                case "GOOGLE_BUSINESS" -> {
+                    var gc = googleConfigRepository.findById(tenantId);
+                    if (gc.isPresent() && gc.get().getBusinessLocationId() != null
+                            && !gc.get().getBusinessLocationId().isBlank()) return true;
+                }
+                default -> { }
+            }
+        }
+        return false;
     }
 
     private List<String> parseNetworks(String csv) {

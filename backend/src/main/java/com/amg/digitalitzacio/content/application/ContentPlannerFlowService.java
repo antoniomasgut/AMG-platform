@@ -74,6 +74,9 @@ public class ContentPlannerFlowService {
         ContentPlanItem result = publishService.publishItem(item);
         if (result.getStatus() == ContentItemStatus.PUBLISHED) {
             telegramBotClient.sendMessage(chatId, "🎉 Publicat! La setmana que ve, nou tema 😉");
+        } else if (result.getStatus() == ContentItemStatus.SKIPPED) {
+            // Cap xarxa connectada: el reintent no ajudaria; cal connectar-les primer.
+            telegramBotClient.sendMessage(chatId, "⚠️ " + result.getError());
         } else {
             telegramBotClient.sendMessage(chatId,
                     "⚠️ No s'ha pogut publicar ara mateix. Ho reintentarem automàticament.");

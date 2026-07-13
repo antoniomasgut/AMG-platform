@@ -3,7 +3,10 @@ package com.amg.digitalitzacio.content.application;
 import com.amg.digitalitzacio.content.domain.ContentItemStatus;
 import com.amg.digitalitzacio.content.domain.ContentPlanItem;
 import com.amg.digitalitzacio.content.domain.ContentPlanItemRepository;
+import com.amg.digitalitzacio.google.domain.GoogleModuleConfigRepository;
 import com.amg.digitalitzacio.social.application.SocialPublisherOrchestrator;
+import com.amg.digitalitzacio.social.domain.SocialMetaConfig;
+import com.amg.digitalitzacio.social.domain.SocialMetaConfigRepository;
 import com.amg.digitalitzacio.social.domain.SocialPost;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +28,8 @@ class ContentPlanPublishServiceTest {
 
     @Mock SocialPublisherOrchestrator orchestrator;
     @Mock ContentPlanItemRepository itemRepository;
+    @Mock SocialMetaConfigRepository metaConfigRepository;
+    @Mock GoogleModuleConfigRepository googleConfigRepository;
     @InjectMocks ContentPlanPublishService service;
 
     private ContentPlanItem item(String networks) {
@@ -33,9 +38,16 @@ class ContentPlanPublishServiceTest {
                 .status(ContentItemStatus.PHOTO_RECEIVED).build();
     }
 
+    /** Simula un tenant amb Meta connectat (token present). */
+    private void metaConnected() {
+        when(metaConfigRepository.findByTenantId(any())).thenReturn(
+                java.util.Optional.of(SocialMetaConfig.builder().pageAccessTokenEncrypted("tok").build()));
+    }
+
     @Test
     void allNetworksOk_itemPublished() {
         when(itemRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        metaConnected();
         doAnswer(inv -> { ((SocialPost) inv.getArgument(0)).setStatus("PUBLISHED"); return null; })
                 .when(orchestrator).publishNow(any());
 
@@ -47,8 +59,23 @@ class ContentPlanPublishServiceTest {
     }
 
     @Test
+    void noConnectedTarget_itemSkipped() {
+        when(itemRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(metaConfigRepository.findByTenantId(any())).thenReturn(java.util.Optional.empty());
+        when(googleConfigRepository.findById(any())).thenReturn(java.util.Optional.empty());
+
+        ContentPlanItem it = item("INSTAGRAM,FACEBOOK");
+        service.publishItem(it);
+
+        assertThat(it.getStatus()).isEqualTo(ContentItemStatus.SKIPPED);
+        assertThat(it.getError()).contains("connecta");
+        verifyNoInteractions(orchestrator);
+    }
+
+    @Test
     void oneNetworkFails_itemFailedWithError() {
         when(itemRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        metaConnected();
         doAnswer(inv -> {
             SocialPost p = inv.getArgument(0);
             if ("GOOGLE_BUSINESS".equals(p.getNetwork())) { p.setStatus("FAILED"); p.setErrorMessage("sense location"); }
