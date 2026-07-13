@@ -11,5 +11,10 @@ public interface ContentPlanItemRepository extends JpaRepository<ContentPlanItem
 
     List<ContentPlanItem> findByTenantIdAndStatus(UUID tenantId, ContentItemStatus status);
 
+    List<ContentPlanItem> findByStatus(ContentItemStatus status);
+
+    // Recordatoris: items amb foto demanada, sense foto i sense recordatori enviat
+    List<ContentPlanItem> findByStatusAndMediaUrlIsNullAndReminderSentAtIsNull(ContentItemStatus status);
+
     void deleteByPlanId(UUID planId);
 }
