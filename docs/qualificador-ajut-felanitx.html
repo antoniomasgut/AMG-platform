@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qualificador · Ajut Felanitx — quina oferta li encaixa</title>
+<style>
+  :root { --blau:#1e3a5f; --verd:#16a34a; --taronja:#ea580c; --lila:#6d28d9; --gris:#64748b; --fons:#f8fafc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; background:var(--fons); color:#1e293b; line-height:1.5; padding:28px 16px; }
+  .full { max-width:760px; margin:0 auto; }
+  header { background:linear-gradient(135deg,#1e3a5f,#2d5a8f); color:#fff; border-radius:14px; padding:22px 26px; margin-bottom:18px; }
+  header h1 { font-size:1.35rem; margin-bottom:6px; }
+  header p { opacity:.92; font-size:.92rem; }
+  .badge { display:inline-block; background:#fbbf24; color:#7c2d12; font-weight:800; font-size:.95rem; padding:4px 12px; border-radius:999px; margin-top:8px; }
+  .screen { display:none; background:#fff; border-radius:14px; padding:24px 26px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .screen.active { display:block; }
+  .q { font-size:1.15rem; font-weight:700; color:var(--blau); margin-bottom:16px; }
+  .opts { display:flex; flex-direction:column; gap:10px; }
+  .opt { text-align:left; border:1px solid #e2e8f0; background:#f8fafc; border-radius:10px; padding:12px 16px; font-size:.98rem; cursor:pointer; transition:.15s; }
+  .opt:hover { border-color:var(--blau); background:#eff6ff; }
+  .opt b { color:var(--blau); }
+  .offer h2 { font-size:1.25rem; margin-bottom:4px; }
+  .offer .lead { color:var(--gris); font-size:.92rem; margin-bottom:14px; }
+  .offer.a h2 { color:var(--blau); } .offer.b h2 { color:var(--taronja); }
+  .offer.c h2 { color:var(--lila); } .offer.d h2 { color:var(--verd); }
+  ul { margin:8px 0 8px 20px; } li { padding:3px 0; font-size:.95rem; }
+  .price { background:#f1f5f9; border-radius:10px; padding:14px 18px; margin:14px 0; }
+  .price .big { font-size:1.15rem; font-weight:800; color:var(--verd); }
+  .price .desp { color:var(--gris); font-size:.85rem; }
+  .domain { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; font-size:.9rem; margin:10px 0; }
+  .extra { background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:10px 14px; font-size:.88rem; color:#4c1d95; margin:10px 0; }
+  .nav { margin-top:16px; display:flex; gap:10px; }
+  .btn { border:none; border-radius:8px; padding:10px 18px; font-weight:700; cursor:pointer; font-size:.95rem; }
+  .btn.p { background:var(--blau); color:#fff; }
+  .btn.g { background:#e2e8f0; color:#334155; }
+  .cta { background:var(--blau); color:#fff; border-radius:10px; padding:12px 18px; text-align:center; margin-top:14px; font-size:.95rem; }
+  .cta a { color:#fff; text-decoration:none; font-weight:700; }
+  .flowlabel { display:none; font-size:.75rem; color:var(--gris); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px; }
+  footer { text-align:center; color:var(--gris); font-size:.8rem; margin-top:14px; }
+  @media print {
+    body { background:#fff; padding:0; font-size:12px; }
+    .screen { display:block !important; margin-bottom:14px; box-shadow:none; border:1px solid #e2e8f0; break-inside:avoid; }
+    .flowlabel { display:block; }
+    .nav { display:none; }
+    header,.badge,.price,.domain,.extra,.cta { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+  @page { size:A4; margin:12mm; }
+</style>
+</head>
+<body>
+<div class="full">
+<header>
+  <h1>🧭 Quina oferta encaixa amb aquest negoci?</h1>
+  <p>Ajut «Modernització» de l'Ajuntament de Felanitx — web, xarxes socials i comunicació digital en català. Respon les preguntes i arribaràs a l'oferta adequada.</p>
+  <div class="badge">Recupera el 50% · fins a 1.000 €</div>
+</header>
+
+<!-- INTRO -->
+<section id="intro" class="screen active">
+  <div class="flowlabel">Inici</div>
+  <div class="q">Què oferim amb la subvenció</div>
+  <ul>
+    <li><b>Web / landing</b> professional en català + allotjament.</li>
+    <li><b>Domini</b>: subdomini gratuït, domini propi o el que ja tinguis.</li>
+    <li><b>Xarxes socials</b>: gestionades per nosaltres o amb autonomia (t'ho ensenyem).</li>
+    <li><b>Comunicació digital</b> en català (el que entra a l'ajut).</li>
+    <li>Nosaltres t'ajudem amb la <b>sol·licitud</b> i la <b>justificació</b>.</li>
+  </ul>
+  <p style="font-size:.88rem;color:var(--gris);margin-top:8px">L'ajut cobreix el 50% del <b>primer any</b>. L'agent d'IA es ven a part (fora de l'ajut).</p>
+  <div class="nav"><button class="btn p" onclick="go('q_web')">Comencem →</button></div>
+</section>
+
+<!-- Q WEB -->
+<section id="q_web" class="screen">
+  <div class="flowlabel">Pregunta 1 · Web</div>
+  <div class="q">Aquest negoci ja té una pàgina web?</div>
+  <div class="opts">
+    <button class="opt" onclick="set('web','si'); go('q_social')"><b>Sí, ja en té una</b> — la mantenim / la connectem</button>
+    <button class="opt" onclick="set('web','no'); go('q_domini')"><b>No, en necessita una</b></button>
+  </div>
+</section>
+
+<!-- Q DOMINI -->
+<section id="q_domini" class="screen">
+  <div class="flowlabel">Pregunta 2 · Domini</div>
+  <div class="q">Quin domini vol per a la web?</div>
+  <div class="opts">
+    <button class="opt" onclick="set('domini','own'); go('q_social')"><b>Ja tinc un domini propi</b> — l'utilitzem</button>
+    <button class="opt" onclick="set('domini','managed'); go('q_social')"><b>Vull que me'n contracteu un</b> — domini gestionat (60€, inclou 1r any)</button>
+    <button class="opt" onclick="set('domini','free'); go('q_social')"><b>Em va bé un subdomini gratuït</b> — elteunegoci.webs.amgdl.com (0€)</button>
+  </div>
+</section>
+
+<!-- Q SOCIAL -->
+<section id="q_social" class="screen">
+  <div class="flowlabel">Pregunta 3 · Xarxes socials</div>
+  <div class="q">I amb les xarxes socials, què prefereix?</div>
+  <div class="opts">
+    <button class="opt" onclick="go('offer_b')"><b>Que me les gestioneu vosaltres</b> — ho fem tot nosaltres cada mes</button>
+    <button class="opt" onclick="go('offer_d')"><b>Fer-les jo, amb la vostra ajuda</b> — em munteu tot i m'ensenyeu (autonomia)</button>
+    <button class="opt" onclick="go('offer_a')"><b>De moment, només la web</b> — sense xarxes</button>
+    <button class="opt" onclick="go('offer_c')"><b>Ho vull tot en un sol pagament</b> — sense quotes mensuals</button>
+  </div>
+</section>
+
+<!-- OFFER A -->
+<section id="offer_a" class="screen offer a">
+  <div class="flowlabel">Oferta A</div>
+  <h2>Web + Presència</h2>
+  <p class="lead">Landing Pro professional en català + allotjament. Sense xarxes.</p>
+  <ul><li>Web amb formulari de contacte i SEO bàsic.</li><li>Allotjament i SSL inclosos.</li></ul>
+  <div class="domain" data-domain></div>
+  <div class="price"><div class="big">Amb l'ajut: ~155 €</div><div class="desp">després, 15 €/mes d'allotjament</div></div>
+  <div class="extra">➕ Vol un agent d'IA que respongui els clients per WhatsApp? +59 €/mes (a part de l'ajut).</div>
+  <div class="cta">📞 <a href="tel:+34614492062">614 492 062</a> · info@amgdl.com</div>
+  <div class="nav"><button class="btn g" onclick="restart()">↺ Tornar a començar</button></div>
+</section>
+
+<!-- OFFER B -->
+<section id="offer_b" class="screen offer b">
+  <div class="flowlabel">Oferta B</div>
+  <h2>Web + Xarxes gestionades</h2>
+  <p class="lead">Ens ocupem de tot: publiquem cada mes a Instagram, Facebook i Google, en català.</p>
+  <ul>
+    <li>Web + allotjament.</li>
+    <li>Gestió mensual de xarxes: <b>Bàsic 69€</b> (4 pubs) · <b>Gestió 139€</b> (8 pubs, recomanat) · <b>Premium 199€</b> (12 pubs).</li>
+    <li>Gestió de comentaris/DMs + informe (a partir de Gestió).</li>
+  </ul>
+  <div class="domain" data-domain></div>
+  <div class="price"><div class="big">Amb l'ajut (1r any, nivell Gestió): ~989 €</div><div class="desp">després, 154 €/mes tot inclòs (15 web + 139 xarxes)</div></div>
+  <div class="extra">Cal dir-ho clar: l'any 1 surt a meitat de preu per l'ajut; a partir de l'any 2 són 154 €/mes complets.</div>
+  <div class="cta">📞 <a href="tel:+34614492062">614 492 062</a> · info@amgdl.com</div>
+  <div class="nav"><button class="btn g" onclick="restart()">↺ Tornar a començar</button></div>
+</section>
+
+<!-- OFFER C -->
+<section id="offer_c" class="screen offer c">
+  <div class="flowlabel">Oferta C</div>
+  <h2>Paquet complet · un sol pagament</h2>
+  <p class="lead">Web completa + un pack de contingut llest per començar. Sense quotes mensuals.</p>
+  <ul>
+    <li>Web professional en català (multi-secció, contingut redactat).</li>
+    <li>Alta de perfils + <b>pack de 12 publicacions</b> creades i programades.</li>
+    <li>Sense compromís mensual (només allotjament).</li>
+  </ul>
+  <div class="domain" data-domain></div>
+  <div class="price"><div class="big">Amb l'ajut: ~440 €</div><div class="desp">després, 15 €/mes d'allotjament</div></div>
+  <div class="cta">📞 <a href="tel:+34614492062">614 492 062</a> · info@amgdl.com</div>
+  <div class="nav"><button class="btn g" onclick="restart()">↺ Tornar a començar</button></div>
+</section>
+
+<!-- OFFER D -->
+<section id="offer_d" class="screen offer d">
+  <div class="flowlabel">Oferta D</div>
+  <h2>Autonomia guiada</h2>
+  <p class="lead">Et muntem les xarxes i t'ensenyem a fer-ho tu. Amb les nostres eines d'IA, publicar és enviar una foto pel mòbil.</p>
+  <ul>
+    <li>Setup complet de perfils + web.</li>
+    <li><b>8 publicacions inicials</b> creades plegats + <b>4 sessions de guia d'1 h</b>.</li>
+    <li>Kit d'autonomia (calendari, plantilles, guia de fotos). Sense quota de gestió.</li>
+  </ul>
+  <div class="domain" data-domain></div>
+  <div class="price"><div class="big">Amb l'ajut: ~345 €</div><div class="desp">després, 15 €/mes d'allotjament</div></div>
+  <div class="extra">➕ El pas natural: l'agent d'IA (F1) que publica per tu i respon els clients, +59 €/mes.</div>
+  <div class="cta">📞 <a href="tel:+34614492062">614 492 062</a> · info@amgdl.com</div>
+  <div class="nav"><button class="btn g" onclick="restart()">↺ Tornar a començar</button></div>
+</section>
+
+<footer>AMG Digitalització · Preus sense IVA · L'ajut cobreix el 50% del cost elegible el 1r any (màx. 1.000 €), segons les bases de l'Ajuntament de Felanitx.</footer>
+</div>
+
+<script>
+  var answers = {};
+  function go(id) {
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    var el = document.getElementById(id);
+    el.classList.add('active');
+    if (el.classList.contains('offer')) renderDomain(el);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function set(k, v) { answers[k] = v; }
+  function restart() { answers = {}; go('intro'); }
+  function renderDomain(el) {
+    var box = el.querySelector('[data-domain]');
+    if (!box) return;
+    var msg = '🌐 Domini: <b>el teu domini actual</b>.';
+    if (answers.web === 'no') {
+      if (answers.domini === 'own')     msg = '🌐 Domini: <b>el teu domini propi</b> (l\'apuntem al servidor).';
+      if (answers.domini === 'managed') msg = '🌐 Domini: <b>te\'n contractem un</b> (gestionat, 60€ inclou 1r any + 15€/any).';
+      if (answers.domini === 'free')    msg = '🌐 Domini: <b>subdomini gratuït</b> (elteunegoci.webs.amgdl.com, 0€).';
+    }
+    box.innerHTML = msg;
+  }
+</script>
+</body>
+</html>
