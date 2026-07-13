@@ -40,6 +40,7 @@ public class TelegramWebhookController {
     private final AmgAdminCommandService amgAdminCommandService;
     private final SystemConfigService systemConfigService;
     private final SocialPublisherOrchestrator socialOrchestrator;
+    private final com.amg.digitalitzacio.content.application.ContentPlannerFlowService contentPlannerFlow;
     private final NexeServiceConfigService nexeServiceConfigService;
     private final SpeechToTextService speechToTextService;
     private final TenantAgendaQueryService tenantAgendaQueryService;
@@ -239,6 +240,26 @@ public class TelegramWebhookController {
                             telegramBotClient.answerCallbackQuery(callbackId, "Escriu la resposta");
                         }
                         telegramBotClient.sendMessage(cbChatId, "✍️ Escriu la teva resposta i l'enviaré al client.");
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Content Planner (Mòdul 58): confirmar / refer el post preparat des del brief
+                if (cbChatId != null && data.startsWith("cpok:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        if (callbackId != null) telegramBotClient.answerCallbackQuery(callbackId, "Publicant...");
+                        contentPlannerFlow.approve(cbChatId, link.get().getTenantId(),
+                                java.util.UUID.fromString(data.substring("cpok:".length())));
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+                if (cbChatId != null && data.startsWith("cpwr:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        if (callbackId != null) telegramBotClient.answerCallbackQuery(callbackId, "Refent el text...");
+                        contentPlannerFlow.rewrite(cbChatId, link.get().getTenantId(),
+                                java.util.UUID.fromString(data.substring("cpwr:".length())));
                     }
                     return ResponseEntity.ok("ok");
                 }
@@ -448,6 +469,12 @@ public class TelegramWebhookController {
                 // Pas d'un flux de publicació social actiu (prioritat: continua el flux existent)
                 if (socialOrchestrator.hasDraft(chatId)) {
                     socialOrchestrator.handleStep(chatId, text, photoFileId);
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Foto sense flux actiu → possible resposta al brief del Content Planner (Mòdul 58)
+                if (photoFileId != null
+                        && contentPlannerFlow.handleIncomingPhoto(chatId, tenantId, photoFileId)) {
                     return ResponseEntity.ok("ok");
                 }
 
