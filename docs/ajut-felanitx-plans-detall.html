@@ -34,6 +34,7 @@
   .via.d { border-top-color:var(--verd); }
   .tag { display:inline-block; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:2px 8px; border-radius:999px; margin-left:8px; vertical-align:middle; }
   .tag.rec { background:#ffedd5; color:#9a3412; }
+  .tag.prem { background:#e0e7ff; color:#3730a3; }
   .big { font-size:1.05rem; font-weight:700; color:var(--blau); }
   .mensual { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 16px; margin-top:10px; }
   .mensual .big { color:#1d4ed8; }
@@ -55,6 +56,15 @@
   A partir de l'any 2 el client paga el servei <b>sencer</b>. Aquest full deixa clar, per a cada via,
   <b>què es paga d'entrada</b>, <b>quant queda l'any 1 amb l'ajut</b> i <b>què es paga cada mes quan acaba l'ajut</b>.
   Preus sempre <b>IVA exclòs</b>.
+</div>
+
+<div class="box key" style="border-left-width:5px;">
+  <b>🎯 Estratègia (pla per defecte): autonomia + automatització.</b> L'objectiu d'AMG és
+  <b>automatitzar al màxim</b> i que el <b>client faci la feina</b> amb les nostres eines d'IA
+  (Social Publisher, agent F1, suggeriments IA). El pla per defecte és la <b>Via D</b>: l'any 1
+  acompanyem i ensenyem el client <b>poc a poc</b> fins que ho fa sol; després només paga les eines
+  (F1/hosting), no feina gestionada. La <b>Via B (gestionada) és l'excepció premium</b> per a qui no
+  vol/pot fer-ho ell mateix. Les vies A i C són entrades ràpides sense recurrència.
 </div>
 
 <section>
@@ -110,8 +120,8 @@
 
 <!-- VIA B -->
 <section class="via b">
-  <h2>Via B — Gestió mensual de xarxes <span class="tag rec">Recomanada</span></h2>
-  <p class="sub">El de la via A + <b>gestió mensual de xarxes en català</b> (nivell Gestió, 139€/mes). Màxim ajut, però feina i cost recurrents alts.</p>
+  <h2>Via B — Gestió mensual de xarxes <span class="tag prem">Premium · excepció</span></h2>
+  <p class="sub">El de la via A + <b>gestió mensual de xarxes en català</b> (nivell Gestió, 139€/mes). És el pla per a qui <b>NO vol fer-ho ell mateix</b>. Màxim ajut, però <b>feina i cost recurrents alts</b> i el que menys escala per a AMG → oferir-lo amb comptagotes, no per defecte (per defecte, Via D).</p>
 
   <h3>Què lliures i feina teva</h3>
   <ul>
@@ -180,17 +190,28 @@
 
 <!-- VIA D -->
 <section class="via d">
-  <h2>Via D — Autonomia (arrencada acompanyada + traspàs)</h2>
-  <p class="sub">AMG els munta les xarxes i els acompanya a fer el contingut els primers mesos; quan acaba l'any, el client ho gestiona <b>ell mateix</b>. Sense quota mensual de xarxes.</p>
+  <h2>Via D — Autonomia guiada <span class="tag rec">⭐ Pla per defecte</span></h2>
+  <p class="sub">El model central d'AMG: <b>automatització + el client fa la feina</b>. Li muntem les xarxes, i durant l'any 1 l'anem ensenyant <b>poc a poc</b> amb les eines d'IA fins que ho gestiona sol. Sense quota mensual de gestió — la teva dedicació <b>baixa mes a mes</b>.</p>
 
   <h3>Què lliures i feina teva</h3>
   <ul>
     <li><b>Setup complet de perfils</b> (Instagram, Facebook, Google Business) en català: imatge, biografia, enllaços, optimització.</li>
-    <li><b>Acompanyament inicial (2-3 mesos):</b> crear el contingut <b>plegats</b>, ensenyar-los el flux de treball i revisar les seves primeres publicacions.</li>
-    <li><b>Kit d'autonomia</b> perquè continuïn sols: calendari editorial, banc de plantilles reutilitzables, la <b>guia de fotos</b> i una guia de publicació.</li>
+    <li><b>Eines d'IA que fan la feina pesada:</b> Social Publisher (envia foto pel Telegram → la IA escriu el caption → publica), suggeriments IA setmanals, i respostes IA a ressenyes/comentaris. La feina del client es redueix a <b>fotos + confirmar</b>.</li>
+    <li><b>Acompanyament decreixent (12 mesos):</b> primer ho feu plegats, després ell amb la teva revisió, i cap al final sol amb suport puntual (veure programa a sota).</li>
+    <li><b>Kit d'autonomia:</b> calendari editorial, banc de plantilles, <b>guia de fotos</b> i guia de publicació.</li>
     <li>Opcional: Landing Pro + allotjament (com a la via A).</li>
-    <li>Feina teva: concentrada els primers mesos; després, cap (o suport puntual a part).</li>
   </ul>
+
+  <h3>Programa d'autonomia guiada (any 1)</h3>
+  <table>
+    <tr><th>Període</th><th>Qui fa la feina</th><th class="num">Dedicació AMG</th></tr>
+    <tr><td>Mes 1-2</td><td>AMG ho fa <b>amb</b> el client (ell mira i participa)</td><td class="num">Alta</td></tr>
+    <tr><td>Mes 3-4</td><td>El client ho fa, <b>AMG revisa</b> i corregeix</td><td class="num">Mitjana</td></tr>
+    <tr><td>Mes 5-6</td><td>El client sol, <b>AMG fa spot-check</b></td><td class="num">Baixa</td></tr>
+    <tr><td>Mes 7-12</td><td>Autònom, suport puntual</td><td class="num">Molt baixa</td></tr>
+    <tr><td><b>Any 2+</b></td><td>100% el client amb les eines</td><td class="num">~0</td></tr>
+  </table>
+  <p style="font-size:.85rem;color:var(--gris)">La teva dedicació cau al llarg de l'any, però la recurrència de l'eina (F1, si la contracta) es manté → <b>és el model que escala</b>.</p>
 
   <div class="box warn">
     <b>⚠️ Compte amb la subvenció:</b> la <b>formació està exclosa</b> de l'ajut. Aquesta via NO es factura mai
@@ -217,8 +238,8 @@
     <p class="big">15 €/mes &nbsp;·&nbsp; 180 €/any (allotjament)</p>
     <p style="font-size:.85rem;color:var(--gris)">Sense web: <b>0€/mes</b>. Opcional: suport puntual o revisió trimestral a part.</p>
   </div>
-  <div class="box tip"><b>Honest amb el client:</b> gestionar les xarxes sol amb constància costa. Aquesta via és per a qui <b>vol</b> autonomia; si al cap d'un temps veu que no pot, sempre pot passar a la via B (gestió mensual).</div>
-  <div class="box key"><b>💡 Estratègia comercial (embut D → B):</b> durant l'arrencada acompanyada el client <b>viu de primera mà</b> la feina que duu (fotos, redacció, calendari, constància). És el millor argument perquè, en acabar, moltíssims prefereixin la <b>via B</b> i et paguin la gestió mensual. Presenta la D com a porta d'entrada de baix compromís i deixa la B com el pas natural quan vulguin deixar-ho en mans expertes.</div>
+  <div class="box tip"><b>El pas natural: F1 (agent IA).</b> Un cop el client és autònom a les xarxes, l'oferta lògica és l'<b>agent F1</b> (+59€/mes): automatitza les respostes als clients per WhatsApp i inclou el Social Publisher. És recurrència d'<b>alt marge</b> (feina ~0) i on AMG guanya de veritat.</div>
+  <div class="box key"><b>💡 Xarxa de seguretat (D → B):</b> alguns clients viuran la feina que duu i no la sostindran. Per a aquesta <b>minoria</b>, la <b>via B (gestionada, premium)</b> és el pla de rescat. Però el <b>default és l'autonomia</b>: no venguis B per defecte — omple't l'agenda de feina de baix marge.</div>
 </section>
 
 <!-- COMPARATIVA MENSUAL -->
@@ -245,10 +266,10 @@
   <h3>Els 4 plans d'entrada (any 1, subvencionat)</h3>
   <table>
     <tr><th>Pla</th><th>Què lliures</th><th class="num">Paga any 1</th><th class="num">Any 2+</th></tr>
+    <tr><td><b>D · Autonomia</b> ⭐</td><td>Setup + acompanyament + traspàs <b>(pla per defecte)</b></td><td class="num">345 €</td><td class="num">15 €/mes</td></tr>
     <tr><td><b>A · Estàndard</b></td><td>Landing Pro + allotjament</td><td class="num">155 €</td><td class="num">15 €/mes</td></tr>
-    <tr><td><b>B · Gestió mensual</b></td><td>+ AMG fa i publica el contingut</td><td class="num">989 €</td><td class="num">154 €/mes</td></tr>
     <tr><td><b>C · Paquet únic</b></td><td>Web completa + pack de contingut</td><td class="num">440 €</td><td class="num">15 €/mes</td></tr>
-    <tr><td><b>D · Autonomia</b></td><td>Setup + acompanyament + traspàs</td><td class="num">345 €</td><td class="num">15 €/mes</td></tr>
+    <tr><td><b>B · Gestió mensual</b></td><td>+ AMG fa i publica el contingut <b>(premium/excepció)</b></td><td class="num">989 €</td><td class="num">154 €/mes</td></tr>
   </table>
 
   <h3>Opcions de l'any 2 (fora de l'ajut) — s'afegeixen sobre qualsevol pla</h3>
