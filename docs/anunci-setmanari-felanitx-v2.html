@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<title>AMG · Anunci setmanari Felanitx (v2)</title>
+<style>
+  :root { --blau:#1e3a5f; --taronja:#FF6B00; --gris:#64748b; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { background:#e2e8f0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; display:flex; justify-content:center; padding:20px; }
+
+  .anunci {
+    width:120mm; height:82mm;
+    background:#fff; border:1px solid #cbd5e1;
+    display:flex; flex-direction:column; align-items:center;
+    overflow:hidden; text-align:center;
+  }
+  .logo { margin-top:8px; width:60mm; height:18mm;
+    background:url("../brand/amg-logo-1920x1080-transparent.png") center/172mm no-repeat; }
+
+  .middle { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:0 8px; }
+  .claim { color:var(--blau); font-size:13.5pt; font-weight:800; line-height:1.05; }
+
+  .hook {
+    margin-top:7px; background:#fff7ed; border:1.5px solid var(--taronja); border-radius:10px;
+    padding:4px 14px; color:#c2410c; display:flex; align-items:center; gap:8px;
+  }
+  .hook .txt { font-size:10pt; font-weight:700; line-height:1.05; text-align:left; }
+  .hook .pct { font-size:26pt; font-weight:900; color:var(--taronja); line-height:1; }
+
+  .serveis { color:var(--gris); font-size:9pt; margin-top:7px; font-weight:600; }
+  .urgencia { color:#c2410c; font-size:8.5pt; font-weight:700; margin-top:4px; }
+
+  .contacte {
+    width:100%; background:var(--blau); color:#fff;
+    padding:7px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .nums { text-align:left; }
+  .num { font-size:13.5pt; font-weight:800; letter-spacing:.4px; line-height:1.15; }
+  .num.sec { font-size:10.5pt; opacity:.92; }
+  .num .lbl { font-size:7pt; font-weight:700; color:var(--taronja); letter-spacing:.4px; }
+  .web { font-size:9pt; font-weight:700; margin-top:3px; opacity:.9; }
+  .qr { display:flex; flex-direction:column; align-items:center; }
+  .qr img { width:17mm; height:17mm; background:#fff; padding:1mm; border-radius:3px; }
+  .qr .cap { font-size:6.5pt; margin-top:1px; color:#fff; opacity:.9; }
+
+  @media print {
+    html,body { background:#fff; padding:0; }
+    .anunci { border:none; }
+    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+  @page { size:120mm 82mm; margin:0; }
+</style>
+</head>
+<body>
+<div class="anunci">
+
+  <div class="logo" role="img" aria-label="AMG Digitalitzacions"></div>
+
+  <div class="middle">
+    <div class="claim">Digitalitzam el teu negoci</div>
+
+    <div class="hook">
+      <span class="pct">50%</span>
+      <span class="txt">🏛️ L'Ajuntament de Felanitx<br>et paga la meitat · fins a 1.000&nbsp;€</span>
+    </div>
+
+    <div class="serveis">Web professional · Xarxes socials · Assistent d'IA per WhatsApp — en català</div>
+    <div class="urgencia">⏳ Termini limitat — t'ajudam amb tota la sol·licitud</div>
+  </div>
+
+  <div class="contacte">
+    <div class="nums">
+      <div class="num"><span class="lbl">ESCRIU-NOS AL WHATSAPP</span><br>654 048 164</div>
+      <div class="num sec"><span class="lbl">O TRUCA'NS</span> 614 492 062</div>
+      <div class="web">amgdl.com</div>
+    </div>
+    <div class="qr">
+      <img src="qr-wa-felanitx.png" alt="QR WhatsApp AMG">
+      <div class="cap">Escaneja i escriu-nos ↗</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
