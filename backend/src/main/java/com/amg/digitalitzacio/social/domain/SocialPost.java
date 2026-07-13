@@ -58,6 +58,10 @@ public class SocialPost {
     private Integer comments;
     private Instant metricsSyncedAt;
 
+    /** Referència inversa al Content Planner (Mòdul 58): l'item que ha originat aquest post. */
+    @Column(name = "content_plan_item_id")
+    private UUID contentPlanItemId;
+
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();

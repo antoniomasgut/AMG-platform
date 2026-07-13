@@ -41,6 +41,10 @@ public class SocialMetaConfig {
     @Builder.Default
     private Boolean igContentPublishGranted = false;
 
+    /** Idioma per defecte de les publicacions del tenant (Mòdul 58): ca/es/en/de. */
+    @Column(name = "default_content_language", length = 5)
+    private String defaultContentLanguage;
+
     @Builder.Default
     private Instant connectedAt = Instant.now();
 
