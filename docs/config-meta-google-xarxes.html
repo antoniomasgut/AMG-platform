@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configurar Meta i Google per publicar a xarxes — guia detallada</title>
+<style>
+  :root { --blau:#1e3a5f; --verd:#16a34a; --taronja:#ea580c; --gris:#64748b; --fons:#f8fafc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; background:var(--fons); color:#1e293b; line-height:1.55; padding:28px 16px; }
+  .full { max-width:900px; margin:0 auto; }
+  header { background:var(--blau); color:#fff; border-radius:12px; padding:24px 28px; margin-bottom:18px; }
+  header h1 { font-size:1.35rem; margin-bottom:6px; }
+  header p { opacity:.9; font-size:.92rem; }
+  section { background:#fff; border-radius:12px; padding:20px 24px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.07); }
+  section > h2 { font-size:1.14rem; color:var(--blau); margin-bottom:8px; }
+  h3 { font-size:1rem; color:var(--blau); margin:16px 0 6px; }
+  ol, ul { margin:6px 0 8px 22px; } li { padding:4px 0; font-size:.94rem; }
+  table { width:100%; border-collapse:collapse; margin:8px 0; font-size:.9rem; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid #eef2f7; vertical-align:top; }
+  th { background:#f1f5f9; color:var(--blau); font-size:.8rem; text-transform:uppercase; }
+  .ok { color:var(--verd); font-weight:700; } .no { color:#dc2626; font-weight:700; }
+  code { background:#f1f5f9; padding:1px 6px; border-radius:4px; font-size:.85em; color:#be123c; word-break:break-all; }
+  .box { border-radius:8px; padding:12px 16px; margin:12px 0; font-size:.9rem; }
+  .box.warn { background:#fee2e2; border-left:4px solid #dc2626; }
+  .box.tip { background:#dcfce7; border-left:4px solid var(--verd); }
+  .box.key { background:#fef9c3; border-left:4px solid #ca8a04; }
+  .path { background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:2px 6px; font-size:.85em; }
+  footer { text-align:center; color:var(--gris); font-size:.8rem; margin-top:6px; }
+  @media print { body{background:#fff;padding:0;font-size:12px;} .full{max-width:none;} header{border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;} section{box-shadow:none;border:1px solid #e2e8f0;break-inside:avoid;} th,.box{-webkit-print-color-adjust:exact;print-color-adjust:exact;} }
+  @page { size:A4; margin:12mm; }
+</style>
+</head>
+<body>
+<div class="full">
+<header>
+  <h1>🔧 Configurar Meta i Google per publicar a xarxes</h1>
+  <p>Guia detallada · pas a pas, amb la configuració actual de la plataforma (verificada a producció) · document intern AMG</p>
+</header>
+
+<section>
+  <h2>Estat actual (verificat)</h2>
+  <table>
+    <tr><th>Clau de config (System Config)</th><th>Estat</th><th>Per a què</th></tr>
+    <tr><td><code>META_APP_SECRET</code></td><td class="ok">✅ Configurat</td><td>App Secret de la Meta App</td></tr>
+    <tr><td><code>META_ADS_APP_ID</code></td><td class="ok">✅ Configurat</td><td>App ID (usat per Meta Ads)</td></tr>
+    <tr><td><code>META_APP_ID</code></td><td class="no">❌ Buit</td><td>Necessari per a l'OAuth de WhatsApp (no per a la publicació social, que és manual)</td></tr>
+    <tr><td><code>GOOGLE_OAUTH_CLIENT_ID</code></td><td class="no">❌ Buit</td><td>Client OAuth de Google (per connectar Google Business)</td></tr>
+    <tr><td><code>GOOGLE_OAUTH_CLIENT_SECRET</code></td><td class="no">❌ Buit</td><td>Secret OAuth de Google</td></tr>
+    <tr><td><code>ANTHROPIC_API_KEY</code> · <code>TELEGRAM_BOT_TOKEN</code></td><td class="ok">✅ Configurats</td><td>IA (captions) i Telegram (briefs/fotos)</td></tr>
+  </table>
+  <div class="box key"><b>On es posen les claus:</b> al portal → <span class="path">Config del sistema (System Config)</span> (rol SUPER_ADMIN). No s'escriuen mai en aquest document.</div>
+</section>
+
+<!-- ═══════════ META ═══════════ -->
+<section>
+  <h2>🟦 Meta — Instagram + Facebook (connexió manual per token)</h2>
+  <p style="font-size:.9rem;color:var(--gris)">A la plataforma, la publicació a IG/FB no fa OAuth: l'admin enganxa un <b>Page Access Token</b> amb els permisos correctes a la fitxa del tenant. La Meta App només serveix per <b>generar</b> aquest token amb els permisos aprovats.</p>
+
+  <h3>Pas 1 · La Meta App (developers.facebook.com)</h3>
+  <ol>
+    <li>Obre la teva App a <b>developers.facebook.com</b> (ja tens App Secret configurat; assegura't també de tenir l'<b>App ID</b> a mà).</li>
+    <li>Afegeix els productes: <b>Facebook Login</b> i <b>Instagram Graph API</b>.</li>
+    <li>Fes la <b>Business Verification</b> del teu negoci (Business Settings → Security Center) si no està feta.</li>
+  </ol>
+
+  <h3>Pas 2 · App Review — permisos a demanar</h3>
+  <ul>
+    <li><code>pages_show_list</code> · <code>pages_read_engagement</code></li>
+    <li><code>pages_manage_posts</code> — <b>publicar a Facebook</b></li>
+    <li><code>instagram_basic</code> · <code>instagram_content_publish</code> — <b>publicar a Instagram</b></li>
+    <li><code>business_management</code></li>
+  </ul>
+  <ul>
+    <li>A <b>App Review → Permissions and Features</b>, sol·licita cada permís.</li>
+    <li>Adjunta un <b>screencast</b> del cas d'ús: a la fitxa del tenant enganxes el token → publiques un post de prova.</li>
+    <li>Text del cas d'ús: «SaaS que gestiona la presència digital de comerços locals de Mallorca; publiquem al seu Instagram/Facebook amb el seu consentiment.»</li>
+    <li>Passa l'App a <b>mode Live</b>.</li>
+  </ul>
+  <div class="box warn"><b>Coll d'ampolla:</b> l'App Review de Meta triga <b>dies o setmanes</b>. Engega-ho ja. Fins que no estigui aprovat, no podràs generar un token amb aquests permisos.</div>
+
+  <h3>Pas 3 · Generar el Page Access Token del client</h3>
+  <ol>
+    <li>El client t'ha de fer <b>admin</b> de la seva <b>Pàgina de Facebook</b> (i tenir el compte d'<b>Instagram Business</b> vinculat a la Pàgina).</li>
+    <li>La via neta i estable: <b>Business Settings → Users → System Users</b> → crea un System User → assigna-li la Pàgina → <b>Generate Token</b> amb els permisos de dalt. (Alternativa ràpida per provar: <i>Graph API Explorer</i>, però el token dura poc.)</li>
+    <li>Anota: <b>Facebook Page ID</b>, <b>Instagram Business Account ID</b> i el <b>Page Access Token</b> (llarga durada).</li>
+  </ol>
+
+  <h3>Pas 4 · Enganxar-ho al portal</h3>
+  <ul>
+    <li>Portal → <span class="path">/portal/admin/tenants/[id]/social</span> → omple:
+      <ul>
+        <li><b>Facebook Page ID</b></li>
+        <li><b>Instagram Account ID</b></li>
+        <li><b>Page Access Token</b> (+ data de caducitat si escau)</li>
+      </ul>
+    </li>
+    <li>Desa. A partir d'aquí, el Content Planner publica a IG i FB.</li>
+  </ul>
+</section>
+
+<!-- ═══════════ GOOGLE ═══════════ -->
+<section>
+  <h2>🟨 Google Business — post + galeria (OAuth)</h2>
+  <p style="font-size:.9rem;color:var(--gris)">Aquí sí que és OAuth: falten les credencials <code>GOOGLE_OAUTH_CLIENT_ID/_SECRET</code>. Un cop posades, cada tenant connecta el seu Google Business amb un clic.</p>
+
+  <h3>Pas 1 · Credencials a Google Cloud (console.cloud.google.com)</h3>
+  <ol>
+    <li>Crea (o reutilitza) un <b>projecte</b>.</li>
+    <li><b>APIs &amp; Services → Library</b>: activa la <b>Business Profile API</b> (i «My Business Account Management» / «Business Information» si apareixen).</li>
+    <li><b>OAuth consent screen</b>: tipus <i>External</i>. Afegeix l'scope sensible <code>https://www.googleapis.com/auth/business.manage</code>.
+      <div class="box warn" style="margin-top:6px">Aquest scope és <b>sensible/restringit</b>: Google exigeix <b>verificació de l'app</b> (justificació d'ús, potser vídeo). Pot trigar. Mentre no es verifiqui, funciona en mode <i>Testing</i> amb usuaris de prova afegits.</div>
+    </li>
+    <li><b>Credentials → Create OAuth client ID → Web application</b>. Redirect URI autoritzat:
+      <br><code>https://api.amgdl.com/api/v1/google/callback</code></li>
+    <li>Copia el <b>Client ID</b> i el <b>Client Secret</b>.</li>
+  </ol>
+
+  <h3>Pas 2 · Posar les credencials a la plataforma</h3>
+  <ul>
+    <li>Portal → <span class="path">Config del sistema</span> → omple:
+      <ul><li><code>GOOGLE_OAUTH_CLIENT_ID</code></li><li><code>GOOGLE_OAUTH_CLIENT_SECRET</code></li></ul>
+    </li>
+  </ul>
+
+  <h3>Pas 3 · Connectar cada tenant</h3>
+  <ol>
+    <li>A la fitxa del tenant (integracions Google), el tenant/admin fa <b>Connectar Google</b> (mòdul <b>business</b> → scope <code>business.manage</code>).</li>
+    <li>Selecciona la <b>ubicació</b> del negoci (es desa com <code>businessLocationId</code>).</li>
+    <li>A partir d'aquí, el Content Planner publica com a <b>post</b> al perfil i, amb el canal <b>Galeria Google</b>, afegeix la foto a la <b>galeria permanent</b>.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>✅ Verificació final</h2>
+  <ol>
+    <li>Crea i activa un <b>pla de contingut</b> per a un tenant amb Telegram enllaçat (<span class="path">/portal/admin/tenants/[id]/content-plan</span>).</li>
+    <li>Envia una foto pel Telegram del tenant → arriba el caption → confirma ✅.</li>
+    <li>Comprova que apareix a Instagram, Facebook, i a Google (post + galeria).</li>
+  </ol>
+  <div class="box tip"><b>Recorda:</b> connectar les xarxes és un <b>one-time per tenant</b> (un clic Google + enganxar el token Meta). La feina mensual (crear i publicar contingut) l'automatitza el Content Planner: el tenant només envia la foto. Mentre no hi hagi connexió, el flux funciona fins a l'aprovació i el tenant rep l'avís de connectar.</div>
+</section>
+
+<footer>AMG Digitalització · document intern · les credencials no s'escriuen mai aquí · estat verificat a producció el 2026-07-13</footer>
+</div>
+</body>
+</html>
