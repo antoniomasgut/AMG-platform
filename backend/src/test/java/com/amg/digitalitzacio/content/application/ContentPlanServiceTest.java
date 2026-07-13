@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,6 +36,7 @@ class ContentPlanServiceTest {
     @Mock TenantRepository tenantRepository;
     @Mock SocialMetaConfigRepository metaConfigRepository;
     @Mock AssetOrchestrator assetOrchestrator;
+    @Mock ContentBriefGenerator briefGenerator;
 
     @InjectMocks ContentPlanService service;
 
@@ -72,6 +74,33 @@ class ContentPlanServiceTest {
             assertThat(i.getBriefText()).isNotBlank();
             assertThat(i.getPhotoDeadline()).isNotNull();
         });
+    }
+
+    @Test
+    void createPlanWithGenerate_usesAiBriefsWhenAvailable() {
+        stubSaves();
+        when(tenantRepository.existsById(TENANT)).thenReturn(true);
+        when(planRepository.findByTenantIdAndPeriod(any(), any())).thenReturn(Optional.empty());
+        when(metaConfigRepository.findByTenantId(TENANT)).thenReturn(Optional.empty());
+        when(tenantRepository.findById(TENANT)).thenReturn(Optional.of(
+                com.amg.digitalitzacio.auth.domain.Tenant.builder()
+                        .name("Perruqueria Maria")
+                        .sector(com.amg.digitalitzacio.auth.domain.BusinessSector.PERRUQUERIA)
+                        .build()));
+        when(briefGenerator.generate(eq("Perruqueria Maria"), eq("PERRUQUERIA"), any()))
+                .thenReturn(Map.of(ContentPillar.NOVELTY,
+                        new ContentBriefGenerator.Brief("Foto d'un canvi de look nou", "Ex: abans i després")));
+
+        service.createPlan(TENANT, new CreatePlanRequest("2026-08", null, true, null), admin);
+
+        ArgumentCaptor<ContentPlanItem> cap = ArgumentCaptor.forClass(ContentPlanItem.class);
+        verify(itemRepository, times(4)).save(cap.capture());
+        ContentPlanItem week1 = cap.getAllValues().get(0); // NOVELTY
+        assertThat(week1.getPillar()).isEqualTo(ContentPillar.NOVELTY);
+        assertThat(week1.getBriefText()).isEqualTo("Foto d'un canvi de look nou");
+        // Els pilars sense brief IA cauen a la plantilla per defecte
+        assertThat(cap.getAllValues().get(2).getBriefText())
+                .isEqualTo(ContentPillar.SHOP.getDefaultBrief());
     }
 
     @Test

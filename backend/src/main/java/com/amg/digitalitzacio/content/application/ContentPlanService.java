@@ -20,6 +20,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -43,6 +44,7 @@ public class ContentPlanService {
     private final TenantRepository tenantRepository;
     private final SocialMetaConfigRepository metaConfigRepository;
     private final AssetOrchestrator assetOrchestrator;
+    private final ContentBriefGenerator briefGenerator;
 
     // ─────────────────────────── Plans ───────────────────────────
 
@@ -177,9 +179,16 @@ public class ContentPlanService {
 
     private void generateItems(ContentPlan plan) {
         itemRepository.deleteByPlanId(plan.getId());
+        // Fase 2: briefs adaptats al sector amb IA; fallback a les plantilles del pilar.
+        Map<ContentPillar, ContentBriefGenerator.Brief> briefs = generateSectorBriefs(plan.getTenantId());
         LocalDate base = LocalDate.parse(plan.getPeriod() + "-01");
         for (int i = 1; i <= WEEKS; i++) {
             ContentPillar pillar = ContentPillar.ROTATION[(i - 1) % ContentPillar.ROTATION.length];
+            ContentBriefGenerator.Brief ai = briefs.get(pillar);
+            String briefText = ai != null && ai.brief() != null && !ai.brief().isBlank()
+                    ? ai.brief() : pillar.getDefaultBrief();
+            String exampleText = ai != null && ai.example() != null && !ai.example().isBlank()
+                    ? ai.example() : pillar.getDefaultExample();
             LocalDate weekStart = base.plusWeeks(i - 1);
             LocalDate photoDeadline = weekStart.with(TemporalAdjusters.nextOrSame(DayOfWeek.THURSDAY));
             ContentPlanItem item = ContentPlanItem.builder()
@@ -187,8 +196,8 @@ public class ContentPlanService {
                     .tenantId(plan.getTenantId())
                     .weekNumber(i)
                     .pillar(pillar)
-                    .briefText(pillar.getDefaultBrief())
-                    .exampleText(pillar.getDefaultExample())
+                    .briefText(briefText)
+                    .exampleText(exampleText)
                     .networks(DEFAULT_NETWORKS)
                     .photoDeadline(photoDeadline)
                     .targetPublishDate(photoDeadline.plusDays(1))
@@ -196,6 +205,16 @@ public class ContentPlanService {
                     .build();
             itemRepository.save(item);
         }
+    }
+
+    /** Briefs per sector via IA (buit si no hi ha tenant o la IA falla → s'usen plantilles). */
+    private Map<ContentPillar, ContentBriefGenerator.Brief> generateSectorBriefs(UUID tenantId) {
+        return tenantRepository.findById(tenantId)
+                .map(t -> briefGenerator.generate(
+                        t.getName(),
+                        t.getSector() != null ? t.getSector().name() : "",
+                        "ca"))
+                .orElseGet(Map::of);
     }
 
     private String resolveDefaultLanguage(UUID tenantId) {
