@@ -38,6 +38,7 @@ function clientGroups(t: T, features: { canAccessAnalytics: boolean; canAccessLe
       items: [
         { label: t('items.myWebs'), icon: IconSet.Globe, href: '/portal/landings' },
         { label: t('items.hosting'), icon: IconSet.Server, href: '/portal/hosting' },
+        { label: t('items.contentPlan'), icon: IconSet.Calendar, href: '/portal/content-plan' },
         { label: t('items.automations'), icon: IconSet.Zap, href: '/portal/automations' },
         { label: t('items.agentAI'), icon: IconSet.Bot, href: '/portal/agents' },
         { label: t('items.inbox'), icon: IconSet.Mail, href: '/portal/agents/inbox' },

@@ -3588,6 +3588,14 @@ export default function TenantDetailPage() {
             >
               Social
             </AMGButton>
+            <AMGButton
+              size="sm"
+              variant="ghost"
+              icon={IconSet.Calendar}
+              onClick={() => router.push(`/${locale}/portal/admin/tenants/${id}/content-plan`)}
+            >
+              Planificador
+            </AMGButton>
             <button
               type="button"
               onClick={() => setShowDeleteTenant(true)}
