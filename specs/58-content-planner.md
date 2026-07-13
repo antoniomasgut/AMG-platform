@@ -45,7 +45,7 @@ Els pilars i briefs per sector es poden **auto-generar amb IA** (secció 6.2). E
 | `tenant_id` | UUID | |
 | `period` | VARCHAR(7) | `YYYY-MM` (mes del pla) |
 | `status` | VARCHAR(20) | `DRAFT` / `ACTIVE` / `DONE` |
-| `content_language` | VARCHAR(5) | **idioma de les publicacions** (`ca`/`es`/`en`/`de`), default `ca`. La IA genera els captions en aquest idioma. |
+| `content_language` | VARCHAR(5) | **idioma de les publicacions** (`ca`/`es`/`en`/`de`); s'inicialitza amb el **default del tenant** (§3.4) i es pot canviar per pla. La IA genera els captions en aquest idioma. |
 | `created_by` | UUID | usuari que el crea (AMG o tenant) |
 | `notes` | TEXT | |
 | `created_at` / `updated_at` | TIMESTAMPTZ | |
@@ -77,8 +77,16 @@ Un item amb `networks = "INSTAGRAM,FACEBOOK,GOOGLE_BUSINESS"` genera **un `Socia
 - `social_post` ALTER: `ADD COLUMN content_plan_item_id UUID` (nullable, FK a `content_plan_items`).
 - L'item només guarda l'**estat** (`PUBLISHED`); els posts publicats es recuperen per `SocialPost.content_plan_item_id`.
 
-### 3.4 Migració
-Migració Flyway **`V94__content_planner.sql`** (última existent = V93): crea `content_plans` + `content_plan_items` + `ALTER TABLE social_post ADD COLUMN content_plan_item_id UUID`. **No** es crea manualment a prod: s'aplica per Flyway (com V91/V92/V93).
+### 3.4 Idioma de les publicacions (jerarquia)
+Tres nivells, amb **un default a nivell de tenant que es pot canviar quan es vulgui**:
+1. **Default del tenant** → `social_meta_configs.default_content_language` (VARCHAR(5), default `ca`). És l'idioma que s'aplica a **totes** les publicacions per defecte. Es canvia des de la configuració social del tenant (§6.4).
+2. **Pla** → `content_plans.content_language` s'**inicialitza** amb el default del tenant en crear el pla; es pot canviar per pla.
+3. **Item** → `content_plan_items.content_language` opcional; sobreescriu el del pla (per a bilingüe: un item per idioma).
+
+Resolució efectiva: `item.content_language ?? plan.content_language ?? tenant.default_content_language ?? 'ca'`.
+
+### 3.5 Migració
+Migració Flyway **`V94__content_planner.sql`** (última existent = V93): crea `content_plans` + `content_plan_items` + `ALTER TABLE social_post ADD COLUMN content_plan_item_id UUID` + `ALTER TABLE social_meta_configs ADD COLUMN default_content_language VARCHAR(5) DEFAULT 'ca'`. **No** es crea manualment a prod: s'aplica per Flyway (com V91/V92/V93).
 
 ---
 
@@ -144,6 +152,14 @@ Endpoints amb `tenantId` a la ruta: `@PreAuthorize("... or (hasRole('CLIENT') an
 | GET | `/api/v1/content-plans/tenants/{tenantId}/pending` | **Fotos que falten fer** (items `PHOTO_REQUESTED` sense foto) |
 | POST/PUT | `/api/v1/content-plans/...` | Crear/editar el seu propi pla (autonomia) |
 | POST | `/api/v1/content-plans/items/{itemId}/photo` | Pujar la foto de l'item (alternativa a Telegram) — ownership al servei |
+
+### 6.4 Idioma per defecte del tenant
+| Mètode | Ruta | Acció |
+|--------|------|-------|
+| GET | `/api/v1/content-plans/tenants/{tenantId}/default-language` | Consultar el default (`ca` si no s'ha fixat) |
+| PUT | `/api/v1/content-plans/tenants/{tenantId}/default-language` | Canviar-lo (`{ "language": "ca\|es\|en\|de" }`) → desa a `social_meta_configs.default_content_language` |
+
+Accessible a SUPER_ADMIN/ADMIN i al CLIENT del propi tenant (`#principal.tenantId == #tenantId`). Els plans creats a partir d'aquí n'hereten el valor.
 
 ---
 
