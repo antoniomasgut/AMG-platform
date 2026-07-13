@@ -9,12 +9,13 @@ import { AMGButton } from '@/components/ui/button';
 import { useToast } from '@/lib/toast-context';
 import { getTenant } from '@/services/admin';
 import {
-  listPlans, createPlan, generatePlan, activatePlan, deletePlan,
+  listPlans, createPlan, generatePlan, activatePlan, deletePlan, updateItem,
   getDefaultLanguage, setDefaultLanguage,
-  type ContentPlan, type ContentItemStatus,
+  type ContentPlan, type ContentPlanItem, type ContentItemStatus,
 } from '@/services/content-plan';
 
 const LANGS = ['ca', 'es', 'en', 'de'] as const;
+const CHANNELS = ['INSTAGRAM', 'FACEBOOK', 'GOOGLE_BUSINESS', 'GOOGLE_PHOTO'] as const;
 
 const STATUS_TONE: Record<ContentItemStatus, string> = {
   PLANNED: 'bg-slate-100 text-slate-600',
@@ -68,6 +69,16 @@ export default function ContentPlanAdminPage() {
     onSuccess: () => { toast('success', t('save')); qc.invalidateQueries({ queryKey: ['content-default-lang', id] }); },
     onError: () => toast('error', t('error')),
   });
+  const updateItemMut = useMutation({
+    mutationFn: ({ itemId, networks }: { itemId: string; networks: string }) => updateItem(itemId, { networks }),
+    onSuccess: invalidate, onError: () => toast('error', t('error')),
+  });
+
+  const toggleChannel = (item: ContentPlanItem, ch: string) => {
+    const set = new Set((item.networks ?? '').split(',').map((s) => s.trim()).filter(Boolean));
+    set.has(ch) ? set.delete(ch) : set.add(ch);
+    updateItemMut.mutate({ itemId: item.id, networks: Array.from(set).join(',') });
+  };
 
   return (
     <PortalShell breadcrumb={t('title')} backHref={`/portal/admin/tenants/${id}`}>
@@ -145,16 +156,34 @@ export default function ContentPlanAdminPage() {
                     <th className="py-1">{t('week')}</th>
                     <th>{t('pillar')}</th>
                     <th>{t('brief')}</th>
+                    <th>{t('channelsLabel')}</th>
                     <th>{t('deadline')}</th>
                     <th>{t('status')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {plan.items.map((it) => (
+                  {plan.items.map((it) => {
+                    const active = new Set((it.networks ?? '').split(',').map((s) => s.trim()));
+                    return (
                     <tr key={it.id} className="border-t border-line/50 align-top">
                       <td className="py-2">{it.weekNumber}</td>
                       <td>{t(`pillars.${it.pillar}`)}</td>
-                      <td className="max-w-[280px] text-ink-2">{it.briefText}</td>
+                      <td className="max-w-[240px] text-ink-2">{it.briefText}</td>
+                      <td>
+                        <div className="flex flex-wrap gap-1">
+                          {CHANNELS.map((ch) => (
+                            <button
+                              key={ch}
+                              onClick={() => toggleChannel(it, ch)}
+                              className={`rounded-full px-2 py-0.5 text-[10px] ${
+                                active.has(ch) ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 line-through'
+                              }`}
+                            >
+                              {t(`channels.${ch}`)}
+                            </button>
+                          ))}
+                        </div>
+                      </td>
                       <td className="whitespace-nowrap text-ink-3">{it.photoDeadline}</td>
                       <td>
                         <span className={`rounded-full px-2 py-0.5 text-[11px] ${STATUS_TONE[it.status]}`}>
@@ -162,7 +191,8 @@ export default function ContentPlanAdminPage() {
                         </span>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </section>

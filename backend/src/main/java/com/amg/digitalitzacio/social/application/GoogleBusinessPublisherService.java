@@ -57,6 +57,38 @@ public class GoogleBusinessPublisherService {
         return postLocalPost(locationName, accessToken, body);
     }
 
+    /**
+     * Puja una foto a la GALERIA del perfil (no com a post): apareix permanentment
+     * a les fotos del negoci. Molt valuós per al SEO local. API v4 media.create.
+     * @return nom del recurs de media creat
+     */
+    public String uploadPhotoToGallery(UUID tenantId, String locationName, String mediaUrl) {
+        String accessToken = getAccessToken(tenantId);
+        var body = Map.of(
+            "mediaFormat", "PHOTO",
+            "locationAssociation", Map.of("category", "ADDITIONAL"),
+            "sourceUrl", mediaUrl
+        );
+        try {
+            var raw = RestClient.create().post()
+                .uri(GMB_URL + "/" + locationName + "/media")
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/json")
+                .body(objectMapper.writeValueAsString(body))
+                .retrieve()
+                .body(String.class);
+
+            JsonNode node = objectMapper.readTree(raw);
+            if (node.has("error")) {
+                throw new RuntimeException("GMB media error: " + node.path("error").path("message").asText());
+            }
+            return node.path("name").asText();
+        } catch (Exception e) {
+            log.error("Error pujant foto a la galeria GBP {}: {}", locationName, e.getMessage());
+            throw new RuntimeException("Error pujant la foto a Google: " + e.getMessage(), e);
+        }
+    }
+
     private Map<String, Object> buildLocalPost(String topicType, String summary,
                                                 String title, String actionType, String mediaUrl) {
         var post = new HashMap<String, Object>();

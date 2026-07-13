@@ -2219,6 +2219,13 @@
       "PUBLISHED": "Publicat",
       "FAILED": "Error",
       "SKIPPED": "Omès"
-    }
+    },
+    "channels": {
+      "INSTAGRAM": "Instagram",
+      "FACEBOOK": "Facebook",
+      "GOOGLE_BUSINESS": "Post a Google",
+      "GOOGLE_PHOTO": "Galeria Google"
+    },
+    "channelsLabel": "Canals"
   }
 }

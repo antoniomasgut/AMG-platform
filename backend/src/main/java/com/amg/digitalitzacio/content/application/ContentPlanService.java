@@ -35,7 +35,7 @@ import java.util.UUID;
 @Transactional
 public class ContentPlanService {
 
-    private static final String DEFAULT_NETWORKS = "INSTAGRAM,FACEBOOK,GOOGLE_BUSINESS";
+    private static final String DEFAULT_NETWORKS = "INSTAGRAM,FACEBOOK,GOOGLE_BUSINESS,GOOGLE_PHOTO";
     private static final Set<String> ALLOWED_LANGUAGES = Set.of("ca", "es", "en", "de");
     private static final int WEEKS = 4;
 

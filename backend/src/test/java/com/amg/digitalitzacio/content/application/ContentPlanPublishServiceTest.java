@@ -19,7 +19,7 @@ import org.mockito.quality.Strictness;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +30,7 @@ class ContentPlanPublishServiceTest {
     @Mock ContentPlanItemRepository itemRepository;
     @Mock SocialMetaConfigRepository metaConfigRepository;
     @Mock GoogleModuleConfigRepository googleConfigRepository;
+    @Mock com.amg.digitalitzacio.social.application.GoogleBusinessPublisherService googleBusinessPublisher;
     @InjectMocks ContentPlanPublishService service;
 
     private ContentPlanItem item(String networks) {
@@ -56,6 +57,21 @@ class ContentPlanPublishServiceTest {
 
         assertThat(it.getStatus()).isEqualTo(ContentItemStatus.PUBLISHED);
         verify(orchestrator, times(2)).publishNow(any());
+    }
+
+    @Test
+    void googlePhotoChannel_uploadsToGallery() {
+        when(itemRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        var gc = new com.amg.digitalitzacio.google.domain.GoogleModuleConfig();
+        gc.setBusinessLocationId("accounts/1/locations/2");
+        when(googleConfigRepository.findById(any())).thenReturn(java.util.Optional.of(gc));
+
+        ContentPlanItem it = item("GOOGLE_PHOTO");
+        service.publishItem(it);
+
+        verify(googleBusinessPublisher).uploadPhotoToGallery(eq(it.getTenantId()), eq("accounts/1/locations/2"), eq("/x.jpg"));
+        verifyNoInteractions(orchestrator);
+        assertThat(it.getStatus()).isEqualTo(ContentItemStatus.PUBLISHED);
     }
 
     @Test

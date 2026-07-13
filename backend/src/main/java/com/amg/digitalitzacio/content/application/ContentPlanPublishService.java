@@ -4,6 +4,7 @@ import com.amg.digitalitzacio.content.domain.ContentItemStatus;
 import com.amg.digitalitzacio.content.domain.ContentPlanItem;
 import com.amg.digitalitzacio.content.domain.ContentPlanItemRepository;
 import com.amg.digitalitzacio.google.domain.GoogleModuleConfigRepository;
+import com.amg.digitalitzacio.social.application.GoogleBusinessPublisherService;
 import com.amg.digitalitzacio.social.application.SocialPublisherOrchestrator;
 import com.amg.digitalitzacio.social.domain.SocialMetaConfigRepository;
 import com.amg.digitalitzacio.social.domain.SocialPost;
@@ -32,6 +33,7 @@ public class ContentPlanPublishService {
     private final ContentPlanItemRepository itemRepository;
     private final SocialMetaConfigRepository metaConfigRepository;
     private final GoogleModuleConfigRepository googleConfigRepository;
+    private final GoogleBusinessPublisherService googleBusinessPublisher;
 
     public ContentPlanItem publishItem(ContentPlanItem item) {
         List<String> networks = parseNetworks(item.getNetworks());
@@ -52,19 +54,28 @@ public class ContentPlanPublishService {
         boolean anyFailed = false;
         String firstError = null;
         for (String network : networks) {
-            SocialPost post = SocialPost.builder()
-                    .tenantId(item.getTenantId())
-                    .network(network)
-                    .postType("PHOTO")
-                    .caption(item.getCaption())
-                    .mediaUrl(item.getMediaUrl())
-                    .contentPlanItemId(item.getId())
-                    .status("DRAFT")
-                    .build();
-            orchestrator.publishNow(post); // fixa PUBLISHED/FAILED i desa el SocialPost
-            if (!"PUBLISHED".equals(post.getStatus())) {
+            try {
+                if ("GOOGLE_PHOTO".equals(network)) {
+                    publishGalleryPhoto(item); // foto a la galeria de Google (no és un post)
+                } else {
+                    SocialPost post = SocialPost.builder()
+                            .tenantId(item.getTenantId())
+                            .network(network)
+                            .postType("PHOTO")
+                            .caption(item.getCaption())
+                            .mediaUrl(item.getMediaUrl())
+                            .contentPlanItemId(item.getId())
+                            .status("DRAFT")
+                            .build();
+                    orchestrator.publishNow(post); // fixa PUBLISHED/FAILED i desa el SocialPost
+                    if (!"PUBLISHED".equals(post.getStatus())) {
+                        anyFailed = true;
+                        if (firstError == null) firstError = post.getErrorMessage();
+                    }
+                }
+            } catch (Exception e) {
                 anyFailed = true;
-                if (firstError == null) firstError = post.getErrorMessage();
+                if (firstError == null) firstError = e.getMessage();
             }
         }
 
@@ -78,6 +89,15 @@ public class ContentPlanPublishService {
         return itemRepository.save(item);
     }
 
+    /** Puja la foto de l'item a la galeria del perfil de Google Business. */
+    private void publishGalleryPhoto(ContentPlanItem item) {
+        var gc = googleConfigRepository.findById(item.getTenantId()).orElse(null);
+        if (gc == null || gc.getBusinessLocationId() == null || gc.getBusinessLocationId().isBlank()) {
+            throw new IllegalStateException("Google Business no connectat");
+        }
+        googleBusinessPublisher.uploadPhotoToGallery(item.getTenantId(), gc.getBusinessLocationId(), item.getMediaUrl());
+    }
+
     /** Cert si el tenant té connectada almenys una de les xarxes de l'item. */
     private boolean hasConnectedTarget(UUID tenantId, List<String> networks) {
         for (String n : networks) {
@@ -86,7 +106,7 @@ public class ContentPlanPublishService {
                     var mc = metaConfigRepository.findByTenantId(tenantId);
                     if (mc.isPresent() && mc.get().getPageAccessTokenEncrypted() != null) return true;
                 }
-                case "GOOGLE_BUSINESS" -> {
+                case "GOOGLE_BUSINESS", "GOOGLE_PHOTO" -> {
                     var gc = googleConfigRepository.findById(tenantId);
                     if (gc.isPresent() && gc.get().getBusinessLocationId() != null
                             && !gc.get().getBusinessLocationId().isBlank()) return true;

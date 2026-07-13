@@ -2227,6 +2227,13 @@
       "PUBLISHED": "Published",
       "FAILED": "Failed",
       "SKIPPED": "Skipped"
-    }
+    },
+    "channels": {
+      "INSTAGRAM": "Instagram",
+      "FACEBOOK": "Facebook",
+      "GOOGLE_BUSINESS": "Google post",
+      "GOOGLE_PHOTO": "Google gallery"
+    },
+    "channelsLabel": "Channels"
   }
 }

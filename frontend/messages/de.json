@@ -2219,6 +2219,13 @@
       "PUBLISHED": "Veröffentlicht",
       "FAILED": "Fehler",
       "SKIPPED": "Übersprungen"
-    }
+    },
+    "channels": {
+      "INSTAGRAM": "Instagram",
+      "FACEBOOK": "Facebook",
+      "GOOGLE_BUSINESS": "Google-Beitrag",
+      "GOOGLE_PHOTO": "Google-Galerie"
+    },
+    "channelsLabel": "Kanäle"
   }
 }
