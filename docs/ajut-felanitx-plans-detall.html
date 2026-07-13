@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMG · Ajut Felanitx — plans i què es paga cada mes</title>
+<style>
+  :root { --blau:#1e3a5f; --verd:#16a34a; --taronja:#ea580c; --gris:#64748b; --fons:#f8fafc; --lila:#6d28d9; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; background:var(--fons); color:#1e293b; line-height:1.55; padding:32px 16px; }
+  .full { max-width:900px; margin:0 auto; }
+  header { background:var(--blau); color:#fff; border-radius:12px; padding:28px 32px; margin-bottom:24px; }
+  header h1 { font-size:1.5rem; margin-bottom:6px; }
+  header p { opacity:.85; font-size:.95rem; }
+  .resum { background:#fff; border-left:4px solid var(--blau); border-radius:8px; padding:16px 20px; margin-bottom:24px; font-size:.95rem; }
+  section { background:#fff; border-radius:12px; padding:22px 26px; margin-bottom:22px; box-shadow:0 1px 3px rgba(0,0,0,.07); }
+  section > h2 { font-size:1.15rem; color:var(--blau); margin-bottom:6px; }
+  section > .sub { color:var(--gris); font-size:.9rem; margin-bottom:16px; }
+  h3 { font-size:.98rem; color:var(--blau); margin:16px 0 8px; }
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:.9rem; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #eef2f7; vertical-align:top; }
+  th { background:#f1f5f9; color:var(--blau); font-size:.82rem; text-transform:uppercase; letter-spacing:.03em; }
+  td.num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .ok { color:var(--verd); font-weight:600; }
+  .no { color:#dc2626; font-weight:600; }
+  ul { margin:6px 0 6px 20px; } li { padding:3px 0; font-size:.93rem; }
+  .box { border-radius:8px; padding:12px 16px; margin:12px 0; font-size:.9rem; }
+  .box.warn { background:#fee2e2; border-left:4px solid #dc2626; }
+  .box.tip { background:#dcfce7; border-left:4px solid var(--verd); }
+  .box.key { background:#fef9c3; border-left:4px solid #ca8a04; }
+  .via { border-top:5px solid var(--blau); }
+  .via.b { border-top-color:var(--taronja); }
+  .via.c { border-top-color:var(--lila); }
+  .tag { display:inline-block; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:2px 8px; border-radius:999px; margin-left:8px; vertical-align:middle; }
+  .tag.rec { background:#ffedd5; color:#9a3412; }
+  .big { font-size:1.05rem; font-weight:700; color:var(--blau); }
+  .mensual { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 16px; margin-top:10px; }
+  .mensual .big { color:#1d4ed8; }
+  .total-row td { border-top:2px solid var(--blau); font-weight:700; color:var(--blau); }
+  footer { text-align:center; color:var(--gris); font-size:.82rem; margin-top:8px; }
+  @media print { body{background:#fff;padding:0;font-size:12px;} .full{max-width:none;} header{border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;} section{box-shadow:none;border:1px solid #e2e8f0;break-inside:avoid;} th,.box,.mensual,.tag{-webkit-print-color-adjust:exact;print-color-adjust:exact;} }
+  @page { size:A4; margin:12mm; }
+</style>
+</head>
+<body>
+<div class="full">
+<header>
+  <h1>🏛️ Ajut Felanitx — plans, feina i què es paga cada mes</h1>
+  <p>Guia interna AMG Digitalització · com queda el cost per al client durant l'any subvencionat i <b>quan s'acaba</b></p>
+</header>
+
+<div class="resum">
+  <b>Idea central:</b> l'ajut de l'Ajuntament cobreix el <b>50% (màx. 1.000€) del PRIMER any</b>.
+  A partir de l'any 2 el client paga el servei <b>sencer</b>. Aquest full deixa clar, per a cada via,
+  <b>què es paga d'entrada</b>, <b>quant queda l'any 1 amb l'ajut</b> i <b>què es paga cada mes quan acaba l'ajut</b>.
+  Preus sempre <b>IVA exclòs</b>.
+</div>
+
+<section>
+  <h2>⚠️ Requisit previ (per a AMG)</h2>
+  <p>Per a <b>qualsevol</b> via, AMG ha d'estar <b>donada d'alta d'autònom i facturant (Holded)</b>: el client
+  justifica l'ajut amb <i>la factura d'AMG</i>. Sense l'alta no es pot participar. Cal també
+  <b>confirmar la data de publicació al BOIB</b> (el termini de sol·licitud és només 1 mes).</p>
+</section>
+
+<section>
+  <h2>🔄 Procés amb el client (igual per a les 3 vies)</h2>
+  <table>
+    <tr><th>#</th><th>Pas</th><th>Feina d'AMG</th></tr>
+    <tr><td>1</td><td>Qualificar</td><td>Autònom/pime de Felanitx, epígraf IAE de l'Annex V, al corrent d'Hisenda/SS/Ajuntament</td></tr>
+    <tr><td>2</td><td>Pressupost</td><td>Conceptes elegibles ben redactats (allotjament web / gestió de xarxes / comunicació digital en català). <b>Mai</b> "consultoria" ni "assessorament"</td></tr>
+    <tr><td>3</td><td>Sol·licitud</td><td>Acompanyar a la Seu electrònica (tràmit <b>SUB16</b>) dins el termini</td></tr>
+    <tr><td>4</td><td>Execució + pagament</td><td>Lliurar el servei i emetre factura; el client paga <b>abans del 15 oct 2026</b></td></tr>
+    <tr><td>5</td><td>Justificació</td><td>Memòria (Annex A): web + captures de perfils en català + <b>cartell</b> (Annex VI)</td></tr>
+    <tr><td>6</td><td>Venda addicional</td><td>Oferir l'<b>agent IA + automatitzacions</b> (fora de l'ajut → recurrència d'AMG)</td></tr>
+  </table>
+</section>
+
+<!-- VIA A -->
+<section class="via">
+  <h2>Via A — Estàndard</h2>
+  <p class="sub">Landing Pro en català + allotjament. Poc ajut, però ràpid i sense compromís mensual gran.</p>
+
+  <h3>Què lliures i feina teva</h3>
+  <ul>
+    <li>Crear i publicar la <b>Landing Pro</b> des de <code>/portal/landings</code> (el subdomini <code>client.webs.amgdl.com</code> queda actiu sol; o domini propi).</li>
+    <li>Posada en marxa de perfils socials (només alta, <b>sense</b> gestió mensual).</li>
+    <li>Feina: ~mig dia. Recurrent: cap més enllà de l'allotjament.</li>
+  </ul>
+
+  <h3>Any 1 — amb ajut</h3>
+  <table>
+    <tr><th>Concepte (per a la factura)</th><th class="num">Import</th></tr>
+    <tr><td>Landing Pro en català — posada en marxa</td><td class="num">80 €</td></tr>
+    <tr><td>Allotjament web (12 mesos prepagats · 15€/mes)</td><td class="num">180 €</td></tr>
+    <tr><td>Gestió de xarxes — posada en marxa</td><td class="num">50 €</td></tr>
+    <tr><td>Cost elegible</td><td class="num">310 €</td></tr>
+    <tr><td class="ok">Ajut (50%)</td><td class="num ok">−155 €</td></tr>
+    <tr class="total-row"><td>Paga el client l'any 1</td><td class="num">155 € + IVA</td></tr>
+  </table>
+
+  <div class="mensual">
+    <h3>💶 A partir de l'any 2 (sense ajut)</h3>
+    <p>Només <b>allotjament de la Landing Pro</b>:</p>
+    <p class="big">15 €/mes &nbsp;·&nbsp; 180 €/any</p>
+    <p style="font-size:.85rem;color:var(--gris)">No hi ha quota de xarxes (la via A no inclou gestió mensual).</p>
+  </div>
+</section>
+
+<!-- VIA B -->
+<section class="via b">
+  <h2>Via B — Gestió mensual de xarxes <span class="tag rec">Recomanada</span></h2>
+  <p class="sub">El de la via A + <b>gestió mensual de xarxes en català</b> (nivell Gestió, 99€/mes). Màxim ajut, però feina i cost recurrents alts.</p>
+
+  <h3>Què lliures i feina teva</h3>
+  <ul>
+    <li>Tot el de la via A.</li>
+    <li>Configurar el <b>Social Publisher</b> (Instagram/Facebook/Google Business via Telegram + IA).</li>
+    <li><b>Cada mes:</b> planificar i redactar 8-12 publicacions en català, publicar, gestionar comentaris/DMs i enviar informe. És <b>servei gestionat</b> (feina teva recurrent, la IA només l'abarateix).</li>
+  </ul>
+
+  <h3>Any 1 — amb ajut</h3>
+  <table>
+    <tr><th>Concepte (per a la factura)</th><th class="num">Import</th></tr>
+    <tr><td>Landing Pro en català — posada en marxa</td><td class="num">80 €</td></tr>
+    <tr><td>Allotjament web (12 mesos prepagats · 15€/mes)</td><td class="num">180 €</td></tr>
+    <tr><td>Gestió de xarxes — posada en marxa</td><td class="num">50 €</td></tr>
+    <tr><td>Gestió mensual de xarxes en català (12 × 99€)</td><td class="num">1.188 €</td></tr>
+    <tr><td>Cost elegible</td><td class="num">1.498 €</td></tr>
+    <tr><td class="ok">Ajut (50%)</td><td class="num ok">−749 €</td></tr>
+    <tr class="total-row"><td>Paga el client l'any 1</td><td class="num">749 € + IVA</td></tr>
+  </table>
+  <p style="font-size:.85rem;color:var(--gris)">⚠️ Requereix <b>confirmar amb l'Ajuntament</b> que accepten el prepagament anual dels 12 mesos dins el període.</p>
+
+  <div class="mensual">
+    <h3>💶 A partir de l'any 2 (sense ajut) — EL PUNT IMPORTANT</h3>
+    <p>El client continua pagant <b>tot el servei sencer</b>:</p>
+    <table>
+      <tr><td>Allotjament Landing Pro</td><td class="num">15 €/mes</td></tr>
+      <tr><td>Gestió mensual de xarxes (nivell Gestió)</td><td class="num">99 €/mes</td></tr>
+      <tr class="total-row"><td>Total mensual any 2+</td><td class="num">114 €/mes · 1.368 €/any</td></tr>
+    </table>
+    <p style="font-size:.88rem"><b>Cal dir-ho clar d'entrada:</b> l'any 1 surt a meitat de preu per l'ajut, però
+    l'any 2 són <b>114€/mes complets</b>. Si el client no vol/pot sostenir aquesta quota, ofereix-li la via A o la C.</p>
+  </div>
+  <p style="font-size:.85rem;color:var(--gris);margin-top:8px">Nivells alternatius de gestió: Bàsic <b>49€/mes</b> (porta d'entrada) · Premium <b>149€/mes</b> (més volum). Canvia el mensual de l'any 2 en conseqüència.</p>
+</section>
+
+<!-- VIA C -->
+<section class="via c">
+  <h2>Via C — Paquet únic, sense quota</h2>
+  <p class="sub">Un sol lliurament més complet, <b>sense recurrència mensual</b> de xarxes. Ideal per a qui no vol lligams.</p>
+
+  <h3>Què lliures i feina teva</h3>
+  <ul>
+    <li>Web/landing <b>professional</b> en català (diverses seccions, contingut redactat) — més feina que una Landing Pro.</li>
+    <li>Alta de perfils + <b>pack inicial de 12-15 publicacions</b> creades i programades.</li>
+    <li>Feina concentrada en un sol lliurament; després, cap obligació mensual (tret de l'allotjament).</li>
+  </ul>
+
+  <h3>Any 1 — amb ajut</h3>
+  <table>
+    <tr><th>Concepte (per a la factura)</th><th class="num">Import</th></tr>
+    <tr><td>Web/landing professional en català — completa</td><td class="num">400 €</td></tr>
+    <tr><td>Allotjament web (1 any prepagat · 15€/mes)</td><td class="num">180 €</td></tr>
+    <tr><td>Posada en marxa xarxes + pack de contingut (12-15 pubs)</td><td class="num">300 €</td></tr>
+    <tr><td>Cost elegible</td><td class="num">880 €</td></tr>
+    <tr><td class="ok">Ajut (50%)</td><td class="num ok">−440 €</td></tr>
+    <tr class="total-row"><td>Paga el client l'any 1</td><td class="num">440 € + IVA</td></tr>
+  </table>
+
+  <div class="mensual">
+    <h3>💶 A partir de l'any 2 (sense ajut)</h3>
+    <p>Només <b>allotjament de la web</b>:</p>
+    <p class="big">15 €/mes &nbsp;·&nbsp; 180 €/any</p>
+    <p style="font-size:.85rem;color:var(--gris)">El pack de contingut era únic → no genera quota. Si vol continuïtat de xarxes, es passa a la via B.</p>
+  </div>
+</section>
+
+<!-- COMPARATIVA MENSUAL -->
+<section>
+  <h2>📊 Comparativa: què paga el client cada mes en acabar l'any subvencionat</h2>
+  <table>
+    <tr><th>Via</th><th class="num">Paga any 1 (amb ajut)</th><th class="num">Mensual any 2+</th><th>Recurrència / feina teva</th></tr>
+    <tr><td><b>A · Estàndard</b></td><td class="num">155 €</td><td class="num big">15 €/mes</td><td>Cap (només hosting)</td></tr>
+    <tr><td><b>B · Gestió 99€</b></td><td class="num">749 €</td><td class="num big">114 €/mes</td><td>Alta — publicacions cada mes</td></tr>
+    <tr><td><b>C · Paquet únic</b></td><td class="num">440 €</td><td class="num big">15 €/mes</td><td>Cap (només hosting)</td></tr>
+  </table>
+  <div class="box key">
+    <b>Regla per no crear malentesos:</b> a la via B, digues sempre les dues xifres juntes —
+    «l'any 1 et surt a <b>749€</b> gràcies a l'ajut; a partir de l'any 2 són <b>114€/mes</b>».
+    A les vies A i C, el compromís mensual és mínim (<b>15€/mes</b> d'allotjament).
+  </div>
+</section>
+
+<section>
+  <h2>➕ Fora de l'ajut: l'agent IA (la recurrència real d'AMG)</h2>
+  <p>L'agent d'IA i les automatitzacions <b>no encaixen</b> net a la subvenció (es llegirien com a software/consultoria):
+  es venen <b>a part</b>, amb la seva pròpia quota mensual segons ús, un cop el client ja està dins.
+  És la via de recurrència de veritat — la subvenció serveix per <b>entrar</b> pel web + xarxes.</p>
+</section>
+
+<section>
+  <h2>📷 Fotografies i material visual — d'on surten</h2>
+  <p class="sub">La quota mensual <b>no inclou un fotògraf professional</b>. Cal deixar-ho clar per no crear falses expectatives.</p>
+  <h3>Model de contingut (per ordre)</h3>
+  <ul>
+    <li><b>1. El client aporta el material base:</b> fotos del local, productes, feina feta i equip, fetes amb el <b>mòbil</b> seguint una mini-guia d'AMG (llum natural, enquadrament net, horitzontal i vertical). És la font principal per a un comerç local.</li>
+    <li><b>2. AMG ho treballa:</b> selecció, edició, plantilles de disseny, text sobre imatge, carrusels i adaptació al format de cada xarxa. La <b>IA</b> genera imatges de suport o fons quan calen (mai per suplantar el producte real).</li>
+    <li><b>3. Banc d'imatges</b> per a continguts genèrics (festius, frases, promocions) quan no cal foto real.</li>
+  </ul>
+  <div class="box tip">
+    <b>Sessió de fotos inicial (opcional, a part):</b> per a qui no té gens de material decent, oferir una sessió puntual
+    de fotos (pròpia o subcontractada) com a <b>extra de posada en marxa</b>. No forma part de la quota mensual;
+    es pressuposta a banda i es pot incloure a la factura de l'ajut com a part de la <b>producció de contingut</b>.
+  </div>
+  <div class="box warn">
+    <b>Regla:</b> AMG no és un estudi fotogràfic. Amb 49-99€/mes no hi caben sessions de fotos mensuals.
+    El model realista és <b>foto de mòbil del client + edició/disseny d'AMG + IA/banc d'imatges</b>. La constància
+    de bones fotos depèn que el client aporti material — pactar-ho des del primer dia.
+  </div>
+</section>
+
+<section>
+  <h2>📱 Amb quines xarxes treballem</h2>
+  <p class="sub">El Social Publisher d'AMG gestiona <b>Instagram, Facebook i Google Business Profile</b> (via Telegram + IA). No treballem TikTok, X ni LinkedIn per a comerç local (LinkedIn és B2B).</p>
+  <table>
+    <tr><th>Xarxa</th><th>Per a què serveix en un comerç de Felanitx</th><th>Prioritat</th></tr>
+    <tr><td><b>Google Business Profile</b></td><td>Aparèixer al mapa i a les cerques «prop de mi», horaris, fotos i <b>ressenyes</b>. Sovint el que més ven a un negoci local.</td><td class="ok">Alta</td></tr>
+    <tr><td><b>Instagram</b></td><td>Aparador visual (estètica, moda, restauració, perruqueria): producte, feina feta, novetats.</td><td class="ok">Alta</td></tr>
+    <tr><td><b>Facebook</b></td><td>Públic més gran, esdeveniments, comunitat local i promocions.</td><td>Mitjana</td></tr>
+  </table>
+  <h3>Xarxes segons el nivell de gestió mensual</h3>
+  <table>
+    <tr><th>Nivell</th><th>Xarxes</th><th class="num">€/mes</th></tr>
+    <tr><td>Bàsic</td><td>1-2 xarxes (típic: Google Business + Instagram)</td><td class="num">49 €</td></tr>
+    <tr><td>Gestió ⭐</td><td>Multi-xarxa: Instagram + Facebook + Google Business</td><td class="num">99 €</td></tr>
+    <tr><td>Premium</td><td>+ més xarxes i campanyes estacionals</td><td class="num">149 €</td></tr>
+  </table>
+  <div class="box key">
+    <b>Consell:</b> per a la majoria de comerços de Felanitx, <b>Google Business + Instagram</b> és el nucli que
+    dona resultats. Facebook s'afegeix segons el públic. No cal prometre "totes les xarxes" — cal les que el client fa servir.
+  </div>
+</section>
+
+<section>
+  <h2>🧾 Feina de justificació (valor afegit que ven)</h2>
+  <ul>
+    <li>Factura d'AMG amb els conceptes elegibles + pagament acreditat.</li>
+    <li>Memòria (Annex A): enllaços a la web i captures dels perfils <b>en català</b> que demostrin l'execució.</li>
+    <li>Tot el contingut <b>en català</b> (requisit explícit).</li>
+    <li><b>Cartell informatiu</b> (Annex VI) a l'entrada de l'establiment.</li>
+  </ul>
+  <div class="box warn">
+    <b>No inflis preus per pujar l'ajut.</b> La justificació exigeix evidències reals; conceptes i imports han de correspondre a feina real. Inflar-los seria frau de subvenció.
+  </div>
+</section>
+
+<footer>AMG Digitalització · document intern de treball · imports IVA exclòs · verificar dates i acceptació del prepagament amb l'Ajuntament de Felanitx</footer>
+</div>
+</body>
+</html>

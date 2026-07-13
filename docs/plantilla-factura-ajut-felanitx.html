@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plantilla de factura — Ajut Felanitx (conceptes elegibles) · AMG</title>
+<style>
+  :root { --blau:#1e3a5f; --verd:#16a34a; --gris:#64748b; --fons:#f8fafc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; background:var(--fons); color:#1e293b; line-height:1.5; padding:32px 16px; }
+  .full { max-width:900px; margin:0 auto; }
+  header { background:var(--blau); color:#fff; border-radius:12px; padding:24px 30px; margin-bottom:20px; }
+  header h1 { font-size:1.35rem; margin-bottom:6px; }
+  header p { opacity:.88; font-size:.92rem; }
+  section { background:#fff; border-radius:12px; padding:20px 24px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,.07); }
+  section > h2 { font-size:1.1rem; color:var(--blau); margin-bottom:6px; }
+  section > .sub { color:var(--gris); font-size:.88rem; margin-bottom:14px; }
+  table { width:100%; border-collapse:collapse; margin:8px 0; font-size:.9rem; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid #eef2f7; vertical-align:top; }
+  th { background:#f1f5f9; color:var(--blau); font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; }
+  td.num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .fill { color:#94a3b8; font-style:italic; }
+  .box { border-radius:8px; padding:12px 16px; margin:12px 0; font-size:.9rem; }
+  .box.warn { background:#fee2e2; border-left:4px solid #dc2626; }
+  .box.tip { background:#dcfce7; border-left:4px solid var(--verd); }
+  .box.key { background:#fef9c3; border-left:4px solid #ca8a04; }
+  .total-row td { border-top:2px solid var(--blau); font-weight:700; color:var(--blau); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .card { border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; font-size:.88rem; }
+  .card h4 { color:var(--blau); font-size:.85rem; text-transform:uppercase; letter-spacing:.03em; margin-bottom:6px; }
+  code { background:#f1f5f9; padding:1px 5px; border-radius:4px; font-size:.85em; }
+  footer { text-align:center; color:var(--gris); font-size:.82rem; margin-top:6px; }
+  @media print { body{background:#fff;padding:0;font-size:12px;} .full{max-width:none;} header{border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;} section{box-shadow:none;border:1px solid #e2e8f0;break-inside:avoid;} th,.box,.card{-webkit-print-color-adjust:exact;print-color-adjust:exact;} }
+  @page { size:A4; margin:12mm; }
+</style>
+</head>
+<body>
+<div class="full">
+<header>
+  <h1>🧾 Plantilla de factura — Ajut «Modernització» Felanitx</h1>
+  <p>Conceptes redactats perquè la despesa entri a la subvenció · document intern AMG · imports IVA exclòs</p>
+</header>
+
+<div class="box warn">
+  <b>Regla d'or de la redacció:</b> factura sempre com a <b>servei de comunicació digital / gestió de xarxes / allotjament</b>,
+  en <b>català</b> i com a <b>subscripció</b> (no venda de software). <b>MAI</b> escriguis «consultoria», «assessorament»,
+  «formació» ni «llicència/compra de software» — són conceptes <b>exclosos</b> i tomben la subvenció.
+</div>
+
+<section>
+  <h2>Capçalera de la factura (dades obligatòries)</h2>
+  <div class="grid2">
+    <div class="card">
+      <h4>Emissor (AMG)</h4>
+      Nom/raó social · NIF<br>
+      Adreça fiscal<br>
+      <span class="fill">(alta d'autònom activa — imprescindible)</span>
+    </div>
+    <div class="card">
+      <h4>Destinatari (el client = beneficiari)</h4>
+      Nom del comerç · NIF/DNI<br>
+      Adreça a <b>Felanitx</b><br>
+      Epígraf IAE <span class="fill">(de l'Annex V)</span>
+    </div>
+  </div>
+  <table>
+    <tr><th>Camp</th><th>Contingut</th></tr>
+    <tr><td>Núm. de factura i data</td><td>Data <b>dins el període</b> (fins 15 oct 2026) i <b>pagada</b> abans d'aquesta data</td></tr>
+    <tr><td>Forma de pagament</td><td>Transferència (deixa <b>rastre bancari</b> per justificar el pagament)</td></tr>
+    <tr><td>IVA</td><td>21% (l'ajut es calcula sobre la base <b>sense IVA</b>)</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Via A — Estàndard</h2>
+  <p class="sub">Landing + allotjament. Copia aquestes línies tal qual.</p>
+  <table>
+    <tr><th>Concepte (text exacte per a la factura)</th><th class="num">Base</th></tr>
+    <tr><td>Disseny i posada en marxa de pàgina web comercial en català</td><td class="num">80,00 €</td></tr>
+    <tr><td>Servei d'allotjament web (12 mesos)</td><td class="num">180,00 €</td></tr>
+    <tr><td>Posada en marxa de perfils de xarxes socials en català</td><td class="num">50,00 €</td></tr>
+    <tr><td>Base imposable</td><td class="num">310,00 €</td></tr>
+    <tr><td>IVA 21%</td><td class="num">65,10 €</td></tr>
+    <tr class="total-row"><td>Total factura</td><td class="num">375,10 €</td></tr>
+  </table>
+  <p style="font-size:.85rem;color:var(--gris)">Cost elegible 310€ → <b>ajut ~155€</b>.</p>
+</section>
+
+<section>
+  <h2>Via B — Gestió mensual (recomanada)</h2>
+  <p class="sub">Afegeix la gestió de xarxes anual. Millor com a <b>servei prepagat de 12 mesos</b> en una sola línia.</p>
+  <table>
+    <tr><th>Concepte (text exacte per a la factura)</th><th class="num">Base</th></tr>
+    <tr><td>Disseny i posada en marxa de pàgina web comercial en català</td><td class="num">80,00 €</td></tr>
+    <tr><td>Servei d'allotjament web (12 mesos)</td><td class="num">180,00 €</td></tr>
+    <tr><td>Posada en marxa de perfils de xarxes socials en català</td><td class="num">50,00 €</td></tr>
+    <tr><td>Servei de gestió de xarxes socials i comunicació digital en català (12 mesos)</td><td class="num">1.188,00 €</td></tr>
+    <tr><td>Base imposable</td><td class="num">1.498,00 €</td></tr>
+    <tr><td>IVA 21%</td><td class="num">314,58 €</td></tr>
+    <tr class="total-row"><td>Total factura</td><td class="num">1.812,58 €</td></tr>
+  </table>
+  <p style="font-size:.85rem;color:var(--gris)">Cost elegible 1.498€ → <b>ajut ~749€</b>. Amb nivell Premium (149€/mes) el cost elegible arriba a ~2.098€ → ajut màxim 1.000€.</p>
+  <div class="box tip"><b>Recorda al client:</b> l'ajut cobreix el 50% del <b>primer any</b>. A partir de l'any 2 el servei continua a <b>114€/mes</b> (15 d'allotjament + 99 de gestió), sense subvenció.</div>
+</section>
+
+<section>
+  <h2>Via C — Paquet únic (sense quota)</h2>
+  <p class="sub">Un sol lliurament més complet. El preu més alt es justifica amb MÉS feina real.</p>
+  <table>
+    <tr><th>Concepte (text exacte per a la factura)</th><th class="num">Base</th></tr>
+    <tr><td>Disseny i desenvolupament de pàgina web professional en català (multi-secció, continguts redactats)</td><td class="num">400,00 €</td></tr>
+    <tr><td>Servei d'allotjament web (12 mesos)</td><td class="num">180,00 €</td></tr>
+    <tr><td>Producció de contingut digital en català per a xarxes socials (pack de 12-15 publicacions)</td><td class="num">300,00 €</td></tr>
+    <tr><td>Base imposable</td><td class="num">880,00 €</td></tr>
+    <tr><td>IVA 21%</td><td class="num">184,80 €</td></tr>
+    <tr class="total-row"><td>Total factura</td><td class="num">1.064,80 €</td></tr>
+  </table>
+  <p style="font-size:.85rem;color:var(--gris)">Cost elegible 880€ → <b>ajut ~440€</b>. A partir de l'any 2: només allotjament <b>15€/mes</b>.</p>
+</section>
+
+<section>
+  <h2>Extres opcionals (si escau)</h2>
+  <table>
+    <tr><th>Concepte elegible</th><th class="num">Base orientativa</th></tr>
+    <tr><td>Sessió de producció fotogràfica per a contingut digital</td><td class="num fill">segons abast</td></tr>
+    <tr><td>Servei d'allotjament de web (renovació anual)</td><td class="num">180,00 €/any</td></tr>
+  </table>
+  <div class="box key">
+    <b>El que NO ha d'aparèixer mai:</b> «agent d'intel·ligència artificial», «chatbot», «automatització»,
+    «llicència de software», «consultoria», «assessorament» ni «formació». L'agent IA i les automatitzacions
+    es facturen en una <b>factura a part</b>, fora de l'ajut.
+  </div>
+</section>
+
+<footer>AMG Digitalització · verificar dates i acceptació del prepagament anual amb l'Ajuntament de Felanitx · els imports i conceptes han de correspondre a feina real (evidències a la justificació)</footer>
+</div>
+</body>
+</html>
