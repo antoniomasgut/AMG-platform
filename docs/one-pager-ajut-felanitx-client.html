@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digitalitza el teu negoci amb l'ajut de Felanitx — AMG</title>
+<style>
+  :root { --blau:#1e3a5f; --verd:#16a34a; --taronja:#ea580c; --gris:#64748b; --lila:#6d28d9; --fons:#f8fafc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; background:var(--fons); color:#1e293b; line-height:1.4; padding:24px 16px; }
+  .full { max-width:820px; margin:0 auto; }
+  header { background:linear-gradient(135deg,#1e3a5f,#2d5a8f); color:#fff; border-radius:14px; padding:22px 26px; margin-bottom:16px; text-align:center; }
+  header h1 { font-size:1.45rem; margin-bottom:8px; }
+  header .lead { font-size:1rem; opacity:.95; max-width:640px; margin:0 auto; }
+  header .badge { display:inline-block; background:#fbbf24; color:#7c2d12; font-weight:800; font-size:1.05rem; padding:6px 16px; border-radius:999px; margin-top:12px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+  .card { background:#fff; border-radius:12px; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,.08); border-top:4px solid var(--blau); position:relative; }
+  .card.b { border-top-color:var(--taronja); }
+  .card.c { border-top-color:var(--lila); }
+  .card.d { border-top-color:var(--verd); }
+  .card h3 { font-size:1.05rem; color:var(--blau); margin-bottom:4px; }
+  .card .desc { font-size:.9rem; color:#334155; margin-bottom:10px; min-height:38px; }
+  .card .preus { font-size:.9rem; border-top:1px solid #eef2f7; padding-top:8px; }
+  .card .preus b { color:var(--verd); font-size:1.05rem; }
+  .card .desp { color:var(--gris); font-size:.82rem; }
+  .card .star { position:absolute; top:12px; right:14px; background:#ffedd5; color:#9a3412; font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; padding:2px 8px; border-radius:999px; }
+  .strip { background:#dcfce7; border-radius:12px; padding:14px 18px; margin-bottom:14px; font-size:.92rem; }
+  .strip b { color:#166534; }
+  .agent { background:#f5f3ff; border:1px solid #ddd6fe; border-radius:12px; padding:12px 18px; margin-bottom:16px; font-size:.9rem; color:#4c1d95; }
+  .cta { background:var(--blau); color:#fff; border-radius:12px; padding:16px 22px; text-align:center; }
+  .cta .big { font-size:1.15rem; font-weight:800; margin-bottom:4px; }
+  .cta a { color:#fff; text-decoration:none; font-weight:700; }
+  .cta .row { font-size:1rem; margin-top:6px; }
+  footer { text-align:center; color:var(--gris); font-size:.78rem; margin-top:10px; }
+  @media print { body{background:#fff;padding:0;} .full{max-width:none;} header,.cta{-webkit-print-color-adjust:exact;print-color-adjust:exact;} .card,.strip,.agent{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none;border:1px solid #e2e8f0;} }
+  @page { size:A4; margin:11mm; }
+</style>
+</head>
+<body>
+<div class="full">
+<header>
+  <h1>Digitalitzam el teu negoci 🚀</h1>
+  <p class="lead">L'Ajuntament de Felanitx t'ajuda a modernitzar el teu comerç: web, xarxes socials i comunicació digital en català. Nosaltres t'ho muntam tot i t'ajudam amb la sol·licitud i la paperassa.</p>
+  <div class="badge">Recupera el 50% · fins a 1.000 €</div>
+</header>
+
+<div class="grid">
+  <div class="card">
+    <h3>Web + Presència</h3>
+    <div class="desc">La teva web professional en català, amb allotjament i formulari de contacte.</div>
+    <div class="preus">Amb l'ajut: <b>155 €</b><br><span class="desp">després, 15 €/mes d'allotjament</span></div>
+  </div>
+
+  <div class="card b">
+    <span class="star">Recomanat</span>
+    <h3>Xarxes gestionades</h3>
+    <div class="desc">Web + ens n'ocupam de tot: publicam a Instagram, Facebook i Google cada mes, en català.</div>
+    <div class="preus">Amb l'ajut (1r any): <b>749 €</b><br><span class="desp">després, 114 €/mes tot inclòs</span></div>
+  </div>
+
+  <div class="card c">
+    <h3>Paquet complet</h3>
+    <div class="desc">Web completa + un pack de publicacions llest per començar. Un sol pagament, sense quotes.</div>
+    <div class="preus">Amb l'ajut: <b>440 €</b><br><span class="desp">després, 15 €/mes d'allotjament</span></div>
+  </div>
+
+  <div class="card d">
+    <h3>Aprèn a fer-ho tu</h3>
+    <div class="desc">Et muntam les xarxes i t'acompanyam els primers mesos perquè després les gestionis tu mateix.</div>
+    <div class="preus">Amb l'ajut: <b>345 €</b><br><span class="desp">després, 15 €/mes d'allotjament</span></div>
+  </div>
+</div>
+
+<div class="strip">
+  ✅ <b>T'ho fem fàcil:</b> t'ajudam amb la sol·licitud a l'Ajuntament, et muntam la web i les xarxes <b>en català</b>, i et preparam la justificació. Tu només poses les fotos del teu negoci — nosaltres la resta.
+</div>
+
+<div class="agent">
+  🤖 <b>Vols anar més enllà?</b> Tenim un <b>agent d'intel·ligència artificial</b> que respon els teus clients per WhatsApp les 24 h i t'ajuda a publicar a xarxes. Demana'ns-en una demostració.
+</div>
+
+<div class="cta">
+  <div class="big">Parlem-ne sense compromís</div>
+  <div class="row">📞 <a href="tel:+34614492062">614 492 062</a> &nbsp;·&nbsp; també per WhatsApp</div>
+  <div class="row">✉️ <a href="mailto:info@amgdl.com">info@amgdl.com</a> &nbsp;·&nbsp; 🌐 amgdl.com</div>
+</div>
+
+<footer>AMG Digitalització · Preus sense IVA · L'ajut cobreix el 50% del cost elegible el primer any (màx. 1.000 €), subjecte a les bases de la convocatòria de l'Ajuntament de Felanitx.</footer>
+</div>
+</body>
+</html>
