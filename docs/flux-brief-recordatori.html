@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flux de contingut — brief setmanal i recordatoris · AMG</title>
+<style>
+  :root { --blau:#1e3a5f; --verd:#16a34a; --taronja:#ea580c; --gris:#64748b; --fons:#f8fafc; --lila:#6d28d9; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; background:var(--fons); color:#1e293b; line-height:1.5; padding:28px 16px; }
+  .full { max-width:880px; margin:0 auto; }
+  header { background:var(--blau); color:#fff; border-radius:12px; padding:24px 28px; margin-bottom:18px; }
+  header h1 { font-size:1.35rem; margin-bottom:6px; }
+  header p { opacity:.88; font-size:.92rem; }
+  section { background:#fff; border-radius:12px; padding:20px 24px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.07); }
+  section > h2 { font-size:1.1rem; color:var(--blau); margin-bottom:6px; }
+  section > .sub { color:var(--gris); font-size:.88rem; margin-bottom:14px; }
+  table { width:100%; border-collapse:collapse; margin:8px 0; font-size:.9rem; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #eef2f7; vertical-align:top; }
+  th { background:#f1f5f9; color:var(--blau); font-size:.8rem; text-transform:uppercase; letter-spacing:.03em; }
+  .msg { background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid var(--verd); border-radius:8px; padding:12px 16px; margin:10px 0; font-size:.92rem; }
+  .msg .lbl { display:block; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--gris); font-weight:700; margin-bottom:5px; }
+  .msg.wa { border-left-color:#25d366; }
+  .msg.alt { border-left-color:var(--taronja); }
+  .msg.ok { border-left-color:var(--lila); }
+  code { background:#f1f5f9; padding:1px 5px; border-radius:4px; font-size:.85em; color:#be123c; }
+  .box { border-radius:8px; padding:12px 16px; margin:12px 0; font-size:.9rem; }
+  .box.tip { background:#dcfce7; border-left:4px solid var(--verd); }
+  .box.key { background:#fef9c3; border-left:4px solid #ca8a04; }
+  ul { margin:6px 0 6px 20px; } li { padding:2px 0; font-size:.93rem; }
+  footer { text-align:center; color:var(--gris); font-size:.82rem; margin-top:6px; }
+  @media print { body{background:#fff;padding:0;font-size:12px;} .full{max-width:none;} header{border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;} section{box-shadow:none;border:1px solid #e2e8f0;break-inside:avoid;} th,.msg,.box{-webkit-print-color-adjust:exact;print-color-adjust:exact;} }
+  @page { size:A4; margin:12mm; }
+</style>
+</head>
+<body>
+<div class="full">
+<header>
+  <h1>🔁 Flux de contingut — brief setmanal i recordatoris</h1>
+  <p>Document intern AMG · com demanem la foto cada setmana amb el mínim esforç (per a gestió i per a autonomia)</p>
+</header>
+
+<section>
+  <h2>El ritme setmanal</h2>
+  <p class="sub">Un cicle simple i repetible. Treballa sempre amb 1 setmana de marge.</p>
+  <table>
+    <tr><th>Dia</th><th>Què passa</th></tr>
+    <tr><td><b>Dilluns</b></td><td>El sistema envia el <b>brief de la setmana</b> al client (què fotografiar + deadline)</td></tr>
+    <tr><td><b>Dimecres</b></td><td>Si no ha arribat la foto → <b>recordatori automàtic</b></td></tr>
+    <tr><td><b>Dijous</b></td><td>Data límit per rebre la foto</td></tr>
+    <tr><td><b>Divendres</b></td><td>La IA redacta el caption → el client confirma → <b>es publica</b> (cap de setmana, més audiència)</td></tr>
+  </table>
+  <div class="box tip"><b>Marge:</b> planifica el <b>mes sencer</b> i demana les fotos en <b>lot a principi de mes</b> sempre que es pugui. Així una foto que no arriba no trenca el calendari.</div>
+</section>
+
+<section>
+  <h2>Format del brief setmanal</h2>
+  <p class="sub">Sempre <b>específic</b> — mai "envia'ns una foto". Estructura fixa:</p>
+  <table>
+    <tr><th>Camp</th><th>Contingut</th></tr>
+    <tr><td><b>Tipus de post</b></td><td>El pilar de la setmana (Novetat / Com combinar / La botiga / Prova social…)</td></tr>
+    <tr><td><b>Què fotografiar</b></td><td>Objecte concret + com (llum natural, enquadrament, horitzontal i vertical)</td></tr>
+    <tr><td><b>Exemple</b></td><td>Una frase que ho aclareixi ("un conjunt de 2-3 peces en maniquí")</td></tr>
+    <tr><td><b>Deadline</b></td><td>Dia límit (dijous)</td></tr>
+  </table>
+  <div class="msg">
+    <span class="lbl">Exemple de brief</span>
+    <b>Setmana 2 · Com combinar-ho</b> 👗<br>
+    📸 Foto d'un conjunt de 2-3 peces (ex: texans + camisa + sandàlia), en maniquí o penjat junt, amb llum natural. Horitzontal i vertical.<br>
+    🗓️ Envia-la abans de <b>dijous</b>.
+  </div>
+</section>
+
+<section>
+  <h2>Textos de recordatori automàtic</h2>
+  <p class="sub">Per configurar al sistema (Telegram/WhatsApp). Variables entre claudàtors: <code>[nom]</code>, <code>[tipus]</code>, <code>[brief]</code>, <code>[dia]</code>.</p>
+
+  <div class="msg wa">
+    <span class="lbl">1 · Brief inicial (dilluns)</span>
+    Hola [nom]! 👋 Aquesta setmana toca <b>[tipus]</b>: [brief]. Envia'ns la foto abans de <b>[dia]</b> i nosaltres ens n'ocupam de la resta 📸
+  </div>
+
+  <div class="msg alt">
+    <span class="lbl">2 · Recordatori si no ha arribat (dimecres)</span>
+    Ei [nom] 😊 encara ens falta la foto de <b>[tipus]</b> per publicar aquesta setmana. Quan puguis, envia-nos-la — amb una del mòbil ja n'hi ha prou!
+  </div>
+
+  <div class="msg ok">
+    <span class="lbl">3 · Esborrany a confirmar (quan envia la foto)</span>
+    Rebut! ✅ Aquí tens el post preparat:<br><i>«[text generat per la IA]»</i><br>El publicam així? Respon <b>✅ Sí</b> o <b>✍️ Canvia-ho</b>.
+  </div>
+
+  <div class="msg">
+    <span class="lbl">4 · Publicat (confirmació)</span>
+    Fet! 🎉 Ja és publicat a [xarxes]. La setmana que ve, nou tema 😉
+  </div>
+</section>
+
+<section>
+  <h2>Pla B — si la foto no arriba</h2>
+  <ul>
+    <li>Publicar amb <b>banc d'imatges</b> o un <b>post de disseny</b> (frase + marca), sense trencar el ritme.</li>
+    <li>Reutilitzar una <b>foto anterior</b> bona que no s'hagi fet servir gaire.</li>
+    <li>Moure el tema a la setmana següent i avançar-ne un altre.</li>
+  </ul>
+  <div class="box key"><b>Pactar-ho al principi:</b> el client ha de saber des del dia 1 que la constància depèn que enviï les fotos, i que aquest és el pla B si algun cop no pot.</div>
+</section>
+
+<section>
+  <h2>El mateix flux serveix per als dos models</h2>
+  <ul>
+    <li><b>Gestió (Presència):</b> el fem nosaltres amb el material del client.</li>
+    <li><b>Autonomia (Via D):</b> és exactament el que <b>li ensenyem</b> — que es faci el seu propi planning i segueixi aquest ritme. L'any 1 l'hi donem fet; després ja sap el sistema.</li>
+  </ul>
+</section>
+
+<footer>AMG Digitalització · document intern de treball</footer>
+</div>
+</body>
+</html>
