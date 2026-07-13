@@ -184,11 +184,11 @@
   function renderDomain(el) {
     var box = el.querySelector('[data-domain]');
     if (!box) return;
-    var msg = '🌐 Domini: <b>el teu domini actual</b>.';
+    var msg = '🌐 Domini: <b>el teu domini actual</b> — <b>sense cost addicional</b> (només l\'apuntem al servidor).';
     if (answers.web === 'no') {
-      if (answers.domini === 'own')     msg = '🌐 Domini: <b>el teu domini propi</b> (l\'apuntem al servidor).';
-      if (answers.domini === 'managed') msg = '🌐 Domini: <b>te\'n contractem un</b> (gestionat, 60€ inclou 1r any + 15€/any).';
-      if (answers.domini === 'free')    msg = '🌐 Domini: <b>subdomini gratuït</b> (elteunegoci.webs.amgdl.com, 0€).';
+      if (answers.domini === 'own')     msg = '🌐 Domini: <b>el teu domini propi</b> — <b>sense cost addicional</b> (l\'apuntem al servidor; tu renoves on el tinguis).';
+      if (answers.domini === 'managed') msg = '🌐 Domini: <b>te\'n contractem un</b> — <b>+60€ a part</b> (gestionat, inclou 1r any; després 15€/any). També entra a l\'ajut → ~30€ nets.';
+      if (answers.domini === 'free')    msg = '🌐 Domini: <b>subdomini gratuït</b> (elteunegoci.webs.amgdl.com) — <b>0€</b>, cap cost.';
     }
     box.innerHTML = msg;
   }
