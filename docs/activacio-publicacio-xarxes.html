@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activació de la publicació a xarxes (Meta + Google) — AMG</title>
+<style>
+  :root { --blau:#1e3a5f; --verd:#16a34a; --taronja:#ea580c; --gris:#64748b; --fons:#f8fafc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; background:var(--fons); color:#1e293b; line-height:1.55; padding:28px 16px; }
+  .full { max-width:880px; margin:0 auto; }
+  header { background:var(--blau); color:#fff; border-radius:12px; padding:24px 28px; margin-bottom:18px; }
+  header h1 { font-size:1.35rem; margin-bottom:6px; }
+  header p { opacity:.9; font-size:.92rem; }
+  section { background:#fff; border-radius:12px; padding:20px 24px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.07); }
+  section > h2 { font-size:1.12rem; color:var(--blau); margin-bottom:8px; }
+  h3 { font-size:.98rem; color:var(--blau); margin:14px 0 6px; }
+  ol, ul { margin:6px 0 6px 22px; } li { padding:3px 0; font-size:.94rem; }
+  table { width:100%; border-collapse:collapse; margin:8px 0; font-size:.9rem; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid #eef2f7; }
+  th { background:#f1f5f9; color:var(--blau); font-size:.8rem; text-transform:uppercase; }
+  .ok { color:var(--verd); font-weight:700; }
+  .no { color:#dc2626; font-weight:700; }
+  code { background:#f1f5f9; padding:1px 5px; border-radius:4px; font-size:.85em; color:#be123c; }
+  .box { border-radius:8px; padding:12px 16px; margin:12px 0; font-size:.9rem; }
+  .box.warn { background:#fee2e2; border-left:4px solid #dc2626; }
+  .box.tip { background:#dcfce7; border-left:4px solid var(--verd); }
+  .box.key { background:#fef9c3; border-left:4px solid #ca8a04; }
+  footer { text-align:center; color:var(--gris); font-size:.8rem; margin-top:6px; }
+  @media print { body{background:#fff;padding:0;font-size:12px;} .full{max-width:none;} header{border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;} section{box-shadow:none;border:1px solid #e2e8f0;break-inside:avoid;} th,.box{-webkit-print-color-adjust:exact;print-color-adjust:exact;} }
+  @page { size:A4; margin:12mm; }
+</style>
+</head>
+<body>
+<div class="full">
+<header>
+  <h1>🔌 Activar la publicació a xarxes (Meta + Google)</h1>
+  <p>Guia d'accions per posar en marxa el Content Planner (Mòdul 58) · document intern AMG</p>
+</header>
+
+<section>
+  <h2>Estat actual (verificat a producció)</h2>
+  <table>
+    <tr><th>Peça</th><th>Estat</th><th>Acció</th></tr>
+    <tr><td>IA (briefs + captions)</td><td class="ok">✅ Configurat</td><td>—</td></tr>
+    <tr><td>Telegram (briefs/fotos)</td><td class="ok">✅ 3 tenants enllaçats</td><td>—</td></tr>
+    <tr><td>Meta App (credencials)</td><td class="ok">✅ App ID + Secret + webhook</td><td>Falta App Review + connectar comptes</td></tr>
+    <tr><td>Permisos de publicació Meta</td><td class="no">❌ Pendent</td><td>Bloc A</td></tr>
+    <tr><td>Google OAuth (client id/secret)</td><td class="no">❌ No configurat</td><td>Bloc B</td></tr>
+  </table>
+  <div class="box key"><b>Res d'això requereix canvis de codi.</b> La plataforma ja ho suporta; només falten aquestes accions externes (Google Cloud, Meta App Review) i, després, connectar cada compte.</div>
+</section>
+
+<section>
+  <h2>🟦 Bloc A — Meta (Instagram + Facebook)</h2>
+  <p style="font-size:.9rem;color:var(--gris)">La Meta App ja existeix i està cablejada. Falta que Meta aprovi els permisos de publicació i que cada tenant connecti el seu compte.</p>
+
+  <h3>A1 · Permisos a demanar a l'App Review</h3>
+  <ul>
+    <li><code>pages_show_list</code> — llistar les pàgines del client</li>
+    <li><code>pages_read_engagement</code> — llegir la pàgina</li>
+    <li><code>pages_manage_posts</code> — <b>publicar a Facebook</b></li>
+    <li><code>instagram_basic</code> + <code>instagram_content_publish</code> — <b>publicar a Instagram</b></li>
+    <li><code>business_management</code> — gestionar actius del negoci</li>
+  </ul>
+
+  <h3>A2 · Passos (a developers.facebook.com → la teva App)</h3>
+  <ol>
+    <li>Verifica el <b>Business</b> (Business Verification) si encara no ho està.</li>
+    <li>A <b>App Review → Permissions and Features</b>, sol·licita els permisos de dalt.</li>
+    <li>Per a cada un, grava un <b>screencast</b> mostrant el flux: el client connecta el compte al portal (<code>/portal/admin/tenants/[id]/social</code>) → es publica un post de prova.</li>
+    <li>Explica el cas d'ús: «SaaS que gestiona la presència digital de comerços locals; publiquem al seu Instagram/Facebook amb el seu consentiment.»</li>
+    <li>Passa l'App a <b>mode Live</b>.</li>
+  </ol>
+  <div class="box warn"><b>És el coll d'ampolla:</b> Meta triga <b>dies o setmanes</b> a revisar. Convé engegar-ho com abans.</div>
+
+  <h3>A3 · Un cop aprovat</h3>
+  <ul>
+    <li>Cada tenant connecta el seu compte des de <code>/portal/admin/tenants/[id]/social</code> (botó de connexió Meta).</li>
+    <li>A partir d'aquí, els posts del planner surten a Instagram i Facebook.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>🟨 Bloc B — Google Business (post + galeria)</h2>
+  <p style="font-size:.9rem;color:var(--gris)">Aquí falta la config OAuth de Google (encara no hi és). Un cop posada, els tenants connecten el seu perfil de Google Business.</p>
+
+  <h3>B1 · Crear les credencials a Google Cloud</h3>
+  <ol>
+    <li>A <b>console.cloud.google.com</b>, crea (o reutilitza) un projecte.</li>
+    <li><b>APIs & Services → Library</b>: activa la <b>Business Profile API</b> (i, si cal, «My Business Account Management» / «Business Information»).</li>
+    <li><b>OAuth consent screen</b>: tipus <i>External</i>, afegeix l'scope <code>https://www.googleapis.com/auth/business.manage</code>. (Requereix verificació de Google per a l'scope sensible.)</li>
+    <li><b>Credentials → Create OAuth client ID</b> (tipus <i>Web application</i>). Redirect URI: la de callback de Google del portal (Mòdul 40, p. ex. <code>https://api.amgdl.com/api/v1/google/callback</code>).</li>
+    <li>Copia el <b>Client ID</b> i el <b>Client Secret</b>.</li>
+  </ol>
+
+  <h3>B2 · Posar-les a la plataforma</h3>
+  <ul>
+    <li>Al portal, <b>Config del sistema</b> (System Config), omple:
+      <ul>
+        <li><code>GOOGLE_OAUTH_CLIENT_ID</code></li>
+        <li><code>GOOGLE_OAUTH_CLIENT_SECRET</code></li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3>B3 · Connectar cada tenant</h3>
+  <ul>
+    <li>El tenant connecta el seu Google (scope <code>business.manage</code>) i selecciona la seva <b>ubicació</b> (businessLocationId).</li>
+    <li>A partir d'aquí, els posts del planner surten com a <b>post</b> al perfil i, amb el canal <b>Galeria Google</b>, la foto s'afegeix a la <b>galeria permanent</b>.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>✅ Verificació final</h2>
+  <ol>
+    <li>Crea un <b>pla de contingut</b> per a un tenant amb Telegram enllaçat (menú → Planificador, o admin → Planificador).</li>
+    <li>Activa'l → dilluns arriba el brief; envia una foto pel Telegram → arriba el caption → confirma ✅.</li>
+    <li>Comprova que el post apareix a Instagram/Facebook i a Google (post + galeria).</li>
+  </ol>
+  <div class="box tip"><b>Fins que Meta/Google no estiguin connectats</b>, tot el flux funciona fins a la confirmació i el tenant rep l'avís que ha de connectar les xarxes (mai marca res com publicat en fals).</div>
+</section>
+
+<footer>AMG Digitalització · document intern de treball · les credencials no s'escriuen mai en aquest document</footer>
+</div>
+</body>
+</html>
