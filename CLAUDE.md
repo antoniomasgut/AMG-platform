@@ -225,15 +225,18 @@ Cada fase té un cost de **setup individual** (varia per `businessSize`: AUTONOM
 | Bot IA avançat (RAG) | 100€ |
 | SMTP Corporatiu | 25€ |
 | Google Analytics | 25€ |
-| Social Publisher (Instagram + Facebook + Google Business via Telegram IA) | 50€ |
+| Social Publisher (Instagram + Facebook + Google Business + galeria via Telegram IA) | 50€ |
+| Content Planner (Mòdul 58 · planning mensual + brief automation) | 0€ (inclòs en F1, requereix Social Publisher) |
 
 **Gestió mensual de xarxes socials (servei gestionat, en català — no autoservei):**
 
 | Nivell | Mensual | Inclou |
 |--------|---------|--------|
-| Bàsic | 49€/mes | 4-6 publicacions/mes, 1-2 xarxes, contingut IA en català |
-| Gestió | 99€/mes | 8-12 publicacions/mes, multi-xarxa, gestió de comentaris/DMs, informe |
-| Premium | 149€/mes | +publicacions, campanyes estacionals, més xarxes |
+| Bàsic | 69€/mes | 4 publicacions/mes, 1-2 xarxes, contingut IA en català |
+| Gestió | 139€/mes | 8 publicacions/mes, multi-xarxa (IG+FB+Google), gestió de comentaris/DMs, informe |
+| Premium | 199€/mes | 12 publicacions/mes, totes les xarxes + campanyes estacionals |
+
+*Alternativa autoservei (Via D · autonomia): el client ho gestiona amb el Content Planner; només agent F1 (59€/mes), sense quota de gestió.*
 
 ---
 
