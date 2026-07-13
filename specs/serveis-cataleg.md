@@ -113,11 +113,24 @@ Cada servei es pot contractar solt (add-on) o dins d'una fase. **Tots a 10 €/m
 | **SMTP Corporatiu** | Correu transaccional (SendGrid/Resend). Verificació de domini, plantilles. | 1 h | 50 € | 0 € | 50 € | 10 € |
 | **Google Analytics** | GA4 + Search Console + Tags Manager. Dashboard mensual. | 1 h | 50 € | 0 € | 50 € | 10 € |
 
-### 2.7 Social Publisher
+### 2.7 Social Publisher i Content Planner
 
 | Servei | Descripció | Hores eng | Cost setup (eng) | Despeses | Setup total | Mensual |
 |--------|-----------|-----------|-----------------|---------|------------|---------|
-| **Social Publisher** | Publicació multi-xarxa (Instagram, Facebook, Google Business) des del Telegram del client. Captions generats per IA. Foto enviada directament pel xat. Historial de publicacions al portal. Requereix F1. | 1 h | 50 € | 0 € | 50 € | 0 € (inclòs en F1) |
+| **Social Publisher** | Publicació multi-xarxa (Instagram, Facebook, Google Business + galeria) des del Telegram del client. Captions generats per IA. Foto enviada directament pel xat. Historial de publicacions al portal. Requereix F1. | 1 h | 50 € | 0 € | 50 € | 0 € (inclòs en F1) |
+| **Content Planner** (Mòdul 58) | Planning mensual + automatització del brief: cada setmana el sistema demana la foto pel Telegram, la IA redacta el caption (pilar + idioma) i publica als canals triats (IG/FB/Google post/galeria). Selecció de canals per publicació. Requereix Social Publisher. | — | 0 € (inclòs) | 0 € | 0 € | 0 € (inclòs en F1) |
+
+### 2.8 Gestió mensual de xarxes (servei gestionat, en català)
+
+Servei **gestionat** per AMG (no autoservei): planificació + redacció en català, publicacions/mes, gestió de comentaris/DMs i informe. El Content Planner amb IA abarateix l'entrega.
+
+| Nivell | Inclou | Setup | Mensual |
+|--------|--------|-------|---------|
+| **Bàsic** | 4 publicacions/mes, 1-2 xarxes, contingut IA en català | 50 € | **69 €/mes** |
+| **Gestió** (recomanat) | 8 publicacions/mes, multi-xarxa (IG+FB+Google), gestió comentaris/DMs, informe | 50 € | **139 €/mes** |
+| **Premium** | 12 publicacions/mes, totes les xarxes + campanyes estacionals | 50 € | **199 €/mes** |
+
+> Alternativa **autoservei** (Via D · autonomia): setup + acompanyament perquè el client ho gestioni ell mateix amb el Content Planner; després només l'agent F1 (59€/mes), sense quota de gestió. Veure `docs/ajut-felanitx-plans-detall.html`.
 
 ---
 

@@ -850,6 +850,14 @@ function PendingStep({ tenant, channels, selectedPhases, tenantId, locale, onNex
       done: false,
       required: false,
     },
+    {
+      id: 'content-plan',
+      label: 'Xarxes socials & Content Planner',
+      desc: 'Configurar el planning mensual de publicacions i connectar les xarxes (Meta/Google + galeria).',
+      sectionId: 'content-plan-page',
+      done: false,
+      required: false,
+    },
   ];
 
   const required = items.filter(i => i.required);
@@ -857,6 +865,10 @@ function PendingStep({ tenant, channels, selectedPhases, tenantId, locale, onNex
   const pendingRequired = required.filter(i => !i.done).length;
 
   function goTo(sectionId: string) {
+    if (sectionId === 'content-plan-page') {
+      router.push(`/${locale}/portal/admin/tenants/${tenantId}/content-plan`);
+      return;
+    }
     router.push(`/${locale}/portal/admin/tenants/${tenantId}#${sectionId}`);
   }
 
