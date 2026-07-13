@@ -2174,5 +2174,51 @@
     "eligibility": "Per a comerços de Felanitx amb activitat elegible (comerç al detall i alguns serveis).",
     "phone": "614 492 062",
     "whatsapp": "654 048 164"
+  },
+  "contentPlan": {
+    "title": "Planificador de contingut",
+    "subtitle": "Planifica les publicacions del mes; el sistema demana les fotos i publica.",
+    "newPlan": "Nou pla",
+    "period": "Mes",
+    "language": "Idioma de les publicacions",
+    "generate": "Generar amb IA",
+    "activate": "Activar",
+    "active": "Actiu",
+    "draft": "Esborrany",
+    "done": "Fet",
+    "delete": "Esborrar",
+    "defaultLanguage": "Idioma per defecte",
+    "save": "Desar",
+    "week": "Setmana",
+    "pillar": "Pilar",
+    "brief": "Què fotografiar",
+    "deadline": "Data límit foto",
+    "status": "Estat",
+    "noPlans": "Encara no hi ha cap pla",
+    "createFirst": "Crea el primer pla del mes",
+    "thisWeek": "Aquesta setmana toca",
+    "pendingPhotos": "Fotos pendents",
+    "uploadPhoto": "Pujar foto",
+    "noPending": "No tens cap foto pendent 🎉",
+    "sendBefore": "Envia la foto abans de",
+    "planCreated": "Pla creat",
+    "planActivated": "Pla activat",
+    "photoUploaded": "Foto pujada",
+    "error": "S'ha produït un error",
+    "pillars": {
+      "NOVELTY": "Novetat",
+      "COMBINE": "Com combinar-ho",
+      "SHOP": "La botiga",
+      "SOCIAL_PROOF": "Prova social"
+    },
+    "statuses": {
+      "PLANNED": "Planificat",
+      "PHOTO_REQUESTED": "Foto demanada",
+      "PHOTO_RECEIVED": "Foto rebuda",
+      "AWAITING_APPROVAL": "Pendent d'aprovar",
+      "PUBLISHED": "Publicat",
+      "FAILED": "Error",
+      "SKIPPED": "Omès"
+    }
   }
 }

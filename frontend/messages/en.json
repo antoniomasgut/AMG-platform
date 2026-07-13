@@ -2182,5 +2182,51 @@
     "eligibility": "For Felanitx businesses with eligible activity (retail and some services).",
     "phone": "614 492 062",
     "whatsapp": "654 048 164"
+  },
+  "contentPlan": {
+    "title": "Content planner",
+    "subtitle": "Plan the month's posts; the system asks for photos and publishes.",
+    "newPlan": "New plan",
+    "period": "Month",
+    "language": "Publication language",
+    "generate": "Generate with AI",
+    "activate": "Activate",
+    "active": "Active",
+    "draft": "Draft",
+    "done": "Done",
+    "delete": "Delete",
+    "defaultLanguage": "Default language",
+    "save": "Save",
+    "week": "Week",
+    "pillar": "Pillar",
+    "brief": "What to photograph",
+    "deadline": "Photo deadline",
+    "status": "Status",
+    "noPlans": "No plans yet",
+    "createFirst": "Create the first plan of the month",
+    "thisWeek": "This week",
+    "pendingPhotos": "Pending photos",
+    "uploadPhoto": "Upload photo",
+    "noPending": "No pending photos 🎉",
+    "sendBefore": "Send the photo before",
+    "planCreated": "Plan created",
+    "planActivated": "Plan activated",
+    "photoUploaded": "Photo uploaded",
+    "error": "An error occurred",
+    "pillars": {
+      "NOVELTY": "New arrival",
+      "COMBINE": "How to combine",
+      "SHOP": "The shop",
+      "SOCIAL_PROOF": "Social proof"
+    },
+    "statuses": {
+      "PLANNED": "Planned",
+      "PHOTO_REQUESTED": "Photo requested",
+      "PHOTO_RECEIVED": "Photo received",
+      "AWAITING_APPROVAL": "Awaiting approval",
+      "PUBLISHED": "Published",
+      "FAILED": "Failed",
+      "SKIPPED": "Skipped"
+    }
   }
 }

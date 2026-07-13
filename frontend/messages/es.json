@@ -2174,5 +2174,51 @@
     "eligibility": "Para comercios de Felanitx con actividad elegible (comercio minorista y algunos servicios).",
     "phone": "614 492 062",
     "whatsapp": "654 048 164"
+  },
+  "contentPlan": {
+    "title": "Planificador de contenido",
+    "subtitle": "Planifica las publicaciones del mes; el sistema pide las fotos y publica.",
+    "newPlan": "Nuevo plan",
+    "period": "Mes",
+    "language": "Idioma de las publicaciones",
+    "generate": "Generar con IA",
+    "activate": "Activar",
+    "active": "Activo",
+    "draft": "Borrador",
+    "done": "Hecho",
+    "delete": "Eliminar",
+    "defaultLanguage": "Idioma por defecto",
+    "save": "Guardar",
+    "week": "Semana",
+    "pillar": "Pilar",
+    "brief": "Qué fotografiar",
+    "deadline": "Fecha límite foto",
+    "status": "Estado",
+    "noPlans": "Aún no hay ningún plan",
+    "createFirst": "Crea el primer plan del mes",
+    "thisWeek": "Esta semana toca",
+    "pendingPhotos": "Fotos pendientes",
+    "uploadPhoto": "Subir foto",
+    "noPending": "No tienes ninguna foto pendiente 🎉",
+    "sendBefore": "Envía la foto antes del",
+    "planCreated": "Plan creado",
+    "planActivated": "Plan activado",
+    "photoUploaded": "Foto subida",
+    "error": "Se ha producido un error",
+    "pillars": {
+      "NOVELTY": "Novedad",
+      "COMBINE": "Cómo combinarlo",
+      "SHOP": "La tienda",
+      "SOCIAL_PROOF": "Prueba social"
+    },
+    "statuses": {
+      "PLANNED": "Planificado",
+      "PHOTO_REQUESTED": "Foto pedida",
+      "PHOTO_RECEIVED": "Foto recibida",
+      "AWAITING_APPROVAL": "Pendiente de aprobar",
+      "PUBLISHED": "Publicado",
+      "FAILED": "Error",
+      "SKIPPED": "Omitido"
+    }
   }
 }

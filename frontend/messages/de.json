@@ -2174,5 +2174,51 @@
     "eligibility": "Für Geschäfte in Felanitx mit förderfähiger Tätigkeit (Einzelhandel und einige Dienstleistungen).",
     "phone": "614 492 062",
     "whatsapp": "654 048 164"
+  },
+  "contentPlan": {
+    "title": "Content-Planer",
+    "subtitle": "Plane die Beiträge des Monats; das System fragt nach Fotos und veröffentlicht.",
+    "newPlan": "Neuer Plan",
+    "period": "Monat",
+    "language": "Sprache der Beiträge",
+    "generate": "Mit KI generieren",
+    "activate": "Aktivieren",
+    "active": "Aktiv",
+    "draft": "Entwurf",
+    "done": "Fertig",
+    "delete": "Löschen",
+    "defaultLanguage": "Standardsprache",
+    "save": "Speichern",
+    "week": "Woche",
+    "pillar": "Säule",
+    "brief": "Was fotografieren",
+    "deadline": "Foto-Frist",
+    "status": "Status",
+    "noPlans": "Noch keine Pläne",
+    "createFirst": "Erstelle den ersten Plan des Monats",
+    "thisWeek": "Diese Woche",
+    "pendingPhotos": "Ausstehende Fotos",
+    "uploadPhoto": "Foto hochladen",
+    "noPending": "Keine ausstehenden Fotos 🎉",
+    "sendBefore": "Sende das Foto vor dem",
+    "planCreated": "Plan erstellt",
+    "planActivated": "Plan aktiviert",
+    "photoUploaded": "Foto hochgeladen",
+    "error": "Ein Fehler ist aufgetreten",
+    "pillars": {
+      "NOVELTY": "Neuheit",
+      "COMBINE": "Kombinieren",
+      "SHOP": "Das Geschäft",
+      "SOCIAL_PROOF": "Social Proof"
+    },
+    "statuses": {
+      "PLANNED": "Geplant",
+      "PHOTO_REQUESTED": "Foto angefragt",
+      "PHOTO_RECEIVED": "Foto erhalten",
+      "AWAITING_APPROVAL": "Warten auf Freigabe",
+      "PUBLISHED": "Veröffentlicht",
+      "FAILED": "Fehler",
+      "SKIPPED": "Übersprungen"
+    }
   }
 }
