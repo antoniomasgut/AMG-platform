@@ -4,9 +4,11 @@ import com.amg.digitalitzacio.agents.domain.AgentMode;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLink;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.agents.application.channel.EmailChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
-import com.amg.digitalitzacio.auth.application.EmailService;
+import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
+import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -41,8 +43,9 @@ public class InboundAssistService {
     private final TenantChatLinkRepository chatLinkRepository;
     private final ConversationalAgentService agentService;
     private final ConversationService conversationService;
+    private final TenantAIConfigRepository aiConfigRepository;
     private final TelegramBotClient telegramBotClient;
-    private final EmailService emailService;
+    private final EmailChannel emailChannel;
     private final WhatsAppChannel whatsAppChannel;
     private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final AIProviderRouter aiRouter;
@@ -181,7 +184,12 @@ public class InboundAssistService {
         return switch (channel) {
             case EMAIL -> {
                 try {
-                    emailService.sendEmail(fromRef, "Resposta a la teva consulta", text);
+                    // Mateix enviament que el flux AUTO: sender del tenant + reply-to a l'adreça
+                    // d'inbound (amg@inbound.amgdl.com) perquè el fil continuï atès pel bot.
+                    UUID tid = UUID.fromString(ctx.path("tenantId").asText());
+                    TenantAIConfig cfg = aiConfigRepository.findById(tid).orElse(TenantAIConfig.defaultFor(tid));
+                    emailChannel.sendMessage(fromRef, "Resposta a la teva consulta", text,
+                            cfg.getSenderEmail(), cfg.getSenderName(), cfg.getReplyToEmail());
                     finalizeInbox(ctx, channel, fromRef, text);
                     yield "✅ Resposta enviada per email a " + fromRef + ".";
                 } catch (Exception e) {

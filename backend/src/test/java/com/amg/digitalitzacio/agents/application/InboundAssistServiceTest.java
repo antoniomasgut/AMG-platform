@@ -2,9 +2,11 @@ package com.amg.digitalitzacio.agents.application;
 
 import com.amg.digitalitzacio.agents.domain.AgentMode;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
+import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
+import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLink;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
-import com.amg.digitalitzacio.auth.application.EmailService;
+import com.amg.digitalitzacio.agents.application.channel.EmailChannel;
 import com.amg.digitalitzacio.shared.ai.AIProvider;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,8 +38,9 @@ class InboundAssistServiceTest {
     @Mock TenantChatLinkRepository chatLinkRepository;
     @Mock ConversationalAgentService agentService;
     @Mock ConversationService conversationService;
+    @Mock TenantAIConfigRepository aiConfigRepository;
     @Mock TelegramBotClient telegramBotClient;
-    @Mock EmailService emailService;
+    @Mock EmailChannel emailChannel;
     @Mock com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel whatsAppChannel;
     @Mock com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel whatsAppMetaChannel;
     @Mock AIProviderRouter aiRouter;
@@ -54,8 +57,9 @@ class InboundAssistServiceTest {
     @BeforeEach
     void setUp() {
         service = new InboundAssistService(chatLinkRepository, agentService, conversationService,
-                telegramBotClient, emailService, whatsAppChannel, whatsAppMetaChannel,
+                aiConfigRepository, telegramBotClient, emailChannel, whatsAppChannel, whatsAppMetaChannel,
                 aiRouter, redis, new ObjectMapper());
+        when(aiConfigRepository.findById(any())).thenReturn(Optional.of(TenantAIConfig.defaultFor(TENANT)));
         when(redis.opsForValue()).thenReturn(valueOps);
         doAnswer(i -> { store.put(i.getArgument(0), i.getArgument(1)); return null; })
                 .when(valueOps).set(anyString(), anyString(), anyLong(), any());
@@ -110,7 +114,7 @@ class InboundAssistServiceTest {
     void approve_sendsEmailWithDraft() {
         String id = intakeAndGetId();
         String result = service.approve(CHAT, id);
-        verify(emailService).sendEmail(eq("client@x.com"), anyString(), eq("Esborrany IA"));
+        verify(emailChannel).sendMessage(eq("client@x.com"), anyString(), eq("Esborrany IA"), any(), any(), any());
         verify(conversationService).finalizeSentReply(eq(TENANT), eq("client@x.com"), eq(ConversationChannel.EMAIL), eq("Esborrany IA"));
         assertThat(result).contains("enviada");
     }
@@ -120,7 +124,7 @@ class InboundAssistServiceTest {
         String id = intakeAndGetId();
         String result = service.approve(999L, id);
         assertThat(result).contains("No accessible");
-        verifyNoInteractions(emailService);
+        verifyNoInteractions(emailChannel);
     }
 
     @Test
@@ -129,7 +133,7 @@ class InboundAssistServiceTest {
         service.startManual(CHAT, id);
         assertThat(service.hasAwait(CHAT)).isTrue();
         String result = service.submitAwaitText(CHAT, "La meva resposta");
-        verify(emailService).sendEmail(eq("client@x.com"), anyString(), eq("La meva resposta"));
+        verify(emailChannel).sendMessage(eq("client@x.com"), anyString(), eq("La meva resposta"), any(), any(), any());
         verify(conversationService).finalizeSentReply(eq(TENANT), eq("client@x.com"), eq(ConversationChannel.EMAIL), eq("La meva resposta"));
         assertThat(result).contains("enviada");
     }
@@ -147,11 +151,11 @@ class InboundAssistServiceTest {
         assertThat(result).isNull(); // ja s'ha reenviat l'esborrany amb botons
         // s'ha reenviat un missatge amb botons (1 al intake + 1 al refine)
         verify(telegramBotClient, times(2)).sendMessageWithButtons(eq(CHAT), anyString(), anyList());
-        verifyNoInteractions(emailService); // encara no s'envia; espera aprovació
+        verifyNoInteractions(emailChannel); // encara no s'envia; espera aprovació
         // el context s'ha actualitzat amb el nou esborrany
         String result2 = service.approve(CHAT, id);
         ArgumentCaptor<String> body = ArgumentCaptor.forClass(String.class);
-        verify(emailService).sendEmail(anyString(), anyString(), body.capture());
+        verify(emailChannel).sendMessage(anyString(), anyString(), body.capture(), any(), any(), any());
         assertThat(body.getValue()).isEqualTo("Esborrany més curt");
     }
 
