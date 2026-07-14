@@ -61,7 +61,7 @@ public class InboundAssistService {
         if (inboundText == null || inboundText.isBlank()) return false;
         TenantChatLink link = chatLinkRepository.findByTenantId(tenantId).orElse(null);
         if (link == null || Boolean.FALSE.equals(link.getIsActive())) return false;
-        if (link.getAgentMode() != AgentMode.HYBRID) return false; // AUTO/MANUAL → flux actual
+        if (link.modeFor(channel) != AgentMode.HYBRID) return false; // AUTO/MANUAL → flux actual
         Long chatId = link.getTelegramChatId();
         if (chatId == null) return false;
 

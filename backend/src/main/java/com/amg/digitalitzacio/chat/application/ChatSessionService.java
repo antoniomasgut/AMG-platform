@@ -544,7 +544,7 @@ public class ChatSessionService {
             if (session.getTenantId() == null) return;
             var link = chatLinkRepository.findByTenantId(UUID.fromString(session.getTenantId())).orElse(null);
             if (link == null || Boolean.FALSE.equals(link.getIsActive())) return;
-            if (link.getAgentMode() == AgentMode.AUTO) return; // no supervisat → sense avís
+            if (link.modeFor(ConversationChannel.WIDGET) == AgentMode.AUTO) return; // no supervisat → sense avís
             Long chatId = link.getTelegramChatId();
             if (chatId == null) return;
 

@@ -65,7 +65,7 @@ class AgentTransactionalHelper {
         String operatorPhone = tenant != null ? tenant.getContactPhone() : null;
 
         return Optional.of(new IncomingPreparation(
-            chatLink.getAgentMode(),
+            chatLink.modeFor(channel),
             chatLink.getTelegramChatId(),
             chatLink.getWhatsappPhoneNumber(),
             chatLink.getWhatsappMetaPhoneNumberId(),
@@ -108,7 +108,7 @@ class AgentTransactionalHelper {
         String operatorPhone = tenant != null ? tenant.getContactPhone() : null;
 
         return Optional.of(new IncomingPreparation(
-            chatLink.getAgentMode(),
+            chatLink.modeFor(ConversationChannel.WIDGET),
             chatLink.getTelegramChatId(),
             null, null, null, null, null,
             context,

@@ -247,7 +247,7 @@ export default function AgentsPage() {
   });
 
   const updateChannelsMutation = useMutation({
-    mutationFn: (data: { widgetEnabled?: boolean; whatsappEnabled?: boolean; emailEnabled?: boolean; whatsappPhoneNumber?: string; whatsappMetaPhoneNumberId?: string; emailAddress?: string }) =>
+    mutationFn: (data: { emailMode?: string; whatsappMode?: string; widgetMode?: string; widgetEnabled?: boolean; whatsappEnabled?: boolean; emailEnabled?: boolean; whatsappPhoneNumber?: string; whatsappMetaPhoneNumberId?: string; emailAddress?: string }) =>
       updateChannels(tenantId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['channels', tenantId] });
@@ -561,6 +561,37 @@ export default function AgentsPage() {
                     </div>
                     <p className="text-xs text-ink-2">{desc}</p>
                   </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Mode per canal — override del mode global */}
+            <div className="amg-card card-clip p-5 space-y-3">
+              <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Mode per canal</div>
+              <p className="text-xs text-ink-2">
+                Per defecte cada canal fa servir el mode general. Aquí pots fixar-ne un de diferent per canal.
+                Al <b>xat web</b> (en directe) «Supervisat» i «Manual» responen igualment a l&apos;instant i t&apos;avisen; l&apos;aprovació prèvia només aplica a correu i WhatsApp.
+              </p>
+              <div className="space-y-2">
+                {([
+                  { key: 'emailMode',    label: 'Correu',   value: channels?.emailMode },
+                  { key: 'whatsappMode', label: 'WhatsApp', value: channels?.whatsappMode },
+                  { key: 'widgetMode',   label: 'Xat web',  value: channels?.widgetMode },
+                ] as const).map(({ key, label, value }) => (
+                  <div key={key} className="flex items-center justify-between gap-3">
+                    <span className="text-sm">{label}</span>
+                    <select
+                      value={value ?? ''}
+                      disabled={updateChannelsMutation.isPending}
+                      onChange={(e) => updateChannelsMutation.mutate({ [key]: e.target.value })}
+                      className="f-mono text-xs bg-surface border border-border-base rounded px-2 py-1.5 min-w-[190px]"
+                    >
+                      <option value="">Igual que general ({currentMode === 'AUTO' ? 'Automàtic' : currentMode === 'HYBRID' ? 'Supervisat' : 'Manual'})</option>
+                      <option value="AUTO">Automàtic</option>
+                      <option value="HYBRID">Supervisat</option>
+                      <option value="MANUAL">Manual</option>
+                    </select>
+                  </div>
                 ))}
               </div>
             </div>

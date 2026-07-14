@@ -47,6 +47,19 @@ public class TenantChatLink {
     @Column(name = "agent_mode", nullable = false)
     private AgentMode agentMode = AgentMode.AUTO;
 
+    // Modes per canal (nullable → hereten agentMode global)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "email_mode")
+    private AgentMode emailMode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "whatsapp_mode")
+    private AgentMode whatsappMode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "widget_mode")
+    private AgentMode widgetMode;
+
     @Column(name = "whatsapp_phone_number", length = 20)
     private String whatsappPhoneNumber;
 
@@ -64,4 +77,16 @@ public class TenantChatLink {
 
     @LastModifiedDate
     private Instant updatedAt;
+
+    /** Mode efectiu per a un canal: override del canal si n'hi ha, si no el mode global. */
+    public AgentMode modeFor(ConversationChannel channel) {
+        AgentMode override = channel == null ? null : switch (channel) {
+            case EMAIL                     -> emailMode;
+            case WHATSAPP, WHATSAPP_META   -> whatsappMode;
+            case WIDGET                    -> widgetMode;
+            default                        -> null;
+        };
+        if (override != null) return override;
+        return agentMode != null ? agentMode : AgentMode.AUTO;
+    }
 }

@@ -279,11 +279,14 @@ public class ConversationalAgentController {
         var chatLink = tenantChatLinkRepository.findByTenantId(tenantId).orElse(null);
         if (chatLink == null) {
             return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
-                    tenantId, "AUTO", false, false, false, false, false, null, telegramBotLink, null, null, null, null));
+                    tenantId, "AUTO", null, null, null, false, false, false, false, false, null, telegramBotLink, null, null, null, null));
         }
         return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
                 tenantId,
                 chatLink.getAgentMode().name(),
+                modeName(chatLink.getEmailMode()),
+                modeName(chatLink.getWhatsappMode()),
+                modeName(chatLink.getWidgetMode()),
                 chatLink.getIsActive(),
                 chatLink.getWidgetEnabled(),
                 chatLink.getWhatsappEnabled(),
@@ -298,6 +301,14 @@ public class ConversationalAgentController {
         ));
     }
 
+    private static String modeName(com.amg.digitalitzacio.agents.domain.AgentMode m) {
+        return m == null ? null : m.name();
+    }
+
+    private static com.amg.digitalitzacio.agents.domain.AgentMode parseMode(String s) {
+        return (s == null || s.isBlank()) ? null : com.amg.digitalitzacio.agents.domain.AgentMode.valueOf(s);
+    }
+
     /** Actualitza la configuració de canals d'un tenant */
     @PutMapping("/{tenantId}/channels")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
@@ -309,6 +320,13 @@ public class ConversationalAgentController {
                         .tenantId(tenantId).build());
         if (request.agentMode() != null)
             chatLink.setAgentMode(com.amg.digitalitzacio.agents.domain.AgentMode.valueOf(request.agentMode()));
+        // Modes per canal: "" (buit) → hereta el global (null); absent → no es toca
+        if (request.emailMode() != null)
+            chatLink.setEmailMode(parseMode(request.emailMode()));
+        if (request.whatsappMode() != null)
+            chatLink.setWhatsappMode(parseMode(request.whatsappMode()));
+        if (request.widgetMode() != null)
+            chatLink.setWidgetMode(parseMode(request.widgetMode()));
         if (request.isActive() != null)
             chatLink.setIsActive(request.isActive());
         if (request.widgetEnabled() != null)
@@ -333,6 +351,9 @@ public class ConversationalAgentController {
         return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
                 tenantId,
                 chatLink.getAgentMode().name(),
+                modeName(chatLink.getEmailMode()),
+                modeName(chatLink.getWhatsappMode()),
+                modeName(chatLink.getWidgetMode()),
                 chatLink.getIsActive(),
                 chatLink.getWidgetEnabled(),
                 chatLink.getWhatsappEnabled(),
@@ -543,6 +564,9 @@ public class ConversationalAgentController {
             return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
                     tenantId,
                     chatLink.getAgentMode().name(),
+                    modeName(chatLink.getEmailMode()),
+                    modeName(chatLink.getWhatsappMode()),
+                    modeName(chatLink.getWidgetMode()),
                     chatLink.getIsActive(),
                     chatLink.getWidgetEnabled(),
                     chatLink.getWhatsappEnabled(),
@@ -578,6 +602,9 @@ public class ConversationalAgentController {
             return ResponseEntity.ok(new com.amg.digitalitzacio.agents.api.dto.ChannelsResponse(
                     tenantId,
                     chatLink.getAgentMode().name(),
+                    modeName(chatLink.getEmailMode()),
+                    modeName(chatLink.getWhatsappMode()),
+                    modeName(chatLink.getWidgetMode()),
                     chatLink.getIsActive(),
                     chatLink.getWidgetEnabled(),
                     chatLink.getWhatsappEnabled(),

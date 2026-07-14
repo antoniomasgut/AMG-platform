@@ -69,11 +69,11 @@ class InboundAssistServiceTest {
     }
 
     private TenantChatLink hybridLink() {
-        TenantChatLink l = mock(TenantChatLink.class);
-        when(l.getIsActive()).thenReturn(true);
-        when(l.getAgentMode()).thenReturn(AgentMode.HYBRID);
-        when(l.getTelegramChatId()).thenReturn(CHAT);
-        return l;
+        return TenantChatLink.builder()
+                .isActive(true)
+                .agentMode(AgentMode.HYBRID)
+                .telegramChatId(CHAT)
+                .build();
     }
 
     /** Fa un intake HYBRID i retorna l'id del context creat. */
@@ -96,9 +96,8 @@ class InboundAssistServiceTest {
 
     @Test
     void tryIntake_autoMode_returnsFalse() {
-        TenantChatLink l = mock(TenantChatLink.class);
-        when(l.getIsActive()).thenReturn(true);
-        when(l.getAgentMode()).thenReturn(AgentMode.AUTO);
+        TenantChatLink l = TenantChatLink.builder()
+                .isActive(true).agentMode(AgentMode.AUTO).telegramChatId(CHAT).build();
         when(chatLinkRepository.findByTenantId(TENANT)).thenReturn(Optional.of(l));
         assertThat(service.tryIntake(TENANT, ConversationChannel.EMAIL, "a@b.com", null, "Hi")).isFalse();
         verifyNoInteractions(agentService);
@@ -161,11 +160,12 @@ class InboundAssistServiceTest {
 
     @Test
     void approve_whatsappMeta_sendsViaGraphApi() {
-        TenantChatLink link = mock(TenantChatLink.class);
-        when(link.getIsActive()).thenReturn(true);
-        when(link.getAgentMode()).thenReturn(AgentMode.HYBRID);
-        when(link.getTelegramChatId()).thenReturn(CHAT);
-        when(link.getWhatsappMetaPhoneNumberId()).thenReturn("PHONE_ID_123");
+        TenantChatLink link = TenantChatLink.builder()
+                .isActive(true)
+                .agentMode(AgentMode.HYBRID)
+                .telegramChatId(CHAT)
+                .whatsappMetaPhoneNumberId("PHONE_ID_123")
+                .build();
         when(chatLinkRepository.findByTenantId(TENANT)).thenReturn(Optional.of(link));
         when(agentService.generateDmDraft(eq(TENANT), anyString(), eq(ConversationChannel.WHATSAPP_META), anyString()))
                 .thenReturn("Esborrany WA");
@@ -178,6 +178,24 @@ class InboundAssistServiceTest {
         verify(whatsAppMetaChannel).sendMessage(eq("PHONE_ID_123"), eq("+34600111222"), eq("Esborrany WA"));
         verify(conversationService).finalizeSentReply(eq(TENANT), eq("+34600111222"), eq(ConversationChannel.WHATSAPP_META), eq("Esborrany WA"));
         assertThat(result).contains("WhatsApp");
+    }
+
+    @Test
+    void perChannelOverride_globalAutoButEmailHybrid_emailHandledWhatsappNot() {
+        TenantChatLink link = TenantChatLink.builder()
+                .isActive(true)
+                .agentMode(AgentMode.AUTO)          // global no supervisat
+                .emailMode(AgentMode.HYBRID)        // però correu supervisat
+                .telegramChatId(CHAT)
+                .build();
+        when(chatLinkRepository.findByTenantId(TENANT)).thenReturn(Optional.of(link));
+        when(agentService.generateDmDraft(eq(TENANT), anyString(), eq(ConversationChannel.EMAIL), anyString()))
+                .thenReturn("Esborrany");
+
+        // Correu → HYBRID (override) → gestionat
+        assertThat(service.tryIntake(TENANT, ConversationChannel.EMAIL, "a@b.com", null, "Hi")).isTrue();
+        // WhatsApp → hereta AUTO global → NO gestionat (segueix flux automàtic)
+        assertThat(service.tryIntake(TENANT, ConversationChannel.WHATSAPP_META, "+34600", null, "Hi")).isFalse();
     }
 
     @Test

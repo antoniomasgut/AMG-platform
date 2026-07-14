@@ -208,9 +208,14 @@ export const updateContactProfile = (
 
 // --- Channels & Activation (Spec 24) ---
 
+export type ChannelMode = 'AUTO' | 'HYBRID' | 'MANUAL';
+
 export interface ChannelsConfig {
   tenantId: string;
-  agentMode: 'AUTO' | 'HYBRID' | 'MANUAL';
+  agentMode: ChannelMode;
+  emailMode: ChannelMode | null;
+  whatsappMode: ChannelMode | null;
+  widgetMode: ChannelMode | null;
   isActive: boolean;
   widgetEnabled: boolean;
   whatsappEnabled: boolean;
@@ -238,7 +243,7 @@ export interface ActivationInstructions {
 export const getChannels = (tenantId: string) =>
   apiFetch<ChannelsConfig>(`/agents/conversational/${tenantId}/channels`);
 
-export const updateChannels = (tenantId: string, data: { agentMode?: string; widgetEnabled?: boolean; whatsappEnabled?: boolean; emailEnabled?: boolean; whatsappPhoneNumber?: string; whatsappMetaPhoneNumberId?: string; emailAddress?: string }) =>
+export const updateChannels = (tenantId: string, data: { agentMode?: string; emailMode?: string; whatsappMode?: string; widgetMode?: string; widgetEnabled?: boolean; whatsappEnabled?: boolean; emailEnabled?: boolean; whatsappPhoneNumber?: string; whatsappMetaPhoneNumberId?: string; emailAddress?: string }) =>
   apiFetch<ChannelsConfig>(`/agents/conversational/${tenantId}/channels`, {
     method: 'PUT',
     body: JSON.stringify(data),

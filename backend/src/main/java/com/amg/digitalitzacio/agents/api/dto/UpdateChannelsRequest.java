@@ -2,6 +2,9 @@ package com.amg.digitalitzacio.agents.api.dto;
 
 public record UpdateChannelsRequest(
         String agentMode,
+        String emailMode,
+        String whatsappMode,
+        String widgetMode,
         Boolean isActive,
         Boolean widgetEnabled,
         Boolean whatsappEnabled,

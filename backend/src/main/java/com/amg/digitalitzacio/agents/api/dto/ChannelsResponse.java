@@ -5,6 +5,9 @@ import java.util.UUID;
 public record ChannelsResponse(
         UUID tenantId,
         String agentMode,
+        String emailMode,
+        String whatsappMode,
+        String widgetMode,
         Boolean isActive,
         Boolean widgetEnabled,
         Boolean whatsappEnabled,

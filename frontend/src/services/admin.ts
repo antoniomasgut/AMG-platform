@@ -157,6 +157,9 @@ export interface TenantSetup {
 export interface ChannelsConfig {
   tenantId: string;
   agentMode: 'AUTO' | 'HYBRID' | 'MANUAL';
+  emailMode: 'AUTO' | 'HYBRID' | 'MANUAL' | null;
+  whatsappMode: 'AUTO' | 'HYBRID' | 'MANUAL' | null;
+  widgetMode: 'AUTO' | 'HYBRID' | 'MANUAL' | null;
   isActive: boolean;
   widgetEnabled: boolean;
   whatsappEnabled: boolean;
