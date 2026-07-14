@@ -1,130 +1,132 @@
 # Spec 59 — Agency Inbound Assist (esborrany IA + aprovació humana)
 
-> **Versió:** 1.0
+> **Versió:** 1.1 (incorpora la validació: servei propi channel-aware, routing de callbacks/free-text a l'AMG_SALES_CHAT_ID, xat només auto+còpia, inbound Mailgun; + opció "demana canvis a la IA")
 > **Data:** 2026-07-14
-> **Estat:** Proposat
-> **Depèn de:** Spec 56 F2 (DMs amb aprovació híbrida — patró reutilitzat), Spec 20 (Agents Telegram), Spec 30 (Landing Chat Widget), Spec 51 (Agency Multichannel), Spec 25 (Omnichannel Inbox)
+> **Estat:** Validat — llest per implementar
+> **Depèn de:** Spec 56 F2 (patró d'aprovació — es REPLICA, no es modifica), Spec 20 (Agents Telegram), Spec 30 (Landing Chat Widget), Spec 51 (Agency Multichannel/WABA), Spec 25 (Omnichannel Inbox)
 
 ---
 
 ## 1. Objectiu
 
-Que **tots els contactes entrants propis d'AMG** (no dels tenants) passin per l'agent IA, que **redacta un esborrany de resposta**, i que **abans d'enviar res AMG l'hagi d'aprovar** des del Telegram (✅ Enviar / ✍️ Escriure). Cap resposta surt sense el vistiplau humà.
+Que **tots els contactes entrants propis d'AMG** (no dels tenants) passin per l'agent IA, que **redacta un esborrany de resposta**, i que **abans d'enviar res AMG l'aprovi** des del Telegram. Tres accions:
+- **✅ Enviar** — surt tal qual.
+- **🔄 Demana canvis** — AMG dóna una **indicació** ("més curta", "més formal", "menciona el preu", "en castellà") → la IA **regenera** l'esborrany mantenint el context → torna a demanar aprovació (repetible).
+- **✍️ L'escric jo** — AMG l'escriu sencera.
 
-**Principi:** la IA estalvia el temps de redactar; la persona manté el control total. És el mateix patró que ja funciona per als DMs d'Instagram/Messenger dels tenants (Spec 56 F2), aplicat als **canals propis d'AMG**.
-
-**Canals coberts:** correu `info@amgdl.com`, formulari web d'`amgdl.com`, WhatsApp d'AMG, i el xat de la landing d'AMG.
+Cap resposta surt sense el vistiplau humà. Canals: correu `info@amgdl.com`, formulari web, WhatsApp d'AMG, xat de la landing d'AMG.
 
 ---
 
-## 2. Model reutilitzat (ja existent)
+## 2. Servei propi (NO es reutilitza SocialDmService directament)
 
-`SocialDmService` (Spec 56 F2) fa exactament el flux objectiu:
-1. Missatge entrant → `ConversationalAgentService.generateDmDraft(tenantId, senderId, channel, text)` → esborrany.
-2. `telegramBotClient.sendMessageWithButtons(chatId, esborrany, [✅ Enviar `dmok:id`, ✍️ Escriure `dmwr:id`])`.
-3. `approveDraft(chatId, id)` envia · `startManualReply` + `submitManualReply` per escriure'l a mà. Estat a **Redis**.
+El patró d'aprovació de `SocialDmService` (Spec 56 F2) és el **model a replicar**, PERÒ el seu `send()` està cablejat a Meta (`messagingChannel.sendMessage`), així que **no serveix per a email/WhatsApp/xat**.
 
-Aquest mòdul **generalitza** aquest patró a més canals, amb el tenant fixat al d'AMG.
+→ **Es crea `AgencyInboundService`** que:
+- Reïx l'estat pendent a **Redis** (com SocialDmService), amb TTL 24h (sobreviu reinicis; Redis és extern → **no cal taula** per a la supervivència del callback).
+- Té un **`send()` channel-aware** (switch per canal, §5.3).
+- **Reutilitza** `ConversationalAgentService.generateDmDraft(tenantId, identifier, ConversationChannel, text)` per generar l'esborrany — és genèric (no lligat a DMs) i `ConversationChannel` ja té `EMAIL`, `WHATSAPP_META`, `WIDGET`.
+- **NO es modifica** `SocialDmService`.
 
 ---
 
 ## 3. Identitat "AMG"
 
 - Tenant propietari = **`PLATFORM_TENANT_ID`** (config existent).
-- Xat d'aprovació = **`AMG_SALES_CHAT_ID`** (config existent, ja rep les notificacions del formulari web).
-- Els fluxos d'aquest mòdul **només** apliquen quan el destinatari és AMG (tenant = PLATFORM_TENANT_ID). Els contactes dels tenants segueixen el seu camí actual.
+- Xat d'aprovació = **`AMG_SALES_CHAT_ID`** (config existent; ja rep els avisos del formulari web; és un **admin chat** segons `AmgAdminCommandService.isAdminChat`).
+- Els fluxos només apliquen quan el destinatari és AMG (tenant == PLATFORM_TENANT_ID). Els contactes dels tenants segueixen el camí actual.
 
 ---
 
 ## 4. Model de dades
 
-### 4.1 `agency_pending_replies` (o Redis + auditoria mínima)
-| Camp | Tipus | Nota |
-|------|-------|------|
-| `id` | UUID/String | id curt per als callbacks |
-| `channel` | VARCHAR(20) | `EMAIL` / `WEB_FORM` / `WHATSAPP` / `CHAT` |
-| `from_ref` | VARCHAR(255) | email, telèfon o session id del remitent |
-| `from_name` | VARCHAR(255) | si es coneix |
-| `inbound_text` | TEXT | missatge original |
-| `draft` | TEXT | esborrany generat per la IA |
-| `status` | VARCHAR(20) | `PENDING` / `SENT` / `MANUAL` / `DISCARDED` |
-| `created_at` / `resolved_at` | TIMESTAMPTZ | |
+**Redis primer** (imprescindible): `agency:pending:<id>` → JSON {channel, fromRef, fromName, inboundText, draft} (TTL 24h) + `agency:await:<chatId>` → {id, mode: REFINE|MANUAL} per capturar el següent text lliure.
 
-> L'estat efímer (esperant text manual) va a **Redis** com al patró DM. La taula és per a **auditoria/historial** i per resoldre el callback després d'un reinici. (Es pot començar només amb Redis i afegir la taula si cal.)
+Taula `agency_pending_replies` **opcional** (només si es vol historial/RGPD): id, channel, from_ref, inbound_text, draft, status (`PENDING`/`SENT`/`MANUAL`/`DISCARDED`), created_at, resolved_at. **v1: només Redis.**
+
+Mapatge de canal → `ConversationChannel` per a `generateDmDraft`: correu i formulari → `EMAIL`; WhatsApp → `WHATSAPP_META`; xat → `WIDGET`.
 
 ---
 
-## 5. Flux (per canal)
+## 5. Flux
 
 ### 5.1 Entrada → esborrany
 | Canal | Punt d'entrada | Canvi |
 |-------|----------------|-------|
-| **Correu** | `EmailWebhookController.handleAsync(tenantId, from, text)` | Si `tenantId == PLATFORM_TENANT_ID` → en comptes d'auto-respondre, crea `PendingReply(EMAIL)` i notifica per aprovar |
-| **Formulari web** | `PublicContactController.submit()` | A més del lead + avís actual, genera esborrany IA i el passa a aprovar |
-| **WhatsApp** | webhook de WhatsApp d'AMG | Si el número és el d'AMG → esborrany + aprovar |
-| **Xat landing** | `ChatSessionService` (Spec 30) | Si és la landing d'AMG → esborrany + aprovar (veure §6, latència) |
+| **Correu** | `EmailWebhookController.handleAsync(tenantId, from, text)` | Si `tenantId == PLATFORM_TENANT_ID` → **bypassa** `handleIncoming` i crida `AgencyInboundService.intake(EMAIL, from, text)` |
+| **Formulari web** | `PublicContactController.submit()` | A més del lead + avís actual, `AgencyInboundService.intake(EMAIL, email, message)` |
+| **WhatsApp** | `WhatsAppMetaWebhookController` → `handleIncoming(WHATSAPP_META)` | Si tenant == PLATFORM → intake(WHATSAPP_META, telèfon, text) |
+| **Xat landing** | `ChatSessionService.sendMessage` (sessió `agency`) | **Auto + còpia** (§6), no aprovació |
 
-Notificació d'aprovació (a `AMG_SALES_CHAT_ID`):
+`intake()` → `generateDmDraft(PLATFORM, fromRef, channel, text)` → desa a Redis → envia a `AMG_SALES_CHAT_ID`:
 ```
-📨 Nova consulta [CANAL] de <from>
-«<inbound_text>»
+📨 Nova consulta [CANAL] de <fromRef>
+«<inboundText>»
 
 Resposta proposada:
 «<draft>»
-[✅ Enviar]  [✍️ Escriure]
+[✅ Enviar]  [🔄 Demana canvis]  [✍️ L'escric jo]
 ```
-Callbacks: `arok:<id>` (aprovar) · `arwr:<id>` (escriure a mà) — nous prefixos al `TelegramWebhookController`.
+Callbacks: `arok:<id>` · `arrf:<id>` (refine) · `arwr:<id>` (manual).
 
-### 5.2 Aprovació → enviament (per canal)
-| Canal | En ✅ Enviar |
-|-------|-------------|
-| **Correu** | `EmailService.sendEmail(from, assumpte, draft)` (Brevo) |
-| **Formulari web** | email a l'adreça del remitent |
-| **WhatsApp** | enviar pel canal de WhatsApp al remitent |
-| **Xat landing** | publicar el missatge a la `ChatSession` (el visitant el veu) |
+### 5.2 Botons i free-text (routing a Telegram — ⚠️ punts crítics de la validació)
+- **Els callbacks `arok:`/`arrf:`/`arwr:` es gategen per `amgAdminCommandService.isAdminChat(cbChatId)`** (o comparació directa amb `AMG_SALES_CHAT_ID`). **MAI** per `findByTelegramChatId` (el grup de vendes no té `TenantChatLink`).
+- **El check de free-text pendent** (`agencyInboundService.hasAwait(chatId)`) s'ha d'inserir **DINS la branca admin** de `TelegramWebhookController`, **abans** de `AmgAdminCommandService.handle()` (línia ~332) — perquè avui el text a un admin chat es consumeix allà i retorna abans dels `hasPending` de reviews/comments/DMs.
+- **🔄 Demana canvis:** `arrf:` → marca `await REFINE` → el següent text d'AMG es passa a la IA com a **instrucció de reescriptura** (regenera el draft amb el context original + la instrucció) → torna a §5.1 amb els 3 botons. Repetible.
+- **✍️ L'escric jo:** `arwr:` → `await MANUAL` → el següent text d'AMG és la **resposta final** → s'envia pel canal.
 
-En **✍️ Escriure**: AMG escriu el text i s'envia igual pel canal corresponent (`submitManualReply` generalitzat).
+### 5.3 Enviament (channel-aware, `AgencyInboundService.send`)
+| Canal | Acció en ✅ (o en enviar el manual) |
+|-------|-------------------------------------|
+| **EMAIL** (correu i formulari) | `EmailService.sendEmail(destinatari, assumpte, cos)` — el 1r arg és el **remitent original** (Brevo, sortint) |
+| **WHATSAPP_META** | `WhatsAppMetaChannel.sendMessage(...)` al remitent |
+| **WIDGET** (xat) | només auto+còpia (§6) |
 
----
-
-## 6. El cas del xat en directe (latència)
-
-El xat de la landing és **síncron**: el visitant espera. Amb aprovació humana hi ha retard (AMG ha d'aprovar al Telegram). Solucions (config per canal):
-- **Mode aprovació** (per defecte per a la resta): el visitant rep un missatge de cortesia («Ara mateix et responem 👋») i la resposta apareix quan AMG aprova. Adequat si AMG està atent.
-- **Mode auto amb còpia** (opcional per al xat): el xat respon a l'instant amb la IA i AMG en rep **còpia** al Telegram per intervenir si cal.
-
-Per defecte: **aprovació** a correu/formulari/WhatsApp; per al **xat**, configurable (comença en mode auto+còpia per no fer esperar el visitant).
+Estat → `SENT` (o `MANUAL`); s'esborra el pending de Redis.
 
 ---
 
-## 7. Prerequisits d'infraestructura
+## 6. Xat en directe — només auto + còpia
 
-- **Correu:** encaminar `info@amgdl.com` al webhook (MX de `amgdl.com` → Brevo inbound) i crear l'enllaç `info@amgdl.com → PLATFORM_TENANT_ID` (`TenantChatLink.emailAddress`). Veure `docs/config-correu-cloudflare.html`.
-- **WhatsApp d'AMG:** número d'AMG connectat (Spec 51).
+`ChatController.sendMessage` és **100% síncron**: el visitant rep la resposta a la mateixa petició HTTP i el widget **no fa polling ni websocket**. Per tant **el "mode aprovació" NO és viable** al xat (una resposta diferida no arribaria mai al visitant).
+
+→ Per al xat: **auto + còpia**. El widget respon a l'instant amb la IA, i s'envia una **còpia a `AMG_SALES_CHAT_ID`** perquè AMG ho vegi i intervingui si cal (afegint la notificació dins `ChatSessionService.sendMessage` per a sessions `agency`, al costat de `notifyAdminNewChatSession`). El mode aprovació al xat queda **fora d'abast** fins que el widget tingui push (polling/WS).
+
+---
+
+## 7. Prerequisits
+
+- **Correu (inbound = Mailgun, ⚠️ no Brevo):** `EmailWebhookController` processa `*@inbound.amgdl.com` via Mailgun (verifica `MAILGUN_WEBHOOK_SIGNING_KEY`). Cal: encaminar `info@amgdl.com` a aquest inbound, i crear `TenantChatLink.emailAddress = info@amgdl.com` lligat a `PLATFORM_TENANT_ID` (perquè `findByEmailAddressIgnoreCase` el resolgui). La **resposta sortint** va per Brevo (`EmailService`). Veure `docs/config-correu-cloudflare.html`.
+- **Agent IA actiu per al tenant PLATFORM:** `generateDmDraft` retorna null si l'agent no està configurat/actiu (`prepareIncoming` buit). Cal `TenantAIConfig`/AGENT habilitat per al tenant d'AMG.
+- **Convivència amb `agentMode` HYBRID:** en HYBRID, `ConversationalAgentService.notifyOperator` ja envia una "resposta suggerida" sense botó → per al tenant AMG s'ha de **bypassar `handleIncoming`** (§5.1) i passar pel flux nou, per evitar doble notificació.
+- **WhatsApp d'AMG:** WABA d'AMG connectat i lligat al tenant propietari (Mòdul 51, prerequisit operatiu).
 - Config existent: `PLATFORM_TENANT_ID`, `AMG_SALES_CHAT_ID`, `ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`.
 
 ---
 
 ## 8. Seguretat / aïllament
 
-- Els fluxos només s'activen per al tenant d'AMG (`PLATFORM_TENANT_ID`). No afecten els contactes dels tenants.
-- Els callbacks `arok:`/`arwr:` només s'accepten si el xat és `AMG_SALES_CHAT_ID` (o un admin d'AMG), no des de qualsevol xat.
+- Els fluxos només s'activen per al tenant d'AMG (`PLATFORM_TENANT_ID`); els tenants no es toquen.
+- Callbacks `arok:`/`arrf:`/`arwr:` i free-text pendent: **només** si `isAdminChat(chatId)` / `chatId == AMG_SALES_CHAT_ID`.
 - Validació de mida/format del text entrant (com el formulari actual).
 
 ---
 
 ## 9. Casos QA
-1. Correu a info@ (un cop encaminat) → arriba esborrany al Telegram d'AMG amb ✅/✍️.
-2. ✅ Enviar → el remitent rep la resposta per email; estat `SENT`.
-3. ✍️ Escriure → AMG escriu; s'envia el seu text; estat `MANUAL`.
-4. Formulari web → a més del lead, arriba esborrany a aprovar.
-5. WhatsApp d'AMG → esborrany + aprovació → resposta pel mateix WhatsApp.
-6. Xat landing en mode auto+còpia → el visitant rep resposta immediata i AMG en rep còpia.
-7. Callback `arok:` des d'un xat que NO és el d'AMG → ignorat.
-8. Contacte d'un **tenant** (no AMG) → segueix el flux actual, sense aprovació d'AMG.
+1. Correu a info@ (encaminat) amb tenant=PLATFORM → arriba esborrany a `AMG_SALES_CHAT_ID` amb els 3 botons.
+2. ✅ Enviar → el remitent rep la resposta per email (Brevo); pending esborrat.
+3. 🔄 Demana canvis → AMG escriu "més curta i en castellà" → la IA regenera → torna amb els 3 botons; es pot repetir.
+4. ✍️ L'escric jo → AMG escriu la resposta → s'envia pel canal; estat MANUAL.
+5. Formulari web → a més del lead, arriba esborrany a aprovar.
+6. WhatsApp d'AMG → esborrany → aprovació → resposta pel mateix WhatsApp.
+7. Xat landing (sessió agency) → el visitant rep resposta immediata i AMG en rep còpia (no aprovació).
+8. Free-text a `AMG_SALES_CHAT_ID` mentre hi ha un `await` pendent → es captura pel flux (no cau a l'assistent admin).
+9. Callback `arok:` des d'un xat que NO és admin/AMG → ignorat.
+10. Contacte d'un **tenant** (no AMG) → flux actual, sense aprovació d'AMG.
 
 ---
 
 ## 10. Fora d'abast (v1)
-- Bústia unificada visual d'AMG (ja hi ha l'Omnichannel Inbox, Spec 25; aquí n'hi ha prou amb Telegram).
-- Respostes multi-idioma automàtiques (la IA respon en l'idioma del missatge; sense selector).
+- Mode aprovació al **xat** (cal push al widget).
+- Taula d'auditoria (v1 només Redis).
+- Bústia visual unificada (ja hi ha l'Omnichannel Inbox, Spec 25).
