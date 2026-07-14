@@ -38,6 +38,8 @@ class InboundAssistServiceTest {
     @Mock ConversationService conversationService;
     @Mock TelegramBotClient telegramBotClient;
     @Mock EmailService emailService;
+    @Mock com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel whatsAppChannel;
+    @Mock com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel whatsAppMetaChannel;
     @Mock AIProviderRouter aiRouter;
     @Mock AIProvider aiProvider;
     @Mock StringRedisTemplate redis;
@@ -52,7 +54,8 @@ class InboundAssistServiceTest {
     @BeforeEach
     void setUp() {
         service = new InboundAssistService(chatLinkRepository, agentService, conversationService,
-                telegramBotClient, emailService, aiRouter, redis, new ObjectMapper());
+                telegramBotClient, emailService, whatsAppChannel, whatsAppMetaChannel,
+                aiRouter, redis, new ObjectMapper());
         when(redis.opsForValue()).thenReturn(valueOps);
         doAnswer(i -> { store.put(i.getArgument(0), i.getArgument(1)); return null; })
                 .when(valueOps).set(anyString(), anyString(), anyLong(), any());
@@ -150,6 +153,27 @@ class InboundAssistServiceTest {
         ArgumentCaptor<String> body = ArgumentCaptor.forClass(String.class);
         verify(emailService).sendEmail(anyString(), anyString(), body.capture());
         assertThat(body.getValue()).isEqualTo("Esborrany més curt");
+    }
+
+    @Test
+    void approve_whatsappMeta_sendsViaGraphApi() {
+        TenantChatLink link = mock(TenantChatLink.class);
+        when(link.getIsActive()).thenReturn(true);
+        when(link.getAgentMode()).thenReturn(AgentMode.HYBRID);
+        when(link.getTelegramChatId()).thenReturn(CHAT);
+        when(link.getWhatsappMetaPhoneNumberId()).thenReturn("PHONE_ID_123");
+        when(chatLinkRepository.findByTenantId(TENANT)).thenReturn(Optional.of(link));
+        when(agentService.generateDmDraft(eq(TENANT), anyString(), eq(ConversationChannel.WHATSAPP_META), anyString()))
+                .thenReturn("Esborrany WA");
+
+        boolean handled = service.tryIntake(TENANT, ConversationChannel.WHATSAPP_META, "+34600111222", null, "Hola?");
+        assertThat(handled).isTrue();
+        String id = store.keySet().stream().filter(k -> k.startsWith("ia:ctx:")).findFirst().orElseThrow().substring("ia:ctx:".length());
+
+        String result = service.approve(CHAT, id);
+        verify(whatsAppMetaChannel).sendMessage(eq("PHONE_ID_123"), eq("+34600111222"), eq("Esborrany WA"));
+        verify(conversationService).finalizeSentReply(eq(TENANT), eq("+34600111222"), eq(ConversationChannel.WHATSAPP_META), eq("Esborrany WA"));
+        assertThat(result).contains("WhatsApp");
     }
 
     @Test

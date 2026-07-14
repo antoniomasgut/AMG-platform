@@ -4,6 +4,8 @@ import com.amg.digitalitzacio.agents.domain.AgentMode;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLink;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
 import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,6 +43,8 @@ public class InboundAssistService {
     private final ConversationService conversationService;
     private final TelegramBotClient telegramBotClient;
     private final EmailService emailService;
+    private final WhatsAppChannel whatsAppChannel;
+    private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final AIProviderRouter aiRouter;
     private final StringRedisTemplate redis;
     private final ObjectMapper objectMapper;
@@ -61,8 +65,15 @@ public class InboundAssistService {
         String draft = agentService.generateDmDraft(tenantId, fromRef, channel, inboundText);
         if (draft == null || draft.isBlank()) return false;
 
+        // Número emissor WhatsApp del tenant (per poder enviar la resposta pel mateix canal)
+        String senderId = switch (channel) {
+            case WHATSAPP_META -> link.getWhatsappMetaPhoneNumberId();
+            case WHATSAPP      -> link.getWhatsappPhoneNumber();
+            default            -> null;
+        };
+
         String id = UUID.randomUUID().toString().substring(0, 8);
-        storeContext(id, tenantId, chatId, channel, fromRef, inboundText, draft);
+        storeContext(id, tenantId, chatId, channel, fromRef, inboundText, draft, senderId);
         sendApproval(chatId, id, channel, fromRef, inboundText, draft);
         return true;
     }
@@ -166,6 +177,7 @@ public class InboundAssistService {
     private String send(ObjectNode ctx, String text) {
         ConversationChannel channel = ConversationChannel.valueOf(ctx.path("channel").asText());
         String fromRef = ctx.path("fromRef").asText();
+        String senderId = ctx.path("senderId").asText("");
         return switch (channel) {
             case EMAIL -> {
                 try {
@@ -177,8 +189,42 @@ public class InboundAssistService {
                     yield "⚠️ No s'ha pogut enviar l'email.";
                 }
             }
-            default -> "⚠️ Canal encara no suportat: " + channel; // WhatsApp/Widget → fases següents
+            case WHATSAPP -> {
+                if (senderId.isBlank()) yield noWabaFallback(fromRef, text);
+                try {
+                    whatsAppChannel.sendMessage(senderId, fromRef, text);
+                    finalizeInbox(ctx, channel, fromRef, text);
+                    yield "✅ Resposta enviada per WhatsApp a " + fromRef + ".";
+                } catch (Exception e) {
+                    log.error("Error enviant WhatsApp a {}: {}", fromRef, e.getMessage());
+                    yield "⚠️ No s'ha pogut enviar el WhatsApp.";
+                }
+            }
+            case WHATSAPP_META -> {
+                if (senderId.isBlank()) yield noWabaFallback(fromRef, text);
+                try {
+                    whatsAppMetaChannel.sendMessage(senderId, fromRef, text);
+                    finalizeInbox(ctx, channel, fromRef, text);
+                    yield "✅ Resposta enviada per WhatsApp a " + fromRef + ".";
+                } catch (Exception e) {
+                    log.error("Error enviant WhatsApp Meta a {}: {}", fromRef, e.getMessage());
+                    yield "⚠️ No s'ha pogut enviar el WhatsApp.";
+                }
+            }
+            default -> "⚠️ Canal encara no suportat: " + channel; // Widget → fase següent
         };
+    }
+
+    /**
+     * Sense WABA configurada no es pot enviar per API. Es dona el text i un enllaç wa.me
+     * perquè el tenant respongui a mà des del seu WhatsApp. No es finalitza l'Inbox
+     * (l'esborrany queda pendent fins que es contesti de veritat).
+     */
+    private String noWabaFallback(String toPhone, String text) {
+        String digits = toPhone == null ? "" : toPhone.replaceAll("[^0-9]", "");
+        String link = digits.isBlank() ? "" : "\n👉 https://wa.me/" + digits;
+        return "ℹ️ WhatsApp sense WABA connectada: copia i envia des del teu WhatsApp:" + link
+                + "\n\n" + text;
     }
 
     /** Deixa el panell central (Inbox) reflectint el text realment enviat, no l'esborrany. */
@@ -196,7 +242,7 @@ public class InboundAssistService {
     }
 
     private void storeContext(String id, UUID tenantId, Long chatId, ConversationChannel channel,
-                              String fromRef, String inboundText, String draft) {
+                              String fromRef, String inboundText, String draft, String senderId) {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("tenantId", tenantId.toString());
         node.put("chatId", chatId);
@@ -204,6 +250,7 @@ public class InboundAssistService {
         node.put("fromRef", fromRef);
         node.put("inboundText", inboundText);
         node.put("draft", draft);
+        if (senderId != null) node.put("senderId", senderId);
         try {
             redis.opsForValue().set(CTX_KEY.formatted(id), objectMapper.writeValueAsString(node), TTL_HOURS, TimeUnit.HOURS);
         } catch (Exception e) {

@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.agents.api;
 
 import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
+import com.amg.digitalitzacio.agents.application.InboundAssistService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +27,7 @@ import java.util.UUID;
 public class WhatsAppWebhookController {
 
     private final ConversationalAgentService conversationalAgentService;
+    private final InboundAssistService inboundAssistService;
     private final SystemConfigService systemConfigService;
 
     @PostMapping("/webhook/{tenantId}")
@@ -69,7 +71,11 @@ public class WhatsAppWebhookController {
     }
 
     @Async
-    private void handleAsync(UUID tenantId, String customerPhone, String text) {
+    protected void handleAsync(UUID tenantId, String customerPhone, String text) {
+        // Inbound Assist (Spec 59): si el tenant és HYBRID, esborrany + aprovació per Telegram.
+        if (inboundAssistService.tryIntake(tenantId, ConversationChannel.WHATSAPP, customerPhone, null, text)) {
+            return;
+        }
         conversationalAgentService.handleIncoming(tenantId, customerPhone, ConversationChannel.WHATSAPP, text);
     }
 

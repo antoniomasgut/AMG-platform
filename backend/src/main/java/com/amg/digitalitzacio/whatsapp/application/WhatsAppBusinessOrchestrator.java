@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.whatsapp.application;
 
 import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
+import com.amg.digitalitzacio.agents.application.InboundAssistService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
@@ -29,6 +30,7 @@ public class WhatsAppBusinessOrchestrator {
     private final VaultEncryption vaultEncryption;
     private final SystemConfigService systemConfigService;
     private final ConversationalAgentService conversationalAgentService;
+    private final InboundAssistService inboundAssistService;
 
     @Transactional(readOnly = true)
     public WhatsAppConfigResponse getConfig(UUID tenantId) {
@@ -129,6 +131,10 @@ public class WhatsAppBusinessOrchestrator {
         var config = configOpt.get();
         if (config.getStatus() != WhatsAppConnectionStatus.CONNECTED) {
             log.info("WhatsApp message ignored — tenant {} not CONNECTED", config.getTenantId());
+            return;
+        }
+        // Inbound Assist (Spec 59): si el tenant és HYBRID, esborrany + aprovació per Telegram.
+        if (inboundAssistService.tryIntake(config.getTenantId(), ConversationChannel.WHATSAPP_META, from, null, text)) {
             return;
         }
         conversationalAgentService.handleIncoming(

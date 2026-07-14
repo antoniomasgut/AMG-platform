@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.agents.api;
 
 import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
+import com.amg.digitalitzacio.agents.application.InboundAssistService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
@@ -25,6 +26,7 @@ import java.util.HexFormat;
 public class WhatsAppMetaWebhookController {
 
     private final ConversationalAgentService conversationalAgentService;
+    private final InboundAssistService inboundAssistService;
     private final TenantChatLinkRepository tenantChatLinkRepository;
     private final SystemConfigService systemConfigService;
     private final ObjectMapper objectMapper;
@@ -106,7 +108,11 @@ public class WhatsAppMetaWebhookController {
     }
 
     @Async
-    private void handleAsync(java.util.UUID tenantId, String from, String text) {
+    protected void handleAsync(java.util.UUID tenantId, String from, String text) {
+        // Inbound Assist (Spec 59): si el tenant és HYBRID, esborrany + aprovació per Telegram.
+        if (inboundAssistService.tryIntake(tenantId, ConversationChannel.WHATSAPP_META, from, null, text)) {
+            return;
+        }
         conversationalAgentService.handleIncoming(tenantId, from, ConversationChannel.WHATSAPP_META, text);
     }
 
