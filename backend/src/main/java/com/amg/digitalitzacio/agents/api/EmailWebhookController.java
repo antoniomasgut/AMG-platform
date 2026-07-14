@@ -1,6 +1,7 @@
 package com.amg.digitalitzacio.agents.api;
 
 import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
+import com.amg.digitalitzacio.agents.application.InboundAssistService;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
@@ -27,6 +28,7 @@ import java.util.UUID;
 public class EmailWebhookController {
 
     private final ConversationalAgentService conversationalAgentService;
+    private final InboundAssistService inboundAssistService;
     private final TenantChatLinkRepository chatLinkRepository;
     private final SystemConfigService systemConfigService;
 
@@ -108,6 +110,10 @@ public class EmailWebhookController {
     @Async
     protected void handleAsync(UUID tenantId, String customerEmail, String text) {
         log.info("Email received for tenant {}: from={}", tenantId, customerEmail);
+        // Inbound Assist (Spec 59): si el tenant és HYBRID, esborrany + aprovació per Telegram.
+        if (inboundAssistService.tryIntake(tenantId, ConversationChannel.EMAIL, customerEmail, null, text)) {
+            return;
+        }
         conversationalAgentService.handleIncoming(tenantId, customerEmail, ConversationChannel.EMAIL, text);
     }
 

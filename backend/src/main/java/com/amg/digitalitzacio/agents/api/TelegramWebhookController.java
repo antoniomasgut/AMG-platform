@@ -4,6 +4,7 @@ import com.amg.digitalitzacio.agents.application.AbsenceRescheduleService;
 import com.amg.digitalitzacio.agents.application.AgentRegistry;
 import com.amg.digitalitzacio.agents.application.AmgAdminCommandService;
 import com.amg.digitalitzacio.agents.application.ConversationalAgentService;
+import com.amg.digitalitzacio.agents.application.InboundAssistService;
 import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.SpeechToTextService;
 import com.amg.digitalitzacio.agents.application.TeamGrowthService;
@@ -41,6 +42,7 @@ public class TelegramWebhookController {
     private final SystemConfigService systemConfigService;
     private final SocialPublisherOrchestrator socialOrchestrator;
     private final com.amg.digitalitzacio.content.application.ContentPlannerFlowService contentPlannerFlow;
+    private final InboundAssistService inboundAssistService;
     private final NexeServiceConfigService nexeServiceConfigService;
     private final SpeechToTextService speechToTextService;
     private final TenantAgendaQueryService tenantAgendaQueryService;
@@ -264,6 +266,26 @@ public class TelegramWebhookController {
                     return ResponseEntity.ok("ok");
                 }
 
+                // Inbound Assist (Mòdul 59): aprovar / demanar canvis / escriure la resposta
+                if (cbChatId != null && data.startsWith("iaok:")) {
+                    if (callbackId != null) telegramBotClient.answerCallbackQuery(callbackId, "Enviant...");
+                    String msg = inboundAssistService.approve(cbChatId, data.substring("iaok:".length()));
+                    telegramBotClient.sendMessage(cbChatId, msg);
+                    return ResponseEntity.ok("ok");
+                }
+                if (cbChatId != null && data.startsWith("iarf:")) {
+                    inboundAssistService.startRefine(cbChatId, data.substring("iarf:".length()));
+                    if (callbackId != null) telegramBotClient.answerCallbackQuery(callbackId, "Escriu la indicació");
+                    telegramBotClient.sendMessage(cbChatId, "✍️ Escriu com vols que la canviï (ex: «més curta», «en castellà»).");
+                    return ResponseEntity.ok("ok");
+                }
+                if (cbChatId != null && data.startsWith("iawr:")) {
+                    inboundAssistService.startManual(cbChatId, data.substring("iawr:".length()));
+                    if (callbackId != null) telegramBotClient.answerCallbackQuery(callbackId, "Escriu la resposta");
+                    telegramBotClient.sendMessage(cbChatId, "✍️ Escriu la teva resposta i l'enviaré.");
+                    return ResponseEntity.ok("ok");
+                }
+
                 if (cbChatId != null && callbackId != null && amgAdminCommandService.isAdminChat(cbChatId)) {
                     amgAdminCommandService.handleCallback(cbChatId, data, callbackId);
                 }
@@ -327,6 +349,14 @@ public class TelegramWebhookController {
             }
 
             log.info("Missatge TG rebut de chat {}: {}", chatId, text);
+
+            // Inbound Assist (Mòdul 59): resposta/indicació pendent. ABANS del catch-all admin,
+            // perquè el Telegram del tenant AMG sol ser el xat de vendes (admin chat) i s'engoliria.
+            if (!text.startsWith("/") && inboundAssistService.hasAwait(chatId)) {
+                String reply = inboundAssistService.submitAwaitText(chatId, text);
+                if (reply != null) telegramBotClient.sendMessage(chatId, reply);
+                return ResponseEntity.ok("ok");
+            }
 
             // Comandes AMG Admin (xat de vendes o infraops)
             if (amgAdminCommandService.isAdminChat(chatId)) {

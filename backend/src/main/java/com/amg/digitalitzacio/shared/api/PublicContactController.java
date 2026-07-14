@@ -1,6 +1,8 @@
 package com.amg.digitalitzacio.shared.api;
 
+import com.amg.digitalitzacio.agents.application.InboundAssistService;
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
+import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.leads.domain.Lead;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
@@ -23,6 +25,7 @@ public class PublicContactController {
     private final LeadRepository leadRepository;
     private final SystemConfigService sysConfig;
     private final TelegramBotClient telegramBotClient;
+    private final InboundAssistService inboundAssistService;
 
     public record ContactRequest(String name, String email, String message) {}
     public record ContactResponse(boolean ok) {}
@@ -85,6 +88,16 @@ public class PublicContactController {
             emailService.sendEmail("info@amgdl.com", "Consulta web: " + name, text);
         } catch (Exception e) {
             log.warn("Contact form email failed (non-fatal): {}", e.getMessage());
+        }
+
+        // Inbound Assist (Spec 59): si el tenant AMG és HYBRID, esborrany + aprovació per Telegram
+        try {
+            String ptid = sysConfig.get("PLATFORM_TENANT_ID");
+            if (ptid != null && !ptid.isBlank()) {
+                inboundAssistService.tryIntake(UUID.fromString(ptid), ConversationChannel.EMAIL, email, name, message);
+            }
+        } catch (Exception e) {
+            log.warn("Inbound assist (form) failed (non-fatal): {}", e.getMessage());
         }
 
         return ResponseEntity.ok(new ContactResponse(true));
