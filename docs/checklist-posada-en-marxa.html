@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist mestra — què falta perquè tot funcioni</title>
+<style>
+  :root { --blau:#1e3a5f; --verd:#16a34a; --taronja:#ea580c; --vermell:#dc2626; --gris:#64748b; --fons:#f8fafc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; background:var(--fons); color:#1e293b; line-height:1.5; padding:26px 16px; }
+  .full { max-width:900px; margin:0 auto; }
+  header { background:var(--blau); color:#fff; border-radius:12px; padding:22px 26px; margin-bottom:16px; }
+  header h1 { font-size:1.3rem; margin-bottom:4px; }
+  header p { opacity:.9; font-size:.9rem; }
+  section { background:#fff; border-radius:12px; padding:16px 20px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,.07); }
+  section > h2 { font-size:1.05rem; margin-bottom:8px; }
+  .done h2 { color:var(--verd); } .block h2 { color:var(--vermell); } .net h2 { color:var(--taronja); } .com h2 { color:#6d28d9; }
+  .item { display:flex; gap:10px; padding:6px 0; border-bottom:1px solid #f1f5f9; font-size:.93rem; }
+  .item:last-child { border-bottom:none; }
+  .chk { flex-shrink:0; width:16px; height:16px; border:2px solid #cbd5e1; border-radius:4px; margin-top:2px; }
+  .item .t b { color:var(--blau); }
+  .guia { color:var(--gris); font-size:.82rem; }
+  .doneitem { color:var(--verd); }
+  .who { font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--gris); font-weight:700; }
+  footer { text-align:center; color:var(--gris); font-size:.8rem; margin-top:6px; }
+  @media print { body{background:#fff;padding:0;font-size:12px;} .full{max-width:none;} header{border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;} section{box-shadow:none;border:1px solid #e2e8f0;break-inside:avoid;} }
+  @page { size:A4; margin:12mm; }
+</style>
+</head>
+<body>
+<div class="full">
+<header>
+  <h1>🚦 Què falta perquè tot funcioni</h1>
+  <p>Checklist mestra AMG · ordenada per prioritat · marca-ho a mesura que ho facis</p>
+</header>
+
+<section class="done">
+  <h2>✅ Ja funciona (no cal fer res)</h2>
+  <div class="item"><span>✔</span><span class="t doneitem"><b>Formulari de la web</b> → et cau al <b>Telegram</b> (xat de vendes) i al <b>CRM de Leads</b>.</span></div>
+  <div class="item"><span>✔</span><span class="t doneitem"><b>WhatsApp</b> de l'anunci (654 048 164) + QR.</span></div>
+  <div class="item"><span>✔</span><span class="t doneitem"><b>Content Planner</b> (planning + brief + publicació) desplegat · <b>Telegram</b> + <b>IA</b> configurats.</span></div>
+  <div class="item"><span>✔</span><span class="t doneitem"><b>Documents comercials</b>: plans, qualificador, guió de telèfon, anunci v2.</span></div>
+</section>
+
+<section class="block">
+  <h2>🔴 Bloquejants (fes-ho primer)</h2>
+  <div class="item"><span class="chk"></span><span class="t"><b>Alta d'autònom + Holded</b> — per poder <b>facturar</b>. Sense això no pots vendre l'ajut ni cobrar cap servei. <span class="who">· tu</span></span></div>
+  <div class="item"><span class="chk"></span><span class="t"><b>Correu info@amgdl.com</b> — Cloudflare Email Routing → reenviar a amgdigitalitzacions@gmail.com (+ netejar el doble MX). <span class="guia">Guia: config-correu-cloudflare</span> <span class="who">· tu (5 min)</span></span></div>
+</section>
+
+<section class="net">
+  <h2>🟠 Perquè les publicacions surtin a xarxes (Content Planner)</h2>
+  <div class="item"><span class="chk"></span><span class="t"><b>Meta (Instagram + Facebook)</b>: App Review dels permisos de publicació → generar un <b>Page Access Token</b> → enganxar Page ID + IG Account ID + token a <b>/portal/admin/tenants/[id]/social</b>. <span class="guia">Guia: config-meta-google-xarxes</span> <span class="who">· tu + Meta (dies/setmanes)</span></span></div>
+  <div class="item"><span class="chk"></span><span class="t"><b>Google Business</b>: crear credencials OAuth a Google Cloud (Business Profile API + scope business.manage) → posar <code>GOOGLE_OAUTH_CLIENT_ID/SECRET</code> a System Config → connectar cada tenant. <span class="guia">Guia: config-meta-google-xarxes</span> <span class="who">· tu + Google</span></span></div>
+  <div class="item"><span class="chk"></span><span class="t"><b>Connectar cada tenant</b> (un cop Meta/Google estiguin a punt): un clic per tenant. <span class="who">· tu / el tenant</span></span></div>
+</section>
+
+<section class="com">
+  <h2>🟠 Ajut de Felanitx (part comercial)</h2>
+  <div class="item"><span class="chk"></span><span class="t"><b>Verificar la data del BOIB</b> — el termini de sol·licitud és només 1 mes. Sense això no saps quant temps queda. <span class="who">· tu</span></span></div>
+  <div class="item"><span class="chk"></span><span class="t"><b>Confirmar el prepagament anual</b> amb l'Ajuntament (per a la Via B, 12 mesos per avançat). <span class="who">· tu</span></span></div>
+</section>
+
+<section>
+  <h2>📌 En resum</h2>
+  <p style="font-size:.93rem">
+    <b>Per vendre ja</b> (fins i tot sense xarxes): només et cal l'<b>alta d'autònom</b> + el <b>correu</b>. La web, el WhatsApp i els leads ja funcionen.<br>
+    <b>Per publicar a xarxes automàticament</b>: Meta (App Review — el que més triga, engega-ho ja) + Google.<br>
+    <b>Per a l'ajut</b>: data del BOIB + prepagament.
+  </p>
+</section>
+
+<footer>AMG Digitalització · document intern · guies detallades a la carpeta docs/</footer>
+</div>
+</body>
+</html>
