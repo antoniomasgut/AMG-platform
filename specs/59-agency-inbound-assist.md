@@ -1,8 +1,8 @@
 # Spec 59 — Inbound Assist (esborrany IA + aprovació humana, per tenant)
 
-> **Versió:** 2.0 (reenfocat: capacitat **per tenant** — no específica d'AMG. AMG Digitalitzacions és el **tenant #1** (dogfooding). Enruta al Telegram del propi tenant, com els DMs → evita el gate d'admin chat)
+> **Versió:** 2.1 (validat per tenant: enum AUTO/HYBRID/MANUAL; `hasAwait` abans del catch-all admin (crític per a AMG=tenant#1); xat va per ChatSessionService no handleIncoming; polling per índex + appendAssistantMessage + frontend AgencyChatWidget; EmailChannel per multi-tenant; AUTO sense flag pending)
 > **Data:** 2026-07-14
-> **Estat:** Proposat (cal re-validar el reenfocament per tenant)
+> **Estat:** Validat — llest per implementar
 > **Depèn de:** Spec 56 F2 (patró d'aprovació DM — es replica), Spec 20 (Agents Telegram), Spec 30 (Landing Chat Widget), Spec 51 (WhatsApp), Spec 25 (Omnichannel Inbox)
 
 ---
@@ -36,7 +36,10 @@ Es reutilitza l'`agentMode` existent. **Igual als 4 canals**, canviable des de l
 |-------------|--------------|--------|
 | **HYBRID** (per defecte) | **Supervisat** | Esborrany → Telegram del tenant amb ✅/🔄/✍️ → només surt en aprovar. |
 | **AUTO** | **Autònom** | La IA respon **directament** pel canal + **còpia** informativa al Telegram del tenant. |
-| **OFF** | Sense bot | Només lead/avís; cap resposta automàtica. |
+| **MANUAL** | Sense bot | Només lead/avís; cap resposta automàtica. |
+
+> ⚠️ L'enum real és **`AUTO` / `HYBRID` / `MANUAL`** (no "OFF").
+> ⚠️ **AUTO i el flag pending:** `generateDmDraft` sempre persisteix el missatge amb `pending=true`. En AUTO no ha de quedar marcat pending → cal un persist **no-pending** per a AUTO (o reutilitzar `handleIncoming` en AUTO evitant el doble `notifyOperator`).
 
 **Efecte al xat:** en **AUTO** el xat respon **síncron i immediat** (com avui, sense polling). El polling (§6) només cal en **HYBRID**.
 
@@ -72,30 +75,42 @@ Resposta proposada: «<draft>»
 ```
 Callbacks: `iaok:<id>` · `iarf:<id>` · `iawr:<id>`.
 
-### 5.2 Botons i free-text (routing Telegram — reutilitza el camí dels DMs)
-- Els callbacks i el free-text pendent es gestionen al **mateix bloc del xat del tenant** que els DMs (`findByTelegramChatId(cbChatId)` amb `isActive`), on ja viuen `hasPending` de reviews/comments/DMs → s'hi afegeix `inboundAssist.hasAwait(chatId)`. **No cal tocar la branca admin.**
+### 5.2 Botons i free-text (routing Telegram)
+- **Callbacks** (`iaok:/iarf:/iawr:`): s'afegeixen al costat de `dmok:/dmwr:` a `TelegramWebhookController` (línies ~220-266), que **retornen ABANS** del check admin → cap problema. Gate: `findByTelegramChatId(cbChatId)` + `isActive`, com els DMs.
+- **Free-text pendent** (per a 🔄 i ✍️): el bloc `findByTelegramChatId` on viuen els `hasPending` (reviews/comments/DMs) està **DESPRÉS** del catch-all admin (`isAdminChat` → `AmgAdminCommandService.handle` → `return`, línia ~332).
+  - ⚠️ **REQUISIT v1 (crític):** com que el Telegram del tenant AMG serà segurament el `AMG_SALES_CHAT_ID` (que **és** admin chat), el text de 🔄/✍️ l'engoliria l'assistent admin. Per tant cal inserir, **ABANS** de la línia 332:
+    ```java
+    if (!text.startsWith("/") && inboundAssist.hasAwait(chatId)) {
+        var reply = inboundAssist.submitAwaitText(chatId, text);
+        if (reply != null) return ResponseEntity.ok(okTgReply(chatId, reply));
+    }
+    ```
 - **🔄 Demana canvis** (`iarf:`) → `await REFINE` → el següent text es passa a la IA com a **instrucció de reescriptura** → torna a §5.1. Repetible.
 - **✍️ L'escric jo** (`iawr:`) → `await MANUAL` → el següent text és la resposta final.
-- ⚠️ *Cas límit AMG:* si el tenant té el Telegram lligat a un **xat que també és admin** (`AMG_SALES_CHAT_ID`), cal que el check `hasAwait` s'avaluï **abans** del catch-all admin. Per a tenants normals no aplica.
 
 ### 5.3 Enviament (channel-aware)
 | Canal | En ✅ / en enviar el manual |
 |-------|-----------------------------|
-| **EMAIL** | `EmailService.sendEmail(destinatari, assumpte, cos)` (Brevo, sortint) |
-| **WHATSAPP_META** | `WhatsAppMetaChannel.sendMessage(...)` al remitent |
-| **WIDGET** | escriure a la `ChatSession` → el visitant ho rep per polling (§6) |
+| **EMAIL** | v1 (AMG): `EmailService.sendEmail(destinatari, assumpte, cos)` (Brevo). *Multi-tenant: usar `EmailChannel.sendMessage(to,subject,text,fromEmail,fromName,replyTo)` per preservar la identitat del tenant.* |
+| **WHATSAPP_META** | `WhatsAppMetaChannel.sendMessage(tenant.whatsappMetaPhoneNumberId, toPhone, text)` |
+| **WIDGET** | nou mètode públic `ChatSessionService.appendAssistantMessage(sessionId, text)` → el visitant ho rep per polling (§6) |
 
 ---
 
 ## 6. Xat: polling (HYBRID) / síncron (AUTO)
 
-El widget és avui **síncron** i sense push. Per a **HYBRID** cal fer-lo **asíncron amb polling**:
-1. El visitant envia → backend retorna `{status:"PENDING", messageId}` i el widget mostra «Ara mateix et responem, un momentet 👋».
-2. `intake(WIDGET,...)` → esborrany al Telegram del tenant.
-3. Nou endpoint `GET /api/v1/chat/sessions/{id}/poll?after=<msgId>` (permitAll) → missatges nous de la sessió.
-4. El widget fa **polling** (~3 s) fins que apareix la resposta aprovada.
+⚠️ **Premissa corregida:** el xat de la landing **NO passa per `handleIncoming`**, sinó per `ChatController → ChatSessionService.sendMessage`, que té el seu **propi `callAI` síncron** (sense tools, sense `agentMode`) i retorna la resposta a la mateixa petició. Per tant la intercepció HYBRID s'ha de fer **dins `ChatSessionService.sendMessage`**.
 
-**UX:** el visitant espera l'aprovació → **timeout de fallback** (60-90 s) → el widget demana el contacte («et responem de seguida per WhatsApp/email»), així cap lead es perd. En **AUTO**, el xat torna a ser **immediat** (sense polling).
+Per a **HYBRID** cal fer el xat **asíncron amb polling**:
+1. Dins `ChatSessionService.sendMessage`, si el tenant és HYBRID → **no** cridar `callAI`; retornar `{status:"PENDING", index:<n>}` (n = nombre de missatges actual) i mostrar «Ara mateix et responem, un momentet 👋».
+2. `intake(WIDGET,...)` → esborrany al Telegram del tenant.
+3. Nou mètode públic `appendAssistantMessage(sessionId, text)` (avui `saveSession`/`loadSession` són privats).
+4. Nou endpoint `GET /api/v1/chat/sessions/{id}/poll?after=<index>` (permitAll) → missatges de la sessió a partir de l'**índex** (⚠️ `ChatMessage` **no té id ni timestamp** → cursor per **posició**, no per msgId).
+5. El widget fa **polling** (~3 s) fins que apareix la resposta aprovada.
+
+⚠️ **Frontend:** cal modificar `frontend/src/components/landing/AgencyChatWidget.tsx` (avui espera reply síncron) → afegir el missatge d'espera, el polling i el timeout.
+
+**UX:** el visitant espera l'aprovació → **timeout de fallback** (60-90 s) → el widget demana el contacte («et responem de seguida per WhatsApp/email»), així cap lead es perd. En **AUTO**, el xat torna a ser **immediat** (sense polling, `callAI` com avui).
 
 ---
 
@@ -104,7 +119,10 @@ El widget és avui **síncron** i sense push. Per a **HYBRID** cal fer-lo **así
 - **Correu (inbound = Mailgun):** `EmailWebhookController` processa `*@inbound.amgdl.com` (verifica `MAILGUN_WEBHOOK_SIGNING_KEY`). Per a AMG: encaminar `info@amgdl.com` a l'inbound + `TenantChatLink.emailAddress = info@amgdl.com` lligat al tenant AMG. Resposta sortint = Brevo. Veure `docs/config-correu-cloudflare.html`.
 - **Agent IA actiu** per al tenant (`generateDmDraft` retorna null si no ho està).
 - **WhatsApp** connectat i lligat al tenant (Mòdul 51).
-- **Convivència amb `agentMode`:** l'intake d'aquest mòdul **substitueix** el camí genèric de `handleIncoming` per als 4 canals (perquè en HYBRID no es dispari també `notifyOperator` sense botó). El comportament el mana el mateix `agentMode` del tenant.
+- **Convivència amb `agentMode` (per punt d'entrada, ⚠️ no és igual als 4):**
+  - **Correu i WhatsApp** van per `handleIncoming` → l'intake el **substitueix** (evita el `notifyOperator` sense botó en HYBRID).
+  - **Formulari** avui **no** crida `handleIncoming` (només lead+avís) → l'intake és **additiu**.
+  - **Xat** va per `ChatSessionService.sendMessage` (no `handleIncoming`) → la intercepció es fa **allà** (§6).
 - Config existent: `PLATFORM_TENANT_ID` (identifica el tenant AMG), `ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`.
 
 ---
@@ -125,12 +143,12 @@ El widget és avui **síncron** i sense push. Per a **HYBRID** cal fer-lo **así
 6. WhatsApp → esborrany → aprovació → resposta pel mateix WhatsApp.
 7. Xat en **HYBRID** → «un momentet» + polling → apareix en aprovar; timeout → demana contacte.
 8. **AUTO** (qualsevol canal) → resposta directa + còpia informativa; xat immediat sense polling.
-9. **OFF** → només lead/avís.
+9. **MANUAL** → només lead/avís, cap resposta automàtica.
 10. **Aïllament:** el tenant A no rep ni pot aprovar els contactes del tenant B.
 11. Canvi d'`agentMode` (HYBRID↔AUTO) → canvia el comportament dels 4 canals, sense doble notificació.
 
 ---
 
 ## 10. Dins/fora d'abast (v1)
-- **Dins:** els 4 canals per al **tenant AMG** (tenant #1), amb els modes; polling del widget del xat; refine loop.
+- **Dins:** els 4 canals per al **tenant AMG** (tenant #1), amb els modes; refine loop; **polling del xat** (backend: endpoint `poll` + `appendAssistantMessage` + cursor per índex; **frontend: `AgencyChatWidget.tsx`** amb polling/espera/timeout); el **check `hasAwait` abans del catch-all admin** (§5.2).
 - **Fora:** extensió del **formulari/xat a les landings dels altres tenants** (natural després); WebSocket (n'hi ha prou amb polling); taula d'auditoria (v1 Redis); bústia visual (Omnichannel Inbox, Spec 25).
