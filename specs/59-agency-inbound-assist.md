@@ -2,7 +2,13 @@
 
 > **Versió:** 2.1 (validat per tenant: enum AUTO/HYBRID/MANUAL; `hasAwait` abans del catch-all admin (crític per a AMG=tenant#1); xat va per ChatSessionService no handleIncoming; polling per índex + appendAssistantMessage + frontend AgencyChatWidget; EmailChannel per multi-tenant; AUTO sense flag pending)
 > **Data:** 2026-07-14
-> **Estat:** Validat — llest per implementar
+> **Estat:** ✅ Implementat (Fase 1 email+formulari, Fase 2 WhatsApp, Fase 3 xat web) — commits 63340d0, a1e3b2a, 6e44acb, 5caee36
+>
+> **Notes d'implementació (2026-07-14):**
+> - Fase 1 (EMAIL + formulari): `InboundAssistService.tryIntake` abans de `handleIncoming` a `EmailWebhookController` i `PublicContactController`. Botons `iaok:`/`iarf:`/`iawr:` + `hasAwait` abans del catch-all admin. L'Inbox reflecteix el text realment enviat (`ConversationService.finalizeSentReply`).
+> - Fase 2 (WhatsApp Twilio + Meta): `tryIntake` als 3 webhooks entrants; resposta pel mateix número del tenant. **Guard sense WABA:** si no hi ha número emissor, no s'envia per API — es dona el text + enllaç `wa.me` per respondre a mà (cas d'AMG amb WhatsApp personal).
+> - Fase 3 (xat web, síncron): NO aprovació prèvia (seria silenci en directe). AUTO = resposta immediata sense avís; HYBRID/MANUAL = resposta immediata + avís informatiu al Telegram del tenant (`ChatSessionService.notifyWidgetOperatorIfHybrid`).
+> - Canvi de mode: portal `PUT /{tenantId}/mode` + comanda `/mode` del Telegram del tenant.
 > **Depèn de:** Spec 56 F2 (patró d'aprovació DM — es replica), Spec 20 (Agents Telegram), Spec 30 (Landing Chat Widget), Spec 51 (WhatsApp), Spec 25 (Omnichannel Inbox)
 
 ---
