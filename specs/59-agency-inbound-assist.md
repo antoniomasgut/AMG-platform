@@ -1,6 +1,6 @@
 # Spec 59 — Agency Inbound Assist (esborrany IA + aprovació humana)
 
-> **Versió:** 1.1 (incorpora la validació: servei propi channel-aware, routing de callbacks/free-text a l'AMG_SALES_CHAT_ID, xat només auto+còpia, inbound Mailgun; + opció "demana canvis a la IA")
+> **Versió:** 1.2 (comportament IDÈNTIC als 4 canals → el xat també amb aprovació, via polling al widget + timeout de fallback; abans deia auto+còpia)
 > **Data:** 2026-07-14
 > **Estat:** Validat — llest per implementar
 > **Depèn de:** Spec 56 F2 (patró d'aprovació — es REPLICA, no es modifica), Spec 20 (Agents Telegram), Spec 30 (Landing Chat Widget), Spec 51 (Agency Multichannel/WABA), Spec 25 (Omnichannel Inbox)
@@ -14,7 +14,7 @@ Que **tots els contactes entrants propis d'AMG** (no dels tenants) passin per l'
 - **🔄 Demana canvis** — AMG dóna una **indicació** ("més curta", "més formal", "menciona el preu", "en castellà") → la IA **regenera** l'esborrany mantenint el context → torna a demanar aprovació (repetible).
 - **✍️ L'escric jo** — AMG l'escriu sencera.
 
-Cap resposta surt sense el vistiplau humà. Canals: correu `info@amgdl.com`, formulari web, WhatsApp d'AMG, xat de la landing d'AMG.
+Cap resposta surt sense el vistiplau humà. Canals: correu `info@amgdl.com`, formulari web, WhatsApp d'AMG, xat de la landing d'AMG. **El bot es comporta EXACTAMENT IGUAL als 4** (mateix esborrany + mateixos 3 botons). El xat, com que és síncron, s'ha de fer asíncron amb polling perquè la resposta aprovada arribi al visitant (§6).
 
 ---
 
@@ -56,7 +56,7 @@ Mapatge de canal → `ConversationChannel` per a `generateDmDraft`: correu i for
 | **Correu** | `EmailWebhookController.handleAsync(tenantId, from, text)` | Si `tenantId == PLATFORM_TENANT_ID` → **bypassa** `handleIncoming` i crida `AgencyInboundService.intake(EMAIL, from, text)` |
 | **Formulari web** | `PublicContactController.submit()` | A més del lead + avís actual, `AgencyInboundService.intake(EMAIL, email, message)` |
 | **WhatsApp** | `WhatsAppMetaWebhookController` → `handleIncoming(WHATSAPP_META)` | Si tenant == PLATFORM → intake(WHATSAPP_META, telèfon, text) |
-| **Xat landing** | `ChatSessionService.sendMessage` (sessió `agency`) | **Auto + còpia** (§6), no aprovació |
+| **Xat landing** | `ChatSessionService.sendMessage` (sessió `agency`) | **Esborrany + aprovació** (igual que la resta) → el visitant rep la resposta aprovada via **polling** (§6) |
 
 `intake()` → `generateDmDraft(PLATFORM, fromRef, channel, text)` → desa a Redis → envia a `AMG_SALES_CHAT_ID`:
 ```
@@ -86,11 +86,19 @@ Estat → `SENT` (o `MANUAL`); s'esborra el pending de Redis.
 
 ---
 
-## 6. Xat en directe — només auto + còpia
+## 6. Xat en directe — aprovació via polling (comportament igual als altres 3)
 
-`ChatController.sendMessage` és **100% síncron**: el visitant rep la resposta a la mateixa petició HTTP i el widget **no fa polling ni websocket**. Per tant **el "mode aprovació" NO és viable** al xat (una resposta diferida no arribaria mai al visitant).
+**Requisit:** el bot es comporta **igual als 4 canals** → el xat també va amb esborrany + aprovació. Però `ChatController.sendMessage` és avui **100% síncron** (el visitant rep la resposta a la mateixa petició HTTP; el widget no fa polling ni WS). Per tant, cal **fer el xat asíncron amb polling**:
 
-→ Per al xat: **auto + còpia**. El widget respon a l'instant amb la IA, i s'envia una **còpia a `AMG_SALES_CHAT_ID`** perquè AMG ho vegi i intervingui si cal (afegint la notificació dins `ChatSessionService.sendMessage` per a sessions `agency`, al costat de `notifyAdminNewChatSession`). El mode aprovació al xat queda **fora d'abast** fins que el widget tingui push (polling/WS).
+1. El visitant envia el missatge → el backend **no** retorna la resposta de la IA de cop; retorna `{status: "PENDING", messageId}` i mostra un **missatge d'espera** al widget: «Ara mateix et responem, un momentet 👋» + indicador d'escrivint.
+2. En paral·lel, `intake(WIDGET, sessionId, text)` genera l'esborrany i el passa a `AMG_SALES_CHAT_ID` amb els 3 botons.
+3. **Nou endpoint de polling** `GET /api/v1/chat/sessions/{id}/poll?after=<msgId>` (permitAll, com la resta del widget) → retorna els missatges nous de la `ChatSession` (Redis).
+4. El **widget fa polling** (cada ~3 s) fins que apareix la resposta aprovada. Quan AMG fa ✅ (o edita), s'escriu el missatge a la `ChatSession` → el poll el recull → el visitant el veu.
+
+**⚠️ Consideració d'UX (important):** el visitant **espera** que AMG aprovi. Si AMG no és ràpid, pot marxar. Per mitigar-ho:
+- Missatge d'espera clar des del primer segon.
+- **Timeout de fallback** configurable (p. ex. 60-90 s sense aprovació) → el widget diu «Et responem de seguida per WhatsApp/email, deixa'ns el contacte» i captura les dades. Així cap lead es perd tot i el retard.
+- (Opcional, config per si es vol) un **mode auto+còpia** com a alternativa, si AMG prefereix immediatesa al xat en algun moment.
 
 ---
 
@@ -119,14 +127,13 @@ Estat → `SENT` (o `MANUAL`); s'esborra el pending de Redis.
 4. ✍️ L'escric jo → AMG escriu la resposta → s'envia pel canal; estat MANUAL.
 5. Formulari web → a més del lead, arriba esborrany a aprovar.
 6. WhatsApp d'AMG → esborrany → aprovació → resposta pel mateix WhatsApp.
-7. Xat landing (sessió agency) → el visitant rep resposta immediata i AMG en rep còpia (no aprovació).
+7. Xat landing (sessió agency) → el visitant veu "un momentet 👋" i fa polling; AMG aprova al Telegram → la resposta apareix al widget. Si passa el timeout sense aprovar → el widget demana el contacte (fallback).
 8. Free-text a `AMG_SALES_CHAT_ID` mentre hi ha un `await` pendent → es captura pel flux (no cau a l'assistent admin).
 9. Callback `arok:` des d'un xat que NO és admin/AMG → ignorat.
 10. Contacte d'un **tenant** (no AMG) → flux actual, sense aprovació d'AMG.
 
 ---
 
-## 10. Fora d'abast (v1)
-- Mode aprovació al **xat** (cal push al widget).
-- Taula d'auditoria (v1 només Redis).
-- Bústia visual unificada (ja hi ha l'Omnichannel Inbox, Spec 25).
+## 10. Dins/fora d'abast (v1)
+- **Dins:** els 4 canals amb esborrany+aprovació idèntic; **polling al widget** del xat (endpoint + widget) perquè el xat es comporti igual; timeout de fallback al xat.
+- **Fora:** WebSocket per al xat (n'hi ha prou amb polling); taula d'auditoria (v1 només Redis); bústia visual unificada (ja hi ha l'Omnichannel Inbox, Spec 25).
