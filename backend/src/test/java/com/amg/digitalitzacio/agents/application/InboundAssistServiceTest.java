@@ -35,6 +35,7 @@ class InboundAssistServiceTest {
 
     @Mock TenantChatLinkRepository chatLinkRepository;
     @Mock ConversationalAgentService agentService;
+    @Mock ConversationService conversationService;
     @Mock TelegramBotClient telegramBotClient;
     @Mock EmailService emailService;
     @Mock AIProviderRouter aiRouter;
@@ -50,8 +51,8 @@ class InboundAssistServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new InboundAssistService(chatLinkRepository, agentService, telegramBotClient,
-                emailService, aiRouter, redis, new ObjectMapper());
+        service = new InboundAssistService(chatLinkRepository, agentService, conversationService,
+                telegramBotClient, emailService, aiRouter, redis, new ObjectMapper());
         when(redis.opsForValue()).thenReturn(valueOps);
         doAnswer(i -> { store.put(i.getArgument(0), i.getArgument(1)); return null; })
                 .when(valueOps).set(anyString(), anyString(), anyLong(), any());
@@ -107,6 +108,7 @@ class InboundAssistServiceTest {
         String id = intakeAndGetId();
         String result = service.approve(CHAT, id);
         verify(emailService).sendEmail(eq("client@x.com"), anyString(), eq("Esborrany IA"));
+        verify(conversationService).finalizeSentReply(eq(TENANT), eq("client@x.com"), eq(ConversationChannel.EMAIL), eq("Esborrany IA"));
         assertThat(result).contains("enviada");
     }
 
@@ -125,6 +127,7 @@ class InboundAssistServiceTest {
         assertThat(service.hasAwait(CHAT)).isTrue();
         String result = service.submitAwaitText(CHAT, "La meva resposta");
         verify(emailService).sendEmail(eq("client@x.com"), anyString(), eq("La meva resposta"));
+        verify(conversationService).finalizeSentReply(eq(TENANT), eq("client@x.com"), eq(ConversationChannel.EMAIL), eq("La meva resposta"));
         assertThat(result).contains("enviada");
     }
 

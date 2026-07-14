@@ -42,6 +42,10 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     Optional<Conversation> findTop1ByTenantIdAndCustomerIdentifierAndChannelOrderByCreatedAtDesc(
         UUID tenantId, String customerIdentifier, ConversationChannel channel);
 
+    // Darrer esborrany pendent d'aprovació (per finalitzar-lo amb el text realment enviat)
+    Optional<Conversation> findTop1ByTenantIdAndCustomerIdentifierAndChannelAndRoleAndPendingApprovalTrueOrderByCreatedAtDesc(
+        UUID tenantId, String customerIdentifier, ConversationChannel channel, ConversationRole role);
+
     long countByTenantIdAndCustomerIdentifierAndChannelAndPendingApprovalTrue(
         UUID tenantId, String customerIdentifier, ConversationChannel channel);
 

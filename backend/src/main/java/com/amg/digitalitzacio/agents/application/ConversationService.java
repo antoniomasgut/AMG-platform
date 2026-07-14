@@ -91,6 +91,29 @@ public class ConversationService {
         return conversations;
     }
 
+    /**
+     * Finalitza un esborrany pendent amb el text realment enviat: actualitza el darrer
+     * missatge ASSISTANT pendent (contingut + treu el flag pendingApproval). Si no en
+     * troba cap (p. ex. resposta manual sense esborrany previ), desa el text com a
+     * missatge ASSISTANT confirmat. Així el panell central mostra sempre el que es va enviar.
+     */
+    @Transactional
+    public void finalizeSentReply(UUID tenantId, String customerIdentifier,
+                                  ConversationChannel channel, String sentText) {
+        var pending = conversationRepository
+            .findTop1ByTenantIdAndCustomerIdentifierAndChannelAndRoleAndPendingApprovalTrueOrderByCreatedAtDesc(
+                tenantId, customerIdentifier, channel, ConversationRole.ASSISTANT);
+        if (pending.isPresent()) {
+            Conversation c = pending.get();
+            c.setContent(sentText);
+            c.setPendingApproval(false);
+            conversationRepository.save(c);
+        } else {
+            save(tenantId, customerIdentifier, channel, ConversationRole.ASSISTANT, sentText, false);
+        }
+        invalidateCache(tenantId, customerIdentifier, channel);
+    }
+
     private void invalidateCache(UUID tenantId, String customerIdentifier, ConversationChannel channel) {
         String redisKey = String.format(REDIS_KEY_PATTERN, tenantId, channel.name(), customerIdentifier);
         try {

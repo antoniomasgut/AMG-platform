@@ -38,6 +38,7 @@ public class InboundAssistService {
 
     private final TenantChatLinkRepository chatLinkRepository;
     private final ConversationalAgentService agentService;
+    private final ConversationService conversationService;
     private final TelegramBotClient telegramBotClient;
     private final EmailService emailService;
     private final AIProviderRouter aiRouter;
@@ -169,6 +170,7 @@ public class InboundAssistService {
             case EMAIL -> {
                 try {
                     emailService.sendEmail(fromRef, "Resposta a la teva consulta", text);
+                    finalizeInbox(ctx, channel, fromRef, text);
                     yield "✅ Resposta enviada per email a " + fromRef + ".";
                 } catch (Exception e) {
                     log.error("Error enviant email a {}: {}", fromRef, e.getMessage());
@@ -177,6 +179,16 @@ public class InboundAssistService {
             }
             default -> "⚠️ Canal encara no suportat: " + channel; // WhatsApp/Widget → fases següents
         };
+    }
+
+    /** Deixa el panell central (Inbox) reflectint el text realment enviat, no l'esborrany. */
+    private void finalizeInbox(ObjectNode ctx, ConversationChannel channel, String fromRef, String sentText) {
+        try {
+            UUID tenantId = UUID.fromString(ctx.path("tenantId").asText());
+            conversationService.finalizeSentReply(tenantId, fromRef, channel, sentText);
+        } catch (Exception e) {
+            log.warn("No s'ha pogut finalitzar l'esborrany a l'Inbox (no crític): {}", e.getMessage());
+        }
     }
 
     private boolean owns(ObjectNode ctx, Long chatId) {
