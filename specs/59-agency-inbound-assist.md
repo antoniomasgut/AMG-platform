@@ -1,6 +1,6 @@
 # Spec 59 — Agency Inbound Assist (esborrany IA + aprovació humana)
 
-> **Versió:** 1.2 (comportament IDÈNTIC als 4 canals → el xat també amb aprovació, via polling al widget + timeout de fallback; abans deia auto+còpia)
+> **Versió:** 1.3 (modes commutables via `agentMode`: HYBRID=supervisat / AUTO=autònom no supervisat / OFF; en AUTO el xat torna a ser síncron sense polling)
 > **Data:** 2026-07-14
 > **Estat:** Validat — llest per implementar
 > **Depèn de:** Spec 56 F2 (patró d'aprovació — es REPLICA, no es modifica), Spec 20 (Agents Telegram), Spec 30 (Landing Chat Widget), Spec 51 (Agency Multichannel/WABA), Spec 25 (Omnichannel Inbox)
@@ -14,7 +14,11 @@ Que **tots els contactes entrants propis d'AMG** (no dels tenants) passin per l'
 - **🔄 Demana canvis** — AMG dóna una **indicació** ("més curta", "més formal", "menciona el preu", "en castellà") → la IA **regenera** l'esborrany mantenint el context → torna a demanar aprovació (repetible).
 - **✍️ L'escric jo** — AMG l'escriu sencera.
 
-Cap resposta surt sense el vistiplau humà. Canals: correu `info@amgdl.com`, formulari web, WhatsApp d'AMG, xat de la landing d'AMG. **El bot es comporta EXACTAMENT IGUAL als 4** (mateix esborrany + mateixos 3 botons). El xat, com que és síncron, s'ha de fer asíncron amb polling perquè la resposta aprovada arribi al visitant (§6).
+Canals: correu `info@amgdl.com`, formulari web, WhatsApp d'AMG, xat de la landing d'AMG. **El bot es comporta EXACTAMENT IGUAL als 4.**
+
+**Dos modes commutables** (§3.1), iguals per als 4 canals:
+- **Supervisat** (per defecte): esborrany + aprovació (✅/🔄/✍️). Cap resposta surt sense el teu vistiplau.
+- **Autònom** (no supervisat): el bot respon **directament**, amb una **còpia** al teu Telegram per si vols intervenir. Per activar quan tinguis confiança.
 
 ---
 
@@ -35,6 +39,20 @@ El patró d'aprovació de `SocialDmService` (Spec 56 F2) és el **model a replic
 - Tenant propietari = **`PLATFORM_TENANT_ID`** (config existent).
 - Xat d'aprovació = **`AMG_SALES_CHAT_ID`** (config existent; ja rep els avisos del formulari web; és un **admin chat** segons `AmgAdminCommandService.isAdminChat`).
 - Els fluxos només apliquen quan el destinatari és AMG (tenant == PLATFORM_TENANT_ID). Els contactes dels tenants segueixen el camí actual.
+
+### 3.1 Modes de funcionament (commutable)
+
+Es reutilitza el concepte d'**`agentMode`** que ja existeix (AUTO/HYBRID/OFF) per al tenant d'AMG. El mode s'aplica **igual als 4 canals** i es canvia des del portal (fitxa del tenant d'AMG) o config.
+
+| `agentMode` | Comportament | Detall |
+|-------------|--------------|--------|
+| **HYBRID** (per defecte) | **Supervisat** | Esborrany → Telegram amb ✅/🔄/✍️ → només surt en aprovar. (Flux §5-§6.) |
+| **AUTO** | **Autònom (no supervisat)** | La IA respon **directament** pel canal, sense aprovació. S'envia una **còpia** a `AMG_SALES_CHAT_ID` (informativa, sense botons) per poder intervenir després. |
+| **OFF** | Sense bot | Només es registra el lead / avís (comportament actual del formulari); cap resposta automàtica. |
+
+**Efecte en el xat (important):** en **AUTO**, el xat respon **síncronament i a l'instant** (com avui) → **no cal polling**. El polling (§6) només és necessari en **HYBRID** (resposta diferida per l'aprovació). Per tant, el mode autònom també **simplifica** el xat.
+
+Recomanació operativa: començar en **HYBRID** (superviso tot), i passar a **AUTO** quan les respostes de la IA siguin prou bones.
 
 ---
 
@@ -106,7 +124,7 @@ Estat → `SENT` (o `MANUAL`); s'esborra el pending de Redis.
 
 - **Correu (inbound = Mailgun, ⚠️ no Brevo):** `EmailWebhookController` processa `*@inbound.amgdl.com` via Mailgun (verifica `MAILGUN_WEBHOOK_SIGNING_KEY`). Cal: encaminar `info@amgdl.com` a aquest inbound, i crear `TenantChatLink.emailAddress = info@amgdl.com` lligat a `PLATFORM_TENANT_ID` (perquè `findByEmailAddressIgnoreCase` el resolgui). La **resposta sortint** va per Brevo (`EmailService`). Veure `docs/config-correu-cloudflare.html`.
 - **Agent IA actiu per al tenant PLATFORM:** `generateDmDraft` retorna null si l'agent no està configurat/actiu (`prepareIncoming` buit). Cal `TenantAIConfig`/AGENT habilitat per al tenant d'AMG.
-- **Convivència amb `agentMode` HYBRID:** en HYBRID, `ConversationalAgentService.notifyOperator` ja envia una "resposta suggerida" sense botó → per al tenant AMG s'ha de **bypassar `handleIncoming`** (§5.1) i passar pel flux nou, per evitar doble notificació.
+- **Convivència amb l'`agentMode` existent (clau):** el mode HYBRID/AUTO/OFF **és** el mateix `agentMode` de la plataforma (§3.1), no un de nou. Per al tenant AMG, l'**intake d'aquest mòdul substitueix** el camí genèric: en HYBRID no s'ha de disparar també `ConversationalAgentService.notifyOperator` (que envia una suggerència sense botó) → **bypassar `handleIncoming`** per als 4 canals quan tenant==PLATFORM i deixar que `AgencyInboundService` apliqui el mode. Els **tenants normals** mantenen el seu `agentMode` i comportament actuals, intactes.
 - **WhatsApp d'AMG:** WABA d'AMG connectat i lligat al tenant propietari (Mòdul 51, prerequisit operatiu).
 - Config existent: `PLATFORM_TENANT_ID`, `AMG_SALES_CHAT_ID`, `ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`.
 
@@ -131,6 +149,10 @@ Estat → `SENT` (o `MANUAL`); s'esborra el pending de Redis.
 8. Free-text a `AMG_SALES_CHAT_ID` mentre hi ha un `await` pendent → es captura pel flux (no cau a l'assistent admin).
 9. Callback `arok:` des d'un xat que NO és admin/AMG → ignorat.
 10. Contacte d'un **tenant** (no AMG) → flux actual, sense aprovació d'AMG.
+11. **Mode AUTO** (autònom): correu/WhatsApp/formulari → la IA respon directament + còpia informativa a `AMG_SALES_CHAT_ID` (sense botons); no espera aprovació.
+12. **Mode AUTO al xat** → el visitant rep resposta immediata (síncron, sense polling); AMG en rep còpia.
+13. **Mode OFF** → només lead/avís, cap resposta automàtica.
+14. Canviar el mode del tenant AMG (HYBRID↔AUTO) → el comportament dels 4 canals canvia en conseqüència, sense doble notificació.
 
 ---
 
