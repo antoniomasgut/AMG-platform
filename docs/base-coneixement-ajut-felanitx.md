@@ -1,0 +1,71 @@
+# Ajut de l'Ajuntament de Felanitx (línia "Modernització" · tràmit SUB16)
+
+Document de coneixement per a l'agent d'IA d'AMG. Serveix per respondre dubtes de
+comerços de Felanitx sobre la subvenció i per saber quins negocis hi encaixen.
+
+## Resum
+- Subvenciona el **50%** de la despesa elegible, amb un **màxim de 1.000 €** per beneficiari.
+- **Beneficiari = el comerç** (el client), no AMG. El comerç demana l'ajut, paga AMG
+  i justifica la despesa amb la factura d'AMG.
+- Es tramita a la seu electrònica: **ajfelanitx.eadministracio.cat** (tràmit **SUB16**).
+
+## Requisits del comerç
+- Estar donat d'alta en un **epígraf IAE inclòs a l'Annex V** (veure sota).
+- **10 treballadors o menys** i **facturació < 1.000.000 €**.
+- Estar **al corrent** amb Hisenda, Seguretat Social i Ajuntament.
+- Alguns ajuts demanen distintiu/cartell (Annex VI) a l'entrada de l'establiment.
+
+## Serveis d'AMG que SÍ són subvencionables (i com descriure'ls a la factura)
+| Servei d'AMG | Concepte a la factura |
+|---|---|
+| Allotjament de la web/landing | "Allotjament web" |
+| Creació de la web/landing en català | "Publicitat i comunicació digital web en català" |
+| Gestió de perfils / xarxes socials | "Gestió de xarxes socials en català" |
+| Comunicació digital com a servei extern | "Serveis professionals externs de comunicació digital" |
+
+**Regla d'or:** factura-ho com a **servei** de comunicació digital / gestió de xarxes /
+allotjament, **en català**, i com a **subscripció** (no com a venda de software).
+
+## El que queda FORA de la subvenció
+- **Assessorament o consultoria** (explícitament exclòs).
+- **Formació**.
+- **Programari en propietat** (compra d'eines/plataformes). El SaaS per subscripció SÍ.
+- **Manteniment o reparació** d'equips.
+- **L'agent d'IA i les automatitzacions** no encaixen net (es podrien llegir com a
+  software/consultoria): es venen **a part**, fora de l'ajut. La subvenció finança la
+  part **web + xarxes** per entrar amb el client; l'agent es contracta després.
+
+## Negocis i epígrafs que poden aprofitar l'ajut (Annex V)
+
+### Prioritat alta (viuen de la imatge — encaix ideal amb web + xarxes)
+- Perruqueries, barberies, centres d'estètica — **972.1 / 972.2**
+- Moda, calçat, complements, llenceria, merceria — **651.x**
+- Joieries, rellotgeries, argenteria — **659.5**
+- Floristeries i vivers (flors i plantes) — **659.7**
+- Forns, pastisseries, gelateries, bomboneries — **644.x**
+- Estudis i serveis fotogràfics — **973.1**
+
+### Prioritat mitjana
+- Mobles, decoració, parament, electrodomèstics, ferreteria, bricolatge — **653.x**
+- Papereries i llibreries — **659.4**
+- Joguines i articles d'esport — **659.6**
+- Carnisseries/xarcuteries gourmet, peixateries selectes — **642.x / 643.x**
+- Vins i cellers — **645**
+- Instruments musicals — **657**
+- Ortopèdies i articles mèdics — **659.3**
+
+### Prioritat menor (encaix més fluix)
+- Fruiteries, verduleries, alimentació i ultramarins (<120 m²) — **641 / 647.x**
+- Tintoreries i bugaderies — **971.x**
+- Impremtes, copisteries, petites editorials — **474.x / 476.x**
+- Segona mà/vintage; basars (comerç mixt) — **656 / 662.x**
+- Modistes, sastres, tapissers (confecció a mida) — **454.x / 455.x**
+- Emmarcació — **975**
+
+### NO hi entren
+Restauració, tallers i automoció, immobiliàries, professionals liberals, educació i
+cura d'infants (mares de dia), i serveis en general fora dels epígrafs 971–975 llistats.
+El que compta sempre és l'**epígraf IAE real** del negoci.
+
+---
+*Font: bases de la convocatòria SUB16 de l'Ajuntament de Felanitx. Document intern d'AMG.*
