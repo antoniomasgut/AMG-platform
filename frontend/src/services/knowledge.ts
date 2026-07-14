@@ -92,6 +92,17 @@ export function testKnowledgeResponse(tenantId: string, message: string): Promis
   });
 }
 
+export interface VectorizeResult {
+  vectorized: number;
+  failed: number;
+  total: number;
+  error?: string;
+}
+
+export function vectorizeKnowledge(tenantId: string): Promise<VectorizeResult> {
+  return apiFetch(`/agents/knowledge/${tenantId}/vectorize`, { method: 'POST' });
+}
+
 export async function uploadDocument(tenantId: string, file: File): Promise<KnowledgeDocument> {
   const form = new FormData();
   form.append('file', file);

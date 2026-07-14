@@ -14,6 +14,7 @@ import {
   updateEntries,
   deleteDocument,
   uploadDocument,
+  vectorizeKnowledge,
   previewPromptBlock,
   testKnowledgeResponse,
   type KnowledgeEntry,
@@ -78,6 +79,16 @@ export default function KnowledgeDetailPage() {
     onError: (err: Error) => toast('error', err.message),
   });
 
+  const { mutate: doVectorize, isPending: vectorizing } = useMutation({
+    mutationFn: () => vectorizeKnowledge(tenantId),
+    onSuccess: (res) => {
+      if (res.error) toast('error', res.error);
+      else toast('success', `Vectoritzat: ${res.vectorized}/${res.total}${res.failed ? ` · ${res.failed} han fallat (revisa OPENAI_API_KEY)` : ''}`);
+      qc.invalidateQueries({ queryKey: ['knowledge', tenantId] });
+    },
+    onError: () => toast('error', 'Error vectoritzant (revisa OPENAI_API_KEY)'),
+  });
+
   const handlePreview = async () => {
     setPreviewLoading(true);
     try {
@@ -120,6 +131,9 @@ export default function KnowledgeDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            <AMGButton size="sm" variant="outline" icon={IconSet.Zap} onClick={() => doVectorize()} loading={vectorizing}>
+              Vectoritzar
+            </AMGButton>
             <AMGButton size="sm" variant="outline" icon={IconSet.Eye} onClick={handlePreview} loading={previewLoading}>
               {t('preview')}
             </AMGButton>
