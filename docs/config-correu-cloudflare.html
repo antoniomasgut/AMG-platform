@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configurar el correu info@amgdl.com (Cloudflare) — guia</title>
+<style>
+  :root { --blau:#1e3a5f; --verd:#16a34a; --taronja:#ea580c; --gris:#64748b; --fons:#f8fafc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; background:var(--fons); color:#1e293b; line-height:1.55; padding:26px 16px; }
+  .full { max-width:880px; margin:0 auto; }
+  header { background:var(--blau); color:#fff; border-radius:12px; padding:22px 26px; margin-bottom:16px; }
+  header h1 { font-size:1.3rem; margin-bottom:4px; }
+  header p { opacity:.9; font-size:.9rem; }
+  section { background:#fff; border-radius:12px; padding:18px 22px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.07); }
+  section > h2 { font-size:1.1rem; color:var(--blau); margin-bottom:8px; }
+  ol { margin:6px 0 8px 22px; } li { padding:5px 0; font-size:.94rem; }
+  ul { margin:4px 0 4px 20px; }
+  code { background:#f1f5f9; padding:1px 6px; border-radius:4px; font-size:.85em; color:#be123c; word-break:break-all; }
+  table { width:100%; border-collapse:collapse; margin:8px 0; font-size:.88rem; }
+  th, td { text-align:left; padding:7px 9px; border-bottom:1px solid #eef2f7; vertical-align:top; }
+  th { background:#f1f5f9; color:var(--blau); font-size:.78rem; text-transform:uppercase; }
+  .box { border-radius:8px; padding:11px 15px; margin:10px 0; font-size:.9rem; }
+  .box.warn { background:#fee2e2; border-left:4px solid #dc2626; }
+  .box.tip { background:#dcfce7; border-left:4px solid var(--verd); }
+  .box.key { background:#fef9c3; border-left:4px solid #ca8a04; }
+  .ok { color:var(--verd); font-weight:700; } .no { color:#dc2626; font-weight:700; }
+  footer { text-align:center; color:var(--gris); font-size:.8rem; margin-top:6px; }
+  @media print { body{background:#fff;padding:0;font-size:12px;} .full{max-width:none;} header{border-radius:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;} section{box-shadow:none;border:1px solid #e2e8f0;break-inside:avoid;} th,.box{-webkit-print-color-adjust:exact;print-color-adjust:exact;} }
+  @page { size:A4; margin:12mm; }
+</style>
+</head>
+<body>
+<div class="full">
+<header>
+  <h1>📧 Configurar info@amgdl.com amb Cloudflare</h1>
+  <p>DNS a Cloudflare · objectiu: que info@amgdl.com arribi a amgdigitalitzacions@gmail.com · document intern AMG</p>
+</header>
+
+<section>
+  <h2>Estat actual (verificat)</h2>
+  <ul>
+    <li><code>amgdl.com</code> → <span class="no">cap MX</span> → info@amgdl.com <b>rebota, no arriba enlloc</b>.</li>
+    <li>Nameservers a <b>Cloudflare</b> ✅ · DMARC de Brevo ✅ · <b>cap SPF</b> propi (només <code>brevo-code</code>).</li>
+    <li><code>inbound.amgdl.com</code> → té MX a <b>Brevo i Cloudflare alhora</b> (ambigu, a netejar — Part 2).</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Part 1 · Activar Email Routing (info@ → Gmail)</h2>
+  <ol>
+    <li>Entra a <b>dash.cloudflare.com</b> → tria la zona <code>amgdl.com</code>.</li>
+    <li>Menú esquerre → <b>Email</b> → <b>Email Routing</b> → <b>Get started / Enable</b>.</li>
+    <li>Cloudflare et proposarà afegir els <b>registres DNS</b> necessaris. Accepta'ls (botó «Add records»). Afegirà:
+      <table>
+        <tr><th>Tipus</th><th>Nom</th><th>Valor</th></tr>
+        <tr><td>MX</td><td>amgdl.com</td><td><code>route1.mx.cloudflare.net</code> (prio 1)</td></tr>
+        <tr><td>MX</td><td>amgdl.com</td><td><code>route2.mx.cloudflare.net</code> (prio 2)</td></tr>
+        <tr><td>MX</td><td>amgdl.com</td><td><code>route3.mx.cloudflare.net</code> (prio 3)</td></tr>
+        <tr><td>TXT (SPF)</td><td>amgdl.com</td><td><code>v=spf1 include:_spf.mx.cloudflare.net ~all</code></td></tr>
+      </table>
+    </li>
+    <li><b>Destination addresses</b> → <b>Add destination</b> → <code>amgdigitalitzacions@gmail.com</code> → Cloudflare hi envia un correu de verificació → obre el Gmail i <b>clica el link</b> (queda ✅ Verified).</li>
+    <li><b>Routing rules</b> → <b>Create address</b> → escriu <code>info@amgdl.com</code> → Action: <b>Send to</b> → <code>amgdigitalitzacions@gmail.com</code> → <b>Save</b>.</li>
+    <li>(Recomanat) <b>Catch-all address</b> → activa'l → Send to <code>amgdigitalitzacions@gmail.com</code>. Així res que arribi a qualsevol <code>@amgdl.com</code> es perd.</li>
+  </ol>
+  <div class="box key"><b>Nota SPF:</b> si algun dia envies correu <b>des de</b> @amgdl.com amb Brevo, canvia l'SPF per incloure Brevo:<br><code>v=spf1 include:spf.brevo.com include:_spf.mx.cloudflare.net ~all</code> (un sol registre SPF, mai dos).</div>
+  <div class="box tip"><b>Prova:</b> espera 5-10 min i envia un correu a <code>info@amgdl.com</code> des d'un altre compte → t'ha d'arribar al Gmail. Ja pots contestar (per respondre «com a info@», configura «Send mail as» al Gmail més endavant).</div>
+</section>
+
+<section>
+  <h2>Part 2 · Netejar el doble MX de inbound.amgdl.com</h2>
+  <p style="font-size:.9rem;color:var(--gris)">Aquest subdomini és el <b>camí del bot</b> (correu entrant dels tenants → webhook de la plataforma). Ara té dos proveïdors alhora, cosa que el fa poc fiable. Deixa'n només <b>un</b>.</p>
+  <ol>
+    <li>A Cloudflare → <b>DNS → Records</b>, filtra per <code>inbound</code>.</li>
+    <li>Veuràs 4 MX a <code>inbound.amgdl.com</code>: un de <b>Brevo</b> (<code>mxrecord-0.inbound.brevo.com</code>) i tres de <b>Cloudflare</b> (<code>route1/2/3.mx.cloudflare.net</code>).</li>
+    <li><b>La plataforma usa Brevo Inbound</b> (l'stack és Brevo). Per tant: <b>esborra els 3 MX de <code>route*.mx.cloudflare.net</code></b> de <code>inbound.amgdl.com</code> i <b>deixa només</b> el de Brevo.</li>
+    <li>Verifica a <b>Brevo → Transactional → Inbound parsing</b> que el domini <code>inbound.amgdl.com</code> reenvia al webhook:<br><code>https://api.amgdl.com/api/v1/agents/email/inbound</code></li>
+  </ol>
+  <div class="box warn"><b>Compte:</b> en activar Email Routing a la zona (Part 1), assegura't que Cloudflare <b>no toqui</b> els MX de <code>inbound.amgdl.com</code> (ha de seguir apuntant a Brevo). Si Cloudflare hi torna a posar els seus MX, torna'ls a treure.</div>
+</section>
+
+<section>
+  <h2>✅ Verificació final (des del terminal)</h2>
+  <ul>
+    <li><code>dig +short MX amgdl.com</code> → ha de sortir <code>route1/2/3.mx.cloudflare.net</code>.</li>
+    <li><code>dig +short MX inbound.amgdl.com</code> → només <code>mxrecord-0.inbound.brevo.com</code>.</li>
+    <li>Correu de prova a info@amgdl.com → arriba al Gmail.</li>
+  </ul>
+  <div class="box key"><b>El bot i info@:</b> amb això, info@ el llegeix una <b>persona</b> (Gmail). Si algun dia vols que el <b>bot</b> contesti info@, cal encaminar-lo al webhook (MX de amgdl.com cap a Brevo inbound) i mapar l'adreça al tenant d'AMG — més feina i no necessari per a un info@ general.</div>
+</section>
+
+<footer>AMG Digitalització · document intern · les credencials/tokens no s'escriuen mai aquí</footer>
+</div>
+</body>
+</html>
