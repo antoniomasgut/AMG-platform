@@ -45,7 +45,7 @@ public class AnthropicAIProvider implements AIProvider {
         var body = Map.of(
             "model", model,
             "max_tokens", 1024,
-            "system", systemPrompt,
+            "system", cachedSystem(systemPrompt),
             "messages", messages
         );
 
@@ -91,7 +91,7 @@ public class AnthropicAIProvider implements AIProvider {
                 var body = new HashMap<String, Object>();
                 body.put("model", model);
                 body.put("max_tokens", 1024);
-                body.put("system", systemPrompt);
+                body.put("system", cachedSystem(systemPrompt));
                 body.put("messages", messages);
                 body.put("tools", toolDefs);
 
@@ -185,7 +185,7 @@ public class AnthropicAIProvider implements AIProvider {
                 var body = new HashMap<String, Object>();
                 body.put("model", model);
                 body.put("max_tokens", 1024);
-                body.put("system", systemPrompt);
+                body.put("system", cachedSystem(systemPrompt));
                 body.put("messages", messages);
                 body.put("tools", toolDefs);
 
@@ -253,7 +253,7 @@ public class AnthropicAIProvider implements AIProvider {
             var body = new HashMap<String, Object>();
             body.put("model", model);
             body.put("max_tokens", 1024);
-            body.put("system", systemPrompt);
+            body.put("system", cachedSystem(systemPrompt));
             body.put("messages", messages);
 
             var raw = restClient.post()
@@ -283,5 +283,19 @@ public class AnthropicAIProvider implements AIProvider {
 
     private String mapRole(String role) {
         return "ASSISTANT".equalsIgnoreCase(role) ? "assistant" : "user";
+    }
+
+    /**
+     * Bloc de sistema amb prompt caching d'Anthropic: marca la part estable del prompt
+     * (persona + coneixement + serveis + catàleg) com a cacheable. En els missatges
+     * següents dins la finestra de ~5 min, aquesta part es cobra a ~10% del preu d'entrada.
+     * Si el prompt no arriba al mínim cacheable, l'API simplement l'ignora (sense error).
+     */
+    private static List<Map<String, Object>> cachedSystem(String systemPrompt) {
+        return List.of(Map.of(
+            "type", "text",
+            "text", systemPrompt != null ? systemPrompt : "",
+            "cache_control", Map.of("type", "ephemeral")
+        ));
     }
 }

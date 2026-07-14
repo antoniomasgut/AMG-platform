@@ -622,10 +622,17 @@ public class ChatSessionService {
                                      List<Map<String, String>> history, String userMessage) throws Exception {
         var messages = new ArrayList<>(history);
         messages.add(Map.of("role", "user", "content", userMessage));
+        // Prompt caching: la part estable del prompt (persona + coneixement) es cacheja
+        // i es cobra a ~10% en missatges següents dins la finestra de ~5 min.
+        var systemBlock = List.of(Map.of(
+            "type", "text",
+            "text", systemPrompt,
+            "cache_control", Map.of("type", "ephemeral")
+        ));
         var body = Map.of(
             "model",      model,
             "max_tokens", MAX_RESPONSE_TOKENS,
-            "system",     systemPrompt,
+            "system",     systemBlock,
             "messages",   messages
         );
         var rc  = restClientBuilder.baseUrl(ANTHROPIC_BASE).build();
