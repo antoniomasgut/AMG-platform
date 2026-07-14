@@ -115,12 +115,8 @@ public class ChatSessionService {
 
         // Comprova si l'agenda està activada per a aquest tenant
         boolean agendaEnabled = isAgendaEnabledForTenant(tenantId);
-        String systemPrompt   = ctx.getSystemPrompt();
-        if (agendaEnabled) {
-            var agendaJson = nexeConfigService.get(tenantId, "AGENDA")
-                    .map(c -> c.getConfigJson()).orElse(null);
-            if (agendaJson != null) systemPrompt += promptBuilder.buildAgendaBlock(agendaJson);
-        }
+        // Prompt unificat: mateix que correu/WhatsApp per a tenants reals
+        String systemPrompt   = buildChannelSystemPrompt(landingSlug, tenantId, ctx, agendaEnabled);
 
         var greeting = generateGreetingWithPrompt(ctx, systemPrompt, landingSlug);
 
@@ -463,13 +459,12 @@ public class ChatSessionService {
         }
 
         var ctx = loadContext(session.getLandingId());
-        String basePrompt   = ctx != null ? ctx.getSystemPrompt() : buildGenericSystemPrompt(session.getLandingSlug());
-        String systemPrompt = basePrompt;
-        if (session.isAgendaEnabled() && session.getTenantId() != null) {
-            var agendaJson = nexeConfigService.get(UUID.fromString(session.getTenantId()), "AGENDA")
-                    .map(c -> c.getConfigJson()).orElse(null);
-            if (agendaJson != null) systemPrompt += promptBuilder.buildAgendaBlock(agendaJson);
-        }
+        UUID sessionTenantId = null;
+        try { if (session.getTenantId() != null) sessionTenantId = UUID.fromString(session.getTenantId()); }
+        catch (Exception ignored) {}
+        // Prompt unificat amb la resta de canals (mateix promptBuilder per a tenants reals)
+        String systemPrompt = buildChannelSystemPrompt(
+                session.getLandingSlug(), sessionTenantId, ctx, session.isAgendaEnabled());
 
         var history = buildHistory(session);
         String reply = callAI(systemPrompt, history, userMessage, isDemo(session.getLandingSlug()), session.getPreferredModel());
@@ -759,6 +754,26 @@ public class ChatSessionService {
                 .businessName(title)
                 .systemPrompt(buildGenericSystemPrompt(title))
                 .build();
+    }
+
+    /**
+     * Prompt del sistema unificat entre canals: per a tenants reals fa servir el MATEIX
+     * {@code promptBuilder.build(...)} que correu/WhatsApp/Telegram (inclou persona,
+     * idioma, knowledge base i serveis com l'agenda). Per a demos/previsualitzacions o
+     * sessions sense tenant, manté el prompt del context de la landing.
+     */
+    private String buildChannelSystemPrompt(String landingSlug, UUID tenantId,
+                                            LandingChatContext ctx, boolean agendaEnabled) {
+        if (!isDemo(landingSlug) && tenantId != null) {
+            return promptBuilder.build(tenantId, null);
+        }
+        String prompt = ctx != null ? ctx.getSystemPrompt() : buildGenericSystemPrompt(landingSlug);
+        if (agendaEnabled && tenantId != null) {
+            var agendaJson = nexeConfigService.get(tenantId, "AGENDA")
+                    .map(c -> c.getConfigJson()).orElse(null);
+            if (agendaJson != null) prompt += promptBuilder.buildAgendaBlock(agendaJson);
+        }
+        return prompt;
     }
 
     private String buildGenericSystemPrompt(String name) {
