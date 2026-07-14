@@ -71,9 +71,9 @@ public class TenantTelegramCommandService {
 
         if (hasF1) {
             sb.append("<b>Agent IA</b> · Mode actual: ").append(mode).append("\n");
-            sb.append("  /mode auto — respon automàticament\n");
+            sb.append("  /mode auto — respon automàticament (no supervisat)\n");
             sb.append("  /mode manual — t'avisa però no respon\n");
-            sb.append("  /mode hybrid — guarda per a la teva revisió\n");
+            sb.append("  /mode hybrid — et proposa la resposta i tu l'aproves aquí (✅/🔄/✍️)\n");
             sb.append("  /stats — resum d'activitat d'avui\n\n");
         }
 

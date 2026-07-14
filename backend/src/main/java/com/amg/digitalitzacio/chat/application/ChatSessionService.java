@@ -6,6 +6,7 @@ import com.amg.digitalitzacio.agents.application.GoogleCalendarService;
 import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.PromptBuilder;
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
+import com.amg.digitalitzacio.agents.domain.AgentMode;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.ConversationRole;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfig;
@@ -526,7 +527,50 @@ public class ChatSessionService {
             }
         } catch (Exception ignored) {}
 
+        // Inbound Assist (Spec 59) al xat en directe: mode HYBRID → resposta IA immediata
+        // (sense silencis) + avís informatiu al tenant per Telegram (supervisió a posteriori).
+        notifyWidgetOperatorIfHybrid(session, userMessage, reply);
+
         return new SendMessageResult(sessionId, reply, false);
+    }
+
+    /**
+     * Al xat web el visitant està en directe: en HYBRID/MANUAL la IA respon igualment
+     * a l'instant i s'avisa el tenant amb l'intercanvi (no hi ha aprovació prèvia perquè
+     * seria un silenci en directe). En AUTO no s'avisa (mode no supervisat).
+     */
+    private void notifyWidgetOperatorIfHybrid(ChatSession session, String userMessage, String reply) {
+        try {
+            if (session.getTenantId() == null) return;
+            var link = chatLinkRepository.findByTenantId(UUID.fromString(session.getTenantId())).orElse(null);
+            if (link == null || Boolean.FALSE.equals(link.getIsActive())) return;
+            if (link.getAgentMode() == AgentMode.AUTO) return; // no supervisat → sense avís
+            Long chatId = link.getTelegramChatId();
+            if (chatId == null) return;
+
+            String who = session.getContactName() != null && !session.getContactName().isBlank()
+                    ? session.getContactName()
+                    : (session.getContactPhone() != null && !session.getContactPhone().isBlank()
+                        ? session.getContactPhone() : "Visitant anònim");
+            String origin = "agency".equals(session.getLandingSlug())
+                    ? "landing d'AMG" : "landing " + session.getLandingSlug();
+            String msg = "💬 <b>Xat web · " + escapeHtml(origin) + "</b>\n"
+                    + "👤 " + escapeHtml(who) + "\n"
+                    + "\"" + escapeHtml(clip(userMessage, 300)) + "\"\n\n"
+                    + "🤖 <b>L'IA ha respost:</b>\n" + escapeHtml(clip(reply, 500));
+            telegramBotClient.sendMessage(chatId, msg);
+        } catch (Exception e) {
+            log.debug("Avís HYBRID de xat web omès (no crític): {}", e.getMessage());
+        }
+    }
+
+    private String clip(String s, int max) {
+        if (s == null) return "";
+        return s.length() > max ? s.substring(0, max - 1) + "…" : s;
+    }
+
+    private String escapeHtml(String s) {
+        return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     // --- AI dispatch ---
