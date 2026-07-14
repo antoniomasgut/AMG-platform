@@ -1,5 +1,7 @@
 package com.amg.digitalitzacio.agents.application.channel;
 
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -10,13 +12,29 @@ import java.util.Map;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class EmailChannel {
 
+    private final SystemConfigService systemConfig;
+
+    // Fallback si no hi ha valor a system_settings (config UI és la font principal)
     @Value("${app.agents.email.brevo-api-key:}")
-    private String brevoApiKey;
+    private String brevoApiKeyProp;
 
     @Value("${app.agents.email.brevo-from-address:noreply@amgdl.com}")
-    private String brevoFromAddress;
+    private String brevoFromAddressProp;
+
+    /** Clau API de Brevo: system_settings.BREVO_API_KEY (principal) o propietat (fallback). */
+    private String resolveApiKey() {
+        String v = systemConfig.get("BREVO_API_KEY");
+        return (v != null && !v.isBlank()) ? v : brevoApiKeyProp;
+    }
+
+    /** Remitent per defecte: system_settings.BREVO_SENDER_EMAIL o propietat (fallback). */
+    private String resolveFromAddress() {
+        String v = systemConfig.get("BREVO_SENDER_EMAIL");
+        return (v != null && !v.isBlank()) ? v : brevoFromAddressProp;
+    }
 
     public void sendMessage(String toEmail, String subject, String text) {
         sendMessage(toEmail, subject, text, null, null);
@@ -27,12 +45,13 @@ public class EmailChannel {
     }
 
     public void sendMessage(String toEmail, String subject, String text, String fromEmail, String fromName, String replyTo) {
-        if (brevoApiKey.isBlank()) {
+        String brevoApiKey = resolveApiKey();
+        if (brevoApiKey == null || brevoApiKey.isBlank()) {
             log.warn("Brevo API key not configured for Email channel");
             return;
         }
 
-        String effectiveFrom = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail : brevoFromAddress;
+        String effectiveFrom = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail : resolveFromAddress();
         String effectiveName = (fromName != null && !fromName.isBlank()) ? fromName : "AMG Digitalitzacions";
 
         try {
