@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<title>AMG · Anunci general (escala de grisos)</title>
+<style>
+  /* Paleta pensada per a impressió en ESCALA DE GRISOS: contrast per tons, no per color */
+  :root { --ink:#111; --dark:#1a1a1a; --gray:#4b4b4b; --line:#8a8a8a; --chip:#ededed; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { background:#e2e8f0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,sans-serif; display:flex; justify-content:center; padding:20px; }
+
+  .anunci {
+    width:120mm; height:auto;
+    background:#fff; border:1px solid #cbd5e1;
+    display:flex; flex-direction:column; align-items:center;
+    overflow:hidden; text-align:center;
+  }
+  .middle { display:flex; flex-direction:column; align-items:center; padding:4px 10px 3px; gap:3px; }
+  .logo { flex-shrink:0; margin:0; width:40mm; height:10mm;
+    background:url("amg-logo-black.png") center/contain no-repeat; }
+  .claim { color:var(--ink); font-size:12.5pt; font-weight:800; line-height:1; }
+  .target { color:var(--gray); font-size:7.5pt; font-weight:700; }
+
+  /* Ganxo: producte estrella (assistent IA 24/7), amb número gran negre */
+  .hook {
+    background:#fff; border:2px solid var(--ink); border-radius:9px;
+    padding:2px 13px; color:var(--ink); display:flex; align-items:center; gap:9px;
+  }
+  .hook .pct { font-size:19pt; font-weight:900; line-height:.95; }
+  .hook .txt { font-size:9pt; font-weight:800; line-height:1.05; text-align:left; }
+
+  /* Serveis com a chips: mai es parteixen a mig mot */
+  .serveis { display:flex; flex-wrap:wrap; justify-content:center; gap:4px; }
+  .chip {
+    background:var(--chip); color:var(--ink); font-size:7.5pt; font-weight:700;
+    padding:2px 8px; border-radius:999px; white-space:nowrap; border:1px solid var(--line);
+  }
+  .catala {
+    background:var(--ink); color:#fff; font-size:8pt; font-weight:800;
+    padding:2px 11px; border-radius:999px; letter-spacing:.2px;
+  }
+  .cta { color:var(--ink); font-size:7.5pt; font-weight:800; }
+
+  .contacte {
+    width:100%; background:var(--dark); color:#fff;
+    padding:5px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .nums { text-align:left; }
+  .num .lbl { font-size:6.5pt; font-weight:800; color:#fff; letter-spacing:.5px; }
+  .num { font-size:13pt; font-weight:800; letter-spacing:.4px; line-height:1.1; }
+  .web { font-size:8.5pt; font-weight:700; margin-top:2px; color:#e5e5e5; }
+  .qr { display:flex; flex-direction:column; align-items:center; }
+  .qr img { width:14mm; height:14mm; background:#fff; padding:1mm; border-radius:3px; }
+  .qr .cap { font-size:6pt; margin-top:2px; color:#e5e5e5; }
+
+  @media print {
+    html,body { background:#fff; padding:0; }
+    .anunci { border:none; }
+    * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+  @page { size:120mm 67mm; margin:0; }
+</style>
+</head>
+<body>
+<div class="anunci">
+
+  <div class="middle">
+    <div class="logo" role="img" aria-label="AMG Digitalitzacions"></div>
+    <div class="claim">Digitalitzam el teu negoci</div>
+    <div class="target">Per a comerços i autònoms de Mallorca</div>
+
+    <div class="hook">
+      <span class="pct">24/7</span>
+      <span class="txt">Un assistent d'IA que atén els teus<br>clients per WhatsApp · sempre obert</span>
+    </div>
+
+    <div class="serveis">
+      <span class="chip">Web professional</span>
+      <span class="chip">Xarxes socials</span>
+      <span class="chip">Assistent IA · WhatsApp</span>
+    </div>
+    <div class="catala">✔&nbsp;Tot en català</div>
+
+    <div class="cta">Demana pressupost sense compromís</div>
+  </div>
+
+  <div class="contacte">
+    <div class="nums">
+      <div class="num"><span class="lbl">TRUCA'NS O WHATSAPP</span><br>654&nbsp;048&nbsp;164</div>
+      <div class="web">amgdl.com</div>
+    </div>
+    <div class="qr">
+      <img src="qr-wa-felanitx.png" alt="QR WhatsApp AMG">
+      <div class="cap">Escaneja i escriu-nos ↗</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
