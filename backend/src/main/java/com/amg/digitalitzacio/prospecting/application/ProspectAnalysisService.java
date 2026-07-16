@@ -110,10 +110,14 @@ public class ProspectAnalysisService {
         else {
             sb.append("Carències detectades:\n");
             if (!Boolean.TRUE.equals(p.getHasWhatsapp())) sb.append("- Sense WhatsApp Business\n");
-            if (!Boolean.TRUE.equals(p.getHasChatWidget())) sb.append("- Sense chat a la web\n");
-            if (!Boolean.TRUE.equals(p.getHasBookingSystem())) sb.append("- Sense sistema de reserves\n");
-            if (!Boolean.TRUE.equals(p.getHasAnalytics())) sb.append("- Sense analítiques web\n");
-            if (p.getWebLoadMs() != null && p.getWebLoadMs() > 3000) sb.append("- Web lenta (" + p.getWebLoadMs() + "ms)\n");
+            // Els senyals web (chat, reserves, analítiques) només si la web ha estat analitzada;
+            // sense anàlisi els camps boolean són null i es confondrien amb "no té"
+            if (p.getWebAnalyzedAt() != null) {
+                if (!Boolean.TRUE.equals(p.getHasChatWidget())) sb.append("- Sense chat a la web\n");
+                if (!Boolean.TRUE.equals(p.getHasBookingSystem())) sb.append("- Sense sistema de reserves\n");
+                if (!Boolean.TRUE.equals(p.getHasAnalytics())) sb.append("- Sense analítiques web\n");
+                if (p.getWebLoadMs() != null && p.getWebLoadMs() > 3000) sb.append("- Web lenta (" + p.getWebLoadMs() + "ms)\n");
+            }
         }
         if (p.getDemoUrl() != null)
             sb.append("URL demo generada: ").append(p.getDemoUrl()).append("\n");

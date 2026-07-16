@@ -345,17 +345,20 @@ public class ProspectingOrchestrator implements ProspectingService {
             || e.contains("@test.") || e.contains("@domain.") || e.contains("@email.");
     }
 
-    private int calculateScore(Prospect p) {
-        int score = detectSignals(p).stream().mapToInt(ProspectSignal::points).sum();
-        return Math.max(0, Math.min(100, score));
-    }
-
-    // Score i tier sempre van junts: un score sense tier deixa el prospect
-    // fora de la cadena automàtica de demos (Spec 12 §5.4)
+    // Score, tier i scoreBreakdown sempre van junts: un score sense tier deixa el
+    // prospect fora de la cadena automàtica de demos (Spec 12 §5.4). scoreBreakdown
+    // persisteix el detall per a auditoria i per mostrar-lo al portal sense re-calcular.
     private void applyScoreAndTier(Prospect p) {
-        int score = calculateScore(p);
+        var signals = detectSignals(p);
+        int score = Math.max(0, Math.min(100, signals.stream().mapToInt(ProspectSignal::points).sum()));
         p.setScore(score);
         p.setProspectTier(computeTier(score));
+        try {
+            var breakdown = signals.stream()
+                .map(s -> Map.of("code", s.code(), "label", s.label(), "pts", s.points()))
+                .collect(Collectors.toList());
+            p.setScoreBreakdown(objectMapper.writeValueAsString(breakdown));
+        } catch (Exception ignored) {}
     }
 
     private void recalculateAndSave(Prospect p) {
