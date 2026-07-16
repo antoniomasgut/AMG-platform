@@ -30,8 +30,9 @@ public class ProspectCsvImportService {
 
     @Transactional
     public Map<String, Integer> importCsv(UUID campaignId, MultipartFile file) {
-        campaignRepository.findById(campaignId)
+        var campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found: " + campaignId));
+        String campaignSector = campaign.getSector();
 
         List<String[]> rows = parseCsv(file);
         if (rows.size() > MAX_ROWS) {
@@ -74,6 +75,7 @@ public class ProspectCsvImportService {
                         .hasWebsite(website != null && !website.isBlank())
                         .address(address)
                         .city(city)
+                        .sector(campaignSector) // herença del sector de la campanya → signals de sector
                         .source(ProspectSource.MANUAL)
                         .status(ProspectStatus.NEW)
                         .build();
