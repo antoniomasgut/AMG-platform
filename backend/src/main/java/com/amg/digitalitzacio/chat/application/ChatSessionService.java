@@ -70,6 +70,7 @@ public class ChatSessionService {
     private static final String ANTHROPIC_BASE       = "https://api.anthropic.com";
     private static final String ANTHROPIC_VERSION    = "2023-06-01";
     private static final Pattern BOOKING_TAG         = Pattern.compile("\\[CONFIRMA_CITA:(\\{.*?\\})]", Pattern.DOTALL);
+    private static final Pattern CONTACT_TAG         = Pattern.compile("\\[CAPTURA_CONTACTE:(\\{.*?\\})]", Pattern.DOTALL);
 
     // Paraules malsonants — CA/ES/EN més comunes
     private static final Set<String> PROFANITY = Set.of(
@@ -532,6 +533,29 @@ public class ChatSessionService {
             }
         }
 
+        // Captura de contacte: el bot inclou [CAPTURA_CONTACTE:{...}] quan l'usuari dóna les dades
+        if ("agency".equals(session.getLandingSlug()) && session.getLeadId() == null) {
+            Matcher cm = CONTACT_TAG.matcher(reply);
+            if (cm.find()) {
+                reply = CONTACT_TAG.matcher(reply).replaceAll("").strip();
+                try {
+                    Map<String, Object> contact = objectMapper.readValue(cm.group(1), new TypeReference<>() {});
+                    String capturedName  = contact.get("name")  instanceof String s ? s.strip() : null;
+                    String capturedPhone = contact.get("phone") instanceof String s ? s.replaceAll("[\\s\\-.]", "").strip() : null;
+                    if (capturedName != null && !capturedName.isBlank()
+                            && capturedPhone != null && !capturedPhone.isBlank()) {
+                        var lead = findOrCreateChatLead(UUID.fromString(session.getTenantId()), capturedName, capturedPhone);
+                        session.setLeadId(lead.getId().toString());
+                        session.setContactName(capturedName);
+                        session.setContactPhone(capturedPhone);
+                        log.info("[Agency] Contacte capturat durant conversa: {} / {}", capturedName, capturedPhone);
+                    }
+                } catch (Exception e) {
+                    log.warn("[Agency] Error processant tag CAPTURA_CONTACTE: {}", e.getMessage());
+                }
+            }
+        }
+
         // Actualitza lastContactAt del lead (best-effort)
         if (session.getLeadId() != null) {
             try {
@@ -823,7 +847,16 @@ public class ChatSessionService {
     private String buildChannelSystemPrompt(String landingSlug, UUID tenantId,
                                             LandingChatContext ctx, boolean agendaEnabled) {
         if (!isDemo(landingSlug) && tenantId != null) {
-            return promptBuilder.build(tenantId, null);
+            String prompt = promptBuilder.build(tenantId, null);
+            if ("agency".equals(landingSlug)) {
+                prompt += """
+
+<contact_capture>
+Si el visitant no ha donat nom ni telèfon, demana'ls de forma natural quan hagi mostrat interès real (no al primer missatge). Quan l'usuari proporcioni nom i telèfon, afegeix AL FINAL de la teva resposta, en una nova línia: [CAPTURA_CONTACTE:{"name":"NOM","phone":"TELEFON"}]
+Substitueix NOM i TELEFON pels valors reals. Mai esmentis el tag a l'usuari — no és visible.
+</contact_capture>""";
+            }
+            return prompt;
         }
         String prompt = ctx != null ? ctx.getSystemPrompt() : buildGenericSystemPrompt(landingSlug);
         if (agendaEnabled && tenantId != null) {
