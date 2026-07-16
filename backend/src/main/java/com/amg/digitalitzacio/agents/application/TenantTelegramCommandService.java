@@ -12,6 +12,10 @@ import com.amg.digitalitzacio.documents.builder.domain.DocumentStatus;
 import com.amg.digitalitzacio.documents.builder.domain.GeneratedDocument;
 import com.amg.digitalitzacio.documents.builder.domain.GeneratedDocumentRepository;
 import com.amg.digitalitzacio.google.application.GoogleBusinessReviewSyncService;
+import com.amg.digitalitzacio.leads.domain.Lead;
+import com.amg.digitalitzacio.leads.domain.LeadRepository;
+import com.amg.digitalitzacio.leads.domain.LeadSource;
+import com.amg.digitalitzacio.leads.domain.PipelineStage;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +27,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Comandes Telegram per a tenants (no AMG admin).
@@ -48,7 +53,11 @@ public class TenantTelegramCommandService {
     private final WhatsAppChannel whatsAppChannel;
     private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final EmailChannel emailChannel;
+    private final LeadRepository leadRepository;
     private final ObjectMapper objectMapper;
+
+    private static final Pattern PHONE_RE = Pattern.compile("(?:^|\\s|,)(\\+?\\d[\\d\\s\\-]{5,14}\\d)(?:$|\\s|,)");
+    private static final Pattern EMAIL_RE = Pattern.compile("[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}");
 
     // ── /ajuda ────────────────────────────────────────────────────────────────
 
@@ -67,7 +76,8 @@ public class TenantTelegramCommandService {
         sb.append("📋 <b>Comandes disponibles</b>\n\n");
 
         sb.append("<b>Generals</b>\n");
-        sb.append("  /ajuda — aquesta llista\n\n");
+        sb.append("  /ajuda — aquesta llista\n");
+        sb.append("  /lead Nom, telèfon, notes — afegir contacte al CRM\n\n");
 
         if (hasF1) {
             sb.append("<b>Agent IA</b> · Mode actual: ").append(mode).append("\n");
@@ -110,6 +120,94 @@ public class TenantTelegramCommandService {
         }
 
         return sb.toString().trim();
+    }
+
+    // ── /lead ─────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public String handleLead(UUID tenantId, String commandText) {
+        String raw = commandText.replaceFirst("(?i)/lead\\s*", "").trim();
+        if (raw.isBlank()) {
+            return "ℹ️ Ús: <code>/lead Nom, telèfon, notes</code>\n"
+                 + "Exemples:\n"
+                 + "  <code>/lead Joan Miquel, 654321098</code>\n"
+                 + "  <code>/lead Maria, 654321098, restaurant Felanitx, vol demo</code>\n"
+                 + "  <code>/lead Pere joan@mail.com m'ha trucat</code>";
+        }
+
+        String[] parts = raw.split(",", -1);
+        String name  = parts[0].trim();
+        String phone = null;
+        String email = null;
+        var notesParts = new ArrayList<String>();
+
+        for (int i = 1; i < parts.length; i++) {
+            String p = parts[i].trim();
+            if (email == null && EMAIL_RE.matcher(p).find()) {
+                email = EMAIL_RE.matcher(p).results().findFirst().map(m -> m.group()).orElse(null);
+            } else if (phone == null && PHONE_RE.matcher(" " + p + " ").find()) {
+                var m = PHONE_RE.matcher(" " + p + " ");
+                if (m.find()) phone = m.group(1).replaceAll("[\\s\\-]", "");
+            } else if (!p.isBlank()) {
+                notesParts.add(p);
+            }
+        }
+
+        // Si no hi ha comes, intenta extreure telèfon/email del text lliure
+        if (parts.length == 1) {
+            var pm = PHONE_RE.matcher(" " + raw + " ");
+            if (pm.find()) {
+                phone = pm.group(1).replaceAll("[\\s\\-]", "");
+                name = raw.replace(pm.group(1), "").replaceAll("[,\\s]+$", "").trim();
+            }
+            var em = EMAIL_RE.matcher(raw);
+            if (em.find()) {
+                email = em.group();
+                name = raw.replace(email, "").replaceAll("[,\\s]+$", "").trim();
+            }
+        }
+
+        if (name.isBlank()) return "⚠️ Cal indicar almenys el nom del contacte.";
+
+        // Anti-duplicat
+        if (phone != null && !phone.isBlank()) {
+            var dup = leadRepository.findFirstByTenantIdAndPhone(tenantId, phone);
+            if (dup.isPresent()) {
+                var l = dup.get();
+                return "ℹ️ Ja existeix: <b>" + l.getName() + "</b> · " + l.getStage()
+                     + (l.getPhone() != null ? " · " + l.getPhone() : "")
+                     + "\n(no s'ha creat duplicat)";
+            }
+        }
+        if (email != null && !email.isBlank()) {
+            var dup = leadRepository.findFirstByTenantIdAndEmail(tenantId, email);
+            if (dup.isPresent()) {
+                var l = dup.get();
+                return "ℹ️ Ja existeix: <b>" + l.getName() + "</b> · " + l.getStage()
+                     + (l.getEmail() != null ? " · " + l.getEmail() : "")
+                     + "\n(no s'ha creat duplicat)";
+            }
+        }
+
+        var lead = new Lead();
+        lead.setTenantId(tenantId);
+        lead.setName(name);
+        lead.setPhone(phone);
+        lead.setEmail(email);
+        lead.setSource(LeadSource.MANUAL);
+        lead.setStage(PipelineStage.NEW);
+        lead.setNotes(notesParts.isEmpty() ? null : String.join(", ", notesParts));
+        lead.setIsActive(true);
+        lead.setCreatedAt(java.time.Instant.now());
+        lead.setUpdatedAt(java.time.Instant.now());
+        leadRepository.save(lead);
+
+        var sb = new StringBuilder("✅ Lead creat: <b>").append(name).append("</b>");
+        if (phone != null) sb.append("\n📞 ").append(phone);
+        if (email != null) sb.append("\n✉️ ").append(email);
+        if (!notesParts.isEmpty()) sb.append("\n📝 ").append(String.join(", ", notesParts));
+        sb.append("\nEtapa: NEW · Font: MANUAL");
+        return sb.toString();
     }
 
     // ── /mode ─────────────────────────────────────────────────────────────────

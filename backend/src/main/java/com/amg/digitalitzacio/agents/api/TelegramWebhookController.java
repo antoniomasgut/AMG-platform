@@ -434,6 +434,12 @@ public class TelegramWebhookController {
                     return ResponseEntity.ok(okTgReply(chatId, reply));
                 }
 
+                // /lead Nom [, telèfon] [, email] [, notes] — crear lead al CRM manualment
+                if (text.toLowerCase().startsWith("/lead")) {
+                    return ResponseEntity.ok(okTgReply(chatId,
+                            tenantCommandService.handleLead(tenantId, text)));
+                }
+
                 // /ajuda — llista de comandes disponibles
                 if (text.equalsIgnoreCase("/ajuda") || text.equalsIgnoreCase("/help")
                         || text.equalsIgnoreCase("/start help")) {
