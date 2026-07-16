@@ -12,6 +12,22 @@ const API_BASE  = process.env.NEXT_PUBLIC_API_URL ?? '';
 const BRAND     = '#FF6B00';
 const WA_NUMBER = '34654048164';
 
+function renderMd(text: string) {
+  return text.split('\n').map((line, li) => {
+    const isBullet = /^[\-\*•]\s+/.test(line);
+    const content  = (isBullet ? line.replace(/^[\-\*•]\s+/, '') : line)
+      .split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g)
+      .map((chunk, ci) => {
+        if (/^\*\*[^*]+\*\*$/.test(chunk)) return <strong key={ci}>{chunk.slice(2, -2)}</strong>;
+        if (/^\*[^*]+\*$/.test(chunk))     return <em key={ci}>{chunk.slice(1, -1)}</em>;
+        return chunk;
+      });
+    if (line === '') return <br key={li} />;
+    if (isBullet)   return <div key={li} style={{ paddingLeft: 10 }}>· {content}</div>;
+    return <span key={li}>{content}<br /></span>;
+  });
+}
+
 export function AgencyChatWidget() {
   const t      = useTranslations('widget');
   const locale = useLocale();
@@ -274,7 +290,7 @@ export function AgencyChatWidget() {
                       borderBottomRightRadius: m.role === 'user' ? 2 : 12,
                       borderBottomLeftRadius: m.role === 'assistant' ? 2 : 12,
                     }}>
-                      {m.text}
+                      {m.role === 'assistant' ? renderMd(m.text) : m.text}
                     </div>
                   </div>
                 ))}

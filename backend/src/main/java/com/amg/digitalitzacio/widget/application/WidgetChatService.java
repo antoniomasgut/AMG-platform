@@ -39,7 +39,7 @@ public class WidgetChatService {
     private static final int    MAX_SESSIONS_PER_IP  = 10;
     private static final int    MAX_MSGS_PER_IP_HOUR = 60;
     private static final String CHAT_MODEL           = "claude-haiku-4-5-20251001";
-    private static final int    MAX_RESPONSE_TOKENS  = 300;
+    private static final int    MAX_RESPONSE_TOKENS  = 600;
     private static final int    MAX_HISTORY_PAIRS    = 10;
     private static final int    MAX_INPUT_CHARS      = 500;
     private static final String ANTHROPIC_BASE       = "https://api.anthropic.com";
