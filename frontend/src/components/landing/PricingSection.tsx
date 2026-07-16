@@ -60,7 +60,7 @@ export function PricingSection() {
         <div className="mt-10 text-center">
           <p className="f-mono text-caption uppercase tracking-widest text-ink-3">{t('setupNote')}</p>
           <a
-            href="#contact"
+            href="#contacte"
             className="inline-block mt-4 bg-accent hover:bg-accent-light text-black font-semibold f-mono text-xs uppercase px-8 h-12 leading-[3rem] transition-colors"
           >
             {t('ctaNote')}

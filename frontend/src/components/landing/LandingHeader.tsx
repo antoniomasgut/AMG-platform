@@ -25,7 +25,7 @@ export function LandingHeader() {
             { key: 'services', href: '#services' },
             { key: 'pricing', href: '#pricing' },
             { key: 'howItWorks', href: '#how-it-works' },
-            { key: 'contact', href: '#contact' },
+            { key: 'contact', href: '#contacte' },
           ].map(({ key, href }) => (
             <a
               key={key}
@@ -67,7 +67,7 @@ export function LandingHeader() {
             { key: 'services', href: '#services' },
             { key: 'pricing', href: '#pricing' },
             { key: 'howItWorks', href: '#how-it-works' },
-            { key: 'contact', href: '#contact' },
+            { key: 'contact', href: '#contacte' },
           ].map(({ key, href }) => (
             <a
               key={key}
