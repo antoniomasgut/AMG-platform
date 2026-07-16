@@ -112,8 +112,8 @@ export function AgencyChatWidget() {
 
   return (
     <>
-      {/* WhatsApp button — WABA si disponible, personal com a fallback temporal */}
-      <div style={{ position: 'fixed', bottom: 96, right: 24, zIndex: 9999 }}>
+      {/* WhatsApp button — s'amaga quan el xat és obert */}
+      <div style={{ position: 'fixed', bottom: 96, right: 24, zIndex: 9999, display: open ? 'none' : 'block' }}>
         <a
           href={`https://wa.me/${wabaPhone ? wabaPhone.replace(/\D/g, '') : WA_NUMBER}`}
           target="_blank"
