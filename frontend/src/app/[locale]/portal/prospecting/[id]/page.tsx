@@ -46,26 +46,26 @@ function HowItWorks() {
   const [open, setOpen] = useState(false);
   const steps = [
     {
-      n: 1, title: 'Puntuar',
-      desc: 'Calcula una puntuació (0–16 pts) basada en senyals d\'oportunitat: web, WhatsApp, reviews, rating, Instagram. Gratuït i instantani. Fes-ho primer per saber en qui invertir les crides de pagament.',
+      n: 1, title: 'Puntuar (0–100 pts)',
+      desc: 'Calcula la puntuació basada en senyals d\'oportunitat: sector, reviews Google, rating, telèfon mòbil, WhatsApp, xarxes socials i presència digital. Gratuït i instantani. Ranges: 0–30 Descartar, 31–60 Revisar, 61–80 Demo, 81–100 Prioritari.',
       tag: 'Gratuït · Instant',
       tagTone: 'success' as const,
     },
     {
-      n: 2, title: 'Obtenir detalls',
-      desc: 'Consulta Google Places per als prospects amb puntuació ≥ X que encara no tenen telèfon. Obté telèfon, web, descripcions i opinions. Recalcula la puntuació (ara inclou el +5 per "sense web"). Costa crèdits de Google.',
-      tag: 'Google Places · De pagament',
-      tagTone: 'warning' as const,
-    },
-    {
-      n: 3, title: 'Enriquir tots',
-      desc: 'Cerca email i web corporativa via scraping per als prospects que els falten. No usa l\'API de Google. Gratuït però pot ser lent. Recalcula la puntuació si troba nova informació.',
+      n: 2, title: 'Analitzar web (gratis)',
+      desc: 'Fa scraping de la web de cada prospect per detectar: SSL, responsivitat, velocitat, CMS, xarxes socials, chat widgets, sistemes de reserves, formularis i tracking. Recalcula la puntuació amb tots els senyals web. Gratuït però pot tardar.',
       tag: 'Scraping · Gratuït',
       tagTone: 'success' as const,
     },
     {
-      n: 4, title: 'Exportar qualificats',
-      desc: 'Envia els prospects amb estat "Qualificat" al CRM de Leads. Des de Leads podràs enviar la demo per WhatsApp/email i gestionar el pipeline fins a tancar el client.',
+      n: 3, title: 'Qualificar (Places Details)',
+      desc: 'Consulta Google Places Details per als prospects prioritaris que no tenen telèfon. Obté telèfon, web ampliada i ressenyes. Costa crèdits de Google — reserva\'l per als millors prospects (qualifyTop o qualifyByMinScore).',
+      tag: 'Google Places · De pagament',
+      tagTone: 'warning' as const,
+    },
+    {
+      n: 4, title: 'Exportar al CRM',
+      desc: 'Envia els prospects qualificats al CRM de Leads amb el sector, la ciutat i el pitch IA al camp de notes. Els PRIORITARIS s\'exporten directament amb etapa "Qualificat". Des de Leads gestiona el pipeline fins a tancar el client.',
       tag: '→ Leads CRM',
       tagTone: 'info' as const,
     },

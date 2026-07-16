@@ -202,7 +202,8 @@ public class ProspectingController {
     @GetMapping("/prospects/{id}/widget-code")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public Map<String, String> getWidgetCode(@PathVariable UUID id) {
-        return Map.of("code", service.getWidgetCode(id) != null ? service.getWidgetCode(id) : "");
+        var code = service.getWidgetCode(id);
+        return Map.of("code", code != null ? code : "");
     }
 
     @GetMapping("/prospects/{id}/channels")
