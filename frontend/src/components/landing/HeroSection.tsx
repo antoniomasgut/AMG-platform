@@ -46,7 +46,7 @@ export function HeroSection() {
             {t('cta')}
           </a>
           <a
-            href="#solucions"
+            href="#how-it-works"
             className="f-mono text-xs uppercase text-ink-2 hover:text-ink-0 border border-border-base hover:border-border-medium px-8 h-12 flex items-center transition-colors"
           >
             {t('ctaSecondary')}

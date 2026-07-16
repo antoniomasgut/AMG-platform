@@ -48,7 +48,7 @@ export function CTASection() {
   }
 
   return (
-    <section id="contact" className="py-24 px-6 border-t border-border-subtle">
+    <section id="contacte" className="py-24 px-6 border-t border-border-subtle">
       <div className="max-w-3xl mx-auto">
         <div className="p-8 sm:p-12 border border-border-medium relative overflow-hidden bg-bg-1">
           <div className="absolute inset-0 pointer-events-none" style={{
