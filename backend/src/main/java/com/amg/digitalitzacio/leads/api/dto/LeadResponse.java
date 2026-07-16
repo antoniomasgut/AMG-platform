@@ -22,6 +22,7 @@ public record LeadResponse(
         Instant convertedAt,
         Instant lastContactAt,
         Instant lastServiceAt,
+        Instant slaDeadline,
         Boolean hasWhatsapp,
         String utmSource,
         String utmMedium,

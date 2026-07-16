@@ -77,6 +77,15 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
                                             @Param("stages") List<PipelineStage> stages,
                                             @Param("cutoff") Instant cutoff);
 
+    @Query("SELECT l FROM Lead l WHERE l.isActive = true AND l.stage IN :stages " +
+           "AND (l.lastContactAt IS NULL OR l.lastContactAt < :cutoff)")
+    List<Lead> findActiveByStageInAndLastContactBefore(@Param("stages") List<PipelineStage> stages,
+                                                       @Param("cutoff") Instant cutoff);
+
+    @Query("SELECT l FROM Lead l WHERE l.isActive = true AND l.slaDeadline IS NOT NULL " +
+           "AND l.slaDeadline < :now AND (l.slaAlerted IS NULL OR l.slaAlerted = false)")
+    List<Lead> findExpiredSlaLeads(@Param("now") Instant now);
+
     List<Lead> findByUpdatedAtBeforeAndIsActive(Instant cutoff, Boolean isActive);
 
     List<Lead> findByUpdatedAtBefore(Instant cutoff);
@@ -112,6 +121,7 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
     List<Object[]> countByUtmCampaign(UUID tenantId);
 
     @Modifying
-    @Query("UPDATE Lead l SET l.isActive = false WHERE l.createdAt < :cutoff AND l.isActive = true")
+    @Query("UPDATE Lead l SET l.isActive = false WHERE l.createdAt < :cutoff AND l.isActive = true " +
+           "AND l.stage NOT IN ('WON') AND l.convertedAt IS NULL")
     int softDeleteLeadsOlderThan(@Param("cutoff") Instant cutoff);
 }

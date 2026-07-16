@@ -4,6 +4,8 @@ import com.amg.digitalitzacio.leads.api.dto.*;
 import com.amg.digitalitzacio.leads.application.ActivityService;
 import com.amg.digitalitzacio.leads.application.ConvertLeadService;
 import com.amg.digitalitzacio.leads.application.LeadService;
+import com.amg.digitalitzacio.leads.domain.PipelineEvent;
+import com.amg.digitalitzacio.leads.domain.PipelineEventRepository;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class LeadController {
     private final LeadService leadService;
     private final ActivityService activityService;
     private final ConvertLeadService convertLeadService;
+    private final PipelineEventRepository pipelineEventRepository;
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
@@ -205,5 +208,13 @@ public class LeadController {
             @PathVariable UUID leadId,
             @Valid @RequestBody ConvertLeadRequest req) {
         return ResponseEntity.ok(convertLeadService.convert(leadId, req));
+    }
+
+    @GetMapping("/{leadId}/pipeline-events")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<PipelineEvent>> getPipelineEvents(@PathVariable UUID leadId,
+                                                                  @AuthenticationPrincipal UserPrincipal principal) {
+        leadService.getLead(leadId, principal); // verifica accés
+        return ResponseEntity.ok(pipelineEventRepository.findByLeadIdOrderByCreatedAtDesc(leadId));
     }
 }

@@ -7,6 +7,8 @@ import com.amg.digitalitzacio.auth.domain.UserRepository;
 import com.amg.digitalitzacio.leads.api.dto.*;
 import com.amg.digitalitzacio.leads.domain.*;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
+import com.amg.digitalitzacio.leads.domain.PipelineEvent;
+import com.amg.digitalitzacio.leads.domain.PipelineEventRepository;
 import com.amg.digitalitzacio.shared.notification.NotificationEvent;
 import com.amg.digitalitzacio.shared.ai.AIProviderRouter;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,6 +36,7 @@ public class LeadService {
 
     private final LeadRepository leadRepository;
     private final ActivityRepository activityRepository;
+    private final PipelineEventRepository pipelineEventRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final MessageTemplateRepository messageTemplateRepository;
@@ -67,12 +70,22 @@ public class LeadService {
             }
             if (existing.isPresent()) {
                 Lead lead = existing.get();
+                PipelineStage prevStage = lead.getStage();
                 lead.setIsActive(true);
                 lead.setSource(source);
-                if (lead.getStage() == PipelineStage.LOST || lead.getStage() == PipelineStage.NURTURING) {
+                lead.setLastContactAt(Instant.now());
+                if (prevStage == PipelineStage.LOST || prevStage == PipelineStage.NURTURING) {
                     lead.setStage(PipelineStage.CONTACTED);
                 }
                 lead = leadRepository.save(lead);
+                if (lead.getStage() != prevStage) {
+                    PipelineEvent event = new PipelineEvent();
+                    event.setLeadId(lead.getId());
+                    event.setFromStage(prevStage.name());
+                    event.setToStage(lead.getStage().name());
+                    event.setTriggeredBy("REACTIVATION");
+                    pipelineEventRepository.save(event);
+                }
                 log.info("Lead {} reactivated via {} channel", lead.getId(), source);
                 return toLeadResponse(lead);
             }
@@ -94,6 +107,13 @@ public class LeadService {
         lead.setUtmCampaign(request.utmCampaign());
 
         lead = leadRepository.save(lead);
+
+        PipelineEvent createEvent = new PipelineEvent();
+        createEvent.setLeadId(lead.getId());
+        createEvent.setFromStage(null);
+        createEvent.setToStage("NEW");
+        createEvent.setTriggeredBy(source.name());
+        pipelineEventRepository.save(createEvent);
 
         String contact = request.email() != null ? request.email()
                 : request.phone() != null ? request.phone() : "—";
@@ -207,13 +227,14 @@ public class LeadService {
         Lead lead = findLead(id);
         verifyAccess(lead, principal);
 
+        PipelineStage oldStage = lead.getStage();
         PipelineStage newStage = request.stage();
         if (newStage == PipelineStage.LOST && (request.lostReason() == null || request.lostReason().isBlank())) {
             throw new IllegalArgumentException("lostReason is required when stage is LOST");
         }
 
         // Reopen from WON/LOST
-        if (lead.getStage() == PipelineStage.WON || lead.getStage() == PipelineStage.LOST) {
+        if (oldStage == PipelineStage.WON || oldStage == PipelineStage.LOST) {
             lead.setConvertedAt(null);
         }
 
@@ -227,8 +248,35 @@ public class LeadService {
             lead.setLostReason(request.lostReason());
         }
 
+        // Actualitza lastContactAt per etapes de progrés de contacte
+        if (newStage == PipelineStage.CONTACTED || newStage == PipelineStage.QUALIFIED
+                || newStage == PipelineStage.PROPOSAL || newStage == PipelineStage.NEGOTIATION) {
+            lead.setLastContactAt(Instant.now());
+        }
+
+        // SLA: etapes crítiques on la resposta és urgent
+        if (newStage == PipelineStage.PROPOSAL) {
+            lead.setSlaDeadline(Instant.now().plus(3, ChronoUnit.DAYS));
+            lead.setSlaAlerted(false);
+        } else if (newStage == PipelineStage.NEGOTIATION) {
+            lead.setSlaDeadline(Instant.now().plus(2, ChronoUnit.DAYS));
+            lead.setSlaAlerted(false);
+        } else {
+            lead.setSlaDeadline(null);
+            lead.setSlaAlerted(false);
+        }
+
         lead.setStage(newStage);
         lead = leadRepository.save(lead);
+
+        // Audit trail d'etapes
+        PipelineEvent event = new PipelineEvent();
+        event.setLeadId(lead.getId());
+        event.setFromStage(oldStage != null ? oldStage.name() : null);
+        event.setToStage(newStage.name());
+        event.setTriggeredBy("USER");
+        event.setActorId(principal.id());
+        pipelineEventRepository.save(event);
 
         // Auto-create activity
         String desc = switch (newStage) {
@@ -366,10 +414,11 @@ public class LeadService {
                 emailService.sendEmail(lead.getEmail(), subject, body);
                 sent++;
 
+                lead.setLastContactAt(Instant.now());
                 if (lead.getStage() == PipelineStage.NEW) {
                     lead.setStage(PipelineStage.CONTACTED);
-                    leadRepository.save(lead);
                 }
+                leadRepository.save(lead);
 
                 Activity activity = new Activity();
                 activity.setLeadId(leadId);
@@ -417,10 +466,11 @@ public class LeadService {
                     logActivity(leadId, principal.id(), ActivityType.EMAIL,
                             "Email enviat [" + template.getName() + "]: " + subject);
                 }
+                lead.setLastContactAt(Instant.now());
                 if (lead.getStage() == PipelineStage.NEW) {
                     lead.setStage(PipelineStage.CONTACTED);
-                    leadRepository.save(lead);
                 }
+                leadRepository.save(lead);
                 sent++;
             } catch (Exception e) {
                 log.warn("sendTemplate failed for lead {}: {}", leadId, e.getMessage());
@@ -470,7 +520,7 @@ public class LeadService {
                 getUserRef(lead.getAssignedTo()),
                 lead.getEstimatedValue(), lead.getNotes(), lead.getTags(),
                 lead.getLostReason(), lead.getConvertedAt(),
-                lead.getLastContactAt(), lead.getLastServiceAt(), lead.getHasWhatsapp(),
+                lead.getLastContactAt(), lead.getLastServiceAt(), lead.getSlaDeadline(), lead.getHasWhatsapp(),
                 lead.getUtmSource(), lead.getUtmMedium(), lead.getUtmCampaign(), lead.getMetaLeadId(),
                 lead.getIsActive(), lead.getCreatedAt(), lead.getUpdatedAt(),
                 lead.getInterviewNotes(), lead.getWebNeed(),
@@ -488,7 +538,7 @@ public class LeadService {
                 userRef,
                 lead.getEstimatedValue(), lead.getNotes(), lead.getTags(),
                 lead.getLostReason(), lead.getConvertedAt(),
-                lead.getLastContactAt(), lead.getLastServiceAt(), lead.getHasWhatsapp(),
+                lead.getLastContactAt(), lead.getLastServiceAt(), lead.getSlaDeadline(), lead.getHasWhatsapp(),
                 lead.getUtmSource(), lead.getUtmMedium(), lead.getUtmCampaign(), lead.getMetaLeadId(),
                 lead.getIsActive(), lead.getCreatedAt(), lead.getUpdatedAt(),
                 lead.getInterviewNotes(), lead.getWebNeed(),

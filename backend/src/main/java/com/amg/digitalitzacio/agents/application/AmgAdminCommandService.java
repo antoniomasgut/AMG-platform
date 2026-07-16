@@ -90,10 +90,12 @@ public class AmgAdminCommandService {
                     telegramBotClient.answerCallbackQuery(callbackQueryId, "Lead no trobat");
                     return;
                 }
+                lead.setLastContactAt(Instant.now());
                 if (lead.getStage() == PipelineStage.NEW) {
                     lead.setStage(PipelineStage.CONTACTED);
-                    leadRepository.save(lead);
+                    lead.setPipelineStage("CONTACTED");
                 }
+                leadRepository.save(lead);
                 telegramBotClient.answerCallbackQuery(callbackQueryId, "✓ " +
                         (lead.getName() != null ? lead.getName() : "Lead") + " marcat com a contactat");
                 return;
@@ -141,6 +143,12 @@ public class AmgAdminCommandService {
             }
 
             if (sent) {
+                if (lead.getStage() == PipelineStage.NEW) {
+                    lead.setStage(PipelineStage.CONTACTED);
+                    lead.setPipelineStage("CONTACTED");
+                }
+                lead.setLastContactAt(Instant.now());
+                leadRepository.save(lead);
                 telegramBotClient.answerCallbackQuery(callbackQueryId, "✅ Demo enviada per WhatsApp!");
                 telegramBotClient.sendMessage(chatId, "✅ Demo enviada a " + escape(phone));
             } else {

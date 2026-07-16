@@ -10,7 +10,9 @@ import com.amg.digitalitzacio.demo.api.dto.DemoFlowResponse;
 import com.amg.digitalitzacio.demo.api.dto.DemoListResponse;
 import com.amg.digitalitzacio.demo.application.DemoService;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
+import com.amg.digitalitzacio.leads.domain.PipelineStage;
 import com.amg.digitalitzacio.shared.security.UserPrincipal;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -98,6 +100,13 @@ public class DemoController {
                     "messageText", message));
         }
 
+        if (lead.getStage() == PipelineStage.NEW) {
+            lead.setStage(PipelineStage.CONTACTED);
+            lead.setPipelineStage("CONTACTED");
+        }
+        lead.setLastContactAt(Instant.now());
+        leadRepository.save(lead);
+
         try {
             var fl = new FollowupLog();
             fl.setTenantId(lead.getTenantId());
@@ -138,6 +147,13 @@ public class DemoController {
                 + "📱 +34 614 492 062 | info@amgdl.com";
 
         emailService.sendEmail(lead.getEmail(), subject, body);
+
+        if (lead.getStage() == PipelineStage.NEW) {
+            lead.setStage(PipelineStage.CONTACTED);
+            lead.setPipelineStage("CONTACTED");
+        }
+        lead.setLastContactAt(Instant.now());
+        leadRepository.save(lead);
 
         try {
             var fl = new FollowupLog();

@@ -700,6 +700,30 @@ function fmt(n: number) {
   return `${(n * 100).toFixed(1)}%`;
 }
 
+// Llindar de dies sense contacte per etapa per mostrar alerta visual
+const STALE_DAYS: Partial<Record<string, number>> = {
+  NEGOTIATION: 2, PROPOSAL: 3, QUALIFIED: 5, NURTURING: 30, CONTACTED: 7,
+};
+
+function daysSince(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+}
+
+function StalenessTag({ stage, lastContactAt }: { stage: string; lastContactAt?: string | null }) {
+  const threshold = STALE_DAYS[stage];
+  if (!threshold) return null;
+  const days = daysSince(lastContactAt);
+  if (days === null) return (
+    <span className="f-mono text-[8px] text-ink-3 px-1 py-0.5 border border-border-subtle">mai contactat</span>
+  );
+  if (days < threshold) return null;
+  const tone = days >= threshold * 2 ? 'text-danger-light border-danger/40' : 'text-warning border-warning/40';
+  return (
+    <span className={`f-mono text-[8px] px-1 py-0.5 border ${tone}`}>fa {days}d</span>
+  );
+}
+
 export default function LeadsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -910,6 +934,10 @@ export default function LeadsPage() {
                         )}
                         <div className="mt-2 flex items-center gap-2 flex-wrap">
                           <AMGBadge tone="neutral">{SOURCE_LABEL[lead.source] ?? lead.source}</AMGBadge>
+                          <StalenessTag stage={stage} lastContactAt={lead.lastContactAt} />
+                          {lead.slaDeadline && new Date(lead.slaDeadline) < new Date() && (
+                            <span className="f-mono text-[8px] text-danger-light border border-danger/40 px-1 py-0.5">SLA!</span>
+                          )}
                         </div>
                         {lead.phone && (
                           <div className="mt-2 flex items-center gap-1.5 flex-wrap">

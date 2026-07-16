@@ -19,6 +19,8 @@ export interface Lead {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  lastContactAt?: string | null;
+  slaDeadline?: string | null;
   interviewNotes?: string | null;
   webNeed?: string | null;
   interviewSector?: string | null;
@@ -177,3 +179,17 @@ export interface ConvertLeadResult {
 
 export const convertLead = (leadId: string, data: ConvertLeadRequest) =>
   apiFetch<ConvertLeadResult>(`/leads/${leadId}/convert`, { method: 'POST', body: JSON.stringify(data) });
+
+export interface PipelineEventEntry {
+  id: string;
+  leadId: string;
+  fromStage: string | null;
+  toStage: string;
+  triggeredBy: string;
+  actorId: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+export const getPipelineEvents = (leadId: string) =>
+  apiFetch<PipelineEventEntry[]>(`/leads/${leadId}/pipeline-events`);

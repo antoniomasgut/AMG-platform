@@ -110,4 +110,9 @@ public class Lead {
         if (pipelineStage == null) pipelineStage = stage.name();
         if (isActive == null) isActive = true;
     }
+
+    @PreUpdate
+    public void preUpdate() {
+        if (stage != null) pipelineStage = stage.name();
+    }
 }

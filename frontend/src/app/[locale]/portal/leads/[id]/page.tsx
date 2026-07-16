@@ -7,7 +7,8 @@ import { useToast } from '@/lib/toast-context';
 import {
   getLead, getActivities, changeStage, createActivity, setWhatsapp, updateLead, deleteLead,
   completeActivity, updateActivity, deleteActivity,
-  analyzeNotes, type AnalyzeNotesResponse, type Activity,
+  analyzeNotes, getPipelineEvents,
+  type AnalyzeNotesResponse, type Activity, type PipelineEventEntry,
   WEB_NEED_OPTIONS,
 } from '@/services/leads';
 import { createLeadProposal, sendBudget } from '@/services/billing';
@@ -166,6 +167,12 @@ export default function LeadDetailPage() {
     enabled: !!user && !!id,
   });
 
+  const { data: pipelineEvents = [] } = useQuery({
+    queryKey: ['pipeline-events', id],
+    queryFn: () => getPipelineEvents(id),
+    enabled: !!user && !!id,
+  });
+
   const { mutate: doChangeStage, isPending: changingStage } = useMutation({
     mutationFn: ({ stage, lostReason }: { stage: string; lostReason?: string }) =>
       changeStage(id, stage, lostReason),
@@ -174,6 +181,7 @@ export default function LeadDetailPage() {
       setShowLostModal(false);
       qc.invalidateQueries({ queryKey: ['lead', id] });
       qc.invalidateQueries({ queryKey: ['leads'] });
+      qc.invalidateQueries({ queryKey: ['pipeline-events', id] });
     },
     onError: () => toast('error', 'Error actualitzant etapa'),
   });
@@ -519,6 +527,15 @@ export default function LeadDetailPage() {
                 <Field label="Origen" value={SOURCE_LABEL[lead.source] ?? lead.source} />
                 <Field label="Valor estimat" value={lead.estimatedValue != null ? `${lead.estimatedValue} €` : ''} />
                 <Field label="Creat" value={fmtDate(lead.createdAt)} />
+                <Field label="Últim contacte" value={lead.lastContactAt ? fmtDate(lead.lastContactAt) : '—'} />
+                {lead.slaDeadline && (
+                  <div>
+                    <div className="f-mono text-label text-ink-3 uppercase tracking-wider mb-0.5">SLA</div>
+                    <div className={`f-display text-sm ${new Date(lead.slaDeadline) < new Date() ? 'text-danger-light' : 'text-ink-0'}`}>
+                      {fmtDate(lead.slaDeadline)} {new Date(lead.slaDeadline) < new Date() ? '⚠ vençut' : ''}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {lead.notes && (
@@ -1201,6 +1218,30 @@ export default function LeadDetailPage() {
           )}
         </div>
       </div>
+
+      {pipelineEvents.length > 0 && (
+        <div className="amg-card card-clip overflow-hidden">
+          <div className="p-4 sm:p-5 border-b border-border-base">
+            <div className="f-display font-bold text-sm">Historial d&apos;etapes</div>
+          </div>
+          <div className="divide-y divide-border-base">
+            {(pipelineEvents as PipelineEventEntry[]).map(ev => (
+              <div key={ev.id} className="px-4 sm:px-5 py-2.5 flex items-center gap-3">
+                <div className="f-mono text-[10px] text-ink-3 shrink-0 w-20">{fmtDate(ev.createdAt)}</div>
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  {ev.fromStage && (
+                    <span className="f-mono text-[10px] text-ink-3">{ev.fromStage}</span>
+                  )}
+                  {ev.fromStage && <span className="text-ink-4">→</span>}
+                  <span className="f-mono text-[10px] text-ink-0 font-medium">{ev.toStage}</span>
+                  {ev.notes && <span className="f-mono text-[9px] text-ink-3 truncate">· {ev.notes}</span>}
+                </div>
+                <span className="f-mono text-[9px] text-ink-4 shrink-0">{ev.triggeredBy}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {showConvertModal && (
         <ConvertLeadModal

@@ -5,6 +5,7 @@ import com.amg.digitalitzacio.leads.api.dto.ActivityRequest;
 import com.amg.digitalitzacio.leads.api.dto.ActivityResponse;
 import com.amg.digitalitzacio.leads.domain.Activity;
 import com.amg.digitalitzacio.leads.domain.ActivityRepository;
+import com.amg.digitalitzacio.leads.domain.ActivityType;
 import com.amg.digitalitzacio.leads.domain.Lead;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
@@ -44,6 +45,14 @@ public class ActivityService {
         activity.setDueDate(request.dueDate());
 
         activity = activityRepository.save(activity);
+
+        if (isContactType(request.type())) {
+            leadRepository.findById(leadId).ifPresent(l -> {
+                l.setLastContactAt(Instant.now());
+                leadRepository.save(l);
+            });
+        }
+
         return toActivityResponse(activity);
     }
 
@@ -101,6 +110,11 @@ public class ActivityService {
                 getUserRef(a.getUserId()),
                 a.getDueDate(), a.getCompletedAt(), a.getCreatedAt()
         );
+    }
+
+    private boolean isContactType(ActivityType type) {
+        return type == ActivityType.CALL || type == ActivityType.EMAIL
+                || type == ActivityType.WHATSAPP || type == ActivityType.MEETING;
     }
 
     private ActivityResponse.UserRef getUserRef(UUID userId) {

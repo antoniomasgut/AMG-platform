@@ -11,6 +11,8 @@ import com.amg.digitalitzacio.leads.api.dto.ConvertLeadRequest;
 import com.amg.digitalitzacio.leads.api.dto.ConvertLeadResult;
 import com.amg.digitalitzacio.leads.domain.Lead;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
+import com.amg.digitalitzacio.leads.domain.PipelineEvent;
+import com.amg.digitalitzacio.leads.domain.PipelineEventRepository;
 import com.amg.digitalitzacio.leads.domain.PipelineStage;
 import com.amg.digitalitzacio.payments.application.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ import java.util.UUID;
 public class ConvertLeadService {
 
     private final LeadRepository leadRepo;
+    private final PipelineEventRepository pipelineEventRepository;
     private final TenantService tenantService;
     private final BudgetRepository budgetRepo;
     private final PaymentService paymentService;
@@ -116,10 +119,20 @@ public class ConvertLeadService {
         }
 
         // 4. Marcar lead com a convertit
+        PipelineStage prevStage = lead.getStage();
         lead.setConvertedTenantId(newTenantId);
         lead.setConvertedAt(Instant.now());
         lead.setStage(PipelineStage.WON);
+        lead.setSlaDeadline(null);
         leadRepo.save(lead);
+
+        PipelineEvent event = new PipelineEvent();
+        event.setLeadId(leadId);
+        event.setFromStage(prevStage != null ? prevStage.name() : null);
+        event.setToStage("WON");
+        event.setTriggeredBy("CONVERT");
+        event.setNotes("Tenant creat: " + newTenantId);
+        pipelineEventRepository.save(event);
 
         return new ConvertLeadResult(newTenantId, newTenant.name(), stripeUrl, goCardlessUrl, holdedInvoiceId);
     }
