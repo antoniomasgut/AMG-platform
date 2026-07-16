@@ -107,6 +107,7 @@ public class Lead {
     @PrePersist
     public void prePersist() {
         if (stage == null) stage = PipelineStage.NEW;
+        if (pipelineStage == null) pipelineStage = stage.name();
         if (isActive == null) isActive = true;
     }
 }

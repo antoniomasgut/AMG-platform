@@ -143,7 +143,7 @@ public class ChatSessionService {
         if (contactName != null && !contactName.isBlank() &&
             contactPhone != null && !contactPhone.isBlank()) {
             try {
-                var lead = findOrCreateChatLead(landing.getTenantId(), contactName.strip(), contactPhone.strip());
+                var lead = findOrCreateChatLead(landing.getTenantId(), contactName.strip(), contactPhone.strip(), null);
                 session.setLeadId(lead.getId().toString());
             } catch (Exception e) {
                 log.warn("Could not create lead for chat session: {}", e.getMessage());
@@ -271,7 +271,7 @@ public class ChatSessionService {
         if (contactName != null && !contactName.isBlank()
                 && contactPhone != null && !contactPhone.isBlank()) {
             try {
-                findOrCreateChatLead(tenantId, contactName.strip(), contactPhone.strip());
+                findOrCreateChatLead(tenantId, contactName.strip(), contactPhone.strip(), null);
             } catch (Exception e) {
                 log.error("[Agency] Could not create lead for {}: {}", contactName, e.getMessage());
                 try {
@@ -431,7 +431,7 @@ public class ChatSessionService {
         return cleaned;
     }
 
-    private Lead findOrCreateChatLead(UUID tenantId, String name, String phone) {
+    private Lead findOrCreateChatLead(UUID tenantId, String name, String phone, String email) {
         Long tgChatId = null;
         try {
             var link = chatLinkRepository.findByTenantId(tenantId).orElse(null);
@@ -442,10 +442,14 @@ public class ChatSessionService {
             }
         } catch (Exception ignored) {}
 
-        var existing = leadRepository.findFirstByTenantIdAndPhone(tenantId, phone);
-        if (existing.isPresent()) {
-            var lead = existing.get();
+        // 1. Cerca per telèfon
+        var byPhone = leadRepository.findFirstByTenantIdAndPhone(tenantId, phone);
+        if (byPhone.isPresent()) {
+            var lead = byPhone.get();
             lead.setLastContactAt(Instant.now());
+            if (email != null && !email.isBlank() && (lead.getEmail() == null || lead.getEmail().isBlank())) {
+                lead.setEmail(email);
+            }
             var saved = leadRepository.save(lead);
             if (tgChatId != null) {
                 telegramBotClient.sendMessage(tgChatId,
@@ -454,10 +458,29 @@ public class ChatSessionService {
             return saved;
         }
 
+        // 2. Cerca per email (dedup si ja existeix del formulari web)
+        if (email != null && !email.isBlank()) {
+            var byEmail = leadRepository.findFirstByTenantIdAndEmail(tenantId, email);
+            if (byEmail.isPresent()) {
+                var lead = byEmail.get();
+                lead.setPhone(phone);
+                lead.setLastContactAt(Instant.now());
+                var saved = leadRepository.save(lead);
+                log.info("[Agency] Lead deduplicat per email {}: afegit telèfon {}", email, phone);
+                if (tgChatId != null) {
+                    telegramBotClient.sendMessage(tgChatId,
+                        "🔗 <b>" + escapeHtml(name) + " (lead existent) · ara amb telèfon</b>\n📱 " + escapeHtml(phone));
+                }
+                return saved;
+            }
+        }
+
+        // 3. Crea nou lead
         var lead = new Lead();
         lead.setTenantId(tenantId);
         lead.setName(name);
         lead.setPhone(phone);
+        if (email != null && !email.isBlank()) lead.setEmail(email);
         lead.setSource(LeadSource.CHAT_WIDGET);
         lead.setStage(com.amg.digitalitzacio.leads.domain.PipelineStage.NEW);
         lead.setIsActive(true);
@@ -467,7 +490,8 @@ public class ChatSessionService {
         var saved = leadRepository.save(lead);
 
         if (tgChatId != null) {
-            String msg = "✅ <b>Nou lead · " + escapeHtml(name) + "</b>\n📱 " + escapeHtml(phone);
+            String msg = "✅ <b>Nou lead · " + escapeHtml(name) + "</b>\n📱 " + escapeHtml(phone)
+                + (email != null && !email.isBlank() ? "\n✉️ " + escapeHtml(email) : "");
             String leadIdStr = saved.getId().toString();
             String demoId = null;
             try {
@@ -499,6 +523,9 @@ public class ChatSessionService {
         }
 
         if (session.getMessageCount() >= MAX_MSGS_PER_SESSION) {
+            if ("agency".equals(session.getLandingSlug()) && session.getLeadId() == null) {
+                notifyAnonymousSessionExpired(session);
+            }
             deleteSession(sessionId);
             return new SendMessageResult(sessionId, buildLimitMessage(session), true);
         }
@@ -533,26 +560,30 @@ public class ChatSessionService {
             }
         }
 
-        // Captura de contacte: el bot inclou [CAPTURA_CONTACTE:{...}] quan l'usuari dóna les dades
-        if ("agency".equals(session.getLandingSlug()) && session.getLeadId() == null) {
-            Matcher cm = CONTACT_TAG.matcher(reply);
-            if (cm.find()) {
-                reply = CONTACT_TAG.matcher(reply).replaceAll("").strip();
-                try {
-                    Map<String, Object> contact = objectMapper.readValue(cm.group(1), new TypeReference<>() {});
-                    String capturedName  = contact.get("name")  instanceof String s ? s.strip() : null;
-                    String capturedPhone = contact.get("phone") instanceof String s ? s.replaceAll("[\\s\\-.]", "").strip() : null;
-                    if (capturedName != null && !capturedName.isBlank()
-                            && capturedPhone != null && !capturedPhone.isBlank()) {
-                        var lead = findOrCreateChatLead(UUID.fromString(session.getTenantId()), capturedName, capturedPhone);
-                        session.setLeadId(lead.getId().toString());
-                        session.setContactName(capturedName);
-                        session.setContactPhone(capturedPhone);
-                        log.info("[Agency] Contacte capturat durant conversa: {} / {}", capturedName, capturedPhone);
-                    }
-                } catch (Exception e) {
-                    log.warn("[Agency] Error processant tag CAPTURA_CONTACTE: {}", e.getMessage());
+        // Captura de contacte: el bot inclou [CAPTURA_CONTACTE:{...}] quan l'usuari dóna les dades.
+        // Sempre elimina el tag de la resposta (complet o parcial) per evitar que sigui visible.
+        Matcher cm = CONTACT_TAG.matcher(reply);
+        boolean hasContactTag = cm.find();
+        reply = CONTACT_TAG.matcher(reply).replaceAll("").strip();
+        if (reply.contains("[CAPTURA_CONTACTE:")) {
+            reply = reply.replaceAll("\\[CAPTURA_CONTACTE:[^\\]]*$", "").strip();
+        }
+        if (hasContactTag && "agency".equals(session.getLandingSlug()) && session.getLeadId() == null) {
+            try {
+                Map<String, Object> contact = objectMapper.readValue(cm.group(1), new TypeReference<>() {});
+                String capturedName  = contact.get("name")  instanceof String s ? s.strip() : null;
+                String capturedPhone = contact.get("phone") instanceof String s ? s.replaceAll("[\\s\\-.()+]", "").strip() : null;
+                String capturedEmail = contact.get("email") instanceof String s && !s.isBlank() ? s.strip().toLowerCase() : null;
+                if (capturedName != null && !capturedName.isBlank()
+                        && capturedPhone != null && !capturedPhone.isBlank()) {
+                    var lead = findOrCreateChatLead(UUID.fromString(session.getTenantId()), capturedName, capturedPhone, capturedEmail);
+                    session.setLeadId(lead.getId().toString());
+                    session.setContactName(capturedName);
+                    session.setContactPhone(capturedPhone);
+                    log.info("[Agency] Contacte capturat durant conversa: {} / {}", capturedName, capturedPhone);
                 }
+            } catch (Exception e) {
+                log.warn("[Agency] Error processant tag CAPTURA_CONTACTE: {}", e.getMessage());
             }
         }
 
@@ -838,6 +869,26 @@ public class ChatSessionService {
                 .build();
     }
 
+    private void notifyAnonymousSessionExpired(ChatSession session) {
+        try {
+            String chatIdStr = sysConfig.get("AMG_SALES_CHAT_ID");
+            if (chatIdStr == null || chatIdStr.isBlank()) return;
+            Long chatId = Long.parseLong(chatIdStr.trim());
+            int msgCount = session.getMessages().size();
+            String snippet = session.getMessages().stream()
+                .filter(m -> "user".equals(m.getRole()))
+                .map(m -> "• " + clip(m.getContent(), 80))
+                .limit(3)
+                .collect(java.util.stream.Collectors.joining("\n"));
+            telegramBotClient.sendMessage(chatId,
+                "👤 <b>Visitant anònim ha exhaurit el xat</b>\n" +
+                "<i>" + msgCount + " missatges sense deixar dades de contacte</i>\n\n" +
+                snippet);
+        } catch (Exception e) {
+            log.debug("Avís sessió anònima omès: {}", e.getMessage());
+        }
+    }
+
     /**
      * Prompt del sistema unificat entre canals: per a tenants reals fa servir el MATEIX
      * {@code promptBuilder.build(...)} que correu/WhatsApp/Telegram (inclou persona,
@@ -852,8 +903,8 @@ public class ChatSessionService {
                 prompt += """
 
 <contact_capture>
-Si el visitant no ha donat nom ni telèfon, demana'ls de forma natural quan hagi mostrat interès real (no al primer missatge). Quan l'usuari proporcioni nom i telèfon, afegeix AL FINAL de la teva resposta, en una nova línia: [CAPTURA_CONTACTE:{"name":"NOM","phone":"TELEFON"}]
-Substitueix NOM i TELEFON pels valors reals. Mai esmentis el tag a l'usuari — no és visible.
+Si el visitant és anònim (no ha donat nom ni telèfon), al 3r o 4t missatge demana'ls de forma natural i amigable. Quan l'usuari et proporcioni nom i telèfon, afegeix EXACTAMENT al final de la teva resposta (nova línia): [CAPTURA_CONTACTE:{"name":"NOM","phone":"TELEFON","email":"EMAIL_O_BUIT"}]
+Substitueix els valors reals. Si no tens email, posa string buit "". Mai esmentis el tag — és invisible per al visitant.
 </contact_capture>""";
             }
             return prompt;

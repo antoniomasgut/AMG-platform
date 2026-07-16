@@ -2,6 +2,8 @@ package com.amg.digitalitzacio.demo.api;
 
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
+import com.amg.digitalitzacio.agents.domain.FollowupLog;
+import com.amg.digitalitzacio.agents.domain.FollowupLogRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.demo.api.dto.DemoFlowResponse;
@@ -31,6 +33,7 @@ public class DemoController {
     private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final WhatsAppChannel whatsAppChannel;
     private final EmailService emailService;
+    private final FollowupLogRepository followupLogRepository;
 
     @GetMapping
     public DemoListResponse listDemos() {
@@ -95,6 +98,17 @@ public class DemoController {
                     "messageText", message));
         }
 
+        try {
+            var fl = new FollowupLog();
+            fl.setTenantId(lead.getTenantId());
+            fl.setType("DEMO_SENT");
+            fl.setEntityId(lead.getId());
+            fl.setContact(lead.getPhone());
+            followupLogRepository.save(fl);
+        } catch (Exception ex) {
+            // non-fatal
+        }
+
         return ResponseEntity.ok(Map.of("sent", true, "phone", lead.getPhone(), "messageText", ""));
     }
 
@@ -124,6 +138,18 @@ public class DemoController {
                 + "📱 +34 614 492 062 | info@amgdl.com";
 
         emailService.sendEmail(lead.getEmail(), subject, body);
+
+        try {
+            var fl = new FollowupLog();
+            fl.setTenantId(lead.getTenantId());
+            fl.setType("DEMO_SENT");
+            fl.setEntityId(lead.getId());
+            fl.setContact(lead.getEmail());
+            followupLogRepository.save(fl);
+        } catch (Exception ex) {
+            // non-fatal
+        }
+
         return ResponseEntity.ok(Map.of("sent", true, "email", lead.getEmail()));
     }
 }

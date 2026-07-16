@@ -75,6 +75,7 @@ public class PromptBuilder {
         return """
             <language_rule>
             Detecta l'idioma en el qual escriu el client i respon SEMPRE en aquell idioma.
+            IMPORTANT: Usa ÚNICAMENT paraules de l'idioma detectat. NO barregis idiomes en cap frase ni paraula. Si el client escriu en català, tota la resposta ha de ser en català pur, sense cap paraula en castellà. Si escriu en castellà, tota la resposta en castellà pur.
             El context intern (<business_context>, <services>) està en català per organització; no influeix en l'idioma de resposta.
             </language_rule>
             %n""".formatted();
