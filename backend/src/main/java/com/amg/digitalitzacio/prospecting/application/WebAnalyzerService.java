@@ -48,12 +48,14 @@ public class WebAnalyzerService {
     private static final Pattern REACT_P     = Pattern.compile("react\\.development\\.js|react\\.production\\.min|__reactFiber", Pattern.CASE_INSENSITIVE);
     private static final Pattern VUE_P       = Pattern.compile("vue\\.min\\.js|__vue__|data-v-[a-f0-9]+", Pattern.CASE_INSENSITIVE);
 
-    // Social networks
-    private static final Pattern FB_P        = Pattern.compile("facebook\\.com/(?!sharer|dialog|tr\\?)[\\w.]+", Pattern.CASE_INSENSITIVE);
+    // Social networks — patrons afinats per evitar falsos positius amb widgets/botons de sharing.
+    // FB: exclou sharer, dialog, tracking (tr?ev), plugins (embed), pàgines de TR (tr/) i v[N]/ (API paths)
+    private static final Pattern FB_P        = Pattern.compile("facebook\\.com/(?!sharer|dialog|tr[/?]|plugins|v\\d|photo|media|events|groups|hashtag|watch)[\\w.]{3,}", Pattern.CASE_INSENSITIVE);
     private static final Pattern LI_P        = Pattern.compile("linkedin\\.com/(?:company|in)/[\\w-]+", Pattern.CASE_INSENSITIVE);
     private static final Pattern TT_P        = Pattern.compile("tiktok\\.com/@[\\w.]+", Pattern.CASE_INSENSITIVE);
     private static final Pattern YT_P        = Pattern.compile("youtube\\.com/(?:channel|c|user|@)[\\w-]+", Pattern.CASE_INSENSITIVE);
-    private static final Pattern IG_P        = Pattern.compile("instagram\\.com/[\\w.]+", Pattern.CASE_INSENSITIVE);
+    // IG: exclou permalinks de contingut (p/, reel/, stories/, explore/, accounts/), mín 3 chars username
+    private static final Pattern IG_P        = Pattern.compile("instagram\\.com/(?!p/|reel/|stories/|explore/|accounts/|_u/)[\\w.]{3,}", Pattern.CASE_INSENSITIVE);
 
     public void analyze(Prospect prospect) {
         if (prospect.getWebsite() == null || prospect.getWebsite().isBlank()) return;
@@ -93,7 +95,7 @@ public class WebAnalyzerService {
                 }
             }
 
-            var loadMs = (int)(System.currentTimeMillis() - t0);
+            var loadMs = html != null ? (int)(System.currentTimeMillis() - t0) : -1;
 
             prospect.setHasSsl(ssl);
             prospect.setWebLoadMs(loadMs);

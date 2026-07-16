@@ -424,10 +424,12 @@ public class ProspectingOrchestrator implements ProspectingService {
             tenantId = userRepository.findById(campaign.getCreatedBy())
                     .map(u -> u.getTenantId()).orElse(null);
         }
-        var result = leadService.createLead(
+        var result = leadService.createLeadFromProspect(
                 prospect.getName(), prospect.getEmail(), prospect.getPhone(),
                 prospect.getWebsite(), prospect.getDescription(),
-                prospect.getSource().name(), tenantId);
+                prospect.getSource().name(), tenantId,
+                prospect.getSector(), prospect.getCity(),
+                prospect.getAiPitch(), prospect.getProspectTier());
 
         prospect.setLeadId(result.leadId());
         prospect.setStatus(ProspectStatus.EXPORTED);
@@ -616,7 +618,7 @@ public class ProspectingOrchestrator implements ProspectingService {
         return n;
     }
 
-    private List<ProspectSignal> detectSignals(Prospect p) {
+    List<ProspectSignal> detectSignals(Prospect p) {
         var signals = new ArrayList<ProspectSignal>();
 
         // ── Potencial comercial ────────────────────────────────────────────────
@@ -643,34 +645,46 @@ public class ProspectingOrchestrator implements ProspectingService {
                 signals.add(signal("MIXED_RATING", "Rating millorable (" + p.getGoogleRating() + "★)", "Agent de fidelització + automatització reviews", "info", 0));
             }
         }
-        if (p.getPhone() != null && p.getPhone().replaceAll("\\D","").startsWith("6")) {
-            signals.add(signal("HAS_MOBILE", "Telèfon mòbil disponible", "Canal directe per WhatsApp Business", "info", 5));
+        if (p.getPhone() != null) {
+            String digits = p.getPhone().replaceAll("\\D", "");
+            // Eliminar codi de país +34 si present
+            if (digits.startsWith("34") && digits.length() > 9) digits = digits.substring(2);
+            // Mòbils espanyols: 6xx i 7xx
+            if (digits.startsWith("6") || digits.startsWith("7")) {
+                signals.add(signal("HAS_MOBILE", "Telèfon mòbil disponible", "Canal directe per WhatsApp Business", "info", 5));
+            }
         }
 
         // ── Necessitat de digitalització ──────────────────────────────────────
-        if (Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasChatWidget())) {
+        // Els senyals que depenen de l'anàlisi web (hasChatWidget, hasBookingSystem, etc.)
+        // NOMÉS disparen si s'ha fet l'anàlisi (webAnalyzedAt != null). Sense anàlisi,
+        // tots els camps boolets són NULL i !Boolean.TRUE.equals(null) = true, cosa que
+        // inflaria el score 60+ pts erròniament per a qualsevol negoci amb web no analitzada.
+        boolean webAnalyzed = p.getWebAnalyzedAt() != null;
+
+        if (webAnalyzed && Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasChatWidget())) {
             signals.add(signal("NO_CHAT", "Sense chat a la web", "Widget IA de xat (Spec 30) — augment conversió", "warning", 10));
         }
         if (!Boolean.TRUE.equals(p.getHasWhatsapp())) {
             signals.add(signal("NO_WHATSAPP", "Sense WhatsApp Business", "Agent IA per WhatsApp + WABA API → porta d'entrada F1", "warning", 10));
         }
-        if (Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasBookingSystem())) {
+        if (webAnalyzed && Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasBookingSystem())) {
             signals.add(signal("NO_BOOKING", "Sense sistema de reserves online", "Agenda automàtica (F2) → estalvi 2-3h/dia de telèfon", "warning", 10));
         }
-        if (!Boolean.TRUE.equals(p.getHasAnalytics()) && !Boolean.TRUE.equals(p.getHasGtm()) && !Boolean.TRUE.equals(p.getHasPixel())) {
+        if (webAnalyzed && !Boolean.TRUE.equals(p.getHasAnalytics()) && !Boolean.TRUE.equals(p.getHasGtm()) && !Boolean.TRUE.equals(p.getHasPixel())) {
             signals.add(signal("NO_AUTOMATIONS", "Sense tracking ni automatitzacions", "GTM + Meta Pixel + Analytics → base per a F3 i F4", "warning", 15));
         }
-        if (Boolean.TRUE.equals(p.getHasWebsite()) &&
+        if (webAnalyzed && Boolean.TRUE.equals(p.getHasWebsite()) &&
             (Boolean.FALSE.equals(p.getIsResponsive()) || (p.getWebLoadMs() != null && p.getWebLoadMs() > 3000))) {
             signals.add(signal("OLD_WEB", "Web lenta o no adaptada a mòbil", "Landing AMG Pro → millora UX i conversió", "danger", 15));
         }
-        if (Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasClearCta())) {
+        if (webAnalyzed && Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasClearCta())) {
             signals.add(signal("NO_CTA", "Sense CTA clara a la web", "Optimització conversió + botó WhatsApp/chat", "warning", 10));
         }
-        if (Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasFaq())) {
+        if (webAnalyzed && Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasFaq())) {
             signals.add(signal("NO_FAQ", "Sense secció FAQ", "FAQ automàtica des de la KB de l'agent IA", "info", 5));
         }
-        if (Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasContactForm())) {
+        if (webAnalyzed && Boolean.TRUE.equals(p.getHasWebsite()) && !Boolean.TRUE.equals(p.getHasContactForm())) {
             signals.add(signal("NO_FORM", "Sense formulari de contacte", "Formulari AMG → captura leads a la BD", "warning", 10));
         }
         if (!Boolean.TRUE.equals(p.getHasWebsite())) {
@@ -679,18 +693,15 @@ public class ProspectingOrchestrator implements ProspectingService {
         // ── Patró de presència a xarxes socials (Mòdul 12 — afinament scoring) ──
         int socialNetworks = countSocialNetworks(p);
 
-        // El cas estrella: rep missatges per Messenger però no té cap agent/xat
-        // → probablement no els contesta a temps (o no se n'assabenta).
-        // Pes moderat (+7): dispara sovint (les pàgines de FB són ubiqües) i
-        // se solapa parcialment amb NO_CHAT (+10); tot i així és el senyal social
-        // més valuós perquè apunta directament a la F1.
-        if (Boolean.TRUE.equals(p.getHasFacebook()) && !Boolean.TRUE.equals(p.getHasChatWidget())) {
+        // El cas estrella: rep missatges per Messenger però no té cap agent/xat.
+        // Només si s'ha analitzat la web; si no, hasFacebook i hasChatWidget poden ser NULL
+        // i el senyal dispararia per falta de dades (no per presència real de FB).
+        if (webAnalyzed && Boolean.TRUE.equals(p.getHasFacebook()) && !Boolean.TRUE.equals(p.getHasChatWidget())) {
             signals.add(signal("SOCIAL_INBOX_NO_AGENT",
                 "Rep missatges per Messenger sense agent",
                 "Agent IA (F1) que contesta els DMs 24/7 → no es perd cap consulta", "warning", 7));
         }
         // Inverteix en xarxes però no té web pròpia → capta atenció i la perd.
-        // L'oportunitat més clara: ja fa màrqueting, només li falta on convertir.
         if (socialNetworks > 0 && !Boolean.TRUE.equals(p.getHasWebsite())) {
             signals.add(signal("SOCIAL_NO_WEBSITE",
                 "Actiu a xarxes però sense web pròpia",
@@ -706,7 +717,7 @@ public class ProspectingOrchestrator implements ProspectingService {
         // convertibilitat més incerta (potser no li interessa el digital): pes baix.
         // Només si s'ha analitzat de veritat: sense anàlisi els camps són NULL i
         // "zero xarxes" seria falta de dades, no absència real de presència.
-        if (socialNetworks == 0 && p.getWebAnalyzedAt() != null) {
+        if (socialNetworks == 0 && webAnalyzed) {
             signals.add(signal("ZERO_SOCIAL",
                 "Sense presència a xarxes socials",
                 "Presència digital de zero → Social Publisher + landing", "warning", 4));
@@ -716,6 +727,7 @@ public class ProspectingOrchestrator implements ProspectingService {
         if (isRetailBusiness(p)) {
             signals.add(signal("RETAIL_NOT_SERVICE", "Sembla una tenda o distribuïdor (no servei)", "Verificar manualment — pot no ser el client objectiu d'AMG", "danger", -40));
         }
+        // webLoadMs = -1 indica que el domini no era accessible quan es va analitzar
         if (Boolean.TRUE.equals(p.getHasWebsite()) && p.getWebLoadMs() != null && p.getWebLoadMs() < 0) {
             signals.add(signal("DOMAIN_DOWN", "Domini no accessible", "Cal verificar manualment", "danger", -50));
         }
@@ -743,8 +755,9 @@ public class ProspectingOrchestrator implements ProspectingService {
     }
 
     @Override
-    @Transactional
     public int analyzeAllWeb(UUID campaignId) {
+        // Carrega sense @Transactional: cada prospect guarda en la seva pròpia transacció
+        // per evitar tenir la connexió BD oberta durant tota l'operació (que pot durar minuts).
         var prospects = prospectRepository.findByCampaignId(campaignId).stream()
             .filter(p -> p.getWebAnalyzedAt() == null)
             .filter(p -> p.getWebsite() != null && !p.getWebsite().isBlank())
@@ -753,7 +766,7 @@ public class ProspectingOrchestrator implements ProspectingService {
         for (var p : prospects) {
             try {
                 webAnalyzerService.analyze(p);
-                recalculateAndSave(p);
+                saveAnalyzedProspect(p);
                 prospectDemoGeneratorService.generateIfEligible(p);
                 analyzed++;
                 Thread.sleep(1500);
@@ -763,6 +776,12 @@ public class ProspectingOrchestrator implements ProspectingService {
         }
         log.info("Web analysis done: {}/{} prospects in campaign {}", analyzed, prospects.size(), campaignId);
         return analyzed;
+    }
+
+    @Transactional
+    protected void saveAnalyzedProspect(Prospect p) {
+        applyScoreAndTier(p);
+        prospectRepository.save(p);
     }
 
     @Override

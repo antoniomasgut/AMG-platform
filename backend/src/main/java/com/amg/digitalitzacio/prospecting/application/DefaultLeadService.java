@@ -53,6 +53,50 @@ public class DefaultLeadService implements LeadService {
         return new LeadCreationResult(saved.getId(), true);
     }
 
+    @Override
+    @Transactional
+    public LeadCreationResult createLeadFromProspect(String name, String email, String phone,
+                                                      String website, String description, String source,
+                                                      UUID tenantId, String sector, String city,
+                                                      String aiPitch, String prospectTier) {
+        // Deduplicació igual que createLead
+        if (phone != null && !phone.isBlank()) {
+            var existing = leadRepository.findFirstByTenantIdAndPhone(tenantId, phone);
+            if (existing.isPresent()) {
+                return new LeadCreationResult(existing.get().getId(), false);
+            }
+        }
+        if (email != null && !email.isBlank()) {
+            var existing = leadRepository.findFirstByTenantIdAndEmail(tenantId, email);
+            if (existing.isPresent()) {
+                return new LeadCreationResult(existing.get().getId(), false);
+            }
+        }
+        var lead = new Lead();
+        lead.setTenantId(tenantId);
+        lead.setName(name);
+        lead.setEmail(email);
+        lead.setPhone(phone);
+        lead.setNotes(buildProspectNotes(website, description, aiPitch));
+        lead.setSource(parseSource(source));
+        // Prospects PRIORITY ja qualificats → QUALIFIED directament (no NEW)
+        lead.setStage("PRIORITY".equals(prospectTier) ? PipelineStage.QUALIFIED : PipelineStage.NEW);
+        // Dades extra del prospect que enriqueixen el CRM
+        if (sector != null && !sector.isBlank()) lead.setInterviewSector(sector);
+        var saved = leadRepository.save(lead);
+        log.debug("Created lead {} from prospect export (tier={}, sector={})", saved.getId(), prospectTier, sector);
+        postAcceptanceService.onLeadCreated(tenantId, name, phone != null ? phone : email, source);
+        return new LeadCreationResult(saved.getId(), true);
+    }
+
+    private String buildProspectNotes(String website, String description, String aiPitch) {
+        var sb = new StringBuilder();
+        if (aiPitch != null && !aiPitch.isBlank()) sb.append("[Pitch IA]\n").append(aiPitch).append("\n\n");
+        if (description != null && !description.isBlank()) sb.append(description).append("\n");
+        if (website != null && !website.isBlank()) sb.append("Web: ").append(website);
+        return sb.isEmpty() ? null : sb.toString().trim();
+    }
+
     private String buildNotes(String website, String description) {
         var sb = new StringBuilder();
         if (description != null && !description.isBlank()) sb.append(description).append("\n");

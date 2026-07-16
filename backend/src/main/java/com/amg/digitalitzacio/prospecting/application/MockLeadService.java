@@ -14,4 +14,9 @@ public class MockLeadService implements LeadService {
     public LeadCreationResult createLead(String name, String email, String phone, String website, String description, String source, UUID tenantId) {
         return new LeadCreationResult(UUID.randomUUID(), true);
     }
+
+    @Override
+    public LeadCreationResult createLeadFromProspect(String name, String email, String phone, String website, String description, String source, UUID tenantId, String sector, String city, String aiPitch, String prospectTier) {
+        return new LeadCreationResult(UUID.randomUUID(), true);
+    }
 }
