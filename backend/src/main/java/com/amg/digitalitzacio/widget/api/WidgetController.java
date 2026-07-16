@@ -145,11 +145,14 @@ public class WidgetController {
       }
       if (cfg.chatEnabled) {
         chatWin = document.createElement('div'); chatWin.className = 'amg-cw amg-hide';
-        chatWin.innerHTML = '<div class="amg-hd"><span>'+(cfg.businessName||'Xat')+'</span><button onclick="this.closest(\\'.amg-cw\\').classList.add(\\'amg-hide\\')" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1">×</button></div><div class="amg-bd" id="amg-bd"></div><div class="amg-in"><input type="text" id="amg-inp" placeholder="Escriu un missatge..." /><button id="amg-send">›</button></div>';
+        chatWin.innerHTML = '<div class="amg-hd"><span>'+(cfg.businessName||'Xat')+'</span><button id="amg-close" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1">×</button></div><div class="amg-bd" id="amg-bd"></div><div class="amg-in"><input type="text" id="amg-inp" placeholder="Escriu un missatge..." /><button id="amg-send">›</button></div>';
         document.body.appendChild(chatWin);
         var cb = document.createElement('button'); cb.className = 'amg-b amg-ch'; cb.title = 'Xat';
         cb.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>';
-        cb.onclick = function() { chatWin.classList.toggle('amg-hide'); if (!chatWin.classList.contains('amg-hide') && !sessId) startSess(); };
+        function openChat()  { chatWin.classList.remove('amg-hide'); wrap.classList.add('amg-hide'); if (!sessId) startSess(); }
+        function closeChat() { chatWin.classList.add('amg-hide'); wrap.classList.remove('amg-hide'); }
+        cb.onclick = openChat;
+        chatWin.querySelector('#amg-close').onclick = closeChat;
         wrap.appendChild(cb);
         chatWin.querySelector('#amg-inp').addEventListener('keydown', function(e) { if (e.key==='Enter') send(); });
         chatWin.querySelector('#amg-send').onclick = send;
