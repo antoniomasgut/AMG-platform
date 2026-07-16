@@ -286,6 +286,11 @@ public class TelegramWebhookController {
                     return ResponseEntity.ok("ok");
                 }
 
+                if (cbChatId != null && data.startsWith("demodemo:")) {
+                    amgAdminCommandService.handleDemoCallback(cbChatId, data, callbackId);
+                    return ResponseEntity.ok("ok");
+                }
+
                 if (cbChatId != null && callbackId != null && amgAdminCommandService.isAdminChat(cbChatId)) {
                     amgAdminCommandService.handleCallback(cbChatId, data, callbackId);
                 }

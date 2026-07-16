@@ -303,6 +303,9 @@ export default function LeadDetailPage() {
   });
 
   const [sendingDemoId, setSendingDemoId] = useState<string | null>(null);
+  const [demoMessageText, setDemoMessageText] = useState<string | null>(null);
+  const [copiedDemoText, setCopiedDemoText] = useState(false);
+  const [sendingDemoEmailId, setSendingDemoEmailId] = useState<string | null>(null);
 
   const { data: demoFlows = [] } = useQuery({
     queryKey: ['demo-flows'],
@@ -312,15 +315,34 @@ export default function LeadDetailPage() {
 
   const { mutate: doSendDemoWhatsApp } = useMutation({
     mutationFn: (demoId: string) =>
-      apiFetch<{ sent: boolean; phone: string }>(`/demo/${demoId}/send-whatsapp?leadId=${id}`, { method: 'POST' }),
+      apiFetch<{ sent: boolean; phone: string; messageText: string }>(`/demo/${demoId}/send-whatsapp?leadId=${id}`, { method: 'POST' }),
     onMutate: (demoId) => setSendingDemoId(demoId),
-    onSuccess: (_, demoId) => {
+    onSuccess: (res) => {
       setSendingDemoId(null);
-      toast('success', 'Demo enviada per WhatsApp');
+      if (res.sent) {
+        toast('success', 'Demo enviada per WhatsApp');
+        setDemoMessageText(null);
+      } else {
+        setDemoMessageText(res.messageText);
+      }
     },
     onError: (err: Error) => {
       setSendingDemoId(null);
       toast('error', err.message || 'Error enviant la demo per WhatsApp');
+    },
+  });
+
+  const { mutate: doSendDemoEmail } = useMutation({
+    mutationFn: (demoId: string) =>
+      apiFetch<{ sent: boolean; email: string }>(`/demo/${demoId}/send-email?leadId=${id}`, { method: 'POST' }),
+    onMutate: (demoId) => setSendingDemoEmailId(demoId),
+    onSuccess: (res) => {
+      setSendingDemoEmailId(null);
+      toast('success', `Demo enviada per correu a ${res.email}`);
+    },
+    onError: (err: Error) => {
+      setSendingDemoEmailId(null);
+      toast('error', err.message || 'Error enviant la demo per correu');
     },
   });
 
@@ -653,12 +675,12 @@ export default function LeadDetailPage() {
           })}
         </div>
 
-        {/* Demos — Enviar per WhatsApp */}
+        {/* Demos — Enviar per WhatsApp o Email */}
         {demoFlows.length > 0 && (
           <div className="amg-card card-clip p-6 space-y-3">
-            <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Enviar Demo per WhatsApp</div>
+            <div className="f-mono text-label uppercase text-ink-2 tracking-widest">Enviar Demo</div>
             <p className="text-sm text-ink-3">
-              Envia una demostració del sistema a {lead.phone ? lead.phone : 'aquest lead'} per WhatsApp.
+              Envia una demostració de l&apos;agent IA al lead.
             </p>
             <div className="space-y-2">
               {demoFlows.map((flow) => (
@@ -667,20 +689,68 @@ export default function LeadDetailPage() {
                     <div className="f-mono text-xs font-semibold text-ink-0">{flow.title}</div>
                     <div className="text-xs text-ink-3 mt-0.5 line-clamp-1">{flow.description}</div>
                   </div>
-                  <AMGButton
-                    variant="outline"
-                    size="sm"
-                    loading={sendingDemoId === flow.id}
-                    disabled={!lead.phone || sendingDemoId !== null}
-                    onClick={() => doSendDemoWhatsApp(flow.id)}
-                  >
-                    Enviar
-                  </AMGButton>
+                  <div className="flex gap-2">
+                    <AMGButton
+                      variant="outline"
+                      size="sm"
+                      loading={sendingDemoId === flow.id}
+                      disabled={!lead.phone || sendingDemoId !== null || sendingDemoEmailId !== null}
+                      onClick={() => doSendDemoWhatsApp(flow.id)}
+                    >
+                      WhatsApp {lead.phone ? `(${lead.phone})` : ''}
+                    </AMGButton>
+                    <AMGButton
+                      variant="outline"
+                      size="sm"
+                      loading={sendingDemoEmailId === flow.id}
+                      disabled={!lead.email || sendingDemoId !== null || sendingDemoEmailId !== null}
+                      onClick={() => doSendDemoEmail(flow.id)}
+                    >
+                      Email {lead.email ? `(${lead.email})` : ''}
+                    </AMGButton>
+                  </div>
                 </div>
               ))}
             </div>
-            {!lead.phone && (
-              <p className="f-mono text-xs text-danger-light">El lead no té telèfon — afegeix-lo per poder enviar.</p>
+            {!lead.phone && !lead.email && (
+              <p className="f-mono text-xs text-danger-light">El lead no té telèfon ni correu — afegeix-ne un per poder enviar la demo.</p>
+            )}
+            {/* Text per copiar quan no hi ha WABA configurat */}
+            {demoMessageText && (
+              <div className="mt-3 border border-border-base bg-bg-1 p-4 space-y-3">
+                <p className="f-mono text-xs text-ink-2 uppercase tracking-widest">
+                  WhatsApp no configurat — copia el text manualment
+                </p>
+                <pre className="text-xs text-ink-0 whitespace-pre-wrap font-sans leading-relaxed">
+                  {demoMessageText}
+                </pre>
+                <div className="flex gap-2">
+                  <AMGButton
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(demoMessageText);
+                      setCopiedDemoText(true);
+                      setTimeout(() => setCopiedDemoText(false), 2000);
+                    }}
+                  >
+                    {copiedDemoText ? '✓ Copiat' : 'Copiar text'}
+                  </AMGButton>
+                  {lead.phone && (
+                    <a
+                      href={`https://wa.me/${lead.phone.replace(/\D/g, '')}?text=${encodeURIComponent(demoMessageText)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center h-8 px-3 text-xs f-mono border border-border-base text-ink-1 hover:text-ink-0 hover:border-border-medium transition-colors"
+                    >
+                      Obrir WhatsApp Web
+                    </a>
+                  )}
+                  <AMGButton size="sm" variant="ghost" onClick={() => setDemoMessageText(null)}>
+                    Tancar
+                  </AMGButton>
+                </div>
+              </div>
             )}
           </div>
         )}

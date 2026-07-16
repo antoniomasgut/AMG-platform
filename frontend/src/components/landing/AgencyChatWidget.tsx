@@ -61,14 +61,13 @@ export function AgencyChatWidget() {
     }
   }, [messages, open]);
 
-  async function startChat() {
-    if (!name.trim() || !phone.trim()) return;
+  async function startChatWith(contactName: string, contactPhone: string) {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/v1/chat/agency/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contactName: name.trim(), contactPhone: phone.trim(), locale }),
+        body: JSON.stringify({ contactName, contactPhone, locale }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -86,6 +85,15 @@ export function AgencyChatWidget() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function startChat() {
+    if (!name.trim() || !phone.trim()) return;
+    startChatWith(name.trim(), phone.trim());
+  }
+
+  function skipToChat() {
+    startChatWith('Visitant', '');
   }
 
   async function sendMessage() {
@@ -268,6 +276,17 @@ export function AgencyChatWidget() {
                 }}
               >
                 {loading ? t('connecting') : t('startChat')}
+              </button>
+              <button
+                onClick={skipToChat}
+                disabled={loading}
+                style={{
+                  background: 'transparent', border: 'none', color: '#9ca3af',
+                  fontSize: 12, cursor: loading ? 'default' : 'pointer',
+                  fontFamily: 'inherit', textDecoration: 'underline', padding: '4px 0',
+                }}
+              >
+                Continua sense identificar-te →
               </button>
             </div>
           )}

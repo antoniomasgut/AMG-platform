@@ -1,10 +1,14 @@
 package com.amg.digitalitzacio.agents.application;
 
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
+import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
+import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.domain.Tenant;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetSetupIntakeRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetStatus;
+import com.amg.digitalitzacio.demo.application.DemoService;
 import com.amg.digitalitzacio.leads.domain.Lead;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.leads.domain.PipelineStage;
@@ -15,6 +19,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -33,6 +39,10 @@ public class AmgAdminCommandService {
     private final BudgetSetupIntakeRepository intakeRepository;
     private final TelegramBotClient telegramBotClient;
     private final AmgAdminAiService aiService;
+    private final DemoService demoService;
+    private final TenantChatLinkRepository chatLinkRepository;
+    private final WhatsAppMetaChannel whatsAppMetaChannel;
+    private final WhatsAppChannel whatsAppChannel;
 
     private static final DateTimeFormatter FMT = DateTimeFormatter
             .ofPattern("dd/MM HH:mm").withZone(ZoneId.of("Europe/Madrid"));
@@ -43,7 +53,11 @@ public class AmgAdminCommandService {
                                    BudgetRepository budgetRepository,
                                    BudgetSetupIntakeRepository intakeRepository,
                                    TelegramBotClient telegramBotClient,
-                                   @Lazy AmgAdminAiService aiService) {
+                                   @Lazy AmgAdminAiService aiService,
+                                   DemoService demoService,
+                                   TenantChatLinkRepository chatLinkRepository,
+                                   WhatsAppMetaChannel whatsAppMetaChannel,
+                                   WhatsAppChannel whatsAppChannel) {
         this.sysConfig = sysConfig;
         this.leadRepository = leadRepository;
         this.tenantRepository = tenantRepository;
@@ -51,6 +65,10 @@ public class AmgAdminCommandService {
         this.intakeRepository = intakeRepository;
         this.telegramBotClient = telegramBotClient;
         this.aiService = aiService;
+        this.demoService = demoService;
+        this.chatLinkRepository = chatLinkRepository;
+        this.whatsAppMetaChannel = whatsAppMetaChannel;
+        this.whatsAppChannel = whatsAppChannel;
     }
 
     /** Retorna true si el chatId és un dels xats AMG admin configurats */
@@ -83,6 +101,57 @@ public class AmgAdminCommandService {
             telegramBotClient.answerCallbackQuery(callbackQueryId, "Acció desconeguda");
         } catch (Exception e) {
             log.warn("[AmgAdmin] Error processant callback '{}': {}", data, e.getMessage());
+            telegramBotClient.answerCallbackQuery(callbackQueryId, "Error processant l'acció");
+        }
+    }
+
+    /** Envia la demo per WhatsApp (callback demodemo:<demoId>:<leadId>). */
+    public void handleDemoCallback(Long chatId, String data, String callbackQueryId) {
+        try {
+            String rest = data.substring("demodemo:".length());
+            int sep = rest.lastIndexOf(":");
+            if (sep < 0) { telegramBotClient.answerCallbackQuery(callbackQueryId, "Format incorrecte"); return; }
+            String demoId = rest.substring(0, sep);
+            UUID leadId = UUID.fromString(rest.substring(sep + 1));
+
+            var lead = leadRepository.findById(leadId).orElse(null);
+            if (lead == null) { telegramBotClient.answerCallbackQuery(callbackQueryId, "Lead no trobat"); return; }
+            String phone = lead.getPhone();
+            if (phone == null || phone.isBlank()) {
+                telegramBotClient.answerCallbackQuery(callbackQueryId, "Lead sense telèfon");
+                return;
+            }
+
+            String demoUrl = "https://amgdl.com/demo/inbox/" + demoId;
+            String firstName = lead.getName() != null ? lead.getName().split(" ")[0] : "client";
+            String message = "Hola " + firstName + "! T'enviem una demostració del nostre sistema d'agent IA. "
+                    + "Pots parlar-hi directament aquí:\n" + demoUrl
+                    + "\n\nEt mostrarà com funciona el nostre agent per a negocis com el teu.";
+
+            UUID ownerTenantId = tenantRepository.findByIsOwnerTrue().map(Tenant::getId).orElse(null);
+            var link = ownerTenantId != null ? chatLinkRepository.findByTenantId(ownerTenantId).orElse(null) : null;
+
+            boolean sent = false;
+            if (link != null && link.getWhatsappMetaPhoneNumberId() != null && !link.getWhatsappMetaPhoneNumberId().isBlank()) {
+                whatsAppMetaChannel.sendMessage(link.getWhatsappMetaPhoneNumberId(), phone, message);
+                sent = true;
+            } else if (link != null && link.getWhatsappPhoneNumber() != null && !link.getWhatsappPhoneNumber().isBlank()) {
+                whatsAppChannel.sendMessage(link.getWhatsappPhoneNumber(), phone, message);
+                sent = true;
+            }
+
+            if (sent) {
+                telegramBotClient.answerCallbackQuery(callbackQueryId, "✅ Demo enviada per WhatsApp!");
+                telegramBotClient.sendMessage(chatId, "✅ Demo enviada a " + escape(phone));
+            } else {
+                String encoded = URLEncoder.encode(message, StandardCharsets.UTF_8);
+                String waLink = "https://wa.me/" + phone.replaceAll("[^0-9+]", "") + "?text=" + encoded;
+                telegramBotClient.answerCallbackQuery(callbackQueryId, "Obre WhatsApp Web");
+                telegramBotClient.sendMessage(chatId,
+                    "📲 <b>Envia la demo manualment:</b>\n" + waLink);
+            }
+        } catch (Exception e) {
+            log.warn("[AmgAdmin] Error processant callback demodemo '{}': {}", data, e.getMessage());
             telegramBotClient.answerCallbackQuery(callbackQueryId, "Error processant l'acció");
         }
     }
@@ -171,6 +240,8 @@ public class AmgAdminCommandService {
                 ? leadRepository.findByTenantId(ownerTenantId).stream()
                         .filter(l -> Boolean.TRUE.equals(l.getIsActive())
                                 && (l.getStage() == PipelineStage.NEW || l.getStage() == PipelineStage.CONTACTED))
+                        .sorted(java.util.Comparator.comparing(
+                                Lead::getCreatedAt, java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())))
                         .limit(10).toList()
                 : List.of();
 

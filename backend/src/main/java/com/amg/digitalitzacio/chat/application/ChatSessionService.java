@@ -6,6 +6,7 @@ import com.amg.digitalitzacio.agents.application.GoogleCalendarService;
 import com.amg.digitalitzacio.agents.application.NexeServiceConfigService;
 import com.amg.digitalitzacio.agents.application.PromptBuilder;
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
+import com.amg.digitalitzacio.demo.application.DemoService;
 import com.amg.digitalitzacio.agents.domain.AgentMode;
 import com.amg.digitalitzacio.agents.domain.ConversationChannel;
 import com.amg.digitalitzacio.agents.domain.ConversationRole;
@@ -22,6 +23,9 @@ import com.amg.digitalitzacio.engine.domain.LandingRepository;
 import com.amg.digitalitzacio.leads.domain.Lead;
 import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.leads.domain.LeadSource;
+import com.amg.digitalitzacio.auth.application.EmailService;
+import com.amg.digitalitzacio.shared.notification.NotificationEvent;
+import com.amg.digitalitzacio.shared.notification.TenantNotificationService;
 import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -92,6 +96,9 @@ public class ChatSessionService {
     private final TenantChatLinkRepository chatLinkRepository;
     private final WhatsAppWabaConfigRepository wabaConfigRepository;
     private final TelegramBotClient telegramBotClient;
+    private final TenantNotificationService notificationService;
+    private final EmailService emailService;
+    private final DemoService demoService;
 
     @Value("${app.landing.base-domain:webs.amgdl.com}")
     private String landingBaseDomain;
@@ -265,7 +272,20 @@ public class ChatSessionService {
             try {
                 findOrCreateChatLead(tenantId, contactName.strip(), contactPhone.strip());
             } catch (Exception e) {
-                log.warn("[Agency] Could not create lead for {}: {}", contactName, e.getMessage());
+                log.error("[Agency] Could not create lead for {}: {}", contactName, e.getMessage());
+                try {
+                    emailService.sendEmail(
+                        "amgdigitalitzacions@gmail.com",
+                        "⚠️ Error creant lead des del xat",
+                        "No s'ha pogut crear el lead al CRM. Dades del contacte:\n\n"
+                            + "Nom:     " + contactName + "\n"
+                            + "Telèfon: " + contactPhone + "\n"
+                            + "Error:   " + e.getMessage() + "\n\n"
+                            + "Crea'l manualment a: https://amgdl.com/portal/leads"
+                    );
+                } catch (Exception mailEx) {
+                    log.error("[Agency] Could not send lead-failure email: {}", mailEx.getMessage());
+                }
             }
         }
 
@@ -411,24 +431,55 @@ public class ChatSessionService {
     }
 
     private Lead findOrCreateChatLead(UUID tenantId, String name, String phone) {
-        return leadRepository.findFirstByTenantIdAndPhone(tenantId, phone)
-                .map(lead -> {
-                    lead.setLastContactAt(Instant.now());
-                    return leadRepository.save(lead);
-                })
-                .orElseGet(() -> {
-                    var lead = new Lead();
-                    lead.setTenantId(tenantId);
-                    lead.setName(name);
-                    lead.setPhone(phone);
-                    lead.setSource(LeadSource.CHAT_WIDGET);
-                    lead.setStage(com.amg.digitalitzacio.leads.domain.PipelineStage.NEW);
-                    lead.setIsActive(true);
-                    lead.setCreatedAt(Instant.now());
-                    lead.setUpdatedAt(Instant.now());
-                    lead.setLastContactAt(Instant.now());
-                    return leadRepository.save(lead);
-                });
+        Long tgChatId = null;
+        try {
+            var link = chatLinkRepository.findByTenantId(tenantId).orElse(null);
+            if (link != null) tgChatId = link.getTelegramChatId();
+            if (tgChatId == null) {
+                String cid = sysConfig.get("AMG_SALES_CHAT_ID");
+                if (cid != null && !cid.isBlank()) tgChatId = Long.parseLong(cid.trim());
+            }
+        } catch (Exception ignored) {}
+
+        var existing = leadRepository.findFirstByTenantIdAndPhone(tenantId, phone);
+        if (existing.isPresent()) {
+            var lead = existing.get();
+            lead.setLastContactAt(Instant.now());
+            var saved = leadRepository.save(lead);
+            if (tgChatId != null) {
+                telegramBotClient.sendMessage(tgChatId,
+                    "👋 <b>" + escapeHtml(name) + " ha tornat al xat</b>\n📱 " + escapeHtml(phone));
+            }
+            return saved;
+        }
+
+        var lead = new Lead();
+        lead.setTenantId(tenantId);
+        lead.setName(name);
+        lead.setPhone(phone);
+        lead.setSource(LeadSource.CHAT_WIDGET);
+        lead.setStage(com.amg.digitalitzacio.leads.domain.PipelineStage.NEW);
+        lead.setIsActive(true);
+        lead.setCreatedAt(Instant.now());
+        lead.setUpdatedAt(Instant.now());
+        lead.setLastContactAt(Instant.now());
+        var saved = leadRepository.save(lead);
+
+        if (tgChatId != null) {
+            String msg = "✅ <b>Nou lead · " + escapeHtml(name) + "</b>\n📱 " + escapeHtml(phone);
+            String leadIdStr = saved.getId().toString();
+            String demoId = null;
+            try {
+                var demos = demoService.listDemos();
+                if (demos != null && !demos.demos().isEmpty()) demoId = demos.demos().get(0).id();
+            } catch (Exception ignored) {}
+            var buttons = new java.util.ArrayList<Map<String, String>>();
+            if (demoId != null) buttons.add(Map.of("text", "📲 Enviar demo", "callback_data", "demodemo:" + demoId + ":" + leadIdStr));
+            buttons.add(Map.of("text", "✓ Contactat", "callback_data", "lead_done:" + leadIdStr));
+            telegramBotClient.sendMessageWithButtons(tgChatId, msg, buttons);
+        }
+
+        return saved;
     }
 
     public SendMessageResult sendMessage(String sessionId, String userMessage, String ip) {

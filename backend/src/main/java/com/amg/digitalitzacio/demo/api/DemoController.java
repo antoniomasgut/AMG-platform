@@ -3,6 +3,7 @@ package com.amg.digitalitzacio.demo.api;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppChannel;
 import com.amg.digitalitzacio.agents.application.channel.WhatsAppMetaChannel;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
+import com.amg.digitalitzacio.auth.application.EmailService;
 import com.amg.digitalitzacio.demo.api.dto.DemoFlowResponse;
 import com.amg.digitalitzacio.demo.api.dto.DemoListResponse;
 import com.amg.digitalitzacio.demo.application.DemoService;
@@ -29,6 +30,7 @@ public class DemoController {
     private final TenantChatLinkRepository chatLinkRepository;
     private final WhatsAppMetaChannel whatsAppMetaChannel;
     private final WhatsAppChannel whatsAppChannel;
+    private final EmailService emailService;
 
     @GetMapping
     public DemoListResponse listDemos() {
@@ -86,10 +88,42 @@ public class DemoController {
         }
 
         if (!sent) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "No hi ha cap canal de WhatsApp configurat per a aquest tenant");
+            // Sense WABA: retorna el text per copiar manualment a WhatsApp Web
+            return ResponseEntity.ok(Map.of(
+                    "sent", false,
+                    "phone", lead.getPhone() != null ? lead.getPhone() : "",
+                    "messageText", message));
         }
 
-        return ResponseEntity.ok(Map.of("sent", true, "phone", lead.getPhone()));
+        return ResponseEntity.ok(Map.of("sent", true, "phone", lead.getPhone(), "messageText", ""));
+    }
+
+    @PostMapping("/{id}/send-email")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    public ResponseEntity<Map<String, Object>> sendDemoEmail(
+            @PathVariable String id,
+            @RequestParam UUID leadId) {
+
+        demoService.getDemo(id);
+
+        var lead = leadRepository.findById(leadId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Lead no trobat: " + leadId));
+
+        if (lead.getEmail() == null || lead.getEmail().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El lead no té adreça de correu");
+        }
+
+        String demoUrl  = "https://amgdl.com/demo/inbox/" + id;
+        String firstName = lead.getName() != null ? lead.getName().split(" ")[0] : "client";
+        String subject  = "Demostració de l'agent IA d'AMG Digitalitzacions";
+        String body     = "Hola " + firstName + ",\n\n"
+                + "T'enviem accés a la nostra demostració d'agent IA. Pots provar-lo directament aquí:\n\n"
+                + demoUrl + "\n\n"
+                + "Et mostrarà com funciona el nostre agent per a negocis com el teu.\n\n"
+                + "Salutacions,\nEquip AMG Digitalitzacions\n"
+                + "📱 +34 614 492 062 | info@amgdl.com";
+
+        emailService.sendEmail(lead.getEmail(), subject, body);
+        return ResponseEntity.ok(Map.of("sent", true, "email", lead.getEmail()));
     }
 }
