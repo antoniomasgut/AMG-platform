@@ -909,6 +909,16 @@ const HeaderBlock: FC<{
   handleClick: () => void;
 }> = ({ p, s, bg, accent, primary, text, fontH, fontB, radius, preview, removeBtn, handleClick }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   const links = Array.isArray(p.links) ? (p.links as Array<{ label: string; href: string }>) : [];
   const logoText = s(p.logoText, 'El Negoci');
   const phone = s(p.phone, '');
@@ -924,41 +934,46 @@ const HeaderBlock: FC<{
         ) : (
           <span style={{ fontFamily: fontH, fontWeight: 800, fontSize: '1.2rem', color: primary, whiteSpace: 'nowrap', letterSpacing: '-0.02em' }}>{logoText}</span>
         )}
-        {/* Desktop nav */}
-        <nav style={{ display: 'flex', gap: 28, flex: 1 }} className="hidden-mobile">
-          {links.map((l, i) => (
-            <a key={i} href={l.href} style={{ fontFamily: fontB, fontSize: '0.9rem', color: text, opacity: 0.75, textDecoration: 'none', fontWeight: 500 }}
-              onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '1'; (e.target as HTMLElement).style.color = primary; }}
-              onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.75'; (e.target as HTMLElement).style.color = text; }}
-            >{l.label}</a>
-          ))}
-        </nav>
-        {/* Right side desktop */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }} className="hidden-mobile">
-          {phone && (
-            <a href={`tel:${phone}`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: text, opacity: 0.7, textDecoration: 'none', fontWeight: 500 }}>
-              <span>📞</span>{phone}
-            </a>
-          )}
-          <a href={s(p.ctaLink, '#contact')} style={{ padding: '9px 20px', background: primary, color: '#fff', borderRadius: radius, fontFamily: fontH, fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            {ctaText}
-          </a>
-        </div>
+        {/* Desktop nav — hidden on mobile */}
+        {!isMobile && (
+          <>
+            <nav style={{ display: 'flex', gap: 28, flex: 1 }}>
+              {links.map((l, i) => (
+                <a key={i} href={l.href} style={{ fontFamily: fontB, fontSize: '0.9rem', color: text, opacity: 0.75, textDecoration: 'none', fontWeight: 500 }}
+                  onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '1'; (e.target as HTMLElement).style.color = primary; }}
+                  onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.75'; (e.target as HTMLElement).style.color = text; }}
+                >{l.label}</a>
+              ))}
+            </nav>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+              {phone && (
+                <a href={`tel:${phone}`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: text, opacity: 0.7, textDecoration: 'none', fontWeight: 500 }}>
+                  <span>📞</span>{phone}
+                </a>
+              )}
+              <a href={s(p.ctaLink, '#contact')} style={{ padding: '9px 20px', background: primary, color: '#fff', borderRadius: radius, fontFamily: fontH, fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                {ctaText}
+              </a>
+            </div>
+          </>
+        )}
         {/* Hamburger button — mobile only */}
-        <button
-          onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
-          style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'none' }}
-          className="show-mobile"
-          aria-label="Menú"
-        >
-          <div style={{ width: 22, height: 2, background: text, marginBottom: 5, transition: 'transform 0.2s', transform: menuOpen ? 'rotate(45deg) translate(5px,5px)' : 'none' }} />
-          <div style={{ width: 22, height: 2, background: text, marginBottom: 5, opacity: menuOpen ? 0 : 1, transition: 'opacity 0.2s' }} />
-          <div style={{ width: 22, height: 2, background: text, transition: 'transform 0.2s', transform: menuOpen ? 'rotate(-45deg) translate(5px,-5px)' : 'none' }} />
-        </button>
+        {isMobile && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex', flexDirection: 'column', gap: 4 }}
+            aria-label="Menú"
+            aria-expanded={menuOpen}
+          >
+            <div style={{ width: 22, height: 2, background: text, transition: 'transform 0.2s', transform: menuOpen ? 'rotate(45deg) translate(4px,6px)' : 'none' }} />
+            <div style={{ width: 22, height: 2, background: text, opacity: menuOpen ? 0 : 1, transition: 'opacity 0.2s' }} />
+            <div style={{ width: 22, height: 2, background: text, transition: 'transform 0.2s', transform: menuOpen ? 'rotate(-45deg) translate(4px,-6px)' : 'none' }} />
+          </button>
+        )}
       </div>
-      {/* Mobile menu dropdown */}
-      {menuOpen && (
-        <div style={{ background: bg, borderTop: `1px solid ${accent}15`, padding: '16px 24px 24px' }} className="mobile-menu">
+      {/* Mobile dropdown */}
+      {isMobile && menuOpen && (
+        <div style={{ background: bg, borderTop: `1px solid ${accent}15`, padding: '16px 24px 24px' }}>
           {links.map((l, i) => (
             <a key={i} href={l.href} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '10px 0', color: text, textDecoration: 'none', fontWeight: 500, borderBottom: `1px solid ${accent}10` }}>
               {l.label}
@@ -969,10 +984,6 @@ const HeaderBlock: FC<{
           </a>
         </div>
       )}
-      <style>{`
-        @media(max-width:768px){.hidden-mobile{display:none!important}.show-mobile{display:flex!important}}
-        @media(min-width:769px){.show-mobile{display:none!important}.mobile-menu{display:none!important}}
-      `}</style>
     </header>
   );
 };

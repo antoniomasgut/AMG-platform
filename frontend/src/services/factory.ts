@@ -479,7 +479,7 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
   video: {
     label: 'Vídeo',
     icon: '▶',
-    defaultProps: { title: '', videoUrl: '', caption: '' },
+    defaultProps: { title: 'Coneix-nos en vídeo', videoUrl: '', caption: '' },
   },
   reviews: {
     label: 'Ressenyes',
