@@ -237,7 +237,7 @@ export const BlockRenderer: FC<Props> = ({
                   style={{ fontFamily: fontH, fontSize: '2rem', fontWeight: 700, color: text, textAlign: 'center', marginBottom: 48 }}
                 />
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 32 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 32 }}>
                 {items.map((item, i) => (
                   <FadeIn key={i} delay={i * 100}>
                     <div style={{ textAlign: 'center', padding: '24px 16px' }}>

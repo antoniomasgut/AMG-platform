@@ -139,8 +139,16 @@ public class TemplateSeeder implements CommandLineRunner {
                         ))),
                 new SectionDef("GALLERY", schema("title", "text", "images", "array"),
                         props("title", "El nostre local i els nostres plats", "images", List.of())),
+                new SectionDef("REVIEWS", schema("title", "text", "items", "array"),
+                        props("title", "El que diuen a Google", "googleMapsUrl", "", "items", List.of(
+                                Map.of("name", "Catalina Moll", "rating", 5, "text", "Anàrem per primera vegada i tornarem moltes vegades. La cuina mallorquina autèntica que feia temps que cercàvem. El servei, impecable.", "date", "2026-03-10"),
+                                Map.of("name", "Ralf Bauer", "rating", 5, "text", "Best Mallorcan food we had during our stay. Authentic, delicious and at a great price. The staff was very welcoming.", "date", "2026-02-15"),
+                                Map.of("name", "Pere Antoni Nadal", "rating", 5, "text", "Hi anam cada setmana amb els de la feina. Mai ens ha fallat: el menú del dia és una ganga i la qualitat, sempre constant.", "date", "2026-01-20")
+                        ))),
                 new SectionDef("OPENING_HOURS", schema("title", "text", "hours", "array"),
                         props("title", "Horaris", "hours", hours("13:00-16:00", "13:00-16:00", "13:00-16:00"))),
+                new SectionDef("CHAT_CTA", schema("title", "text"),
+                        props("title", "Reserva la teva taula ara", "subtitle", "El nostre assistent respon en menys d'1 minut", "buttonText", "Parla amb nosaltres")),
                 new SectionDef("CTA", schema("title", "text", "ctaText", "text"),
                         props("title", "Reserva la teva taula avui", "subtitle", "Places limitades. Reserva ara i assegura el teu lloc.", "ctaText", "Reservar ara", "ctaLink", "#contact")),
                 new SectionDef("CONTACT_FORM", schema("title", "text", "email", "text", "phone", "text"),
@@ -372,6 +380,8 @@ public class TemplateSeeder implements CommandLineRunner {
                                 Map.of("question", "Quant tarda el pressupost?", "answer", "En menys de 24 hores tindreu el pressupost detallat per escrit. En urgències, en 2 hores."),
                                 Map.of("question", "Doneu garantia dels treballs?", "answer", "Sí, tots els treballs tenen garantia de 2 anys en mà d'obra i respectem les garanties del fabricant en materials.")
                         ))),
+                new SectionDef("CHAT_CTA", schema("title", "text"),
+                        props("title", "Demana el teu pressupost en 2 minuts", "subtitle", "Explica'ns el que necessites i et responem de seguida", "buttonText", "Xateja ara")),
                 new SectionDef("CTA", schema("title", "text", "ctaText", "text"),
                         props("title", "Pressupost gratuït en menys de 24h", "subtitle", "Sense compromís · Resposta garantida", "ctaText", "Demanar pressupost", "ctaLink", "#contact")),
                 new SectionDef("CONTACT_FORM", schema("title", "text"),
@@ -439,6 +449,8 @@ public class TemplateSeeder implements CommandLineRunner {
                         ))),
                 new SectionDef("OPENING_HOURS", schema("title", "text", "hours", "array"),
                         props("title", "Horaris d'atenció", "hours", hours("09:00-20:00", "09:00-14:00", ""))),
+                new SectionDef("CHAT_CTA", schema("title", "text"),
+                        props("title", "Reserva la teva cita en 1 minut", "subtitle", "El nostre assistent t'ajudarà a trobar el millor horari", "buttonText", "Xateja amb nosaltres")),
                 new SectionDef("CTA", schema("title", "text", "ctaText", "text"),
                         props("title", "Comença el teu camí cap al benestar", "subtitle", "Primera visita sense compromís · Places limitades", "ctaText", "Reservar cita ara", "ctaLink", "#contact")),
                 new SectionDef("CONTACT_FORM", schema("title", "text"),
@@ -550,6 +562,12 @@ public class TemplateSeeder implements CommandLineRunner {
                                 Map.of("question", "Quina és la vostra comissió de venda?", "answer", "La nostra comissió és un percentatge sobre el preu de venda, inclòs en el preu final. Et detallarem tot a la consulta inicial gratuïta."),
                                 Map.of("question", "Quant tarda a vendre's una propietat?", "answer", "En mercat estàndard, entre 2 i 6 mesos. Amb el nostre pla de màrqueting actiu, accelerem el procés considerablement."),
                                 Map.of("question", "Treballeu amb compradors internacionals?", "answer", "Sí, el 40% dels nostres clients provenen d'Alemanya, Regne Unit i Escandinávia. Tenim equip multilingüe.")
+                        ))),
+                new SectionDef("REVIEWS", schema("title", "text", "items", "array"),
+                        props("title", "El que diuen els nostres clients a Google", "googleMapsUrl", "", "items", List.of(
+                                Map.of("name", "Susanne Hoffmann", "rating", 5, "text", "We found our dream home in Mallorca through them. Professional, multilingual service and they guided us through every step. Highly recommended!", "date", "2026-04-05"),
+                                Map.of("name", "Jaume Cerdà", "rating", 5, "text", "Vaig vendre el meu apartament en 5 setmanes i per sobre del preu que esperava. Gestió impecable i comunicació constant.", "date", "2026-03-18"),
+                                Map.of("name", "Ana López Ruiz", "rating", 5, "text", "Primera experiència comprant a Mallorca i no podríem estar més satisfets. Ens van assessorar fins i tot amb el finançament. Molt professionals.", "date", "2026-02-22")
                         ))),
                 new SectionDef("CTA", schema("title", "text", "ctaText", "text"),
                         props("title", "La teva propietat perfecta t'espera", "subtitle", "Consulta gratuïta · Sense compromís · Experiència local", "ctaText", "Parla amb un expert", "ctaLink", "#contact")),

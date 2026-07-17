@@ -458,10 +458,10 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
     label: 'Preus',
     icon: '€',
     defaultProps: {
-      title: 'Tarifes',
+      title: 'Les nostres tarifes',
       items: [
-        { name: 'Bàsic', description: 'Per a particulars', price: '29', period: 'mes', features: ['Característica 1', 'Característica 2'], highlighted: false },
-        { name: 'Pro', description: 'Per a empreses', price: '59', period: 'mes', features: ['Tot del Bàsic', 'Característica 3', 'Suport prioritari'], highlighted: true },
+        { name: 'Bàsic', description: 'Per a autònoms i particulars', price: '29', period: 'mes', features: ['Consulta inicial gratuïta', 'Resposta en 48h', 'Servei adaptat a les teves necessitats'], highlighted: false },
+        { name: 'Pro', description: 'Per a empreses i pimes', price: '59', period: 'mes', features: ['Tot del pla Bàsic', 'Atenció prioritària en 24h', 'Visita presencial inclosa', 'Suport mensual il·limitat'], highlighted: true },
       ],
     },
   },
@@ -471,8 +471,8 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
     defaultProps: {
       title: 'El nostre equip',
       items: [
-        { name: 'Nom Cognom', role: 'Director', bio: 'Breu descripció professional', photo: '' },
-        { name: 'Nom Cognom', role: 'Especialista', bio: 'Breu descripció professional', photo: '' },
+        { name: 'Andreu Mas', role: 'Director i fundador', bio: 'Expert en el sector amb més de 10 anys d\'experiència a Mallorca. Especialista en solucions per a negocis locals.', photo: '' },
+        { name: 'Maria Vidal', role: 'Especialista tècnica', bio: 'Formació especialitzada i atenció personalitzada a cada client. La seva prioritat: que surts satisfet.', photo: '' },
       ],
     },
   },

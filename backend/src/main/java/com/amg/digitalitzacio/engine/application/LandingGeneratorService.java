@@ -173,6 +173,18 @@ public class LandingGeneratorService {
                 Retorna exactamente este JSON:
                 {"title":"Cómo trabajamos","items":[{"number":"1","title":"[nombre paso]","description":"[descripción acción concreta 1-2 oraciones]"},{"number":"2","title":"...","description":"..."},{"number":"3","title":"...","description":"..."}]}
                 """.formatted(ctx);
+            case "en" -> """
+                Create 3-4 work process steps for "%s".
+                Each step must describe a real, specific action of this sector's process.
+                Return exactly this JSON:
+                {"title":"How we work","items":[{"number":"1","title":"[step name]","description":"[concrete action 1-2 sentences]"},{"number":"2","title":"...","description":"..."},{"number":"3","title":"...","description":"..."}]}
+                """.formatted(ctx);
+            case "de" -> """
+                Erstellen Sie 3-4 Arbeitsschritte für "%s".
+                Jeder Schritt muss eine echte, spezifische Aktion des Prozesses dieser Branche beschreiben.
+                Geben Sie genau dieses JSON zurück:
+                {"title":"So arbeiten wir","items":[{"number":"1","title":"[Schrittname]","description":"[konkrete Aktion 1-2 Sätze]"},{"number":"2","title":"...","description":"..."},{"number":"3","title":"...","description":"..."}]}
+                """.formatted(ctx);
             default -> """
                 Crea 3-4 passos del procés de treball per a "%s".
                 Cada pas ha de descriure una acció real i específica del procés d'aquest sector.
@@ -191,6 +203,18 @@ public class LandingGeneratorService {
                 Usa certificaciones, asociaciones, premios o partners reales del sector (o plausibles).
                 Retorna exactamente este JSON:
                 {"title":"Por qué confiar en nosotros","items":[{"name":"[nombre indicador]","icon":"[emoji]"},{"name":"...","icon":"..."},{"name":"...","icon":"..."},{"name":"...","icon":"..."}]}
+                """.formatted(ctx);
+            case "en" -> """
+                Create 4-5 trust indicators for "%s".
+                Use certifications, associations, awards or real sector partners (or plausible ones).
+                Return exactly this JSON:
+                {"title":"Why trust us","items":[{"name":"[indicator name]","icon":"[emoji]"},{"name":"...","icon":"..."},{"name":"...","icon":"..."},{"name":"...","icon":"..."}]}
+                """.formatted(ctx);
+            case "de" -> """
+                Erstellen Sie 4-5 Vertrauensindikatoren für "%s".
+                Verwenden Sie Zertifizierungen, Verbände, Auszeichnungen oder reale Branchenpartner.
+                Geben Sie genau dieses JSON zurück:
+                {"title":"Warum uns vertrauen","items":[{"name":"[Indikatorname]","icon":"[emoji]"},{"name":"...","icon":"..."},{"name":"...","icon":"..."},{"name":"...","icon":"..."}]}
                 """.formatted(ctx);
             default -> """
                 Crea 4-5 indicadors de confiança per a "%s".
