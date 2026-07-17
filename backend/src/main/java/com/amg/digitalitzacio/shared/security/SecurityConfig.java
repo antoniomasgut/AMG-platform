@@ -92,6 +92,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/leads/meta-webhook").permitAll()
                         // Callback OAuth de LinkedIn (Mòdul 56 F4)
                         .requestMatchers(HttpMethod.GET, "/api/v1/social/linkedin/callback").permitAll()
+                        // Magic link de resposta client (Guided Config) — protegit per requestId UUID aleatori
+                        .requestMatchers(HttpMethod.POST, "/api/v1/vault/communication/*/respond").permitAll()
                         .requestMatchers(HttpMethod.GET, "/oauth/meta/whatsapp/callback").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/meta/whatsapp/oauth-session/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/whatsapp/webhook").permitAll()

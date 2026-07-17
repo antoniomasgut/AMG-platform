@@ -55,8 +55,12 @@ public class ClientUserProvisioningService {
             log.warn("[Provisioning] Tenant {} sense email — no es pot crear l'usuari CLIENT", tenantId);
             return false;
         }
+        if (userRepository.existsByEmailAndRole(email, Role.CLIENT)) {
+            log.debug("[Provisioning] L'email {} ja té un usuari CLIENT — es reusa", email);
+            return false;
+        }
         if (userRepository.existsByEmail(email)) {
-            log.warn("[Provisioning] L'email {} ja pertany a un altre usuari — no es crea CLIENT per tenant {}",
+            log.warn("[Provisioning] L'email {} pertany a un usuari ADMIN/SUPER_ADMIN — no es crea CLIENT duplicat per tenant {}. Assigna el tenant manualment.",
                     email, tenantId);
             return false;
         }

@@ -500,10 +500,10 @@ public class BillingOrchestrator implements BillingService {
                 return new AcceptRejectResponse("PAYMENT_REQUIRED",
                         "Per activar el servei, completa el pagament del setup.", checkoutUrl);
             } catch (Exception e) {
-                log.warn("[Billing] No s'ha pogut crear sessió Stripe per budget {}: {}", budget.getId(), e.getMessage());
-                addContractedPhases(budget.getTenantId(), nexePhases);
-                budget.setSetupPaid(Boolean.TRUE);
-                budget.setSetupPaidAt(Instant.now());
+                log.error("[Billing] Error creant sessió Stripe per budget {} — fases NO activades: {}", budget.getId(), e.getMessage());
+                budgetRepository.save(budget);
+                return new AcceptRejectResponse("PAYMENT_ERROR",
+                        "No s'ha pogut processar el pagament. Contacta amb suport.", null);
             }
         }
 
