@@ -82,6 +82,11 @@ public class SystemConfigService {
         new KnownKey("META_ADS_MANAGEMENT_TOKEN",   "Meta Ads Management Token",          "System User Token de Meta amb permisos ads_management per crear i gestionar campanyes.", "META_ADS", true, "secret", null, null, 40),
         new KnownKey("META_ADS_APP_ID",             "Meta Ads App ID",                    "App ID de la Facebook App per a Meta Ads Management.", "META_ADS", false, "string", null, null, 50),
 
+        // SOCIAL (LinkedIn OAuth)
+        new KnownKey("LINKEDIN_CLIENT_ID",     "LinkedIn Client ID",      "Client ID de l'aplicació LinkedIn per a OAuth (Share on LinkedIn)", "SOCIAL", false, "string", null, null, 10),
+        new KnownKey("LINKEDIN_CLIENT_SECRET", "LinkedIn Client Secret",  "Client Secret de l'aplicació LinkedIn per a OAuth", "SOCIAL", true, "secret", null, null, 20),
+        new KnownKey("LINKEDIN_REDIRECT_URI",  "LinkedIn Redirect URI",   "URI de callback OAuth LinkedIn (ex: https://api.amgdl.com/api/v1/social/linkedin/callback)", "SOCIAL", false, "url", null, null, 30),
+
         // DOMAINS (OpenProvider reseller)
         new KnownKey("OPENPROVIDER_USERNAME",    "OpenProvider Username",   "Nom d'usuari del compte reseller d'OpenProvider per a registre de dominis.", "DOMAINS", false, "string", null, null, 10),
         new KnownKey("OPENPROVIDER_PASSWORD",    "OpenProvider Password",   "Contrasenya del compte reseller d'OpenProvider (es xifra a la BD).", "DOMAINS", true, "secret", null, null, 20),
