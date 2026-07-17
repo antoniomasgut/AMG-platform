@@ -381,9 +381,7 @@ public class TenantVaultService implements VaultService {
     }
 
     private CatalogService findServiceBySlug(String slug) {
-        return catalogServiceRepository.findAll().stream()
-                .filter(s -> s.getSlug().equals(slug) && s.getPhaseId() == null)
-                .findFirst()
+        return catalogServiceRepository.findBySlugAndPhaseIdIsNull(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Base service not found: " + slug));
     }
 

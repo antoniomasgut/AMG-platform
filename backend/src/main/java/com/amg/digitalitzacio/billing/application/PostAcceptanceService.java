@@ -548,21 +548,19 @@ public class PostAcceptanceService {
     }
 
     private BudgetSetupIntake ensureIntake(Budget budget, String tenantName) {
-        // Re-check dins del mateix thread per evitar race condition de doble creació
-        var existing = intakeRepository.findByBudgetId(budget.getId()).orElse(null);
-        if (existing != null) return existing;
-        return intakeRepository.findByBudgetId(budget.getId()).orElseGet(() -> {
-            var intake = new BudgetSetupIntake();
-            intake.setBudgetId(budget.getId());
-            intake.setTenantId(budget.getTenantId());
-            intake.setTenantName(tenantName);
-            intake.setSector(budget.getSector());
-            intake.setToken(UUID.randomUUID().toString().replace("-", ""));
-            intake.setStatus("PENDING");
-            intake.setCreatedAt(Instant.now());
-            intake.setUpdatedAt(Instant.now());
-            return intakeRepository.save(intake);
-        });
+        // Constraint uq_budget_setup_intakes_budget_id garanteix que no en creen de duplicats
+        var existing = intakeRepository.findByBudgetId(budget.getId());
+        if (existing.isPresent()) return existing.get();
+        var intake = new BudgetSetupIntake();
+        intake.setBudgetId(budget.getId());
+        intake.setTenantId(budget.getTenantId());
+        intake.setTenantName(tenantName);
+        intake.setSector(budget.getSector());
+        intake.setToken(UUID.randomUUID().toString().replace("-", ""));
+        intake.setStatus("PENDING");
+        intake.setCreatedAt(Instant.now());
+        intake.setUpdatedAt(Instant.now());
+        return intakeRepository.save(intake);
     }
 
     private void notifyAmgTeam(Budget budget, String clientName, String sector, String total, String intakeUrl) {

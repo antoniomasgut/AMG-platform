@@ -12,5 +12,6 @@ public interface CatalogServiceRepository extends JpaRepository<CatalogService, 
     List<CatalogService> findByIsAddonTrue();
     List<CatalogService> findByType(ServiceType type);
     java.util.Optional<CatalogService> findBySlug(String slug);
+    java.util.Optional<CatalogService> findBySlugAndPhaseIdIsNull(String slug);
     boolean existsBySlug(String slug);
 }
