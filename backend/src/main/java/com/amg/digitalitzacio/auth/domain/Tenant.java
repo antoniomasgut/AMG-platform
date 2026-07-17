@@ -69,7 +69,11 @@ public class Tenant {
     /** Comprova si una fase és operativa. Mira activePhases; si null, consulta contractedPhases. */
     public boolean isPhaseActive(String phase) {
         var source = activePhases != null ? activePhases : contractedPhases;
-        return source != null && source.contains(phase);
+        if (source == null || source.isBlank()) return false;
+        for (String p : source.split(",")) {
+            if (phase.equals(p.trim())) return true;
+        }
+        return false;
     }
 
     @Column(name = "agent_system_prompt", columnDefinition = "TEXT")

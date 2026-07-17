@@ -42,9 +42,7 @@ public class PhaseActivationService {
      */
     @Transactional
     public void recordDeactivation(UUID tenantId, String phase, String deactivatedBy) {
-        repo.findByTenantIdOrderByActivatedAtDesc(tenantId).stream()
-            .filter(a -> phase.equals(a.getPhase()) && a.getDeactivatedAt() == null)
-            .findFirst()
+        repo.findFirstByTenantIdAndPhaseAndDeactivatedAtIsNullOrderByActivatedAtDesc(tenantId, phase)
             .ifPresent(a -> {
                 a.setDeactivatedAt(Instant.now());
                 a.setDeactivatedBy(deactivatedBy);

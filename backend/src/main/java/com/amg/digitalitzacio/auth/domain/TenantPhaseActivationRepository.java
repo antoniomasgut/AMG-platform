@@ -9,6 +9,8 @@ public interface TenantPhaseActivationRepository extends JpaRepository<TenantPha
 
     List<TenantPhaseActivation> findByTenantIdOrderByActivatedAtDesc(UUID tenantId);
 
+    java.util.Optional<TenantPhaseActivation> findFirstByTenantIdAndPhaseAndDeactivatedAtIsNullOrderByActivatedAtDesc(UUID tenantId, String phase);
+
     boolean existsByTenantIdAndPhaseAndDeactivatedAtIsNull(UUID tenantId, String phase);
 
     List<TenantPhaseActivation> findByActivatedAtBetweenAndDeactivatedAtIsNull(Instant from, Instant to);
