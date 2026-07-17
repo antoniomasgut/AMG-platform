@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.engine.domain;
 
 public enum BlockType {
     HERO,
+    HEADER,
     TEXT,
     SERVICES,
     GALLERY,
@@ -19,6 +20,7 @@ public enum BlockType {
     TRUST_BAR,
     CHAT_CTA,
     STEPS,
+    STATS,
     BEFORE_AFTER;
 
     /** Nom del tipus de bloc per al JSON de la landing (guions, no guions baixos). */

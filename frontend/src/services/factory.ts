@@ -5,7 +5,8 @@ import { apiFetch } from './api';
 // --- Types ---
 
 export type BlockType =
-  | 'hero' | 'text' | 'services' | 'gallery' | 'contact-form'
+  | 'header' | 'hero' | 'stats' | 'trust-bar' | 'steps'
+  | 'text' | 'services' | 'gallery' | 'contact-form'
   | 'faq' | 'testimonials' | 'cta' | 'footer' | 'map' | 'opening-hours'
   | 'pricing' | 'team' | 'video' | 'reviews' | 'chat-cta' | 'before-after';
 
@@ -300,10 +301,63 @@ export async function getLandingDefaults(tenantId: string): Promise<LandingDefau
 // --- Block templates ---
 
 export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; defaultProps: Record<string, unknown> }> = {
+  header: {
+    label: 'Capçalera',
+    icon: '☰',
+    defaultProps: {
+      logoText: 'El Negoci',
+      logo: '',
+      links: [
+        { label: 'Serveis', href: '#services' },
+        { label: 'Sobre nosaltres', href: '#about' },
+        { label: 'Contacte', href: '#contact' },
+      ],
+      phone: '',
+      ctaText: 'Reserva cita',
+      ctaLink: '#contact',
+    },
+  },
   hero: {
     label: 'Hero',
     icon: '⊞',
-    defaultProps: { title: 'Títol principal', subtitle: 'Subtítol', ctaText: 'Contacta', ctaLink: '#contact', bgImage: '' },
+    defaultProps: { title: 'Títol principal', subtitle: 'Subtítol', ctaText: 'Contacta\'ns', ctaLink: '#contact', bgImage: '', badgeText: '', secondaryCtaText: '', secondaryCtaLink: '#services' },
+  },
+  stats: {
+    label: 'Estadístiques',
+    icon: '📊',
+    defaultProps: {
+      title: '',
+      items: [
+        { number: '500+', label: 'Clients satisfets', icon: '👥' },
+        { number: '15', label: 'Anys d\'experiència', icon: '🏆' },
+        { number: '4.9★', label: 'Valoració Google', icon: '⭐' },
+      ],
+    },
+  },
+  'trust-bar': {
+    label: 'Confiança',
+    icon: '🛡',
+    defaultProps: {
+      title: 'Empreses que confien en nosaltres',
+      items: [
+        { name: 'Certificat ISO', icon: '📋' },
+        { name: 'Col·legi Professional', icon: '🏛' },
+        { name: 'Google Partner', icon: '🔍' },
+        { name: '5 Estrelles', icon: '⭐' },
+      ],
+    },
+  },
+  steps: {
+    label: 'Passos',
+    icon: '→',
+    defaultProps: {
+      title: 'Com treballem',
+      items: [
+        { number: '1', title: 'Primera consulta', description: 'Et contactem per entendre les teves necessitats.' },
+        { number: '2', title: 'Proposta personalitzada', description: 'Preparem una solució adaptada al teu negoci.' },
+        { number: '3', title: 'Posada en marxa', description: 'Implementem i t\'acompanyem en tot el procés.' },
+      ],
+    },
   },
   text: {
     label: 'Text',
@@ -343,7 +397,20 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
   footer: {
     label: 'Footer',
     icon: '⌂',
-    defaultProps: { copyright: '© 2026 Tots els drets reservats' },
+    defaultProps: {
+      businessName: '',
+      tagline: '',
+      address: '',
+      phone: '',
+      email: '',
+      links: [
+        { label: 'Serveis', href: '#services' },
+        { label: 'Sobre nosaltres', href: '#about' },
+        { label: 'Contacte', href: '#contact' },
+      ],
+      socialLinks: [],
+      copyright: '',
+    },
   },
   map: {
     label: 'Mapa',
