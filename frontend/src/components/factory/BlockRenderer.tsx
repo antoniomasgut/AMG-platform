@@ -105,6 +105,14 @@ const Avatar: FC<{ name: string; size?: number; color: string }> = ({ name, size
   );
 };
 
+const SECTION_ID: Partial<Record<string, string>> = {
+  hero: 'hero', services: 'services', 'contact-form': 'contact',
+  'opening-hours': 'hours', testimonials: 'testimonials', faq: 'faq',
+  gallery: 'gallery', pricing: 'pricing', team: 'team', map: 'map',
+  stats: 'stats', steps: 'steps', reviews: 'reviews', 'trust-bar': 'trust',
+  'before-after': 'before-after',
+};
+
 export const BlockRenderer: FC<Props> = ({
   block, styles, isSelected, onSelect, onRemove, onDuplicate, onUpdateProps, onClick, preview,
 }) => {
@@ -149,56 +157,7 @@ export const BlockRenderer: FC<Props> = ({
 
       // ─── HEADER / NAVBAR ──────────────────────────────────────────────────
       case 'header': {
-        const links = Array.isArray(p.links) ? (p.links as Array<{ label: string; href: string }>) : [];
-        const logoText = s(p.logoText, 'El Negoci');
-        const phone = s(p.phone, styles.phone ?? '');
-        const ctaText = s(p.ctaText, 'Contacta');
-        const transparent = !!p.transparent;
-        return (
-          <header style={{
-            position: preview ? 'relative' : 'sticky',
-            top: 0, zIndex: 100,
-            background: transparent ? 'rgba(255,255,255,0.95)' : bg,
-            backdropFilter: 'blur(8px)',
-            borderBottom: `1px solid ${accent}18`,
-            fontFamily: fontB,
-          }} onClick={handleClick}>
-            {removeBtn}
-            <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', gap: 32 }}>
-              {/* Logo */}
-              {s(p.logo) ? (
-                <img src={s(p.logo)} alt={logoText} style={{ height: 40, objectFit: 'contain' }} />
-              ) : (
-                <span style={{ fontFamily: fontH, fontWeight: 800, fontSize: '1.2rem', color: primary, whiteSpace: 'nowrap', letterSpacing: '-0.02em' }}>
-                  {logoText}
-                </span>
-              )}
-              {/* Nav links */}
-              <nav style={{ display: 'flex', gap: 28, flex: 1 }}>
-                {links.map((l, i) => (
-                  <a key={i} href={l.href} style={{ fontFamily: fontB, fontSize: '0.9rem', color: text, opacity: 0.75, textDecoration: 'none', fontWeight: 500 }}
-                    onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '1'; (e.target as HTMLElement).style.color = primary; }}
-                    onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.75'; (e.target as HTMLElement).style.color = text; }}
-                  >{l.label}</a>
-                ))}
-              </nav>
-              {/* Right side */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                {phone && (
-                  <a href={`tel:${phone}`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: text, opacity: 0.7, textDecoration: 'none', fontWeight: 500 }}>
-                    <span>📞</span>{phone}
-                  </a>
-                )}
-                <a
-                  href={s(p.ctaLink, '#contact')}
-                  style={{ padding: '9px 20px', background: primary, color: '#fff', borderRadius: radius, fontFamily: fontH, fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', whiteSpace: 'nowrap' }}
-                >
-                  {ctaText}
-                </a>
-              </div>
-            </div>
-          </header>
-        );
+        return <HeaderBlock p={p} s={s} styles={styles} bg={bg} accent={accent} primary={primary} text={text} fontH={fontH} fontB={fontB} radius={radius} preview={!!preview} removeBtn={removeBtn} handleClick={handleClick} />;
       }
 
       // ─── HERO ─────────────────────────────────────────────────────────────
@@ -252,9 +211,10 @@ export const BlockRenderer: FC<Props> = ({
               </div>
             </div>
             {/* Scroll indicator */}
+            <style>{`@keyframes bounce-dot{0%,100%{transform:translateY(0)}50%{transform:translateY(10px)}}`}</style>
             <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: 0.55 }}>
               <div style={{ width: 24, height: 40, border: '2px solid rgba(255,255,255,0.6)', borderRadius: 12, display: 'flex', justifyContent: 'center', paddingTop: 6 }}>
-                <div style={{ width: 4, height: 8, background: 'rgba(255,255,255,0.8)', borderRadius: 2, animation: 'bounce 1.5s infinite' }} />
+                <div style={{ width: 4, height: 8, background: 'rgba(255,255,255,0.8)', borderRadius: 2, animation: 'bounce-dot 1.5s ease-in-out infinite' }} />
               </div>
             </div>
           </section>
@@ -428,7 +388,7 @@ export const BlockRenderer: FC<Props> = ({
         const wa = s(p.whatsappNumber, styles.whatsappNumber ?? '');
         const ph = s(p.phone, styles.phone ?? '');
         return (
-          <section id="contact" style={{ background: `${accent}08`, fontFamily: fontB }} onClick={handleClick}>
+          <section style={{ background: `${accent}08`, fontFamily: fontB }} onClick={handleClick}>
             {removeBtn}
             <div style={{ maxWidth: 640, margin: '0 auto', padding: '88px 24px' }}>
               <FadeIn>
@@ -933,7 +893,88 @@ export const BlockRenderer: FC<Props> = ({
     }
   };
 
-  return <div className={wrapperClass} onClick={handleClick}>{renderContent()}</div>;
+  const sectionId = SECTION_ID[block.type];
+  return <div id={sectionId} className={wrapperClass} onClick={handleClick}>{renderContent()}</div>;
+};
+
+// ─── HEADER BLOCK (amb hamburger mòbil) ──────────────────────────────────────
+const HeaderBlock: FC<{
+  p: Record<string, unknown>;
+  s: (v: unknown, def?: string) => string;
+  styles: PageStyles;
+  bg: string; accent: string; primary: string; text: string;
+  fontH: string; fontB: string; radius: string;
+  preview: boolean;
+  removeBtn: React.ReactNode;
+  handleClick: () => void;
+}> = ({ p, s, bg, accent, primary, text, fontH, fontB, radius, preview, removeBtn, handleClick }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const links = Array.isArray(p.links) ? (p.links as Array<{ label: string; href: string }>) : [];
+  const logoText = s(p.logoText, 'El Negoci');
+  const phone = s(p.phone, '');
+  const ctaText = s(p.ctaText, 'Contacta');
+
+  return (
+    <header style={{ position: preview ? 'relative' : 'sticky', top: 0, zIndex: 100, background: bg, backdropFilter: 'blur(8px)', borderBottom: `1px solid ${accent}18`, fontFamily: fontB }} onClick={handleClick}>
+      {removeBtn}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', gap: 32 }}>
+        {/* Logo */}
+        {s(p.logo) ? (
+          <img src={s(p.logo)} alt={logoText} style={{ height: 40, objectFit: 'contain' }} />
+        ) : (
+          <span style={{ fontFamily: fontH, fontWeight: 800, fontSize: '1.2rem', color: primary, whiteSpace: 'nowrap', letterSpacing: '-0.02em' }}>{logoText}</span>
+        )}
+        {/* Desktop nav */}
+        <nav style={{ display: 'flex', gap: 28, flex: 1 }} className="hidden-mobile">
+          {links.map((l, i) => (
+            <a key={i} href={l.href} style={{ fontFamily: fontB, fontSize: '0.9rem', color: text, opacity: 0.75, textDecoration: 'none', fontWeight: 500 }}
+              onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '1'; (e.target as HTMLElement).style.color = primary; }}
+              onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.75'; (e.target as HTMLElement).style.color = text; }}
+            >{l.label}</a>
+          ))}
+        </nav>
+        {/* Right side desktop */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }} className="hidden-mobile">
+          {phone && (
+            <a href={`tel:${phone}`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: text, opacity: 0.7, textDecoration: 'none', fontWeight: 500 }}>
+              <span>📞</span>{phone}
+            </a>
+          )}
+          <a href={s(p.ctaLink, '#contact')} style={{ padding: '9px 20px', background: primary, color: '#fff', borderRadius: radius, fontFamily: fontH, fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            {ctaText}
+          </a>
+        </div>
+        {/* Hamburger button — mobile only */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+          style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'none' }}
+          className="show-mobile"
+          aria-label="Menú"
+        >
+          <div style={{ width: 22, height: 2, background: text, marginBottom: 5, transition: 'transform 0.2s', transform: menuOpen ? 'rotate(45deg) translate(5px,5px)' : 'none' }} />
+          <div style={{ width: 22, height: 2, background: text, marginBottom: 5, opacity: menuOpen ? 0 : 1, transition: 'opacity 0.2s' }} />
+          <div style={{ width: 22, height: 2, background: text, transition: 'transform 0.2s', transform: menuOpen ? 'rotate(-45deg) translate(5px,-5px)' : 'none' }} />
+        </button>
+      </div>
+      {/* Mobile menu dropdown */}
+      {menuOpen && (
+        <div style={{ background: bg, borderTop: `1px solid ${accent}15`, padding: '16px 24px 24px' }} className="mobile-menu">
+          {links.map((l, i) => (
+            <a key={i} href={l.href} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '10px 0', color: text, textDecoration: 'none', fontWeight: 500, borderBottom: `1px solid ${accent}10` }}>
+              {l.label}
+            </a>
+          ))}
+          <a href={s(p.ctaLink, '#contact')} onClick={() => setMenuOpen(false)} style={{ display: 'block', marginTop: 16, padding: '12px 20px', background: primary, color: '#fff', borderRadius: radius, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+            {ctaText}
+          </a>
+        </div>
+      )}
+      <style>{`
+        @media(max-width:768px){.hidden-mobile{display:none!important}.show-mobile{display:flex!important}}
+        @media(min-width:769px){.show-mobile{display:none!important}.mobile-menu{display:none!important}}
+      `}</style>
+    </header>
+  );
 };
 
 // ─── FAQ ACCORDION ITEM ──────────────────────────────────────────────────────

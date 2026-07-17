@@ -184,6 +184,13 @@ public class TemplateSeeder implements CommandLineRunner {
                                 Map.of("name", "Dret fiscal", "desc", "Planificació fiscal, recursos tributaris i representació davant Hisenda.", "icon", "📋"),
                                 Map.of("name", "Propietat intel·lectual", "desc", "Registre de marques, patents i protecció del teu actiu intangible.", "icon", "💡")
                         ))),
+                new SectionDef("TRUST_BAR", schema("title", "text", "items", "array"),
+                        props("title", "Col·legiats i certificats", "items", List.of(
+                                Map.of("name", "Il·lustre Col·legi d'Advocats", "icon", "⚖️"),
+                                Map.of("name", "Protecció de dades RGPD", "icon", "🔒"),
+                                Map.of("name", "+500 casos resolts", "icon", "✅"),
+                                Map.of("name", "Membre ICAIB", "icon", "🏛")
+                        ))),
                 new SectionDef("STEPS", schema("title", "text", "items", "array"),
                         props("title", "Com treballem", "items", List.of(
                                 Map.of("number", "1", "title", "Primera consulta", "description", "Anàlisi gratuïta del teu cas. Sense compromisos, sense sorpreses."),
@@ -201,6 +208,12 @@ public class TemplateSeeder implements CommandLineRunner {
                                 Map.of("question", "La primera consulta és gratuïta?", "answer", "Sí, la primera consulta de fins a 30 minuts és completament gratuïta i sense compromís."),
                                 Map.of("question", "Quant tarda a resoldre's un cas?", "answer", "Depèn de la complexitat. Un contracte mercantil pot estar en 3-5 dies; un litigi pot trigar mesos. T'informarem des del principi."),
                                 Map.of("question", "Treballeu amb empreses petites?", "answer", "Sí, la majoria dels nostres clients són pimes i autònoms. Tenim tarifes adaptades a cada situació.")
+                        ))),
+                new SectionDef("PRICING", schema("title", "text", "items", "array"),
+                        props("title", "Tarifes transparents", "items", List.of(
+                                Map.of("name", "Consulta puntual", "description", "Per a autònoms i particulars", "price", "150", "period", "hora", "features", List.of("Consulta d'1h en profunditat", "Informe escrit amb recomanacions", "Seguiment per email 30 dies"), "highlighted", false),
+                                Map.of("name", "Assessoria mensual", "description", "Per a empreses i pimes", "price", "250", "period", "mes", "features", List.of("Assessorament il·limitat", "Revisió de contractes", "Representació en gestions", "Resposta en 24h garantida"), "highlighted", true),
+                                Map.of("name", "Pack defensa", "description", "Per a litigis i disputes", "price", "Pressupost", "period", "cas", "features", List.of("Anàlisi inicial gratuïta", "Estratègia personalitzada", "Representació completa", "Sense sorpreses"), "highlighted", false)
                         ))),
                 new SectionDef("CTA", schema("title", "text", "ctaText", "text"),
                         props("title", "Resol el teu problema legal avui", "subtitle", "Primera consulta gratuïta · Resposta en 24h", "ctaText", "Parla amb un expert", "ctaLink", "#contact")),
@@ -334,6 +347,13 @@ public class TemplateSeeder implements CommandLineRunner {
                                 Map.of("name", "Manteniment preventiu", "desc", "Revisions periòdiques per evitar avaries i garantir el bon funcionament.", "icon", "🔍"),
                                 Map.of("name", "Pressupost gratuït", "desc", "Visita de diagnòstic i pressupost detallat sense cap cost ni compromís.", "icon", "📋")
                         ))),
+                new SectionDef("TRUST_BAR", schema("title", "text", "items", "array"),
+                        props("title", "Per què triar-nos", "items", List.of(
+                                Map.of("name", "Assegurat", "icon", "🛡"),
+                                Map.of("name", "Garantia 2 anys", "icon", "✅"),
+                                Map.of("name", "Pressupost gratuït", "icon", "📋"),
+                                Map.of("name", "Disponibles 7 dies", "icon", "📞")
+                        ))),
                 new SectionDef("STEPS", schema("title", "text", "items", "array"),
                         props("title", "Com treballem", "items", List.of(
                                 Map.of("number", "1", "title", "Truques o escrius", "description", "Ens expliques el que necessites. Et respondrem en menys de 2 hores."),
@@ -392,6 +412,13 @@ public class TemplateSeeder implements CommandLineRunner {
                                 Map.of("name", "Nutrició i dietètica", "desc", "Plans nutricionals personalitzats amb seguiment. Resultats visibles en 4 setmanes.", "icon", "🥗"),
                                 Map.of("name", "Psicologia", "desc", "Atenció psicològica individual i de parella. Eines per al teu benestar emocional.", "icon", "🧠"),
                                 Map.of("name", "Estètica avançada", "desc", "Tractaments facials i corporals amb tecnologia de darrera generació.", "icon", "✨")
+                        ))),
+                new SectionDef("TRUST_BAR", schema("title", "text", "items", "array"),
+                        props("title", "Professionalitat i confiança", "items", List.of(
+                                Map.of("name", "Professionals col·legiats", "icon", "🏛"),
+                                Map.of("name", "3.000+ pacients atesos", "icon", "❤️"),
+                                Map.of("name", "Assegurança responsabilitat civil", "icon", "🛡"),
+                                Map.of("name", "Cita en 24h garantida", "icon", "⚡")
                         ))),
                 new SectionDef("TEAM", schema("title", "text", "items", "array"),
                         props("title", "El nostre equip", "items", List.of(
@@ -453,6 +480,8 @@ public class TemplateSeeder implements CommandLineRunner {
                                 Map.of("name", "Frenada i suspensió", "desc", "Revisió i substitució de frens i amortidors. Seguretat màxima al volant.", "icon", "⚙️"),
                                 Map.of("name", "Pneumàtics", "desc", "Venda, muntatge, equilibrat i alineació. Totes les marques al millor preu.", "icon", "🏎️")
                         ))),
+                new SectionDef("BEFORE_AFTER", schema("title", "text"),
+                        props("title", "Resultats reals dels nostres treballs", "beforeLabel", "Abans de la reparació", "afterLabel", "Resultat final", "beforeImage", "", "afterImage", "")),
                 new SectionDef("TESTIMONIALS", schema("title", "text", "items", "array"),
                         props("title", "Clients satisfets", "items", List.of(
                                 Map.of("name", "Toni Moll", "role", "Client des de 2018", "text", "El pressupost sempre clar i just. Mai m'han facturat res que no s'hagi acordat abans. Hi porto tots els meus vehicles.", "rating", 5),

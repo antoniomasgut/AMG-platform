@@ -362,12 +362,19 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
   text: {
     label: 'Text',
     icon: '¶',
-    defaultProps: { title: 'Sobre nosaltres', body: '<p>Text de contingut</p>' },
+    defaultProps: { title: 'Sobre nosaltres', body: '<p>Som un negoci local amb anys d\'experiència al sector. La nostra missió és oferir el millor servei amb la màxima qualitat i atenció personalitzada a cada client.</p>' },
   },
   services: {
     label: 'Serveis',
     icon: '◆',
-    defaultProps: { title: 'Els nostres serveis', items: [{ name: 'Servei 1', desc: 'Descripció' }] },
+    defaultProps: {
+      title: 'Els nostres serveis',
+      items: [
+        { name: 'Servei professional', desc: 'Oferim el millor servei adaptat a les necessitats del teu negoci. Qualitat garantida.', icon: '⭐' },
+        { name: 'Atenció personalitzada', desc: 'Tracte directe i proper amb cada client. Respondrem les teves preguntes en menys de 24h.', icon: '💬' },
+        { name: 'Resultats garantits', desc: 'El nostre compromís és el teu èxit. Si no estàs satisfet, ho arreglem sense cost addicional.', icon: '✓' },
+      ],
+    },
   },
   gallery: {
     label: 'Galeria',
@@ -382,12 +389,26 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
   faq: {
     label: 'FAQ',
     icon: '?',
-    defaultProps: { title: 'Preguntes freqüents', items: [{ q: 'Pregunta?', a: 'Resposta' }] },
+    defaultProps: {
+      title: 'Preguntes freqüents',
+      items: [
+        { question: 'Com puc demanar un pressupost?', answer: 'Pots contactar-nos per telèfon, WhatsApp o el formulari de contacte. T\'enviarem el pressupost detallat en menys de 24 hores.' },
+        { question: 'Quant tarda a estar llest?', answer: 'Depèn de la feina. Les tasques senzilles les resolem el mateix dia; les més complexes en 2-5 dies hàbils. Et mantindrem informat en tot moment.' },
+        { question: 'Doneu garantia del servei?', answer: 'Sí, tots els treballs inclouen garantia. Si no estàs satisfet amb el resultat, ho arreglem sense cap cost addicional.' },
+      ],
+    },
   },
   testimonials: {
     label: 'Testimonis',
     icon: '★',
-    defaultProps: { title: 'Què diuen els clients', items: [{ name: 'Client', text: 'Testimoni', rating: 5 }] },
+    defaultProps: {
+      title: 'El que diuen els clients',
+      items: [
+        { name: 'Maria G.', role: 'Client habitual', text: 'Excel·lent servei i tracte molt professional. Ho recoman a tothom. El millor que he provat a la zona.', rating: 5 },
+        { name: 'Joan P.', role: 'Client des de 2022', text: 'El resultat va superar les expectatives. Ràpids, eficients i amb un preu molt raonable. Repetiré sense dubte.', rating: 5 },
+        { name: 'Anna M.', role: 'Primera visita', text: 'Vaig venir per recomanació i estic molt contenta. Atenen molt bé i expliquen tot amb detall. 100% recomanable.', rating: 5 },
+      ],
+    },
   },
   cta: {
     label: 'CTA',
