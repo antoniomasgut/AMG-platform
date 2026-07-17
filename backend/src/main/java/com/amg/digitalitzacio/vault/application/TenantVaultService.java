@@ -84,7 +84,7 @@ public class TenantVaultService implements VaultService {
                             .build();
                     tenantServiceRepository.save(ts);
                 }
-                phaseTotal = phaseTotal.add(svc.getSalePrice());
+                phaseTotal = phaseTotal.add(svc.getSalePrice() != null ? svc.getSalePrice() : BigDecimal.ZERO);
             }
 
             phaseSummaries.add(new AssignProfileResponse.PhaseSummary(
@@ -163,11 +163,11 @@ public class TenantVaultService implements VaultService {
     public ApprovePhaseResponse approvePhase(UUID tenantId, UUID phaseId) {
         var tph = tenantPhaseRepository.findByTenantIdAndPhaseId(tenantId, phaseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant phase not found"));
-        tph.setApprovalStatus(ApprovalStatus.APPROVED);
-        tph.setApprovedAt(Instant.now());
 
         var services = catalogServiceRepository.findByPhaseIdOrderBySortOrder(phaseId);
-        var amount = services.stream().map(CatalogService::getSalePrice).reduce(BigDecimal.ZERO, BigDecimal::add);
+        var amount = services.stream()
+                .map(s -> s.getSalePrice() != null ? s.getSalePrice() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Create invoice via stub
         var invoiceId = invoiceService.createInvoice(tenantId, phaseId, amount);
@@ -175,9 +175,11 @@ public class TenantVaultService implements VaultService {
         tph.setInvoiceAmount(amount);
         tph.setInvoiceStatus(com.amg.digitalitzacio.vault.domain.InvoiceStatus.SENT);
 
-        // Charge via stub
+        // Charge via stub — approval only confirmed if payment succeeds
         var paymentResult = paymentService.charge(tenantId, invoiceId, amount);
         if (paymentResult.success()) {
+            tph.setApprovalStatus(ApprovalStatus.APPROVED);
+            tph.setApprovedAt(Instant.now());
             tph.setPaymentStatus(PaymentStatus.PAID);
             tph.setPaidAt(Instant.now());
             tph.setImplementationStatus(ImplementationStatus.NOT_STARTED);
@@ -188,8 +190,10 @@ public class TenantVaultService implements VaultService {
 
         tenantPhaseRepository.save(tph);
 
-        return new ApprovePhaseResponse(phaseId, "APPROVED",
-                tph.getPaymentStatus().name(), tph.getImplementationStatus().name(),
+        return new ApprovePhaseResponse(phaseId,
+                tph.getApprovalStatus().name(),
+                tph.getPaymentStatus() != null ? tph.getPaymentStatus().name() : PaymentStatus.PENDING.name(),
+                tph.getImplementationStatus() != null ? tph.getImplementationStatus().name() : ImplementationStatus.NOT_STARTED.name(),
                 invoiceId.toString(), amount);
     }
 
@@ -248,6 +252,7 @@ public class TenantVaultService implements VaultService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant service not found"));
 
         var existing = tenantCredentialRepository.findByTenantIdAndFieldId(tenantId, fieldId);
+        boolean isNew = existing.isEmpty();
         var tc = existing.orElseGet(() -> TenantCredential.builder()
                 .tenantId(tenantId).fieldId(fieldId).build());
 
@@ -259,7 +264,7 @@ public class TenantVaultService implements VaultService {
         // Audit log
         credentialAuditLogRepository.save(CredentialAuditLog.builder()
                 .credentialId(tc.getId()).userId(userId)
-                .action(AuditAction.CREATE)
+                .action(isNew ? AuditAction.CREATE : AuditAction.UPDATE)
                 .maskedValue(CredentialResponse.mask(value))
                 .createdAt(Instant.now()).build());
 
@@ -539,8 +544,12 @@ public class TenantVaultService implements VaultService {
                 .orElseThrow(() -> new ResourceNotFoundException("Service definition not found"));
 
         // Determine recipient and channel from tenant context
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
         CommunicationChannel channel = CommunicationChannel.EMAIL; // default
-        String recipient = "client@unknown.com";
+        String recipient = tenant != null && tenant.getEmail() != null ? tenant.getEmail() : null;
+        if (recipient == null || recipient.isBlank()) {
+            throw new IllegalStateException("Tenant " + tenantId + " no té email configurat — no es pot enviar la sol·licitud");
+        }
 
         // Build message based on request type
         String body;
@@ -675,44 +684,31 @@ public class TenantVaultService implements VaultService {
         ConfirmPhaseResponse.NextPhase nextPhase = null;
         boolean profileCompleted = true;
 
-        // Find current phase index and check if there's a next phase
-        UUID currentPhaseId = null;
-        for (var phase : phases) {
-            var tphOpt = tenantPhaseRepository.findByTenantIdAndPhaseId(tenantId, phase.getId());
-            if (tphOpt.isPresent() && tphOpt.get().getImplementationStatus() != ImplementationStatus.COMPLETED) {
-                // Check if this is the current phase (first not-completed one)
-                if (currentPhaseId == null) {
-                    currentPhaseId = phase.getId();
-                    // This is the one being confirmed
-                    var tph = tphOpt.get();
-                    tph.setImplementationStatus(ImplementationStatus.COMPLETED);
-                    tph.setCompletedAt(Instant.now());
-                    tenantPhaseRepository.save(tph);
-                }
-            }
+        // Mark the specific requested phase as COMPLETED
+        if (request.phaseId() != null) {
+            tenantPhaseRepository.findByTenantIdAndPhaseId(tenantId, request.phaseId()).ifPresent(tph -> {
+                tph.setImplementationStatus(ImplementationStatus.COMPLETED);
+                tph.setCompletedAt(Instant.now());
+                tenantPhaseRepository.save(tph);
+            });
         }
 
-        if (currentPhaseId == null) {
-            // Profile is completed
-            tp.setCompletedAt(Instant.now());
-            tenantProfileRepository.save(tp);
-            profileCompleted = true;
-        } else {
-            // Check if there's a next phase after the confirmed one
-            boolean foundCurrent = false;
-            for (var phase : phases) {
-                if (foundCurrent) {
+        // Find the next non-completed phase after request.phaseId()
+        boolean foundCurrent = request.phaseId() == null; // if no phaseId, treat first as next
+        for (var phase : phases) {
+            if (foundCurrent) {
+                var tphOpt = tenantPhaseRepository.findByTenantIdAndPhaseId(tenantId, phase.getId());
+                boolean alreadyDone = tphOpt.map(t -> t.getImplementationStatus() == ImplementationStatus.COMPLETED).orElse(false);
+                if (!alreadyDone) {
                     nextPhase = new ConfirmPhaseResponse.NextPhase(phase.getId(), phase.getName(), phase.getSortOrder());
                     tp.setPhaseStatus(PhaseStatus.CONFIGURING);
                     tenantProfileRepository.save(tp);
 
-                    // Verify the TenantPhase exists
-                    var nextTph = tenantPhaseRepository.findByTenantIdAndPhaseId(tenantId, phase.getId())
-                            .orElseGet(() -> {
-                                var newTph = TenantPhase.builder()
-                                        .tenantId(tenantId).profileId(profileId).phaseId(phase.getId()).build();
-                                return tenantPhaseRepository.save(newTph);
-                            });
+                    var nextTph = tphOpt.orElseGet(() -> {
+                        var newTph = TenantPhase.builder()
+                                .tenantId(tenantId).profileId(profileId).phaseId(phase.getId()).build();
+                        return tenantPhaseRepository.save(newTph);
+                    });
                     if (nextTph.getImplementationStatus() == null) {
                         nextTph.setImplementationStatus(ImplementationStatus.NOT_STARTED);
                         tenantPhaseRepository.save(nextTph);
@@ -720,17 +716,16 @@ public class TenantVaultService implements VaultService {
                     profileCompleted = false;
                     break;
                 }
-                if (phase.getId().equals(request.phaseId())) {
-                    foundCurrent = true;
-                }
             }
-            if (nextPhase == null) {
-                // No next phase found, profile completed
-                tp.setCompletedAt(Instant.now());
-                tp.setPhaseStatus(PhaseStatus.COMPLETED);
-                tenantProfileRepository.save(tp);
-                profileCompleted = true;
+            if (phase.getId().equals(request.phaseId())) {
+                foundCurrent = true;
             }
+        }
+
+        if (profileCompleted) {
+            tp.setCompletedAt(Instant.now());
+            tp.setPhaseStatus(PhaseStatus.COMPLETED);
+            tenantProfileRepository.save(tp);
         }
 
         return new ConfirmPhaseResponse(tp.getPhaseStatus().name(), nextPhase, profileCompleted);

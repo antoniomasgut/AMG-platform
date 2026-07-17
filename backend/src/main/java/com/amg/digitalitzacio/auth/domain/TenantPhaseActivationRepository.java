@@ -14,4 +14,6 @@ public interface TenantPhaseActivationRepository extends JpaRepository<TenantPha
     List<TenantPhaseActivation> findByActivatedAtBetweenAndDeactivatedAtIsNull(Instant from, Instant to);
 
     List<TenantPhaseActivation> findByDeactivatedAtIsNullAndActivatedAtBefore(Instant before);
+
+    void deleteByTenantId(UUID tenantId);
 }

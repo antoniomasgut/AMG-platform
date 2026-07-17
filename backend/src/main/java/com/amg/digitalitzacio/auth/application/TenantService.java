@@ -2,7 +2,9 @@ package com.amg.digitalitzacio.auth.application;
 
 import com.amg.digitalitzacio.agents.application.SectorKnowledgeSeedService;
 import com.amg.digitalitzacio.agents.application.TenantBudgetDefaultsService;
+import com.amg.digitalitzacio.agents.domain.FollowupLogRepository;
 import com.amg.digitalitzacio.agents.domain.KnowledgeBaseRepository;
+import com.amg.digitalitzacio.agents.domain.NexeServiceConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantAIConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.api.dto.*;
@@ -11,6 +13,7 @@ import com.amg.digitalitzacio.auth.domain.BusinessSize;
 import com.amg.digitalitzacio.auth.domain.PreferredChannel;
 import com.amg.digitalitzacio.auth.domain.Tenant;
 import com.amg.digitalitzacio.auth.domain.TenantPhaseActivation;
+import com.amg.digitalitzacio.auth.domain.TenantPhaseActivationRepository;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.finops.domain.MonthlyInvoiceRepository;
@@ -60,6 +63,9 @@ public class TenantService {
     private final SectorKnowledgeSeedService sectorKnowledgeSeedService;
     private final TenantBudgetDefaultsService tenantBudgetDefaultsService;
     private final PhaseActivationService phaseActivationService;
+    private final TenantPhaseActivationRepository tenantPhaseActivationRepository;
+    private final NexeServiceConfigRepository nexeServiceConfigRepository;
+    private final FollowupLogRepository followupLogRepository;
 
     @Transactional
     public TenantResponse createTenant(@Valid CreateTenantRequest request) {
@@ -100,6 +106,14 @@ public class TenantService {
                 && !Boolean.TRUE.equals(request.isFree())) {
             tenant.setBillingStartDate(LocalDate.now());
             tenant = tenantRepository.save(tenant);
+        }
+        // Registrar les fases inicials al log d'activació (necessari pel watchdog i l'onboarding)
+        if (request.contractedPhases() != null) {
+            final UUID tenantId = tenant.getId();
+            request.contractedPhases().stream()
+                    .filter(p -> p != null && !p.isBlank())
+                    .map(String::toUpperCase)
+                    .forEach(p -> phaseActivationService.recordActivation(tenantId, p, "CREATE", null, null));
         }
         return toResponse(tenant);
     }
@@ -282,6 +296,9 @@ public class TenantService {
         goCardlessConfigRepository.deleteByTenantId(id);
         whatsAppWabaConfigRepository.deleteByTenantId(id);
         tenantTelegramConfigRepository.deleteByTenantId(id);
+        tenantPhaseActivationRepository.deleteByTenantId(id);
+        nexeServiceConfigRepository.deleteByTenantId(id);
+        followupLogRepository.deleteByTenantId(id);
         tenantRepository.deleteById(id);
     }
 

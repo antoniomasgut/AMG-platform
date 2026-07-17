@@ -13,4 +13,6 @@ public interface NexeServiceConfigRepository extends JpaRepository<NexeServiceCo
     List<NexeServiceConfig> findByServiceKey(String serviceKey);
 
     Optional<NexeServiceConfig> findByTenantIdAndServiceKey(UUID tenantId, String serviceKey);
+
+    void deleteByTenantId(UUID tenantId);
 }

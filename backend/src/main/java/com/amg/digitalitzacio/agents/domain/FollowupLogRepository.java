@@ -11,4 +11,6 @@ public interface FollowupLogRepository extends JpaRepository<FollowupLog, UUID> 
     boolean existsByTenantIdAndTypeAndEntityId(UUID tenantId, String type, UUID entityId);
 
     List<FollowupLog> findByTypeAndSentAtBetween(String type, Instant from, Instant to);
+
+    void deleteByTenantId(UUID tenantId);
 }
