@@ -2,10 +2,12 @@ package com.amg.digitalitzacio.automations.api;
 
 import com.amg.digitalitzacio.automations.api.dto.*;
 import com.amg.digitalitzacio.automations.application.AutomationService;
+import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,9 +39,10 @@ public class AutomationController {
     }
 
     @GetMapping("/tenants/{tenantId}/workflows")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN') or (hasRole('CLIENT') and #principal.tenantId == #tenantId)")
     public WorkflowListResponse listWorkflows(
             @PathVariable UUID tenantId,
+            @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -81,7 +84,7 @@ public class AutomationController {
     }
 
     @GetMapping("/workflows/{workflowId}/executions")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     public Page<WorkflowExecutionResponse> listExecutions(
             @PathVariable UUID workflowId,
             @RequestParam(required = false) String status,

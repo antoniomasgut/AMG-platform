@@ -37,33 +37,37 @@ public class SlaMonitorScheduler {
         var overdueIntakes = intakeRepository.findByStatusAndCompletedAtBefore("COMPLETE", deadline);
 
         for (var intake : overdueIntakes) {
-            var tenant = tenantRepository.findById(intake.getTenantId()).orElse(null);
-            boolean alreadyActive = false;
-            if (tenant != null && tenant.getContractedPhases() != null && !tenant.getContractedPhases().isBlank()) {
-                var contracted = Set.of(tenant.getContractedPhases().split(","));
-                var active = tenant.getActivePhases() != null
-                        ? Set.of(tenant.getActivePhases().split(","))
-                        : contracted;
-                alreadyActive = active.containsAll(contracted);
-            } else if (tenant != null) {
-                alreadyActive = tenant.getActivePhases() != null && !tenant.getActivePhases().isBlank();
+            try {
+                var tenant = tenantRepository.findById(intake.getTenantId()).orElse(null);
+                boolean alreadyActive = false;
+                if (tenant != null && tenant.getContractedPhases() != null && !tenant.getContractedPhases().isBlank()) {
+                    var contracted = Set.of(tenant.getContractedPhases().split(","));
+                    var active = tenant.getActivePhases() != null
+                            ? Set.of(tenant.getActivePhases().split(","))
+                            : contracted;
+                    alreadyActive = active.containsAll(contracted);
+                } else if (tenant != null) {
+                    alreadyActive = tenant.getActivePhases() != null && !tenant.getActivePhases().isBlank();
+                }
+
+                if (alreadyActive) continue;
+
+                // Una sola alerta per intake — evita spam cada hora
+                if (followupLogRepository.existsByTenantIdAndTypeAndEntityId(
+                        intake.getTenantId(), LOG_TYPE, intake.getId())) continue;
+
+                long hoursWaiting = ChronoUnit.HOURS.between(intake.getCompletedAt(), Instant.now());
+                log.warn("[SLA] Setup completat fa {}h sense activar — tenant {}", hoursWaiting, intake.getTenantId());
+                postAcceptanceService.onSetupSlaExpired(intake, hoursWaiting);
+
+                var log2 = new FollowupLog();
+                log2.setTenantId(intake.getTenantId());
+                log2.setType(LOG_TYPE);
+                log2.setEntityId(intake.getId());
+                followupLogRepository.save(log2);
+            } catch (Exception e) {
+                log.error("[SLA] Error processant intake {} (setup completat): {}", intake.getId(), e.getMessage());
             }
-
-            if (alreadyActive) continue;
-
-            // Una sola alerta per intake — evita spam cada hora
-            if (followupLogRepository.existsByTenantIdAndTypeAndEntityId(
-                    intake.getTenantId(), LOG_TYPE, intake.getId())) continue;
-
-            long hoursWaiting = ChronoUnit.HOURS.between(intake.getCompletedAt(), Instant.now());
-            log.warn("[SLA] Setup completat fa {}h sense activar — tenant {}", hoursWaiting, intake.getTenantId());
-            postAcceptanceService.onSetupSlaExpired(intake, hoursWaiting);
-
-            var log2 = new FollowupLog();
-            log2.setTenantId(intake.getTenantId());
-            log2.setType(LOG_TYPE);
-            log2.setEntityId(intake.getId());
-            followupLogRepository.save(log2);
         }
     }
 
@@ -78,18 +82,22 @@ public class SlaMonitorScheduler {
                 java.util.List.of("PENDING", "IN_PROGRESS"), deadline);
 
         for (var intake : pending) {
-            if (followupLogRepository.existsByTenantIdAndTypeAndEntityId(
-                    intake.getTenantId(), LOG_TYPE_INTAKE, intake.getId())) continue;
+            try {
+                if (followupLogRepository.existsByTenantIdAndTypeAndEntityId(
+                        intake.getTenantId(), LOG_TYPE_INTAKE, intake.getId())) continue;
 
-            long hoursWaiting = ChronoUnit.HOURS.between(intake.getCreatedAt(), Instant.now());
-            log.warn("[SLA] Fitxa de configuració sense omplir fa {}h — tenant {}", hoursWaiting, intake.getTenantId());
-            postAcceptanceService.onIntakePending(intake, hoursWaiting);
+                long hoursWaiting = ChronoUnit.HOURS.between(intake.getCreatedAt(), Instant.now());
+                log.warn("[SLA] Fitxa de configuració sense omplir fa {}h — tenant {}", hoursWaiting, intake.getTenantId());
+                postAcceptanceService.onIntakePending(intake, hoursWaiting);
 
-            var entry = new FollowupLog();
-            entry.setTenantId(intake.getTenantId());
-            entry.setType(LOG_TYPE_INTAKE);
-            entry.setEntityId(intake.getId());
-            followupLogRepository.save(entry);
+                var entry = new FollowupLog();
+                entry.setTenantId(intake.getTenantId());
+                entry.setType(LOG_TYPE_INTAKE);
+                entry.setEntityId(intake.getId());
+                followupLogRepository.save(entry);
+            } catch (Exception e) {
+                log.error("[SLA] Error processant intake {} (pendent): {}", intake.getId(), e.getMessage());
+            }
         }
     }
 }

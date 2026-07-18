@@ -145,7 +145,7 @@ export interface AIModelInfo {
 }
 
 export async function listAIModels(): Promise<AIModelInfo[]> {
-  return apiFetch<AIModelInfo[]>('/agents/models');
+  return apiFetch<AIModelInfo[]>('/agents/conversational/models');
 }
 
 // --- Engine API ---

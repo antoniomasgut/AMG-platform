@@ -8,10 +8,12 @@ import com.amg.digitalitzacio.billing.domain.BudgetRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetSetupIntake;
 import com.amg.digitalitzacio.billing.domain.BudgetSetupIntakeRepository;
 import com.amg.digitalitzacio.billing.domain.BudgetStatus;
+import com.amg.digitalitzacio.shared.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -97,8 +99,12 @@ public class BudgetSetupIntakeController {
     // GET /api/v1/billing/budgets/{budgetId}/intake — obté la fitxa per pressupost (requereix auth)
     @GetMapping("/budgets/{budgetId}/intake")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<IntakeResponse> getIntakeByBudget(@PathVariable UUID budgetId) {
+    public ResponseEntity<IntakeResponse> getIntakeByBudget(
+            @PathVariable UUID budgetId,
+            @AuthenticationPrincipal UserPrincipal principal) {
         return intakeRepository.findByBudgetId(budgetId)
+                .filter(i -> "SUPER_ADMIN".equals(principal.role()) || "ADMIN".equals(principal.role())
+                        || i.getTenantId().equals(principal.tenantId()))
                 .map(i -> ResponseEntity.ok(toResponse(i)))
                 .orElse(ResponseEntity.notFound().build());
     }

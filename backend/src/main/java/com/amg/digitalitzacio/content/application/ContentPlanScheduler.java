@@ -40,10 +40,14 @@ public class ContentPlanScheduler {
                     .filter(i -> inCurrentWeek(i.getPhotoDeadline(), today))
                     .findFirst()
                     .ifPresent(item -> {
-                        item.setStatus(ContentItemStatus.PHOTO_REQUESTED);
-                        item.setBriefSentAt(Instant.now());
-                        itemRepository.save(item);
-                        telegramBotClient.sendMessage(link.get().getTelegramChatId(), briefMessage(item));
+                        try {
+                            item.setStatus(ContentItemStatus.PHOTO_REQUESTED);
+                            item.setBriefSentAt(Instant.now());
+                            itemRepository.save(item);
+                            telegramBotClient.sendMessage(link.get().getTelegramChatId(), briefMessage(item));
+                        } catch (Exception e) {
+                            log.error("Error enviant brief per item {}: {}", item.getId(), e.getMessage());
+                        }
                     });
         }
     }
@@ -53,11 +57,15 @@ public class ContentPlanScheduler {
     public void sendReminders() {
         for (ContentPlanItem item : itemRepository
                 .findByStatusAndMediaUrlIsNullAndReminderSentAtIsNull(ContentItemStatus.PHOTO_REQUESTED)) {
-            var link = chatLinkRepository.findByTenantId(item.getTenantId());
-            if (link.isEmpty()) continue;
-            item.setReminderSentAt(Instant.now());
-            itemRepository.save(item);
-            telegramBotClient.sendMessage(link.get().getTelegramChatId(), reminderMessage(item));
+            try {
+                var link = chatLinkRepository.findByTenantId(item.getTenantId());
+                if (link.isEmpty()) continue;
+                item.setReminderSentAt(Instant.now());
+                itemRepository.save(item);
+                telegramBotClient.sendMessage(link.get().getTelegramChatId(), reminderMessage(item));
+            } catch (Exception e) {
+                log.error("Error enviant recordatori per item {}: {}", item.getId(), e.getMessage());
+            }
         }
     }
 
