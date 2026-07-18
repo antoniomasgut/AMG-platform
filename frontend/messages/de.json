@@ -43,7 +43,7 @@
         "automationsValue": "< 4h",
         "automationsLabel": "Reaktionszeit"
       },
-      "sectors": "['Kliniken', 'Renovierungen', 'Anwälte', 'Geschäfte', 'Restaurants', 'Friseure', 'Beratungsunternehmen']"
+      "sectors": ["Kliniken", "Renovierungen", "Anwälte", "Geschäfte", "Restaurants", "Friseure", "Beratungsunternehmen"]
     },
     "problem": {
       "badge": "Das echte Problem",

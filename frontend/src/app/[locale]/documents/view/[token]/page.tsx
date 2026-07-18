@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { useParams } from 'next/navigation';
 import { AMGLogo } from '@/components/ui/AMGLogo';
 import {
@@ -192,6 +193,10 @@ export default function DocumentViewPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
+  const safeHtml = useMemo(
+    () => (doc?.htmlContent ? DOMPurify.sanitize(doc.htmlContent, { USE_PROFILES: { html: true } }) : null),
+    [doc?.htmlContent]
+  );
   const docTitle = doc?.description ?? doc?.fileName ?? 'Document';
   const isAccepted = doc?.accepted || acceptedBy !== null;
   const signerNameDisplay = acceptedBy ?? doc?.signerName ?? '';
@@ -222,11 +227,11 @@ export default function DocumentViewPage() {
             {paidParam !== null && <PaymentBanner paid={paidParam === '1'} />}
 
             {/* Document HTML */}
-            {doc.htmlContent ? (
+            {safeHtml ? (
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 overflow-x-auto">
                 <div
                   className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: doc.htmlContent }}
+                  dangerouslySetInnerHTML={{ __html: safeHtml ?? '' }}
                 />
               </div>
             ) : (

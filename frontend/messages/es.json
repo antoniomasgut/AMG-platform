@@ -43,7 +43,7 @@
         "automationsValue": "< 4h",
         "automationsLabel": "Tiempo de respuesta"
       },
-      "sectors": "Peluquerías, talleres, clínicas, restaurantes y más..."
+      "sectors": ["Clínicas", "Reformas", "Abogados", "Tiendas", "Restaurantes", "Peluquerías", "Consultorías"]
     },
     "problem": {
       "badge": "El problema real",
