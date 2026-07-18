@@ -1063,6 +1063,7 @@ public class EngineOrchestrator implements EngineService {
     private String buildGlobalCss(StyleVars s) {
         return ":root{--p:" + s.primary() + ";--a:" + s.accent() + ";--bg:" + s.bg() + ";--tx:" + s.text() + "}" +
                "*{margin:0;padding:0;box-sizing:border-box}" +
+               "html{scroll-behavior:smooth;scroll-padding-top:72px}" +
                "body{font-family:" + s.fontB() + ";background:var(--bg);color:var(--tx);line-height:1.6}" +
                "h1,h2,h3,h4{font-family:" + s.fontH() + ";line-height:1.2}" +
                "img{max-width:100%;display:block}" +

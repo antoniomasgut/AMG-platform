@@ -1196,7 +1196,10 @@
       "config": "Configuration",
       "myBusiness": "My business",
       "commTemplates": "Communication templates",
-      "contentPlan": "Content planner"
+      "contentPlan": "Content planner",
+      "agenda": "Agenda",
+      "pipeline": "Sales Pipeline",
+      "deployHub": "Deploy Hub"
     }
   },
   "knowledge": {

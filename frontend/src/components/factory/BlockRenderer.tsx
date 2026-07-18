@@ -212,7 +212,7 @@ export const BlockRenderer: FC<Props> = ({
             </div>
             {/* Scroll indicator */}
             <style>{`@keyframes bounce-dot{0%,100%{transform:translateY(0)}50%{transform:translateY(10px)}}`}</style>
-            <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: 0.55 }}>
+            <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: 0.55, pointerEvents: 'none' }}>
               <div style={{ width: 24, height: 40, border: '2px solid rgba(255,255,255,0.6)', borderRadius: 12, display: 'flex', justifyContent: 'center', paddingTop: 6 }}>
                 <div style={{ width: 4, height: 8, background: 'rgba(255,255,255,0.8)', borderRadius: 2, animation: 'bounce-dot 1.5s ease-in-out infinite' }} />
               </div>

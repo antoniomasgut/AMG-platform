@@ -46,7 +46,9 @@ class ContentPlanSchedulerTest {
     void sendWeeklyBriefs_transitionsItemAndSendsBrief() {
         UUID planId = UUID.randomUUID();
         ContentPlan plan = ContentPlan.builder().id(planId).tenantId(TENANT).status(ContentPlanStatus.ACTIVE).build();
-        LocalDate thisWeekThu = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.THURSDAY));
+        LocalDate thisWeekThu = LocalDate.now()
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .plusDays(3);
         ContentPlanItem item = ContentPlanItem.builder().id(UUID.randomUUID()).planId(planId).tenantId(TENANT)
                 .weekNumber(1).pillar(ContentPillar.NOVELTY).briefText("Foto novetat")
                 .status(ContentItemStatus.PLANNED).photoDeadline(thisWeekThu).build();

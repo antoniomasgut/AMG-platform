@@ -170,6 +170,11 @@
 }
 
 /* ─────────── Base styles ─────────── */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 56px; /* landing header fixa */
+}
+
 body {
   background: var(--body-bg);
   color: var(--body-color);

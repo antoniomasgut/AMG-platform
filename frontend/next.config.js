@@ -25,7 +25,7 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      { source: '/api/:path*', destination: `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8081'}/api/:path*` },
+      { source: '/api/:path*', destination: `${process.env.NEXT_PUBLIC_API_URL ?? 'https://api.amgdl.com'}/api/:path*` },
     ];
   },
   async headers() {

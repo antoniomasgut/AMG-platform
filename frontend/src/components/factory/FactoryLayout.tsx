@@ -356,7 +356,15 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
             className={previewDevice === 'mobile'
               ? 'w-[390px] max-h-[844px] overflow-auto rounded-[40px] border-4 border-[#2d2d2d] shadow-2xl mb-8'
               : 'w-full max-w-4xl overflow-auto mx-8 mb-8'}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              const anchor = (e.target as HTMLElement).closest('a');
+              if (anchor?.hash) {
+                e.preventDefault();
+                const target = (e.currentTarget as HTMLElement).querySelector(anchor.hash);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }}
           >
             <div className="bg-white shadow-2xl" style={{ fontFamily: styles.fontBody || styles.fontHeading }}>
               {content.blocks.map((block) => (

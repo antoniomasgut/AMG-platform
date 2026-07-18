@@ -1188,7 +1188,10 @@
       "config": "Konfiguration",
       "myBusiness": "Mein Unternehmen",
       "commTemplates": "Kommunikationsvorlagen",
-      "contentPlan": "Content-Planer"
+      "contentPlan": "Content-Planer",
+      "agenda": "Kalender",
+      "pipeline": "Vertriebs-Pipeline",
+      "deployHub": "Deploy Hub"
     }
   },
   "knowledge": {

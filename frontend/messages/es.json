@@ -1188,7 +1188,10 @@
       "config": "Configuración",
       "myBusiness": "Mi negocio",
       "commTemplates": "Plantillas de comunicación",
-      "contentPlan": "Planificador"
+      "contentPlan": "Planificador",
+      "agenda": "Agenda",
+      "pipeline": "Pipeline de Ventas",
+      "deployHub": "Deploy Hub"
     }
   },
   "knowledge": {
