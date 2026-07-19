@@ -1,4 +1,7 @@
-CREATE TABLE websites (
+-- Mòdul 29: Web Hosting & Import.
+-- Idempotent: V8 (catchup afegit posteriorment amb número anterior) ja crea la taula
+-- en BD noves; aquí només garantim que existeix amb els índexs.
+CREATE TABLE IF NOT EXISTS websites (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id),
     type VARCHAR(20) NOT NULL,
@@ -13,6 +16,6 @@ CREATE TABLE websites (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-CREATE INDEX idx_websites_tenant ON websites(tenant_id);
-CREATE INDEX idx_websites_status ON websites(status);
+ALTER TABLE websites ADD COLUMN IF NOT EXISTS client_notes TEXT;
+CREATE INDEX IF NOT EXISTS idx_websites_tenant ON websites(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_websites_status ON websites(status);
