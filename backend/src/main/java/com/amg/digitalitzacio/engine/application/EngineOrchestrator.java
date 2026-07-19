@@ -1410,7 +1410,7 @@ public class EngineOrchestrator implements EngineService {
         } else {
             props = Map.of();
         }
-        return switch (type) {
+        String html = switch (type) {
             case "hero"          -> renderHero(props, s);
             case "text"          -> renderText(props, s);
             case "services"      -> renderServices(props, s);
@@ -1431,6 +1431,37 @@ public class EngineOrchestrator implements EngineService {
             case "before-after"  -> renderBeforeAfter(props, s);
             default              -> "";
         };
+        String divider = buildShapeDivider(props);
+        return divider.isEmpty() ? html
+                : "<div style=\"position:relative;overflow:hidden\">" + html + divider + "</div>";
+    }
+
+    private static final java.util.Map<String, String> DIVIDER_PATHS = java.util.Map.of(
+        "wave",      "M0,40 C150,0 350,80 600,40 C850,0 1050,80 1200,40 L1200,100 L0,100 Z",
+        "wave-soft", "M0,60 C400,10 800,100 1200,50 L1200,100 L0,100 Z",
+        "triangle",  "M600,0 L1200,100 L0,100 Z",
+        "oblique",   "M0,0 L1200,60 L1200,100 L0,100 Z",
+        "curve",     "M0,70 Q600,0 1200,70 L1200,100 L0,100 Z"
+    );
+
+    @SuppressWarnings("unchecked")
+    private String buildShapeDivider(Map<String, Object> props) {
+        var raw = props.get("dividerBottom");
+        if (!(raw instanceof Map)) return "";
+        var d = (Map<String, Object>) raw;
+        var shape = String.valueOf(d.getOrDefault("shape", "none"));
+        var path  = DIVIDER_PATHS.get(shape);
+        if (path == null) return "";
+        var color  = String.valueOf(d.getOrDefault("color",  "#ffffff"));
+        var height = d.getOrDefault("height", 60);
+        int h = height instanceof Number n ? n.intValue() : 60;
+        var flip   = Boolean.TRUE.equals(d.get("flip"));
+        var transform = flip ? " transform:scaleX(-1)" : "";
+        return "<div style=\"position:absolute;bottom:0;left:0;width:100%;line-height:0;z-index:2;" + transform + "\">" +
+               "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1200 100\" preserveAspectRatio=\"none\"" +
+               " style=\"display:block;width:100%;height:" + h + "px\">" +
+               "<path d=\"" + path + "\" fill=\"" + escapeHtml(color) + "\"/>" +
+               "</svg></div>";
     }
 
     private String renderHero(Map<String, Object> props, StyleVars s) {

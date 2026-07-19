@@ -506,6 +506,61 @@ export const BlockProperties: FC = () => {
         return renderField(key, value);
       })}
 
+      {/* Separació inferior (shape divider) */}
+      {!['header', 'footer'].includes(block.type) && (() => {
+        const div = (block.props.dividerBottom ?? {}) as Record<string, unknown>;
+        const shapes = [
+          { id: 'none',      label: '—'  },
+          { id: 'wave',      label: '〜' },
+          { id: 'wave-soft', label: '∿'  },
+          { id: 'triangle',  label: '▽'  },
+          { id: 'oblique',   label: '╱'  },
+          { id: 'curve',     label: '⌣'  },
+        ];
+        const active = String(div.shape ?? 'none');
+        const setDiv = (patch: Record<string, unknown>) =>
+          handleChange('dividerBottom', { shape: 'none', color: '#ffffff', flip: false, height: 60, ...div, ...patch });
+        return (
+          <div className="mt-4 border-t border-border-subtle pt-4">
+            <div className="f-mono text-[9px] uppercase tracking-widest text-ink-3 mb-2">Separació inferior</div>
+            <div className="flex gap-1 mb-3 flex-wrap">
+              {shapes.map((sh) => (
+                <button key={sh.id} onClick={() => setDiv({ shape: sh.id })}
+                  title={sh.id}
+                  className={`w-9 h-7 rounded text-base border transition ${active === sh.id ? 'bg-[#FF6B00] border-[#FF6B00] text-black' : 'bg-[#0d0d1a] border-border-medium text-ink-1 hover:border-[#FF6B00]/50'}`}>
+                  {sh.label}
+                </button>
+              ))}
+            </div>
+            {active !== 'none' && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <label className="f-mono text-[9px] uppercase text-ink-3 w-16 shrink-0">Color</label>
+                  <input type="color" value={String(div.color ?? '#ffffff')}
+                    onChange={(e) => setDiv({ color: e.target.value })}
+                    className="w-8 h-7 rounded cursor-pointer border-0 bg-transparent" />
+                  <span className="f-mono text-[9px] text-ink-3">{String(div.color ?? '#ffffff')}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="f-mono text-[9px] uppercase text-ink-3 w-16 shrink-0">Alçada</label>
+                  <input type="range" min="30" max="120" value={Number(div.height ?? 60)}
+                    onChange={(e) => setDiv({ height: Number(e.target.value) })}
+                    className="flex-1 accent-[#FF6B00]" />
+                  <span className="f-mono text-[9px] text-ink-3 w-8">{Number(div.height ?? 60)}px</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="f-mono text-[9px] uppercase text-ink-3 w-16 shrink-0">Girar</label>
+                  <button onClick={() => setDiv({ flip: !div.flip })}
+                    className={`px-3 py-1 rounded text-xs f-mono border transition ${div.flip ? 'bg-[#FF6B00] border-[#FF6B00] text-black' : 'bg-[#0d0d1a] border-border-medium text-ink-2 hover:border-[#FF6B00]/50'}`}>
+                    ↔ Horitzontal
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* ImagePicker modal */}
       {imgPickerFor && (
         <ImagePicker

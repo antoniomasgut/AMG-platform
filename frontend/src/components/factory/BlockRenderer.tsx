@@ -90,6 +90,32 @@ const FadeIn: FC<{ children: React.ReactNode; delay?: number }> = ({ children, d
   );
 };
 
+const DIVIDER_PATHS: Record<string, string> = {
+  wave:       'M0,40 C150,0 350,80 600,40 C850,0 1050,80 1200,40 L1200,100 L0,100 Z',
+  'wave-soft':'M0,60 C400,10 800,100 1200,50 L1200,100 L0,100 Z',
+  triangle:   'M600,0 L1200,100 L0,100 Z',
+  oblique:    'M0,0 L1200,60 L1200,100 L0,100 Z',
+  curve:      'M0,70 Q600,0 1200,70 L1200,100 L0,100 Z',
+};
+
+const ShapeDivider: FC<{ props: Record<string, unknown> }> = ({ props }) => {
+  const d = props.dividerBottom as Record<string, unknown> | undefined;
+  const shape = String(d?.shape ?? 'none');
+  const path = DIVIDER_PATHS[shape];
+  if (!path) return null;
+  const color  = String(d?.color  ?? '#ffffff');
+  const height = Number(d?.height ?? 60);
+  const flip   = Boolean(d?.flip);
+  return (
+    <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', lineHeight: 0, zIndex: 2, transform: flip ? 'scaleX(-1)' : undefined }}>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 100" preserveAspectRatio="none"
+        style={{ display: 'block', width: '100%', height }}>
+        <path d={path} fill={color} />
+      </svg>
+    </div>
+  );
+};
+
 /** Initials avatar */
 const Avatar: FC<{ name: string; size?: number; color: string }> = ({ name, size = 48, color }) => {
   const initials = name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('');
@@ -894,7 +920,14 @@ export const BlockRenderer: FC<Props> = ({
   };
 
   const sectionId = SECTION_ID[block.type];
-  return <div id={sectionId} className={wrapperClass} onClick={handleClick}>{renderContent()}</div>;
+  const hasDivider = !!DIVIDER_PATHS[String((p.dividerBottom as Record<string,unknown>)?.shape ?? 'none')];
+  return (
+    <div id={sectionId} className={wrapperClass} onClick={handleClick}
+      style={hasDivider ? { overflow: 'hidden' } : undefined}>
+      {renderContent()}
+      {hasDivider && <ShapeDivider props={p} />}
+    </div>
+  );
 };
 
 // ─── HEADER BLOCK (amb hamburger mòbil) ──────────────────────────────────────
