@@ -90,6 +90,46 @@ const FadeIn: FC<{ children: React.ReactNode; delay?: number }> = ({ children, d
   );
 };
 
+// ─── Carousel with configurable indicators ────────────────────────────────────
+const Carousel: FC<{
+  slides: React.ReactNode[];
+  indicator: string;
+  color: string;
+}> = ({ slides, indicator, color }) => {
+  const [cur, setCur] = useState(0);
+  const n = slides.length;
+  const go = (d: number) => setCur(c => (c + d + n) % n);
+  if (n === 0) return null;
+  return (
+    <div style={{ position: 'relative' }}>
+      <div style={{ overflow: 'hidden', borderRadius: 10 }}>
+        <div style={{ display: 'flex', transform: `translateX(-${cur * 100}%)`, transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)', willChange: 'transform' }}>
+          {slides.map((slide, i) => (
+            <div key={i} style={{ minWidth: '100%', flexShrink: 0 }}>{slide}</div>
+          ))}
+        </div>
+      </div>
+      {n > 1 && (
+        <>
+          {(['prev','next'] as const).map((dir) => (
+            <button key={dir}
+              onClick={(e) => { e.stopPropagation(); go(dir === 'prev' ? -1 : 1); }}
+              style={{ position: 'absolute', [dir === 'prev' ? 'left' : 'right']: 10, top: '50%', transform: 'translateY(-50%)', zIndex: 3, background: 'rgba(0,0,0,0.38)', backdropFilter: 'blur(4px)', border: 'none', color: '#fff', width: 38, height: 38, borderRadius: '50%', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+            >{dir === 'prev' ? '‹' : '›'}</button>
+          ))}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 16, flexWrap: 'wrap' }}>
+            {slides.map((_, i) => (
+              <button key={i} onClick={(e) => { e.stopPropagation(); setCur(i); }}
+                style={{ background: 'none', border: 'none', padding: '2px 1px', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, color: i === cur ? color : '#bbb', transform: i === cur ? 'scale(1.35)' : 'scale(1)', transition: 'all 0.2s ease', opacity: i === cur ? 1 : 0.45 }}
+              >{indicator}</button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 const DIVIDER_PATHS: Record<string, string> = {
   wave:       'M0,40 C150,0 350,80 600,40 C850,0 1050,80 1200,40 L1200,100 L0,100 Z',
   'wave-soft':'M0,60 C400,10 800,100 1200,50 L1200,100 L0,100 Z',
@@ -386,24 +426,34 @@ export const BlockRenderer: FC<Props> = ({
       // ─── GALLERY ──────────────────────────────────────────────────────────
       case 'gallery': {
         const images = Array.isArray(p.images) ? (p.images as string[]) : [];
-        const placeholders = images.length > 0 ? images : Array.from({ length: 6 }, () => '');
+        const isCarousel = s(p.displayMode) === 'carousel';
+        const indicator  = s(p.navIndicator, '●');
+        const slideImg = (img: string, i: number) => (
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#f1f5f9', borderRadius: radius, overflow: 'hidden' }}>
+            {img
+              ? <Image src={img} alt={`Foto ${i + 1}`} fill sizes="100vw" style={{ objectFit: 'cover' }} />
+              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>Foto {i + 1}</div>}
+          </div>
+        );
         return (
           <section style={{ background: bg, fontFamily: fontB }} onClick={handleClick}>
             {removeBtn}
-            <div style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
+            <div style={{ maxWidth: isCarousel ? 860 : 1100, margin: '0 auto', padding: '80px 24px' }}>
               <ET tag="h2" value={s(p.title, 'Galeria')} editable={editable} onSave={upd('title')}
                 style={{ fontFamily: fontH, fontSize: 'clamp(1.6rem,3vw,2.2rem)', fontWeight: 700, color: text, textAlign: 'center', marginBottom: 40 }}
               />
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 12 }}>
-                {placeholders.map((img, i) => (
-                  <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: radius, overflow: 'hidden', background: '#f1f5f9' }}>
-                    {img
-                      ? <Image src={img} alt="" fill sizes="(max-width: 768px) 50vw, 33vw" style={{ objectFit: 'cover' }} />
-                      : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>Foto</div>
-                    }
+              {isCarousel
+                ? <Carousel slides={(images.length > 0 ? images : ['','']).map((img, i) => slideImg(img, i))} indicator={indicator} color={primary} />
+                : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 12 }}>
+                    {(images.length > 0 ? images : Array.from({ length: 6 }, () => '')).map((img, i) => (
+                      <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: radius, overflow: 'hidden', background: '#f1f5f9' }}>
+                        {img
+                          ? <Image src={img} alt="" fill sizes="(max-width: 768px) 50vw, 33vw" style={{ objectFit: 'cover' }} />
+                          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>Foto</div>}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+              }
             </div>
           </section>
         );
@@ -491,42 +541,46 @@ export const BlockRenderer: FC<Props> = ({
       // ─── TESTIMONIALS ─────────────────────────────────────────────────────
       case 'testimonials': {
         const testimonials = Array.isArray(p.items) ? (p.items as Array<Record<string, unknown>>) : [];
+        const isCarousel = s(p.displayMode) === 'carousel';
+        const indicator  = s(p.navIndicator, '●');
+        const testCard = (item: Record<string, unknown>, i: number) => {
+          const rating = typeof item.rating === 'number' ? item.rating : 5;
+          const name = s(item.name);
+          return (
+            <HoverCard style={{ padding: '28px 26px', borderRadius: radius, background: '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.07)', margin: isCarousel ? '0 8px' : 0 }}>
+              <div style={{ color: '#f59e0b', fontSize: '1rem', marginBottom: 14, letterSpacing: 2 }}>{'★'.repeat(rating)}</div>
+              <ET tag="p" value={s(item.text)} editable={editable}
+                onSave={(v) => { const ni = [...testimonials]; ni[i] = { ...ni[i], text: v }; onUpdateProps?.({ items: ni }); }}
+                style={{ color: text, opacity: 0.72, fontSize: '0.95rem', lineHeight: 1.75, marginBottom: 20, fontStyle: 'italic' }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Avatar name={name} color={primary} size={42} />
+                <div>
+                  <ET tag="span" value={name} editable={editable}
+                    onSave={(v) => { const ni = [...testimonials]; ni[i] = { ...ni[i], name: v }; onUpdateProps?.({ items: ni }); }}
+                    style={{ fontFamily: fontH, fontWeight: 700, fontSize: '0.92rem', color: text, display: 'block' }}
+                  />
+                  {s(item.role) && <span style={{ fontSize: '0.78rem', color: primary, fontWeight: 500 }}>{s(item.role)}</span>}
+                </div>
+              </div>
+            </HoverCard>
+          );
+        };
         return (
           <section style={{ background: `${accent}06`, fontFamily: fontB }} onClick={handleClick}>
             {removeBtn}
-            <div style={{ maxWidth: 1100, margin: '0 auto', padding: '88px 24px' }}>
+            <div style={{ maxWidth: isCarousel ? 720 : 1100, margin: '0 auto', padding: '88px 24px' }}>
               <FadeIn>
                 <ET tag="h2" value={s(p.title, 'Testimonis')} editable={editable} onSave={upd('title')}
                   style={{ fontFamily: fontH, fontSize: 'clamp(1.6rem,3vw,2.2rem)', fontWeight: 700, color: text, textAlign: 'center', marginBottom: 48 }}
                 />
               </FadeIn>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 24 }}>
-                {testimonials.map((item, i) => {
-                  const rating = typeof item.rating === 'number' ? item.rating : 5;
-                  const name = s(item.name);
-                  return (
-                    <FadeIn key={i} delay={i * 80}>
-                      <HoverCard style={{ padding: '28px 26px', borderRadius: radius, background: '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
-                        <div style={{ color: '#f59e0b', fontSize: '1rem', marginBottom: 14, letterSpacing: 2 }}>{'★'.repeat(rating)}</div>
-                        <ET tag="p" value={s(item.text)} editable={editable}
-                          onSave={(v) => { const ni = [...testimonials]; ni[i] = { ...ni[i], text: v }; onUpdateProps?.({ items: ni }); }}
-                          style={{ color: text, opacity: 0.72, fontSize: '0.95rem', lineHeight: 1.75, marginBottom: 20, fontStyle: 'italic' }}
-                        />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <Avatar name={name} color={primary} size={42} />
-                          <div>
-                            <ET tag="span" value={name} editable={editable}
-                              onSave={(v) => { const ni = [...testimonials]; ni[i] = { ...ni[i], name: v }; onUpdateProps?.({ items: ni }); }}
-                              style={{ fontFamily: fontH, fontWeight: 700, fontSize: '0.92rem', color: text, display: 'block' }}
-                            />
-                            {s(item.role) && <span style={{ fontSize: '0.78rem', color: primary, fontWeight: 500 }}>{s(item.role)}</span>}
-                          </div>
-                        </div>
-                      </HoverCard>
-                    </FadeIn>
-                  );
-                })}
-              </div>
+              {isCarousel
+                ? <Carousel slides={testimonials.map((item, i) => testCard(item, i))} indicator={indicator} color={primary} />
+                : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 24 }}>
+                    {testimonials.map((item, i) => <FadeIn key={i} delay={i * 80}>{testCard(item, i)}</FadeIn>)}
+                  </div>
+              }
             </div>
           </section>
         );

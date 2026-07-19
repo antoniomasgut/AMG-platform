@@ -497,11 +497,64 @@ export const BlockProperties: FC = () => {
         </div>
       )}
 
+      {/* Mode carousel + indicador de navegació (gallery + testimonials) */}
+      {['gallery', 'testimonials'].includes(block.type) && (() => {
+        const mode = String(block.props.displayMode ?? 'grid');
+        const ind  = String(block.props.navIndicator ?? '●');
+        const presets = ['●','○','◆','◇','♥','★','▪','—','◎','·'];
+        return (
+          <div className="mb-4 border border-[rgba(255,107,0,0.2)] rounded overflow-hidden">
+            <div className="px-3 py-2 bg-[rgba(255,107,0,0.06)] f-mono text-[9px] uppercase tracking-widest text-accent-light">
+              Visualització
+            </div>
+            <div className="p-3 space-y-3">
+              {/* Grid / Carousel toggle */}
+              <div>
+                <label className="f-mono text-[9px] uppercase text-ink-3 block mb-1.5">Mode</label>
+                <div className="flex gap-2">
+                  {(['grid','carousel'] as const).map((m) => (
+                    <button key={m} onClick={() => handleChange('displayMode', m)}
+                      className={`flex-1 py-1.5 rounded text-xs f-mono transition ${mode === m ? 'bg-[#FF6B00] text-black font-bold' : 'bg-[#0d0d1a] border border-border-medium text-ink-2 hover:text-ink-0'}`}>
+                      {m === 'grid' ? '▣ Graella' : '▷ Carrusel'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Indicator — only when carousel */}
+              {mode === 'carousel' && (
+                <div>
+                  <label className="f-mono text-[9px] uppercase text-ink-3 block mb-1.5">Indicador de navegació</label>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {presets.map((ch) => (
+                      <button key={ch} onClick={() => handleChange('navIndicator', ch)}
+                        className={`w-8 h-7 rounded text-base border transition ${ind === ch ? 'bg-[#FF6B00] border-[#FF6B00] text-black' : 'bg-[#0d0d1a] border-border-medium text-ink-0 hover:border-[#FF6B00]/50'}`}>
+                        {ch}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="f-mono text-[9px] uppercase text-ink-3">Personalitzat:</span>
+                    <input
+                      value={ind}
+                      onChange={(e) => handleChange('navIndicator', e.target.value.slice(0,2) || '●')}
+                      maxLength={2}
+                      className="w-12 bg-[#0d0d1a] border border-border-medium rounded p-1 text-center text-sm text-ink-0"
+                      placeholder="●"
+                    />
+                    <span className="text-lg leading-none" style={{ color: '#FF6B00' }}>{ind}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {Object.keys(tpl?.defaultProps || {}).map((key) => {
-        // Ocultar camps de source/minRating/maxItems (gestionats al panell superior)
+        // Ocultar camps gestionats per panells superiors
         if (block.type === 'reviews' && ['source', 'minRating', 'maxItems'].includes(key)) return null;
-        // Ocultar items si la font és google_business
         if (block.type === 'reviews' && key === 'items' && (block.props.source ?? 'manual') === 'google_business') return null;
+        if (['gallery','testimonials'].includes(block.type) && ['displayMode','navIndicator'].includes(key)) return null;
         const value = key in (block.props || {}) ? block.props[key] : (tpl?.defaultProps || {})[key];
         return renderField(key, value);
       })}

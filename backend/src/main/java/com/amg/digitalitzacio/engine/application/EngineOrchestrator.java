@@ -1214,45 +1214,95 @@ public class EngineOrchestrator implements EngineService {
 
     @SuppressWarnings("unchecked")
     private String renderGallery(Map<String, Object> props, StyleVars s) {
-        var title = str(props, "title", "");
+        var title       = str(props, "title", "");
+        var displayMode = str(props, "displayMode", "grid");
+        var navInd      = str(props, "navIndicator", "●");
+
+        // Collect images (from either images[] strings or items[] maps)
+        var images = new java.util.ArrayList<String>();
+        var rawImgs = props.get("images");
+        if (rawImgs instanceof List<?> imgList) {
+            for (var u : imgList) { if (u != null && !u.toString().isBlank()) images.add(u.toString()); }
+        }
         var rawItems = props.getOrDefault("items", List.of());
-        var imageList = new java.util.ArrayList<Map<String, Object>>();
-        if (rawItems instanceof List<?> list) {
-            for (var item : list) {
-                if (item instanceof Map m) imageList.add((Map<String, Object>) m);
+        if (images.isEmpty() && rawItems instanceof List<?> list) {
+            for (var it : list) {
+                if (it instanceof Map m) {
+                    var url = str((Map<String,Object>) m, "url", "");
+                    if (!url.isBlank()) images.add(url);
+                }
             }
         }
-        if (imageList.isEmpty()) return "";
-
-        // Variable JS global per a les dades del lightbox d'aquesta galeria
-        var galleryVar = "glr" + Integer.toHexString(System.identityHashCode(props));
-        var jsItems = new StringBuilder("[");
-        for (int i = 0; i < imageList.size(); i++) {
-            var img = imageList.get(i);
-            if (i > 0) jsItems.append(",");
-            jsItems.append("{u:\"").append(escapeJs(str(img, "url", ""))).append("\"")
-                   .append(",a:\"").append(escapeJs(str(img, "alt", ""))).append("\"}");
-        }
-        jsItems.append("]");
+        if (images.isEmpty()) return "";
 
         var html = new StringBuilder();
-        html.append("<section class=\"sec\" style=\"background:#f8fafc\"><div class=\"w\" data-anim>");
-        if (!title.isBlank()) {
-            html.append("<h2 class=\"sec-title\">").append(escapeHtml(title)).append("</h2>");
-        }
-        html.append("<script>window['").append(galleryVar).append("']=").append(jsItems).append(";</script>");
-        html.append("<div class=\"gallery-grid\">");
-        for (int i = 0; i < imageList.size(); i++) {
-            var img = imageList.get(i);
-            var url = str(img, "url", "");
-            var alt = str(img, "alt", "");
-            if (url.isBlank()) continue;
-            html.append("<div class=\"gl-item\" onclick=\"openLb(window['").append(galleryVar).append("'],").append(i).append(")\">");
-            html.append("<img src=\"").append(escapeHtml(url)).append("\" alt=\"").append(escapeHtml(alt)).append("\" loading=\"lazy\">");
+        html.append("<section class=\"sec\" style=\"background:").append(s.bg()).append("\">");
+        html.append("<div class=\"w\" data-anim>");
+        if (!title.isBlank()) html.append("<h2 class=\"sec-title\">").append(escapeHtml(title)).append("</h2>");
+
+        if ("carousel".equals(displayMode)) {
+            var cid = "glc" + Integer.toHexString(System.identityHashCode(props));
+            html.append(buildCarouselHtml(images.stream().map(url ->
+                "<img src=\"" + escapeHtml(url) + "\" style=\"width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px\" loading=\"lazy\">")
+                .toList(), navInd, s.primary(), cid));
+        } else {
+            var galleryVar = "glr" + Integer.toHexString(System.identityHashCode(props));
+            var jsItems = new StringBuilder("[");
+            for (int i = 0; i < images.size(); i++) {
+                if (i > 0) jsItems.append(",");
+                jsItems.append("{u:\"").append(escapeJs(images.get(i))).append("\",a:\"\"}");
+            }
+            jsItems.append("]");
+            html.append("<script>window['").append(galleryVar).append("']=").append(jsItems).append(";</script>");
+            html.append("<div class=\"gallery-grid\">");
+            for (int i = 0; i < images.size(); i++) {
+                html.append("<div class=\"gl-item\" onclick=\"openLb(window['").append(galleryVar).append("'],").append(i).append(")\">")
+                    .append("<img src=\"").append(escapeHtml(images.get(i))).append("\" loading=\"lazy\">")
+                    .append("</div>");
+            }
             html.append("</div>");
         }
-        html.append("</div></div></section>");
+        html.append("</div></section>");
         return html.toString();
+    }
+
+    private String buildCarouselHtml(List<String> slides, String indicator, String primaryColor, String cid) {
+        var sb = new StringBuilder();
+        int n = slides.size();
+        sb.append("<div id=\"").append(cid).append("\" style=\"position:relative;max-width:860px;margin:0 auto\">");
+        sb.append("<div style=\"overflow:hidden;border-radius:10px\">");
+        sb.append("<div id=\"").append(cid).append("-trk\" style=\"display:flex;transition:transform .4s cubic-bezier(.4,0,.2,1);will-change:transform\">");
+        for (var slide : slides) {
+            sb.append("<div style=\"min-width:100%;flex-shrink:0\">").append(slide).append("</div>");
+        }
+        sb.append("</div></div>");
+        // Arrows
+        var arrowStyle = "position:absolute;top:50%;transform:translateY(-50%);z-index:3;background:rgba(0,0,0,.38);backdrop-filter:blur(4px);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1";
+        sb.append("<button id=\"").append(cid).append("-p\" style=\"").append(arrowStyle).append(";left:10px\">&#8249;</button>");
+        sb.append("<button id=\"").append(cid).append("-n\" style=\"").append(arrowStyle).append(";right:10px\">&#8250;</button>");
+        // Indicators
+        sb.append("<div id=\"").append(cid).append("-dots\" style=\"text-align:center;margin-top:16px;display:flex;justify-content:center;gap:6px;flex-wrap:wrap\">");
+        for (int i = 0; i < n; i++) {
+            sb.append("<span style=\"font-size:1rem;cursor:pointer;transition:all .2s;color:")
+              .append(i == 0 ? escapeHtml(primaryColor) : "#bbb")
+              .append(";opacity:").append(i == 0 ? "1" : ".45")
+              .append(";transform:").append(i == 0 ? "scale(1.35)" : "scale(1)")
+              .append(";line-height:1;padding:2px 1px\">").append(escapeHtml(indicator)).append("</span>");
+        }
+        sb.append("</div>");
+        // JS
+        sb.append("<script>(function(){")
+          .append("var id='").append(cid).append("',n=").append(n).append(",cur=0;")
+          .append("var trk=document.getElementById(id+'-trk');")
+          .append("var dots=[].slice.call(document.querySelectorAll('#'+id+'-dots span'));")
+          .append("function go(i){cur=(i%n+n)%n;trk.style.transform='translateX(-'+cur*100+'%)';")
+          .append("dots.forEach(function(d,j){var a=j===cur;d.style.color=a?'").append(escapeJs(primaryColor)).append("':'#bbb';d.style.opacity=a?'1':'.45';d.style.transform=a?'scale(1.35)':'scale(1)';})}}")
+          .append("document.getElementById(id+'-p').onclick=function(){go(cur-1)};")
+          .append("document.getElementById(id+'-n').onclick=function(){go(cur+1)};")
+          .append("dots.forEach(function(d,j){d.onclick=function(){go(j)}});")
+          .append("})();</script>");
+        sb.append("</div>");
+        return sb.toString();
     }
 
     private String renderBeforeAfter(Map<String, Object> props, StyleVars s) {
@@ -1939,29 +1989,47 @@ public class EngineOrchestrator implements EngineService {
 
     @SuppressWarnings("unchecked")
     private String renderTestimonials(Map<String, Object> props, StyleVars s) {
-        var title = str(props, "title", "Testimonis");
-        var items = props.getOrDefault("items", List.of());
-        var html  = new StringBuilder();
+        var title       = str(props, "title", "Testimonis");
+        var displayMode = str(props, "displayMode", "grid");
+        var navInd      = str(props, "navIndicator", "●");
+        var items       = props.getOrDefault("items", List.of());
+        var html        = new StringBuilder();
         html.append("<section class=\"sec\" style=\"background:").append(s.accent()).append("10\">")
-            .append("<div class=\"w\"><h2 class=\"sec-title\">").append(escapeHtml(title)).append("</h2>")
-            .append("<div class=\"grid-3\">");
+            .append("<div class=\"w\"><h2 class=\"sec-title\">").append(escapeHtml(title)).append("</h2>");
+
+        var slides = new java.util.ArrayList<String>();
         if (items instanceof List<?> list) {
             for (var item : list) {
                 if (item instanceof Map m) {
                     var im     = (Map<String, Object>) m;
                     var name   = str(im, "name", "");
                     var text   = str(im, "text", "");
+                    var role   = str(im, "role", "");
                     var rating = im.getOrDefault("rating", 5);
                     var stars  = "★".repeat(rating instanceof Number n ? n.intValue() : 5);
-                    html.append("<div class=\"card\" data-anim>")
-                        .append("<div style=\"color:#f59e0b;margin-bottom:12px\">").append(stars).append("</div>")
-                        .append("<p style=\"opacity:.75;font-size:.95rem;line-height:1.7;font-style:italic;margin-bottom:16px\">&ldquo;").append(escapeHtml(text)).append("&rdquo;</p>")
-                        .append("<p style=\"font-weight:700;font-size:.9rem;color:").append(s.primary()).append("\">").append(escapeHtml(name)).append("</p>")
-                        .append("</div>");
+                    var card   = "<div class=\"card\" style=\"text-align:center;padding:36px 32px\">" +
+                                 "<div style=\"color:#f59e0b;font-size:1.1rem;margin-bottom:14px\">" + stars + "</div>" +
+                                 "<p style=\"opacity:.75;font-size:1rem;line-height:1.75;font-style:italic;margin-bottom:20px\">&ldquo;" + escapeHtml(text) + "&rdquo;</p>" +
+                                 "<p style=\"font-weight:700;font-size:.95rem;color:" + s.primary() + ";margin-bottom:4px\">" + escapeHtml(name) + "</p>" +
+                                 (role.isBlank() ? "" : "<p style=\"font-size:.8rem;opacity:.6\">" + escapeHtml(role) + "</p>") +
+                                 "</div>";
+                    slides.add(card);
+                    if (!"carousel".equals(displayMode)) {
+                        html.append(card.replace("text-align:center;", ""));
+                    }
                 }
             }
         }
-        html.append("</div></div></section>");
+        if ("carousel".equals(displayMode)) {
+            var cid = "tsc" + Integer.toHexString(System.identityHashCode(props));
+            html.append(buildCarouselHtml(slides, navInd, s.primary(), cid));
+        } else {
+            // grid-3 already added cards above
+            var gridContent = html.substring(html.indexOf("</h2>") + 5);
+            html.setLength(html.indexOf("</h2>") + 5);
+            html.append("<div class=\"grid-3\">").append(gridContent).append("</div>");
+        }
+        html.append("</div></section>");
         return html.toString();
     }
 

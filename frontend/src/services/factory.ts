@@ -379,7 +379,7 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
   gallery: {
     label: 'Galeria',
     icon: '▣',
-    defaultProps: { title: 'Galeria', images: [] },
+    defaultProps: { title: 'Galeria', images: [], displayMode: 'grid', navIndicator: '●' },
   },
   'contact-form': {
     label: 'Contacte',
@@ -403,6 +403,8 @@ export const BLOCK_TEMPLATES: Record<BlockType, { label: string; icon: string; d
     icon: '★',
     defaultProps: {
       title: 'El que diuen els clients',
+      displayMode: 'grid',
+      navIndicator: '●',
       items: [
         { name: 'Maria G.', role: 'Client habitual', text: 'Excel·lent servei i tracte molt professional. Ho recoman a tothom. El millor que he provat a la zona.', rating: 5 },
         { name: 'Joan P.', role: 'Client des de 2022', text: 'El resultat va superar les expectatives. Ràpids, eficients i amb un preu molt raonable. Repetiré sense dubte.', rating: 5 },
