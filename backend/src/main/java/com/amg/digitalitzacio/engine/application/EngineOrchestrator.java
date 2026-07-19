@@ -1146,6 +1146,38 @@ public class EngineOrchestrator implements EngineService {
     }
 
     @SuppressWarnings("unchecked")
+    private String renderStats(Map<String, Object> props, StyleVars s) {
+        var title = str(props, "title", "");
+        var items = props.getOrDefault("items", List.of());
+        var html  = new StringBuilder();
+        html.append("<section class=\"sec\" style=\"background:var(--p);color:#fff;padding:60px 0\"><div class=\"w\">");
+        if (!title.isBlank()) {
+            html.append("<h2 class=\"sec-title\" style=\"color:#fff\">").append(escapeHtml(title)).append("</h2>");
+        }
+        html.append("<div style=\"display:flex;justify-content:center;flex-wrap:wrap;gap:48px 80px;text-align:center\">");
+        if (items instanceof List<?> list) {
+            for (var item : list) {
+                if (item instanceof Map m) {
+                    var im     = (Map<String, Object>) m;
+                    var number = str(im, "number", "");
+                    var label  = str(im, "label", "");
+                    var icon   = str(im, "icon", "");
+                    String iconSvg = icon.isBlank() ? ""
+                            : "<div style=\"display:flex;justify-content:center;margin-bottom:8px;opacity:.8\">" + svgIcon(icon, "#ffffff") + "</div>";
+                    html.append("<div data-anim style=\"min-width:140px\">")
+                        .append(iconSvg)
+                        .append("<div style=\"font-size:3rem;font-weight:700;line-height:1;font-family:Montserrat,sans-serif\">")
+                        .append(escapeHtml(number)).append("</div>")
+                        .append("<div style=\"font-size:.85rem;opacity:.85;margin-top:8px;text-transform:uppercase;letter-spacing:.08em\">")
+                        .append(escapeHtml(label)).append("</div>")
+                        .append("</div>");
+                }
+            }
+        }
+        html.append("</div></div></section>");
+        return html.toString();
+    }
+
     private String renderTrustBar(Map<String, Object> props, StyleVars s) {
         var items = props.getOrDefault("items", List.of());
         var html = new StringBuilder();
@@ -1476,6 +1508,7 @@ public class EngineOrchestrator implements EngineService {
             case "video"         -> renderVideo(props, s);
             case "reviews"       -> renderReviews(props, s, tenantId);
             case "trust-bar"     -> renderTrustBar(props, s);
+            case "stats"         -> renderStats(props, s);
             case "gallery"       -> renderGallery(props, s);
             case "steps"         -> renderSteps(props, s);
             case "before-after"  -> renderBeforeAfter(props, s);
