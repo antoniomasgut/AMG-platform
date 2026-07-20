@@ -4,12 +4,15 @@ import com.amg.digitalitzacio.agents.application.TelegramBotClient;
 import com.amg.digitalitzacio.agents.domain.NexeServiceConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
+import com.amg.digitalitzacio.social.domain.SocialMetaConfigRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +35,7 @@ public class SocialSuggestionScheduler {
     private final TenantChatLinkRepository chatLinkRepository;
     private final TenantRepository tenantRepository;
     private final TelegramBotClient telegramBotClient;
+    private final SocialMetaConfigRepository metaConfigRepo;
 
     /** Cada dilluns a les 10:00 */
     @Scheduled(cron = "0 0 10 * * MON")
@@ -100,6 +104,38 @@ public class SocialSuggestionScheduler {
                 analyticsService.syncMetrics(config.getTenantId());
             } catch (Exception e) {
                 log.debug("Error sync mètriques tenant {}: {}", config.getTenantId(), e.getMessage());
+            }
+        }
+    }
+
+    /** Cada dia a les 08:00: avisa els tenants amb token Meta a caducar en 7 dies (P12) */
+    @Scheduled(cron = "0 0 8 * * *")
+    public void checkTokenExpiry() {
+        var configs = nexeConfigRepo.findByServiceKey(SERVICE_KEY);
+        var limit = Instant.now().plus(7, ChronoUnit.DAYS);
+
+        for (var config : configs) {
+            var tenantId = config.getTenantId();
+            try {
+                var mc = metaConfigRepo.findByTenantId(tenantId).orElse(null);
+                if (mc == null || mc.getTokenExpiresAt() == null) continue;
+                if (mc.getTokenExpiresAt().isAfter(limit)) continue;
+
+                var chatLink = chatLinkRepository.findByTenantId(tenantId).orElse(null);
+                if (chatLink == null || chatLink.getTelegramChatId() == null) continue;
+
+                long daysLeft = ChronoUnit.DAYS.between(Instant.now(), mc.getTokenExpiresAt());
+                String msg = daysLeft <= 0
+                    ? "⚠️ <b>El token de Facebook/Instagram ha caducat.</b>\n"
+                      + "Les publicacions a xarxes fallaran fins que el reconnectis.\n"
+                      + "Vés a /portal → Social → Meta per reconnectar."
+                    : "⚠️ <b>El token de Facebook/Instagram caduca en " + daysLeft + " dies.</b>\n"
+                      + "Reconnecta'l aviat per evitar interrupcions.\n"
+                      + "Vés a /portal → Social → Meta per renovar-lo.";
+
+                telegramBotClient.sendMessage(chatLink.getTelegramChatId(), msg);
+            } catch (Exception e) {
+                log.debug("Error comprovant expiració de token per tenant {}: {}", tenantId, e.getMessage());
             }
         }
     }

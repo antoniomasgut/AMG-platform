@@ -83,6 +83,14 @@ public class SocialPublisherOrchestrator {
         var draft = loadDraft(chatId);
         if (draft == null) return;
 
+        // Cancel·lació explícita del flux en qualsevol pas
+        if (text != null && text.trim().toLowerCase().matches("/cancel|cancel|cancel·lar|cancelar|sortir|exit")) {
+            redis.delete(KEY_PREFIX + chatId);
+            telegramBotClient.sendMessage(chatId,
+                "❌ Publicació cancel·lada.\nEscriu <code>/publica</code> quan vulguis tornar a publicar.");
+            return;
+        }
+
         String step = draft.get("step");
 
         switch (step) {
@@ -580,8 +588,11 @@ public class SocialPublisherOrchestrator {
      */
     public void publishNow(SocialPost scheduledPost) {
         try {
-            publishToNetwork(scheduledPost.getTenantId(), scheduledPost.getNetwork(),
+            String extId = publishToNetwork(scheduledPost.getTenantId(), scheduledPost.getNetwork(),
                 scheduledPost.getPostType(), scheduledPost.getCaption(), scheduledPost.getMediaUrl());
+            scheduledPost.setExternalPostId(extId);
+            scheduledPost.setExternalPostUrl(
+                resolvePostUrl(scheduledPost.getTenantId(), scheduledPost.getNetwork(), extId));
             scheduledPost.setStatus("PUBLISHED");
             scheduledPost.setPublishedAt(Instant.now());
         } catch (Exception e) {
@@ -606,12 +617,14 @@ public class SocialPublisherOrchestrator {
         for (String net : resolveNetworks(draft)) {
             try {
                 String extId = publishToNetwork(tenantId, net, postType, caption, mediaUrl);
-                savePost(tenantId, net, postType, caption, mediaUrl, extId, null, "PUBLISHED");
-                results.append("✅ ").append(labels.get(net)).append(" publicat\n");
+                String postUrl = resolvePostUrl(tenantId, net, extId);
+                savePost(tenantId, net, postType, caption, mediaUrl, extId, postUrl, null, "PUBLISHED");
+                String urlNote = postUrl != null ? "\n🔗 " + postUrl : "";
+                results.append("✅ ").append(labels.get(net)).append(" publicat").append(urlNote).append("\n");
             } catch (UnsupportedOperationException e) {
                 results.append("⚠️ ").append(labels.get(net)).append(": ").append(e.getMessage()).append("\n");
             } catch (Exception e) {
-                savePost(tenantId, net, postType, caption, mediaUrl, null, e.getMessage(), "FAILED");
+                savePost(tenantId, net, postType, caption, mediaUrl, null, null, e.getMessage(), "FAILED");
                 results.append("❌ ").append(labels.get(net)).append(": ").append(e.getMessage()).append("\n");
             }
         }
@@ -726,6 +739,38 @@ public class SocialPublisherOrchestrator {
         return mediaUrl;
     }
 
+    /**
+     * Construeix l'URL pública del post publicat per mostrar-la al portal.
+     * IG: crida al Graph API per obtenir el permalink_url (best-effort).
+     * FB: construeix URL a partir del format "pageId_postId".
+     * Altres: null.
+     */
+    private String resolvePostUrl(UUID tenantId, String network, String externalPostId) {
+        if (externalPostId == null) return null;
+        try {
+            if ("INSTAGRAM".equals(network)) {
+                var mc = metaConfigRepo.findByTenantId(tenantId).orElse(null);
+                if (mc == null || mc.getPageAccessTokenEncrypted() == null) return null;
+                String token = vaultEncryption.decrypt(mc.getPageAccessTokenEncrypted());
+                var raw = org.springframework.web.client.RestClient.create().get()
+                    .uri("https://graph.facebook.com/v22.0/" + externalPostId
+                         + "?fields=permalink_url&access_token=" + token)
+                    .retrieve().body(String.class);
+                if (raw != null) {
+                    var node = objectMapper.readTree(raw);
+                    String url = node.path("permalink_url").asText(null);
+                    if (url != null && !url.isEmpty()) return url;
+                }
+            } else if ("FACEBOOK".equals(network) && externalPostId.contains("_")) {
+                String[] parts = externalPostId.split("_", 2);
+                return "https://www.facebook.com/" + parts[0] + "/posts/" + parts[1];
+            }
+        } catch (Exception e) {
+            log.debug("No s'ha pogut obtenir l'URL del post {}: {}", externalPostId, e.getMessage());
+        }
+        return null;
+    }
+
     /** Detecta vídeo per l'extensió dins la part de path de la URL (les URLs signades porten query). */
     private static boolean isVideoUrl(String url) {
         if (url == null) return false;
@@ -763,7 +808,7 @@ public class SocialPublisherOrchestrator {
     }
 
     private void savePost(UUID tenantId, String network, String postType, String caption,
-                          String mediaUrl, String extId, String errorMsg, String status) {
+                          String mediaUrl, String extId, String extUrl, String errorMsg, String status) {
         try {
             var post = SocialPost.builder()
                 .tenantId(tenantId)
@@ -772,6 +817,7 @@ public class SocialPublisherOrchestrator {
                 .caption(caption)
                 .mediaUrl(mediaUrl)
                 .externalPostId(extId)
+                .externalPostUrl(extUrl)
                 .status(status)
                 .publishedAt("PUBLISHED".equals(status) ? Instant.now() : null)
                 .errorMessage(errorMsg)

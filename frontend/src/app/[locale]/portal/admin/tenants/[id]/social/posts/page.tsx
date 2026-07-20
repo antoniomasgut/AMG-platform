@@ -179,11 +179,21 @@ export default function SocialPostsPage() {
                   </div>
                 )}
 
-                {post.externalPostId && (
+                {/* Link directe al post publicat */}
+                {post.externalPostUrl ? (
+                  <a
+                    href={post.externalPostUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 underline"
+                  >
+                    🔗 Veure post
+                  </a>
+                ) : post.externalPostId ? (
                   <p className="text-xs text-gray-400">
                     ID extern: <code>{post.externalPostId}</code>
                   </p>
-                )}
+                ) : null}
 
                 {post.errorMessage && (
                   <p className="text-xs text-red-600 bg-red-50 rounded p-2">
