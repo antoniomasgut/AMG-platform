@@ -5,6 +5,7 @@ import com.amg.digitalitzacio.agents.domain.NexeServiceConfigRepository;
 import com.amg.digitalitzacio.agents.domain.TenantChatLinkRepository;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.social.domain.SocialMetaConfigRepository;
+import com.amg.digitalitzacio.social.domain.SocialPostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -36,6 +37,7 @@ public class SocialSuggestionScheduler {
     private final TenantRepository tenantRepository;
     private final TelegramBotClient telegramBotClient;
     private final SocialMetaConfigRepository metaConfigRepo;
+    private final SocialPostRepository postRepository;
 
     /** Cada dilluns a les 10:00 */
     @Scheduled(cron = "0 0 10 * * MON")
@@ -137,6 +139,52 @@ public class SocialSuggestionScheduler {
             } catch (Exception e) {
                 log.debug("Error comprovant expiració de token per tenant {}: {}", tenantId, e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Cada dijous a les 11:00 (P22): si no ha publicat res en els últims 7 dies,
+     * envia un recordatori per activar el tenant i evitar inactivitat prolongada.
+     */
+    @Scheduled(cron = "0 0 11 * * THU")
+    public void nudgeInactiveTenants() {
+        var configs = nexeConfigRepo.findByServiceKey(SERVICE_KEY);
+        var since7d = Instant.now().minus(7, ChronoUnit.DAYS);
+
+        for (var config : configs) {
+            var tenantId = config.getTenantId();
+            try {
+                var posts = postRepository.findPublishedSince(tenantId, since7d);
+                if (!posts.isEmpty()) continue;
+
+                var chatLink = chatLinkRepository.findByTenantId(tenantId).orElse(null);
+                if (chatLink == null || chatLink.getTelegramChatId() == null) continue;
+
+                telegramBotClient.sendMessage(chatLink.getTelegramChatId(),
+                    "📅 Fa més de 7 dies que no publiques a xarxes socials.\n"
+                    + "Publicar de forma regular millora el teu abast i la fidelitat dels clients.\n\n"
+                    + "Escriu <code>/publica</code> per crear un post ràpid!");
+            } catch (Exception e) {
+                log.debug("Error comprovant inactivitat del tenant {}: {}", tenantId, e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Cada hora (P23): reverteix posts encallats en estat PUBLISHING (app crash enmig d'una publicació).
+     * Un post en PUBLISHING durant més de 5 minuts és definitament un error.
+     */
+    @Scheduled(cron = "0 0 * * * *")
+    public void cleanupStuckPublishingPosts() {
+        var stuckSince = Instant.now().minus(5, ChronoUnit.MINUTES);
+        var stuck = postRepository.findStuckPublishing(stuckSince);
+        if (stuck.isEmpty()) return;
+
+        log.warn("Social cleanup: {} posts encallats en PUBLISHING, revertint a FAILED", stuck.size());
+        for (var post : stuck) {
+            post.setStatus("FAILED");
+            post.setErrorMessage("La publicació va quedar interrompuda (reinici del servidor)");
+            postRepository.save(post);
         }
     }
 

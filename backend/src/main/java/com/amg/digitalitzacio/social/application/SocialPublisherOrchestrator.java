@@ -639,6 +639,21 @@ public class SocialPublisherOrchestrator {
 
         draft.put("caption", caption);
 
+        // P25: avís si el caption supera el límit de la xarxa (no bloqueig, l'usuari decideix)
+        if (caption != null && !caption.isBlank()) {
+            int len = caption.length();
+            String captionWarning = null;
+            if ("1".equals(draft.get("ig")) && len > 2200) {
+                captionWarning = "⚠️ El caption té " + len + " caràcters. Instagram permet un màxim de 2.200.";
+            } else if ("1".equals(draft.get("gb")) && len > 1500) {
+                captionWarning = "⚠️ El caption té " + len + " caràcters. Google Business permet un màxim de 1.500.";
+            }
+            if (captionWarning != null) {
+                telegramBotClient.sendMessage(chatId, captionWarning
+                    + "\nPots editar-lo escrivint <code>EDITAR</code> a la confirmació, o continuar si no supera el límit.");
+            }
+        }
+
         String pt = draft.get("postType");
         boolean needsMedia = "PHOTO".equals(pt) || "REEL".equals(pt);
         if (needsMedia) {

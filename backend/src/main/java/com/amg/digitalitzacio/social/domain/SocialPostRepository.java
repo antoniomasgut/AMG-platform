@@ -20,4 +20,9 @@ public interface SocialPostRepository extends JpaRepository<SocialPost, UUID> {
     @Query("SELECT p FROM SocialPost p WHERE p.tenantId = :tenantId AND p.status = 'PUBLISHED' "
             + "AND p.publishedAt >= :since ORDER BY p.publishedAt DESC")
     List<SocialPost> findPublishedSince(UUID tenantId, Instant since);
+
+    // P23: posts encallats en PUBLISHING (crash del servidor enmig d'una publicació)
+    // Si scheduledAt <= (ara - 5 min) i segueix en PUBLISHING → definitivamente encallat
+    @Query("SELECT p FROM SocialPost p WHERE p.status = 'PUBLISHING' AND p.scheduledAt <= :before")
+    List<SocialPost> findStuckPublishing(Instant before);
 }
