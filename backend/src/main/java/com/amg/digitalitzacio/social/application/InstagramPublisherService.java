@@ -52,6 +52,34 @@ public class InstagramPublisherService {
         return publishContainer(igUserId, accessToken, containerId);
     }
 
+    /**
+     * Publica un carrusel (2–10 fotos). Cada imatge es crea com a CAROUSEL_ITEM,
+     * després es crea el contenidor pare amb children=[id1,id2,...] i es publica.
+     */
+    public String publishCarousel(String igUserId, String accessToken,
+                                  java.util.List<String> imageUrls, String caption) {
+        if (imageUrls == null || imageUrls.size() < 2) {
+            throw new IllegalArgumentException("El carrusel necessita almenys 2 imatges");
+        }
+        if (imageUrls.size() > 10) {
+            throw new IllegalArgumentException("El carrusel admet un màxim de 10 imatges");
+        }
+        var childIds = new java.util.ArrayList<String>();
+        for (String url : imageUrls) {
+            String childId = createContainer(igUserId, java.util.Map.of(
+                "image_url",       url,
+                "is_carousel_item", true,
+                "access_token",    accessToken));
+            childIds.add(childId);
+        }
+        String carouselId = createContainer(igUserId, java.util.Map.of(
+            "media_type",   "CAROUSEL",
+            "children",     String.join(",", childIds),
+            "caption",      caption != null ? caption : "",
+            "access_token", accessToken));
+        return publishContainer(igUserId, accessToken, carouselId);
+    }
+
     /** Publica una Story (foto o vídeo). Les stories no porten caption a l'API. */
     public String publishStory(String igUserId, String accessToken, String mediaUrl, boolean isVideo) {
         var body = new java.util.HashMap<String, Object>();

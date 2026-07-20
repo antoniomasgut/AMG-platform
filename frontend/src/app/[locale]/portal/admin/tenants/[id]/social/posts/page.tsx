@@ -159,6 +159,26 @@ export default function SocialPostsPage() {
                   </p>
                 )}
 
+                {/* Mètriques d'engagement (sincronitzades diàriament) */}
+                {post.status === 'PUBLISHED' && (post.reach != null || post.likes != null || post.comments != null) && (
+                  <div className="flex gap-4 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+                    {post.reach != null && (
+                      <span title="Abast">👁 <b>{post.reach.toLocaleString()}</b></span>
+                    )}
+                    {post.likes != null && (
+                      <span title="Likes">❤️ <b>{post.likes.toLocaleString()}</b></span>
+                    )}
+                    {post.comments != null && (
+                      <span title="Comentaris">💬 <b>{post.comments.toLocaleString()}</b></span>
+                    )}
+                    {post.metricsSyncedAt && (
+                      <span className="ml-auto text-xs text-gray-400">
+                        actualitzat {fmtDate(post.metricsSyncedAt)}
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {post.externalPostId && (
                   <p className="text-xs text-gray-400">
                     ID extern: <code>{post.externalPostId}</code>

@@ -14,6 +14,10 @@ export interface SocialPost {
   publishedAt: string | null;
   errorMessage: string | null;
   createdAt: string;
+  reach: number | null;
+  likes: number | null;
+  comments: number | null;
+  metricsSyncedAt: string | null;
 }
 
 export interface MetaStatus {
@@ -113,9 +117,11 @@ export const NETWORK_ICONS: Record<string, string> = {
 
 export const POST_TYPE_LABELS: Record<string, string> = {
   PHOTO:     'Foto',
+  CAROUSEL:  'Carrusel',
   TEXT:      'Text',
   REEL:      'Vídeo / Reel',
   STORY:     'Story',
+  LINK:      'Enllaç',
   WHATS_NEW: 'Notícia',
   OFFER:     'Oferta',
   EVENT:     'Esdeveniment',

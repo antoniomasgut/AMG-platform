@@ -90,6 +90,20 @@ public class SocialSuggestionScheduler {
         }
     }
 
+    /** Cada dia a les 23:00: sincronitza mètriques de tots els tenants (P6 — dades fresques al portal) */
+    @Scheduled(cron = "0 0 23 * * *")
+    public void dailyMetricsSync() {
+        var configs = nexeConfigRepo.findByServiceKey(SERVICE_KEY);
+        log.debug("Social daily sync: {} tenants", configs.size());
+        for (var config : configs) {
+            try {
+                analyticsService.syncMetrics(config.getTenantId());
+            } catch (Exception e) {
+                log.debug("Error sync mètriques tenant {}: {}", config.getTenantId(), e.getMessage());
+            }
+        }
+    }
+
     private String dateContext() {
         var now = LocalDate.now();
         String season = switch (now.getMonthValue()) {

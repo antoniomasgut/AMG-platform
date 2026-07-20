@@ -202,4 +202,46 @@ class SocialPublisherOrchestratorTest {
         verify(facebookPublisher).publishText(eq("fb-page-1"), eq("token"),
             eq("Reserva a https://canarebecca.webs.amgdl.com?utm_source=facebook&utm_medium=social&utm_campaign=amg_social ara"));
     }
+
+    @Test
+    void carruselInstagramEncaminaAPublishCarousel() {
+        stubMetaConfig();
+        when(instagramPublisher.publishCarousel(any(), any(), any(), any())).thenReturn("ext-9");
+
+        var p = post("INSTAGRAM", "CAROUSEL",
+            "https://cdn.example.com/1.jpg|https://cdn.example.com/2.jpg|https://cdn.example.com/3.jpg");
+        orchestrator().publishNow(p);
+
+        verify(instagramPublisher).publishCarousel(
+            eq("ig-acc-1"), eq("token"),
+            eq(java.util.List.of("https://cdn.example.com/1.jpg",
+                                 "https://cdn.example.com/2.jpg",
+                                 "https://cdn.example.com/3.jpg")),
+            anyString());
+        assertThat(p.getStatus()).isEqualTo("PUBLISHED");
+    }
+
+    @Test
+    void carruselSenseMediaFalla() {
+        stubMetaConfig();
+
+        var p = post("INSTAGRAM", "CAROUSEL", null);
+        orchestrator().publishNow(p);
+
+        assertThat(p.getStatus()).isEqualTo("FAILED");
+        verify(instagramPublisher, never()).publishCarousel(any(), any(), any(), any());
+    }
+
+    @Test
+    void linkFacebookEncaminaAPublishLink() {
+        stubMetaConfig();
+        when(facebookPublisher.publishLink(any(), any(), any(), any())).thenReturn("ext-10");
+
+        var p = post("FACEBOOK", "LINK", "https://amgdl.com");
+        orchestrator().publishNow(p);
+
+        verify(facebookPublisher).publishLink(eq("fb-page-1"), eq("token"),
+            eq("https://amgdl.com"), anyString());
+        assertThat(p.getStatus()).isEqualTo("PUBLISHED");
+    }
 }

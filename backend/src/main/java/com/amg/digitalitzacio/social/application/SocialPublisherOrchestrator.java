@@ -86,12 +86,14 @@ public class SocialPublisherOrchestrator {
         String step = draft.get("step");
 
         switch (step) {
-            case "AWAIT_NETWORKS" -> handleNetworks(chatId, text, draft);
-            case "AWAIT_TYPE"     -> handleType(chatId, text, draft);
-            case "AWAIT_MEDIA"    -> handleMedia(chatId, text, photoFileId, videoFileId, draft);
-            case "AWAIT_CAPTION"  -> handleCaption(chatId, text, draft);
-            case "AWAIT_SCHEDULE" -> handleSchedule(chatId, text, draft);
-            case "AWAIT_CONFIRM"  -> handleConfirm(chatId, text, draft);
+            case "AWAIT_NETWORKS"        -> handleNetworks(chatId, text, draft);
+            case "AWAIT_TYPE"            -> handleType(chatId, text, draft);
+            case "AWAIT_MEDIA"           -> handleMedia(chatId, text, photoFileId, videoFileId, draft);
+            case "AWAIT_CAROUSEL_MEDIA"  -> handleCarouselMedia(chatId, text, photoFileId, draft);
+            case "AWAIT_LINK_URL"        -> handleLinkUrl(chatId, text, draft);
+            case "AWAIT_CAPTION"         -> handleCaption(chatId, text, draft);
+            case "AWAIT_SCHEDULE"        -> handleSchedule(chatId, text, draft);
+            case "AWAIT_CONFIRM"         -> handleConfirm(chatId, text, draft);
             default -> {
                 redis.delete(KEY_PREFIX + chatId);
                 telegramBotClient.sendMessage(chatId, "❌ Flux cancel·lat. Torna a escriure <code>/publica</code>.");
@@ -134,9 +136,15 @@ public class SocialPublisherOrchestrator {
 
         telegramBotClient.sendMessage(chatId,
             "Quin tipus de contingut?\n"
-            + (ig ? "📸 <code>FOTO</code> — Foto amb caption\n   🎬 <code>VIDEO</code> — Reel (vídeo al feed)\n   ⭕ <code>STORY</code> — Story (foto o vídeo, 24h)\n" : "")
-            + (fb ? "📝 <code>TEXT</code> — Missatge de text\n   📸 <code>FOTO</code> — Foto amb caption\n"
-                    + (!ig ? "   🎬 <code>VIDEO</code> — Vídeo a la pàgina\n   ⭕ <code>STORY</code> — Story de foto (24h)\n" : "") : "")
+            + (ig ? "📸 <code>FOTO</code> — Foto amb caption\n"
+                  + "   🖼 <code>CARRUSEL</code> — 2–10 fotos (carrusel)\n"
+                  + "   🎬 <code>VIDEO</code> — Reel (vídeo al feed)\n"
+                  + "   ⭕ <code>STORY</code> — Story (foto o vídeo, 24h)\n" : "")
+            + (fb ? "📝 <code>TEXT</code> — Missatge de text\n"
+                  + "   📸 <code>FOTO</code> — Foto amb caption\n"
+                  + "   🔗 <code>LINK</code> — Compartir un enllaç\n"
+                  + (!ig ? "   🎬 <code>VIDEO</code> — Vídeo a la pàgina\n"
+                         + "   ⭕ <code>STORY</code> — Story de foto (24h)\n" : "") : "")
             + (gb ? "🗺 <code>NOTICIES</code> — Notícia\n   🎉 <code>OFERTA</code> — Oferta\n" : "")
             + (li ? "💼 <code>TEXT</code> — Publicació a LinkedIn\n" : "")
             + "\nEscriu el tipus (p.ex. <code>FOTO</code>):");
@@ -152,19 +160,23 @@ public class SocialPublisherOrchestrator {
     private void handleType(Long chatId, String text, Map<String, String> draft) {
         String t = text.toUpperCase().trim();
         String postType = switch (t) {
-            case "FOTO"            -> "PHOTO";
-            case "TEXT"            -> "TEXT";
-            case "VIDEO", "REEL"   -> "REEL";
-            case "STORY", "STORIES"-> "STORY";
-            case "NOTICIES"        -> "WHATS_NEW";
-            case "OFERTA"          -> "OFFER";
-            case "EVENT"           -> "EVENT";
-            default                -> null;
+            case "FOTO"              -> "PHOTO";
+            case "TEXT"              -> "TEXT";
+            case "VIDEO", "REEL"     -> "REEL";
+            case "STORY", "STORIES"  -> "STORY";
+            case "CARRUSEL","CAROUSEL"-> "CAROUSEL";
+            case "LINK", "ENLLAS"    -> "LINK";
+            case "NOTICIES"          -> "WHATS_NEW";
+            case "OFERTA"            -> "OFFER";
+            case "EVENT"             -> "EVENT";
+            default                  -> null;
         };
 
         if (postType == null) {
             telegramBotClient.sendMessage(chatId,
-                "⚠️ Opció no reconeguda. Escriu: <code>FOTO</code>, <code>TEXT</code>, <code>VIDEO</code>, <code>STORY</code>, <code>NOTICIES</code>, <code>OFERTA</code> o <code>EVENT</code>.");
+                "⚠️ Opció no reconeguda. Escriu: <code>FOTO</code>, <code>CARRUSEL</code>, "
+                + "<code>TEXT</code>, <code>LINK</code>, <code>VIDEO</code>, <code>STORY</code>, "
+                + "<code>NOTICIES</code>, <code>OFERTA</code> o <code>EVENT</code>.");
             return;
         }
 
@@ -184,6 +196,20 @@ public class SocialPublisherOrchestrator {
             }
         }
 
+        // Carrusel: Instagram only
+        if ("CAROUSEL".equals(postType) && !"1".equals(draft.get("ig"))) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ El carrusel només és compatible amb Instagram. Selecciona Instagram o tria un altre tipus.");
+            return;
+        }
+
+        // Link: Facebook only
+        if ("LINK".equals(postType) && !"1".equals(draft.get("fb"))) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ La publicació d'enllaços només és compatible amb Facebook. Selecciona Facebook o tria un altre tipus.");
+            return;
+        }
+
         draft.put("postType", postType);
 
         // Les stories no porten text: salta directament al mèdia
@@ -195,11 +221,100 @@ public class SocialPublisherOrchestrator {
             return;
         }
 
+        // Carrusel: pas especial per acumular múltiples fotos
+        if ("CAROUSEL".equals(postType)) {
+            draft.put("step", "AWAIT_CAROUSEL_MEDIA");
+            draft.put("carouselCount", "0");
+            saveDraft(chatId, draft);
+            telegramBotClient.sendMessage(chatId,
+                "🖼 <b>Carrusel Instagram</b>\n\n"
+                + "Envia les fotos una per una (mínim 2, màxim 10).\n"
+                + "Quan hagis enviat totes les imatges escriu <code>LLEST</code>.");
+            return;
+        }
+
+        // Link: demanem primer la URL
+        if ("LINK".equals(postType)) {
+            draft.put("step", "AWAIT_LINK_URL");
+            saveDraft(chatId, draft);
+            telegramBotClient.sendMessage(chatId,
+                "🔗 Envia l'URL que vols compartir (ha de començar per https://):");
+            return;
+        }
+
         draft.put("step", "AWAIT_CAPTION");
         saveDraft(chatId, draft);
 
         telegramBotClient.sendMessage(chatId,
             "✍️ Escriu el text del post o <code>IA</code> per generar-lo automàticament:");
+    }
+
+    /** Acumula fotos del carrusel. Cada foto s'afegeix a la llista fins a LLEST o màxim 10. */
+    private void handleCarouselMedia(Long chatId, String text, String photoFileId, Map<String, String> draft) {
+        if ("LLEST".equalsIgnoreCase(text.trim())) {
+            int count = Integer.parseInt(draft.getOrDefault("carouselCount", "0"));
+            if (count < 2) {
+                telegramBotClient.sendMessage(chatId,
+                    "⚠️ Necessites almenys 2 fotos per crear un carrusel. "
+                    + "Continua enviant fotos o escriu <code>LLEST</code> quan en tinguis prou.");
+                return;
+            }
+            // Passem al text del post
+            draft.put("step", "AWAIT_CAPTION");
+            saveDraft(chatId, draft);
+            telegramBotClient.sendMessage(chatId,
+                "✅ " + count + " fotos carregades.\n✍️ Escriu el text del carrusel o <code>IA</code>:");
+            return;
+        }
+
+        int count = Integer.parseInt(draft.getOrDefault("carouselCount", "0"));
+        if (count >= 10) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ Màxim 10 fotos per carrusel. Escriu <code>LLEST</code> per continuar.");
+            return;
+        }
+
+        String url = null;
+        if (photoFileId != null) {
+            telegramBotClient.sendMessage(chatId, "⏳ Pujant foto " + (count + 1) + "…");
+            try {
+                UUID tenantId = UUID.fromString(draft.get("tenantId"));
+                url = telegramMediaUploadService.downloadAndUpload(photoFileId, tenantId);
+            } catch (Exception e) {
+                telegramBotClient.sendMessage(chatId,
+                    "⚠️ No s'ha pogut pujar la foto: " + e.getMessage());
+                return;
+            }
+        } else if (text.trim().startsWith("http")) {
+            url = text.trim();
+        } else {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ Envia una foto o una URL vàlida. Quan acabis escriu <code>LLEST</code>.");
+            return;
+        }
+
+        count++;
+        draft.put("carouselUrl" + count, url);
+        draft.put("carouselCount", String.valueOf(count));
+        saveDraft(chatId, draft);
+        telegramBotClient.sendMessage(chatId,
+            "✅ Foto " + count + " afegida."
+            + (count < 10 ? " Envia la següent o escriu <code>LLEST</code> per continuar." : " Màxim assolit. Escriu <code>LLEST</code>."));
+    }
+
+    /** Demana l'URL per al POST_LINK de Facebook, després passa al caption. */
+    private void handleLinkUrl(Long chatId, String text, Map<String, String> draft) {
+        String url = text.trim();
+        if (!url.startsWith("https://") && !url.startsWith("http://")) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ L'URL ha de començar per https://. Torna a introduir-la.");
+            return;
+        }
+        draft.put("linkUrl", url);
+        draft.put("step", "AWAIT_CAPTION");
+        saveDraft(chatId, draft);
+        telegramBotClient.sendMessage(chatId,
+            "✍️ Escriu el text que acompanyarà l'enllaç (o <code>SENSE_TEXT</code> si no en vols):");
     }
 
     private void handleMedia(Long chatId, String text, String photoFileId, String videoFileId,
@@ -308,13 +423,14 @@ public class SocialPublisherOrchestrator {
 
         redis.delete(KEY_PREFIX + chatId);
         UUID tenantId = UUID.fromString(draft.get("tenantId"));
+        String resolvedMedia = resolveMediaUrl(draft);
         for (String net : resolveNetworks(draft)) {
             postRepository.save(SocialPost.builder()
                 .tenantId(tenantId)
                 .network(net)
                 .postType(draft.get("postType"))
                 .caption(draft.get("caption"))
-                .mediaUrl(draft.get("mediaUrl"))
+                .mediaUrl(resolvedMedia)
                 .status("SCHEDULED")
                 .scheduledAt(scheduledAt)
                 .build());
@@ -374,29 +490,47 @@ public class SocialPublisherOrchestrator {
     }
 
     private java.util.List<String> resolveNetworks(Map<String, String> draft) {
-        // Vídeo (Reel) i Story només van a IG/FB
-        boolean mediaOnly = "REEL".equals(draft.get("postType")) || "STORY".equals(draft.get("postType"));
+        String pt = draft.get("postType");
+        // Vídeo, Story i Carrusel: IG/FB
+        boolean mediaOnly = "REEL".equals(pt) || "STORY".equals(pt) || "CAROUSEL".equals(pt);
+        // Link: FB only
+        boolean fbOnly = "LINK".equals(pt);
         var list = new java.util.ArrayList<String>();
-        if ("1".equals(draft.get("ig"))) list.add("INSTAGRAM");
+        if (!fbOnly && "1".equals(draft.get("ig"))) list.add("INSTAGRAM");
         if ("1".equals(draft.get("fb"))) list.add("FACEBOOK");
-        if (!mediaOnly && "1".equals(draft.get("gb"))) list.add("GOOGLE_BUSINESS");
-        if (!mediaOnly && "1".equals(draft.get("li"))) list.add("LINKEDIN");
+        if (!mediaOnly && !fbOnly && "1".equals(draft.get("gb"))) list.add("GOOGLE_BUSINESS");
+        if (!mediaOnly && !fbOnly && "1".equals(draft.get("li"))) list.add("LINKEDIN");
         return list;
     }
 
     private void sendPreview(Long chatId, Map<String, String> draft, String caption) {
         boolean isVideo = "video".equals(draft.get("mediaKind"));
-        String preview = "📋 <b>Resum del post:</b>\n"
-            + "Xarxes: " + buildNetworkList(draft) + "\n"
-            + "Tipus: " + draft.get("postType") + "\n"
-            + (draft.containsKey("mediaUrl")
-               ? (isVideo ? "🎬 Vídeo: " : "🖼 Imatge: ") + draft.get("mediaUrl") + "\n" : "")
-            + "\n" + (caption != null ? caption : "")
-            + "\n\n✅ Escriu <code>SI</code> per publicar o <code>NO</code> per cancel·lar.";
-        telegramBotClient.sendMessage(chatId, preview);
+        String pt = draft.get("postType");
+        var sb = new StringBuilder("📋 <b>Resum del post:</b>\n")
+            .append("Xarxes: ").append(buildNetworkList(draft)).append("\n")
+            .append("Tipus: ").append(pt).append("\n");
+
+        if ("CAROUSEL".equals(pt)) {
+            int count = Integer.parseInt(draft.getOrDefault("carouselCount", "0"));
+            sb.append("🖼 ").append(count).append(" fotos al carrusel\n");
+        } else if ("LINK".equals(pt) && draft.containsKey("linkUrl")) {
+            sb.append("🔗 ").append(draft.get("linkUrl")).append("\n");
+        } else if (draft.containsKey("mediaUrl")) {
+            sb.append(isVideo ? "🎬 Vídeo: " : "🖼 Imatge: ").append(draft.get("mediaUrl")).append("\n");
+        }
+
+        if (caption != null && !caption.isBlank()) sb.append("\n").append(caption);
+        sb.append("\n\n✅ Escriu <code>SI</code> per publicar o <code>NO</code> per cancel·lar.");
+        telegramBotClient.sendMessage(chatId, sb.toString());
     }
 
-    private void handleCaption(Long chatId, String text, Map<String, String> draft) {
+    private void handleCaption(Long chatId, String rawText, Map<String, String> draft) {
+        String text = "SENSE_TEXT".equalsIgnoreCase(rawText.trim()) ? "" : rawText;
+        handleCaptionInternal(chatId, text, draft);
+    }
+
+    // Separat per no duplicar lògica — el real handler és aquí
+    private void handleCaptionInternal(Long chatId, String text, Map<String, String> draft) {
         String caption;
         if (text.trim().equalsIgnoreCase("IA")) {
             String business = draft.getOrDefault("business", "el negoci");
@@ -462,7 +596,7 @@ public class SocialPublisherOrchestrator {
     public void publishAsync(UUID tenantId, Long chatId, Map<String, String> draft) {
         String postType  = draft.get("postType");
         String caption   = draft.get("caption");
-        String mediaUrl  = draft.get("mediaUrl");
+        String mediaUrl  = resolveMediaUrl(draft);
 
         var results = new StringBuilder("📊 <b>Resultats:</b>\n");
         var labels = Map.of(
@@ -506,12 +640,14 @@ public class SocialPublisherOrchestrator {
                     .orElseThrow(() -> new IllegalStateException("Meta no configurat per a aquest tenant"));
                 String token = vaultEncryption.decrypt(mc.getPageAccessTokenEncrypted());
                 return switch (pt) {
-                    case "REEL"  -> instagramPublisher.publishReel(mc.getInstagramAccountId(), token,
-                                        requireMedia(mediaUrl), cap);
-                    case "STORY" -> instagramPublisher.publishStory(mc.getInstagramAccountId(), token,
-                                        requireMedia(mediaUrl), isVideoUrl(mediaUrl));
-                    default      -> instagramPublisher.publishFeedPhoto(mc.getInstagramAccountId(), token,
-                                        requireMedia(mediaUrl), cap);
+                    case "REEL"     -> instagramPublisher.publishReel(mc.getInstagramAccountId(), token,
+                                           requireMedia(mediaUrl), cap);
+                    case "STORY"    -> instagramPublisher.publishStory(mc.getInstagramAccountId(), token,
+                                           requireMedia(mediaUrl), isVideoUrl(mediaUrl));
+                    case "CAROUSEL" -> instagramPublisher.publishCarousel(mc.getInstagramAccountId(), token,
+                                           java.util.Arrays.asList(requireMedia(mediaUrl).split("\\|")), cap);
+                    default         -> instagramPublisher.publishFeedPhoto(mc.getInstagramAccountId(), token,
+                                           requireMedia(mediaUrl), cap);
                 };
             }
             case "FACEBOOK" -> {
@@ -529,6 +665,8 @@ public class SocialPublisherOrchestrator {
                         yield facebookPublisher.publishPhotoStory(mc.getFacebookPageId(), token,
                                   requireMedia(mediaUrl));
                     }
+                    case "LINK"  -> facebookPublisher.publishLink(mc.getFacebookPageId(), token,
+                                        requireMedia(mediaUrl), cap);
                     default      -> "PHOTO".equals(pt) && mediaUrl != null
                                     ? facebookPublisher.publishPhoto(mc.getFacebookPageId(), token, mediaUrl, cap)
                                     : facebookPublisher.publishText(mc.getFacebookPageId(), token, cap);
@@ -557,6 +695,28 @@ public class SocialPublisherOrchestrator {
             }
             default -> throw new IllegalArgumentException("Xarxa desconeguda: " + network);
         }
+    }
+
+    /**
+     * Resol el mediaUrl efectiu del draft:
+     * - CAROUSEL: concatena carouselUrl1..N amb "|"
+     * - LINK: usa linkUrl
+     * - Resta: mediaUrl directe
+     */
+    private static String resolveMediaUrl(Map<String, String> draft) {
+        String pt = draft.get("postType");
+        if ("CAROUSEL".equals(pt)) {
+            int count = Integer.parseInt(draft.getOrDefault("carouselCount", "0"));
+            if (count == 0) return null;
+            var urls = new java.util.ArrayList<String>();
+            for (int i = 1; i <= count; i++) {
+                String u = draft.get("carouselUrl" + i);
+                if (u != null) urls.add(u);
+            }
+            return String.join("|", urls);
+        }
+        if ("LINK".equals(pt)) return draft.get("linkUrl");
+        return draft.get("mediaUrl");
     }
 
     private static String requireMedia(String mediaUrl) {

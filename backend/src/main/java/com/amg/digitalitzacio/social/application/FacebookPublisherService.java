@@ -60,6 +60,18 @@ public class FacebookPublisherService {
     }
 
     /**
+     * Comparteix un enllaç a la pàgina de Facebook (POST_LINK).
+     * Meta genera automàticament el preview de l'URL (Open Graph).
+     */
+    public String publishLink(String pageId, String accessToken, String link, String message) {
+        var body = new HashMap<String, Object>();
+        body.put("link",         link);
+        if (message != null && !message.isBlank()) body.put("message", message);
+        body.put("access_token", accessToken);
+        return postToFeed(pageId, "/feed", body);
+    }
+
+    /**
      * Publica una Story de foto: primer puja la foto sense publicar-la al feed
      * (published=false) i després crea la story amb el photo_id.
      */
