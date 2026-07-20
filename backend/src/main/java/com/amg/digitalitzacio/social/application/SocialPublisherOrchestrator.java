@@ -117,6 +117,12 @@ public class SocialPublisherOrchestrator {
         // LinkedIn només per al tenant propietari amb connexió activa
         if (li && !isLinkedInAvailable(UUID.fromString(draft.get("tenantId")))) {
             li = false;
+            if (!ig && !fb && !gb) {
+                telegramBotClient.sendMessage(chatId,
+                    "⚠️ LinkedIn no està disponible per a aquest compte. "
+                    + "Tria una altra xarxa: <b>I</b> (Instagram), <b>F</b> (Facebook) o <b>G</b> (Google Business).");
+                return;
+            }
         }
 
         draft.put("ig", ig ? "1" : "0");
@@ -162,12 +168,20 @@ public class SocialPublisherOrchestrator {
             return;
         }
 
-        // Vídeo i Story només van a IG/FB — avisa si també hi ha xarxes que no ho suporten
-        if (("REEL".equals(postType) || "STORY".equals(postType))
-                && ("1".equals(draft.get("gb")) || "1".equals(draft.get("li")))) {
-            telegramBotClient.sendMessage(chatId,
-                "ℹ️ Els vídeos i stories només es publiquen a Instagram/Facebook. "
-                + "Google Business i LinkedIn s'ometran per a aquest post.");
+        // Vídeo i Story només van a IG/FB
+        if ("REEL".equals(postType) || "STORY".equals(postType)) {
+            boolean hasIgFb = "1".equals(draft.get("ig")) || "1".equals(draft.get("fb"));
+            if (!hasIgFb) {
+                telegramBotClient.sendMessage(chatId,
+                    "⚠️ Els vídeos i stories només es publiquen a Instagram/Facebook, "
+                    + "i no n'has seleccionat cap. Tria un altre tipus de contingut.");
+                return;
+            }
+            if ("1".equals(draft.get("gb")) || "1".equals(draft.get("li"))) {
+                telegramBotClient.sendMessage(chatId,
+                    "ℹ️ Els vídeos i stories només es publiquen a Instagram/Facebook. "
+                    + "Google Business i LinkedIn s'ometran per a aquest post.");
+            }
         }
 
         draft.put("postType", postType);

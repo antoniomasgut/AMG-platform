@@ -58,6 +58,8 @@ public class SocialAnalyticsService {
 
         for (var post : posts) {
             if (post.getExternalPostId() == null) continue;
+            // Les stories caduquen a les 24h: consultar-les després només genera errors d'API
+            if ("STORY".equals(post.getPostType())) continue;
             try {
                 if ("INSTAGRAM".equals(post.getNetwork())) {
                     fetchInstagramMetrics(client, post, token);

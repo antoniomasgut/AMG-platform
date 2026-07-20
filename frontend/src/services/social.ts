@@ -101,12 +101,24 @@ export const NETWORK_LABELS: Record<string, string> = {
   INSTAGRAM: 'Instagram',
   FACEBOOK:  'Facebook',
   GOOGLE_BUSINESS: 'Google Business',
+  LINKEDIN:  'LinkedIn',
 };
 
 export const NETWORK_ICONS: Record<string, string> = {
   INSTAGRAM:       '📷',
   FACEBOOK:        '👥',
   GOOGLE_BUSINESS: '🗺',
+  LINKEDIN:        '💼',
+};
+
+export const POST_TYPE_LABELS: Record<string, string> = {
+  PHOTO:     'Foto',
+  TEXT:      'Text',
+  REEL:      'Vídeo / Reel',
+  STORY:     'Story',
+  WHATS_NEW: 'Notícia',
+  OFFER:     'Oferta',
+  EVENT:     'Esdeveniment',
 };
 
 export const STATUS_LABELS: Record<string, string> = {

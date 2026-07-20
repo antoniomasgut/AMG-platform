@@ -13,6 +13,7 @@ import {
   cancelSocialPost,
   NETWORK_LABELS,
   NETWORK_ICONS,
+  POST_TYPE_LABELS,
   STATUS_LABELS,
   STATUS_COLORS,
   type SocialPost,
@@ -126,7 +127,7 @@ export default function SocialPostsPage() {
                     <span className="text-2xl">{NETWORK_ICONS[post.network] ?? '📣'}</span>
                     <div>
                       <div className="font-medium">
-                        {NETWORK_LABELS[post.network]} — {post.postType}
+                        {NETWORK_LABELS[post.network]} — {POST_TYPE_LABELS[post.postType] ?? post.postType}
                       </div>
                       <div className="text-xs text-gray-400 mt-0.5">
                         {post.publishedAt

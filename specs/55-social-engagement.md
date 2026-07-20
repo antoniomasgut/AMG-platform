@@ -77,3 +77,22 @@ ALTER TABLE social_posts ADD COLUMN reach INTEGER, ADD COLUMN likes INTEGER,
 - **Meta App**: subscriure la pàgina al camp `feed` (a més de `leadgen`) al mateix webhook `/api/v1/leads/meta-webhook`.
 - **Insights**: `read_insights` requereix App Review de Meta perquè les mètriques (reach) es puguin llegir; sense això, likes/comments igualment funcionen via camps públics.
 - **`SocialMetaConfig.facebookPageId`** ha d'estar ple per resoldre el tenant des del `page_id` del webhook.
+
+---
+
+## 9. Millores 2026-07-20 (P2–P4)
+
+### 9.1 Atribució de trànsit i leads (UTM) ✅
+- `UtmTagger` afegeix `utm_source=<xarxa>&utm_medium=social&utm_campaign=amg_social` als enllaços del caption en publicar (no duplica si ja en porten).
+- `landing_visit_daily` (V100): comptador diari de visites per font, agregat sense PII. El render de landing llegeix `utm_source` i incrementa amb upsert atòmic; fonts normalitzades a conjunt tancat (instagram, facebook, google_business, linkedin, whatsapp, email, direct, other).
+- El resum setmanal inclou la secció «Trànsit des de xarxes → web»: visites per font + leads IG/FB dels últims 7 dies (`LeadRepository.countByTenantIdAndSourceSince`).
+
+### 9.2 Suggeriments basats en rendiment ✅
+- `SocialAnalyticsService.buildPerformanceContext`: millor post per engagement (reach + likes×3 + comments×5) i abast mitjà per tipus (mínim 2 posts per tipus) dels últims 30 dies.
+- `generateWeeklyIdea(…, performanceContext)`: la idea del dilluns prioritza formats/temes que han funcionat i ho esmenta breument.
+
+### 9.3 Triatge de comentaris ✅
+- `CommentTriage.worthNotifying`: filtre determinista abans de notificar per Telegram — emojis/puntuació sols, reaccions d'una paraula (top/ok/jajaja…), spam (crypto/followers/préstecs/DM) i comentaris només-enllaç no arriben al tenant. En cas de dubte, notifica.
+
+### 9.4 Vídeo i Stories (vegeu spec 52 §3) ✅
+- Reels IG (polling del contenidor fins FINISHED), vídeo FB (`file_url`), Stories IG (foto/vídeo) i FB (només foto). Les stories s'exclouen del sync de mètriques (caduquen a les 24 h).
