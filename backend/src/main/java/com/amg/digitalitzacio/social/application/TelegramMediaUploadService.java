@@ -18,8 +18,9 @@ import java.time.Duration;
 import java.util.UUID;
 
 /**
- * Descarrega una foto de Telegram i la puja al storage del tenant.
+ * Descarrega un mèdia (foto o vídeo) de Telegram i el puja al storage del tenant.
  * Retorna una URL signada (24h) vàlida per a Meta/GBP.
+ * Límit de l'API de bots de Telegram: fitxers fins a 20 MB.
  */
 @Service
 @RequiredArgsConstructor
@@ -48,14 +49,21 @@ public class TelegramMediaUploadService {
         String filePath = getFilePath(token, fileId);
         byte[] imageBytes = downloadFile(token, filePath);
 
-        String extension = filePath.contains(".") ? filePath.substring(filePath.lastIndexOf('.')) : ".jpg";
+        String extension = filePath.contains(".") ? filePath.substring(filePath.lastIndexOf('.')).toLowerCase() : ".jpg";
+        String contentType = switch (extension) {
+            case ".mp4"  -> "video/mp4";
+            case ".mov"  -> "video/quicktime";
+            case ".png"  -> "image/png";
+            case ".webp" -> "image/webp";
+            default      -> "image/jpeg";
+        };
         String fileName = "social-" + UUID.randomUUID() + extension;
 
         var provider = storageRouter.getProvider(tenantId);
         var stored = provider.upload(
             new java.io.ByteArrayInputStream(imageBytes),
             fileName,
-            "image/jpeg"
+            contentType
         );
 
         String signedUrl = provider.getSignedUrl(stored.fileId(), Duration.ofHours(24));

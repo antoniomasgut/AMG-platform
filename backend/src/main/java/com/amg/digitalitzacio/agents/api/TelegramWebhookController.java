@@ -320,6 +320,14 @@ public class TelegramWebhookController {
                     text = cap.trim();
                 }
             }
+            // Detecta vídeo enviat directament (per a Reels/Stories del social publisher)
+            String videoFileId = null;
+            if (message.get("video") instanceof Map<?, ?> video) {
+                videoFileId = video.get("file_id") instanceof String vfid ? vfid : null;
+                if (text.isBlank() && message.get("caption") instanceof String cap) {
+                    text = cap.trim();
+                }
+            }
             // Nota de veu (F5): transcriure-la i tractar-la com a text
             String voiceFileId = null;
             if (message.get("voice") instanceof Map<?, ?> voice) {
@@ -509,7 +517,7 @@ public class TelegramWebhookController {
 
                 // Pas d'un flux de publicació social actiu (prioritat: continua el flux existent)
                 if (socialOrchestrator.hasDraft(chatId)) {
-                    socialOrchestrator.handleStep(chatId, text, photoFileId);
+                    socialOrchestrator.handleStep(chatId, text, photoFileId, videoFileId);
                     return ResponseEntity.ok("ok");
                 }
 

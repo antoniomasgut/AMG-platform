@@ -47,6 +47,36 @@ public class FacebookPublisherService {
         return postToFeed(pageId, "/photos", body);
     }
 
+    /**
+     * Publica un vídeo a la pàgina (Meta el descarrega de file_url i el processa asíncronament).
+     * @return ID del vídeo
+     */
+    public String publishVideo(String pageId, String accessToken, String videoUrl, String description) {
+        var body = new HashMap<String, Object>();
+        body.put("file_url",     videoUrl);
+        body.put("description",  description != null ? description : "");
+        body.put("access_token", accessToken);
+        return postToFeed(pageId, "/videos", body);
+    }
+
+    /**
+     * Publica una Story de foto: primer puja la foto sense publicar-la al feed
+     * (published=false) i després crea la story amb el photo_id.
+     */
+    public String publishPhotoStory(String pageId, String accessToken, String photoUrl) {
+        var photoBody = new HashMap<String, Object>();
+        photoBody.put("url",          photoUrl);
+        photoBody.put("published",    false);
+        photoBody.put("access_token", accessToken);
+        String photoId = postToFeed(pageId, "/photos", photoBody);
+
+        var storyBody = Map.of(
+            "photo_id",     photoId,
+            "access_token", accessToken
+        );
+        return postToFeed(pageId, "/photo_stories", storyBody);
+    }
+
     private String postToFeed(String pageId, String path, Map<String, ?> body) {
         try {
             var raw = RestClient.create().post()

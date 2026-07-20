@@ -77,9 +77,9 @@ public class SocialPublisherOrchestrator {
             + "\nEscriu les lletres separades per espai, p.ex.: <code>I F</code>");
     }
 
-    /** Processa cada pas del flux. photoFileId és no-null quan l'usuari envia una foto. */
+    /** Processa cada pas del flux. photoFileId/videoFileId són no-null quan l'usuari envia mèdia. */
     @Async
-    public void handleStep(Long chatId, String text, String photoFileId) {
+    public void handleStep(Long chatId, String text, String photoFileId, String videoFileId) {
         var draft = loadDraft(chatId);
         if (draft == null) return;
 
@@ -88,7 +88,7 @@ public class SocialPublisherOrchestrator {
         switch (step) {
             case "AWAIT_NETWORKS" -> handleNetworks(chatId, text, draft);
             case "AWAIT_TYPE"     -> handleType(chatId, text, draft);
-            case "AWAIT_MEDIA"    -> handleMedia(chatId, text, photoFileId, draft);
+            case "AWAIT_MEDIA"    -> handleMedia(chatId, text, photoFileId, videoFileId, draft);
             case "AWAIT_CAPTION"  -> handleCaption(chatId, text, draft);
             case "AWAIT_SCHEDULE" -> handleSchedule(chatId, text, draft);
             case "AWAIT_CONFIRM"  -> handleConfirm(chatId, text, draft);
@@ -128,8 +128,9 @@ public class SocialPublisherOrchestrator {
 
         telegramBotClient.sendMessage(chatId,
             "Quin tipus de contingut?\n"
-            + (ig ? "📸 <code>FOTO</code> — Foto amb caption\n" : "")
-            + (fb ? "📝 <code>TEXT</code> — Missatge de text\n   📸 <code>FOTO</code> — Foto amb caption\n" : "")
+            + (ig ? "📸 <code>FOTO</code> — Foto amb caption\n   🎬 <code>VIDEO</code> — Reel (vídeo al feed)\n   ⭕ <code>STORY</code> — Story (foto o vídeo, 24h)\n" : "")
+            + (fb ? "📝 <code>TEXT</code> — Missatge de text\n   📸 <code>FOTO</code> — Foto amb caption\n"
+                    + (!ig ? "   🎬 <code>VIDEO</code> — Vídeo a la pàgina\n   ⭕ <code>STORY</code> — Story de foto (24h)\n" : "") : "")
             + (gb ? "🗺 <code>NOTICIES</code> — Notícia\n   🎉 <code>OFERTA</code> — Oferta\n" : "")
             + (li ? "💼 <code>TEXT</code> — Publicació a LinkedIn\n" : "")
             + "\nEscriu el tipus (p.ex. <code>FOTO</code>):");
@@ -145,21 +146,41 @@ public class SocialPublisherOrchestrator {
     private void handleType(Long chatId, String text, Map<String, String> draft) {
         String t = text.toUpperCase().trim();
         String postType = switch (t) {
-            case "FOTO"     -> "PHOTO";
-            case "TEXT"     -> "TEXT";
-            case "NOTICIES" -> "WHATS_NEW";
-            case "OFERTA"   -> "OFFER";
-            case "EVENT"    -> "EVENT";
-            default         -> null;
+            case "FOTO"            -> "PHOTO";
+            case "TEXT"            -> "TEXT";
+            case "VIDEO", "REEL"   -> "REEL";
+            case "STORY", "STORIES"-> "STORY";
+            case "NOTICIES"        -> "WHATS_NEW";
+            case "OFERTA"          -> "OFFER";
+            case "EVENT"           -> "EVENT";
+            default                -> null;
         };
 
         if (postType == null) {
             telegramBotClient.sendMessage(chatId,
-                "⚠️ Opció no reconeguda. Escriu: <code>FOTO</code>, <code>TEXT</code>, <code>NOTICIES</code>, <code>OFERTA</code> o <code>EVENT</code>.");
+                "⚠️ Opció no reconeguda. Escriu: <code>FOTO</code>, <code>TEXT</code>, <code>VIDEO</code>, <code>STORY</code>, <code>NOTICIES</code>, <code>OFERTA</code> o <code>EVENT</code>.");
             return;
         }
 
+        // Vídeo i Story només van a IG/FB — avisa si també hi ha xarxes que no ho suporten
+        if (("REEL".equals(postType) || "STORY".equals(postType))
+                && ("1".equals(draft.get("gb")) || "1".equals(draft.get("li")))) {
+            telegramBotClient.sendMessage(chatId,
+                "ℹ️ Els vídeos i stories només es publiquen a Instagram/Facebook. "
+                + "Google Business i LinkedIn s'ometran per a aquest post.");
+        }
+
         draft.put("postType", postType);
+
+        // Les stories no porten text: salta directament al mèdia
+        if ("STORY".equals(postType)) {
+            draft.put("step", "AWAIT_MEDIA");
+            saveDraft(chatId, draft);
+            telegramBotClient.sendMessage(chatId,
+                "⭕ Envia la foto o el vídeo de la story directament aquí (o una URL pública):");
+            return;
+        }
+
         draft.put("step", "AWAIT_CAPTION");
         saveDraft(chatId, draft);
 
@@ -167,17 +188,36 @@ public class SocialPublisherOrchestrator {
             "✍️ Escriu el text del post o <code>IA</code> per generar-lo automàticament:");
     }
 
-    private void handleMedia(Long chatId, String text, String photoFileId, Map<String, String> draft) {
-        // Cas 1: l'usuari ha enviat una foto directament per Telegram
-        if (photoFileId != null) {
-            telegramBotClient.sendMessage(chatId, "⏳ Pujant la foto…");
+    private void handleMedia(Long chatId, String text, String photoFileId, String videoFileId,
+                             Map<String, String> draft) {
+        String postType = draft.get("postType");
+        boolean wantsVideo = "REEL".equals(postType);
+
+        // Validació: un Reel necessita vídeo; una FOTO necessita foto
+        if (wantsVideo && photoFileId != null && videoFileId == null) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ Has triat <b>VIDEO</b> però has enviat una foto. Envia un vídeo (MP4, màx 20 MB).");
+            return;
+        }
+        if ("PHOTO".equals(postType) && videoFileId != null) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ Has triat <b>FOTO</b> però has enviat un vídeo. Envia una foto, o cancel·la i tria <code>VIDEO</code>.");
+            return;
+        }
+
+        String fileId = videoFileId != null ? videoFileId : photoFileId;
+
+        // Cas 1: l'usuari ha enviat el mèdia directament per Telegram
+        if (fileId != null) {
+            telegramBotClient.sendMessage(chatId, videoFileId != null ? "⏳ Pujant el vídeo…" : "⏳ Pujant la foto…");
             try {
                 UUID tenantId = UUID.fromString(draft.get("tenantId"));
-                String url = telegramMediaUploadService.downloadAndUpload(photoFileId, tenantId);
+                String url = telegramMediaUploadService.downloadAndUpload(fileId, tenantId);
                 draft.put("mediaUrl", url);
+                draft.put("mediaKind", videoFileId != null ? "video" : "image");
             } catch (Exception e) {
                 telegramBotClient.sendMessage(chatId,
-                    "⚠️ No s'ha pogut pujar la foto: " + e.getMessage()
+                    "⚠️ No s'ha pogut pujar el mèdia: " + e.getMessage()
                     + "\nEnvia una URL o escriu <code>SENSE_FOTO</code>.");
                 return;
             }
@@ -187,10 +227,17 @@ public class SocialPublisherOrchestrator {
             if (!url.equalsIgnoreCase("SENSE_FOTO")) {
                 if (!url.startsWith("http")) {
                     telegramBotClient.sendMessage(chatId,
-                        "⚠️ Envia la foto directament o una URL vàlida (http/https), o escriu <code>SENSE_FOTO</code>.");
+                        "⚠️ Envia el mèdia directament o una URL vàlida (http/https), o escriu <code>SENSE_FOTO</code>.");
                     return;
                 }
                 draft.put("mediaUrl", url);
+                String lower = url.toLowerCase();
+                draft.put("mediaKind",
+                    lower.contains(".mp4") || lower.contains(".mov") || wantsVideo ? "video" : "image");
+            } else if (wantsVideo || "STORY".equals(postType)) {
+                telegramBotClient.sendMessage(chatId,
+                    "⚠️ Un " + ("STORY".equals(postType) ? "story" : "Reel") + " necessita mèdia obligatòriament.");
+                return;
             }
         }
 
@@ -313,19 +360,23 @@ public class SocialPublisherOrchestrator {
     }
 
     private java.util.List<String> resolveNetworks(Map<String, String> draft) {
+        // Vídeo (Reel) i Story només van a IG/FB
+        boolean mediaOnly = "REEL".equals(draft.get("postType")) || "STORY".equals(draft.get("postType"));
         var list = new java.util.ArrayList<String>();
         if ("1".equals(draft.get("ig"))) list.add("INSTAGRAM");
         if ("1".equals(draft.get("fb"))) list.add("FACEBOOK");
-        if ("1".equals(draft.get("gb"))) list.add("GOOGLE_BUSINESS");
-        if ("1".equals(draft.get("li"))) list.add("LINKEDIN");
+        if (!mediaOnly && "1".equals(draft.get("gb"))) list.add("GOOGLE_BUSINESS");
+        if (!mediaOnly && "1".equals(draft.get("li"))) list.add("LINKEDIN");
         return list;
     }
 
     private void sendPreview(Long chatId, Map<String, String> draft, String caption) {
+        boolean isVideo = "video".equals(draft.get("mediaKind"));
         String preview = "📋 <b>Resum del post:</b>\n"
             + "Xarxes: " + buildNetworkList(draft) + "\n"
             + "Tipus: " + draft.get("postType") + "\n"
-            + (draft.containsKey("mediaUrl") ? "🖼 Imatge: " + draft.get("mediaUrl") + "\n" : "")
+            + (draft.containsKey("mediaUrl")
+               ? (isVideo ? "🎬 Vídeo: " : "🖼 Imatge: ") + draft.get("mediaUrl") + "\n" : "")
             + "\n" + (caption != null ? caption : "")
             + "\n\n✅ Escriu <code>SI</code> per publicar o <code>NO</code> per cancel·lar.";
         telegramBotClient.sendMessage(chatId, preview);
@@ -345,14 +396,16 @@ public class SocialPublisherOrchestrator {
 
         draft.put("caption", caption);
 
-        boolean needsMedia = "PHOTO".equals(draft.get("postType"));
+        String pt = draft.get("postType");
+        boolean needsMedia = "PHOTO".equals(pt) || "REEL".equals(pt);
         if (needsMedia) {
             draft.put("step", "AWAIT_MEDIA");
             saveDraft(chatId, draft);
-            telegramBotClient.sendMessage(chatId,
-                "📸 Envia la foto directament aquí, o una URL pública:\n"
-                + "Exemple: <code>https://cdn.amgdl.com/fotos/foto.jpg</code>\n\n"
-                + "O escriu <code>SENSE_FOTO</code> per publicar sense imatge.");
+            telegramBotClient.sendMessage(chatId, "REEL".equals(pt)
+                ? "🎬 Envia el vídeo directament aquí (MP4, màx 20 MB), o una URL pública:"
+                : "📸 Envia la foto directament aquí, o una URL pública:\n"
+                  + "Exemple: <code>https://cdn.amgdl.com/fotos/foto.jpg</code>\n\n"
+                  + "O escriu <code>SENSE_FOTO</code> per publicar sense imatge.");
         } else {
             askWhenToPublish(chatId, draft);
         }
@@ -378,56 +431,9 @@ public class SocialPublisherOrchestrator {
      * Cridat de forma síncrona des de SocialSchedulerJob.
      */
     public void publishNow(SocialPost scheduledPost) {
-        var draft = new HashMap<String, String>();
-        draft.put("tenantId",  scheduledPost.getTenantId().toString());
-        draft.put("ig", "INSTAGRAM".equals(scheduledPost.getNetwork())      ? "1" : "0");
-        draft.put("fb", "FACEBOOK".equals(scheduledPost.getNetwork())       ? "1" : "0");
-        draft.put("gb", "GOOGLE_BUSINESS".equals(scheduledPost.getNetwork()) ? "1" : "0");
-        draft.put("li", "LINKEDIN".equals(scheduledPost.getNetwork())        ? "1" : "0");
-        draft.put("postType", scheduledPost.getPostType());
-        draft.put("caption",  scheduledPost.getCaption() != null ? scheduledPost.getCaption() : "");
-        if (scheduledPost.getMediaUrl() != null) draft.put("mediaUrl", scheduledPost.getMediaUrl());
-
-        UUID tenantId = scheduledPost.getTenantId();
-        var metaConfigOpt = metaConfigRepo.findByTenantId(tenantId);
-        String postType = scheduledPost.getPostType();
-        String caption  = scheduledPost.getCaption();
-        String mediaUrl = scheduledPost.getMediaUrl();
-        boolean ig = "1".equals(draft.get("ig"));
-        boolean fb = "1".equals(draft.get("fb"));
-        boolean gb = "1".equals(draft.get("gb"));
-        boolean li = "1".equals(draft.get("li"));
-
         try {
-            if (ig && metaConfigOpt.isPresent()) {
-                var mc = metaConfigOpt.get();
-                String token = vaultEncryption.decrypt(mc.getPageAccessTokenEncrypted());
-                instagramPublisher.publishFeedPhoto(mc.getInstagramAccountId(), token,
-                    mediaUrl != null ? mediaUrl : "", caption != null ? caption : "");
-            }
-            if (fb && metaConfigOpt.isPresent()) {
-                var mc = metaConfigOpt.get();
-                String token = vaultEncryption.decrypt(mc.getPageAccessTokenEncrypted());
-                if ("PHOTO".equals(postType) && mediaUrl != null) {
-                    facebookPublisher.publishPhoto(mc.getFacebookPageId(), token, mediaUrl, caption);
-                } else {
-                    facebookPublisher.publishText(mc.getFacebookPageId(), token, caption != null ? caption : "");
-                }
-            }
-            if (gb) {
-                var gConfig = googleConfigRepo.findById(tenantId).orElse(null);
-                String locationName = gConfig != null ? gConfig.getBusinessLocationId() : null;
-                if (locationName != null && !locationName.isBlank()) {
-                    switch (postType != null ? postType : "") {
-                        case "OFFER" -> googleBusinessPublisher.publishOffer(tenantId, locationName, caption, mediaUrl);
-                        case "EVENT" -> googleBusinessPublisher.publishEvent(tenantId, locationName, caption, caption, mediaUrl);
-                        default      -> googleBusinessPublisher.publishWhatsNew(tenantId, locationName, caption, mediaUrl);
-                    }
-                }
-            }
-            if (li) {
-                linkedInPublisher.publishText(tenantId, caption != null ? caption : "");
-            }
+            publishToNetwork(scheduledPost.getTenantId(), scheduledPost.getNetwork(),
+                scheduledPost.getPostType(), scheduledPost.getCaption(), scheduledPost.getMediaUrl());
             scheduledPost.setStatus("PUBLISHED");
             scheduledPost.setPublishedAt(Instant.now());
         } catch (Exception e) {
@@ -440,78 +446,25 @@ public class SocialPublisherOrchestrator {
 
     @Async
     public void publishAsync(UUID tenantId, Long chatId, Map<String, String> draft) {
-        boolean ig = "1".equals(draft.get("ig"));
-        boolean fb = "1".equals(draft.get("fb"));
-        boolean gb = "1".equals(draft.get("gb"));
-        boolean li = "1".equals(draft.get("li"));
         String postType  = draft.get("postType");
         String caption   = draft.get("caption");
         String mediaUrl  = draft.get("mediaUrl");
 
         var results = new StringBuilder("📊 <b>Resultats:</b>\n");
-        var metaConfigOpt = metaConfigRepo.findByTenantId(tenantId);
+        var labels = Map.of(
+            "INSTAGRAM", "Instagram", "FACEBOOK", "Facebook",
+            "GOOGLE_BUSINESS", "Google Business", "LINKEDIN", "LinkedIn");
 
-        if (ig && metaConfigOpt.isPresent()) {
+        for (String net : resolveNetworks(draft)) {
             try {
-                var mc = metaConfigOpt.get();
-                String token = vaultEncryption.decrypt(mc.getPageAccessTokenEncrypted());
-                String extId = instagramPublisher.publishFeedPhoto(mc.getInstagramAccountId(), token,
-                    mediaUrl != null ? mediaUrl : "", caption != null ? caption : "");
-                savePost(tenantId, "INSTAGRAM", postType, caption, mediaUrl, extId, null, "PUBLISHED");
-                results.append("✅ Instagram publicat\n");
+                String extId = publishToNetwork(tenantId, net, postType, caption, mediaUrl);
+                savePost(tenantId, net, postType, caption, mediaUrl, extId, null, "PUBLISHED");
+                results.append("✅ ").append(labels.get(net)).append(" publicat\n");
+            } catch (UnsupportedOperationException e) {
+                results.append("⚠️ ").append(labels.get(net)).append(": ").append(e.getMessage()).append("\n");
             } catch (Exception e) {
-                savePost(tenantId, "INSTAGRAM", postType, caption, mediaUrl, null, e.getMessage(), "FAILED");
-                results.append("❌ Instagram: ").append(e.getMessage()).append("\n");
-            }
-        }
-
-        if (fb && metaConfigOpt.isPresent()) {
-            try {
-                var mc = metaConfigOpt.get();
-                String token = vaultEncryption.decrypt(mc.getPageAccessTokenEncrypted());
-                String extId;
-                if ("PHOTO".equals(postType) && mediaUrl != null) {
-                    extId = facebookPublisher.publishPhoto(mc.getFacebookPageId(), token, mediaUrl, caption);
-                } else {
-                    extId = facebookPublisher.publishText(mc.getFacebookPageId(), token, caption != null ? caption : "");
-                }
-                savePost(tenantId, "FACEBOOK", postType, caption, mediaUrl, extId, null, "PUBLISHED");
-                results.append("✅ Facebook publicat\n");
-            } catch (Exception e) {
-                savePost(tenantId, "FACEBOOK", postType, caption, mediaUrl, null, e.getMessage(), "FAILED");
-                results.append("❌ Facebook: ").append(e.getMessage()).append("\n");
-            }
-        }
-
-        if (gb) {
-            try {
-                var gConfig = googleConfigRepo.findById(tenantId).orElse(null);
-                String locationName = gConfig != null ? gConfig.getBusinessLocationId() : null;
-                if (locationName == null || locationName.isBlank()) {
-                    results.append("⚠️ Google Business: ubicació no configurada\n");
-                } else {
-                    String extId = switch (postType) {
-                        case "OFFER"    -> googleBusinessPublisher.publishOffer(tenantId, locationName, caption, mediaUrl);
-                        case "EVENT"    -> googleBusinessPublisher.publishEvent(tenantId, locationName, caption, caption, mediaUrl);
-                        default         -> googleBusinessPublisher.publishWhatsNew(tenantId, locationName, caption, mediaUrl);
-                    };
-                    savePost(tenantId, "GOOGLE_BUSINESS", postType, caption, mediaUrl, extId, null, "PUBLISHED");
-                    results.append("✅ Google Business publicat\n");
-                }
-            } catch (Exception e) {
-                savePost(tenantId, "GOOGLE_BUSINESS", postType, caption, mediaUrl, null, e.getMessage(), "FAILED");
-                results.append("❌ Google Business: ").append(e.getMessage()).append("\n");
-            }
-        }
-
-        if (li) {
-            try {
-                String extId = linkedInPublisher.publishText(tenantId, caption != null ? caption : "");
-                savePost(tenantId, "LINKEDIN", postType, caption, mediaUrl, extId, null, "PUBLISHED");
-                results.append("✅ LinkedIn publicat\n");
-            } catch (Exception e) {
-                savePost(tenantId, "LINKEDIN", postType, caption, mediaUrl, null, e.getMessage(), "FAILED");
-                results.append("❌ LinkedIn: ").append(e.getMessage()).append("\n");
+                savePost(tenantId, net, postType, caption, mediaUrl, null, e.getMessage(), "FAILED");
+                results.append("❌ ").append(labels.get(net)).append(": ").append(e.getMessage()).append("\n");
             }
         }
 
@@ -520,6 +473,90 @@ public class SocialPublisherOrchestrator {
         } else {
             log.info("Social publish results (scheduled): {}", results);
         }
+    }
+
+    /**
+     * Publica a UNA xarxa i retorna l'ID extern.
+     * Llança UnsupportedOperationException si la combinació xarxa+tipus no està suportada
+     * (p.ex. vídeo a Google Business) — el caller ho tracta com a avís, no com a error.
+     */
+    private String publishToNetwork(UUID tenantId, String network, String postType,
+                                    String caption, String mediaUrl) {
+        String pt  = postType != null ? postType : "";
+        String cap = caption  != null ? caption  : "";
+
+        switch (network) {
+            case "INSTAGRAM" -> {
+                var mc = metaConfigRepo.findByTenantId(tenantId)
+                    .orElseThrow(() -> new IllegalStateException("Meta no configurat per a aquest tenant"));
+                String token = vaultEncryption.decrypt(mc.getPageAccessTokenEncrypted());
+                return switch (pt) {
+                    case "REEL"  -> instagramPublisher.publishReel(mc.getInstagramAccountId(), token,
+                                        requireMedia(mediaUrl), cap);
+                    case "STORY" -> instagramPublisher.publishStory(mc.getInstagramAccountId(), token,
+                                        requireMedia(mediaUrl), isVideoUrl(mediaUrl));
+                    default      -> instagramPublisher.publishFeedPhoto(mc.getInstagramAccountId(), token,
+                                        requireMedia(mediaUrl), cap);
+                };
+            }
+            case "FACEBOOK" -> {
+                var mc = metaConfigRepo.findByTenantId(tenantId)
+                    .orElseThrow(() -> new IllegalStateException("Meta no configurat per a aquest tenant"));
+                String token = vaultEncryption.decrypt(mc.getPageAccessTokenEncrypted());
+                return switch (pt) {
+                    case "REEL"  -> facebookPublisher.publishVideo(mc.getFacebookPageId(), token,
+                                        requireMedia(mediaUrl), cap);
+                    case "STORY" -> {
+                        if (isVideoUrl(mediaUrl)) {
+                            throw new UnsupportedOperationException(
+                                "les stories de vídeo a Facebook encara no estan suportades (usa una foto)");
+                        }
+                        yield facebookPublisher.publishPhotoStory(mc.getFacebookPageId(), token,
+                                  requireMedia(mediaUrl));
+                    }
+                    default      -> "PHOTO".equals(pt) && mediaUrl != null
+                                    ? facebookPublisher.publishPhoto(mc.getFacebookPageId(), token, mediaUrl, cap)
+                                    : facebookPublisher.publishText(mc.getFacebookPageId(), token, cap);
+                };
+            }
+            case "GOOGLE_BUSINESS" -> {
+                if ("REEL".equals(pt) || "STORY".equals(pt)) {
+                    throw new UnsupportedOperationException("vídeos i stories no disponibles a Google Business");
+                }
+                var gConfig = googleConfigRepo.findById(tenantId).orElse(null);
+                String locationName = gConfig != null ? gConfig.getBusinessLocationId() : null;
+                if (locationName == null || locationName.isBlank()) {
+                    throw new IllegalStateException("ubicació de Google Business no configurada");
+                }
+                return switch (pt) {
+                    case "OFFER" -> googleBusinessPublisher.publishOffer(tenantId, locationName, cap, mediaUrl);
+                    case "EVENT" -> googleBusinessPublisher.publishEvent(tenantId, locationName, cap, cap, mediaUrl);
+                    default      -> googleBusinessPublisher.publishWhatsNew(tenantId, locationName, cap, mediaUrl);
+                };
+            }
+            case "LINKEDIN" -> {
+                if ("REEL".equals(pt) || "STORY".equals(pt)) {
+                    throw new UnsupportedOperationException("vídeos i stories no disponibles a LinkedIn");
+                }
+                return linkedInPublisher.publishText(tenantId, cap);
+            }
+            default -> throw new IllegalArgumentException("Xarxa desconeguda: " + network);
+        }
+    }
+
+    private static String requireMedia(String mediaUrl) {
+        if (mediaUrl == null || mediaUrl.isBlank()) {
+            throw new IllegalStateException("aquest tipus de post necessita una foto o un vídeo");
+        }
+        return mediaUrl;
+    }
+
+    /** Detecta vídeo per l'extensió dins la part de path de la URL (les URLs signades porten query). */
+    private static boolean isVideoUrl(String url) {
+        if (url == null) return false;
+        String path = url.contains("?") ? url.substring(0, url.indexOf('?')) : url;
+        String lower = path.toLowerCase();
+        return lower.endsWith(".mp4") || lower.endsWith(".mov");
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
