@@ -30,6 +30,7 @@ public class SocialController {
     private final SocialFeatureService featureService;
     private final com.amg.digitalitzacio.social.application.LinkedInAuthService linkedInAuthService;
     private final com.amg.digitalitzacio.social.application.LinkedInPublisherService linkedInPublisher;
+    private final com.amg.digitalitzacio.social.application.SocialAnalyticsService analyticsService;
     private final com.amg.digitalitzacio.auth.domain.TenantRepository tenantRepository;
 
     /** Historial de posts per tenant */
@@ -79,15 +80,16 @@ public class SocialController {
         var config = mc.get();
         boolean tokenValid = config.getTokenExpiresAt() == null
                 || config.getTokenExpiresAt().isAfter(Instant.now());
-        return ResponseEntity.ok(Map.of(
-            "connected",             true,
-            "facebookPageId",        config.getFacebookPageId() != null ? config.getFacebookPageId() : "",
-            "instagramAccountId",    config.getInstagramAccountId() != null ? config.getInstagramAccountId() : "",
-            "pagesManagedPosts",     config.getPagesManagedPostsGranted(),
-            "igContentPublish",      config.getIgContentPublishGranted(),
-            "tokenValid",            tokenValid,
-            "tokenExpiresAt",        config.getTokenExpiresAt() != null ? config.getTokenExpiresAt().toString() : ""
-        ));
+        var result = new java.util.HashMap<String, Object>();
+        result.put("connected",             true);
+        result.put("facebookPageId",        config.getFacebookPageId() != null ? config.getFacebookPageId() : "");
+        result.put("instagramAccountId",    config.getInstagramAccountId() != null ? config.getInstagramAccountId() : "");
+        result.put("pagesManagedPosts",     config.getPagesManagedPostsGranted());
+        result.put("igContentPublish",      config.getIgContentPublishGranted());
+        result.put("tokenValid",            tokenValid);
+        result.put("tokenExpiresAt",        config.getTokenExpiresAt() != null ? config.getTokenExpiresAt().toString() : "");
+        result.put("defaultContentLanguage", config.getDefaultContentLanguage() != null ? config.getDefaultContentLanguage() : "ca");
+        return ResponseEntity.ok(result);
     }
 
     /** Desa o actualitza la config Meta del tenant (SUPER_ADMIN) */
@@ -106,8 +108,9 @@ public class SocialController {
             config.setPageAccessTokenEncrypted(vaultEncryption.encrypt(req.pageAccessToken()));
         }
         if (req.tokenExpiresAt()       != null) config.setTokenExpiresAt(req.tokenExpiresAt());
-        if (req.pagesManagedPosts()    != null) config.setPagesManagedPostsGranted(req.pagesManagedPosts());
-        if (req.igContentPublish()     != null) config.setIgContentPublishGranted(req.igContentPublish());
+        if (req.pagesManagedPosts()         != null) config.setPagesManagedPostsGranted(req.pagesManagedPosts());
+        if (req.igContentPublish()          != null) config.setIgContentPublishGranted(req.igContentPublish());
+        if (req.defaultContentLanguage()    != null) config.setDefaultContentLanguage(req.defaultContentLanguage());
         config.setUpdatedAt(Instant.now());
 
         metaConfigRepo.save(config);
@@ -146,6 +149,32 @@ public class SocialController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Sincronitza mètriques de posts publicats on-demand (P17) */
+    @PostMapping("/tenants/{tenantId}/metrics/sync")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<Void> syncMetrics(@PathVariable UUID tenantId) {
+        analyticsService.syncMetrics(tenantId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Desa l'idioma per defecte del contingut del tenant (ca/es/en/de) */
+    @PutMapping("/tenants/{tenantId}/meta/default-language")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Void> saveDefaultLanguage(
+            @PathVariable UUID tenantId,
+            @RequestBody Map<String, String> body) {
+        String lang = body.get("language");
+        if (lang == null || !java.util.Set.of("ca", "es", "en", "de").contains(lang)) {
+            return ResponseEntity.badRequest().build();
+        }
+        var config = metaConfigRepo.findByTenantId(tenantId)
+                .orElse(SocialMetaConfig.builder().tenantId(tenantId).build());
+        config.setDefaultContentLanguage(lang);
+        config.setUpdatedAt(Instant.now());
+        metaConfigRepo.save(config);
+        return ResponseEntity.noContent().build();
+    }
+
     // ─── LinkedIn (Mòdul 56 F4) — només tenant propietari AMG ──────────────────
 
     /** Genera la URL d'autorització OAuth de LinkedIn (només tenant propietari) */
@@ -178,6 +207,7 @@ public class SocialController {
         String pageAccessToken,
         Instant tokenExpiresAt,
         Boolean pagesManagedPosts,
-        Boolean igContentPublish
+        Boolean igContentPublish,
+        String defaultContentLanguage
     ) {}
 }

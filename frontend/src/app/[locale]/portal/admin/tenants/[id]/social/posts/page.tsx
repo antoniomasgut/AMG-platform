@@ -11,6 +11,7 @@ import { getTenant } from '@/services/admin';
 import {
   listSocialPosts,
   cancelSocialPost,
+  syncSocialMetrics,
   NETWORK_LABELS,
   NETWORK_ICONS,
   POST_TYPE_LABELS,
@@ -53,6 +54,15 @@ export default function SocialPostsPage() {
     onError: (e: Error) => toast('error', e.message),
   });
 
+  const syncMetrics = useMutation({
+    mutationFn: () => syncSocialMetrics(id),
+    onSuccess: () => {
+      toast('success', 'Mètriques sincronitzades');
+      qc.invalidateQueries({ queryKey: ['social-posts', id] });
+    },
+    onError: (e: Error) => toast('error', e.message),
+  });
+
   const tenantName = tenant?.name ?? id;
   const filtered = networkFilter === 'ALL'
     ? posts
@@ -70,9 +80,18 @@ export default function SocialPostsPage() {
             <h1 className="text-2xl font-bold">Historial de posts</h1>
             <p className="text-sm text-gray-500 mt-1">{tenantName}</p>
           </div>
-          <Link href={`/portal/admin/tenants/${id}/social`}>
-            <AMGButton variant="secondary">← Connexió</AMGButton>
-          </Link>
+          <div className="flex gap-2">
+            <AMGButton
+              variant="secondary"
+              onClick={() => syncMetrics.mutate()}
+              disabled={syncMetrics.isPending}
+            >
+              {syncMetrics.isPending ? 'Sincronitzant…' : '🔄 Mètriques'}
+            </AMGButton>
+            <Link href={`/portal/admin/tenants/${id}/social`}>
+              <AMGButton variant="secondary">← Connexió</AMGButton>
+            </Link>
+          </div>
         </div>
 
         {/* Filtres per xarxa */}

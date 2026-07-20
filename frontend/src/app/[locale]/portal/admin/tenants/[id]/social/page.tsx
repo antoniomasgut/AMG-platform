@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -41,12 +41,19 @@ export default function SocialConnectionPage() {
   });
 
   const [form, setForm] = useState<MetaConfigRequest>({
-    facebookPageId:     '',
-    instagramAccountId: '',
-    pageAccessToken:    '',
-    pagesManagedPosts:  true,
-    igContentPublish:   true,
+    facebookPageId:        '',
+    instagramAccountId:    '',
+    pageAccessToken:       '',
+    pagesManagedPosts:     true,
+    igContentPublish:      true,
+    defaultContentLanguage: 'ca',
   });
+
+  useEffect(() => {
+    if (metaStatus?.defaultContentLanguage) {
+      setForm(f => ({ ...f, defaultContentLanguage: metaStatus.defaultContentLanguage }));
+    }
+  }, [metaStatus?.defaultContentLanguage]);
 
   const saveMeta = useMutation({
     mutationFn: () => saveMetaConfig(id, form),
@@ -206,6 +213,23 @@ export default function SocialConnectionPage() {
               </label>
             </div>
 
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Idioma del contingut IA</label>
+              <select
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white"
+                value={form.defaultContentLanguage ?? 'ca'}
+                onChange={e => setForm(f => ({ ...f, defaultContentLanguage: e.target.value }))}
+              >
+                <option value="ca">Català (ca)</option>
+                <option value="es">Castellà (es)</option>
+                <option value="en">Anglès (en)</option>
+                <option value="de">Alemany (de)</option>
+              </select>
+              <p className="text-xs text-gray-400 mt-1">
+                L'IA generarà els captions en aquest idioma per a tots els posts d'aquest tenant.
+              </p>
+            </div>
+
             <AMGButton
               onClick={() => saveMeta.mutate()}
               disabled={saveMeta.isPending}
@@ -272,11 +296,12 @@ export default function SocialConnectionPage() {
             xat de Telegram per iniciar el flux interactiu de publicació multi-xarxa.
           </p>
           <ul className="text-sm text-amber-700 list-disc pl-5 space-y-1">
-            <li>Selecciona les xarxes (I / F / G)</li>
-            <li>Tria el tipus (FOTO / TEXT / NOTICIES / OFERTA / EVENT)</li>
-            <li>Proporciona la URL de la imatge (opcional)</li>
-            <li>Escriu el caption o demana-li a la IA</li>
-            <li>Confirma amb SI per publicar</li>
+            <li>Selecciona les xarxes (I / F / G / L)</li>
+            <li>Tria el tipus: FOTO · TEXT · NOTICIES · OFERTA · EVENT · CARRUSEL (IG) · LINK (FB) · GALERIA (GB)</li>
+            <li>Proporciona la URL de la imatge (o múltiples per carrusel)</li>
+            <li>Escriu el caption o demana-li a la IA (en l'idioma configurat)</li>
+            <li>Confirma amb SI per publicar, o indica hora per programar</li>
+            <li>Escriu <code className="bg-amber-100 px-1 rounded">/cancel</code> en qualsevol moment per abortar</li>
           </ul>
         </section>
 

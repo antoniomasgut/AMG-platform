@@ -28,6 +28,7 @@ export interface MetaStatus {
   igContentPublish?: boolean;
   tokenValid?: boolean;
   tokenExpiresAt?: string;
+  defaultContentLanguage?: string;
 }
 
 export interface MetaConfigRequest {
@@ -37,6 +38,11 @@ export interface MetaConfigRequest {
   tokenExpiresAt?: string | null;
   pagesManagedPosts?: boolean;
   igContentPublish?: boolean;
+  defaultContentLanguage?: string;
+}
+
+export async function syncSocialMetrics(tenantId: string): Promise<void> {
+  return apiFetch(`/api/v1/social/tenants/${tenantId}/metrics/sync`, { method: 'POST' });
 }
 
 // ─── LinkedIn (Mòdul 56 F4 — només tenant propietari) ────────────────────────
