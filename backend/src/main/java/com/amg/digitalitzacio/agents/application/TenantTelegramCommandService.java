@@ -113,7 +113,8 @@ public class TenantTelegramCommandService {
         if (hasSocialPublisher) {
             sb.append("<b>Xarxes socials</b>\n");
             sb.append("  /publica — nou post a Instagram, Facebook o Google Business\n");
-            sb.append("  /posts — publicacions programades (+ cancel·lar)\n\n");
+            sb.append("  /posts — publicacions programades (+ cancel·lar)\n");
+            sb.append("  /stats-social — resum d'activitat dels últims 7 dies\n\n");
         }
 
         if (!hasF1 && !hasF2 && !hasF3 && !hasF4 && !hasSocialPublisher) {

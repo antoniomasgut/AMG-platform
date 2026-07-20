@@ -414,6 +414,31 @@ class SocialPublisherOrchestratorTest {
             argThat(msg -> msg.contains("Post programat")));
     }
 
+    // ─── P35: drecera TOTS a la selecció de xarxes ───────────────────────────
+
+    @Test
+    void handleNetworksTots_seleccionaXarxesDisponibles() {
+        stubMetaConfig(); // ig + fb configurats
+        Long chatId = 250L;
+        stubFlowDraft(chatId, new java.util.HashMap<>(Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_NETWORKS",
+            "business", "El Negoci"
+        )));
+        // Google Business: no configurat (googleConfigRepo retorna Optional.empty per defecte)
+        when(googleConfigRepo.findById(TENANT_ID)).thenReturn(java.util.Optional.empty());
+        when(linkedInPublisher.isConnected(TENANT_ID)).thenReturn(false);
+
+        orchestrator().handleStep(chatId, "TOTS", null, null);
+
+        var captor = ArgumentCaptor.forClass(String.class);
+        verify(opsForValue).set(eq("social:draft:" + chatId), captor.capture(), anyLong(), any());
+        // IG i FB s'activen (configurats); GB i LI no
+        assertThat(captor.getValue()).contains("\"ig\":\"1\"").contains("\"fb\":\"1\"")
+            .contains("\"gb\":\"0\"").contains("\"li\":\"0\"")
+            .contains("AWAIT_TYPE");
+    }
+
     // ─── P34: /posts — llistar i cancel·lar publicacions programades ─────────
 
     @Test

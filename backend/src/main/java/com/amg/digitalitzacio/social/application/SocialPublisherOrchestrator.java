@@ -167,14 +167,34 @@ public class SocialPublisherOrchestrator {
 
     private void handleNetworks(Long chatId, String text, Map<String, String> draft) {
         String upper = text.toUpperCase().replace(",", " ").trim();
-        boolean ig = upper.contains("I");
-        boolean fb = upper.contains("F");
-        boolean gb = upper.contains("G");
-        boolean li = upper.contains("L");
+
+        // P35: drecera "TOTS"/"ALL"/"TOTES" → selecciona totes les xarxes disponibles
+        boolean tots = upper.contains("TOTS") || upper.contains("ALL") || upper.contains("TOTES");
+        boolean ig, fb, gb, li;
+        if (tots) {
+            UUID tid = UUID.fromString(draft.get("tenantId"));
+            var mc = metaConfigRepo.findByTenantId(tid);
+            ig = mc.isPresent() && mc.get().getInstagramAccountId() != null;
+            fb = mc.isPresent() && mc.get().getFacebookPageId() != null;
+            var gc = googleConfigRepo.findById(tid);
+            gb = gc.isPresent() && gc.get().isBusinessEnabled();
+            li = isLinkedInAvailable(tid);
+            if (!ig && !fb && !gb && !li) {
+                telegramBotClient.sendMessage(chatId,
+                    "⚠️ No tens cap xarxa configurada. Contacta l'administrador per connectar-les.");
+                return;
+            }
+        } else {
+            ig = upper.contains("I");
+            fb = upper.contains("F");
+            gb = upper.contains("G");
+            li = upper.contains("L");
+        }
 
         if (!ig && !fb && !gb && !li) {
             telegramBotClient.sendMessage(chatId,
-                "⚠️ Indica almenys una xarxa: <b>I</b> (Instagram), <b>F</b> (Facebook), <b>G</b> (Google Business).");
+                "⚠️ Indica almenys una xarxa: <b>I</b> (Instagram), <b>F</b> (Facebook), <b>G</b> (Google Business)"
+                + " o <code>TOTS</code> per seleccionar totes.");
             return;
         }
 

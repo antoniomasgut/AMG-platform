@@ -52,6 +52,7 @@ public class TelegramWebhookController {
     private final com.amg.digitalitzacio.social.application.ReviewSocialShareService reviewSocialShareService;
     private final com.amg.digitalitzacio.social.application.SocialCommentReplyService commentReplyService;
     private final com.amg.digitalitzacio.social.application.SocialDmService socialDmService;
+    private final com.amg.digitalitzacio.social.application.SocialAnalyticsService socialAnalyticsService;
 
     private static final java.util.regex.Pattern SOCIAL_TRIGGER = java.util.regex.Pattern.compile(
         "(?i)\\b(publica|publicar|post|instagram|facebook|penja|penjar|xarxes)\\b");
@@ -542,6 +543,23 @@ public class TelegramWebhookController {
                 if (photoFileId != null
                         && contentPlannerFlow.handleIncomingPhoto(chatId, tenantId, photoFileId)) {
                     return ResponseEntity.ok("ok");
+                }
+
+                // /stats-social — resum activitat social on-demand (P36)
+                if (text.equalsIgnoreCase("/stats-social") || text.equalsIgnoreCase("/resum-social")) {
+                    boolean activatedSocial = nexeServiceConfigService
+                        .get(tenantId, "SOCIAL_PUBLISHER").isPresent();
+                    if (!activatedSocial) {
+                        return ResponseEntity.ok(okTgReply(chatId,
+                            "ℹ️ El servei de publicació a xarxes socials no està activat."));
+                    }
+                    socialAnalyticsService.syncMetrics(tenantId);
+                    String digest = socialAnalyticsService.buildWeeklyDigest(tenantId);
+                    if (digest == null) {
+                        return ResponseEntity.ok(okTgReply(chatId,
+                            "📊 Encara no tens publicacions amb mètriques disponibles."));
+                    }
+                    return ResponseEntity.ok(okTgReply(chatId, digest));
                 }
 
                 // Comanda /posts — llista de publicacions programades (P34)
