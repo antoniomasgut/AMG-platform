@@ -362,4 +362,82 @@ class SocialPublisherOrchestratorTest {
         verify(telegramBotClient).sendMessage(eq(chatId),
             argThat(msg -> msg.contains("/publica")));
     }
+
+    // ─── P32: confirmació per a posts programats ──────────────────────────────
+
+    @Test
+    void handleScheduleAmbTemps_vaAConfirmPreviewSenseGuardar() {
+        Long chatId = 204L;
+        stubFlowDraft(chatId, new java.util.HashMap<>(Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_SCHEDULE",
+            "ig", "1",
+            "postType", "PHOTO",
+            "caption", "El meu post",
+            "mediaUrl", PHOTO_URL
+        )));
+
+        orchestrator().handleStep(chatId, "demà a les 09:30", null, null);
+
+        // no ha de guardar res a la BD encara
+        verify(postRepository, never()).save(any());
+        // ha de desar el draft amb AWAIT_CONFIRM i scheduledAt
+        var captor = ArgumentCaptor.forClass(String.class);
+        verify(opsForValue).set(eq("social:draft:" + chatId), captor.capture(), anyLong(), any());
+        assertThat(captor.getValue()).contains("AWAIT_CONFIRM").contains("scheduledAt");
+        // ha de mostrar el preview amb la data
+        verify(telegramBotClient).sendMessage(eq(chatId),
+            argThat(msg -> msg.contains("Resum del post") && msg.contains("REGENERAR")));
+    }
+
+    @Test
+    void handleConfirmSiAmbScheduledAt_guardaComScheduled() {
+        Long chatId = 205L;
+        String futureAt = java.time.Instant.now().plus(java.time.Duration.ofHours(2)).toString();
+        stubFlowDraft(chatId, new java.util.HashMap<>(Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_CONFIRM",
+            "ig", "1",
+            "postType", "PHOTO",
+            "caption", "El meu post",
+            "mediaUrl", PHOTO_URL,
+            "scheduledAt", futureAt
+        )));
+        stubMetaConfig();
+
+        orchestrator().handleStep(chatId, "SI", null, null);
+
+        verify(postRepository).save(argThat(p ->
+            "SCHEDULED".equals(p.getStatus()) && p.getScheduledAt() != null));
+        verify(telegramBotClient).sendMessage(eq(chatId),
+            argThat(msg -> msg.contains("Post programat")));
+    }
+
+    // ─── P33: REGENERAR caption IA a la confirmació ───────────────────────────
+
+    @Test
+    void handleConfirmRegenerar_regeneraCaptionSenseCancellar() {
+        Long chatId = 206L;
+        stubFlowDraft(chatId, new java.util.HashMap<>(Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_CONFIRM",
+            "ig", "1",
+            "postType", "TEXT",
+            "caption", "Caption original",
+            "business", "El Restaurant",
+            "sector", "RESTAURACIO"
+        )));
+        when(metaConfigRepo.findByTenantId(TENANT_ID)).thenReturn(java.util.Optional.empty());
+        when(contentGenerator.generateCaption(any(), any(), any())).thenReturn("Nou caption IA");
+
+        orchestrator().handleStep(chatId, "REGENERAR", null, null);
+
+        verify(contentGenerator).generateCaption(any(), any(), any());
+        verify(redis, never()).delete(any(String.class));
+        verify(postRepository, never()).save(any());
+        var captor = ArgumentCaptor.forClass(String.class);
+        verify(opsForValue, atLeastOnce()).set(eq("social:draft:" + chatId),
+            captor.capture(), anyLong(), any());
+        assertThat(captor.getValue()).contains("Nou caption IA");
+    }
 }

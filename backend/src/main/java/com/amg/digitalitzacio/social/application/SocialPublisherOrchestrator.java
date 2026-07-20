@@ -514,28 +514,11 @@ public class SocialPublisherOrchestrator {
                 + "Programa-la per a avui o demà per garantir que arribi als seguidors.");
         }
 
-        redis.delete(KEY_PREFIX + chatId);
-        UUID tenantId = UUID.fromString(draft.get("tenantId"));
-        String resolvedMedia = resolveMediaUrl(draft);
-        for (String net : resolveNetworks(draft)) {
-            postRepository.save(SocialPost.builder()
-                .tenantId(tenantId)
-                .network(net)
-                .postType(draft.get("postType"))
-                .caption(draft.get("caption"))
-                .mediaUrl(resolvedMedia)
-                .status("SCHEDULED")
-                .scheduledAt(scheduledAt)
-                .build());
-        }
-
-        String formatted = java.time.format.DateTimeFormatter
-            .ofPattern("dd/MM/yyyy HH:mm")
-            .withZone(ZONE_ES)
-            .format(scheduledAt);
-        telegramBotClient.sendMessage(chatId,
-            "✅ Post programat per al <b>" + formatted + "</b>.\n"
-            + "Pots veure'l i cancel·lar-lo des del portal.");
+        // P32: mostrar preview i demanar confirmació abans de programar (igual que ARA)
+        draft.put("scheduledAt", scheduledAt.toString());
+        draft.put("step", "AWAIT_CONFIRM");
+        saveDraft(chatId, draft);
+        sendPreview(chatId, draft, draft.get("caption"));
     }
 
     /** Parseja expressions de data/hora en català i format numèric. */
@@ -646,7 +629,17 @@ public class SocialPublisherOrchestrator {
         }
 
         if (caption != null && !caption.isBlank()) sb.append("\n").append(caption);
-        sb.append("\n\n✅ <code>SI</code> — publicar · ✏️ <code>EDITAR</code> — canviar el text · ❌ <code>NO</code> — cancel·lar");
+
+        // P32: si hi ha data programada, mostrar-la al resum
+        if (draft.containsKey("scheduledAt")) {
+            try {
+                Instant schAt = Instant.parse(draft.get("scheduledAt"));
+                String formatted = java.time.format.DateTimeFormatter
+                    .ofPattern("dd/MM/yyyy HH:mm").withZone(ZONE_ES).format(schAt);
+                sb.append("\n\n⏰ Programat per al: <b>").append(formatted).append("</b>");
+            } catch (Exception ignored) {}
+        }
+        sb.append("\n\n✅ <code>SI</code> — confirmar · ✏️ <code>EDITAR</code> — canviar el text · 🔄 <code>REGENERAR</code> — nova versió IA · ❌ <code>NO</code> — cancel·lar");
         telegramBotClient.sendMessage(chatId, sb.toString());
     }
 
@@ -725,6 +718,28 @@ public class SocialPublisherOrchestrator {
             return;
         }
 
+        // P33: regenerar caption IA sense cancel·lar el flux
+        if (normalized.matches("regenerar|regenera|regenerate")) {
+            UUID tenantId = UUID.fromString(draft.get("tenantId"));
+            String business = draft.getOrDefault("business", "el negoci");
+            String sector = draft.getOrDefault("sector", "general");
+            String postType = draft.getOrDefault("postType", "PHOTO");
+            boolean ig = "1".equals(draft.get("ig"));
+            String network = ig ? "INSTAGRAM" : ("1".equals(draft.get("fb")) ? "FACEBOOK" : "GOOGLE_BUSINESS");
+            String lang = metaConfigRepo.findByTenantId(tenantId)
+                    .map(mc -> mc.getDefaultContentLanguage()).filter(l -> l != null && !l.isBlank())
+                    .orElse(null);
+            String brief = "Publicació de tipus " + postType + " per a " + business
+                + " (sector: " + sector + ")"
+                + (lang != null ? ". Idioma del caption: " + lang + "." : "");
+            telegramBotClient.sendMessage(chatId, "🤖 Generant un nou caption…");
+            String newCaption = contentGenerator.generateCaption(network, business + " — " + sector, brief);
+            draft.put("caption", newCaption);
+            saveDraft(chatId, draft);
+            sendPreview(chatId, draft, newCaption);
+            return;
+        }
+
         redis.delete(KEY_PREFIX + chatId);
 
         if (!normalized.matches("si|yes|✅|👍|publicar|confirmar")) {
@@ -733,8 +748,37 @@ public class SocialPublisherOrchestrator {
         }
 
         UUID tenantId = UUID.fromString(draft.get("tenantId"));
-        telegramBotClient.sendMessage(chatId, "⏳ Publicant a les xarxes seleccionades…");
 
+        // P32: si hi ha data programada, guardar com a SCHEDULED en lloc de publicar ara
+        if (draft.containsKey("scheduledAt")) {
+            try {
+                Instant scheduledAt = Instant.parse(draft.get("scheduledAt"));
+                String resolvedMedia = resolveMediaUrl(draft);
+                for (String net : resolveNetworks(draft)) {
+                    postRepository.save(SocialPost.builder()
+                        .tenantId(tenantId)
+                        .network(net)
+                        .postType(draft.get("postType"))
+                        .caption(draft.get("caption"))
+                        .mediaUrl(resolvedMedia)
+                        .status("SCHEDULED")
+                        .scheduledAt(scheduledAt)
+                        .build());
+                }
+                String formatted = java.time.format.DateTimeFormatter
+                    .ofPattern("dd/MM/yyyy HH:mm").withZone(ZONE_ES).format(scheduledAt);
+                telegramBotClient.sendMessage(chatId,
+                    "✅ Post programat per al <b>" + formatted + "</b>.\n"
+                    + "Pots veure'l i cancel·lar-lo des del portal.");
+            } catch (Exception e) {
+                log.error("Error programant post per al tenant {}: {}", tenantId, e.getMessage());
+                telegramBotClient.sendMessage(chatId,
+                    "⚠️ Error desant el post programat: " + e.getMessage());
+            }
+            return;
+        }
+
+        telegramBotClient.sendMessage(chatId, "⏳ Publicant a les xarxes seleccionades…");
         publishAsync(tenantId, chatId, draft);
     }
 
