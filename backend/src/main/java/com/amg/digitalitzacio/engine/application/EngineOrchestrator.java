@@ -39,6 +39,7 @@ public class EngineOrchestrator implements EngineService {
     private String apiBaseUrl;
 
     private final LandingRepository landingRepository;
+    private final LandingVisitDailyRepository visitDailyRepository;
     private final LandingVersionRepository landingVersionRepository;
     private final ContactLeadRepository contactLeadRepository;
     private final LeadRepository leadRepository;
@@ -335,6 +336,11 @@ public class EngineOrchestrator implements EngineService {
     @Override
     @Transactional(readOnly = true)
     public String renderLanding(String slug, String host, String locale) {
+        return renderLanding(slug, host, locale, null);
+    }
+
+    @Override
+    public String renderLanding(String slug, String host, String locale, String utmSource) {
         var landing = landingRepository.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Landing not found: " + slug));
 
@@ -359,7 +365,31 @@ public class EngineOrchestrator implements EngineService {
         landing.setViewCount(landing.getViewCount() + 1);
         landingRepository.save(landing);
 
+        // Atribució per font (agregat diari, sense PII). Best-effort: mai bloqueja el render.
+        try {
+            visitDailyRepository.incrementVisit(landing.getId(),
+                java.time.LocalDate.now(java.time.ZoneId.of("Europe/Madrid")),
+                normalizeTrafficSource(utmSource));
+        } catch (Exception e) {
+            log.debug("No s'ha pogut registrar la visita per font de {}: {}", slug, e.getMessage());
+        }
+
         return buildHtmlPage(landing, version);
+    }
+
+    /** Normalitza utm_source a un conjunt tancat de fonts (evita cardinalitat il·limitada a BD). */
+    private static String normalizeTrafficSource(String utmSource) {
+        if (utmSource == null || utmSource.isBlank()) return "direct";
+        return switch (utmSource.toLowerCase().trim()) {
+            case "instagram", "ig"          -> "instagram";
+            case "facebook", "fb"           -> "facebook";
+            case "google_business", "gmb",
+                 "google"                   -> "google_business";
+            case "linkedin", "li"           -> "linkedin";
+            case "whatsapp", "wa"           -> "whatsapp";
+            case "email", "newsletter"      -> "email";
+            default                         -> "other";
+        };
     }
 
     @Override

@@ -23,6 +23,11 @@ public interface EngineService {
     DomainConfigResponse updateDomainStatus(UUID landingId, UpdateDomainStatusRequest request);
     void removeDomain(UUID landingId);
     String renderLanding(String slug, String host, String locale);
+
+    /** Variant amb utm_source per a atribució de trànsit (P2 social). */
+    default String renderLanding(String slug, String host, String locale, String utmSource) {
+        return renderLanding(slug, host, locale);
+    }
     String renderSitemap(String slug);
     ContactResponse submitContact(String slug, ContactRequest request);
     LandingStatsResponse getLandingStats(UUID tenantId, UUID landingId);

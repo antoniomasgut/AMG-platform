@@ -59,7 +59,8 @@ public class PublicSiteController {
     @GetMapping(PREFIX + "/**")
     public ResponseEntity<?> serve(HttpServletRequest request,
                                    @RequestHeader(value = "Host", required = false) String host,
-                                   @RequestParam(value = "lang", required = false) String lang) {
+                                   @RequestParam(value = "lang", required = false) String lang,
+                                   @RequestParam(value = "utm_source", required = false) String utmSource) {
         if (host == null || host.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
@@ -75,7 +76,7 @@ public class PublicSiteController {
                 String locale = (lang != null && !lang.isBlank()) ? lang : "ca";
                 return ResponseEntity.ok()
                         .contentType(MediaType.TEXT_HTML)
-                        .body(engineService.renderLanding(subdomain, hostname, locale));
+                        .body(engineService.renderLanding(subdomain, hostname, locale, utmSource));
             }
         }
 

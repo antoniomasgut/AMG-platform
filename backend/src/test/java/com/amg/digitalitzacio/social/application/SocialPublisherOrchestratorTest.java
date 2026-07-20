@@ -189,4 +189,17 @@ class SocialPublisherOrchestratorTest {
         verify(facebookPublisher).publishText("fb-page-1", "token", "caption");
         assertThat(p.getStatus()).isEqualTo("PUBLISHED");
     }
+
+    @Test
+    void captionAmbLinkRepUtmDeLaXarxa() {
+        stubMetaConfig();
+        when(facebookPublisher.publishText(any(), any(), any())).thenReturn("ext-8");
+
+        var p = post("FACEBOOK", "TEXT", null);
+        p.setCaption("Reserva a https://canarebecca.webs.amgdl.com ara");
+        orchestrator().publishNow(p);
+
+        verify(facebookPublisher).publishText(eq("fb-page-1"), eq("token"),
+            eq("Reserva a https://canarebecca.webs.amgdl.com?utm_source=facebook&utm_medium=social&utm_campaign=amg_social ara"));
+    }
 }

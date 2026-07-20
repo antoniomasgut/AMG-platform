@@ -483,7 +483,8 @@ public class SocialPublisherOrchestrator {
     private String publishToNetwork(UUID tenantId, String network, String postType,
                                     String caption, String mediaUrl) {
         String pt  = postType != null ? postType : "";
-        String cap = caption  != null ? caption  : "";
+        // UTM per atribució: cada xarxa marca els seus enllaços amb el seu utm_source
+        String cap = UtmTagger.tag(caption != null ? caption : "", network);
 
         switch (network) {
             case "INSTAGRAM" -> {

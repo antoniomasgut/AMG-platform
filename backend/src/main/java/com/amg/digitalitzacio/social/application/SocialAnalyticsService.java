@@ -1,5 +1,8 @@
 package com.amg.digitalitzacio.social.application;
 
+import com.amg.digitalitzacio.engine.domain.LandingVisitDailyRepository;
+import com.amg.digitalitzacio.leads.domain.LeadRepository;
+import com.amg.digitalitzacio.leads.domain.LeadSource;
 import com.amg.digitalitzacio.social.domain.SocialMetaConfigRepository;
 import com.amg.digitalitzacio.social.domain.SocialPost;
 import com.amg.digitalitzacio.social.domain.SocialPostRepository;
@@ -33,6 +36,8 @@ public class SocialAnalyticsService {
     private final SocialMetaConfigRepository metaConfigRepo;
     private final VaultEncryption vaultEncryption;
     private final ObjectMapper objectMapper;
+    private final LandingVisitDailyRepository visitDailyRepository;
+    private final LeadRepository leadRepository;
 
     /** Sincronitza les mètriques dels posts publicats del tenant en els últims 30 dies */
     public void syncMetrics(UUID tenantId) {
@@ -153,7 +158,46 @@ public class SocialAnalyticsService {
             String c = top.getCaption().length() > 80 ? top.getCaption().substring(0, 77) + "…" : top.getCaption();
             sb.append("\n🏆 Post destacat: \"").append(escapeHtml(c)).append("\"");
         }
+        appendTrafficSection(sb, tenantId, since);
         return sb.toString();
+    }
+
+    /**
+     * Trànsit i leads atribuïts a xarxes (P2): visites de landing per utm_source
+     * i leads captats des de cada xarxa en els últims 7 dies. Best-effort.
+     */
+    private void appendTrafficSection(StringBuilder sb, UUID tenantId, Instant since) {
+        try {
+            var sinceDate = java.time.LocalDate.ofInstant(since, java.time.ZoneId.of("Europe/Madrid"));
+            var bySource = visitDailyRepository.sumByTenantSince(tenantId, sinceDate);
+            var socialVisits = bySource.stream()
+                    .filter(v -> !"direct".equals(v.getSource()) && !"other".equals(v.getSource()))
+                    .toList();
+
+            long igLeads = leadRepository.countByTenantIdAndSourceSince(tenantId, LeadSource.INSTAGRAM, since);
+            long fbLeads = leadRepository.countByTenantIdAndSourceSince(tenantId, LeadSource.FACEBOOK, since);
+
+            if (socialVisits.isEmpty() && igLeads == 0 && fbLeads == 0) return;
+
+            sb.append("\n\n🔗 <b>Trànsit des de xarxes → web</b>\n");
+            var labels = java.util.Map.of(
+                "instagram", "Instagram", "facebook", "Facebook",
+                "google_business", "Google Business", "linkedin", "LinkedIn",
+                "whatsapp", "WhatsApp", "email", "Email");
+            for (var v : socialVisits) {
+                sb.append("• ").append(labels.getOrDefault(v.getSource(), v.getSource()))
+                  .append(": <b>").append(v.getViews()).append("</b> visites\n");
+            }
+            long totalLeads = igLeads + fbLeads;
+            if (totalLeads > 0) {
+                sb.append("🎯 Contactes nous des de xarxes: <b>").append(totalLeads).append("</b>");
+                if (igLeads > 0 && fbLeads > 0) {
+                    sb.append(" (IG ").append(igLeads).append(" · FB ").append(fbLeads).append(")");
+                }
+            }
+        } catch (Exception e) {
+            log.debug("No s'ha pogut afegir la secció de trànsit al digest de {}: {}", tenantId, e.getMessage());
+        }
     }
 
     private String escapeHtml(String s) {

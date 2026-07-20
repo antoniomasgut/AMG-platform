@@ -26,8 +26,9 @@ public class LandingPublicController {
 
     @GetMapping(value = "/", produces = MediaType.TEXT_HTML_VALUE)
     public String root(@RequestHeader(value = "Host", required = false) String host,
-                       @RequestParam(defaultValue = "ca") String lang) {
-        return engineService.renderLanding(extractSlug(host), host, lang);
+                       @RequestParam(defaultValue = "ca") String lang,
+                       @RequestParam(value = "utm_source", required = false) String utmSource) {
+        return engineService.renderLanding(extractSlug(host), host, lang, utmSource);
     }
 
     @GetMapping(value = "/sitemap.xml", produces = MediaType.APPLICATION_XML_VALUE)

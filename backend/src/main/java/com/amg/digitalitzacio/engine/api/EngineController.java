@@ -165,8 +165,9 @@ public class EngineController {
     public String renderLanding(@PathVariable String slug,
                                 @RequestHeader(value = "Host", required = false) String host,
                                 @RequestParam(required = false) String lang,
+                                @RequestParam(value = "utm_source", required = false) String utmSource,
                                 @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage) {
-        return engineService.renderLanding(slug, host, resolveLocale(lang, acceptLanguage));
+        return engineService.renderLanding(slug, host, resolveLocale(lang, acceptLanguage), utmSource);
     }
 
     // --- Auto-translate ---
