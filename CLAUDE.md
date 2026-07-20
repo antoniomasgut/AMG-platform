@@ -186,6 +186,12 @@ Quan treballis dins un kit, llegeix primer el seu `CLAUDE.md` local — substitu
 | 51 | Agency Multichannel Contact (Widget IA + WhatsApp Business per a la landing d'AMG) | 🔧 Parcial (widget+WA personal actius; WABA pendent config) | specs/51-agency-multichannel-contact.md |
 | 52 | Social Publisher (publicació multi-xarxa via Telegram + IA) | ✅ Completat | specs/52-social-publisher.md |
 | 53 | F3 Cobrament Online (Stripe del tenant a l'acceptació de documents) | ✅ Completat | specs/53-f3-cobrament-online.md |
+| 54 | Google Reviews → Telegram (notificació + resposta) | ✅ Completat (pendent re-auth scope business.manage) | specs/54-google-review-telegram.md |
+| 55 | Social Engagement & Analytics (toggles, IA, comentaris FB) | ✅ Completat (pendent subscripció Meta feed) | specs/55-social-engagement.md |
+| 56 | Social Capabilities (respostes IA, DMs→Inbox, LinkedIn AMG) | ✅ Completat (pendent App Review DMs + producte LinkedIn) | specs/56-social-capabilities.md |
+| 57 | Social Quick Wins (festius→Google, ressenya negativa, social proof) | ✅ Completat | specs/57-social-quick-wins.md |
+| 58 | Content Planner & Brief Automation (planning mensual via Telegram) | ✅ Completat | specs/58-content-planner.md |
+| 59 | Inbound Assist (esborrany IA + aprovació humana per tenant) | ✅ Completat (WhatsApp dorment fins WABA) | specs/59-agency-inbound-assist.md |
 
 ---
 
@@ -240,24 +246,14 @@ Cada fase té un cost de **setup individual** (varia per `businessSize`: AUTONOM
 
 ---
 
-## Notes de producció (taules creades manualment)
+## Notes de producció (esquema de BD)
 
-Hibernate a producció usa `ddl-auto: validate` — les taules noves **cal crear-les manualment** a la BD de producció (`ssh root@65.108.148.62 'docker exec amg-postgres psql -U amg -d amg -c "..."'`):
+**Des del 2026-07-20 les migracions Flyway són l'única font de veritat de l'esquema.** Verificat: una BD buida + Flyway + `ddl-auto: validate` arrenca neta sense flags (sanejament al commit `e447eb6`: V23 idempotent, V98 catchup de `prospects.score`/`reviews_json`, V99 catchup de la CHECK de `block_type`).
 
-| Taula | Creat | SQL resumit |
-|-------|-------|-------------|
-| `whatsapp_waba_configs` | 2026-05-24 | Entitat Mòdul 27 |
-| `sector_phases` | 2026-05-26 | Catàleg de fases per sector (105 files via SQL) |
-| `nexe_service_configs` | 2026-05-28 | `(tenant_id UUID, service_key VARCHAR(30), config_json TEXT, updated_at TIMESTAMPTZ, PK(tenant_id, service_key))` |
-| `websites` | V23 | `(id UUID PK, tenant_id UUID, type VARCHAR(20), status VARCHAR(20), domain VARCHAR(255), container_name VARCHAR(100), storage_bytes BIGINT, review_notes TEXT, reviewed_by UUID, reviewed_at TIMESTAMPTZ, deployed_at TIMESTAMPTZ, created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ)` |
-| `storage_provider_configs` | V21 | `(tenant_id UUID, provider_key VARCHAR(30), config_json TEXT, is_active BOOLEAN, updated_at TIMESTAMPTZ, PK(tenant_id, provider_key))` |
-| `google_connections` | V22 | `(id UUID PK, tenant_id UUID, google_account_email VARCHAR, google_user_id VARCHAR, encrypted_access_token TEXT, encrypted_refresh_token TEXT, token_expires_at TIMESTAMPTZ, is_active BOOLEAN)` |
-| `google_module_configs` | V22 | `(tenant_id UUID PK, drive_enabled BOOLEAN, gmail_enabled BOOLEAN, calendar_enabled BOOLEAN, sheets_enabled BOOLEAN, drive_folder_id VARCHAR)` |
-| `oauth_states` | V22 | `(id UUID PK, tenant_id UUID, state_token VARCHAR(64) UNIQUE, redirect_uri VARCHAR(500), requested_scopes TEXT, expires_at TIMESTAMPTZ)` |
-| `stripe_configs` (ALTER) | V44 Flyway | `ADD COLUMN stripe_customer_id, stripe_payment_method_id, pm_last_four, pm_brand, pm_exp_month, pm_exp_year` |
-| `model_pricing` | V49 Flyway | `(model_name VARCHAR(100) PK, provider VARCHAR(50), input_cost_micros BIGINT, output_cost_micros BIGINT, markup_percent INTEGER DEFAULT 20, client_input_micros BIGINT, client_output_micros BIGINT, updated_at TIMESTAMPTZ)` |
-| `booking_tokens` (ALTER) | V66 Flyway | `lead_id` nullable + `ADD COLUMN source_document_id UUID, recipient_phone VARCHAR(30), recipient_name VARCHAR(255), booking_label VARCHAR(100)` |
-| `tenant_document_preferences` (ALTER) | V66 Flyway | `ADD COLUMN auto_booking_on_accept BOOLEAN NOT NULL DEFAULT true` |
+Regles:
+- **MAI crear taules o columnes a mà a producció** — sempre una migració `V{n}__nom.sql`, que s'aplica sola al deploy.
+- Quan s'afegeix un valor a un enum `@Enumerated(STRING)` amb CHECK constraint a BD, **cal una migració que ampliï la CHECK** (bugs històrics: `scaling_recommendations` V93, `template_sections.block_type` V99).
+- Les taules antigues creades a mà (`whatsapp_waba_configs`, `sector_phases`, `nexe_service_configs`...) ja estan cobertes per migracions (V1 baseline, V7/V8 catchup).
 
 **NexeLocal Service Configs** (`nexe_service_configs`):
 - Service keys: `AGENDA`, `PRESSUPOSTOS`, `FIDELITZACIO`, `EQUIP`

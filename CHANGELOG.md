@@ -4,6 +4,21 @@ Registre de millores aplicades al codi que poden requerir actualització de les 
 
 ---
 
+## 2026-07-20 — Sanejament de migracions + landing Ca na Rebecca
+
+### Infra / BD (Mòdul 11)
+- Migracions Flyway replicables des de zero: BD buida + `flyway migrate` + `ddl-auto: validate` arrenca sense flags (V23 idempotent, V98/V99 catchup de deriva). Checksum V23 realineat a producció.
+- Política nova: mai més taules a mà a producció — tot per migració (vegeu CLAUDE.md § Notes de producció).
+
+### Engine (Mòdul 04)
+- Nou renderer `renderStats` per al bloc `stats` (existia al frontend però es renderitzava buit).
+- Blocs `carousel` amb indicadors configurables i `shape dividers` entre seccions (sessió anterior, desplegats ara).
+
+### Client pilot
+- Ca na Rebecca (MARE_DE_DIA): tenant + landing publicada (canarebecca.webs.amgdl.com) + pressupost BUD-2026-0013 en esborrany.
+
+---
+
 ## 2026-06-09 — Revisió i millora del portal (sessió de QA)
 
 ### CI/CD (fora d'spec)
