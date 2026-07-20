@@ -48,6 +48,12 @@ public class SocialCommentService {
         // Evita notificar les respostes de la mateixa pàgina
         if (fromId != null && fromId.equals(pageId)) return;
 
+        // Triatge (P4): emojis sols, reaccions curtes i spam no molesten el tenant
+        if (!CommentTriage.worthNotifying(message)) {
+            log.debug("Comentari {} filtrat pel triatge (soroll/spam)", commentId);
+            return;
+        }
+
         var tenantId = meta.getTenantId();
         if (!featureService.get(tenantId).commentsToTelegram()) return;
 
