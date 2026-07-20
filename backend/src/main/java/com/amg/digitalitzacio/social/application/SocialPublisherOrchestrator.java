@@ -506,6 +506,14 @@ public class SocialPublisherOrchestrator {
             return;
         }
 
+        // P31: avís si es programa una Story per a més de 24h (les stories expiren en 24h)
+        String postType = draft.get("postType");
+        if ("STORY".equals(postType) && scheduledAt.isAfter(Instant.now().plus(java.time.Duration.ofHours(23)))) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ Les stories expiren a les 24 hores de publicar-se. "
+                + "Programa-la per a avui o demà per garantir que arribi als seguidors.");
+        }
+
         redis.delete(KEY_PREFIX + chatId);
         UUID tenantId = UUID.fromString(draft.get("tenantId"));
         String resolvedMedia = resolveMediaUrl(draft);
