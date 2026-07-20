@@ -1051,6 +1051,61 @@ public class SocialPublisherOrchestrator {
         }
     }
 
+    /**
+     * P34: envia la llista dels pròxims posts programats per al tenant.
+     * Cada post inclou un botó de cancel·lació inline (màxim 5).
+     */
+    public void sendUpcomingPosts(UUID tenantId, Long chatId) {
+        var upcoming = postRepository.findUpcomingScheduled(tenantId, Instant.now());
+        if (upcoming.isEmpty()) {
+            telegramBotClient.sendMessage(chatId, "📭 No tens cap publicació programada.");
+            return;
+        }
+        int shown = Math.min(upcoming.size(), 5);
+        var sb = new StringBuilder("📅 <b>Publicacions programades</b>");
+        if (upcoming.size() > 5) sb.append(" (mostrant les primeres 5 de ").append(upcoming.size()).append(")");
+        sb.append("\n\n");
+        var fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(ZONE_ES);
+        for (int i = 0; i < shown; i++) {
+            var p = upcoming.get(i);
+            String label = NETWORK_LABEL.getOrDefault(p.getNetwork(), p.getNetwork());
+            String when = fmt.format(p.getScheduledAt());
+            String caption = p.getCaption() != null && !p.getCaption().isBlank()
+                ? (p.getCaption().length() > 40 ? p.getCaption().substring(0, 37) + "…" : p.getCaption())
+                : "(sense text)";
+            sb.append(i + 1).append(". ").append(label).append(" · ").append(when)
+              .append(" · \"").append(caption).append("\"\n")
+              .append("   <code>CANCEL·LAR#").append(i + 1).append("</code>\n\n");
+        }
+        telegramBotClient.sendMessage(chatId,
+            sb.append("Escriu <code>CANCEL·LAR#N</code> per cancel·lar una publicació.").toString());
+    }
+
+    private static final java.util.Map<String, String> NETWORK_LABEL = java.util.Map.of(
+        "INSTAGRAM", "Instagram", "FACEBOOK", "Facebook",
+        "GOOGLE_BUSINESS", "Google Business", "LINKEDIN", "LinkedIn");
+
+    /**
+     * P34: cancel·la el post programat N-èsim (1-indexed) de la llista upcoming.
+     * Verifica que pertany al tenant per seguretat.
+     */
+    public void cancelUpcomingPost(UUID tenantId, Long chatId, int ordinal) {
+        var upcoming = postRepository.findUpcomingScheduled(tenantId, Instant.now());
+        if (ordinal < 1 || ordinal > upcoming.size()) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ No existeix el post #" + ordinal + ". Escriu <code>/posts</code> per veure la llista actualitzada.");
+            return;
+        }
+        var post = upcoming.get(ordinal - 1);
+        post.setStatus("CANCELLED");
+        postRepository.save(post);
+        var fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(ZONE_ES);
+        telegramBotClient.sendMessage(chatId,
+            "✅ Publicació cancel·lada.\n"
+            + "Era: " + NETWORK_LABEL.getOrDefault(post.getNetwork(), post.getNetwork())
+            + " · " + fmt.format(post.getScheduledAt()));
+    }
+
     /** Reprograma un post FAILED per tornar a intentar en 30 segons (P28). */
     public void requeuePost(java.util.UUID postId) {
         postRepository.findById(postId).ifPresent(post -> {

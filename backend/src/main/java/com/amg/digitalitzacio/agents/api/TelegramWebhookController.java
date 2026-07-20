@@ -544,6 +544,35 @@ public class TelegramWebhookController {
                     return ResponseEntity.ok("ok");
                 }
 
+                // Comanda /posts — llista de publicacions programades (P34)
+                if (text.equalsIgnoreCase("/posts") || text.equalsIgnoreCase("/publicacions")) {
+                    boolean activated = nexeServiceConfigService
+                        .get(tenantId, "SOCIAL_PUBLISHER").isPresent();
+                    if (!activated) {
+                        return ResponseEntity.ok(okTgReply(chatId,
+                            "ℹ️ El servei de publicació a xarxes socials no està activat."));
+                    }
+                    socialOrchestrator.sendUpcomingPosts(tenantId, chatId);
+                    return ResponseEntity.ok("ok");
+                }
+
+                // Cancel·lació d'un post programat: CANCEL·LAR#N (P34)
+                if (text.toUpperCase().replace("·", "").startsWith("CANCELLAR#")) {
+                    boolean activated = nexeServiceConfigService
+                        .get(tenantId, "SOCIAL_PUBLISHER").isPresent();
+                    if (activated) {
+                        try {
+                            int ordinal = Integer.parseInt(
+                                text.replaceAll("(?i)[cC][aA][nN][cC][eE][lL·]+[aA][rR]#", "").trim());
+                            socialOrchestrator.cancelUpcomingPost(tenantId, chatId, ordinal);
+                        } catch (NumberFormatException e) {
+                            telegramBotClient.sendMessage(chatId,
+                                "⚠️ Format incorrecte. Exemple: <code>CANCEL·LAR#1</code>");
+                        }
+                        return ResponseEntity.ok("ok");
+                    }
+                }
+
                 // Comanda /publica o paraules clau de publicació social
                 boolean isSocialIntent = text.toLowerCase().startsWith("/publica")
                     || (!text.startsWith("/") && SOCIAL_TRIGGER.matcher(text).find());

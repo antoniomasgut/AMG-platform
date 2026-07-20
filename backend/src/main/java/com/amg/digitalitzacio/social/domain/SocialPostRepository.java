@@ -25,4 +25,9 @@ public interface SocialPostRepository extends JpaRepository<SocialPost, UUID> {
     // Si scheduledAt <= (ara - 5 min) i segueix en PUBLISHING → definitivamente encallat
     @Query("SELECT p FROM SocialPost p WHERE p.status = 'PUBLISHING' AND p.scheduledAt <= :before")
     List<SocialPost> findStuckPublishing(Instant before);
+
+    // P34: pròxims posts programats per tenant (per al /posts de Telegram)
+    @Query("SELECT p FROM SocialPost p WHERE p.tenantId = :tenantId AND p.status = 'SCHEDULED' "
+            + "AND p.scheduledAt > :after ORDER BY p.scheduledAt ASC")
+    List<SocialPost> findUpcomingScheduled(UUID tenantId, Instant after);
 }

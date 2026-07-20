@@ -19,6 +19,7 @@ import org.mockito.quality.Strictness;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -411,6 +412,56 @@ class SocialPublisherOrchestratorTest {
             "SCHEDULED".equals(p.getStatus()) && p.getScheduledAt() != null));
         verify(telegramBotClient).sendMessage(eq(chatId),
             argThat(msg -> msg.contains("Post programat")));
+    }
+
+    // ─── P34: /posts — llistar i cancel·lar publicacions programades ─────────
+
+    @Test
+    void sendUpcomingPosts_sensePostsProgramats_avisaBuits() {
+        when(postRepository.findUpcomingScheduled(eq(TENANT_ID), any())).thenReturn(List.of());
+
+        orchestrator().sendUpcomingPosts(TENANT_ID, 300L);
+
+        verify(telegramBotClient).sendMessage(eq(300L),
+            argThat(msg -> msg.contains("cap publicació programada")));
+    }
+
+    @Test
+    void sendUpcomingPosts_ambPostsProgramats_mostratLlista() {
+        var p1 = SocialPost.builder().id(UUID.randomUUID()).tenantId(TENANT_ID)
+                .network("INSTAGRAM").postType("PHOTO").caption("El meu post")
+                .status("SCHEDULED").scheduledAt(java.time.Instant.now().plusSeconds(3600)).build();
+        when(postRepository.findUpcomingScheduled(eq(TENANT_ID), any())).thenReturn(List.of(p1));
+
+        orchestrator().sendUpcomingPosts(TENANT_ID, 300L);
+
+        verify(telegramBotClient).sendMessage(eq(300L),
+            argThat(msg -> msg.contains("Instagram") && msg.contains("CANCEL·LAR#1")));
+    }
+
+    @Test
+    void cancelUpcomingPost_validOrdinal_guardaComCancelled() {
+        var p1 = SocialPost.builder().id(UUID.randomUUID()).tenantId(TENANT_ID)
+                .network("FACEBOOK").postType("TEXT").caption("Post")
+                .status("SCHEDULED").scheduledAt(java.time.Instant.now().plusSeconds(3600)).build();
+        when(postRepository.findUpcomingScheduled(eq(TENANT_ID), any())).thenReturn(List.of(p1));
+
+        orchestrator().cancelUpcomingPost(TENANT_ID, 300L, 1);
+
+        verify(postRepository).save(argThat(p -> "CANCELLED".equals(p.getStatus())));
+        verify(telegramBotClient).sendMessage(eq(300L),
+            argThat(msg -> msg.contains("cancel·lada") || msg.contains("Cancel·lada")));
+    }
+
+    @Test
+    void cancelUpcomingPost_ordinalInvalid_avisaError() {
+        when(postRepository.findUpcomingScheduled(eq(TENANT_ID), any())).thenReturn(List.of());
+
+        orchestrator().cancelUpcomingPost(TENANT_ID, 300L, 5);
+
+        verify(postRepository, never()).save(any());
+        verify(telegramBotClient).sendMessage(eq(300L),
+            argThat(msg -> msg.contains("#5")));
     }
 
     // ─── P33: REGENERAR caption IA a la confirmació ───────────────────────────

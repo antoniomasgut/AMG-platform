@@ -112,7 +112,8 @@ public class TenantTelegramCommandService {
         boolean hasSocialPublisher = nexeServiceConfigService.get(tenantId, "SOCIAL_PUBLISHER").isPresent();
         if (hasSocialPublisher) {
             sb.append("<b>Xarxes socials</b>\n");
-            sb.append("  /publica — publicar a Instagram, Facebook i Google Business\n\n");
+            sb.append("  /publica — nou post a Instagram, Facebook o Google Business\n");
+            sb.append("  /posts — publicacions programades (+ cancel·lar)\n\n");
         }
 
         if (!hasF1 && !hasF2 && !hasF3 && !hasF4 && !hasSocialPublisher) {
