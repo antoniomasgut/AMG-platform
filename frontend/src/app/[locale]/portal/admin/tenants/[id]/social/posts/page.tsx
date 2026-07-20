@@ -111,7 +111,7 @@ export default function SocialPostsPage() {
           ))}
         </div>
 
-        {/* Stats ràpids */}
+        {/* Stats ràpids per estat */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {(['PUBLISHED', 'SCHEDULED', 'FAILED', 'CANCELLED'] as const).map(status => {
             const count = posts.filter(p => p.status === status).length;
@@ -123,6 +123,34 @@ export default function SocialPostsPage() {
             );
           })}
         </div>
+
+        {/* Mètriques d'engagement agregades (P27) */}
+        {posts.some(p => p.status === 'PUBLISHED' && (p.reach != null || p.likes != null)) && (
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              {
+                icon: '👁',
+                label: 'Abast total',
+                value: posts.reduce((s, p) => s + (p.reach ?? 0), 0).toLocaleString('ca-ES'),
+              },
+              {
+                icon: '❤️',
+                label: 'Likes totals',
+                value: posts.reduce((s, p) => s + (p.likes ?? 0), 0).toLocaleString('ca-ES'),
+              },
+              {
+                icon: '💬',
+                label: 'Comentaris',
+                value: posts.reduce((s, p) => s + (p.comments ?? 0), 0).toLocaleString('ca-ES'),
+              },
+            ].map(({ icon, label, value }) => (
+              <div key={label} className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
+                <div className="text-xl font-bold text-blue-800">{icon} {value}</div>
+                <div className="text-xs text-blue-600 mt-1">{label}</div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Llista de posts */}
         {isLoading ? (
