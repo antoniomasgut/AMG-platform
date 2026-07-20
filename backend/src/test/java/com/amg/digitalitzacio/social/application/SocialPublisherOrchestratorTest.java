@@ -249,6 +249,26 @@ class SocialPublisherOrchestratorTest {
         assertThat(p.getStatus()).isEqualTo("PUBLISHED");
     }
 
+    // ─── P25: avís caption massa llarg per xarxa ─────────────────────────────
+
+    @Test
+    void captionExcessivamentLlargAInstagram_avisaAvansDeMedia() {
+        String captionLlarg = "A".repeat(2201); // > 2200 limit IG
+        Long chatId = 210L;
+        stubFlowDraft(chatId, new java.util.HashMap<>(java.util.Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_CAPTION",
+            "ig", "1",
+            "postType", "TEXT"
+        )));
+
+        orchestrator().handleStep(chatId, captionLlarg, null, null);
+
+        // Ha d'avisar del límit de caràcters
+        verify(telegramBotClient, atLeastOnce()).sendMessage(eq(chatId),
+            argThat(msg -> msg.contains("2.200") || msg.contains("2200")));
+    }
+
     // ─── P20: editar caption a AWAIT_CONFIRM ─────────────────────────────────
 
     private void stubFlowDraft(Long chatId, Map<String, String> fields) {
