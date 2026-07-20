@@ -160,6 +160,13 @@ public class SocialAnalyticsService {
             String c = top.getCaption().length() > 80 ? top.getCaption().substring(0, 77) + "…" : top.getCaption();
             sb.append("\n🏆 Post destacat: \"").append(escapeHtml(c)).append("\"");
         }
+        // Millor xarxa per nombre de posts publicats aquesta setmana (P30)
+        var byNetwork = posts.stream().collect(java.util.stream.Collectors.groupingBy(SocialPost::getNetwork,
+                java.util.stream.Collectors.counting()));
+        byNetwork.entrySet().stream()
+            .max(java.util.Map.Entry.comparingByValue())
+            .ifPresent(e -> sb.append("\n📊 Xarxa més activa: <b>").append(networkLabel(e.getKey()))
+                .append("</b> (").append(e.getValue()).append(" posts)"));
         appendTrafficSection(sb, tenantId, since);
         return sb.toString();
     }
@@ -200,6 +207,16 @@ public class SocialAnalyticsService {
         } catch (Exception e) {
             log.debug("No s'ha pogut afegir la secció de trànsit al digest de {}: {}", tenantId, e.getMessage());
         }
+    }
+
+    private static String networkLabel(String n) {
+        return switch (n) {
+            case "INSTAGRAM"       -> "Instagram";
+            case "FACEBOOK"        -> "Facebook";
+            case "GOOGLE_BUSINESS" -> "Google Business";
+            case "LINKEDIN"        -> "LinkedIn";
+            default                -> n;
+        };
     }
 
     private String escapeHtml(String s) {

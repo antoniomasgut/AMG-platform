@@ -472,6 +472,7 @@ public class SocialPublisherOrchestrator {
             + "<code>ARA</code> — publicar immediatament\n"
             + "<code>avui a les 22:00</code> — avui a l'hora indicada\n"
             + "<code>demà a les 09:30</code> — demà\n"
+            + "<code>divendres a les 18:00</code> — el proper divendres\n"
             + "<code>15/07 18:00</code> — data sense any (any actual)\n"
             + "<code>15/07/2026 18:00</code> — data amb any completa");
     }
@@ -493,6 +494,7 @@ public class SocialPublisherOrchestrator {
                 + "<code>ARA</code>\n"
                 + "<code>avui a les 22:00</code>\n"
                 + "<code>demà a les 09:30</code>\n"
+                + "<code>divendres a les 18:00</code>\n"
                 + "<code>15/07 18:00</code>\n"
                 + "<code>15/07/2026 a les 07:00</code>");
             return;
@@ -544,6 +546,9 @@ public class SocialPublisherOrchestrator {
         } else if (lower.startsWith("dem") || lower.startsWith("tomorrow")) {
             // "demà" o "dema"
             date = java.time.LocalDate.now(ZONE_ES).plusDays(1);
+        } else if (lowerContainsDayName(lower)) {
+            date = nextWeekday(lower);
+            if (date == null) return null;
         } else {
             // Prova DD/MM/YYYY primer (més específic)
             var fullMatcher = PAT_DATE_FULL.matcher(lower);
@@ -570,6 +575,34 @@ public class SocialPublisherOrchestrator {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static final java.util.Map<String, java.time.DayOfWeek> DAY_NAMES = java.util.Map.of(
+        "dilluns",   java.time.DayOfWeek.MONDAY,
+        "dimarts",   java.time.DayOfWeek.TUESDAY,
+        "dimecres",  java.time.DayOfWeek.WEDNESDAY,
+        "dijous",    java.time.DayOfWeek.THURSDAY,
+        "divendres", java.time.DayOfWeek.FRIDAY,
+        "dissabte",  java.time.DayOfWeek.SATURDAY,
+        "diumenge",  java.time.DayOfWeek.SUNDAY
+    );
+
+    private static boolean lowerContainsDayName(String lower) {
+        return DAY_NAMES.keySet().stream().anyMatch(lower::contains);
+    }
+
+    /** Retorna la data del proper dia de la setmana indicat (sempre futur, mai avui). */
+    private static java.time.LocalDate nextWeekday(String lower) {
+        return DAY_NAMES.entrySet().stream()
+            .filter(e -> lower.contains(e.getKey()))
+            .findFirst()
+            .map(e -> {
+                var today = java.time.LocalDate.now(ZONE_ES);
+                int delta = (e.getValue().getValue() - today.getDayOfWeek().getValue() + 7) % 7;
+                if (delta == 0) delta = 7; // si és avui, la setmana que ve
+                return today.plusDays(delta);
+            })
+            .orElse(null);
     }
 
     private java.util.List<String> resolveNetworks(Map<String, String> draft) {
