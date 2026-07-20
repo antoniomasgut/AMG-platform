@@ -116,15 +116,16 @@ export const NETWORK_ICONS: Record<string, string> = {
 };
 
 export const POST_TYPE_LABELS: Record<string, string> = {
-  PHOTO:     'Foto',
-  CAROUSEL:  'Carrusel',
-  TEXT:      'Text',
-  REEL:      'Vídeo / Reel',
-  STORY:     'Story',
-  LINK:      'Enllaç',
-  WHATS_NEW: 'Notícia',
-  OFFER:     'Oferta',
-  EVENT:     'Esdeveniment',
+  PHOTO:         'Foto',
+  CAROUSEL:      'Carrusel',
+  TEXT:          'Text',
+  REEL:          'Vídeo / Reel',
+  STORY:         'Story',
+  LINK:          'Enllaç',
+  WHATS_NEW:     'Notícia',
+  OFFER:         'Oferta',
+  EVENT:         'Esdeveniment',
+  GALLERY_PHOTO: 'Foto galeria',
 };
 
 export const STATUS_LABELS: Record<string, string> = {

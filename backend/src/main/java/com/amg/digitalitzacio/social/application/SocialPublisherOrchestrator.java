@@ -67,6 +67,9 @@ public class SocialPublisherOrchestrator {
         draft.put("tenantId",  tenantId.toString());
         draft.put("step",      "AWAIT_NETWORKS");
         draft.put("business",  businessName);
+        if (tenant != null && tenant.getSector() != null) {
+            draft.put("sector", tenant.getSector().name());
+        }
         saveDraft(chatId, draft);
 
         var networks = buildAvailableNetworks(tenantId);
@@ -153,7 +156,9 @@ public class SocialPublisherOrchestrator {
                   + "   🔗 <code>LINK</code> — Compartir un enllaç\n"
                   + (!ig ? "   🎬 <code>VIDEO</code> — Vídeo a la pàgina\n"
                          + "   ⭕ <code>STORY</code> — Story de foto (24h)\n" : "") : "")
-            + (gb ? "🗺 <code>NOTICIES</code> — Notícia\n   🎉 <code>OFERTA</code> — Oferta\n" : "")
+            + (gb ? "🗺 <code>NOTICIES</code> — Notícia\n"
+                  + "   🎉 <code>OFERTA</code> — Oferta\n"
+                  + "   📷 <code>GALERIA</code> — Foto a la galeria del perfil (SEO local)\n" : "")
             + (li ? "💼 <code>TEXT</code> — Publicació a LinkedIn\n" : "")
             + "\nEscriu el tipus (p.ex. <code>FOTO</code>):");
     }
@@ -172,19 +177,20 @@ public class SocialPublisherOrchestrator {
             case "TEXT"              -> "TEXT";
             case "VIDEO", "REEL"     -> "REEL";
             case "STORY", "STORIES"  -> "STORY";
-            case "CARRUSEL","CAROUSEL"-> "CAROUSEL";
-            case "LINK", "ENLLAS"    -> "LINK";
-            case "NOTICIES"          -> "WHATS_NEW";
-            case "OFERTA"            -> "OFFER";
-            case "EVENT"             -> "EVENT";
-            default                  -> null;
+            case "CARRUSEL","CAROUSEL"   -> "CAROUSEL";
+            case "LINK", "ENLLAS"        -> "LINK";
+            case "NOTICIES"              -> "WHATS_NEW";
+            case "OFERTA"                -> "OFFER";
+            case "EVENT"                 -> "EVENT";
+            case "GALERIA","GALLERY"     -> "GALLERY_PHOTO";
+            default                      -> null;
         };
 
         if (postType == null) {
             telegramBotClient.sendMessage(chatId,
-                "⚠️ Opció no reconeguda. Escriu: <code>FOTO</code>, <code>CARRUSEL</code>, "
+                "⚠️ Opció no reconeguda. Opcions: <code>FOTO</code>, <code>CARRUSEL</code>, "
                 + "<code>TEXT</code>, <code>LINK</code>, <code>VIDEO</code>, <code>STORY</code>, "
-                + "<code>NOTICIES</code>, <code>OFERTA</code> o <code>EVENT</code>.");
+                + "<code>NOTICIES</code>, <code>OFERTA</code>, <code>EVENT</code>, <code>GALERIA</code>.");
             return;
         }
 
@@ -218,6 +224,13 @@ public class SocialPublisherOrchestrator {
             return;
         }
 
+        // Galeria: Google Business only
+        if ("GALLERY_PHOTO".equals(postType) && !"1".equals(draft.get("gb"))) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ La foto de galeria és una funció exclusiva de Google Business. Selecciona Google Business o tria un altre tipus.");
+            return;
+        }
+
         draft.put("postType", postType);
 
         // Les stories no porten text: salta directament al mèdia
@@ -247,6 +260,17 @@ public class SocialPublisherOrchestrator {
             saveDraft(chatId, draft);
             telegramBotClient.sendMessage(chatId,
                 "🔗 Envia l'URL que vols compartir (ha de començar per https://):");
+            return;
+        }
+
+        // Galeria: salta caption, va directe a media (la foto és el contingut)
+        if ("GALLERY_PHOTO".equals(postType)) {
+            draft.put("step", "AWAIT_MEDIA");
+            saveDraft(chatId, draft);
+            telegramBotClient.sendMessage(chatId,
+                "📷 <b>Foto a la galeria del perfil de Google Business</b>\n\n"
+                + "Les fotos de galeria apareixen permanentment al perfil i milloren el SEO local.\n\n"
+                + "Envia la foto directament aquí o una URL pública:");
             return;
         }
 
@@ -503,11 +527,13 @@ public class SocialPublisherOrchestrator {
         boolean mediaOnly = "REEL".equals(pt) || "STORY".equals(pt) || "CAROUSEL".equals(pt);
         // Link: FB only
         boolean fbOnly = "LINK".equals(pt);
+        // Galeria: GB only
+        boolean gbOnly = "GALLERY_PHOTO".equals(pt);
         var list = new java.util.ArrayList<String>();
-        if (!fbOnly && "1".equals(draft.get("ig"))) list.add("INSTAGRAM");
-        if ("1".equals(draft.get("fb"))) list.add("FACEBOOK");
+        if (!fbOnly && !gbOnly && "1".equals(draft.get("ig"))) list.add("INSTAGRAM");
+        if (!gbOnly && "1".equals(draft.get("fb"))) list.add("FACEBOOK");
         if (!mediaOnly && !fbOnly && "1".equals(draft.get("gb"))) list.add("GOOGLE_BUSINESS");
-        if (!mediaOnly && !fbOnly && "1".equals(draft.get("li"))) list.add("LINKEDIN");
+        if (!mediaOnly && !fbOnly && !gbOnly && "1".equals(draft.get("li"))) list.add("LINKEDIN");
         return list;
     }
 
@@ -542,9 +568,13 @@ public class SocialPublisherOrchestrator {
         String caption;
         if (text.trim().equalsIgnoreCase("IA")) {
             String business = draft.getOrDefault("business", "el negoci");
+            String sector = draft.getOrDefault("sector", "general");
+            String postType = draft.getOrDefault("postType", "PHOTO");
             boolean ig = "1".equals(draft.get("ig"));
             String network = ig ? "INSTAGRAM" : ("1".equals(draft.get("fb")) ? "FACEBOOK" : "GOOGLE_BUSINESS");
-            caption = contentGenerator.generateCaption(network, business, "Post professional per a " + business);
+            String brief = "Publicació de tipus " + postType + " per a " + business
+                + " (sector: " + sector + ")";
+            caption = contentGenerator.generateCaption(network, business + " — " + sector, brief);
             telegramBotClient.sendMessage(chatId, "🤖 Caption generat per IA:\n\n" + caption);
         } else {
             caption = text.trim();
@@ -695,9 +725,11 @@ public class SocialPublisherOrchestrator {
                     throw new IllegalStateException("ubicació de Google Business no configurada");
                 }
                 return switch (pt) {
-                    case "OFFER" -> googleBusinessPublisher.publishOffer(tenantId, locationName, cap, mediaUrl);
-                    case "EVENT" -> googleBusinessPublisher.publishEvent(tenantId, locationName, cap, cap, mediaUrl);
-                    default      -> googleBusinessPublisher.publishWhatsNew(tenantId, locationName, cap, mediaUrl);
+                    case "OFFER"         -> googleBusinessPublisher.publishOffer(tenantId, locationName, cap, mediaUrl);
+                    case "EVENT"         -> googleBusinessPublisher.publishEvent(tenantId, locationName, cap, cap, mediaUrl);
+                    case "GALLERY_PHOTO" -> googleBusinessPublisher.uploadPhotoToGallery(tenantId, locationName,
+                                               requireMedia(mediaUrl));
+                    default              -> googleBusinessPublisher.publishWhatsNew(tenantId, locationName, cap, mediaUrl);
                 };
             }
             case "LINKEDIN" -> {
