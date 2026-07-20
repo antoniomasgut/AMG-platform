@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Publica els posts SCHEDULED quan arriba el seu scheduledAt.
@@ -90,12 +91,14 @@ public class SocialSchedulerJob {
 
             String caption = post.getCaption() == null ? ""
                 : post.getCaption().length() > 60 ? post.getCaption().substring(0, 57) + "…" : post.getCaption();
-            telegramBotClient.sendMessage(chatLink.getTelegramChatId(),
+            String text =
                 "⚠️ <b>No s'ha pogut publicar el post programat</b>\n"
                 + "Xarxa: " + NETWORK_LABELS.getOrDefault(post.getNetwork(), post.getNetwork()) + "\n"
                 + (caption.isBlank() ? "" : "Text: \"" + caption + "\"\n")
                 + "Motiu: " + (post.getErrorMessage() != null ? post.getErrorMessage() : "error desconegut")
-                + "\n\nPots tornar-lo a programar amb <code>/publica</code>.");
+                + "\n\nPots tornar-lo a intentar o crear un post nou amb <code>/publica</code>.";
+            var btn = Map.of("text", "🔄 Tornar a intentar", "callback_data", "retry:" + post.getId());
+            telegramBotClient.sendMessageWithButtons(chatLink.getTelegramChatId(), text, List.of(btn));
         } catch (Exception e) {
             log.warn("No s'ha pogut avisar el tenant {} de la fallada del post {}: {}",
                 post.getTenantId(), post.getId(), e.getMessage());

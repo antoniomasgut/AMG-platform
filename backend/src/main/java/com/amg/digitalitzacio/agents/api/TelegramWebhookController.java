@@ -286,6 +286,23 @@ public class TelegramWebhookController {
                     return ResponseEntity.ok("ok");
                 }
 
+                // P28: "🔄 Tornar a intentar" — reprograma un post FAILED en 30 s
+                if (cbChatId != null && data.startsWith("retry:")) {
+                    var link = chatLinkRepository.findByTelegramChatId(cbChatId);
+                    if (link.isPresent() && link.get().getIsActive()) {
+                        try {
+                            java.util.UUID postId = java.util.UUID.fromString(data.substring("retry:".length()));
+                            if (callbackId != null) telegramBotClient.answerCallbackQuery(callbackId, "Reprogramant...");
+                            socialOrchestrator.requeuePost(postId);
+                            telegramBotClient.sendMessage(cbChatId,
+                                "🔄 Post reprogramat — s'intentarà publicar en 30 segons.");
+                        } catch (Exception e) {
+                            telegramBotClient.sendMessage(cbChatId, "⚠️ No s'ha pogut reprogramar el post.");
+                        }
+                    }
+                    return ResponseEntity.ok("ok");
+                }
+
                 if (cbChatId != null && data.startsWith("demodemo:")) {
                     amgAdminCommandService.handleDemoCallback(cbChatId, data, callbackId);
                     return ResponseEntity.ok("ok");

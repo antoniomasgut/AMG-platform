@@ -65,10 +65,11 @@ class SocialSchedulerJobTest {
 
         job().publishScheduledPosts();
 
-        verify(telegramBotClient).sendMessage(eq(555L),
+        verify(telegramBotClient).sendMessageWithButtons(eq(555L),
             argThat(msg -> msg.contains("No s'ha pogut publicar")
                         && msg.contains("Instagram")
-                        && msg.contains("token caducat")));
+                        && msg.contains("token caducat")),
+            argThat(btns -> !btns.isEmpty() && btns.get(0).containsKey("callback_data")));
     }
 
     @Test
@@ -155,7 +156,8 @@ class SocialSchedulerJobTest {
         job().publishScheduledPosts();
 
         assertThat(post.getStatus()).isEqualTo("FAILED");
-        verify(telegramBotClient).sendMessage(eq(555L),
-            argThat(msg -> msg.contains("No s'ha pogut publicar") && msg.contains("token caducat")));
+        verify(telegramBotClient).sendMessageWithButtons(eq(555L),
+            argThat(msg -> msg.contains("No s'ha pogut publicar") && msg.contains("token caducat")),
+            argThat(btns -> !btns.isEmpty()));
     }
 }

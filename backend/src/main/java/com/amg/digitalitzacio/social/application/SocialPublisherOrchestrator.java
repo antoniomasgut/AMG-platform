@@ -965,4 +965,16 @@ public class SocialPublisherOrchestrator {
             log.warn("Error desant draft social per chat {}: {}", chatId, e.getMessage());
         }
     }
+
+    /** Reprograma un post FAILED per tornar a intentar en 30 segons (P28). */
+    public void requeuePost(java.util.UUID postId) {
+        postRepository.findById(postId).ifPresent(post -> {
+            if (!"FAILED".equals(post.getStatus())) return;
+            post.setStatus("SCHEDULED");
+            post.setRetryCount(0);
+            post.setScheduledAt(Instant.now().plus(java.time.Duration.ofSeconds(30)));
+            post.setErrorMessage(null);
+            postRepository.save(post);
+        });
+    }
 }
