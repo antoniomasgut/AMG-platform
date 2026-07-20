@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -50,8 +51,9 @@ class SocialSchedulerJobTest {
     }
 
     @Test
-    void postProgramatQueFallaAvisaElTenant() {
+    void postProgramatQueFallaAvisaElTenantAl3rIntent() {
         var post = duePost();
+        post.setRetryCount(2); // ja ha fallat 2 cops: ara és el 3r inteni → avisa
         when(postRepository.findDueScheduled(any())).thenReturn(List.of(post));
         stubChatLink();
         doAnswer(inv -> {
@@ -70,7 +72,7 @@ class SocialSchedulerJobTest {
     }
 
     @Test
-    void postPublicatCorrectamentNoAvisa() {
+    void postPublicatNoAvisa() {
         var post = duePost();
         when(postRepository.findDueScheduled(any())).thenReturn(List.of(post));
         doAnswer(inv -> {
@@ -93,8 +95,46 @@ class SocialSchedulerJobTest {
             return null;
         }).when(orchestrator).publishNow(any());
 
+        // retryCount=0 → reprogramat com a SCHEDULED, no avisa
         job().publishScheduledPosts();
 
         verify(telegramBotClient, never()).sendMessage(anyLong(), anyString());
+    }
+
+    @Test
+    void primerFallaProgramaReintent() {
+        var post = duePost();
+        when(postRepository.findDueScheduled(any())).thenReturn(List.of(post));
+        doAnswer(inv -> {
+            ((SocialPost) inv.getArgument(0)).setStatus("FAILED");
+            return null;
+        }).when(orchestrator).publishNow(any());
+
+        job().publishScheduledPosts();
+
+        assertThat(post.getStatus()).isEqualTo("SCHEDULED");
+        assertThat(post.getRetryCount()).isEqualTo(1);
+        assertThat(post.getScheduledAt()).isAfter(java.time.Instant.now().minusSeconds(5));
+        verify(telegramBotClient, never()).sendMessage(anyLong(), anyString());
+    }
+
+    @Test
+    void tercerFallaNotiricaTenant() {
+        var post = duePost();
+        post.setRetryCount(2);
+        when(postRepository.findDueScheduled(any())).thenReturn(List.of(post));
+        stubChatLink();
+        doAnswer(inv -> {
+            SocialPost p = inv.getArgument(0);
+            p.setStatus("FAILED");
+            p.setErrorMessage("token caducat");
+            return null;
+        }).when(orchestrator).publishNow(any());
+
+        job().publishScheduledPosts();
+
+        assertThat(post.getStatus()).isEqualTo("FAILED");
+        verify(telegramBotClient).sendMessage(eq(555L),
+            argThat(msg -> msg.contains("No s'ha pogut publicar") && msg.contains("token caducat")));
     }
 }

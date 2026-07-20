@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,18 @@ public class SocialSchedulerJob {
             orchestrator.publishNow(post);
 
             if ("FAILED".equals(post.getStatus())) {
-                notifyFailure(post);
+                int retries = post.getRetryCount() != null ? post.getRetryCount() : 0;
+                if (retries < 2) {
+                    // Auto-retry: tornar a programar en 10 minuts
+                    post.setRetryCount(retries + 1);
+                    post.setStatus("SCHEDULED");
+                    post.setScheduledAt(Instant.now().plus(Duration.ofMinutes(10)));
+                    post.setErrorMessage(null);
+                    postRepository.save(post);
+                    log.info("Post {} programat per a reintent {} en 10 min", post.getId(), retries + 1);
+                } else {
+                    notifyFailure(post);
+                }
             }
         }
     }

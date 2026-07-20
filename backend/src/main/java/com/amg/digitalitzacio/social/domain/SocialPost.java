@@ -62,6 +62,10 @@ public class SocialPost {
     @Column(name = "content_plan_item_id")
     private UUID contentPlanItemId;
 
+    /** Nombre de reintents realitzats (auto-retry en FAILED, max 2 → 3 intents totals). */
+    @Builder.Default
+    private Integer retryCount = 0;
+
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();

@@ -572,8 +572,14 @@ public class SocialPublisherOrchestrator {
             String postType = draft.getOrDefault("postType", "PHOTO");
             boolean ig = "1".equals(draft.get("ig"));
             String network = ig ? "INSTAGRAM" : ("1".equals(draft.get("fb")) ? "FACEBOOK" : "GOOGLE_BUSINESS");
+            // Idioma del tenant (null → el servei usarà el per-defecte de la xarxa)
+            UUID tenantId = UUID.fromString(draft.get("tenantId"));
+            String lang = metaConfigRepo.findByTenantId(tenantId)
+                    .map(mc -> mc.getDefaultContentLanguage()).filter(l -> l != null && !l.isBlank())
+                    .orElse(null);
             String brief = "Publicació de tipus " + postType + " per a " + business
-                + " (sector: " + sector + ")";
+                + " (sector: " + sector + ")"
+                + (lang != null ? ". Idioma del caption: " + lang + "." : "");
             caption = contentGenerator.generateCaption(network, business + " — " + sector, brief);
             telegramBotClient.sendMessage(chatId, "🤖 Caption generat per IA:\n\n" + caption);
         } else {
