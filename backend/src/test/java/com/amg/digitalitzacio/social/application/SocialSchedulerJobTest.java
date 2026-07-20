@@ -72,9 +72,30 @@ class SocialSchedulerJobTest {
     }
 
     @Test
-    void postPublicatNoAvisa() {
+    void postPublicatAvisaElTenantAmBEnllac() {
+        var post = duePost();
+        post.setExternalPostUrl("https://www.instagram.com/p/abc123/");
+        when(postRepository.findDueScheduled(any())).thenReturn(List.of(post));
+        stubChatLink();
+        doAnswer(inv -> {
+            SocialPost p = inv.getArgument(0);
+            p.setStatus("PUBLISHED");
+            p.setExternalPostUrl("https://www.instagram.com/p/abc123/");
+            return null;
+        }).when(orchestrator).publishNow(any());
+
+        job().publishScheduledPosts();
+
+        verify(telegramBotClient).sendMessage(eq(555L),
+            argThat(msg -> msg.contains("✅") && msg.contains("Post publicat")
+                        && msg.contains("https://www.instagram.com/p/abc123/")));
+    }
+
+    @Test
+    void postPublicatSenseChatLinkNoPeta() {
         var post = duePost();
         when(postRepository.findDueScheduled(any())).thenReturn(List.of(post));
+        when(chatLinkRepository.findByTenantId(TENANT_ID)).thenReturn(Optional.empty());
         doAnswer(inv -> {
             ((SocialPost) inv.getArgument(0)).setStatus("PUBLISHED");
             return null;

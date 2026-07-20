@@ -60,6 +60,22 @@ public class SocialPublisherOrchestrator {
     /** Inicia el flux de publicació per a un tenant */
     @Async
     public void startFlow(UUID tenantId, Long chatId) {
+        // Si hi ha un esborrany pendent, oferir reprendre o descartar (P21)
+        if (hasDraft(chatId)) {
+            var existing = loadDraft(chatId);
+            String prevStep = existing.getOrDefault("step", "AWAIT_NETWORKS");
+            if (!"AWAIT_RESUME".equals(prevStep)) {
+                existing.put("prevStep", prevStep);
+                existing.put("step", "AWAIT_RESUME");
+                saveDraft(chatId, existing);
+                telegramBotClient.sendMessage(chatId,
+                    "⚠️ Tens una publicació pendent (pas: <b>" + stepLabel(prevStep) + "</b>).\n\n"
+                    + "<code>CONTINUA</code> — reprendre on ho vas deixar\n"
+                    + "<code>DESCARTAR</code> — eliminar i iniciar un post nou");
+                return;
+            }
+        }
+
         var tenant = tenantRepository.findById(tenantId).orElse(null);
         String businessName = tenant != null ? tenant.getName() : "el teu negoci";
 
@@ -80,6 +96,20 @@ public class SocialPublisherOrchestrator {
             + "\nEscriu les lletres separades per espai, p.ex.: <code>I F</code>");
     }
 
+    private static String stepLabel(String step) {
+        return switch (step) {
+            case "AWAIT_NETWORKS"       -> "selecció de xarxes";
+            case "AWAIT_TYPE"           -> "tipus de post";
+            case "AWAIT_MEDIA"          -> "URL de la imatge";
+            case "AWAIT_CAROUSEL_MEDIA" -> "fotos del carrusel";
+            case "AWAIT_LINK_URL"       -> "URL de l'enllaç";
+            case "AWAIT_CAPTION"        -> "caption / text";
+            case "AWAIT_SCHEDULE"       -> "data de publicació";
+            case "AWAIT_CONFIRM"        -> "confirmació final";
+            default                     -> step;
+        };
+    }
+
     /** Processa cada pas del flux. photoFileId/videoFileId són no-null quan l'usuari envia mèdia. */
     @Async
     public void handleStep(Long chatId, String text, String photoFileId, String videoFileId) {
@@ -97,6 +127,7 @@ public class SocialPublisherOrchestrator {
         String step = draft.get("step");
 
         switch (step) {
+            case "AWAIT_RESUME"          -> handleResume(chatId, text, draft);
             case "AWAIT_NETWORKS"        -> handleNetworks(chatId, text, draft);
             case "AWAIT_TYPE"            -> handleType(chatId, text, draft);
             case "AWAIT_MEDIA"           -> handleMedia(chatId, text, photoFileId, videoFileId, draft);
@@ -113,6 +144,26 @@ public class SocialPublisherOrchestrator {
     }
 
     // ─── Steps ───────────────────────────────────────────────────────────────
+
+    private void handleResume(Long chatId, String text, Map<String, String> draft) {
+        String upper = text.trim().toUpperCase().replace("·", "");
+        if (upper.startsWith("CONTIN") || upper.equals("SI") || upper.equals("YES")) {
+            String prevStep = draft.getOrDefault("prevStep", "AWAIT_NETWORKS");
+            draft.put("step", prevStep);
+            draft.remove("prevStep");
+            saveDraft(chatId, draft);
+            telegramBotClient.sendMessage(chatId,
+                "✅ Reprenent el flux — pas: <b>" + stepLabel(prevStep) + "</b>\n"
+                + "Continua enviant la resposta per a aquest pas.");
+        } else if (upper.startsWith("DESCAR") || upper.equals("NOU") || upper.equals("NO")) {
+            redis.delete(KEY_PREFIX + chatId);
+            telegramBotClient.sendMessage(chatId,
+                "🗑 Esborrany eliminat.\nEscriu <code>/publica</code> per iniciar un nou post.");
+        } else {
+            telegramBotClient.sendMessage(chatId,
+                "Escriu <code>CONTINUA</code> per reprendre o <code>DESCARTAR</code> per eliminar l'esborrany.");
+        }
+    }
 
     private void handleNetworks(Long chatId, String text, Map<String, String> draft) {
         String upper = text.toUpperCase().replace(",", " ").trim();
@@ -554,7 +605,7 @@ public class SocialPublisherOrchestrator {
         }
 
         if (caption != null && !caption.isBlank()) sb.append("\n").append(caption);
-        sb.append("\n\n✅ Escriu <code>SI</code> per publicar o <code>NO</code> per cancel·lar.");
+        sb.append("\n\n✅ <code>SI</code> — publicar · ✏️ <code>EDITAR</code> — canviar el text · ❌ <code>NO</code> — cancel·lar");
         telegramBotClient.sendMessage(chatId, sb.toString());
     }
 
@@ -605,6 +656,19 @@ public class SocialPublisherOrchestrator {
 
     private void handleConfirm(Long chatId, String text, Map<String, String> draft) {
         String normalized = text.trim().toLowerCase().replace("í", "i").replace("é", "e");
+
+        // Editar caption sense cancel·lar (P20)
+        if (normalized.matches("editar|edit|edita|modificar|modifica")) {
+            draft.put("step", "AWAIT_CAPTION");
+            saveDraft(chatId, draft);
+            String current = draft.get("caption");
+            telegramBotClient.sendMessage(chatId,
+                "✏️ Caption actual:\n<i>" + (current != null && !current.isBlank() ? current : "(buit)") + "</i>\n\n"
+                + "Escriu el nou caption, o <code>IA</code> per generar-ne un de nou amb IA.\n"
+                + "O <code>SENSE_TEXT</code> per publicar sense text.");
+            return;
+        }
+
         redis.delete(KEY_PREFIX + chatId);
 
         if (!normalized.matches("si|yes|✅|👍|publicar|confirmar")) {

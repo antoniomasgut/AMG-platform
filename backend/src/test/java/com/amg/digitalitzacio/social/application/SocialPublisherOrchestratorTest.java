@@ -11,12 +11,15 @@ import com.amg.digitalitzacio.vault.application.VaultEncryption;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,6 +32,7 @@ import static org.mockito.Mockito.*;
 class SocialPublisherOrchestratorTest {
 
     @Mock StringRedisTemplate redis;
+    @Mock @SuppressWarnings("unchecked") ValueOperations<String, String> opsForValue;
     @Mock TelegramBotClient telegramBotClient;
     @Mock TenantRepository tenantRepository;
     @Mock SocialMetaConfigRepository metaConfigRepo;
@@ -243,5 +247,99 @@ class SocialPublisherOrchestratorTest {
         verify(facebookPublisher).publishLink(eq("fb-page-1"), eq("token"),
             eq("https://amgdl.com"), anyString());
         assertThat(p.getStatus()).isEqualTo("PUBLISHED");
+    }
+
+    // ─── P20: editar caption a AWAIT_CONFIRM ─────────────────────────────────
+
+    private void stubFlowDraft(Long chatId, Map<String, String> fields) {
+        try {
+            var draft = new java.util.HashMap<>(fields);
+            String json = objectMapper.writeValueAsString(draft);
+            when(redis.opsForValue()).thenReturn(opsForValue);
+            when(opsForValue.get("social:draft:" + chatId)).thenReturn(json);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    @Test
+    void handleConfirmEditar_permetModificarCaptionSenseCancellar() {
+        Long chatId = 200L;
+        stubFlowDraft(chatId, Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_CONFIRM",
+            "ig", "1",
+            "postType", "PHOTO",
+            "caption", "Caption original",
+            "mediaUrl", PHOTO_URL
+        ));
+
+        orchestrator().handleStep(chatId, "EDITAR", null, null);
+
+        verify(telegramBotClient).sendMessage(eq(chatId),
+            argThat(msg -> msg.contains("Caption original")));
+        verify(redis, never()).delete(any(String.class));
+        verify(postRepository, never()).save(any());
+        var captor = ArgumentCaptor.forClass(String.class);
+        verify(opsForValue).set(eq("social:draft:" + chatId), captor.capture(), anyLong(), any());
+        assertThat(captor.getValue()).contains("AWAIT_CAPTION");
+    }
+
+    // ─── P21: recuperació de draft pendent ───────────────────────────────────
+
+    @Test
+    void startFlowAmbDraftPendent_mostraOpcionsResume() {
+        Long chatId = 201L;
+        when(redis.hasKey("social:draft:" + chatId)).thenReturn(true);
+        stubFlowDraft(chatId, Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_CAPTION",
+            "ig", "1",
+            "postType", "PHOTO"
+        ));
+
+        orchestrator().startFlow(TENANT_ID, chatId);
+
+        verify(telegramBotClient).sendMessage(eq(chatId),
+            argThat(msg -> msg.contains("CONTINUA") && msg.contains("DESCARTAR")));
+        verify(tenantRepository, never()).findById(any());
+    }
+
+    @Test
+    void handleResumeContinua_restoreElPasAnterior() {
+        Long chatId = 202L;
+        stubFlowDraft(chatId, Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_RESUME",
+            "prevStep", "AWAIT_CAPTION",
+            "ig", "1",
+            "postType", "PHOTO"
+        ));
+
+        orchestrator().handleStep(chatId, "CONTINUA", null, null);
+
+        verify(telegramBotClient).sendMessage(eq(chatId),
+            argThat(msg -> msg.contains("Reprenent")));
+        var captor = ArgumentCaptor.forClass(String.class);
+        verify(opsForValue).set(eq("social:draft:" + chatId), captor.capture(), anyLong(), any());
+        assertThat(captor.getValue()).contains("AWAIT_CAPTION");
+        assertThat(captor.getValue()).doesNotContain("AWAIT_RESUME");
+        assertThat(captor.getValue()).doesNotContain("prevStep");
+    }
+
+    @Test
+    void handleResumeDescartar_eliminaElDraft() {
+        Long chatId = 203L;
+        stubFlowDraft(chatId, Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_RESUME",
+            "prevStep", "AWAIT_MEDIA",
+            "ig", "1",
+            "postType", "PHOTO"
+        ));
+
+        orchestrator().handleStep(chatId, "DESCARTAR", null, null);
+
+        verify(redis).delete("social:draft:" + chatId);
+        verify(telegramBotClient).sendMessage(eq(chatId),
+            argThat(msg -> msg.contains("/publica")));
     }
 }

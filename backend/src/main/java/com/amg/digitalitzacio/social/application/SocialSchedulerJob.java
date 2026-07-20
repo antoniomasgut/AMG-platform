@@ -46,7 +46,9 @@ public class SocialSchedulerJob {
             // publishNow és síncron: actualitza l'estat del post existent (PUBLISHED o FAILED)
             orchestrator.publishNow(post);
 
-            if ("FAILED".equals(post.getStatus())) {
+            if ("PUBLISHED".equals(post.getStatus())) {
+                notifySuccess(post);
+            } else if ("FAILED".equals(post.getStatus())) {
                 int retries = post.getRetryCount() != null ? post.getRetryCount() : 0;
                 if (retries < 2) {
                     // Auto-retry: tornar a programar en 10 minuts
@@ -60,6 +62,24 @@ public class SocialSchedulerJob {
                     notifyFailure(post);
                 }
             }
+        }
+    }
+
+    private void notifySuccess(SocialPost post) {
+        try {
+            var chatLink = chatLinkRepository.findByTenantId(post.getTenantId()).orElse(null);
+            if (chatLink == null || chatLink.getTelegramChatId() == null) return;
+
+            String caption = post.getCaption() == null ? ""
+                : post.getCaption().length() > 60 ? post.getCaption().substring(0, 57) + "…" : post.getCaption();
+            String urlNote = post.getExternalPostUrl() != null ? "\n🔗 " + post.getExternalPostUrl() : "";
+            telegramBotClient.sendMessage(chatLink.getTelegramChatId(),
+                "✅ <b>Post publicat</b> · " + NETWORK_LABELS.getOrDefault(post.getNetwork(), post.getNetwork()) + "\n"
+                + (caption.isBlank() ? "" : "\"" + caption + "\"\n")
+                + urlNote);
+        } catch (Exception e) {
+            log.warn("No s'ha pogut avisar el tenant {} de la publicació del post {}: {}",
+                post.getTenantId(), post.getId(), e.getMessage());
         }
     }
 
