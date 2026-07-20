@@ -22,14 +22,28 @@ public class SocialContentGeneratorService {
      * Retorna 1-2 frases amb una proposta concreta segons sector i època de l'any.
      */
     public String generateWeeklyIdea(String businessContext, String sector, String dateContext) {
+        return generateWeeklyIdea(businessContext, sector, dateContext, null);
+    }
+
+    /**
+     * Variant amb context de rendiment (P3): la idea prioritza els formats i temes
+     * que han funcionat de veritat per a aquest negoci, no només sector i època.
+     */
+    public String generateWeeklyIdea(String businessContext, String sector, String dateContext,
+                                     String performanceContext) {
         String systemPrompt = """
                 Ets un estrateg de xarxes socials per a negocis locals a Mallorca.
                 Proposa UNA idea de publicació concreta i accionable per a aquesta setmana.
                 Té en compte el sector i l'època de l'any (temporada, festius, tendències locals).
+                Si tens dades de rendiment, prioritza els formats i temes que han funcionat millor
+                i esmenta-ho breument (p.ex. "com que les fotos del local funcionen bé...").
                 Màxim 2 frases. To proper, en català. Comença directament amb la idea, sense preàmbuls.
                 """;
         String userPrompt = "Negoci: " + businessContext + "\nSector: " + sector
-                + "\nContext temporal: " + dateContext + "\n\nProposa la idea:";
+                + "\nContext temporal: " + dateContext
+                + (performanceContext != null && !performanceContext.isBlank()
+                   ? "\n\n" + performanceContext : "")
+                + "\n\nProposa la idea:";
         try {
             var provider = aiRouter.forModel(MODEL);
             return provider.chat(systemPrompt, List.of(), userPrompt).trim();

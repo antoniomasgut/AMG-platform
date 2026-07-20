@@ -52,7 +52,9 @@ public class SocialSuggestionScheduler {
 
                 String businessName = tenant.getName() != null ? tenant.getName() : "el teu negoci";
                 String sector = tenant.getSector() != null ? tenant.getSector().name() : "general";
-                String idea = contentGenerator.generateWeeklyIdea(businessName, sector, dateContext());
+                // P3: les mètriques es sincronitzen a les 9:00 (digest); a les 10:00 ja són fresques
+                String performance = analyticsService.buildPerformanceContext(tenantId);
+                String idea = contentGenerator.generateWeeklyIdea(businessName, sector, dateContext(), performance);
                 if (idea == null || idea.isBlank()) continue;
 
                 String text = "💡 <b>Idea per aquesta setmana</b>\n\n" + idea

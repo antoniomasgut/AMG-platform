@@ -207,4 +207,46 @@ public class SocialAnalyticsService {
     public List<SocialPost> publishedLastDays(UUID tenantId, int days) {
         return postRepository.findPublishedSince(tenantId, Instant.now().minus(Duration.ofDays(days)));
     }
+
+    /**
+     * Context de rendiment per a la IA de suggeriments (P3): què ha funcionat
+     * en els últims 30 dies, en text compacte. Retorna null si no hi ha prou dades
+     * (cap post amb mètriques) — llavors el suggeriment es genera sense context.
+     */
+    public String buildPerformanceContext(UUID tenantId) {
+        var posts = publishedLastDays(tenantId, 30).stream()
+                .filter(p -> p.getReach() != null || p.getLikes() != null)
+                .toList();
+        if (posts.isEmpty()) return null;
+
+        var sb = new StringBuilder("Rendiment real dels últims 30 dies (" + posts.size() + " posts amb mètriques):\n");
+
+        // Post amb més engagement
+        posts.stream()
+             .max(java.util.Comparator.comparingInt(SocialAnalyticsService::engagement))
+             .ifPresent(top -> {
+                 String c = top.getCaption() == null ? "(sense text)"
+                         : top.getCaption().length() > 70 ? top.getCaption().substring(0, 67) + "…" : top.getCaption();
+                 sb.append("- El millor: \"").append(c).append("\" (").append(top.getPostType())
+                   .append(" a ").append(top.getNetwork())
+                   .append(", abast ").append(nz(top.getReach()))
+                   .append(", ").append(nz(top.getLikes())).append(" likes)\n");
+             });
+
+        // Mitjana d'abast per tipus de post (només tipus amb 2+ posts, per no treure conclusions d'un sol cas)
+        var byType = posts.stream().collect(java.util.stream.Collectors.groupingBy(SocialPost::getPostType));
+        for (var e : byType.entrySet()) {
+            if (e.getValue().size() < 2) continue;
+            double avgReach = e.getValue().stream().mapToInt(p -> nz(p.getReach())).average().orElse(0);
+            sb.append("- ").append(e.getKey()).append(": ").append(e.getValue().size())
+              .append(" posts, abast mitjà ").append(Math.round(avgReach)).append("\n");
+        }
+        return sb.toString();
+    }
+
+    private static int engagement(SocialPost p) {
+        return nz(p.getReach()) + nz(p.getLikes()) * 3 + nz(p.getComments()) * 5;
+    }
+
+    private static int nz(Integer v) { return v != null ? v : 0; }
 }
