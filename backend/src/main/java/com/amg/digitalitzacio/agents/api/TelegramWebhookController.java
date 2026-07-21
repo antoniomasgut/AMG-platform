@@ -601,6 +601,32 @@ public class TelegramWebhookController {
                     }
                 }
 
+                // /hashtags — biblioteca d'hashtags (P46)
+                if (text.equalsIgnoreCase("/hashtags") || text.equalsIgnoreCase("/etiquetes")) {
+                    boolean activated = nexeServiceConfigService
+                        .get(tenantId, "SOCIAL_PUBLISHER").isPresent();
+                    if (activated) {
+                        socialOrchestrator.sendHashtagLibrary(tenantId, chatId);
+                        return ResponseEntity.ok("ok");
+                    }
+                }
+
+                // DESAR HASHTAGS: #tag1 #tag2 ... (P46)
+                if (text.toUpperCase().startsWith("DESAR HASHTAGS:")) {
+                    boolean activated = nexeServiceConfigService
+                        .get(tenantId, "SOCIAL_PUBLISHER").isPresent();
+                    if (activated) {
+                        String tags = text.substring("DESAR HASHTAGS:".length()).trim();
+                        if (!tags.isBlank()) {
+                            socialOrchestrator.saveHashtagPresets(tenantId, chatId, tags);
+                        } else {
+                            telegramBotClient.sendMessage(chatId,
+                                "⚠️ Format: <code>DESAR HASHTAGS: #tag1 #tag2 ...</code>");
+                        }
+                        return ResponseEntity.ok("ok");
+                    }
+                }
+
                 // /reutilitzar — llista posts recents per copiar (P41)
                 if (text.equalsIgnoreCase("/reutilitzar") || text.equalsIgnoreCase("/reuse")) {
                     boolean activated = nexeServiceConfigService

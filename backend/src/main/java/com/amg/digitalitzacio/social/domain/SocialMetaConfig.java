@@ -48,6 +48,10 @@ public class SocialMetaConfig {
     @Builder.Default
     private Instant connectedAt = Instant.now();
 
+    /** P46: hashtags desats per l'usuari separats per espai. Exemple: "#mallorca #restaurant" */
+    @Column(columnDefinition = "TEXT")
+    private String hashtagPresets;
+
     @Builder.Default
     private Instant updatedAt = Instant.now();
 }

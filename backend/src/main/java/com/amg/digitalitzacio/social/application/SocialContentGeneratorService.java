@@ -98,6 +98,31 @@ public class SocialContentGeneratorService {
         }
     }
 
+    /**
+     * P47: tradueix un caption a l'idioma indicat mantenint el format i estil del text original.
+     * langCode: "ca" | "es" | "de" | "en"
+     */
+    public String translateCaption(String caption, String langCode) {
+        String langName = switch (langCode.toLowerCase()) {
+            case "ca" -> "català";
+            case "es" -> "castellà";
+            case "de" -> "alemany";
+            case "en" -> "anglès";
+            default   -> langCode;
+        };
+        String systemPrompt = "Ets un traductor expert. Tradueix el text al " + langName
+            + " mantenint exactament el format, emojis, hashtags i estil del text original. "
+            + "Torna ÚNICAMENT la traducció, sense cap comentari ni prefix.";
+        String userPrompt = "Tradueix al " + langName + ":\n\n" + caption;
+        try {
+            var provider = aiRouter.forModel(MODEL);
+            return provider.chat(systemPrompt, List.of(), userPrompt).trim();
+        } catch (Exception e) {
+            log.warn("Error traduint caption a {}: {}", langCode, e.getMessage());
+            return caption;
+        }
+    }
+
     public String generateCaption(String network, String businessContext, String userBrief) {
         return generateCaption(network, businessContext, userBrief, List.of());
     }

@@ -115,8 +115,10 @@ public class TenantTelegramCommandService {
             sb.append("  /publica — nou post a Instagram, Facebook o Google Business\n");
             sb.append("  /posts — publicacions programades (+ cancel·lar)\n");
             sb.append("  /calendari — vista mensual de posts programats\n");
-            sb.append("  /reutilitzar — copiar un post publicat recentment\n");
-            sb.append("  /stats-social — resum d'activitat dels últims 7 dies\n\n");
+            sb.append("  /reutilitzar — copiar un post publicat recentment (ordenat per rendiment)\n");
+            sb.append("  /hashtags — biblioteca d'hashtags (+ DESAR HASHTAGS: #tag1 ...)\n");
+            sb.append("  /stats-social — resum d'activitat dels últims 7 dies\n");
+            sb.append("  A la confirmació: TRADUIR CA/ES/DE/EN · + HASHTAGS\n\n");
         }
 
         if (!hasF1 && !hasF2 && !hasF3 && !hasF4 && !hasSocialPublisher) {

@@ -847,6 +847,33 @@ public class SocialPublisherOrchestrator {
             return;
         }
 
+        // P46: + HASHTAGS — afegeix els hashtags desats al caption
+        if (normalized.matches("\\+\\s*hashtags?|hashtags?\\+|afegir hashtags?")) {
+            UUID tenantId46 = UUID.fromString(draft.get("tenantId"));
+            String presets = metaConfigRepo.findByTenantId(tenantId46)
+                .map(SocialMetaConfig::getHashtagPresets)
+                .filter(s -> s != null && !s.isBlank())
+                .orElse(null);
+            if (presets == null) {
+                telegramBotClient.sendMessage(chatId,
+                    "⚠️ No tens hashtags desats. Escriu <code>/hashtags</code> per desar-ne.");
+            } else {
+                String current = draft.getOrDefault("caption", "");
+                String updated = (current.isBlank() ? "" : current + "\n") + presets;
+                draft.put("caption", updated);
+                clearNetworkCaptions(draft);
+                saveDraft(chatId, draft);
+                sendPreview(chatId, draft, updated);
+            }
+            return;
+        }
+
+        // P47: TRADUIR XX — tradueix el caption a un altre idioma
+        if (normalized.startsWith("traduir") || normalized.startsWith("traducir") || normalized.startsWith("translate")) {
+            handleTranslate(chatId, normalized, draft);
+            return;
+        }
+
         redis.delete(KEY_PREFIX + chatId);
 
         if (!normalized.matches("si|yes|✅|👍|publicar|confirmar")) {
@@ -1254,16 +1281,66 @@ public class SocialPublisherOrchestrator {
             + " · " + fmt.format(post.getScheduledAt()));
     }
 
+    // ─── P46: biblioteca d'hashtags ──────────────────────────────────────────
+
+    /** Mostra els hashtags desats i explica com gestionar-los. */
+    public void sendHashtagLibrary(UUID tenantId, Long chatId) {
+        String presets = metaConfigRepo.findByTenantId(tenantId)
+            .map(SocialMetaConfig::getHashtagPresets)
+            .filter(s -> s != null && !s.isBlank())
+            .orElse(null);
+        if (presets == null) {
+            telegramBotClient.sendMessage(chatId,
+                "📚 <b>Biblioteca d'hashtags</b>\n\n"
+                + "Encara no tens hashtags desats.\n\n"
+                + "Per desar-ne, escriu:\n"
+                + "<code>DESAR HASHTAGS: #mallorca #restaurant #menú #dinar</code>");
+        } else {
+            telegramBotClient.sendMessage(chatId,
+                "📚 <b>Hashtags desats:</b>\n" + presets + "\n\n"
+                + "Per actualitzar-los:\n"
+                + "<code>DESAR HASHTAGS: #tag1 #tag2 ...</code>\n"
+                + "Durant la confirmació d'un post, escriu <code>+ HASHTAGS</code> per afegir-los.");
+        }
+    }
+
+    /** Desa (o reemplaza) els hashtags de la biblioteca del tenant. */
+    public void saveHashtagPresets(UUID tenantId, Long chatId, String hashtags) {
+        var config = metaConfigRepo.findByTenantId(tenantId).orElse(null);
+        if (config == null) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ Necessites configurar les xarxes socials primer (Instagram/Facebook).");
+            return;
+        }
+        String cleaned = hashtags.trim();
+        config.setHashtagPresets(cleaned);
+        config.setUpdatedAt(Instant.now());
+        metaConfigRepo.save(config);
+        telegramBotClient.sendMessage(chatId,
+            "✅ Hashtags desats:\n" + cleaned + "\n\n"
+            + "Escriu <code>+ HASHTAGS</code> a la confirmació d'un post per afegir-los.");
+    }
+
     // ─── P41: reutilitzar un post publicat ───────────────────────────────────
 
     /** Llista els últims 5 posts publicats i ofereix reutilitzar-los. */
     public void sendRecentPublishedPosts(UUID tenantId, Long chatId) {
-        var recent = postRepository.findPublishedSince(tenantId,
+        var candidates = postRepository.findPublishedSince(tenantId,
                 Instant.now().minus(java.time.Duration.ofDays(90)))
             .stream()
             .filter(p -> p.getPublishedAt() != null)
-            .sorted(java.util.Comparator.comparing(SocialPost::getPublishedAt).reversed())
-            .limit(5)
+            .collect(java.util.stream.Collectors.toList());
+
+        // P48: si hi ha mètriques, ordena per rendiment; si no, per data
+        boolean hasMetrics = candidates.stream()
+            .anyMatch(p -> p.getLikes() != null || p.getReach() != null);
+        java.util.Comparator<SocialPost> order = hasMetrics
+            ? java.util.Comparator.comparingInt(
+                (SocialPost p) -> nzPost(p.getReach()) + nzPost(p.getLikes()) * 3 + nzPost(p.getComments()) * 5)
+              .reversed()
+            : java.util.Comparator.comparing(SocialPost::getPublishedAt).reversed();
+
+        var recent = candidates.stream().sorted(order).limit(5)
             .collect(java.util.stream.Collectors.toList());
 
         if (recent.isEmpty()) {
@@ -1332,6 +1409,33 @@ public class SocialPublisherOrchestrator {
             "🔄 Post pre-emplenat. Pots modificar el caption escrivint <code>EDITAR</code>, "
             + "o confirmar directament.");
         sendPreview(chatId, draft, draft.get("caption"));
+    }
+
+    // ─── P47: traducció de caption ───────────────────────────────────────────
+
+    private void handleTranslate(Long chatId, String normalized, Map<String, String> draft) {
+        // Format: "traduir ca", "traduir es", "traduir de", "traduir en"
+        String langCode = normalized.replaceAll("(traduir|traducir|translate)\\s*", "").trim();
+        if (langCode.isEmpty() || !langCode.matches("ca|es|de|en")) {
+            telegramBotClient.sendMessage(chatId,
+                "🌍 Indica l'idioma de destinació:\n"
+                + "<code>TRADUIR CA</code> — català\n"
+                + "<code>TRADUIR ES</code> — castellà\n"
+                + "<code>TRADUIR DE</code> — alemany\n"
+                + "<code>TRADUIR EN</code> — anglès");
+            return;
+        }
+        String caption = draft.get("caption");
+        if (caption == null || caption.isBlank()) {
+            telegramBotClient.sendMessage(chatId, "⚠️ No hi ha caption per traduir.");
+            return;
+        }
+        telegramBotClient.sendMessage(chatId, "🌍 Traduint…");
+        String translated = contentGenerator.translateCaption(caption, langCode);
+        draft.put("caption", translated);
+        clearNetworkCaptions(draft);
+        saveDraft(chatId, draft);
+        sendPreview(chatId, draft, translated);
     }
 
     // ─── P39: tria entre 3 opcions de caption ────────────────────────────────
@@ -1493,6 +1597,8 @@ public class SocialPublisherOrchestrator {
         }
         return primaryCaption != null ? primaryCaption : "";
     }
+
+    private static int nzPost(Integer v) { return v != null ? v : 0; }
 
     private static String captionKey(String network) {
         return switch (network) {
