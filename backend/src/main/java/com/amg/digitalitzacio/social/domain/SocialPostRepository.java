@@ -30,4 +30,15 @@ public interface SocialPostRepository extends JpaRepository<SocialPost, UUID> {
     @Query("SELECT p FROM SocialPost p WHERE p.tenantId = :tenantId AND p.status = 'SCHEDULED' "
             + "AND p.scheduledAt > :after ORDER BY p.scheduledAt ASC")
     List<SocialPost> findUpcomingScheduled(UUID tenantId, Instant after);
+
+    // P43: posts programats en un rang de dates (per al /calendari mensual)
+    @Query("SELECT p FROM SocialPost p WHERE p.tenantId = :tenantId AND p.status = 'SCHEDULED' "
+            + "AND p.scheduledAt >= :from AND p.scheduledAt < :to ORDER BY p.scheduledAt ASC")
+    List<SocialPost> findScheduledBetween(UUID tenantId, Instant from, Instant to);
+
+    // P42: posts publicats en un rang i sense notificació de rendiment enviada
+    @Query("SELECT p FROM SocialPost p WHERE p.status = 'PUBLISHED' "
+            + "AND p.publishedAt >= :from AND p.publishedAt < :to "
+            + "AND p.performanceNotifiedAt IS NULL")
+    List<SocialPost> findPublishedWithoutPerformanceNotification(Instant from, Instant to);
 }

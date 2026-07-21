@@ -14,6 +14,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -167,4 +169,25 @@ public class S3StorageProvider implements StorageProvider {
 
     @Override
     public String getProviderName() { return providerName; }
+
+    @Override
+    public List<StorageFile> listFiles(String prefix, int maxKeys) {
+        try {
+            var req = ListObjectsV2Request.builder()
+                .bucket(bucket)
+                .maxKeys(maxKeys)
+                .prefix(prefix != null ? prefix : "")
+                .build();
+            var result = s3.listObjectsV2(req);
+            var files = new ArrayList<StorageFile>();
+            for (var obj : result.contents()) {
+                String mime = obj.key().toLowerCase().matches(".*\\.(jpg|jpeg|png|gif|webp)") ? "image/*" : "application/octet-stream";
+                files.add(new StorageFile(obj.key(), obj.key(), mime, obj.size(), providerName));
+            }
+            return files;
+        } catch (Exception e) {
+            log.warn("listFiles S3 fallit: {}", e.getMessage());
+            return List.of();
+        }
+    }
 }

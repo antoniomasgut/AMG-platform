@@ -574,6 +574,16 @@ public class TelegramWebhookController {
                     return ResponseEntity.ok("ok");
                 }
 
+                // Comanda /calendari — vista mensual de posts programats (P43)
+                if (text.equalsIgnoreCase("/calendari") || text.equalsIgnoreCase("/calendar")) {
+                    boolean activated = nexeServiceConfigService
+                        .get(tenantId, "SOCIAL_PUBLISHER").isPresent();
+                    if (activated) {
+                        socialOrchestrator.sendMonthlyCalendar(tenantId, chatId);
+                        return ResponseEntity.ok("ok");
+                    }
+                }
+
                 // Cancel·lació d'un post programat: CANCEL·LAR#N (P34)
                 if (text.toUpperCase().replace("·", "").startsWith("CANCELLAR#")) {
                     boolean activated = nexeServiceConfigService

@@ -2,6 +2,7 @@ package com.amg.digitalitzacio.social.application;
 
 import com.amg.digitalitzacio.agents.application.TelegramBotClient;
 import com.amg.digitalitzacio.auth.domain.TenantRepository;
+import com.amg.digitalitzacio.shared.storage.application.TenantStorageService;
 import com.amg.digitalitzacio.google.domain.GoogleModuleConfig;
 import com.amg.digitalitzacio.google.domain.GoogleModuleConfigRepository;
 import com.amg.digitalitzacio.social.domain.SocialMetaConfig;
@@ -47,6 +48,7 @@ public class SocialPublisherOrchestrator {
     private final GoogleModuleConfigRepository googleConfigRepo;
     private final VaultEncryption vaultEncryption;
     private final SocialAnalyticsService analyticsService;
+    private final TenantStorageService tenantStorageService;
     private final SocialContentGeneratorService contentGenerator;
     private final InstagramPublisherService instagramPublisher;
     private final FacebookPublisherService facebookPublisher;
@@ -443,6 +445,19 @@ public class SocialPublisherOrchestrator {
 
         String fileId = videoFileId != null ? videoFileId : photoFileId;
 
+        // P44: /imatges — mostra les imatges pujades al storage del tenant
+        if (text != null && (text.equalsIgnoreCase("/imatges") || text.equalsIgnoreCase("/images"))
+                && fileId == null) {
+            sendStorageImagePicker(chatId, draft);
+            return;
+        }
+
+        // P44: IMATGE#N — l'usuari tria una imatge de la galeria per número
+        if (text != null && text.toUpperCase().startsWith("IMATGE#") && fileId == null) {
+            handleImagePick(chatId, text, draft);
+            return;
+        }
+
         // Cas 1: l'usuari ha enviat el mèdia directament per Telegram
         if (fileId != null) {
             telegramBotClient.sendMessage(chatId, videoFileId != null ? "⏳ Pujant el vídeo…" : "⏳ Pujant la foto…");
@@ -478,6 +493,71 @@ public class SocialPublisherOrchestrator {
         }
 
         askWhenToPublish(chatId, draft);
+    }
+
+    // ─── P44: image picker des de l'emmagatzematge ────────────────────────────
+
+    private void sendStorageImagePicker(Long chatId, Map<String, String> draft) {
+        UUID tenantId = UUID.fromString(draft.get("tenantId"));
+        var images = tenantStorageService.listTenantImages(tenantId, 8);
+        if (images.isEmpty()) {
+            telegramBotClient.sendMessage(chatId,
+                "📭 No tens imatges pujades al teu espai d'emmagatzematge.\n"
+                + "Envia una foto directament o una URL pública.");
+            return;
+        }
+        draft.put("imgPickerCount", String.valueOf(images.size()));
+        for (int i = 0; i < images.size(); i++) {
+            draft.put("imgPicker" + (i + 1), images.get(i).fileId());
+        }
+        saveDraft(chatId, draft);
+
+        var sb = new StringBuilder("🖼 <b>Tria una imatge del teu espai:</b>\n\n");
+        for (int i = 0; i < images.size(); i++) {
+            String name = images.get(i).fileName();
+            if (name.contains("/")) name = name.substring(name.lastIndexOf('/') + 1);
+            if (name.length() > 40) name = name.substring(0, 37) + "…";
+            sb.append(i + 1).append(". ").append(name).append("\n");
+        }
+        sb.append("\nEscriu <code>IMATGE#N</code> per triar, o envia una foto/URL directament.");
+        telegramBotClient.sendMessage(chatId, sb.toString());
+    }
+
+    private void handleImagePick(Long chatId, String text, Map<String, String> draft) {
+        int pick;
+        try { pick = Integer.parseInt(text.replaceAll("(?i)IMATGE#", "").trim()); }
+        catch (NumberFormatException e) { pick = -1; }
+
+        String key = "imgPicker" + pick;
+        if (pick < 1 || !draft.containsKey(key)) {
+            telegramBotClient.sendMessage(chatId,
+                "Escriu <code>IMATGE#N</code> amb el número de la llista, o envia una foto/URL directament.");
+            return;
+        }
+        String fileId = draft.get(key);
+        // Neteja claus temporals del picker
+        int count = Integer.parseInt(draft.getOrDefault("imgPickerCount", "0"));
+        for (int i = 1; i <= count; i++) draft.remove("imgPicker" + i);
+        draft.remove("imgPickerCount");
+
+        // Genera URL pública signada (5 min per al flux, suficient)
+        UUID tenantId = UUID.fromString(draft.get("tenantId"));
+        try {
+            var images = tenantStorageService.listTenantImages(tenantId, 8);
+            var chosen = images.stream().filter(f -> f.fileId().equals(fileId)).findFirst();
+            if (chosen.isEmpty()) {
+                telegramBotClient.sendMessage(chatId, "⚠️ No s'ha trobat la imatge. Prova de nou.");
+                return;
+            }
+            // Usa el fileId com a mediaUrl (el publisher resoldrà la URL signada en publicar)
+            draft.put("mediaUrl", fileId);
+            draft.put("mediaKind", "image");
+            draft.put("mediaFromStorage", "true");
+            saveDraft(chatId, draft);
+            askWhenToPublish(chatId, draft);
+        } catch (Exception e) {
+            telegramBotClient.sendMessage(chatId, "⚠️ Error accedint a la imatge: " + e.getMessage());
+        }
     }
 
     private static final java.time.ZoneId ZONE_ES = java.time.ZoneId.of("Europe/Madrid");
@@ -736,7 +816,7 @@ public class SocialPublisherOrchestrator {
             telegramBotClient.sendMessage(chatId, "REEL".equals(pt)
                 ? "🎬 Envia el vídeo directament aquí (MP4, màx 20 MB), o una URL pública:"
                 : "📸 Envia la foto directament aquí, o una URL pública:\n"
-                  + "Exemple: <code>https://cdn.amgdl.com/fotos/foto.jpg</code>\n\n"
+                  + "O escriu <code>/imatges</code> per triar del teu espai d'emmagatzematge.\n"
                   + "O escriu <code>SENSE_FOTO</code> per publicar sense imatge.");
         } else {
             askWhenToPublish(chatId, draft);
@@ -1085,6 +1165,44 @@ public class SocialPublisherOrchestrator {
      * P34: envia la llista dels pròxims posts programats per al tenant.
      * Cada post inclou un botó de cancel·lació inline (màxim 5).
      */
+    /**
+     * P43: vista mensual del calendari de posts programats.
+     * Mostra tots els posts programats del mes actual i el mes vinent, agrupats per setmana.
+     */
+    public void sendMonthlyCalendar(UUID tenantId, Long chatId) {
+        var now  = java.time.ZonedDateTime.now(ZONE_ES);
+        var from = now.toLocalDate().withDayOfMonth(1).atStartOfDay(ZONE_ES).toInstant();
+        var to   = now.toLocalDate().withDayOfMonth(1).plusMonths(2).atStartOfDay(ZONE_ES).toInstant();
+        var posts = postRepository.findScheduledBetween(tenantId, from, to);
+
+        if (posts.isEmpty()) {
+            telegramBotClient.sendMessage(chatId,
+                "📭 No tens cap publicació programada per als pròxims 2 mesos.");
+            return;
+        }
+        var fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm").withZone(ZONE_ES);
+        var sb  = new StringBuilder("📅 <b>Calendari de publicacions</b>\n\n");
+        String lastWeekLabel = null;
+        for (var p : posts) {
+            var zdt = p.getScheduledAt().atZone(ZONE_ES);
+            int weekNum = zdt.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+            String weekLabel = "Setmana " + weekNum;
+            if (!weekLabel.equals(lastWeekLabel)) {
+                if (lastWeekLabel != null) sb.append("\n");
+                sb.append("— <b>").append(weekLabel).append("</b> —\n");
+                lastWeekLabel = weekLabel;
+            }
+            String label = NETWORK_LABEL.getOrDefault(p.getNetwork(), p.getNetwork());
+            String cap   = p.getCaption() != null && !p.getCaption().isBlank()
+                ? (p.getCaption().length() > 45 ? p.getCaption().substring(0, 42) + "…" : p.getCaption())
+                : "(sense text)";
+            sb.append("• ").append(fmt.format(p.getScheduledAt()))
+              .append(" · ").append(label)
+              .append(" · \"").append(cap).append("\"\n");
+        }
+        telegramBotClient.sendMessage(chatId, sb.toString().trim());
+    }
+
     public void sendUpcomingPosts(UUID tenantId, Long chatId) {
         var upcoming = postRepository.findUpcomingScheduled(tenantId, Instant.now());
         if (upcoming.isEmpty()) {
@@ -1162,7 +1280,13 @@ public class SocialPublisherOrchestrator {
             String cap   = p.getCaption() != null && !p.getCaption().isBlank()
                 ? (p.getCaption().length() > 50 ? p.getCaption().substring(0, 47) + "…" : p.getCaption())
                 : "(sense text)";
-            sb.append(i + 1).append(". ").append(label).append(" · ").append(when)
+            // P45: mostrar mètriques si disponibles
+            String metrics = "";
+            if (p.getLikes() != null || p.getReach() != null) {
+                metrics = " · " + (p.getLikes() != null ? p.getLikes() + " likes" : "")
+                    + (p.getReach() != null ? (p.getLikes() != null ? ", " : "") + p.getReach() + " abast" : "");
+            }
+            sb.append(i + 1).append(". ").append(label).append(" · ").append(when).append(metrics)
               .append("\n   \"").append(cap).append("\"\n")
               .append("   <code>REUTILITZAR#").append(i + 1).append("</code>\n\n");
         }

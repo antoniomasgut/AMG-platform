@@ -66,6 +66,9 @@ public class SocialPost {
     @Builder.Default
     private Integer retryCount = 0;
 
+    /** P42: quan s'ha enviat la notificació de rendiment 24h post-publicació. */
+    private Instant performanceNotifiedAt;
+
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();

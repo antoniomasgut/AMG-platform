@@ -5,6 +5,8 @@ import com.amg.digitalitzacio.auth.domain.TenantRepository;
 import com.amg.digitalitzacio.google.domain.GoogleModuleConfigRepository;
 import com.amg.digitalitzacio.social.domain.SocialMetaConfig;
 import com.amg.digitalitzacio.social.domain.SocialMetaConfigRepository;
+import com.amg.digitalitzacio.social.application.SocialAnalyticsService;
+import com.amg.digitalitzacio.shared.storage.application.TenantStorageService;
 import com.amg.digitalitzacio.social.domain.SocialPost;
 import com.amg.digitalitzacio.social.domain.SocialPostRepository;
 import com.amg.digitalitzacio.vault.application.VaultEncryption;
@@ -46,6 +48,8 @@ class SocialPublisherOrchestratorTest {
     @Mock GoogleBusinessPublisherService googleBusinessPublisher;
     @Mock LinkedInPublisherService linkedInPublisher;
     @Mock TelegramMediaUploadService telegramMediaUploadService;
+    @Mock SocialAnalyticsService analyticsService;
+    @Mock TenantStorageService tenantStorageService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -56,8 +60,9 @@ class SocialPublisherOrchestratorTest {
     private SocialPublisherOrchestrator orchestrator() {
         return new SocialPublisherOrchestrator(redis, objectMapper, telegramBotClient,
                 tenantRepository, metaConfigRepo, postRepository, googleConfigRepo,
-                vaultEncryption, contentGenerator, instagramPublisher, facebookPublisher,
-                googleBusinessPublisher, linkedInPublisher, telegramMediaUploadService);
+                vaultEncryption, analyticsService, tenantStorageService, contentGenerator,
+                instagramPublisher, facebookPublisher, googleBusinessPublisher,
+                linkedInPublisher, telegramMediaUploadService);
     }
 
     private void stubMetaConfig() {

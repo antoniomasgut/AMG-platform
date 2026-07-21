@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.shared.storage.application;
 
+import com.amg.digitalitzacio.shared.storage.StorageFile;
 import com.amg.digitalitzacio.shared.storage.StorageProviderRouter;
 import com.amg.digitalitzacio.shared.storage.api.dto.ProviderConfigRequest;
 import com.amg.digitalitzacio.shared.storage.api.dto.ProviderConfigResponse;
@@ -108,6 +109,28 @@ public class TenantStorageService {
         } catch (Exception e) {
             throw new RuntimeException("Test de connexió fallit: " + e.getMessage());
         }
+    }
+
+    /**
+     * P44: llista les últimes imatges pujades pel tenant (filtrades per extensió).
+     * Retorna fins a maxKeys fitxers; si no hi ha storage configurat, retorna buit.
+     */
+    @Transactional(readOnly = true)
+    public List<StorageFile> listTenantImages(UUID tenantId, int maxKeys) {
+        return configRepo.findByTenantIdAndActiveTrue(tenantId)
+            .map(config -> {
+                try {
+                    var provider = router.buildProvider(config);
+                    return provider.listFiles("", maxKeys).stream()
+                        .filter(f -> f.fileName() != null && f.fileName().toLowerCase()
+                            .matches(".*\\.(jpg|jpeg|png|gif|webp)"))
+                        .collect(Collectors.toList());
+                } catch (Exception e) {
+                    log.warn("listTenantImages fallit per {}: {}", tenantId, e.getMessage());
+                    return List.<StorageFile>of();
+                }
+            })
+            .orElse(List.of());
     }
 
     private ProviderConfigResponse toResponse(StorageProviderConfig c) {
