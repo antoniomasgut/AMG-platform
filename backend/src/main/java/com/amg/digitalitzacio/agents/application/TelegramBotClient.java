@@ -57,6 +57,19 @@ public class TelegramBotClient {
         return sent;
     }
 
+    /** Envia missatge amb keyboard multi-fila. rows = llista de files, cada fila = llista de botons. */
+    public boolean sendMessageWithRows(Long chatId, String text, List<List<Map<String, String>>> rows) {
+        try {
+            String markup = JSON.writeValueAsString(Map.of("inline_keyboard", rows));
+            boolean sent = sendRaw(chatId, text, markup, getPlatformToken());
+            if (!sent) enqueue(chatId, text, markup);
+            return sent;
+        } catch (Exception e) {
+            log.warn("Error enviant missatge amb files de botons: {}", e.getMessage());
+            return sendMessage(chatId, text);
+        }
+    }
+
     /** Respon un callback_query (treu l'spinner del botó i mostra un toast a Telegram). */
     public void answerCallbackQuery(String callbackQueryId, String text) {
         try {

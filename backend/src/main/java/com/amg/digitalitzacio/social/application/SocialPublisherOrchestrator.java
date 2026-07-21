@@ -105,6 +105,7 @@ public class SocialPublisherOrchestrator {
             case "AWAIT_CAROUSEL_MEDIA" -> "fotos del carrusel";
             case "AWAIT_LINK_URL"       -> "URL de l'enllaç";
             case "AWAIT_CAPTION"        -> "caption / text";
+            case "AWAIT_CAPTION_PICK"   -> "tria d'opció de caption";
             case "AWAIT_SCHEDULE"       -> "data de publicació";
             case "AWAIT_CONFIRM"        -> "confirmació final";
             default                     -> step;
@@ -135,6 +136,7 @@ public class SocialPublisherOrchestrator {
             case "AWAIT_CAROUSEL_MEDIA"  -> handleCarouselMedia(chatId, text, photoFileId, draft);
             case "AWAIT_LINK_URL"        -> handleLinkUrl(chatId, text, draft);
             case "AWAIT_CAPTION"         -> handleCaption(chatId, text, draft);
+            case "AWAIT_CAPTION_PICK"    -> handleCaptionPick(chatId, text, draft);
             case "AWAIT_SCHEDULE"        -> handleSchedule(chatId, text, draft);
             case "AWAIT_CONFIRM"         -> handleConfirm(chatId, text, draft);
             default -> {
@@ -686,8 +688,9 @@ public class SocialPublisherOrchestrator {
     private void handleCaptionInternal(Long chatId, String text, Map<String, String> draft) {
         String caption;
         if (text.trim().equalsIgnoreCase("IA")) {
-            // P37 + P38: genera caption per cada xarxa seleccionada, evitant repeticions
-            caption = generateAndStoreCaptions(chatId, draft, true);
+            // P39: mostra 3 opcions de caption per triar
+            generateAndShowOptions(chatId, draft);
+            return;
         } else {
             caption = "SENSE_TEXT".equalsIgnoreCase(text.trim()) ? "" : text.trim();
             // Neteja captions per-xarxa antics quan l'usuari escriu manualment
@@ -1117,6 +1120,110 @@ public class SocialPublisherOrchestrator {
             "✅ Publicació cancel·lada.\n"
             + "Era: " + NETWORK_LABEL.getOrDefault(post.getNetwork(), post.getNetwork())
             + " · " + fmt.format(post.getScheduledAt()));
+    }
+
+    // ─── P39: tria entre 3 opcions de caption ────────────────────────────────
+
+    /** Genera 3 opcions de caption i presenta-les amb botons per triar. */
+    private void generateAndShowOptions(Long chatId, Map<String, String> draft) {
+        telegramBotClient.sendMessage(chatId, "🤖 Generant 3 opcions de caption…");
+
+        UUID tenantId = UUID.fromString(draft.get("tenantId"));
+        String business = draft.getOrDefault("business", "el negoci");
+        String sector   = draft.getOrDefault("sector", "general");
+        String postType = draft.getOrDefault("postType", "PHOTO");
+        String brief    = "Publicació de tipus " + postType + " per a " + business + " (sector: " + sector + ")";
+        String ctx      = business + " — " + sector;
+
+        var networks = resolveNetworks(draft);
+        String primaryNet = networks.isEmpty() ? "INSTAGRAM" : networks.get(0);
+        List<String> history = recentCaptionsFor(tenantId, primaryNet);
+
+        List<String> options = contentGenerator.generateCaptionOptions(primaryNet, ctx, brief, history);
+
+        for (int i = 0; i < options.size(); i++) {
+            draft.put("captionOpt" + (i + 1), options.get(i));
+        }
+        draft.put("step", "AWAIT_CAPTION_PICK");
+        saveDraft(chatId, draft);
+
+        var sb = new StringBuilder("🎨 <b>Tria el caption que més t'agradi:</b>\n\n");
+        for (int i = 0; i < options.size(); i++) {
+            sb.append("<b>").append(i + 1).append(".</b> ").append(options.get(i)).append("\n\n");
+        }
+        var numericRow = new java.util.ArrayList<Map<String, String>>();
+        for (int i = 1; i <= options.size(); i++) {
+            numericRow.add(Map.of("text", String.valueOf(i), "callback_data", String.valueOf(i)));
+        }
+        telegramBotClient.sendMessageWithRows(chatId, sb.toString().trim(),
+            List.of(
+                numericRow,
+                List.of(
+                    Map.of("text", "🔄 Regenerar", "callback_data", "REGENERAR_OPTS"),
+                    Map.of("text", "✍️ Escriure", "callback_data", "ESCRIURE")
+                )
+            ));
+    }
+
+    /** Gestiona la tria d'opció de caption (pas AWAIT_CAPTION_PICK). */
+    private void handleCaptionPick(Long chatId, String text, Map<String, String> draft) {
+        String t = text.trim().toUpperCase();
+
+        if (t.matches("REGENERAR.*|🔄.*|REGENERAR_OPTS")) {
+            clearCaptionOptions(draft);
+            generateAndShowOptions(chatId, draft);
+            return;
+        }
+
+        if (t.matches("ESCRIURE|MANUAL|ESCRIU|✍️.*")) {
+            clearCaptionOptions(draft);
+            draft.put("step", "AWAIT_CAPTION");
+            saveDraft(chatId, draft);
+            telegramBotClient.sendMessage(chatId,
+                "✏️ Escriu el teu caption, o <code>IA</code> per generar-ne de nous.\n"
+                + "O <code>SENSE_TEXT</code> per publicar sense text.");
+            return;
+        }
+
+        int pick;
+        try { pick = Integer.parseInt(t); } catch (NumberFormatException e) { pick = -1; }
+        String optKey = (pick >= 1 && pick <= 3) ? "captionOpt" + pick : null;
+
+        if (optKey == null || !draft.containsKey(optKey)) {
+            telegramBotClient.sendMessage(chatId,
+                "Escriu 1, 2 o 3 per triar una opció, <code>REGENERAR</code> per generar-ne de noves, "
+                + "o <code>ESCRIURE</code> per entrar text manualment.");
+            return;
+        }
+
+        // Opció triada → establir caption i procedir
+        String chosen = draft.get(optKey);
+        draft.put("caption", chosen);
+        clearCaptionOptions(draft);
+        // P37: si hi ha múltiples xarxes, genera captions per-xarxa basant-se en l'opció triada
+        var networks = resolveNetworks(draft);
+        if (networks.size() > 1) {
+            generateAndStoreCaptions(chatId, draft, false);
+        }
+
+        String pt = draft.get("postType");
+        boolean needsMedia = "PHOTO".equals(pt) || "REEL".equals(pt);
+        if (needsMedia) {
+            draft.put("step", "AWAIT_MEDIA");
+            saveDraft(chatId, draft);
+            telegramBotClient.sendMessage(chatId, "REEL".equals(pt)
+                ? "🎬 Envia el vídeo directament aquí (MP4, màx 20 MB), o una URL pública:"
+                : "📸 Envia la foto directament aquí, o una URL pública:\n"
+                  + "O escriu <code>SENSE_FOTO</code> per publicar sense imatge.");
+        } else {
+            askWhenToPublish(chatId, draft);
+        }
+    }
+
+    private static void clearCaptionOptions(Map<String, String> draft) {
+        draft.remove("captionOpt1");
+        draft.remove("captionOpt2");
+        draft.remove("captionOpt3");
     }
 
     // ─── Helpers P37 + P38 ────────────────────────────────────────────────────

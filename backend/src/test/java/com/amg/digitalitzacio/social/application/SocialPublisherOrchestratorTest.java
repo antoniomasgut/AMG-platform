@@ -482,6 +482,7 @@ class SocialPublisherOrchestratorTest {
 
     @Test
     void captionIA_multiXarxa_generaCapcioPerCadaXarxa() {
+        // P39: "IA" va a AWAIT_CAPTION_PICK; la generació per xarxa passa en confirmar l'opció
         Long chatId = 260L;
         stubFlowDraft(chatId, new java.util.HashMap<>(Map.of(
             "tenantId", TENANT_ID.toString(),
@@ -490,21 +491,52 @@ class SocialPublisherOrchestratorTest {
             "fb", "1",
             "postType", "TEXT"
         )));
-        when(metaConfigRepo.findByTenantId(TENANT_ID)).thenReturn(java.util.Optional.empty());
         when(postRepository.findPublishedSince(eq(TENANT_ID), any())).thenReturn(List.of());
-        when(contentGenerator.generateCaption(any(), any(), any(), any())).thenReturn("Caption IA");
+        when(contentGenerator.generateCaptionOptions(any(), any(), any(), any()))
+            .thenReturn(List.of("Opció 1", "Opció 2", "Opció 3"));
 
         orchestrator().handleStep(chatId, "IA", null, null);
 
-        // Ha de cridar generateCaption per a INSTAGRAM i FACEBOOK (2 vegades)
-        verify(contentGenerator, times(2)).generateCaption(any(), any(), any(), any());
-        // El draft desat ha de contenir captionIG i captionFB
+        // Ha de cridar generateCaptionOptions (no generateCaption directament)
+        verify(contentGenerator).generateCaptionOptions(any(), any(), any(), any());
+        verify(contentGenerator, never()).generateCaption(any(), any(), any(), any());
+        // El draft desat ha d'anar a AWAIT_CAPTION_PICK amb les opcions
         var captor = ArgumentCaptor.forClass(String.class);
         verify(opsForValue, atLeastOnce()).set(eq("social:draft:" + chatId),
             captor.capture(), anyLong(), any());
-        String draftAmbCaptions = captor.getAllValues().stream()
+        String saved = captor.getAllValues().stream()
+            .filter(v -> v.contains("captionOpt1")).findFirst().orElse("");
+        assertThat(saved).contains("AWAIT_CAPTION_PICK").contains("captionOpt1");
+    }
+
+    @Test
+    void captionPickOpcio1_multiXarxa_generaCapcionsPerXarxa() {
+        // P37 + P39: en triar l'opció 1 en multi-xarxa, genera per-network captions
+        Long chatId = 263L;
+        stubFlowDraft(chatId, new java.util.HashMap<>(Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_CAPTION_PICK",
+            "ig", "1",
+            "fb", "1",
+            "postType", "TEXT",
+            "captionOpt1", "Primera opció de caption",
+            "captionOpt2", "Segona opció",
+            "captionOpt3", "Tercera opció"
+        )));
+        when(metaConfigRepo.findByTenantId(TENANT_ID)).thenReturn(java.util.Optional.empty());
+        when(postRepository.findPublishedSince(eq(TENANT_ID), any())).thenReturn(List.of());
+        when(contentGenerator.generateCaption(any(), any(), any(), any())).thenReturn("Caption per xarxa");
+
+        orchestrator().handleStep(chatId, "1", null, null);
+
+        // Ha de generar captions per a IG i FB (2 crides) per P37
+        verify(contentGenerator, times(2)).generateCaption(any(), any(), any(), any());
+        var captor = ArgumentCaptor.forClass(String.class);
+        verify(opsForValue, atLeastOnce()).set(eq("social:draft:" + chatId),
+            captor.capture(), anyLong(), any());
+        String saved = captor.getAllValues().stream()
             .filter(v -> v.contains("captionIG")).findFirst().orElse("");
-        assertThat(draftAmbCaptions).contains("captionIG").contains("captionFB");
+        assertThat(saved).contains("captionIG").contains("captionFB");
     }
 
     @Test
@@ -537,6 +569,7 @@ class SocialPublisherOrchestratorTest {
 
     @Test
     void captionIA_passaHistorialALaIA() {
+        // P38 s'activa via generateCaptionOptions (P39) que rep l'historial
         Long chatId = 262L;
         stubFlowDraft(chatId, new java.util.HashMap<>(Map.of(
             "tenantId", TENANT_ID.toString(),
@@ -545,17 +578,17 @@ class SocialPublisherOrchestratorTest {
             "postType", "TEXT",
             "business", "El Restaurant"
         )));
-        when(metaConfigRepo.findByTenantId(TENANT_ID)).thenReturn(java.util.Optional.empty());
         var post1 = SocialPost.builder().id(UUID.randomUUID()).tenantId(TENANT_ID)
             .network("INSTAGRAM").caption("Caption anterior 1").status("PUBLISHED").build();
         var post2 = SocialPost.builder().id(UUID.randomUUID()).tenantId(TENANT_ID)
             .network("INSTAGRAM").caption("Caption anterior 2").status("PUBLISHED").build();
         when(postRepository.findPublishedSince(eq(TENANT_ID), any())).thenReturn(List.of(post1, post2));
-        when(contentGenerator.generateCaption(any(), any(), any(), any())).thenReturn("Nou caption");
+        when(contentGenerator.generateCaptionOptions(any(), any(), any(), any()))
+            .thenReturn(List.of("Opció 1"));
 
         orchestrator().handleStep(chatId, "IA", null, null);
 
-        verify(contentGenerator).generateCaption(
+        verify(contentGenerator).generateCaptionOptions(
             eq("INSTAGRAM"), any(), any(),
             argThat(list -> list.size() == 2
                 && list.contains("Caption anterior 1")
@@ -571,6 +604,57 @@ class SocialPublisherOrchestratorTest {
         verify(postRepository, never()).save(any());
         verify(telegramBotClient).sendMessage(eq(300L),
             argThat(msg -> msg.contains("#5")));
+    }
+
+    // ─── P39: 3 opcions de caption ───────────────────────────────────────────
+
+    @Test
+    void captionPick_escriure_tornaaAwaitCaption() {
+        Long chatId = 264L;
+        stubFlowDraft(chatId, new java.util.HashMap<>(Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_CAPTION_PICK",
+            "ig", "1",
+            "postType", "TEXT",
+            "captionOpt1", "Opció 1",
+            "captionOpt2", "Opció 2",
+            "captionOpt3", "Opció 3"
+        )));
+
+        orchestrator().handleStep(chatId, "ESCRIURE", null, null);
+
+        verify(telegramBotClient).sendMessage(eq(chatId),
+            argThat(msg -> msg.contains("SENSE_TEXT")));
+        var captor = ArgumentCaptor.forClass(String.class);
+        verify(opsForValue).set(eq("social:draft:" + chatId), captor.capture(), anyLong(), any());
+        assertThat(captor.getValue()).contains("AWAIT_CAPTION")
+                                    .doesNotContain("captionOpt1");
+    }
+
+    @Test
+    void captionPickOpcio2_xarxaUnica_posaElCaption() {
+        Long chatId = 265L;
+        stubFlowDraft(chatId, new java.util.HashMap<>(Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_CAPTION_PICK",
+            "ig", "1",
+            "postType", "TEXT",
+            "captionOpt1", "Opció casual",
+            "captionOpt2", "Opció professional",
+            "captionOpt3", "Opció promocional"
+        )));
+
+        orchestrator().handleStep(chatId, "2", null, null);
+
+        // xarxa única → no s'ha de cridar generateCaption per-xarxa
+        verifyNoInteractions(contentGenerator);
+        var captor = ArgumentCaptor.forClass(String.class);
+        verify(opsForValue, atLeastOnce()).set(eq("social:draft:" + chatId),
+            captor.capture(), anyLong(), any());
+        String saved = captor.getAllValues().get(captor.getAllValues().size() - 1);
+        assertThat(saved).contains("Opció professional")
+                         .doesNotContain("captionOpt1")
+                         .doesNotContain("captionOpt2");
     }
 
     // ─── P33: REGENERAR caption IA a la confirmació ───────────────────────────

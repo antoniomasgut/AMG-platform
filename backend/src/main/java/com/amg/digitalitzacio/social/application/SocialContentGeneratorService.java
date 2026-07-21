@@ -53,6 +53,51 @@ public class SocialContentGeneratorService {
         }
     }
 
+    /**
+     * P39: genera 3 opcions de caption en tons diferents (casual / professional / promocional).
+     * Retorna entre 1 i 3 opcions; fa fallback a 1 sola opció si el parsing falla.
+     */
+    public List<String> generateCaptionOptions(String network, String businessContext,
+                                               String userBrief, List<String> recentCaptions) {
+        String networkName = switch (network.toUpperCase()) {
+            case "INSTAGRAM"       -> "Instagram";
+            case "FACEBOOK"        -> "Facebook";
+            case "GOOGLE_BUSINESS" -> "Google Business Profile";
+            case "LINKEDIN"        -> "LinkedIn";
+            default -> "xarxes socials";
+        };
+        String recentHint = "";
+        if (recentCaptions != null && !recentCaptions.isEmpty()) {
+            recentHint = "Evita repetir temes i expressions de: "
+                + recentCaptions.stream().limit(3)
+                    .map(c -> "«" + (c.length() > 60 ? c.substring(0, 57) + "…" : c) + "»")
+                    .collect(java.util.stream.Collectors.joining(", "))
+                + "\n";
+        }
+        String systemPrompt = "Ets un copywriter expert en " + networkName + " per a negocis locals a Mallorca.\n"
+            + recentHint
+            + "Genera EXACTAMENT 3 versions de caption per al contingut descrit, en tons diferents:\n"
+            + "1) To casual i proper (emojis, llenguatge informal)\n"
+            + "2) To professional (directe, sense emojis excessius)\n"
+            + "3) To promocional (CTA directa, benefici o oferta)\n"
+            + "Format OBLIGATORI: separa les 3 opcions amb «---» en una línia sola. Cap text extra fora de les opcions.";
+        String userPrompt = "Negoci: " + businessContext + "\nBreu: " + userBrief
+            + "\n\nGenera les 3 opcions:";
+        try {
+            var provider = aiRouter.forModel(MODEL);
+            String raw = provider.chat(systemPrompt, List.of(), userPrompt).trim();
+            var parts = java.util.Arrays.stream(raw.split("(?m)^\\s*---\\s*$"))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .limit(3)
+                .collect(java.util.stream.Collectors.toList());
+            return parts.isEmpty() ? List.of(raw) : parts;
+        } catch (Exception e) {
+            log.warn("Error generant opcions de caption IA per {}: {}", network, e.getMessage());
+            return List.of(generateCaption(network, businessContext, userBrief, recentCaptions));
+        }
+    }
+
     public String generateCaption(String network, String businessContext, String userBrief) {
         return generateCaption(network, businessContext, userBrief, List.of());
     }
