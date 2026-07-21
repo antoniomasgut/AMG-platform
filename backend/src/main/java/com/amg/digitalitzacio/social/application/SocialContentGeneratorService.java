@@ -54,7 +54,16 @@ public class SocialContentGeneratorService {
     }
 
     public String generateCaption(String network, String businessContext, String userBrief) {
-        String systemPrompt = switch (network.toUpperCase()) {
+        return generateCaption(network, businessContext, userBrief, List.of());
+    }
+
+    /**
+     * P37: genera un caption adaptat a l'estil específic de cada xarxa.
+     * P38: recentCaptions (últims 5 posts de la xarxa) per evitar repeticions.
+     */
+    public String generateCaption(String network, String businessContext, String userBrief,
+                                  List<String> recentCaptions) {
+        String styleGuide = switch (network.toUpperCase()) {
             case "INSTAGRAM" -> """
                     Ets un copywriter expert en Instagram per a negocis locals a Mallorca.
                     Escriu en català o castellà (adaptat al negoci).
@@ -72,12 +81,28 @@ public class SocialContentGeneratorService {
             case "GOOGLE_BUSINESS" -> """
                     Ets un copywriter expert en Google Business Profile per a negocis locals a Mallorca.
                     Escriu en català o castellà (adaptat al negoci). To professional i local.
-                    Sense emojis. Inclou el nom del negoci i la localitat si és rellevant.
+                    Sense emojis ni hashtags. Inclou el nom del negoci i la localitat si és rellevant.
                     Màxim 200 caràcters. Concís i informatiu.
+                    Torna NOMÉS el text del post, res més.
+                    """;
+            case "LINKEDIN" -> """
+                    Ets un copywriter expert en LinkedIn per a negocis locals a Mallorca.
+                    Escriu en català o castellà (adaptat al negoci). To professional però proper.
+                    Màxim 3 hashtags. 1-2 emojis. Màxim 300 caràcters.
                     Torna NOMÉS el text del post, res més.
                     """;
             default -> "Escriu un caption curt i professional per a xarxes socials. Màxim 200 caràcters.";
         };
+
+        // P38: evitar repeticions de les publicacions recents
+        String systemPrompt = styleGuide;
+        if (recentCaptions != null && !recentCaptions.isEmpty()) {
+            var samples = recentCaptions.stream()
+                .map(c -> "«" + (c.length() > 80 ? c.substring(0, 77) + "…" : c) + "»")
+                .collect(java.util.stream.Collectors.joining(", "));
+            systemPrompt += "Evita repetir els mateixos temes, expressions o crida a l'acció de "
+                + "publicacions recents: " + samples + "\n";
+        }
 
         String userPrompt = "Negoci: " + businessContext + "\n\nBreu de l'usuari: " + userBrief
                 + "\n\nGenera el caption per a " + network + ":";

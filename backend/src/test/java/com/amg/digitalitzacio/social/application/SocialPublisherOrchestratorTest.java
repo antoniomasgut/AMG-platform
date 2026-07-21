@@ -478,6 +478,90 @@ class SocialPublisherOrchestratorTest {
             argThat(msg -> msg.contains("cancel·lada") || msg.contains("Cancel·lada")));
     }
 
+    // ─── P37: captions per xarxa ─────────────────────────────────────────────
+
+    @Test
+    void captionIA_multiXarxa_generaCapcioPerCadaXarxa() {
+        Long chatId = 260L;
+        stubFlowDraft(chatId, new java.util.HashMap<>(Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_CAPTION",
+            "ig", "1",
+            "fb", "1",
+            "postType", "TEXT"
+        )));
+        when(metaConfigRepo.findByTenantId(TENANT_ID)).thenReturn(java.util.Optional.empty());
+        when(postRepository.findPublishedSince(eq(TENANT_ID), any())).thenReturn(List.of());
+        when(contentGenerator.generateCaption(any(), any(), any(), any())).thenReturn("Caption IA");
+
+        orchestrator().handleStep(chatId, "IA", null, null);
+
+        // Ha de cridar generateCaption per a INSTAGRAM i FACEBOOK (2 vegades)
+        verify(contentGenerator, times(2)).generateCaption(any(), any(), any(), any());
+        // El draft desat ha de contenir captionIG i captionFB
+        var captor = ArgumentCaptor.forClass(String.class);
+        verify(opsForValue, atLeastOnce()).set(eq("social:draft:" + chatId),
+            captor.capture(), anyLong(), any());
+        String draftAmbCaptions = captor.getAllValues().stream()
+            .filter(v -> v.contains("captionIG")).findFirst().orElse("");
+        assertThat(draftAmbCaptions).contains("captionIG").contains("captionFB");
+    }
+
+    @Test
+    void captionManual_netejaCapcionsPerXarxa() {
+        Long chatId = 261L;
+        var fields = new java.util.HashMap<String, String>();
+        fields.put("tenantId", TENANT_ID.toString());
+        fields.put("step", "AWAIT_CAPTION");
+        fields.put("ig", "1");
+        fields.put("fb", "1");
+        fields.put("postType", "TEXT");
+        fields.put("captionIG", "Caption antic Instagram");
+        fields.put("captionFB", "Caption antic Facebook");
+        stubFlowDraft(chatId, fields);
+
+        orchestrator().handleStep(chatId, "El meu text manual", null, null);
+
+        verifyNoInteractions(contentGenerator);
+        var captor = ArgumentCaptor.forClass(String.class);
+        verify(opsForValue, atLeastOnce()).set(eq("social:draft:" + chatId),
+            captor.capture(), anyLong(), any());
+        // Últim draft desat: ha de tenir el text manual però no captionIG/captionFB
+        String saved = captor.getAllValues().get(captor.getAllValues().size() - 1);
+        assertThat(saved).contains("El meu text manual")
+                         .doesNotContain("captionIG")
+                         .doesNotContain("captionFB");
+    }
+
+    // ─── P38: historial per evitar repeticions ────────────────────────────────
+
+    @Test
+    void captionIA_passaHistorialALaIA() {
+        Long chatId = 262L;
+        stubFlowDraft(chatId, new java.util.HashMap<>(Map.of(
+            "tenantId", TENANT_ID.toString(),
+            "step", "AWAIT_CAPTION",
+            "ig", "1",
+            "postType", "TEXT",
+            "business", "El Restaurant"
+        )));
+        when(metaConfigRepo.findByTenantId(TENANT_ID)).thenReturn(java.util.Optional.empty());
+        var post1 = SocialPost.builder().id(UUID.randomUUID()).tenantId(TENANT_ID)
+            .network("INSTAGRAM").caption("Caption anterior 1").status("PUBLISHED").build();
+        var post2 = SocialPost.builder().id(UUID.randomUUID()).tenantId(TENANT_ID)
+            .network("INSTAGRAM").caption("Caption anterior 2").status("PUBLISHED").build();
+        when(postRepository.findPublishedSince(eq(TENANT_ID), any())).thenReturn(List.of(post1, post2));
+        when(contentGenerator.generateCaption(any(), any(), any(), any())).thenReturn("Nou caption");
+
+        orchestrator().handleStep(chatId, "IA", null, null);
+
+        verify(contentGenerator).generateCaption(
+            eq("INSTAGRAM"), any(), any(),
+            argThat(list -> list.size() == 2
+                && list.contains("Caption anterior 1")
+                && list.contains("Caption anterior 2")));
+    }
+
     @Test
     void cancelUpcomingPost_ordinalInvalid_avisaError() {
         when(postRepository.findUpcomingScheduled(eq(TENANT_ID), any())).thenReturn(List.of());
@@ -504,11 +588,12 @@ class SocialPublisherOrchestratorTest {
             "sector", "RESTAURACIO"
         )));
         when(metaConfigRepo.findByTenantId(TENANT_ID)).thenReturn(java.util.Optional.empty());
-        when(contentGenerator.generateCaption(any(), any(), any())).thenReturn("Nou caption IA");
+        when(postRepository.findPublishedSince(eq(TENANT_ID), any())).thenReturn(List.of());
+        when(contentGenerator.generateCaption(any(), any(), any(), any())).thenReturn("Nou caption IA");
 
         orchestrator().handleStep(chatId, "REGENERAR", null, null);
 
-        verify(contentGenerator).generateCaption(any(), any(), any());
+        verify(contentGenerator).generateCaption(any(), any(), any(), any());
         verify(redis, never()).delete(any(String.class));
         verify(postRepository, never()).save(any());
         var captor = ArgumentCaptor.forClass(String.class);

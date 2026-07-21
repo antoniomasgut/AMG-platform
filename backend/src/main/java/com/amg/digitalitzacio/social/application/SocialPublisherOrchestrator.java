@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -648,7 +649,20 @@ public class SocialPublisherOrchestrator {
             sb.append(isVideo ? "🎬 Vídeo: " : "🖼 Imatge: ").append(draft.get("mediaUrl")).append("\n");
         }
 
-        if (caption != null && !caption.isBlank()) sb.append("\n").append(caption);
+        // P37: si hi ha captions per-xarxa generats per IA, mostrar-los per separat
+        var networks = resolveNetworks(draft);
+        boolean hasNetworkCaptions = networks.stream().anyMatch(n -> draft.containsKey(captionKey(n)));
+        if (hasNetworkCaptions) {
+            for (String net : networks) {
+                String nc = draft.getOrDefault(captionKey(net), draft.get("caption"));
+                if (nc != null && !nc.isBlank()) {
+                    sb.append("\n").append(networkEmoji(net)).append(" <b>")
+                      .append(networkLabelShort(net)).append(":</b>\n").append(nc);
+                }
+            }
+        } else if (caption != null && !caption.isBlank()) {
+            sb.append("\n").append(caption);
+        }
 
         // P32: si hi ha data programada, mostrar-la al resum
         if (draft.containsKey("scheduledAt")) {
@@ -672,23 +686,12 @@ public class SocialPublisherOrchestrator {
     private void handleCaptionInternal(Long chatId, String text, Map<String, String> draft) {
         String caption;
         if (text.trim().equalsIgnoreCase("IA")) {
-            String business = draft.getOrDefault("business", "el negoci");
-            String sector = draft.getOrDefault("sector", "general");
-            String postType = draft.getOrDefault("postType", "PHOTO");
-            boolean ig = "1".equals(draft.get("ig"));
-            String network = ig ? "INSTAGRAM" : ("1".equals(draft.get("fb")) ? "FACEBOOK" : "GOOGLE_BUSINESS");
-            // Idioma del tenant (null → el servei usarà el per-defecte de la xarxa)
-            UUID tenantId = UUID.fromString(draft.get("tenantId"));
-            String lang = metaConfigRepo.findByTenantId(tenantId)
-                    .map(mc -> mc.getDefaultContentLanguage()).filter(l -> l != null && !l.isBlank())
-                    .orElse(null);
-            String brief = "Publicació de tipus " + postType + " per a " + business
-                + " (sector: " + sector + ")"
-                + (lang != null ? ". Idioma del caption: " + lang + "." : "");
-            caption = contentGenerator.generateCaption(network, business + " — " + sector, brief);
-            telegramBotClient.sendMessage(chatId, "🤖 Caption generat per IA:\n\n" + caption);
+            // P37 + P38: genera caption per cada xarxa seleccionada, evitant repeticions
+            caption = generateAndStoreCaptions(chatId, draft, true);
         } else {
-            caption = text.trim();
+            caption = "SENSE_TEXT".equalsIgnoreCase(text.trim()) ? "" : text.trim();
+            // Neteja captions per-xarxa antics quan l'usuari escriu manualment
+            clearNetworkCaptions(draft);
         }
 
         draft.put("caption", caption);
@@ -738,22 +741,9 @@ public class SocialPublisherOrchestrator {
             return;
         }
 
-        // P33: regenerar caption IA sense cancel·lar el flux
+        // P33 + P37: regenerar captions IA (per xarxa) sense cancel·lar el flux
         if (normalized.matches("regenerar|regenera|regenerate")) {
-            UUID tenantId = UUID.fromString(draft.get("tenantId"));
-            String business = draft.getOrDefault("business", "el negoci");
-            String sector = draft.getOrDefault("sector", "general");
-            String postType = draft.getOrDefault("postType", "PHOTO");
-            boolean ig = "1".equals(draft.get("ig"));
-            String network = ig ? "INSTAGRAM" : ("1".equals(draft.get("fb")) ? "FACEBOOK" : "GOOGLE_BUSINESS");
-            String lang = metaConfigRepo.findByTenantId(tenantId)
-                    .map(mc -> mc.getDefaultContentLanguage()).filter(l -> l != null && !l.isBlank())
-                    .orElse(null);
-            String brief = "Publicació de tipus " + postType + " per a " + business
-                + " (sector: " + sector + ")"
-                + (lang != null ? ". Idioma del caption: " + lang + "." : "");
-            telegramBotClient.sendMessage(chatId, "🤖 Generant un nou caption…");
-            String newCaption = contentGenerator.generateCaption(network, business + " — " + sector, brief);
+            String newCaption = generateAndStoreCaptions(chatId, draft, false);
             draft.put("caption", newCaption);
             saveDraft(chatId, draft);
             sendPreview(chatId, draft, newCaption);
@@ -775,11 +765,13 @@ public class SocialPublisherOrchestrator {
                 Instant scheduledAt = Instant.parse(draft.get("scheduledAt"));
                 String resolvedMedia = resolveMediaUrl(draft);
                 for (String net : resolveNetworks(draft)) {
+                    // P37: cada xarxa guarda el seu propi caption
+                    String netCaption = resolveNetworkCaption(draft, net);
                     postRepository.save(SocialPost.builder()
                         .tenantId(tenantId)
                         .network(net)
                         .postType(draft.get("postType"))
-                        .caption(draft.get("caption"))
+                        .caption(netCaption)
                         .mediaUrl(resolvedMedia)
                         .status("SCHEDULED")
                         .scheduledAt(scheduledAt)
@@ -825,9 +817,8 @@ public class SocialPublisherOrchestrator {
 
     @Async
     public void publishAsync(UUID tenantId, Long chatId, Map<String, String> draft) {
-        String postType  = draft.get("postType");
-        String caption   = draft.get("caption");
-        String mediaUrl  = resolveMediaUrl(draft);
+        String postType = draft.get("postType");
+        String mediaUrl = resolveMediaUrl(draft);
 
         var results = new StringBuilder("📊 <b>Resultats:</b>\n");
         var labels = Map.of(
@@ -835,6 +826,8 @@ public class SocialPublisherOrchestrator {
             "GOOGLE_BUSINESS", "Google Business", "LINKEDIN", "LinkedIn");
 
         for (String net : resolveNetworks(draft)) {
+            // P37: usa el caption específic de la xarxa si n'hi ha
+            String caption = resolveNetworkCaption(draft, net);
             try {
                 String extId = publishToNetwork(tenantId, net, postType, caption, mediaUrl);
                 String postUrl = resolvePostUrl(tenantId, net, extId);
@@ -1124,6 +1117,120 @@ public class SocialPublisherOrchestrator {
             "✅ Publicació cancel·lada.\n"
             + "Era: " + NETWORK_LABEL.getOrDefault(post.getNetwork(), post.getNetwork())
             + " · " + fmt.format(post.getScheduledAt()));
+    }
+
+    // ─── Helpers P37 + P38 ────────────────────────────────────────────────────
+
+    /**
+     * P37 + P38: genera captions per a cada xarxa seleccionada (o una sola si n'hi ha una).
+     * Injecta historial de publicacions recents per evitar repeticions (P38).
+     * Desa els captions per-xarxa al draft (captionIG, captionFB...) i retorna el principal.
+     * @param notifyUser si true, envia el missatge de "generant..." per Telegram
+     */
+    private String generateAndStoreCaptions(Long chatId, Map<String, String> draft, boolean notifyUser) {
+        UUID tenantId = UUID.fromString(draft.get("tenantId"));
+        String business = draft.getOrDefault("business", "el negoci");
+        String sector = draft.getOrDefault("sector", "general");
+        String postType = draft.getOrDefault("postType", "PHOTO");
+        String lang = metaConfigRepo.findByTenantId(tenantId)
+                .map(mc -> mc.getDefaultContentLanguage()).filter(l -> l != null && !l.isBlank()).orElse(null);
+        String brief = "Publicació de tipus " + postType + " per a " + business
+            + " (sector: " + sector + ")"
+            + (lang != null ? ". Idioma del caption: " + lang + "." : "");
+        String businessCtx = business + " — " + sector;
+
+        var networks = resolveNetworks(draft);
+        if (networks.isEmpty()) networks = java.util.List.of("INSTAGRAM");
+
+        if (notifyUser) {
+            String genMsg = networks.size() > 1
+                ? "🤖 Generant captions adaptats per a cada xarxa…"
+                : "🤖 Generant caption…";
+            telegramBotClient.sendMessage(chatId, genMsg);
+        }
+
+        // Neteja captions antics
+        clearNetworkCaptions(draft);
+
+        String primaryCaption = null;
+        if (networks.size() == 1) {
+            String net = networks.get(0);
+            List<String> history = recentCaptionsFor(tenantId, net);
+            String nc = contentGenerator.generateCaption(net, businessCtx, brief, history);
+            draft.put(captionKey(net), nc);
+            primaryCaption = nc;
+            telegramBotClient.sendMessage(chatId, "🤖 Caption generat per IA:\n\n" + nc);
+        } else {
+            var preview = new StringBuilder("🤖 <b>Captions generats per xarxa:</b>\n\n");
+            for (String net : networks) {
+                List<String> history = recentCaptionsFor(tenantId, net);
+                String nc = contentGenerator.generateCaption(net, businessCtx, brief, history);
+                draft.put(captionKey(net), nc);
+                if (primaryCaption == null) primaryCaption = nc;
+                preview.append(networkEmoji(net)).append(" <b>").append(networkLabelShort(net))
+                       .append(":</b>\n").append(nc).append("\n\n");
+            }
+            telegramBotClient.sendMessage(chatId, preview.toString().trim());
+        }
+        return primaryCaption != null ? primaryCaption : "";
+    }
+
+    private static String captionKey(String network) {
+        return switch (network) {
+            case "INSTAGRAM"       -> "captionIG";
+            case "FACEBOOK"        -> "captionFB";
+            case "GOOGLE_BUSINESS" -> "captionGB";
+            case "LINKEDIN"        -> "captionLI";
+            default -> "caption_" + network.toLowerCase();
+        };
+    }
+
+    private static String resolveNetworkCaption(Map<String, String> draft, String network) {
+        String specific = draft.get(captionKey(network));
+        return specific != null ? specific : draft.get("caption");
+    }
+
+    private static void clearNetworkCaptions(Map<String, String> draft) {
+        draft.remove("captionIG");
+        draft.remove("captionFB");
+        draft.remove("captionGB");
+        draft.remove("captionLI");
+    }
+
+    /** P38: últims 5 captions publicats per aquesta xarxa (per context de repeticions). */
+    private List<String> recentCaptionsFor(UUID tenantId, String network) {
+        try {
+            return postRepository.findPublishedSince(tenantId,
+                    Instant.now().minus(java.time.Duration.ofDays(30)))
+                .stream()
+                .filter(p -> network.equals(p.getNetwork()))
+                .filter(p -> p.getCaption() != null && !p.getCaption().isBlank())
+                .limit(5)
+                .map(SocialPost::getCaption)
+                .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    private static String networkEmoji(String network) {
+        return switch (network) {
+            case "INSTAGRAM"       -> "📸";
+            case "FACEBOOK"        -> "📘";
+            case "GOOGLE_BUSINESS" -> "🗺";
+            case "LINKEDIN"        -> "💼";
+            default -> "📱";
+        };
+    }
+
+    private static String networkLabelShort(String network) {
+        return switch (network) {
+            case "INSTAGRAM"       -> "Instagram";
+            case "FACEBOOK"        -> "Facebook";
+            case "GOOGLE_BUSINESS" -> "Google Business";
+            case "LINKEDIN"        -> "LinkedIn";
+            default -> network;
+        };
     }
 
     /** Reprograma un post FAILED per tornar a intentar en 30 segons (P28). */
