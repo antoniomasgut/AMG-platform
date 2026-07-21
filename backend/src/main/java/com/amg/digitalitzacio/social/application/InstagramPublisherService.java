@@ -43,11 +43,20 @@ public class InstagramPublisherService {
      * cal esperar que el contenidor arribi a FINISHED abans de publicar.
      */
     public String publishReel(String igUserId, String accessToken, String videoUrl, String caption) {
-        String containerId = createContainer(igUserId, Map.of(
-            "media_type",   "REELS",
-            "video_url",    videoUrl,
-            "caption",      caption != null ? caption : "",
-            "access_token", accessToken));
+        return publishReel(igUserId, accessToken, videoUrl, caption, null);
+    }
+
+    public String publishReel(String igUserId, String accessToken, String videoUrl, String caption,
+                              String audioName) {
+        var params = new java.util.HashMap<String, Object>();
+        params.put("media_type",   "REELS");
+        params.put("video_url",    videoUrl);
+        params.put("caption",      caption != null ? caption : "");
+        params.put("access_token", accessToken);
+        if (audioName != null && !audioName.isBlank()) {
+            params.put("audio_name", audioName);
+        }
+        String containerId = createContainer(igUserId, params);
         waitUntilFinished(containerId, accessToken);
         return publishContainer(igUserId, accessToken, containerId);
     }

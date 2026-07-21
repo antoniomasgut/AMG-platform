@@ -109,6 +109,7 @@ public class SocialPublisherOrchestrator {
             case "AWAIT_LINK_URL"       -> "URL de l'enllaç";
             case "AWAIT_CAPTION"        -> "caption / text";
             case "AWAIT_CAPTION_PICK"   -> "tria d'opció de caption";
+            case "AWAIT_MUSIC"          -> "música del reel";
             case "AWAIT_SCHEDULE"       -> "data de publicació";
             case "AWAIT_CONFIRM"        -> "confirmació final";
             default                     -> step;
@@ -140,6 +141,7 @@ public class SocialPublisherOrchestrator {
             case "AWAIT_LINK_URL"        -> handleLinkUrl(chatId, text, draft);
             case "AWAIT_CAPTION"         -> handleCaption(chatId, text, draft);
             case "AWAIT_CAPTION_PICK"    -> handleCaptionPick(chatId, text, draft);
+            case "AWAIT_MUSIC"           -> handleMusic(chatId, text, draft);
             case "AWAIT_SCHEDULE"        -> handleSchedule(chatId, text, draft);
             case "AWAIT_CONFIRM"         -> handleConfirm(chatId, text, draft);
             default -> {
@@ -492,6 +494,35 @@ public class SocialPublisherOrchestrator {
             }
         }
 
+        if ("REEL".equals(draft.get("postType"))) {
+            draft.put("step", "AWAIT_MUSIC");
+            saveDraft(chatId, draft);
+            telegramBotClient.sendMessage(chatId,
+                "🎵 Vols afegir música al Reel?\n\nEscriu el nom de la cançó o artista "
+                + "(p.ex. <code>Flowers - Miley Cyrus</code>) o <code>NO</code> per publicar sense música:");
+        } else {
+            askWhenToPublish(chatId, draft);
+        }
+    }
+
+    /** Gestiona la selecció de música per a Reels d'Instagram (pas AWAIT_MUSIC). */
+    private void handleMusic(Long chatId, String text, Map<String, String> draft) {
+        String input = text.trim();
+        if (input.equalsIgnoreCase("no") || input.equalsIgnoreCase("no gràcies")
+                || input.equalsIgnoreCase("sense música") || input.equalsIgnoreCase("skip")) {
+            draft.remove("audioName");
+            saveDraft(chatId, draft);
+        } else if (input.isBlank()) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ Escriu el nom de la cançó/artista o <code>NO</code> per saltar.");
+            return;
+        } else {
+            draft.put("audioName", input);
+            saveDraft(chatId, draft);
+            telegramBotClient.sendMessage(chatId,
+                "🎵 Música seleccionada: <b>" + input + "</b>\n"
+                + "<i>(Si la cançó no existeix a la biblioteca d'Instagram s'ignorarà)</i>");
+        }
         askWhenToPublish(chatId, draft);
     }
 
@@ -925,7 +956,7 @@ public class SocialPublisherOrchestrator {
     public void publishNow(SocialPost scheduledPost) {
         try {
             String extId = publishToNetwork(scheduledPost.getTenantId(), scheduledPost.getNetwork(),
-                scheduledPost.getPostType(), scheduledPost.getCaption(), scheduledPost.getMediaUrl());
+                scheduledPost.getPostType(), scheduledPost.getCaption(), scheduledPost.getMediaUrl(), null);
             scheduledPost.setExternalPostId(extId);
             scheduledPost.setExternalPostUrl(
                 resolvePostUrl(scheduledPost.getTenantId(), scheduledPost.getNetwork(), extId));
@@ -953,7 +984,8 @@ public class SocialPublisherOrchestrator {
             // P37: usa el caption específic de la xarxa si n'hi ha
             String caption = resolveNetworkCaption(draft, net);
             try {
-                String extId = publishToNetwork(tenantId, net, postType, caption, mediaUrl);
+                String extId = publishToNetwork(tenantId, net, postType, caption, mediaUrl,
+                    draft.get("audioName"));
                 String postUrl = resolvePostUrl(tenantId, net, extId);
                 savePost(tenantId, net, postType, caption, mediaUrl, extId, postUrl, null, "PUBLISHED");
                 String urlNote = postUrl != null ? "\n🔗 " + postUrl : "";
@@ -979,7 +1011,7 @@ public class SocialPublisherOrchestrator {
      * (p.ex. vídeo a Google Business) — el caller ho tracta com a avís, no com a error.
      */
     private String publishToNetwork(UUID tenantId, String network, String postType,
-                                    String caption, String mediaUrl) {
+                                    String caption, String mediaUrl, String audioName) {
         String pt  = postType != null ? postType : "";
         // UTM per atribució: cada xarxa marca els seus enllaços amb el seu utm_source
         String cap = UtmTagger.tag(caption != null ? caption : "", network);
@@ -991,7 +1023,7 @@ public class SocialPublisherOrchestrator {
                 String token = vaultEncryption.decrypt(mc.getPageAccessTokenEncrypted());
                 return switch (pt) {
                     case "REEL"     -> instagramPublisher.publishReel(mc.getInstagramAccountId(), token,
-                                           requireMedia(mediaUrl), cap);
+                                           requireMedia(mediaUrl), cap, audioName);
                     case "STORY"    -> instagramPublisher.publishStory(mc.getInstagramAccountId(), token,
                                            requireMedia(mediaUrl), isVideoUrl(mediaUrl));
                     case "CAROUSEL" -> instagramPublisher.publishCarousel(mc.getInstagramAccountId(), token,

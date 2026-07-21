@@ -171,6 +171,14 @@ const Avatar: FC<{ name: string; size?: number; color: string }> = ({ name, size
   );
 };
 
+const LUCIDE_EMOJI: Record<string, string> = {
+  award: '🏆', check: '✓', coffee: '☕', 'graduation-cap': '🎓', heart: '❤️',
+  home: '🏠', leaf: '🌿', location: '📍', 'message-circle': '💬', scissors: '✂️',
+  shield: '🛡️', smile: '😊', star: '⭐', sun: '☀️', user: '👤', users: '👥',
+  wrench: '🔧', zap: '⚡',
+};
+const resolveIcon = (icon: string) => LUCIDE_EMOJI[icon] ?? icon;
+
 const SECTION_ID: Partial<Record<string, string>> = {
   hero: 'hero', services: 'services', 'contact-form': 'contact',
   'opening-hours': 'hours', testimonials: 'testimonials', faq: 'faq',
@@ -372,7 +380,7 @@ export const BlockRenderer: FC<Props> = ({
                   <FadeIn key={i} delay={i * 80}>
                     <HoverCard style={{ padding: '32px 28px', borderRadius: radius, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', background: '#fff', borderTop: `4px solid ${primary}` }}>
                       {s(item.icon) && (
-                        <div style={{ fontSize: '2rem', marginBottom: 16 }}>{s(item.icon)}</div>
+                        <div style={{ fontSize: '2rem', marginBottom: 16 }}>{resolveIcon(s(item.icon))}</div>
                       )}
                       <ET
                         tag="h3" value={s(item.title ?? item.name)} editable={editable}
@@ -410,7 +418,7 @@ export const BlockRenderer: FC<Props> = ({
                   <FadeIn key={i} delay={i * 100}>
                     <div style={{ textAlign: 'center', padding: '28px 20px' }}>
                       <div style={{ width: 56, height: 56, borderRadius: '50%', background: primary, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontFamily: fontH, fontWeight: 800, fontSize: '1.3rem' }}>
-                        {item.icon ?? item.number ?? (i + 1)}
+                        {item.icon ? resolveIcon(item.icon) : (item.number ?? (i + 1))}
                       </div>
                       <h3 style={{ fontFamily: fontH, fontWeight: 700, fontSize: '1.1rem', color: text, marginBottom: 10 }}>{item.title}</h3>
                       <p style={{ fontSize: '0.9rem', color: text, opacity: 0.62, lineHeight: 1.65 }}>{item.description}</p>

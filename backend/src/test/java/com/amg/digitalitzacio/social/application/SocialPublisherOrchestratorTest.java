@@ -91,12 +91,12 @@ class SocialPublisherOrchestratorTest {
     @Test
     void reelInstagramEncaminaAPublishReel() {
         stubMetaConfig();
-        when(instagramPublisher.publishReel(any(), any(), any(), any())).thenReturn("ext-1");
+        when(instagramPublisher.publishReel(any(), any(), any(), any(), any())).thenReturn("ext-1");
 
         var p = post("INSTAGRAM", "REEL", VIDEO_URL);
         orchestrator().publishNow(p);
 
-        verify(instagramPublisher).publishReel("ig-acc-1", "token", VIDEO_URL, "caption");
+        verify(instagramPublisher).publishReel("ig-acc-1", "token", VIDEO_URL, "caption", null);
         verify(instagramPublisher, never()).publishFeedPhoto(any(), any(), any(), any());
         assertThat(p.getStatus()).isEqualTo("PUBLISHED");
     }
@@ -173,7 +173,7 @@ class SocialPublisherOrchestratorTest {
         orchestrator().publishNow(p);
 
         assertThat(p.getStatus()).isEqualTo("FAILED");
-        verify(instagramPublisher, never()).publishReel(any(), any(), any(), any());
+        verify(instagramPublisher, never()).publishReel(any(), any(), any(), any(), any());
     }
 
     @Test
