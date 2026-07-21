@@ -46,6 +46,7 @@ public class SocialPublisherOrchestrator {
     private final SocialPostRepository postRepository;
     private final GoogleModuleConfigRepository googleConfigRepo;
     private final VaultEncryption vaultEncryption;
+    private final SocialAnalyticsService analyticsService;
     private final SocialContentGeneratorService contentGenerator;
     private final InstagramPublisherService instagramPublisher;
     private final FacebookPublisherService facebookPublisher;
@@ -490,8 +491,21 @@ public class SocialPublisherOrchestrator {
     private void askWhenToPublish(Long chatId, Map<String, String> draft) {
         draft.put("step", "AWAIT_SCHEDULE");
         saveDraft(chatId, draft);
+
+        // P40: suggeriment de millor hora si hi ha dades suficients
+        String bestTimeHint = "";
+        try {
+            UUID tenantId = UUID.fromString(draft.get("tenantId"));
+            var networks = resolveNetworks(draft);
+            String net = networks.isEmpty() ? null : networks.get(0);
+            String best = analyticsService.getBestTimeToPost(tenantId, net);
+            if (best != null) {
+                bestTimeHint = "\n\n📊 <i>La teva millor hora: " + best + "</i>";
+            }
+        } catch (Exception ignored) {}
+
         telegramBotClient.sendMessage(chatId,
-            "⏰ Quan vols publicar?\n\n"
+            "⏰ Quan vols publicar?" + bestTimeHint + "\n\n"
             + "<code>ARA</code> — publicar immediatament\n"
             + "<code>avui a les 22:00</code> — avui a l'hora indicada\n"
             + "<code>demà a les 09:30</code> — demà\n"
@@ -1120,6 +1134,80 @@ public class SocialPublisherOrchestrator {
             "✅ Publicació cancel·lada.\n"
             + "Era: " + NETWORK_LABEL.getOrDefault(post.getNetwork(), post.getNetwork())
             + " · " + fmt.format(post.getScheduledAt()));
+    }
+
+    // ─── P41: reutilitzar un post publicat ───────────────────────────────────
+
+    /** Llista els últims 5 posts publicats i ofereix reutilitzar-los. */
+    public void sendRecentPublishedPosts(UUID tenantId, Long chatId) {
+        var recent = postRepository.findPublishedSince(tenantId,
+                Instant.now().minus(java.time.Duration.ofDays(90)))
+            .stream()
+            .filter(p -> p.getPublishedAt() != null)
+            .sorted(java.util.Comparator.comparing(SocialPost::getPublishedAt).reversed())
+            .limit(5)
+            .collect(java.util.stream.Collectors.toList());
+
+        if (recent.isEmpty()) {
+            telegramBotClient.sendMessage(chatId,
+                "📭 No tens posts publicats recents (últims 90 dies).");
+            return;
+        }
+        var fmt = java.time.format.DateTimeFormatter.ofPattern("dd/MM").withZone(ZONE_ES);
+        var sb = new StringBuilder("🔄 <b>Posts recents — tria un per reutilitzar</b>\n\n");
+        for (int i = 0; i < recent.size(); i++) {
+            var p = recent.get(i);
+            String label = NETWORK_LABEL.getOrDefault(p.getNetwork(), p.getNetwork());
+            String when  = p.getPublishedAt() != null ? fmt.format(p.getPublishedAt()) : "?";
+            String cap   = p.getCaption() != null && !p.getCaption().isBlank()
+                ? (p.getCaption().length() > 50 ? p.getCaption().substring(0, 47) + "…" : p.getCaption())
+                : "(sense text)";
+            sb.append(i + 1).append(". ").append(label).append(" · ").append(when)
+              .append("\n   \"").append(cap).append("\"\n")
+              .append("   <code>REUTILITZAR#").append(i + 1).append("</code>\n\n");
+        }
+        telegramBotClient.sendMessage(chatId, sb.toString().trim());
+    }
+
+    /** Inicia un nou flux de publicació pre-emplenat amb les dades del post reutilitzat. */
+    public void startReuseFlow(UUID tenantId, Long chatId, int ordinal) {
+        var recent = postRepository.findPublishedSince(tenantId,
+                Instant.now().minus(java.time.Duration.ofDays(90)))
+            .stream()
+            .filter(p -> p.getPublishedAt() != null)
+            .sorted(java.util.Comparator.comparing(SocialPost::getPublishedAt).reversed())
+            .limit(5)
+            .collect(java.util.stream.Collectors.toList());
+
+        if (ordinal < 1 || ordinal > recent.size()) {
+            telegramBotClient.sendMessage(chatId,
+                "⚠️ No existeix el post #" + ordinal + ". Escriu <code>/reutilitzar</code> per veure la llista.");
+            return;
+        }
+        var source = recent.get(ordinal - 1);
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
+        String businessName = tenant != null ? tenant.getName() : "el teu negoci";
+
+        // Pre-emplena el draft amb les dades del post original
+        var draft = new HashMap<String, String>();
+        draft.put("tenantId",  tenantId.toString());
+        draft.put("business",  businessName);
+        draft.put("step",      "AWAIT_CONFIRM");
+        draft.put("postType",  source.getPostType() != null ? source.getPostType() : "TEXT");
+        draft.put("caption",   source.getCaption() != null ? source.getCaption() : "");
+        // Xarxa del post original
+        String net = source.getNetwork();
+        if ("INSTAGRAM".equals(net))       draft.put("ig", "1");
+        else if ("FACEBOOK".equals(net))   draft.put("fb", "1");
+        else if ("GOOGLE_BUSINESS".equals(net)) draft.put("gb", "1");
+        else if ("LINKEDIN".equals(net))   draft.put("li", "1");
+        if (source.getMediaUrl() != null)  draft.put("mediaUrl", source.getMediaUrl());
+
+        saveDraft(chatId, draft);
+        telegramBotClient.sendMessage(chatId,
+            "🔄 Post pre-emplenat. Pots modificar el caption escrivint <code>EDITAR</code>, "
+            + "o confirmar directament.");
+        sendPreview(chatId, draft, draft.get("caption"));
     }
 
     // ─── P39: tria entre 3 opcions de caption ────────────────────────────────

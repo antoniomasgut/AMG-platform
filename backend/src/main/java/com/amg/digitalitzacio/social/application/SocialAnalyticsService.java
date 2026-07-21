@@ -263,6 +263,58 @@ public class SocialAnalyticsService {
         return sb.toString();
     }
 
+    /**
+     * P40: retorna un suggeriment de millor hora per publicar basat en l'engagement
+     * dels últims 60 dies. Agrupa els posts per dia-de-la-setmana i hora UTC+2 aproximada,
+     * i retorna la combinació amb més engagement mig.
+     * Retorna null si no hi ha prou dades (< 5 posts amb mètriques).
+     */
+    public String getBestTimeToPost(UUID tenantId, String network) {
+        var posts = publishedLastDays(tenantId, 60).stream()
+            .filter(p -> (network == null || network.equals(p.getNetwork())))
+            .filter(p -> p.getPublishedAt() != null)
+            .filter(p -> p.getReach() != null || p.getLikes() != null)
+            .toList();
+        if (posts.size() < 5) return null;
+
+        // Agrupa per (dayOfWeek, hourOfDay) en zona Europe/Madrid
+        var zone = java.time.ZoneId.of("Europe/Madrid");
+        var bySlot = posts.stream().collect(
+            java.util.stream.Collectors.groupingBy(p -> {
+                var ldt = p.getPublishedAt().atZone(zone);
+                return ldt.getDayOfWeek().getValue() + ":" + ldt.getHour();
+            })
+        );
+
+        String bestSlot = null;
+        double bestScore = -1;
+        for (var entry : bySlot.entrySet()) {
+            if (entry.getValue().size() < 2) continue;
+            double avg = entry.getValue().stream()
+                .mapToInt(SocialAnalyticsService::engagement)
+                .average().orElse(0);
+            if (avg > bestScore) {
+                bestScore = avg;
+                bestSlot = entry.getKey();
+            }
+        }
+        if (bestSlot == null) return null;
+
+        String[] parts = bestSlot.split(":");
+        var dow = java.time.DayOfWeek.of(Integer.parseInt(parts[0]));
+        int hour = Integer.parseInt(parts[1]);
+        String dayName = switch (dow) {
+            case MONDAY    -> "dilluns";
+            case TUESDAY   -> "dimarts";
+            case WEDNESDAY -> "dimecres";
+            case THURSDAY  -> "dijous";
+            case FRIDAY    -> "divendres";
+            case SATURDAY  -> "dissabte";
+            case SUNDAY    -> "diumenge";
+        };
+        return String.format("%s a les %dh", dayName, hour);
+    }
+
     private static int engagement(SocialPost p) {
         return nz(p.getReach()) + nz(p.getLikes()) * 3 + nz(p.getComments()) * 5;
     }

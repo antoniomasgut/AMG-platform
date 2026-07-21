@@ -114,6 +114,7 @@ public class TenantTelegramCommandService {
             sb.append("<b>Xarxes socials</b>\n");
             sb.append("  /publica — nou post a Instagram, Facebook o Google Business\n");
             sb.append("  /posts — publicacions programades (+ cancel·lar)\n");
+            sb.append("  /reutilitzar — copiar un post publicat recentment\n");
             sb.append("  /stats-social — resum d'activitat dels últims 7 dies\n\n");
         }
 

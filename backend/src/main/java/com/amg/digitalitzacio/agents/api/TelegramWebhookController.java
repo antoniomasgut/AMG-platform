@@ -591,6 +591,32 @@ public class TelegramWebhookController {
                     }
                 }
 
+                // /reutilitzar — llista posts recents per copiar (P41)
+                if (text.equalsIgnoreCase("/reutilitzar") || text.equalsIgnoreCase("/reuse")) {
+                    boolean activated = nexeServiceConfigService
+                        .get(tenantId, "SOCIAL_PUBLISHER").isPresent();
+                    if (activated) {
+                        socialOrchestrator.sendRecentPublishedPosts(tenantId, chatId);
+                        return ResponseEntity.ok("ok");
+                    }
+                }
+
+                // REUTILITZAR#N — inicia flux pre-emplenat (P41)
+                if (text.toUpperCase().startsWith("REUTILITZAR#")) {
+                    boolean activated = nexeServiceConfigService
+                        .get(tenantId, "SOCIAL_PUBLISHER").isPresent();
+                    if (activated) {
+                        try {
+                            int ordinal = Integer.parseInt(text.replaceAll("(?i)REUTILITZAR#", "").trim());
+                            socialOrchestrator.startReuseFlow(tenantId, chatId, ordinal);
+                        } catch (NumberFormatException e) {
+                            telegramBotClient.sendMessage(chatId,
+                                "⚠️ Format incorrecte. Exemple: <code>REUTILITZAR#1</code>");
+                        }
+                        return ResponseEntity.ok("ok");
+                    }
+                }
+
                 // Comanda /publica o paraules clau de publicació social
                 boolean isSocialIntent = text.toLowerCase().startsWith("/publica")
                     || (!text.startsWith("/") && SOCIAL_TRIGGER.matcher(text).find());
