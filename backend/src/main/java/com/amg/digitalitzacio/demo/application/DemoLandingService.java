@@ -12,7 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.*;
 
 @Slf4j
@@ -586,6 +590,7 @@ public class DemoLandingService {
         }
 
         String lang = langName(locale);
+        String agendaBlock = buildDemoAgendaBlock(sector);
 
         return "You are the virtual assistant of " + businessName + ".\n\n" +
                "THE LANDING PAGE PRESENTS:\n" +
@@ -597,12 +602,63 @@ public class DemoLandingService {
                "- Motivate the visitor to book an appointment or make contact\n" +
                "- If asked about prices, say it depends on the service and invite them to contact you\n" +
                "- If you don't know the answer, invite them to call or write via the contact form\n\n" +
+               agendaBlock +
                "LANGUAGE RULE (CRITICAL): Detect the language of EACH message the visitor sends and " +
                "ALWAYS respond in that SAME language. The landing is in " + lang + ", but if the visitor " +
                "writes in Spanish, respond in Spanish. If they write in English, respond in English. " +
                "If they write in German, respond in German. If they write in Catalan, respond in Catalan. " +
                "NEVER switch languages mid-conversation unless the visitor does.\n\n" +
                "STYLE: Short responses (max 3 sentences), friendly, coherent with the landing content.";
+    }
+
+    private String buildDemoAgendaBlock(String sector) {
+        var appointmentSectors = Set.of(
+            "PERRUQUERIA", "PERRUQUERIA_CANINA", "ESTETICA",
+            "FISIOTERAPEUTA", "PSICOLEG", "NUTRICIONISTA", "VETERINARI"
+        );
+        if (!appointmentSectors.contains(sector)) return "";
+
+        var slots  = buildNextAvailableSlots();
+        var catalog = switch (sector) {
+            case "PERRUQUERIA"       -> "Tall i estil (45 min / 35€), Coloració (2h / 65€), Mèxes (3h / 95€), Tractament capilar (1h / 45€)";
+            case "PERRUQUERIA_CANINA"-> "Bany i assecat (1h / 30€), Tall i estilisme (1,5h / 50€), Estètica completa (2h / 70€)";
+            case "ESTETICA"          -> "Neteja facial (1h / 45€), Depilació cera (30 min / 20€), Massatge relaxant (1h / 55€)";
+            case "FISIOTERAPEUTA"    -> "Primera visita (1h / 55€), Sessió de seguiment (45 min / 45€), Teràpia manual (1h / 60€)";
+            case "PSICOLEG"          -> "Primera consulta (50 min / 65€), Sessió individual (50 min / 60€)";
+            case "NUTRICIONISTA"     -> "Valoració inicial (1h / 55€), Revisió i seguiment (30 min / 35€)";
+            case "VETERINARI"        -> "Consulta general (30 min / 40€), Vacunació (15 min / 25€), Revisió completa (45 min / 60€)";
+            default                  -> "";
+        };
+
+        return "\nAPPOINTMENT BOOKING (SIMULATION — behave as if it were a real booking system):\n" +
+               "Today is " + LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.forLanguageTag("ca"))) + ".\n" +
+               "Available services and prices: " + catalog + "\n" +
+               "When a visitor wants to book an appointment, follow these steps:\n" +
+               "1. Ask which SERVICE they want (show the list above with duration and price)\n" +
+               "2. Offer exactly these available slots:\n" + slots +
+               "3. When they choose a slot, ask for their FULL NAME\n" +
+               "4. CONFIRM the booking with all details: service, date/time, name, and say you will send a reminder\n" +
+               "Present yourself as a real booking system. Be proactive — if the visitor asks about any service, " +
+               "immediately offer to book an appointment.\n\n";
+    }
+
+    private String buildNextAvailableSlots() {
+        var sb    = new StringBuilder();
+        var today = LocalDate.now();
+        // Genera 4 slots als pròxims 5 dies laborables (L-S, excloent diumenge)
+        var times = List.of("10:00", "12:30", "16:00", "18:00");
+        int slotIdx = 0;
+        for (int d = 1; d <= 10 && slotIdx < times.size(); d++) {
+            var day = today.plusDays(d);
+            if (day.getDayOfWeek() == DayOfWeek.SUNDAY) continue;
+            String dayName = day.getDayOfWeek()
+                    .getDisplayName(TextStyle.FULL, Locale.forLanguageTag("ca"));
+            dayName = dayName.substring(0, 1).toUpperCase() + dayName.substring(1);
+            sb.append("   • ").append(dayName).append(" ").append(day.getDayOfMonth())
+              .append(" a les ").append(times.get(slotIdx)).append("\n");
+            slotIdx++;
+        }
+        return sb.toString();
     }
 
     private String buildContentJson(SectorConfig config, String displayName, String locale) {
