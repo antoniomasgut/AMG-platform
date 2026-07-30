@@ -336,7 +336,7 @@ public class EngineOrchestrator implements EngineService {
     // --- Render (public) ---
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public String renderLanding(String slug, String host, String locale) {
         return renderLanding(slug, host, locale, null);
     }
