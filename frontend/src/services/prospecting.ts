@@ -191,6 +191,9 @@ export const scheduleCampaign = (id: string, nextRun: string, repeatDays: number
 export const unscheduleCampaign = (id: string) =>
   apiFetch<Campaign>(`/prospecting/campaigns/${id}/unschedule`, { method: 'POST' });
 
+export const resetCampaign = (id: string) =>
+  apiFetch<Campaign>(`/prospecting/campaigns/${id}/reset`, { method: 'POST' });
+
 // ── Spec 12 v2 ────────────────────────────────────────────────────────────────
 export const analyzeWebProspect = (id: string) =>
   apiFetch<Prospect>(`/prospecting/prospects/${id}/analyze-web`, { method: 'POST' });

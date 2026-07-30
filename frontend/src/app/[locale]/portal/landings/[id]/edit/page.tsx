@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/auth';
@@ -11,8 +11,10 @@ import { FactoryLayout } from '@/components/factory/FactoryLayout';
 
 export default function EditLandingPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const landingId = params.id as string;
+  const requestedLocale = searchParams.get('locale') ?? 'ca';
   const user = getCurrentUser();
   const loadLanding = useEditorStore((s) => s.loadLanding);
   const reset = useEditorStore((s) => s.reset);
@@ -25,14 +27,17 @@ export default function EditLandingPage() {
 
   useEffect(() => {
     if (landing) {
-      const draftVersion = landing.versions.find((v) => v.status === 'DRAFT');
-      const versionId = draftVersion?.id || landing.versions[0]?.id;
+      const draftVersion =
+        landing.versions.find((v) => v.locale === requestedLocale && v.status === 'DRAFT') ||
+        landing.versions.find((v) => v.status === 'DRAFT') ||
+        landing.versions[0];
+      const versionId = draftVersion?.id;
       if (versionId) {
-        loadLanding(landing, versionId);
+        loadLanding(landing, versionId, draftVersion?.locale ?? requestedLocale);
       }
     }
     return () => reset();
-  }, [landing, loadLanding, reset]);
+  }, [landing, loadLanding, reset, requestedLocale]);
 
   if (!user) {
     router.replace('/login');

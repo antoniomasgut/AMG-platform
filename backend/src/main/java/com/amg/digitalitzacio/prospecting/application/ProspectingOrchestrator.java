@@ -518,6 +518,16 @@ public class ProspectingOrchestrator implements ProspectingService {
         return toCampaignResponse(campaign);
     }
 
+    @Override
+    public CampaignResponse resetCampaign(UUID campaignId) {
+        var campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found: " + campaignId));
+        campaign.setStatus(CampaignStatus.DRAFT);
+        campaign = campaignRepository.save(campaign);
+        log.info("Campaign {} reset to DRAFT (was {})", campaignId, campaign.getStatus());
+        return toCampaignResponse(campaign);
+    }
+
     private CampaignResponse toCampaignResponse(ProspectCampaign c) {
         return new CampaignResponse(c.getId(), c.getName(), c.getSector(), c.getLocation(),
                 c.getSource().name(), c.getStatus().name(), c.getTotalFound(), c.getTotalExported(),

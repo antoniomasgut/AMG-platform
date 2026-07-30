@@ -114,6 +114,15 @@ export default function LandingsPage() {
                 </AMGBadge>
               </div>
               <div className="f-mono text-caption text-ink-3 mb-1">/{l.slug}</div>
+              {l.publishedLocales?.length > 0 && (
+                <div className="flex gap-1 mt-1 flex-wrap">
+                  {l.publishedLocales.map((loc) => (
+                    <span key={loc} className="f-mono text-[9px] uppercase px-1.5 py-0.5 rounded bg-[rgba(255,107,0,0.12)] text-accent-light border border-[rgba(255,107,0,0.3)]">
+                      {loc}
+                    </span>
+                  ))}
+                </div>
+              )}
               {l.status === 'PUBLISHED' && (
                 <LandingStats tenantId={user.tenantId!} landingId={l.id} />
               )}

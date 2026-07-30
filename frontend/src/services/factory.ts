@@ -30,6 +30,7 @@ export interface PageStyles {
   borderRadius: string;
   // Analytics
   gaId?: string;
+  clarityId?: string;
   // CSS personalitzat
   customCss?: string;
   // Contacte ràpid
@@ -79,11 +80,13 @@ export interface LandingSummary {
   publicUrl: string;
   domainVerified: boolean;
   createdAt: string;
+  publishedLocales: string[];
 }
 
 export interface VersionResponse {
   id: string;
   versionNumber: number;
+  locale: string;
   status: string;
   content: PageContent;
   styles: PageStyles | null;
@@ -198,10 +201,10 @@ export async function createLandingFromTemplate(
   });
 }
 
-export async function createVersion(landingId: string, content: PageContent, styles?: PageStyles): Promise<VersionResponse> {
+export async function createVersion(landingId: string, content: PageContent, styles?: PageStyles, locale = 'ca'): Promise<VersionResponse> {
   return apiFetch<VersionResponse>(`/engine/landings/${landingId}/versions`, {
     method: 'POST',
-    body: JSON.stringify({ content, styles }),
+    body: JSON.stringify({ content, styles, locale }),
   });
 }
 
@@ -212,8 +215,20 @@ export async function updateVersion(landingId: string, versionId: string, conten
   });
 }
 
-export async function publishLanding(landingId: string): Promise<PublishResponse> {
-  return apiFetch<PublishResponse>(`/engine/landings/${landingId}/publish`, { method: 'POST' });
+export async function publishLanding(landingId: string, locale = 'ca'): Promise<PublishResponse> {
+  return apiFetch<PublishResponse>(`/engine/landings/${landingId}/publish?locale=${locale}`, { method: 'POST' });
+}
+
+export async function autoTranslateLanding(
+  tenantId: string,
+  landingId: string,
+  sourceLocale: string,
+  targetLocales: string[]
+): Promise<VersionResponse[]> {
+  return apiFetch<VersionResponse[]>(
+    `/engine/tenants/${tenantId}/landings/${landingId}/auto-translate`,
+    { method: 'POST', body: JSON.stringify({ sourceLocale, targetLocales }) }
+  );
 }
 
 export async function unpublishLanding(landingId: string): Promise<void> {

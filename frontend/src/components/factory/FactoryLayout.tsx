@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, type FC } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useEditorStore } from '@/store/editor';
-import { createVersion, updateVersion, publishLanding, unpublishLanding, generatePreviewToken, duplicateLanding } from '@/services/factory';
+import { createVersion, updateVersion, publishLanding, unpublishLanding, generatePreviewToken, duplicateLanding, getLanding, autoTranslateLanding } from '@/services/factory';
 import { getCurrentUser } from '@/services/auth';
 import { BlockCatalog } from './BlockCatalog';
 import { BlockProperties } from './BlockProperties';
@@ -17,6 +17,11 @@ import { IconSet } from '@/components/ui/icons';
 import type { BlockType } from '@/services/factory';
 
 type SidebarTab = 'blocks' | 'properties' | 'styles' | 'chat' | 'versions';
+
+const LOCALES = ['ca', 'es', 'en', 'de'] as const;
+type Locale = typeof LOCALES[number];
+const LOCALE_LABEL: Record<Locale, string> = { ca: 'CA', es: 'ES', en: 'EN', de: 'DE' };
+const LOCALE_NAME: Record<Locale, string> = { ca: 'Català', es: 'Español', en: 'English', de: 'Deutsch' };
 
 interface Props {
   landingId: string;
@@ -34,15 +39,19 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
   const [shareUrl, setShareUrl] = useState('');
   const [shareCopied, setShareCopied] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const landing = useEditorStore((s) => s.landing);
   const versionId = useEditorStore((s) => s.versionId);
+  const currentLocale = useEditorStore((s) => s.currentLocale);
+  const setLocale = useEditorStore((s) => s.setLocale);
   const content = useEditorStore((s) => s.content);
   const styles = useEditorStore((s) => s.styles);
   const isDirty = useEditorStore((s) => s.isDirty);
   const isSaving = useEditorStore((s) => s.isSaving);
   const markClean = useEditorStore((s) => s.markClean);
   const markSaving = useEditorStore((s) => s.markSaving);
+  const loadLanding = useEditorStore((s) => s.loadLanding);
   const addBlock = useEditorStore((s) => s.addBlock);
   const undo = useEditorStore((s) => s.undo);
   const redo = useEditorStore((s) => s.redo);
@@ -106,9 +115,9 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
     try {
       if (isDirty) {
         if (versionId) await updateVersion(landingId, versionId, content, styles);
-        else await createVersion(landingId, content, styles);
+        else await createVersion(landingId, content, styles, currentLocale);
       }
-      await publishLanding(landingId);
+      await publishLanding(landingId, currentLocale);
       setStatusMsg('Publicat!');
       setTimeout(() => setStatusMsg(''), 3000);
     } catch {
@@ -116,7 +125,7 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
     } finally {
       markSaving(false);
     }
-  }, [landingId, versionId, content, styles, isDirty, markSaving]);
+  }, [landingId, versionId, content, styles, isDirty, markSaving, currentLocale]);
 
   const handleUnpublish = useCallback(async () => {
     markSaving(true);
@@ -166,6 +175,46 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
       markSaving(false);
     }
   }, [user?.tenantId, landingId, markSaving, router]);
+
+  const handleSwitchLocale = useCallback(async (locale: string) => {
+    if (locale === currentLocale || !user?.tenantId) return;
+    if (isDirty && versionId) {
+      await updateVersion(landingId, versionId, content, styles).catch(() => null);
+      markClean();
+    }
+    try {
+      const fresh = await getLanding(user.tenantId, landingId);
+      const target =
+        fresh.versions.find((v) => v.locale === locale && v.status === 'DRAFT') ||
+        fresh.versions.find((v) => v.locale === locale);
+      if (target) {
+        loadLanding(fresh, target.id, locale);
+      } else {
+        setLocale(locale);
+        setStatusMsg(`Versió ${locale.toUpperCase()} no existeix — clica Traduir per crear-la`);
+        setTimeout(() => setStatusMsg(''), 4000);
+      }
+    } catch {
+      setStatusMsg('Error canviant idioma');
+    }
+  }, [currentLocale, isDirty, versionId, landingId, content, styles, markClean, loadLanding, setLocale, user?.tenantId]);
+
+  const handleAutoTranslate = useCallback(async () => {
+    if (!user?.tenantId) return;
+    const missing = LOCALES.filter((l) => l !== currentLocale);
+    setIsTranslating(true);
+    try {
+      await autoTranslateLanding(user.tenantId, landingId, currentLocale, [...missing]);
+      const fresh = await getLanding(user.tenantId, landingId);
+      loadLanding(fresh, fresh.versions.find((v) => v.locale === currentLocale && v.status === 'DRAFT')?.id || fresh.versions[0].id, currentLocale);
+      setStatusMsg('Traduccions generades!');
+      setTimeout(() => setStatusMsg(''), 3000);
+    } catch {
+      setStatusMsg('Error en traduir');
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [user?.tenantId, landingId, currentLocale, loadLanding]);
 
   const handleAddBlock = useCallback((type: BlockType) => {
     addBlock(type);
@@ -226,6 +275,39 @@ export const FactoryLayout: FC<Props> = ({ landingId }) => {
         >
           ↪
         </button>
+
+        {/* Locale switcher */}
+        <div className="flex items-center gap-0.5 ml-1 border border-border-base rounded overflow-hidden">
+          {LOCALES.map((loc) => {
+            const hasVersion = landing?.versions.some((v) => v.locale === loc);
+            return (
+              <button
+                key={loc}
+                onClick={() => handleSwitchLocale(loc)}
+                title={LOCALE_NAME[loc]}
+                className={`px-2 h-6 f-mono text-[9px] uppercase transition ${
+                  currentLocale === loc
+                    ? 'bg-[#FF6B00] text-black font-bold'
+                    : hasVersion
+                    ? 'text-ink-1 hover:bg-white/10'
+                    : 'text-ink-3 hover:bg-white/5'
+                }`}
+              >
+                {LOCALE_LABEL[loc]}
+              </button>
+            );
+          })}
+        </div>
+        {isAdmin && (
+          <button
+            onClick={handleAutoTranslate}
+            disabled={isTranslating || isSaving}
+            title="Genera traduccions als 3 idiomes restants via IA"
+            className="f-mono text-[9px] uppercase px-2 h-6 rounded border border-border-base text-ink-2 hover:text-accent-light hover:border-accent-light disabled:opacity-40 transition whitespace-nowrap"
+          >
+            {isTranslating ? '...' : '🌐 Traduir'}
+          </button>
+        )}
 
         <div className="flex-1" />
         <PreviewToolbar />

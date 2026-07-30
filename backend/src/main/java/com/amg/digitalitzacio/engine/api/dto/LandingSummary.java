@@ -12,5 +12,6 @@ public record LandingSummary(
     Boolean domainVerified,
     Boolean managedDomain,
     String domainStatus,
-    Instant createdAt
+    Instant createdAt,
+    java.util.List<String> publishedLocales
 ) {}

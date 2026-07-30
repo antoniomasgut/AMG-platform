@@ -353,6 +353,17 @@ export const PageStylesPanel: FC = () => {
             />
             <div className="f-mono text-[9px] text-ink-3 mt-0.5">Mesurament ID de la propietat GA4. Injectat automàticament a la landing publicada.</div>
           </div>
+          <div>
+            <label className="f-mono text-label uppercase text-ink-2 block mb-1">Microsoft Clarity ID</label>
+            <input
+              type="text"
+              placeholder="xxxxxxxxxx"
+              value={styles.clarityId ?? ''}
+              onChange={(e) => setStyles({ clarityId: e.target.value })}
+              className="w-full bg-[#0d0d1a] border border-border-medium rounded p-2 text-xs text-ink-0 placeholder:text-ink-3 font-mono"
+            />
+            <div className="f-mono text-[9px] text-ink-3 mt-0.5">Project ID de clarity.microsoft.com — heatmaps i gravació de sessions. RGPD compliant.</div>
+          </div>
         </div>
       </details>
 

@@ -9,6 +9,7 @@ import com.amg.digitalitzacio.leads.domain.LeadRepository;
 import com.amg.digitalitzacio.leads.domain.LeadSource;
 import com.amg.digitalitzacio.leads.domain.PipelineStage;
 import com.amg.digitalitzacio.shared.exception.ResourceNotFoundException;
+import com.amg.digitalitzacio.shared.sysconfig.application.SystemConfigService;
 import com.amg.digitalitzacio.shared.notification.NotificationEvent;
 import com.amg.digitalitzacio.shared.notification.TenantNotificationService;
 import com.amg.digitalitzacio.vault.domain.CatalogServiceRepository;
@@ -54,6 +55,7 @@ public class EngineOrchestrator implements EngineService {
     private final GoogleBusinessReviewSyncService googleBusinessReviewSyncService;
     private final TenantVariableResolver tenantVariableResolver;
     private final AutoTranslationService autoTranslationService;
+    private final SystemConfigService systemConfigService;
 
     // --- Landings ---
 
@@ -824,6 +826,10 @@ public class EngineOrchestrator implements EngineService {
     }
 
     private LandingSummary toSummary(Landing landing) {
+        var publishedLocales = landingVersionRepository
+                .findByLandingIdAndStatus(landing.getId(), VersionStatus.PUBLISHED)
+                .stream().map(v -> v.getLocale() != null ? v.getLocale() : "ca")
+                .distinct().sorted().toList();
         return new LandingSummary(
                 landing.getId(),
                 landing.getTitle(),
@@ -833,7 +839,8 @@ public class EngineOrchestrator implements EngineService {
                 landing.getDomainVerified(),
                 landing.getManagedDomain(),
                 landing.getDomainStatus().name(),
-                landing.getCreatedAt()
+                landing.getCreatedAt(),
+                publishedLocales
         );
     }
 
@@ -909,6 +916,10 @@ public class EngineOrchestrator implements EngineService {
             }
         }
         var gaId         = styles != null ? styles.getOrDefault("gaId", "")            : "";
+        var clarityIdRaw = styles != null ? styles.getOrDefault("clarityId", "")      : "";
+        // Fallback a la clau global de plataforma si la landing no en té
+        var clarityId    = (clarityIdRaw == null || clarityIdRaw.toString().isBlank())
+                ? systemConfigService.get("CLARITY_ID") : clarityIdRaw.toString();
         var customCss    = styles != null ? styles.getOrDefault("customCss", "")       : "";
         var logoUrl      = styles != null ? styles.getOrDefault("logoUrl", "").toString() : "";
         var showNav      = styles == null || !Boolean.FALSE.equals(styles.get("showNav"));
@@ -951,8 +962,9 @@ public class EngineOrchestrator implements EngineService {
         boolean hasChatWidget = chatEnabled || hasChatCta;
         var waButton     = buildWhatsAppButton(waNumber, hasChatWidget);
         var stickyNav    = showNav ? buildStickyNav(landing.getTitle(), logoUrl, sv) : "";
-        // GA4: s'injecta però s'activa NOMÉS quan l'usuari accepta cookies
-        var gaScript     = buildGa4ScriptDeferred(gaId.toString());
+        // GA4 i Clarity: s'injecten però s'activen NOMÉS quan l'usuari accepta cookies
+        var gaScript      = buildGa4ScriptDeferred(gaId.toString());
+        var clarityScript = buildClarityScriptDeferred(clarityId);
         var chatWidget   = hasChatWidget ? buildChatWidget(landing.getSlug(), sv.primary(), chatBizName) : "";
         var cookieBanner = buildCookieBanner(sv.primary(), legalBase);
         final String heroPreload = heroImageUrl.isBlank() ? "" :
@@ -997,6 +1009,7 @@ public class EngineOrchestrator implements EngineService {
                "<title>" + escapeHtml(landing.getTitle()) + "</title>" +
                googleFontsLink +
                gaScript +
+               clarityScript +
                schemaJson +
                "<style>" +
                buildGlobalCss(sv) +
@@ -1079,6 +1092,21 @@ public class EngineOrchestrator implements EngineService {
                "};" +
                // Si l'usuari ja havia acceptat prèviament, activar ara directament
                "if(localStorage.getItem('amg_cookie_consent')==='all'){window.__amgActivateGa();}" +
+               "</script>";
+    }
+
+    private String buildClarityScriptDeferred(String clarityId) {
+        if (clarityId == null || clarityId.isBlank()) return "";
+        String escapedId = escapeHtml(clarityId);
+        return "<script>" +
+               "window.__amgActivateClarity=function(){" +
+               "(function(c,l,a,r,i,t,y){" +
+               "c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};" +
+               "t=l.createElement(r);t.async=1;t.src='https://www.clarity.ms/tag/'+i;" +
+               "y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);" +
+               "})(window,document,'clarity','script','" + escapedId + "');" +
+               "};" +
+               "if(localStorage.getItem('amg_cookie_consent')==='all'){window.__amgActivateClarity();}" +
                "</script>";
     }
 
@@ -1829,8 +1857,9 @@ public class EngineOrchestrator implements EngineService {
                "window.amgCookieAccept=function(){" +
                "localStorage.setItem('amg_cookie_consent','all');" +
                "banner.classList.add('hidden');" +
-               // Activar GA4 si estava configurat
+               // Activar GA4 i Clarity si estaven configurats
                "if(typeof window.__amgActivateGa==='function')window.__amgActivateGa();" +
+               "if(typeof window.__amgActivateClarity==='function')window.__amgActivateClarity();" +
                "};" +
                "window.amgCookieReject=function(){" +
                "localStorage.setItem('amg_cookie_consent','necessary');" +

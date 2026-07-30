@@ -30,6 +30,7 @@ public interface ProspectingService {
     Map<String, Integer> exportQualifiedProspects(UUID campaignId);
     CampaignResponse scheduleCampaign(UUID campaignId, Instant nextRun, int repeatDays);
     CampaignResponse unscheduleCampaign(UUID campaignId);
+    CampaignResponse resetCampaign(UUID campaignId);
     String generateOutreach(UUID prospectId, String channel);
 
     // Spec 12 v2 — nous mètodes

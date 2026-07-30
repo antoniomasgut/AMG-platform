@@ -179,6 +179,12 @@ public class ProspectingController {
         return service.unscheduleCampaign(id);
     }
 
+    @PostMapping("/campaigns/{id}/reset")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public CampaignResponse resetCampaign(@PathVariable UUID id) {
+        return service.resetCampaign(id);
+    }
+
     // ── Spec 12 v2 — nous endpoints ──────────────────────────────────────────
 
     @PostMapping("/prospects/{id}/analyze-web")

@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import {
   getCampaigns, createCampaign, runCampaign, deleteCampaign, cloneCampaign,
-  scheduleCampaign, unscheduleCampaign, getDuplicates,
+  scheduleCampaign, unscheduleCampaign, resetCampaign, getDuplicates,
   type Campaign, type ProspectSource, type DuplicateGroup,
 } from '@/services/prospecting';
 import { PortalShell } from '@/components/portal/PortalShell';
@@ -121,6 +121,12 @@ export default function ProspectingPage() {
     mutationFn: (id: string) => unscheduleCampaign(id),
     onSuccess: () => { toast('success', 'Programació cancel·lada'); invalidate(); },
     onError: () => toast('error', 'Error cancel·lant la programació'),
+  });
+
+  const { mutate: doReset, isPending: resetting, variables: resettingId } = useMutation({
+    mutationFn: (id: string) => resetCampaign(id),
+    onSuccess: () => { toast('success', 'Campanya reiniciada a Pendent'); invalidate(); },
+    onError: () => toast('error', 'Error reiniciant la campanya'),
   });
 
   if (!user || !isAdmin) return null;
@@ -346,6 +352,15 @@ export default function ProspectingPage() {
                             {c.status === 'SCHEDULED' && (
                               <AMGButton size="sm" variant="ghost" icon={IconSet.X} onClick={() => doUnschedule(c.id)}>
                                 Aturar
+                              </AMGButton>
+                            )}
+                            {(c.status === 'IN_PROGRESS' || c.status === 'FAILED') && (
+                              <AMGButton
+                                size="sm" variant="ghost" icon={IconSet.X}
+                                loading={resetting && resettingId === c.id}
+                                onClick={() => doReset(c.id)}
+                              >
+                                Reset
                               </AMGButton>
                             )}
                             <AMGButton

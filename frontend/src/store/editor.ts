@@ -26,6 +26,7 @@ function snap(state: EditorState): { history: Snapshot[]; historyIndex: number }
 export interface EditorState {
   landing: LandingDetail | null;
   versionId: string | null;
+  currentLocale: string;
   content: PageContent;
   styles: PageStyles;
   selectedBlockId: string | null;
@@ -35,7 +36,8 @@ export interface EditorState {
   history: Snapshot[];
   historyIndex: number;
 
-  loadLanding: (landing: LandingDetail, versionId: string) => void;
+  loadLanding: (landing: LandingDetail, versionId: string, locale?: string) => void;
+  setLocale: (locale: string) => void;
   setBlocks: (blocks: Block[]) => void;
   addBlock: (type: Block['type'], index?: number) => void;
   removeBlock: (blockId: string) => void;
@@ -55,6 +57,7 @@ export interface EditorState {
 export const useEditorStore = create<EditorState>((set) => ({
   landing: null,
   versionId: null,
+  currentLocale: 'ca',
   content: { blocks: [] },
   styles: DEFAULT_STYLES,
   selectedBlockId: null,
@@ -64,12 +67,14 @@ export const useEditorStore = create<EditorState>((set) => ({
   history: [],
   historyIndex: -1,
 
-  loadLanding: (landing, versionId) => {
-    const initialContent = landing.versions.find((v) => v.id === versionId)?.content || { blocks: [] };
-    const initialStyles = landing.versions.find((v) => v.id === versionId)?.styles || DEFAULT_STYLES;
+  loadLanding: (landing, versionId, locale) => {
+    const version = landing.versions.find((v) => v.id === versionId);
+    const initialContent = version?.content || { blocks: [] };
+    const initialStyles = version?.styles || DEFAULT_STYLES;
     set({
       landing,
       versionId,
+      currentLocale: locale ?? version?.locale ?? 'ca',
       content: initialContent,
       styles: initialStyles,
       selectedBlockId: null,
@@ -78,6 +83,8 @@ export const useEditorStore = create<EditorState>((set) => ({
       historyIndex: 0,
     });
   },
+
+  setLocale: (locale) => set({ currentLocale: locale }),
 
   setBlocks: (blocks) =>
     set((state) => ({ ...snap(state), content: { blocks }, isDirty: true })),
@@ -165,7 +172,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   markClean: () => set({ isDirty: false }),
   markSaving: (isSaving) => set({ isSaving }),
   reset: () => set({
-    landing: null, versionId: null, content: { blocks: [] }, styles: DEFAULT_STYLES,
+    landing: null, versionId: null, currentLocale: 'ca', content: { blocks: [] }, styles: DEFAULT_STYLES,
     selectedBlockId: null, isDirty: false, history: [], historyIndex: -1,
   }),
 }));

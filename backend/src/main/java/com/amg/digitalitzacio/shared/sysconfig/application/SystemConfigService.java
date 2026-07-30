@@ -132,7 +132,8 @@ public class SystemConfigService {
         new KnownKey("AMG_NOTIFY_WEB_CONTACT",       "Notificar: consulta web amgdl.com","Enviar Telegram a vendes quan arriba una consulta del formulari d'amgdl.com.", "VENDES", false, "boolean", "true", null, 71),
         new KnownKey("AMG_NOTIFY_WIDGET_VISIT",      "Notificar: visitant al widget",  "Enviar Telegram a vendes per cada sessió nova del chat widget. Desactivar si genera soroll.", "VENDES", false, "boolean", "true", null, 72),
         new KnownKey("AMG_NOTIFY_PROSPECT_PRIORITY", "Notificar: prospect PRIORITY",   "Enviar Telegram a vendes quan un prospect arriba a tier PRIORITY (score 81+).", "VENDES", false, "boolean", "true", null, 73),
-        new KnownKey("AMG_DAILY_DIGEST",             "Digest del matí (8:00)",         "Resum diari accionable al xat de vendes: leads nous, pressupostos pendents, fitxes sense omplir, cobraments fallits.", "VENDES", false, "boolean", "true", null, 74)
+        new KnownKey("AMG_DAILY_DIGEST",             "Digest del matí (8:00)",         "Resum diari accionable al xat de vendes: leads nous, pressupostos pendents, fitxes sense omplir, cobraments fallits.", "VENDES", false, "boolean", "true", null, 74),
+        new KnownKey("CLARITY_ID",                   "Microsoft Clarity Project ID",   "Project ID de clarity.microsoft.com — heatmaps i gravació de sessions per a totes les landings. Pot sobreescriure's per landing des de l'editor d'estils.", "GENERAL", false, "string", null, null, 15)
     );
 
     public String get(String key) {
