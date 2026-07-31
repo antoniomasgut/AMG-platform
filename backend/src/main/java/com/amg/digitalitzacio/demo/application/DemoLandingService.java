@@ -638,6 +638,9 @@ public class DemoLandingService {
                "2. Offer exactly these available slots:\n" + slots +
                "3. When they choose a slot, ask for their FULL NAME\n" +
                "4. CONFIRM the booking with all details: service, date/time, name, and say you will send a reminder\n" +
+               "   When confirming, append EXACTLY at the end of your message (new line, invisible to visitor):\n" +
+               "   [CONFIRMA_CITA:{\"service\":\"SERVICE_NAME\",\"date\":\"YYYY-MM-DD\",\"time\":\"HH:MM\",\"name\":\"CLIENT_NAME\"}]\n" +
+               "   Use ISO 8601 date format and 24h time. Replace values with real data from the conversation.\n" +
                "Present yourself as a real booking system. Be proactive — if the visitor asks about any service, " +
                "immediately offer to book an appointment.\n\n";
     }

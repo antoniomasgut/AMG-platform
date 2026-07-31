@@ -551,12 +551,18 @@ public class ChatSessionService {
             reply = "Ho sent, en aquest moment no puc respondre. Torna-ho a provar en uns instants.";
         }
 
-        // Processa tag de reserva si l'agenda és activa
+        // Processa tag de reserva si l'agenda és activa (real) o és una sessió de demo
         if (session.isAgendaEnabled() && session.getTenantId() != null) {
             try {
                 reply = processBookingTag(reply, UUID.fromString(session.getTenantId()), session.getLeadId());
             } catch (Exception e) {
                 log.warn("Error processing booking tag in chat: {}", e.getMessage());
+            }
+        } else if (isDemo(session.getLandingSlug())) {
+            try {
+                reply = processDemoBookingTag(reply, session.getLandingSlug());
+            } catch (Exception e) {
+                log.warn("Error processing demo booking tag: {}", e.getMessage());
             }
         }
 
@@ -672,6 +678,40 @@ public class ChatSessionService {
 
     private String escapeHtml(String s) {
         return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private static final String DEMO_APPTS_KEY_PREFIX = "demo:appts:";
+    private static final long   DEMO_APPTS_TTL_H      = 24;
+
+    private String processDemoBookingTag(String response, String landingSlug) {
+        Matcher m = BOOKING_TAG.matcher(response);
+        if (!m.find()) return response;
+        String cleaned = BOOKING_TAG.matcher(response).replaceAll("").strip();
+        try {
+            String json = m.group(1);
+            Map<String, Object> appt = objectMapper.readValue(json, new com.fasterxml.jackson.core.type.TypeReference<>() {});
+            String apptJson = objectMapper.writeValueAsString(appt);
+            String key = DEMO_APPTS_KEY_PREFIX + landingSlug;
+            redis.opsForList().rightPush(key, apptJson);
+            redis.expire(key, DEMO_APPTS_TTL_H, java.util.concurrent.TimeUnit.HOURS);
+            log.info("Demo booking saved for {}: {}", landingSlug, apptJson);
+        } catch (Exception e) {
+            log.warn("Could not parse demo booking tag: {}", e.getMessage());
+        }
+        return cleaned;
+    }
+
+    public List<Map<String, Object>> getDemoAppointments(String landingSlug) {
+        String key = DEMO_APPTS_KEY_PREFIX + landingSlug;
+        var raw = redis.opsForList().range(key, 0, -1);
+        if (raw == null) return List.of();
+        var result = new ArrayList<Map<String, Object>>();
+        for (String json : raw) {
+            try {
+                result.add(objectMapper.readValue(json, new com.fasterxml.jackson.core.type.TypeReference<>() {}));
+            } catch (Exception ignored) {}
+        }
+        return result;
     }
 
     // --- AI dispatch ---

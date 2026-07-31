@@ -1,5 +1,6 @@
 package com.amg.digitalitzacio.engine.application;
 
+import com.amg.digitalitzacio.chat.application.ChatSessionService;
 import com.amg.digitalitzacio.engine.api.dto.*;
 import com.amg.digitalitzacio.engine.domain.*;
 import com.amg.digitalitzacio.google.application.GoogleBusinessReviewSyncService;
@@ -56,6 +57,7 @@ public class EngineOrchestrator implements EngineService {
     private final TenantVariableResolver tenantVariableResolver;
     private final AutoTranslationService autoTranslationService;
     private final SystemConfigService systemConfigService;
+    private final ChatSessionService chatSessionService;
 
     // --- Landings ---
 
@@ -408,6 +410,94 @@ public class EngineOrchestrator implements EngineService {
                "  <url><loc>https://" + (landing.getCustomDomain() != null ? landing.getCustomDomain() : slug + "." + landingBaseDomain) +
                "</loc></url>\n" +
                "</urlset>";
+    }
+
+    // --- Demo Agenda ---
+
+    @Override
+    public String renderDemoAgenda(String slug) {
+        if (!slug.startsWith("demo-")) {
+            throw new ResourceNotFoundException("Not a demo landing: " + slug);
+        }
+        var appointments = chatSessionService.getDemoAppointments(slug);
+        return buildDemoAgendaHtml(slug, appointments);
+    }
+
+    private String buildDemoAgendaHtml(String slug, java.util.List<java.util.Map<String, Object>> appointments) {
+        // Agrupa les cites per data per a la vista d'agenda (2 dies visibles)
+        var byDay = new java.util.TreeMap<String, java.util.List<java.util.Map<String, Object>>>();
+        for (var a : appointments) {
+            String date = a.getOrDefault("date", "").toString();
+            byDay.computeIfAbsent(date, k -> new java.util.ArrayList<>()).add(a);
+        }
+
+        var dayFmt = java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMMM", java.util.Locale.forLanguageTag("ca"));
+        var sb = new StringBuilder();
+        for (var entry : byDay.entrySet()) {
+            String dateLabel;
+            try {
+                var ld = java.time.LocalDate.parse(entry.getKey());
+                String dl = ld.format(dayFmt);
+                dateLabel = dl.substring(0, 1).toUpperCase() + dl.substring(1);
+            } catch (Exception e) { dateLabel = entry.getKey(); }
+
+            sb.append("<div class=\"day-col\">")
+              .append("<div class=\"day-header\">").append(escapeHtml(dateLabel)).append("</div>")
+              .append("<div class=\"day-slots\">");
+            for (var appt : entry.getValue()) {
+                String time    = appt.getOrDefault("time",    "").toString();
+                String service = appt.getOrDefault("service", "").toString();
+                String name    = appt.getOrDefault("name",    "").toString();
+                sb.append("<div class=\"slot confirmed\">")
+                  .append("<span class=\"slot-time\">").append(escapeHtml(time)).append("</span>")
+                  .append("<div class=\"slot-info\">")
+                  .append("<div class=\"slot-name\">").append(escapeHtml(name)).append("</div>")
+                  .append("<div class=\"slot-service\">").append(escapeHtml(service)).append("</div>")
+                  .append("</div></div>");
+            }
+            sb.append("</div></div>");
+        }
+
+        String daysHtml = byDay.isEmpty()
+            ? "<div class=\"empty\">Encara no hi ha cites reservades.<br>Inicia una conversa al xat de la landing.</div>"
+            : sb.toString();
+
+        return "<!DOCTYPE html><html lang=\"ca\"><head><meta charset=\"UTF-8\">" +
+               "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
+               "<title>Agenda · Demo</title>" +
+               "<style>" +
+               "*{box-sizing:border-box;margin:0;padding:0}" +
+               "body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;color:#1e293b;min-height:100vh}" +
+               ".topbar{background:#7c3aed;color:#fff;padding:16px 24px;display:flex;align-items:center;gap:12px}" +
+               ".topbar h1{font-size:1.1rem;font-weight:600}" +
+               ".topbar .badge{background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;font-size:.75rem}" +
+               ".toolbar{padding:16px 24px;display:flex;align-items:center;gap:8px;background:#fff;border-bottom:1px solid #e2e8f0}" +
+               ".toolbar .nav-btn{background:none;border:1px solid #e2e8f0;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:.875rem;color:#64748b}" +
+               ".toolbar .nav-btn:hover{background:#f1f5f9}" +
+               ".toolbar .period{font-weight:600;font-size:.95rem;flex:1;text-align:center}" +
+               ".agenda{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1px;background:#e2e8f0;padding:0;max-width:900px;margin:24px auto;border-radius:12px;overflow:hidden}" +
+               ".day-col{background:#fff;min-height:400px}" +
+               ".day-header{padding:14px 18px;font-weight:700;font-size:.875rem;text-transform:capitalize;background:#f8fafc;border-bottom:1px solid #e2e8f0;color:#7c3aed}" +
+               ".day-slots{padding:12px}" +
+               ".slot{display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:8px;margin-bottom:8px;border-left:3px solid #7c3aed;background:#faf5ff}" +
+               ".slot-time{font-size:.875rem;font-weight:700;color:#7c3aed;white-space:nowrap;min-width:42px}" +
+               ".slot-name{font-weight:600;font-size:.9rem}" +
+               ".slot-service{font-size:.8rem;color:#64748b;margin-top:2px}" +
+               ".empty{text-align:center;padding:60px 24px;color:#94a3b8;font-size:.95rem;line-height:1.6;grid-column:1/-1}" +
+               ".back-link{display:block;text-align:center;margin:12px auto 32px;color:#7c3aed;font-size:.875rem;text-decoration:none}" +
+               ".back-link:hover{text-decoration:underline}" +
+               "</style></head><body>" +
+               "<div class=\"topbar\"><span style=\"font-size:1.4rem\">✂️</span>" +
+               "<h1>Agenda · Perruqueria Mireia</h1>" +
+               "<span class=\"badge\">Demo en viu</span></div>" +
+               "<div class=\"toolbar\">" +
+               "<button class=\"nav-btn\">‹</button>" +
+               "<span class=\"period\">Pròxims dies</span>" +
+               "<button class=\"nav-btn\">›</button>" +
+               "</div>" +
+               "<div class=\"agenda\">" + daysHtml + "</div>" +
+               "<a class=\"back-link\" href=\"/api/v1/engine/render/" + escapeHtml(slug) + "/ca\">← Tornar a la landing</a>" +
+               "</body></html>";
     }
 
     // --- Stats ---

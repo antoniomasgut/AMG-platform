@@ -216,6 +216,11 @@ public class EngineController {
         return engineService.renderLanding(slug, host, locale);
     }
 
+    @GetMapping(value = "/render/{slug}/agenda", produces = MediaType.TEXT_HTML_VALUE)
+    public String renderDemoAgenda(@PathVariable String slug) {
+        return engineService.renderDemoAgenda(slug);
+    }
+
     @GetMapping(value = "/render/{slug}/sitemap.xml", produces = MediaType.APPLICATION_XML_VALUE)
     public String renderSitemap(@PathVariable String slug) {
         return engineService.renderSitemap(slug);

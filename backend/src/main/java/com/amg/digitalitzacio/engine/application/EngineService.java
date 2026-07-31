@@ -37,4 +37,5 @@ public interface EngineService {
     Map<String, String> generatePreviewToken(UUID tenantId, UUID landingId);
     String renderLandingByPreviewToken(String token, String locale);
     LandingResponse duplicateLanding(UUID tenantId, UUID landingId);
+    String renderDemoAgenda(String slug);
 }
