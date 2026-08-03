@@ -97,6 +97,8 @@ services:
       VAULT_MASTER_KEY: ${VAULT_MASTER_KEY:?VAULT_MASTER_KEY required}
       HOSTING_DATA_PATH: /data/websites
       DEMO_TENANT_ID: ${DEMO_TENANT_ID}
+      APP_HEALTHCHECK_FRONTEND_URL: https://amgdl.com/ca/login
+      APP_HEALTHCHECK_TRAEFIK_URL: http://coolify-proxy:80/ping
     volumes:
       # SEGURETAT (2026-07-12): socket de Docker ELIMINAT del backend. El hosting d'imports
       # s'ha rearquitecturat de forma segura: el backend NO toca mai Docker. Els imports

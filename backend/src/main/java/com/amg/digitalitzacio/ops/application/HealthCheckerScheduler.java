@@ -189,17 +189,16 @@ public class HealthCheckerScheduler {
     }
 
     private String formatDownAlert(String serviceName, Incident inc) {
-        return "🔴 <b>AMG Platform</b> · " + serviceName
-                + "\nEstat: <b>DOWN</b>"
-                + "\nTítol: " + inc.getTitle()
-                + "\nInici: " + inc.getStartedAt();
+        long minutesDown = Duration.between(inc.getStartedAt(), Instant.now()).toMinutes();
+        String extra = "";
+        if ("frontend".equals(serviceName)) extra = "\n🔗 https://amgdl.com/ca/login";
+        if ("backend".equals(serviceName))  extra = "\n🔗 https://api.amgdl.com/api/v1/ops/health";
+        return "🔴 AMG · <b>" + serviceName.toUpperCase() + "</b> · DOWN · fa " + minutesDown + " min" + extra;
     }
 
     private String formatRecoveryAlert(String serviceName, Incident inc) {
-        var duration = inc.getDurationSeconds() != null ? inc.getDurationSeconds() + "s" : "?";
-        return "✅ <b>AMG Platform</b> · " + serviceName
-                + "\nEstat: <b>RECUPERAT</b>"
-                + "\nTemps de caiguda: " + duration;
+        long minutes = inc.getDurationSeconds() != null ? inc.getDurationSeconds() / 60 : 0;
+        return "✅ AMG · <b>" + serviceName.toUpperCase() + "</b> recuperat · caiguda: " + minutes + " min";
     }
 
     @FunctionalInterface
