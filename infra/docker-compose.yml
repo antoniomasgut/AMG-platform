@@ -145,6 +145,7 @@ services:
           - amg-frontend
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
       - "traefik.http.routers.frontend.rule=Host(`${APP_DOMAIN}`) || Host(`www.${APP_DOMAIN}`)"
       - "traefik.http.routers.frontend.tls=true"
       - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
