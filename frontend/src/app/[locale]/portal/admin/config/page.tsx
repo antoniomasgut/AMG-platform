@@ -92,6 +92,19 @@ const KEY_IMPORTANCE: Record<string, Importance> = {
 type HelpStep = { n: number; text: React.ReactNode };
 
 const CATEGORY_HELP: Record<string, { title: string; steps: HelpStep[] }[]> = {
+  AGENTS: [
+    {
+      title: 'Transcripció de veu via Groq (STT_API_KEY) — gratuït fins a 28.800 min/dia',
+      steps: [
+        { n: 1, text: <>Ves a <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-accent-light underline">console.groq.com/keys</a> i crea un compte gratuït (o entra si ja en tens).</> },
+        { n: 2, text: <><strong>Create API Key</strong> → posa-li un nom (ex: <code className="bg-surface-overlay px-1 rounded text-[10px]">amg-stt</code>) → copia la clau.</> },
+        { n: 3, text: <>Enganxa la clau al camp <strong>STT_API_KEY</strong> aquí a baix.</> },
+        { n: 4, text: <>Al camp <strong>STT_BASE_URL</strong> posa: <code className="bg-surface-overlay px-1 rounded text-[10px]">https://api.groq.com/openai/v1</code></> },
+        { n: 5, text: <>Al camp <strong>STT_MODEL</strong> posa: <code className="bg-surface-overlay px-1 rounded text-[10px]">whisper-large-v3-turbo</code> (el més ràpid de Groq).</> },
+        { n: 6, text: <>Ja funciona. Quan un client o tu envieu una nota de veu al bot de Telegram, l&apos;agent la transcriurà automàticament i la processarà com a text normal.</> },
+      ],
+    },
+  ],
   EMAIL_INBOUND: [
     {
       title: 'Configuració del Cloudflare Email Worker (una sola vegada)',
@@ -837,11 +850,16 @@ export default function SystemConfigPage() {
             );
           })
         )}
+
+        {/* Drive AMG */}
+        <div className="pt-4 border-t border-border-subtle">
+          <p className="f-mono text-xs font-bold text-ink-3 uppercase tracking-widest mb-3">Eines d&apos;administració</p>
+          <DriveAMGSection />
+        </div>
+
+        {/* Taula de preus IA */}
+        <ModelPricingSection queryClient={qc} />
       </div>
-      {/* Drive AMG */}
-      <DriveAMGSection />
-      {/* Taula de preus IA */}
-      <ModelPricingSection queryClient={qc} />
     </PortalShell>
   );
 }
