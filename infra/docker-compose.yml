@@ -99,6 +99,9 @@ services:
       DEMO_TENANT_ID: ${DEMO_TENANT_ID}
       APP_HEALTHCHECK_FRONTEND_URL: https://amgdl.com/ca/login
       APP_HEALTHCHECK_TRAEFIK_URL: http://coolify-proxy:80/ping
+      STT_API_KEY: ${STT_API_KEY}
+      STT_BASE_URL: ${STT_BASE_URL:-https://api.groq.com/openai/v1}
+      STT_MODEL: ${STT_MODEL:-whisper-large-v3-turbo}
     volumes:
       # SEGURETAT (2026-07-12): socket de Docker ELIMINAT del backend. El hosting d'imports
       # s'ha rearquitecturat de forma segura: el backend NO toca mai Docker. Els imports
